@@ -373,6 +373,143 @@
     border-style: dashed;
 }
 
+/* --- CINEMATIC CELESTIAL STYLING ENGINE --- */
+.space-canvas {
+    background-color: #0A1128;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Aurora Backdrop Layers */
+.aurora-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(140px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+}
+.green-light { background: #10B981; top: -10%; left: -10%; }
+.blue-light { background: #0066CC; bottom: -10%; right: -10%; }
+
+/* The 3D Orbital Scene Container */
+.universe-container {
+    width: 100vw;
+    height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1200px;
+    cursor: grab;
+    z-index: 5;
+}
+.universe-container:active { cursor: grabbing; }
+
+.orbital-system {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    transform-style: preserve-3d;
+    transform: rotateX(60deg) rotateY(0deg);
+    transition: transform 0.1s linear;
+}
+
+/* Central Logo Axis */
+.central-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateX(-60deg);
+    text-align: center;
+    transform-style: preserve-3d;
+    z-index: 10;
+}
+.core-logo {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
+}
+.logo-brain { color: #ffffff; font-weight: 400; }
+.logo-whim { color: #10B981; font-weight: 800; }
+
+.core-pulse {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: corePulse 3s infinite alternate ease-in-out;
+}
+
+/* Translucent Axis Rings */
+.orbital-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    transform: translate(-50%, -50%);
+    transform-style: preserve-3d;
+}
+.ring-learn  { width: 300px; height: 300px; }
+.ring-live   { width: 440px; height: 440px; border-color: rgba(16,185,129,0.15); }
+.ring-play   { width: 580px; height: 580px; }
+.ring-create { width: 720px; height: 720px; }
+
+/* Premium Glassmorphic App Orbs/Cards */
+.planet-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 160px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* Keeps cards standing completely upright towards browser face while spinning */
+    transform: translate(-50%, -50%) rotateY(0deg) rotateX(-60deg); 
+    transform-origin: center;
+    cursor: pointer;
+    transition: background 0.3s, border 0.3s, transform 0.2s;
+}
+.planet-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(16,185,129,0.4);
+}
+
+/* Positioning maths utilizing custom angle vectors */
+.ring-learn .planet-card  { transform: translate(-50%, -50%) rotateZ(var(--angle)) translate(150px) rotateZ(calc(-1 * var(--angle))) rotateX(-60deg); }
+.ring-live .planet-card   { transform: translate(-50%, -50%) rotateZ(var(--angle)) translate(220px) rotateZ(calc(-1 * var(--angle))) rotateX(-60deg); }
+.ring-play .planet-card   { transform: translate(-50%, -50%) rotateZ(var(--angle)) translate(290px) rotateZ(calc(-1 * var(--angle))) rotateX(-60deg); }
+.ring-create .planet-card { transform: translate(-50%, -50%) rotateZ(var(--angle)) translate(360px) rotateZ(calc(-1 * var(--angle))) rotateX(-60deg); }
+
+.node-icon { font-size: 24px; margin-bottom: 8px; }
+.planet-card h4 { font-size: 16px; margin: 0 0 4px 0; color: #ffffff; }
+.node-preview { font-size: 11px; color: #a0aec0; line-height: 1.3; }
+.node-badge { display: inline-block; margin-top: 8px; font-size: 9px; font-weight: 700; color: #10B981; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 10px; text-transform: uppercase; }
+
+.navigation-hint { position: absolute; bottom: 30px; font-size: 13px; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 0.5px; }
+
+@keyframes corePulse {
+    0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+    100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+}
+
     </style>
 </head>
 <body>
@@ -406,97 +543,69 @@
         <p>Explore native utilities, educational ecosystems, and interactive experiences optimized beautifully for mobile, tablet, and desktop environments.</p>
     </div>
 
-    <!-- MAIN PRODUCT CATALOG SYSTEM -->
-    <!-- MAIN PRODUCT CATALOG SYSTEM -->
-<main id="apps" class="catalog-container">
+<!-- MAIN PRODUCT CATALOG SYSTEM (CELESTIAL ORBITAL AXIS) -->
+<main class="space-canvas">
+    
+    <!-- THE BACKGROUND NEBULA ATMOSPHERE -->
+    <div class="aurora-glow green-light"></div>
+    <div class="aurora-glow blue-light"></div>
 
-    <!-- CATEGORY 1: LEARN -->
-    <section class="catalog-suite">
-        <h2 class="suite-title">📚 Learn</h2>
-        <p class="suite-description">Applications designed to expand knowledge, master new capabilities, and accelerate skill development.</p>
-        
-        <div class="app-suite-grid">
-            <!-- Sub-Category: Homeschool Connections & Kids Learning -->
-            <div class="project-card placeholder">
-                <div class="project-icon">🏠</div>
-                <h3>Homeschool & Early Learning</h3>
-                <p class="project-tagline">Connecting Education & Development</p>
-                <p class="project-description">Intuitive, interactive frameworks tailored to enrich early childhood learning tracking and home education modules.</p>
-                <span class="status-badge tracking">In Pipeline</span>
-            </div>
+    <!-- THE SYSTEM CONTAINER WITH INTERACTIVE SCENE CONTROLS -->
+    <div class="universe-container" id="universe">
+        <div class="orbital-system" id="orbitalSystem">
             
-            <!-- Sub-Category: Skills & Self-Improvement -->
-            <div class="project-card placeholder">
-                <div class="project-icon">📈</div>
-                <h3>Skills & Self-Improvement</h3>
-                <p class="project-tagline">Personal Mastery Frameworks</p>
-                <p class="project-description">Dynamic tools designed to map out, track, and optimize new cognitive and technical capabilities.</p>
-                <span class="status-badge tracking">In Pipeline</span>
+            <!-- CENTRAL SUN AXIS: THE BRAINWHIM LOGO CORE -->
+            <div class="central-core">
+                <div class="core-logo">
+                    <span class="logo-brain">Brain</span><span class="logo-whim">Whim</span>
+                </div>
+                <div class="core-pulse"></div>
             </div>
-        </div>
-    </section>
 
-    <!-- CATEGORY 2: LIVE -->
-    <section class="catalog-suite">
-        <h2 class="suite-title">🌱 Live</h2>
-        <p class="suite-description">Everyday life helpers engineered to streamline routines, optimize environments, and balance daily operations.</p>
-        
-        <div class="app-suite-grid">
-            <!-- App Card: WhimLedger (Personal Finance Sector) -->
-            <div class="project-card">
-                <div class="project-icon">📉</div>
-                <h3>WhimLedger</h3>
-                <p class="project-tagline">Personal Finance. Redefined.</p>
-                <p class="project-description">A minimalist, 100% offline-first financial ledger engineered for independent creators. Zero cloud loops—just pure local privacy.</p>
-                <span class="status-badge concept">In Conceptual Development</span>
+            <!-- ORBITAL RING 1: LEARN (VIBRANT VIOLET) -->
+            <div class="orbital-ring ring-learn">
+                <div class="planet-card learn-node" style="--angle: 0deg;">
+                    <div class="node-icon">📚</div>
+                    <h4>Learn</h4>
+                    <div class="node-preview">Homeschool & Master Skills</div>
+                </div>
             </div>
-            
-            <!-- Sub-Category: Recipes & Work-Life Balance / Habits -->
-            <div class="project-card placeholder">
-                <div class="project-icon">🍳</div>
-                <h3>Routines, Recipes & Balance</h3>
-                <p class="project-tagline">Everyday Life Orchestration</p>
-                <p class="project-description">Smart systems engineered to harmonize cooking schedules, track healthy habits, and restore physical work-life balance.</p>
-                <span class="status-badge tracking">In Pipeline</span>
-            </div>
-        </div>
-    </section>
 
-    <!-- CATEGORY 3: PLAY -->
-    <section class="catalog-suite">
-        <h2 class="suite-title">🎮 Play</h2>
-        <p class="suite-description">Engaging digital arenas, casual puzzles, and lighthearted experiences designed to relax the mind and bring people together.</p>
-        
-        <div class="app-suite-grid">
-            <!-- Sub-Category: Casual, Family, and Creative Play Games -->
-            <div class="project-card placeholder">
-                <div class="project-icon">🎲</div>
-                <h3>Casual & Family Gaming</h3>
-                <p class="project-tagline">Light, Shared Experiences</p>
-                <p class="project-description">Minimalist tabletop and digital interaction mechanics focused on wholesome family engagement and creative play loops.</p>
-                <span class="status-badge tracking">In Pipeline</span>
+            <!-- ORBITAL RING 2: LIVE (EMERALD AURORA) -->
+            <div class="orbital-ring ring-live">
+                <div class="planet-card live-node active-product" style="--angle: 90deg;">
+                    <div class="node-icon">📉</div>
+                    <h4>WhimLedger</h4>
+                    <div class="node-preview">Offline Personal Finance</div>
+                    <span class="node-badge">Concept</span>
+                </div>
             </div>
-        </div>
-    </section>
 
-    <!-- CATEGORY 4: CREATE -->
-    <section class="catalog-suite">
-        <h2 class="suite-title">🎨 Create</h2>
-        <p class="suite-description">Expressive toolkits, trend discovery panels, and structured environments built to transform raw imagination into tangible ideas.</p>
-        
-        <div class="app-suite-grid">
-            <!-- Sub-Category: Creative Tools, Trending, Projects & Ideas -->
-            <div class="project-card placeholder">
-                <div class="project-icon">💡</div>
-                <h3>Projects, Trends & Ideas</h3>
-                <p class="project-tagline">Spontaneous Creative Engines</p>
-                <p class="project-description">Advanced visual canvas tools designed to curate trending topics and convert sudden sparks of vision into executable milestones.</p>
-                <span class="status-badge tracking">In Pipeline</span>
+            <!-- ORBITAL RING 3: PLAY (NEON CORAL) -->
+            <div class="orbital-ring ring-play">
+                <div class="planet-card play-node" style="--angle: 180deg;">
+                    <div class="node-icon">🎮</div>
+                    <h4>Play</h4>
+                    <div class="node-preview">Casual & Family Gaming</div>
+                </div>
             </div>
-        </div>
-    </section>
 
+            <!-- ORBITAL RING 4: CREATE (ELECTRIC BLUE) -->
+            <div class="orbital-ring ring-create">
+                <div class="planet-card create-node" style="--angle: 270deg;">
+                    <div class="node-icon">🎨</div>
+                    <h4>Create</h4>
+                    <div class="node-preview">Projects, Trends & Ideas</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- INTERACTIVE USER NAVIGATION PROMPT -->
+    <div class="navigation-hint">➔ Click and Drag anywhere to spin the studio universe ↺</div>
 </main>
+    
 
 
     <!-- AUTOMATION MECHANICS ENGINE -->
@@ -521,6 +630,54 @@
             output.innerText = nextSelection;
         }
     </script>
+<!-- INTERACTIVE CELSTIAL SPIN ENGINE MOUSE SCRIPT -->
+<script>
+    const canvas = document.getElementById('universe');
+    const system = document.getElementById('orbitalSystem');
+    
+    let isDragging = false;
+    let previousMouseX = 0;
+    let currentRotationY = 0;
+
+    // Track Mouse/Trackpad Clicks
+    canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        previousMouseX = e.clientX;
+    });
+
+    // Handle Active Spin Physics Calculations
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - previousMouseX;
+        previousMouseX = e.clientX;
+        
+        // Adjust current rotation based on horizontal drag distance 
+        currentRotationY += deltaX * 0.4; 
+        
+        // Execute the 3D matrix transform adjustment dynamically
+        system.style.transform = `rotateX(60deg) rotateY(${currentRotationY}deg)`;
+    });
+
+    // Close Interaction Threads Safely
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    
+    // Add touch support for iPhone/iPad testing profiles
+    canvas.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        previousMouseX = e.touches[0].clientX;
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const deltaX = e.touches[0].clientX - previousMouseX;
+        previousMouseX = e.touches[0].clientX;
+        currentRotationY += deltaX * 0.4;
+        system.style.transform = `rotateX(60deg) rotateY(${currentRotationY}deg)`;
+    });
+    window.addEventListener('touchend', () => { isDragging = false; });
+</script>
 
 </body>
 </html>
