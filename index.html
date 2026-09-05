@@ -30,6 +30,27 @@
             --glow-violet: #8B5CF6;
             --glow-coral: #FF7A2A;
             --glow-create: #0066CC;
+
+            --galaxy-image: url("galaxy-home.jpg");
+            --galaxy-filter: none;
+            --galaxy-vignette: radial-gradient(ellipse at center, rgba(10, 22, 48, 0.16) 0%, rgba(10, 22, 48, 0.40) 100%);
+        }
+
+        /* Page tints — same photo, color shifted behind the orbs only */
+        .theme-home {
+            --galaxy-filter: none;
+        }
+        .theme-learn {
+            --galaxy-filter: hue-rotate(48deg) saturate(1.08);
+        }
+        .theme-live {
+            --galaxy-filter: hue-rotate(-18deg) saturate(1.12);
+        }
+        .theme-play {
+            --galaxy-filter: hue-rotate(-52deg) saturate(1.15);
+        }
+        .theme-create {
+            --galaxy-filter: hue-rotate(12deg) saturate(1.06) brightness(1.04);
         }
 
         html,
@@ -378,55 +399,41 @@
            RESPONSIVE MOBILE-FIRST CELESTIAL CANVASES
            =================================================== */
         .space-canvas {
-            background-color: #16203D !important;
+            background-color: #0a1630 !important;
             min-height: calc(100vh - 110px);
-            width: 100vw;
+            min-height: calc(100dvh - 110px);
+            width: 100%;
+            max-width: 100vw;
             position: relative;
+            isolation: isolate;
             overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 10px 0 40px;
             box-sizing: border-box;
-            background-color: #16203D !important;
+        }
 
-
+        /* Photo lives on ::before so page tints do not recolor the orbs */
+        .space-canvas::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-color: #0a1630;
             background-image:
-                /* Sweeping diagonal gas lane */
-                linear-gradient(135deg,
-                    transparent 8%,
-                    rgba(0, 102, 204, 0.22) 28%,
-                    rgba(16, 185, 129, 0.18) 48%,
-                    rgba(107, 163, 201, 0.12) 62%,
-                    transparent 82%),
-                linear-gradient(315deg,
-                    transparent 20%,
-                    rgba(16, 185, 129, 0.10) 45%,
-                    transparent 70%),
-                /* Nebula clouds */
-                radial-gradient(circle at 20% 25%, rgba(0, 102, 204, 0.40) 0%, transparent 55%),
-                radial-gradient(circle at 80% 75%, rgba(16, 185, 129, 0.32) 0%, transparent 60%),
-                /* Starbursts */
-                radial-gradient(circle at 35% 15%, rgba(255, 255, 255, 0.95) 2.5px, rgba(107, 163, 201, 0.5) 7px, transparent 20px),
-                radial-gradient(circle at 85% 40%, rgba(255, 255, 255, 0.85) 2px, rgba(0, 102, 204, 0.4) 6px, transparent 16px),
-                /* Dust / clusters */
-                radial-gradient(rgba(255, 255, 255, 0.65) 2px, transparent 2px),
-                radial-gradient(rgba(255, 255, 255, 0.45) 1px, transparent 1px);
-            background-size:
-                100% 100%,
-                100% 100%,
-                100% 100%,
-                100% 100%,
-                100% 100%,
-                100% 100%,
-                340px 340px,
-                180px 180px;
-            background-position:
-                0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 30px 50px, 90px 140px;
-            background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
+                var(--galaxy-vignette),
+                var(--galaxy-image);
+            background-size: cover, cover;
+            background-position: center center, center center;
+            background-repeat: no-repeat, no-repeat;
+            filter: var(--galaxy-filter);
+            transform: translateZ(0);
         }
 
         .aurora-glow {
+            display: none !important;
             position: absolute;
             width: 85vw;
             height: 85vw;
@@ -434,8 +441,7 @@
             max-height: 850px;
             border-radius: 50%;
             filter: blur(160px);
-            opacity: 0.45;
-            /* was lower – opens the mood */
+            opacity: 0;
             pointer-events: none;
             z-index: 1;
         }
@@ -791,6 +797,11 @@
             .space-canvas {
                 min-height: calc(100dvh - 100px);
                 padding: 0 0 20px;
+            }
+
+            .space-canvas::before {
+                background-position: center center, center center;
+                background-size: cover, cover;
             }
 
         }
@@ -1323,10 +1334,37 @@
             gap: 24px;
             /* Beautiful 24px gap separating each legal link */
         }
+    
+        /* Galaxy photo — phones, iPads, desktops */
+        @media (max-width: 768px) {
+            .space-canvas {
+                min-height: calc(100dvh - 100px);
+            }
+            .space-canvas::before {
+                background-position: 42% center, 42% center;
+                background-size: cover, cover;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .space-canvas::before {
+                background-position: 40% center, 40% center;
+                background-size: cover, cover;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .space-canvas::before {
+                background-position: center center, center center;
+                background-size: cover, cover;
+            }
+        }
+
     </style>
 </head>
 
-<body>
+<body class="theme-home">
+    <!-- Other pages: use theme-learn / theme-live / theme-play / theme-create on <body> -->
 
     <!-- LEFT MENU -->
 
@@ -1443,7 +1481,7 @@
                     <div class="sphere-node-wrapper position-0">
                         <div class="volumetric-sphere orb-learn" onclick="window.location.href='learn.html'">
                             <div class="sphere-content-face">
-                                <div class="sphere-icon">📚</div>
+                                <div class="sphere-icon">??</div>
                                 <h3>Learn</h3>
                                 <div class="sphere-hover-panel">
                                     <p class="sphere-subtitle">Education Track</p>
@@ -1458,7 +1496,7 @@
                     <div class="sphere-node-wrapper position-90">
                         <div class="volumetric-sphere orb-live" onclick="window.location.href='live.html'">
                             <div class="sphere-content-face">
-                                <div class="sphere-icon">🌱</div>
+                                <div class="sphere-icon">??</div>
                                 <h3>Live</h3>
                                 <div class="sphere-hover-panel">
                                     <p class="sphere-subtitle">Life Flow</p>
@@ -1473,7 +1511,7 @@
                     <div class="sphere-node-wrapper position-180">
                         <div class="volumetric-sphere orb-play" onclick="window.location.href='play.html'">
                             <div class="sphere-content-face">
-                                <div class="sphere-icon">🎮</div>
+                                <div class="sphere-icon">??</div>
                                 <h3>Play</h3>
                                 <div class="sphere-hover-panel">
                                     <p class="sphere-subtitle">Playful Systems</p>
@@ -1488,7 +1526,7 @@
                     <div class="sphere-node-wrapper position-270">
                         <div class="volumetric-sphere orb-create" onclick="window.location.href='create.html'">
                             <div class="sphere-content-face">
-                                <div class="sphere-icon">🎨</div>
+                                <div class="sphere-icon">??</div>
                                 <h3>Create</h3>
                                 <div class="sphere-hover-panel">
                                     <p class="sphere-subtitle">Ideation Engine</p>
