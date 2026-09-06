@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Play · BrainWhim</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky: #6BA3C9;
+            --berry: #F24C7A;
+            --text: #E8F1F8;
+            --muted: #B7C6D6;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            font-family: Montserrat, sans-serif;
+            color: var(--text);
+            background: #0a1630 url("galaxy-home.jpg") center / cover no-repeat fixed;
+        }
+        body::after {
+            content: "";
+            position: fixed; inset: 0; pointer-events: none;
+            background: linear-gradient(108deg, rgba(40,130,210,.16) 0%, rgba(242,76,122,.18) 40%, rgba(242,76,122,.42) 100%);
+        }
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 22px 18px 48px;
+        }
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .top a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .top a:hover { color: var(--sky); }
+        h1 {
+            font-size: 28px;
+            margin: 8px 0 6px;
+        }
+        .lede {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.55;
+            margin: 0 0 20px;
+            max-width: 36em;
+        }
+        .picks {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        @media (min-width: 640px) {
+            .picks { grid-template-columns: repeat(3, 1fr); }
+        }
+        .pick {
+            background: rgba(8,16,36,.42);
+            border: 1px solid rgba(210,228,242,.16);
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: left;
+            color: inherit;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        .pick strong { display: block; font-size: 16px; margin-bottom: 4px; }
+        .pick span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+        .pick.is-on {
+            border-color: rgba(242,76,122,.7);
+            box-shadow: 0 0 0 1px rgba(242,76,122,.25);
+        }
+        .board {
+            background: rgba(8,16,36,.48);
+            border: 1px solid rgba(210,228,242,.14);
+            border-radius: 18px;
+            padding: 16px;
+            min-height: 280px;
+            backdrop-filter: blur(12px);
+        }
+        .status {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+        button.ghost {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(210,228,242,.2);
+            color: #fff;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button.ghost:hover { color: var(--sky); }
+        .grid {
+            display: grid;
+            gap: 8px;
+            margin: 0 auto;
+        }
+        .cell {
+            aspect-ratio: 1;
+            border: 0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 22px;
+            cursor: pointer;
+            background: rgba(255,255,255,.08);
+            color: #fff;
+        }
+        .cell.on { background: rgba(242,76,122,.85); }
+        .cell.matched { background: rgba(107,163,201,.35); cursor: default; }
+        .cell.face { background: rgba(242,76,122,.55); }
+        .letters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 12px 0;
+        }
+        .letters button, .guess button {
+            min-width: 40px;
+            height: 44px;
+            border-radius: 10px;
+            border: 0;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: inherit;
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            cursor: pointer;
+        }
+        .guess {
+            min-height: 44px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .win {
+            text-align: center;
+            color: #fff;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+        .hint { text-align: center; color: var(--muted); font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="top">
+            <a href="play.html">← Play</a>
+            <a href="index.html">Home</a>
+        </div>
+        <h1>Puzzle Play</h1>
+        <p class="lede">Three short games. No account. Nothing for sale yet — just something you can actually finish.</p>
+
+        <div class="picks">
+            <button class="pick is-on" data-game="match"><strong>Star Match</strong><span>Find the pairs. Memory, not speed.</span></button>
+            <button class="pick" data-game="word"><strong>Drift Word</strong><span>Unscramble a small word from the sky.</span></button>
+            <button class="pick" data-game="grid"><strong>Signal Grid</strong><span>Tap a cell to flip it and its neighbors.</span></button>
+        </div>
+
+        <div class="board" id="board"></div>
+    </div>
+    <script>
+        const board = document.getElementById('board');
+        const picks = document.querySelectorAll('.pick');
+        let game = 'match';
+
+        picks.forEach(p => p.addEventListener('click', () => {
+            picks.forEach(x => x.classList.remove('is-on'));
+            p.classList.add('is-on');
+            game = p.dataset.game;
+            start();
+        }));
+
+        function start() {
+            if (game === 'match') startMatch();
+            if (game === 'word') startWord();
+            if (game === 'grid') startGrid();
+        }
+
+        function startMatch() {
+            const icons = ['✦','☾','☀','☄','★','✧','✺','✶'];
+            const deck = shuffle([...icons, ...icons]);
+            let first = null, lock = false, moves = 0, found = 0;
+            board.innerHTML = `
+                <div class="status"><span id="mStat">Moves 0 · Pairs 0/8</span><button class="ghost" id="mNew">New</button></div>
+                <div class="grid" style="grid-template-columns:repeat(4,1fr); max-width:360px;"></div>`;
+            const grid = board.querySelector('.grid');
+            const stat = board.querySelector('#mStat');
+            deck.forEach((icon, i) => {
+                const b = document.createElement('button');
+                b.className = 'cell';
+                b.dataset.icon = icon;
+                b.dataset.i = i;
+                b.textContent = '';
+                b.onclick = () => {
+                    if (lock || b.classList.contains('matched') || b.classList.contains('face')) return;
+                    b.textContent = icon;
+                    b.classList.add('face');
+                    if (!first) { first = b; return; }
+                    moves++;
+                    if (first.dataset.icon === b.dataset.icon && first !== b) {
+                        first.classList.add('matched');
+                        b.classList.add('matched');
+                        first = null;
+                        found++;
+                        stat.textContent = `Moves ${moves} · Pairs ${found}/8`;
+                        if (found === 8) stat.textContent = `Solved in ${moves} moves`;
+                    } else {
+                        lock = true;
+                        const a = first;
+                        setTimeout(() => {
+                            a.textContent = ''; a.classList.remove('face');
+                            b.textContent = ''; b.classList.remove('face');
+                            first = null; lock = false;
+                            stat.textContent = `Moves ${moves} · Pairs ${found}/8`;
+                        }, 650);
+                    }
+                };
+                grid.appendChild(b);
+            });
+            board.querySelector('#mNew').onclick = startMatch;
+        }
+
+        const WORDS = ['WHIM','STAR','ORBIT','PLAY','SPARK','DREAM','GLOW','NOVA','LUNAR','COMET'];
+        function startWord() {
+            const word = WORDS[Math.floor(Math.random() * WORDS.length)];
+            const letters = shuffle(word.split(''));
+            let guess = [];
+            board.innerHTML = `
+                <div class="status"><span>Unscramble the word</span><button class="ghost" id="wNew">New word</button></div>
+                <div class="guess" id="guess"></div>
+                <div class="letters" id="pool"></div>
+                <p class="hint">${word.length} letters</p>
+                <p class="win" id="wWin"></p>`;
+            const pool = board.querySelector('#pool');
+            const guessEl = board.querySelector('#guess');
+            const win = board.querySelector('#wWin');
+            function render() {
+                guessEl.innerHTML = '';
+                guess.forEach((ch, i) => {
+                    const b = document.createElement('button');
+                    b.textContent = ch;
+                    b.onclick = () => { guess.splice(i,1); render(); };
+                    guessEl.appendChild(b);
+                });
+                pool.innerHTML = '';
+                const used = [...guess];
+                letters.forEach((ch) => {
+                    const idx = used.indexOf(ch);
+                    const b = document.createElement('button');
+                    b.textContent = ch;
+                    if (idx >= 0) {
+                        used.splice(idx,1);
+                        b.style.opacity = '.25';
+                        b.disabled = true;
+                    } else {
+                        b.onclick = () => {
+                            guess.push(ch);
+                            render();
+                            if (guess.join('') === word) win.textContent = 'Nice. ' + word + '.';
+                        };
+                    }
+                    pool.appendChild(b);
+                });
+            }
+            render();
+            board.querySelector('#wNew').onclick = startWord;
+        }
+
+        function startGrid() {
+            const n = 4;
+            let cells = Array(n*n).fill(0).map(() => Math.random() > 0.55 ? 1 : 0);
+            let taps = 0;
+            board.innerHTML = `
+                <div class="status"><span id="gStat">Turn the board dark</span><button class="ghost" id="gNew">New</button></div>
+                <div class="grid" style="grid-template-columns:repeat(4,1fr); max-width:320px;"></div>
+                <p class="hint">Each tap flips that cell and the ones beside it.</p>
+                <p class="win" id="gWin"></p>`;
+            const grid = board.querySelector('.grid');
+            const win = board.querySelector('#gWin');
+            function flip(i) {
+                const x = i % n, y = Math.floor(i / n);
+                [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dy]) => {
+                    const nx = x+dx, ny = y+dy;
+                    if (nx>=0 && nx<n && ny>=0 && ny<n) cells[ny*n+nx] ^= 1;
+                });
+            }
+            function draw() {
+                grid.innerHTML = '';
+                cells.forEach((v, i) => {
+                    const b = document.createElement('button');
+                    b.className = 'cell' + (v ? ' on' : '');
+                    b.onclick = () => {
+                        taps++;
+                        flip(i);
+                        draw();
+                        if (cells.every(c => c === 0)) win.textContent = `Clear — ${taps} taps.`;
+                    };
+                    grid.appendChild(b);
+                });
+            }
+            draw();
+            board.querySelector('#gNew').onclick = startGrid;
+        }
+
+        function shuffle(a) {
+            const x = [...a];
+            for (let i = x.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [x[i], x[j]] = [x[j], x[i]];
+            }
+            return x;
+        }
+
+        start();
+    </script>
+</body>
+</html>
