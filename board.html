@@ -48,6 +48,11 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 #room-ch .dk{background:#B7D6C8 url("logo-image.png") center/38% no-repeat;background-blend-mode:soft-light}
 #room-ch .sel{outline:3px solid #C9A227;outline-offset:-3px}
 #room-ch .mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
+#room-ch .from{box-shadow:inset 0 0 0 3px rgba(201,162,39,.55)}
+#room-ch .to{box-shadow:inset 0 0 0 4px #C9A227;background:#e8d48a}
+.taken{display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;padding:4px 2px}
+.taken img{width:22px;height:28px;object-fit:contain}
+.taken .lab{font-size:11px;color:#4B5E73;margin-right:6px}
 .pc{font-size:clamp(20px,5.2vw,32px);line-height:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.28))}
 .pc.w{color:#163A8A;text-shadow:0 0 1px #C9A227,0 1px 0 #0a1f4a}
 .pc.b{color:#146B4A;text-shadow:0 0 1px #C9A227,0 1px 0 #083322}
@@ -89,7 +94,11 @@ header{height:64px;padding:0 10px}
 <h1>Garden Chess</h1>
 <p class="sub">You are cobalt with gold. Emerald answers. Tap a piece, then a square.</p>
 <div class="bar"><span class="msg" id="chmsg">Your turn</span><button type="button" onclick="chNew()">New game</button></div>
-<div class="parlor"><div class="sqgrid" id="chboard"></div></div>
+<div class="parlor">
+<div class="taken" id="chBotTook"><span class="lab">Emerald took</span></div>
+<div class="sqgrid" id="chboard"></div>
+<div class="taken" id="chYouTook"><span class="lab">You took</span></div>
+</div>
 </div>
 </div>
 <script>
@@ -299,7 +308,7 @@ function chNew(){
     ["P","P","P","P","P","P","P","P"],
     ["R","N","B","Q","K","B","N","R"]
   ];
-  chSel=null; chOver=false; chTurn="w";
+  chSel=null; chOver=false; chTurn="w"; chLast=null; chYouTook=[]; chBotTook=[];
   document.getElementById("chmsg").textContent="Your turn";
   chPaint();
 }
@@ -317,7 +326,7 @@ function pieceSVG(p){
   return '<svg class="pcsvg" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g fill="'+fill+'" stroke="'+gold+'" stroke-width="1.4">'+body+'</g><path d="M8 25h16" stroke="'+hi+'" stroke-width="1" fill="none"/></svg>';
 }
 function pieceHTML(p){
-  var file="piece-"+(chWhite(p)?"w":"b")+"-"+p.toUpperCase()+".png";
+  var file="piece-"+(chWhite(p)?"w":"b")+"-"+p.toUpperCase()+".png?v=3";
   return '<img class="pcimg" alt="" src="'+file+'">';
 }
 function chPaint(){
@@ -327,10 +336,21 @@ function chPaint(){
     var cls="sq "+(dark?"dk":"lt");
     if(chSel && chSel[0]===r && chSel[1]===c) cls+=" sel";
     if(moves.some(function(m){return m[0]===r&&m[1]===c})) cls+=" mv";
+    if(chLast && chLast[0]===r && chLast[1]===c) cls+=" from";
+    if(chLast && chLast[2]===r && chLast[3]===c) cls+=" to";
     var p=ch[r][c];
     html+='<button type="button" class="'+cls+'" onclick="chClick('+r+','+c+')">'+(p?pieceHTML(p):"")+'</button>';
   }
   document.getElementById("chboard").innerHTML=html;
+  function tray(id, arr, label){
+    var el=document.getElementById(id);
+    if(!el) return;
+    var h='<span class="lab">'+label+'</span>';
+    for(var i=0;i<arr.length;i++) h+=pieceHTML(arr[i]);
+    el.innerHTML=h;
+  }
+  tray("chBotTook", chBotTook, "Emerald took");
+  tray("chYouTook", chYouTook, "You took");
 }
 function chWhite(p){ return p && p===p.toUpperCase(); }
 function chOn(r,c){ return r>=0&&c>=0&&r<8&&c<8; }
@@ -413,16 +433,21 @@ function chClick(r,c){
   if(chOver||chTurn!=="w") return;
   if(chSel){
     var ok=chMoves(chSel[0],chSel[1]).some(function(m){return m[0]===r&&m[1]===c});
-    if(ok){ chDo(chSel[0],chSel[1],r,c); chSel=null; chPaint();
+    if(ok){ chLast=[chSel[0],chSel[1],r,c]; chDo(chSel[0],chSel[1],r,c); chSel=null; chPaint();
       if(!chAll(false).length){ chOver=true; document.getElementById("chmsg").textContent=chInCheck(false)?"Checkmate.":"Draw."; return; }
-      chTurn="b"; document.getElementById("chmsg").textContent="Black is thinking…"; setTimeout(chAi,200); return;
+      chTurn="b"; document.getElementById("chmsg").textContent="Black is thinking…"; setTimeout(chAi,900); return;
     }
   }
   if(ch[r][c] && chWhite(ch[r][c])){ chSel=[r,c]; chPaint(); }
   else { chSel=null; chPaint(); }
 }
+var chYouTook=[], chBotTook=[];
 function chDo(sr,sc,r,c){
-  var p=ch[sr][sc];
+  var p=ch[sr][sc], cap=ch[r][c];
+  if(cap){
+    if(chWhite(cap)) chBotTook.push(cap);
+    else chYouTook.push(cap);
+  }
   ch[r][c]=p; ch[sr][sc]="";
   if(p==="P" && r===0) ch[r][c]="Q";
   if(p==="p" && r===7) ch[r][c]="q";
