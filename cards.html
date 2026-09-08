@@ -156,8 +156,26 @@ function render(){
   if(stock.length){const c=face({up:false});c.onclick=()=>onCard("stock");cells[0].appendChild(c)}
   else{const g=empty();g.onclick=()=>onCard("stock");cells[0].appendChild(g)}
   cells[1].className="pile";
-  if(waste.length){const c=face(waste[waste.length-1]);if(sel&&sel.from==="waste")c.classList.add("sel");c.onclick=()=>onCard("waste");c.ondblclick=()=>onCard("waste",0,0,true);cells[1].appendChild(c)}
-  else cells[1].appendChild(empty());
+  cells[1].style.position="relative";
+  if(!waste.length) cells[1].appendChild(empty());
+  else {
+    const show=Math.min(drawN===3?3:1, waste.length);
+    const start=waste.length-show;
+    for(let k=0;k<show;k++){
+      const card=waste[start+k];
+      const c=face(card);
+      c.style.position="absolute";
+      c.style.left=(k*18)+"px";
+      c.style.top="0";
+      c.style.zIndex=String(k+1);
+      if(k===show-1){
+        if(sel&&sel.from==="waste") c.classList.add("sel");
+        c.onclick=()=>onCard("waste");
+        c.ondblclick=()=>onCard("waste",0,0,true);
+      }
+      cells[1].appendChild(c);
+    }
+  }
   cells[2].appendChild(document.createElement("div"));
   for(let i=0;i<4;i++){
     const wrap=cells[3+i];wrap.className="pile";
