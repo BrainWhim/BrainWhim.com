@@ -53,6 +53,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .card-body button,.card-body .ghost{display:block;width:100%;margin-top:8px;border-radius:12px;padding:12px;font-weight:700;font-family:inherit;cursor:pointer;font-size:14px}
 .card-body button{background:var(--navy);color:#fff;border:0}
 .card-body .ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+
+.games{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 12px}
+.games button{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:6px 12px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
+.games button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mg{display:grid;gap:8px;margin:0 auto;max-width:340px}
+.mtile{aspect-ratio:1;border:0;border-radius:12px;background:#E5E8ED;color:var(--navy);font-size:26px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .22s ease,background .2s}
+.mtile.back{color:transparent}
+.mtile.face,.mtile.matched{background:#fff;border:2px solid var(--navy);color:var(--navy);transform:rotateY(0)}
+.mtile.matched{background:#D7E8F4;border-color:#6BA3C9}
+.mbar{display:flex;justify-content:space-between;align-items:center;max-width:340px;margin:0 auto 12px;font-size:13px;color:var(--muted)}
+.mbar button{border:0;border-radius:999px;padding:7px 12px;background:var(--navy);color:#fff;font-weight:700;font-family:inherit;cursor:pointer;font-size:12px}
+.letters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}
+.letters button{min-width:44px;height:48px;border:0;border-radius:10px;background:#E5E8ED;color:var(--navy);font-weight:800;font-size:18px;font-family:inherit;cursor:pointer}
+.letters button.used{opacity:.28}
+.gcell.on{background:var(--navy);color:#fff}
 </style>
 </head>
 <body>
@@ -62,6 +77,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 </header>
 <div class="toast" id="toast"></div>
 <main class="shell">
+<div class="games" id="gameNav">
+<button class="on" data-g="sky" type="button">Sky Word</button>
+<button data-g="match" type="button">Star Match</button>
+<button data-g="drift" type="button">Drift Word</button>
+<button data-g="grid" type="button">Signal Grid</button>
+</div>
+<div id="skyApp">
 <h1 class="title">Sky Word</h1>
 <p class="sub" id="sub">Daily five-letter word. Six tries.</p>
 <div class="modes">
@@ -70,6 +92,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 </div>
 <div class="board" id="board"></div>
 <div class="keys" id="keys"></div>
+</div>
+<div id="otherApp" hidden></div>
 </main>
 <div class="modal" id="modal">
 <div class="card">
@@ -136,7 +160,130 @@ function reset(word,label){
   marks=Array.from({length:6},()=>Array(5).fill(""));
   keyMap={}; shareLines=[];
   document.getElementById("sub").textContent=label;
-  paintBoard(); paintKeys();
+  
+const other = document.getElementById("otherApp");
+const skyApp = document.getElementById("skyApp");
+let room = "sky";
+document.getElementById("gameNav").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  room = b.dataset.g;
+  [...document.getElementById("gameNav").children].forEach(x => x.classList.toggle("on", x===b));
+  if (room === "sky") { skyApp.hidden = false; other.hidden = true; }
+  else { skyApp.hidden = true; other.hidden = false; if(room==="match") startMatch(); if(room==="drift") startDrift(); if(room==="grid") startGrid(); }
+};
+function shuffle(a){ const x=[...a]; for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]; } return x; }
+function otherWin(title, body){
+  document.getElementById("mTitle").textContent = title;
+  document.getElementById("mBody").textContent = body;
+  document.getElementById("sharebox").textContent = "";
+  const st=S.stats;
+  document.getElementById("sP").textContent=st.played;
+  document.getElementById("sW").textContent=st.played?Math.round(st.wins/st.played*100):0;
+  document.getElementById("sC").textContent=st.streak;
+  document.getElementById("sB").textContent=st.best;
+  modal.classList.add("on");
+}
+function startMatch(){
+  const icons=["✦","☾","☀","☄","★","✧","✺","✶"];
+  const deck=shuffle([...icons,...icons]);
+  let first=null,lock=false,moves=0,found=0;
+  if(!S.matchBest) S.matchBest=null;
+  other.innerHTML=`<h1 class="title">Star Match</h1><p class="sub">Eight pairs. Flip two at a time.</p>
+    <div class="mbar"><span id="ms">0 moves · 0 / 8</span><button type="button" id="mn">New board</button></div>
+    <div class="mg" id="mg" style="grid-template-columns:repeat(4,1fr)"></div>
+    <p class="sub">${S.matchBest?("Best "+S.matchBest+" moves"):"Finish a board for a best."}</p>`;
+  const mg=other.querySelector("#mg");
+  deck.forEach((icon,i)=>{
+    const b=document.createElement("button");
+    b.className="mtile back"; b.textContent="✦";
+    b.onclick=()=>{
+      if(lock||b.classList.contains("matched")||b.classList.contains("face")) return;
+      b.classList.remove("back"); b.classList.add("face"); b.textContent=icon;
+      if(!first){ first=b; return; }
+      moves++;
+      if(first!==b && first.dataset.i===icon){
+        first.classList.add("matched"); b.classList.add("matched"); first=null; found++;
+        other.querySelector("#ms").textContent=moves+" moves · "+found+" / 8";
+        if(found===8){
+          if(!S.matchBest||moves<S.matchBest){ S.matchBest=moves; save(); }
+          otherWin("Board clear.", moves+" moves"+(S.matchBest===moves?" · best":""));
+        }
+      } else {
+        lock=true; const a=first;
+        setTimeout(()=>{ a.textContent="✦"; a.className="mtile back"; b.textContent="✦"; b.className="mtile back"; first=null; lock=false;
+          other.querySelector("#ms").textContent=moves+" moves · "+found+" / 8"; }, 650);
+      }
+    };
+    b.dataset.i=icon; mg.appendChild(b);
+  });
+  other.querySelector("#mn").onclick=startMatch;
+}
+const DRIFT=["ORBIT","SPARK","CLOUD","LIGHT","DREAM","QUIET","TRACE","FIELD","STONE","RIVER","OCEAN","MAPLE","NORTH","SOUTH","EARTH","SPACE","MOONS","PRISM","QUEST","BRAIN","HOUSE","WORLD","MUSIC","HEART","PLANT","WATER","STORY","SMILE","THINK","BRING","CLEAR","SHARE","START","PLACE","POINT","RIGHT","SOUND","STILL","HONOR","PEACE","GRACE","FRESH","BLOOM","FLAME","STORM","NIGHT","CHART","CRAFT"];
+function startDrift(){
+  const W=DRIFT[Math.floor(Math.random()*DRIFT.length)];
+  const letters=shuffle(W.split(""));
+  let guess=[];
+  S.driftSolved=S.driftSolved||0;
+  other.innerHTML=`<h1 class="title">Drift Word</h1><p class="sub">Unscramble · ${W.length} letters</p>
+    <div class="mbar"><span id="ds">${S.driftSolved} solved on this device</span><button type="button" id="dn">New word</button></div>
+    <div class="letters" id="built"></div>
+    <div class="letters" id="pool"></div>
+    <p class="sub">Tap up to spell. Tap a letter to send it back.</p>`;
+  const built=other.querySelector("#built");
+  const pool=other.querySelector("#pool");
+  function draw(){
+    built.innerHTML="";
+    guess.forEach((ch,i)=>{ const b=document.createElement("button"); b.textContent=ch; b.onclick=()=>{ guess.splice(i,1); draw(); }; built.appendChild(b); });
+    pool.innerHTML="";
+    const used=[...guess];
+    letters.forEach(ch=>{
+      const b=document.createElement("button"); b.textContent=ch;
+      const idx=used.indexOf(ch);
+      if(idx>=0){ used.splice(idx,1); b.className="used"; b.disabled=true; }
+      else b.onclick=()=>{ guess.push(ch); draw(); if(guess.join("")===W){ S.driftSolved++; save(); otherWin(W,"Unscrambled."); } };
+      pool.appendChild(b);
+    });
+  }
+  draw(); other.querySelector("#dn").onclick=startDrift;
+}
+function startGrid(){
+  const n=5;
+  let cells=Array(n*n).fill(0);
+  // generate solvable: start dark, apply random taps
+  for(let k=0;k<12;k++){
+    const i=Math.floor(Math.random()*n*n);
+    flipAt(cells,i,n);
+  }
+  if(cells.every(c=>c===0)) cells[0]=1;
+  let taps=0;
+  other.innerHTML=`<h1 class="title">Signal Grid</h1><p class="sub">Turn every cell dark. A tap flips a cell and its neighbors.</p>
+    <div class="mbar"><span id="gs">0 taps</span><button type="button" id="gn">New grid</button></div>
+    <div class="mg" id="gg" style="grid-template-columns:repeat(5,1fr);max-width:320px"></div>`;
+  const gg=other.querySelector("#gg");
+  function flipAt(arr,i,n){
+    const x=i%n,y=Math.floor(i/n);
+    [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dy])=>{
+      const nx=x+dx,ny=y+dy; if(nx>=0&&nx<n&&ny>=0&&ny<n) arr[ny*n+nx]^=1;
+    });
+  }
+  function draw(){
+    gg.innerHTML="";
+    cells.forEach((v,i)=>{
+      const b=document.createElement("button");
+      b.className="mtile"+(v?" on gcell":"");
+      b.onclick=()=>{ taps++; flipAt(cells,i,n); other.querySelector("#gs").textContent=taps+" taps"; draw();
+        if(cells.every(c=>c===0)){
+          if(!S.gridBest||taps<S.gridBest){ S.gridBest=taps; save(); }
+          otherWin("Signal quiet.", taps+" taps");
+        }
+      };
+      gg.appendChild(b);
+    });
+  }
+  draw(); other.querySelector("#gn").onclick=startGrid;
+}
+
+paintBoard(); paintKeys();
 }
 function type(ch){ if(done||flipping||col>=5)return; rows[row][col]=ch; col++; paintBoard(); }
 function back(){ if(done||flipping||col===0)return; col--; rows[row][col]=""; paintBoard(); }
@@ -222,6 +369,129 @@ document.getElementById("mShare").onclick=()=>{
   const text="Sky Word · BrainWhim\n"+(mode==="daily"?"Daily":"Practice")+"\n"+shareLines.join("\n")+"\nbrainwhim.com/puzzles.html";
   navigator.clipboard.writeText(text).then(()=>say("Copied")).catch(()=>say("Copy failed"));
 };
+
+const other = document.getElementById("otherApp");
+const skyApp = document.getElementById("skyApp");
+let room = "sky";
+document.getElementById("gameNav").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  room = b.dataset.g;
+  [...document.getElementById("gameNav").children].forEach(x => x.classList.toggle("on", x===b));
+  if (room === "sky") { skyApp.hidden = false; other.hidden = true; }
+  else { skyApp.hidden = true; other.hidden = false; if(room==="match") startMatch(); if(room==="drift") startDrift(); if(room==="grid") startGrid(); }
+};
+function shuffle(a){ const x=[...a]; for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]; } return x; }
+function otherWin(title, body){
+  document.getElementById("mTitle").textContent = title;
+  document.getElementById("mBody").textContent = body;
+  document.getElementById("sharebox").textContent = "";
+  const st=S.stats;
+  document.getElementById("sP").textContent=st.played;
+  document.getElementById("sW").textContent=st.played?Math.round(st.wins/st.played*100):0;
+  document.getElementById("sC").textContent=st.streak;
+  document.getElementById("sB").textContent=st.best;
+  modal.classList.add("on");
+}
+function startMatch(){
+  const icons=["✦","☾","☀","☄","★","✧","✺","✶"];
+  const deck=shuffle([...icons,...icons]);
+  let first=null,lock=false,moves=0,found=0;
+  if(!S.matchBest) S.matchBest=null;
+  other.innerHTML=`<h1 class="title">Star Match</h1><p class="sub">Eight pairs. Flip two at a time.</p>
+    <div class="mbar"><span id="ms">0 moves · 0 / 8</span><button type="button" id="mn">New board</button></div>
+    <div class="mg" id="mg" style="grid-template-columns:repeat(4,1fr)"></div>
+    <p class="sub">${S.matchBest?("Best "+S.matchBest+" moves"):"Finish a board for a best."}</p>`;
+  const mg=other.querySelector("#mg");
+  deck.forEach((icon,i)=>{
+    const b=document.createElement("button");
+    b.className="mtile back"; b.textContent="✦";
+    b.onclick=()=>{
+      if(lock||b.classList.contains("matched")||b.classList.contains("face")) return;
+      b.classList.remove("back"); b.classList.add("face"); b.textContent=icon;
+      if(!first){ first=b; return; }
+      moves++;
+      if(first!==b && first.dataset.i===icon){
+        first.classList.add("matched"); b.classList.add("matched"); first=null; found++;
+        other.querySelector("#ms").textContent=moves+" moves · "+found+" / 8";
+        if(found===8){
+          if(!S.matchBest||moves<S.matchBest){ S.matchBest=moves; save(); }
+          otherWin("Board clear.", moves+" moves"+(S.matchBest===moves?" · best":""));
+        }
+      } else {
+        lock=true; const a=first;
+        setTimeout(()=>{ a.textContent="✦"; a.className="mtile back"; b.textContent="✦"; b.className="mtile back"; first=null; lock=false;
+          other.querySelector("#ms").textContent=moves+" moves · "+found+" / 8"; }, 650);
+      }
+    };
+    b.dataset.i=icon; mg.appendChild(b);
+  });
+  other.querySelector("#mn").onclick=startMatch;
+}
+const DRIFT=["ORBIT","SPARK","CLOUD","LIGHT","DREAM","QUIET","TRACE","FIELD","STONE","RIVER","OCEAN","MAPLE","NORTH","SOUTH","EARTH","SPACE","MOONS","PRISM","QUEST","BRAIN","HOUSE","WORLD","MUSIC","HEART","PLANT","WATER","STORY","SMILE","THINK","BRING","CLEAR","SHARE","START","PLACE","POINT","RIGHT","SOUND","STILL","HONOR","PEACE","GRACE","FRESH","BLOOM","FLAME","STORM","NIGHT","CHART","CRAFT"];
+function startDrift(){
+  const W=DRIFT[Math.floor(Math.random()*DRIFT.length)];
+  const letters=shuffle(W.split(""));
+  let guess=[];
+  S.driftSolved=S.driftSolved||0;
+  other.innerHTML=`<h1 class="title">Drift Word</h1><p class="sub">Unscramble · ${W.length} letters</p>
+    <div class="mbar"><span id="ds">${S.driftSolved} solved on this device</span><button type="button" id="dn">New word</button></div>
+    <div class="letters" id="built"></div>
+    <div class="letters" id="pool"></div>
+    <p class="sub">Tap up to spell. Tap a letter to send it back.</p>`;
+  const built=other.querySelector("#built");
+  const pool=other.querySelector("#pool");
+  function draw(){
+    built.innerHTML="";
+    guess.forEach((ch,i)=>{ const b=document.createElement("button"); b.textContent=ch; b.onclick=()=>{ guess.splice(i,1); draw(); }; built.appendChild(b); });
+    pool.innerHTML="";
+    const used=[...guess];
+    letters.forEach(ch=>{
+      const b=document.createElement("button"); b.textContent=ch;
+      const idx=used.indexOf(ch);
+      if(idx>=0){ used.splice(idx,1); b.className="used"; b.disabled=true; }
+      else b.onclick=()=>{ guess.push(ch); draw(); if(guess.join("")===W){ S.driftSolved++; save(); otherWin(W,"Unscrambled."); } };
+      pool.appendChild(b);
+    });
+  }
+  draw(); other.querySelector("#dn").onclick=startDrift;
+}
+function startGrid(){
+  const n=5;
+  let cells=Array(n*n).fill(0);
+  // generate solvable: start dark, apply random taps
+  for(let k=0;k<12;k++){
+    const i=Math.floor(Math.random()*n*n);
+    flipAt(cells,i,n);
+  }
+  if(cells.every(c=>c===0)) cells[0]=1;
+  let taps=0;
+  other.innerHTML=`<h1 class="title">Signal Grid</h1><p class="sub">Turn every cell dark. A tap flips a cell and its neighbors.</p>
+    <div class="mbar"><span id="gs">0 taps</span><button type="button" id="gn">New grid</button></div>
+    <div class="mg" id="gg" style="grid-template-columns:repeat(5,1fr);max-width:320px"></div>`;
+  const gg=other.querySelector("#gg");
+  function flipAt(arr,i,n){
+    const x=i%n,y=Math.floor(i/n);
+    [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dy])=>{
+      const nx=x+dx,ny=y+dy; if(nx>=0&&nx<n&&ny>=0&&ny<n) arr[ny*n+nx]^=1;
+    });
+  }
+  function draw(){
+    gg.innerHTML="";
+    cells.forEach((v,i)=>{
+      const b=document.createElement("button");
+      b.className="mtile"+(v?" on gcell":"");
+      b.onclick=()=>{ taps++; flipAt(cells,i,n); other.querySelector("#gs").textContent=taps+" taps"; draw();
+        if(cells.every(c=>c===0)){
+          if(!S.gridBest||taps<S.gridBest){ S.gridBest=taps; save(); }
+          otherWin("Signal quiet.", taps+" taps");
+        }
+      };
+      gg.appendChild(b);
+    });
+  }
+  draw(); other.querySelector("#gn").onclick=startGrid;
+}
+
 paintBoard(); paintKeys();
 </script>
 </body>
