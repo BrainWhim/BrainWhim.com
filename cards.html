@@ -37,14 +37,40 @@ h1{margin:0;font-size:22px}
 .card:not(.back)::after{content:"";position:absolute;inset:18px 14px;background:url("logo-image.png") center/42% no-repeat;opacity:.08;pointer-events:none}
 .card .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px}
 .card.back{
-  background-color:#1A2744;
-  background-image:url("logo-image.png"),linear-gradient(160deg,#2a456e,#1A2744 58%,#0f1a30);
   background-size:58% auto, cover;
   background-position:center,center;
   background-repeat:no-repeat;
-  color:transparent;border-color:#0c1730;
-  box-shadow:0 8px 0 #0a1222,0 14px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18)
+  color:transparent;
+  box-shadow:0 8px 0 rgba(0,0,0,.3),0 14px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18)
 }
+.felt[data-skin="bw"] .card.back{
+  background-color:#1A2744;border-color:#0c1730;
+  background-image:url("logo-image.png"),linear-gradient(160deg,#2a456e,#1A2744 58%,#0f1a30);
+}
+.felt[data-skin="garden"] .card.back{
+  background-color:#B7D6C8;border-color:#7aa38f;
+  background-image:url("logo-image.png"),linear-gradient(160deg,#F4EFE3,#B7D6C8);
+}
+.felt[data-skin="cobalt"] .card.back{
+  background-color:#163A8A;border-color:#0c214e;
+  background-image:url("logo-image.png"),linear-gradient(160deg,#5b8fe8,#163A8A 60%,#0c214e);
+}
+.felt[data-skin="emerald"] .card.back{
+  background-color:#146B4A;border-color:#083322;
+  background-image:url("logo-image.png"),linear-gradient(160deg,#5dcc96,#146B4A 60%,#083322);
+}
+.felt[data-skin="gold"] .card.back{
+  background-color:#7a5a12;border-color:#C9A227;
+  background-image:url("logo-image.png"),linear-gradient(160deg,#E8C15A,#8a6414);
+}
+.skins{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+.skins button{width:28px;height:36px;border-radius:5px;border:2px solid transparent;cursor:pointer;padding:0;background-size:70% auto,cover;background-position:center;background-repeat:no-repeat}
+.skins button.on{border-color:#E8C872}
+.skins .s-bw{background-image:url("logo-image.png"),linear-gradient(#1A2744,#0f1a30)}
+.skins .s-garden{background-image:url("logo-image.png"),linear-gradient(#F4EFE3,#B7D6C8)}
+.skins .s-cobalt{background-image:url("logo-image.png"),linear-gradient(#5b8fe8,#163A8A)}
+.skins .s-emerald{background-image:url("logo-image.png"),linear-gradient(#5dcc96,#146B4A)}
+.skins .s-gold{background-image:url("logo-image.png"),linear-gradient(#E8C15A,#8a6414)}
 .card.sel{outline:3px solid var(--gold);outline-offset:-2px;z-index:8}
 .ghost{width:var(--cw);height:var(--ch);border:2px dashed rgba(255,255,255,.28);border-radius:10px}
 .stack .card{position:absolute;left:50%;transform:translateX(-50%)}
@@ -70,11 +96,17 @@ header{height:64px;padding:0 10px}
 </header>
 <div class="toast" id="toast"></div>
 <main class="table">
-<div class="felt">
+<div class="felt" id="felt" data-skin="bw">
 <div class="topbar">
 <div><h1>Klondike</h1><p class="hint">Tap a card, then a legal pile. Double-tap to send the next rank to a foundation. Empty stock recycles the waste.</p></div>
 <div class="actions">
-<span class="hint" style="align-self:center">Deck · BrainWhim</span><button type="button" id="drawMode">Draw 1</button>
+<div class="skins" id="skins">
+<button type="button" class="s-bw on" data-skin="bw" title="BrainWhim"></button>
+<button type="button" class="s-garden" data-skin="garden" title="Garden"></button>
+<button type="button" class="s-cobalt" data-skin="cobalt" title="Cobalt"></button>
+<button type="button" class="s-emerald" data-skin="emerald" title="Emerald"></button>
+<button type="button" class="s-gold" data-skin="gold" title="Gold"></button>
+</div><button type="button" id="drawMode">Draw 1</button>
 <button type="button" id="undo">Undo</button>
 <button type="button" id="deal">New deal</button>
 </div>
@@ -208,6 +240,19 @@ function render(){
 document.getElementById("deal").onclick=deal;
 document.getElementById("undo").onclick=()=>{if(!hist.length){say("Nothing to undo");return}restore(hist.pop());render()};
 document.getElementById("drawMode").onclick=e=>{drawN=drawN===1?3:1;e.target.textContent="Draw "+drawN;e.target.classList.toggle("on",drawN===3)};
+(function(){
+  const felt=document.getElementById("felt");
+  const saved=localStorage.getItem("bwDeck")||"bw";
+  felt.dataset.skin=saved;
+  document.querySelectorAll("#skins button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.skin===saved);
+    b.onclick=()=>{
+      felt.dataset.skin=b.dataset.skin;
+      localStorage.setItem("bwDeck", b.dataset.skin);
+      document.querySelectorAll("#skins button").forEach(x=>x.classList.toggle("on",x===b));
+    };
+  });
+})();
 deal();
 </script>
 </body>
