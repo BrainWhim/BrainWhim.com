@@ -100,7 +100,11 @@ header{height:64px;padding:0 10px}
 <h1>Garden Checkers</h1>
 <p class="sub">You are cobalt. Emerald answers. Jump when you can. Kings go both ways.</p>
 <div class="bar"><span class="msg" id="ckmsg">Your turn</span><button type="button" onclick="ckNew()">New game</button></div>
-<div class="parlor"><div class="sqgrid" id="ckboard"></div></div>
+<div class="parlor">
+<div class="taken" id="ckBotTook"><span class="lab">Emerald took</span></div>
+<div class="sqgrid" id="ckboard"></div>
+<div class="taken" id="ckYouTook"><span class="lab">You took</span></div>
+</div>
 </div>
 <div id="room-ch">
 <h1>Garden Chess</h1>
@@ -180,9 +184,9 @@ function c4Ai(){
 }
 
 /* -------- Checkers -------- */
-var ck, ckTurn, ckSel, ckOver, ckLast;
+var ck, ckTurn, ckSel, ckOver, ckLast, ckYouTook, ckBotTook;
 function ckNew(){
-  ck=[]; ckSel=null; ckOver=false; ckTurn=1; ckLast=null;
+  ck=[]; ckSel=null; ckOver=false; ckTurn=1; ckLast=null; ckYouTook=[]; ckBotTook=[];
   for(var r=0;r<8;r++){
     ck[r]=[];
     for(var c=0;c<8;c++){
@@ -214,6 +218,14 @@ function ckPaint(){
     html+='<button type="button" class="'+cls+'" onclick="ckClick('+r+','+c+')">'+inside+'</button>';
   }
   document.getElementById("ckboard").innerHTML=html;
+  function ckTray(id, arr, label, cls){
+    var el=document.getElementById(id); if(!el) return;
+    var h='<span class="lab">'+label+'</span>';
+    for(var i=0;i<arr.length;i++) h+='<div class="man '+cls+'" style="width:16px;height:16px"></div>';
+    el.innerHTML=h;
+  }
+  ckTray("ckBotTook", ckBotTook||[], "Emerald took", "redm");
+  ckTray("ckYouTook", ckYouTook||[], "You took", "blkm");
 }
 function ckSide(v){ if(v===1||v===3) return 1; if(v===2||v===4) return 2; return 0; }
 function ckKing(v){ return v===3||v===4; }
@@ -256,7 +268,12 @@ function ckMove(sr,sc,r,c){
   var jumped=null;
   for(var i=0;i<js.length;i++) if(js[i][0]===r&&js[i][1]===c) jumped=js[i];
   ck[sr][sc]=0; ck[r][c]=v;
-  if(jumped) ck[jumped[2]][jumped[3]]=0;
+  if(jumped){
+    var cap=ck[jumped[2]][jumped[3]];
+    ck[jumped[2]][jumped[3]]=0;
+    if(ckSide(v)===1) ckYouTook.push(cap);
+    else ckBotTook.push(cap);
+  }
   if(v===1 && r===0) ck[r][c]=3;
   if(v===2 && r===7) ck[r][c]=4;
   return jumped;
@@ -321,6 +338,7 @@ function chNew(){
     ["R","N","B","Q","K","B","N","R"]
   ];
   chSel=null; chOver=false; chTurn="w"; chLast=null; chYouTook=[]; chBotTook=[];
+  chEp=null; chRights={wk:1,wq:1,bk:1,bq:1};
   document.getElementById("chmsg").textContent="Your turn";
   chPaint();
 }
@@ -407,6 +425,7 @@ function chRaw(r,c,forAttack){
     for(i=-1;i<=1;i+=2){
       nr=r+dir; nc=c+i;
       if(chOn(nr,nc) && (forAttack || (ch[nr][nc] && chWhite(ch[nr][nc])!==w))) out.push([nr,nc]);
+      if(!forAttack && chEp && nr===chEp[0] && nc===chEp[1]) out.push([nr,nc]);
     }
   }
   if(t==="N"){
@@ -418,6 +437,18 @@ function chRaw(r,c,forAttack){
   if(t==="K"){
     for(nr=r-1;nr<=r+1;nr++) for(nc=c-1;nc<=c+1;nc++){
       if((nr!==r||nc!==c)&&chOn(nr,nc)&&(!ch[nr][nc]||chWhite(ch[nr][nc])!==w)) out.push([nr,nc]);
+    }
+    if(!forAttack){
+      var hits=chAttacks(!w);
+      function safe(rr,cc){ return !hits[rr+","+cc]; }
+      if(w && r===7 && c===4){
+        if(chRights.wk && !ch[7][5] && !ch[7][6] && ch[7][7]==="R" && safe(7,4)&&safe(7,5)&&safe(7,6)) out.push([7,6]);
+        if(chRights.wq && !ch[7][1] && !ch[7][2] && !ch[7][3] && ch[7][0]==="R" && safe(7,4)&&safe(7,3)&&safe(7,2)) out.push([7,2]);
+      }
+      if(!w && r===0 && c===4){
+        if(chRights.bk && !ch[0][5] && !ch[0][6] && ch[0][7]==="r" && safe(0,4)&&safe(0,5)&&safe(0,6)) out.push([0,6]);
+        if(chRights.bq && !ch[0][1] && !ch[0][2] && !ch[0][3] && ch[0][0]==="r" && safe(0,4)&&safe(0,3)&&safe(0,2)) out.push([0,2]);
+      }
     }
   }
   return out;
@@ -454,13 +485,32 @@ function chClick(r,c){
   else { chSel=null; chPaint(); }
 }
 var chYouTook=[], chBotTook=[];
+var chEp=null, chRights={wk:1,wq:1,bk:1,bq:1};
 function chDo(sr,sc,r,c){
   var p=ch[sr][sc], cap=ch[r][c];
+  if(p==="P" || p==="p"){
+    if(!cap && sc!==c && chEp && r===chEp[0] && c===chEp[1]){
+      var pr=sr, pc=c, taken=ch[pr][pc];
+      cap=taken; ch[pr][pc]="";
+    }
+  }
   if(cap){
     if(chWhite(cap)) chBotTook.push(cap);
     else chYouTook.push(cap);
   }
   ch[r][c]=p; ch[sr][sc]="";
+  if(p==="K"){ chRights.wk=0; chRights.wq=0; if(sr===7 && sc===4 && Math.abs(c-sc)===2){ if(c===6){ ch[7][5]=ch[7][7]; ch[7][7]=""; } if(c===2){ ch[7][3]=ch[7][0]; ch[7][0]=""; } } }
+  if(p==="k"){ chRights.bk=0; chRights.bq=0; if(sr===0 && sc===4 && Math.abs(c-sc)===2){ if(c===6){ ch[0][5]=ch[0][7]; ch[0][7]=""; } if(c===2){ ch[0][3]=ch[0][0]; ch[0][0]=""; } } }
+  if(p==="R" && sr===7 && sc===7) chRights.wk=0;
+  if(p==="R" && sr===7 && sc===0) chRights.wq=0;
+  if(p==="r" && sr===0 && sc===7) chRights.bk=0;
+  if(p==="r" && sr===0 && sc===0) chRights.bq=0;
+  if(cap==="R" && r===7 && c===7) chRights.wk=0;
+  if(cap==="R" && r===7 && c===0) chRights.wq=0;
+  if(cap==="r" && r===0 && c===7) chRights.bk=0;
+  if(cap==="r" && r===0 && c===0) chRights.bq=0;
+  if((p==="P"||p==="p") && Math.abs(r-sr)===2) chEp=[(r+sr)/2,c];
+  else chEp=null;
   if(p==="P" && r===0) ch[r][c]="Q";
   if(p==="p" && r===7) ch[r][c]="q";
 }
