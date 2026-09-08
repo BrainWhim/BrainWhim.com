@@ -41,6 +41,16 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 .blkm{background:radial-gradient(circle at 32% 28%,#6a6a6a,#1a1a1a 55%,#000);box-shadow:0 3px 0 #000,inset 0 -3px 5px rgba(0,0,0,.45)}
 .king::after{content:"♔";position:absolute;font-size:.45em;color:#E8C872}
 .manwrap{position:relative;width:68%;height:68%;display:flex;align-items:center;justify-content:center}
+
+.parlor{background:linear-gradient(180deg,#f7f4ee,#e4ddd0);padding:14px 12px 16px;border-radius:22px;border:3px solid #c5c0b4;box-shadow:inset 0 1px 0 #fff,0 16px 32px rgba(80,70,50,.18)}
+.parlor .sqgrid{border:4px solid #b7c3c2;border-radius:4px;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.12)}
+#room-ch .lt{background:#F4EFE3}
+#room-ch .dk{background:#B7D6C8 url("logo-image.png") center/38% no-repeat;background-blend-mode:soft-light}
+#room-ch .sel{outline:3px solid #C9A227;outline-offset:-3px}
+#room-ch .mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
+.pc{font-size:clamp(20px,5.2vw,32px);line-height:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.28))}
+.pc.w{color:#163A8A;text-shadow:0 0 1px #C9A227,0 1px 0 #0a1f4a}
+.pc.b{color:#146B4A;text-shadow:0 0 1px #C9A227,0 1px 0 #083322}
 @media(max-width:700px){
 header{height:64px;padding:0 10px}
 .brand{font-size:18px}
@@ -57,11 +67,11 @@ header{height:64px;padding:0 10px}
 </header>
 <div class="wrap">
 <div class="games">
-<button class="on" type="button" onclick="showRoom('c4',this)">Connect Four</button>
+<button type="button" onclick="showRoom('c4',this)">Connect Four</button>
 <button type="button" onclick="showRoom('ck',this)">Checkers</button>
-<button type="button" onclick="showRoom('ch',this)">Chess</button>
+<button class="on" type="button" onclick="showRoom('ch',this)">Chess</button>
 </div>
-<div id="room-c4">
+<div id="room-c4" hidden>
 <h1>Connect Four</h1>
 <p class="sub">You are the red disc. Tap a column to drop.</p>
 <div class="bar"><span class="msg" id="c4msg">Your turn</span><button type="button" onclick="c4New()">New game</button></div>
@@ -73,11 +83,11 @@ header{height:64px;padding:0 10px}
 <div class="bar"><span class="msg" id="ckmsg">Your turn</span><button type="button" onclick="ckNew()">New game</button></div>
 <div class="wood"><div class="sqgrid" id="ckboard"></div></div>
 </div>
-<div id="room-ch" hidden>
-<h1>Chess</h1>
-<p class="sub">You are white. Tap a piece, then a legal square. Pawns promote to queen.</p>
+<div id="room-ch">
+<h1>Garden Chess</h1>
+<p class="sub">You are cobalt with gold. Emerald answers. Tap a piece, then a square.</p>
 <div class="bar"><span class="msg" id="chmsg">Your turn</span><button type="button" onclick="chNew()">New game</button></div>
-<div class="wood"><div class="sqgrid" id="chboard"></div></div>
+<div class="parlor"><div class="sqgrid" id="chboard"></div></div>
 </div>
 </div>
 <script>
@@ -299,7 +309,8 @@ function chPaint(){
     if(chSel && chSel[0]===r && chSel[1]===c) cls+=" sel";
     if(moves.some(function(m){return m[0]===r&&m[1]===c})) cls+=" mv";
     var p=ch[r][c];
-    html+='<button type="button" class="'+cls+'" onclick="chClick('+r+','+c+')">'+(p?GLYPH[p]:"")+'</button>';
+    var side=p?(chWhite(p)?" w":" b"):"";
+    html+='<button type="button" class="'+cls+'" onclick="chClick('+r+','+c+')">'+(p?'<span class="pc'+side+'">'+GLYPH[p]+'</span>':"")+'</button>';
   }
   document.getElementById("chboard").innerHTML=html;
 }
