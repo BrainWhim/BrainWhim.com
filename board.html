@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Board Night · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9;--line:#D0D5DD;--muted:#4B5E73;--you:#C43C3C;--cpu:#E6C15A}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at top,#fff 0%,#F3F4F6 50%,#E6EAF0 100%);color:var(--navy);font-family:Montserrat,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 4%;background:var(--navy);height:110px}
+.brand{display:flex;align-items:center;text-decoration:none;color:#fff;font-size:30px}
+.brand img{width:100px;height:100px;object-fit:contain;margin-right:-8px}
+.brand .whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1.1em;font-weight:400}
+.hdr{display:flex;gap:18px}
+.hdr a{color:#fff;font-weight:700;font-size:16px;text-decoration:none}
+.shell{max-width:440px;margin:0 auto;padding:16px 14px 40px}
+.playcard{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 10px 28px rgba(26,39,68,.08)}
+.title{text-align:center;margin:4px 0 6px;font-size:24px}
+.sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 12px}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.bar button{border:0;border-radius:999px;padding:8px 12px;background:var(--navy);color:#fff;font-weight:700;font-family:inherit;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--navy);padding:10px;border-radius:16px}
+.cell{aspect-ratio:1;border-radius:50%;background:#E8EEF4;border:0;cursor:pointer}
+.cell.you{background:var(--you)}
+.cell.cpu{background:var(--cpu)}
+@media(max-width:700px){
+header{height:64px;padding:0 10px}
+.brand{font-size:18px}
+.brand img{width:52px;height:52px}
+.hdr a{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<div class="hdr"><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="index.html">Home</a></div>
+</header>
+<main class="shell">
+<div class="playcard">
+<h1 class="title">Board Night</h1>
+<p class="sub">Connect four. You are red. The table plays gold.</p>
+<div class="bar"><span id="msg">Your drop</span><button type="button" id="new">New game</button></div>
+<div class="grid" id="grid"></div>
+</div>
+</main>
+<script>
+const ROWS=6, COLS=7;
+let board, turn, lock;
+function empty(){ return Array.from({length:ROWS},()=>Array(COLS).fill(0)); }
+function start(){ board=empty(); turn=1; lock=false; document.getElementById("msg").textContent="Your drop"; draw(); }
+function draw(){
+  const g=document.getElementById("grid"); g.innerHTML="";
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const b=document.createElement("button");
+    b.className="cell"+(board[r][c]===1?" you":board[r][c]===2?" cpu":"");
+    b.onclick=()=>drop(c);
+    g.appendChild(b);
+  }
+}
+function colTop(c){ for(let r=ROWS-1;r>=0;r--) if(!board[r][c]) return r; return -1; }
+function wins(p){
+  const d=[[0,1],[1,0],[1,1],[1,-1]];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(board[r][c]!==p) continue;
+    for(const [dr,dc] of d){
+      let n=1;
+      for(let k=1;k<4;k++){
+        const rr=r+dr*k, cc=c+dc*k;
+        if(rr<0||cc<0||rr>=ROWS||cc>=COLS||board[rr][cc]!==p) break;
+        n++;
+      }
+      if(n>=4) return true;
+    }
+  }
+  return false;
+}
+function full(){ return board[0].every(Boolean); }
+function drop(c){
+  if(lock||turn!==1) return;
+  const r=colTop(c); if(r<0) return;
+  board[r][c]=1;
+  if(wins(1)){ lock=true; document.getElementById("msg").textContent="You connect four."; draw(); return; }
+  if(full()){ lock=true; document.getElementById("msg").textContent="Draw."; draw(); return; }
+  turn=2; draw(); document.getElementById("msg").textContent="Table thinking…";
+  setTimeout(ai, 280);
+}
+function scoreMove(c,p){
+  const r=colTop(c); if(r<0) return -999;
+  board[r][c]=p; const w=wins(p); board[r][c]=0;
+  return w?100:r;
+}
+function ai(){
+  let best=-1, bestS=-1000;
+  for(let c=0;c<COLS;c++){
+    if(colTop(c)<0) continue;
+    let s=scoreMove(c,2);
+    const r=colTop(c);
+    board[r][c]=2;
+    // block you
+    for(let k=0;k<COLS;k++) if(colTop(k)>=0 && scoreMove(k,1)>=100) s+=40;
+    board[r][c]=0;
+    s += [0,1,2,3,2,1,0][c];
+    if(s>bestS){ bestS=s; best=c; }
+  }
+  const r=colTop(best);
+  board[r][best]=2;
+  if(wins(2)){ lock=true; document.getElementById("msg").textContent="Gold connects four."; draw(); return; }
+  if(full()){ lock=true; document.getElementById("msg").textContent="Draw."; draw(); return; }
+  turn=1; document.getElementById("msg").textContent="Your drop"; draw();
+}
+document.getElementById("new").onclick=start;
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Card Table · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--felt:#1B4A3A;--whim:#7EB6D9;--line:#D0D5DD;--muted:#4B5E73}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#E6EAF0;color:var(--navy);font-family:Montserrat,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 4%;background:var(--navy);height:110px}
+.brand{display:flex;align-items:center;text-decoration:none;color:#fff;font-size:30px}
+.brand img{width:100px;height:100px;object-fit:contain;margin-right:-8px}
+.brand .whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1.1em;font-weight:400}
+.hdr{display:flex;gap:18px}
+.hdr a{color:#fff;font-weight:700;font-size:16px;text-decoration:none}
+.shell{max-width:860px;margin:0 auto;padding:16px 12px 40px}
+.playcard{background:var(--felt);border-radius:20px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.title{color:#fff;text-align:center;margin:4px 0 2px;font-size:22px}
+.sub{color:#cfe8dc;text-align:center;font-size:13px;margin:0 0 12px}
+.bar{display:flex;justify-content:space-between;gap:8px;margin-bottom:12px}
+.bar button{border:0;border-radius:999px;padding:8px 12px;background:#0f2f24;color:#fff;font-weight:700;font-family:inherit;cursor:pointer}
+.row{display:flex;gap:8px;justify-content:space-between;margin-bottom:14px}
+.col{flex:1;min-height:88px;display:flex;flex-direction:column;align-items:center}
+.card{width:46px;height:64px;border-radius:6px;background:#fff;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;cursor:pointer;user-select:none;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.card.red{color:#b42318}
+.card.blk{color:#1A2744}
+.card.back{background:linear-gradient(160deg,#1A2744,#3d5a80);color:transparent;border-color:#0d1a30}
+.card.sel{outline:3px solid #F5D76E}
+.stack .card{margin-top:-42px}
+.stack .card:first-child{margin-top:0}
+.found .card,.pile .card{margin-top:0}
+.empty{width:46px;height:64px;border:2px dashed rgba(255,255,255,.35);border-radius:6px}
+@media(max-width:700px){
+header{height:64px;padding:0 10px}
+.brand{font-size:18px}
+.brand img{width:52px;height:52px}
+.hdr a{font-size:13px}
+.card,.empty{width:40px;height:56px;font-size:11px}
+.stack .card{margin-top:-36px}
+}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span class="brain">Brain</span><span class="whim">Whim</span></a>
+<div class="hdr"><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="index.html">Home</a></div>
+</header>
+<main class="shell">
+<div class="playcard">
+<h1 class="title">Card Table</h1>
+<p class="sub">Klondike. Tap a card, then tap where it should go. Aces build up. Columns build down in color.</p>
+<div class="bar"><span class="sub" id="msg" style="margin:0">New deal</span><button type="button" id="deal">New deal</button></div>
+<div class="row" id="top"></div>
+<div class="row" id="tab"></div>
+</div>
+</main>
+<script>
+const SUITS=[["♠","blk"],["♥","red"],["♦","red"],["♣","blk"]];
+const RANKS=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+const val=r=>RANKS.indexOf(r);
+function deck(){
+  const d=[];
+  SUITS.forEach(([s,c])=>RANKS.forEach(r=>d.push({r,s,c,up:false,id:r+s})));
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  return d;
+}
+let stock=[],waste=[],found=[[],[],[],[]],tab=[[],[],[],[],[],[],[]],sel=null;
+function deal(){
+  const d=deck();
+  tab=[[],[],[],[],[],[],[]]; found=[[],[],[],[]]; waste=[];
+  for(let c=0;c<7;c++) for(let r=0;r<=c;r++){ const card=d.pop(); card.up=(r===c); tab[c].push(card); }
+  stock=d; sel=null; draw();
+}
+function topFound(i){ return found[i][found[i].length-1]||null; }
+function canFound(card,i){
+  const t=topFound(i);
+  if(!t) return card.r==="A";
+  return t.s===card.s && val(card.r)===val(t.r)+1;
+}
+function canTab(card,col){
+  const pile=tab[col];
+  if(!pile.length) return card.r==="K";
+  const t=pile[pile.length-1];
+  return t.up && t.c!==card.c && val(card.r)===val(t.r)-1;
+}
+function clearSel(){ sel=null; }
+function pick(kind,i,j){
+  if(kind==="stock"){
+    if(stock.length){ const c=stock.pop(); c.up=true; waste.push(c); }
+    else { while(waste.length){ const c=waste.pop(); c.up=false; stock.push(c); } }
+    sel=null; draw(); return;
+  }
+  if(kind==="waste"){
+    if(!waste.length) return;
+    const card=waste[waste.length-1];
+    if(sel&&sel.kind==="waste"){ sel=null; draw(); return; }
+    sel={kind,i:0,j:waste.length-1,card,run:[card]}; draw(); return;
+  }
+  if(kind==="found"){
+    if(sel){
+      const card=sel.run[0];
+      if(sel.run.length===1 && canFound(card,i)){
+        pullSel(); found[i].push(card); sel=null; draw(); winCheck(); return;
+      }
+    }
+    sel=null; draw(); return;
+  }
+  // tableau
+  const pile=tab[i];
+  if(sel){
+    const head=sel.run[0];
+    if(canTab(head,i)){
+      pullSel(); tab[i].push(...sel.run); sel=null; draw(); winCheck(); return;
+    }
+  }
+  if(!pile.length){ sel=null; draw(); return; }
+  const card=pile[j];
+  if(!card || !card.up){ sel=null; draw(); return; }
+  sel={kind:"tab",i,j,card,run:pile.slice(j)}; draw();
+}
+function pullSel(){
+  if(sel.kind==="waste") waste.pop();
+  if(sel.kind==="tab"){
+    tab[sel.i].splice(sel.j);
+    const p=tab[sel.i];
+    if(p.length && !p[p.length-1].up) p[p.length-1].up=true;
+  }
+}
+function winCheck(){
+  if(found.every(f=>f.length===13)) document.getElementById("msg").textContent="All foundations. Nice.";
+}
+function elCard(card,on,selected){
+  const d=document.createElement("div");
+  d.className="card "+(card.up?(card.c==="red"?"red":"blk"):"back")+(selected?" sel":"");
+  d.textContent=card.up?card.r+card.s:"";
+  d.onclick=on; return d;
+}
+function draw(){
+  const top=document.getElementById("top");
+  const tabEl=document.getElementById("tab");
+  top.innerHTML=""; tabEl.innerHTML="";
+  const stockCol=document.createElement("div"); stockCol.className="col pile";
+  if(stock.length){ const c={r:"",s:"",c:"blk",up:false}; stockCol.appendChild(elCard(c,()=>pick("stock"))); }
+  else { const e=document.createElement("div"); e.className="empty"; e.onclick=()=>pick("stock"); stockCol.appendChild(e); }
+  top.appendChild(stockCol);
+  const wasteCol=document.createElement("div"); wasteCol.className="col pile";
+  if(waste.length) wasteCol.appendChild(elCard(waste[waste.length-1],()=>pick("waste"), sel&&sel.kind==="waste"));
+  else wasteCol.appendChild(Object.assign(document.createElement("div"),{className:"empty"}));
+  top.appendChild(wasteCol);
+  for(let i=0;i<4;i++){
+    const col=document.createElement("div"); col.className="col found";
+    const t=topFound(i);
+    if(t) col.appendChild(elCard(t,()=>pick("found",i)));
+    else { const e=document.createElement("div"); e.className="empty"; e.onclick=()=>pick("found",i); col.appendChild(e); }
+    top.appendChild(col);
+  }
+  for(let i=0;i<7;i++){
+    const col=document.createElement("div"); col.className="col stack";
+    if(!tab[i].length){
+      const e=document.createElement("div"); e.className="empty"; e.onclick=()=>pick("tab",i,0); col.appendChild(e);
+    } else {
+      tab[i].forEach((card,j)=>{
+        const selected=sel&&sel.kind==="tab"&&sel.i===i&&j>=sel.j;
+        col.appendChild(elCard(card,()=>pick("tab",i,j), selected));
+      });
+    }
+    tabEl.appendChild(col);
+  }
+}
+document.getElementById("deal").onclick=deal;
+deal();
+</script>
+</body>
+</html>
