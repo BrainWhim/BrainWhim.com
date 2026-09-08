@@ -44,10 +44,14 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 
 .parlor{background:linear-gradient(180deg,#f7f4ee,#e4ddd0);padding:14px 12px 16px;border-radius:22px;border:3px solid #c5c0b4;box-shadow:inset 0 1px 0 #fff,0 16px 32px rgba(80,70,50,.18)}
 .parlor .sqgrid{border:4px solid #b7c3c2;border-radius:4px;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.12)}
-#room-ch .lt{background:#F4EFE3}
-#room-ch .dk{background:#B7D6C8 url("logo-image.png") center/38% no-repeat;background-blend-mode:soft-light}
-#room-ch .sel{outline:3px solid #C9A227;outline-offset:-3px}
-#room-ch .mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
+#room-ch .lt,#room-ck .lt{background:#F4EFE3}
+#room-ch .dk,#room-ck .dk{background:#B7D6C8 url("logo-image.png") center/38% no-repeat;background-blend-mode:soft-light}
+#room-ch .sel,#room-ck .sel{outline:3px solid #C9A227;outline-offset:-3px}
+#room-ch .mv,#room-ck .mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
+#room-ck .from{box-shadow:inset 0 0 0 3px rgba(201,162,39,.55)}
+#room-ck .to{box-shadow:inset 0 0 0 4px #C9A227;background:#e8d48a}
+#room-ck .man.redm{background:radial-gradient(circle at 32% 28%,#5b8fe8,#163A8A 52%,#0c214e);box-shadow:0 3px 0 #0a1c40,inset 0 -3px 5px rgba(0,0,0,.3)}
+#room-ck .man.blkm{background:radial-gradient(circle at 32% 28%,#5dcc96,#146B4A 52%,#083322);box-shadow:0 3px 0 #062616,inset 0 -3px 5px rgba(0,0,0,.3)}
 #room-ch .from{box-shadow:inset 0 0 0 3px rgba(201,162,39,.55)}
 #room-ch .to{box-shadow:inset 0 0 0 4px #C9A227;background:#e8d48a}
 .taken{display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;padding:4px 2px}
@@ -56,7 +60,14 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 .pc{font-size:clamp(20px,5.2vw,32px);line-height:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.28))}
 .pc.w{color:#163A8A;text-shadow:0 0 1px #C9A227,0 1px 0 #0a1f4a}
 .pc.b{color:#146B4A;text-shadow:0 0 1px #C9A227,0 1px 0 #083322}
-.pcimg{width:86%;height:86%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35));pointer-events:none}
+.pcimg{width:86%;height:86%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35));pointer-events:none;background:transparent}
+.pcimg.P{width:62%;height:72%}
+.pcimg.N,.pcimg.B{width:78%;height:84%}
+.pcimg.R{width:74%;height:82%}
+.pcimg.Q{width:86%;height:90%}
+.pcimg.K{width:90%;height:94%}
+@keyframes slideIn{from{transform:translateY(-18%) scale(.92);opacity:.35}to{transform:none;opacity:1}}
+#room-ch .to .pcimg{animation:slideIn .45s ease}
 .pcsvg{width:82%;height:82%;filter:drop-shadow(0 3px 2px rgba(0,0,0,.32));pointer-events:none}
 @media(max-width:700px){
 header{height:64px;padding:0 10px}
@@ -85,10 +96,10 @@ header{height:64px;padding:0 10px}
 <div class="frame"><div class="c4" id="c4board"></div></div>
 </div>
 <div id="room-ck" hidden>
-<h1>Checkers</h1>
-<p class="sub">You are red, moving up. Jump when you can. Kings go both ways.</p>
+<h1>Garden Checkers</h1>
+<p class="sub">You are cobalt. Emerald answers. Jump when you can. Kings go both ways.</p>
 <div class="bar"><span class="msg" id="ckmsg">Your turn</span><button type="button" onclick="ckNew()">New game</button></div>
-<div class="wood"><div class="sqgrid" id="ckboard"></div></div>
+<div class="parlor"><div class="sqgrid" id="ckboard"></div></div>
 </div>
 <div id="room-ch">
 <h1>Garden Chess</h1>
@@ -168,9 +179,9 @@ function c4Ai(){
 }
 
 /* -------- Checkers -------- */
-var ck, ckTurn, ckSel, ckOver;
+var ck, ckTurn, ckSel, ckOver, ckLast;
 function ckNew(){
-  ck=[]; ckSel=null; ckOver=false; ckTurn=1;
+  ck=[]; ckSel=null; ckOver=false; ckTurn=1; ckLast=null;
   for(var r=0;r<8;r++){
     ck[r]=[];
     for(var c=0;c<8;c++){
@@ -190,6 +201,8 @@ function ckPaint(){
     var cls="sq "+(dark?"dk":"lt");
     if(ckSel && ckSel[0]===r && ckSel[1]===c) cls+=" sel";
     if(ckSel && ckCanLand(ckSel[0],ckSel[1],r,c)) cls+=" mv";
+    if(typeof ckLast!=="undefined" && ckLast && ckLast[0]===r && ckLast[1]===c) cls+=" from";
+    if(typeof ckLast!=="undefined" && ckLast && ckLast[2]===r && ckLast[3]===c) cls+=" to";
     var inside="";
     var v=ck[r][c];
     if(v){
@@ -256,11 +269,11 @@ function ckHas(side){
 function ckClick(r,c){
   if(ckOver||ckTurn!==1) return;
   if(ckSel && ckCanLand(ckSel[0],ckSel[1],r,c)){
-    var jumped=ckMove(ckSel[0],ckSel[1],r,c);
+    ckLast=[ckSel[0],ckSel[1],r,c]; var jumped=ckMove(ckSel[0],ckSel[1],r,c);
     if(jumped && ckJumpsFrom(r,c).length){ ckSel=[r,c]; ckPaint(); document.getElementById("ckmsg").textContent="Jump again"; return; }
     ckSel=null;
     if(!ckHas(2)){ ckOver=true; document.getElementById("ckmsg").textContent="You win."; ckPaint(); return; }
-    ckTurn=2; ckPaint(); setTimeout(ckAi, 220); return;
+    ckTurn=2; ckPaint(); setTimeout(ckAi, 800); return;
   }
   if(ckSide(ck[r][c])===1){
     var jumps=ckAllJumps(1);
@@ -284,7 +297,7 @@ function ckAi(){
   }
   if(!moves.length){ ckOver=true; document.getElementById("ckmsg").textContent="You win."; ckPaint(); return; }
   var m=moves[Math.floor(Math.random()*moves.length)];
-  var jumped=ckMove(m[0],m[1],m[2],m[3]);
+  ckLast=[m[0],m[1],m[2],m[3]]; var jumped=ckMove(m[0],m[1],m[2],m[3]);
   while(jumped && ckJumpsFrom(m[2],m[3]).length){
     var more=ckJumpsFrom(m[2],m[3])[0];
     jumped=ckMove(m[2],m[3],more[0],more[1]);
@@ -327,7 +340,7 @@ function pieceSVG(p){
 }
 function pieceHTML(p){
   var file="piece-"+(chWhite(p)?"w":"b")+"-"+p.toUpperCase()+".png?v=3";
-  return '<img class="pcimg" alt="" src="'+file+'">';
+  return '<img class="pcimg '+p.toUpperCase()+'" alt="" src="'+file+'">';
 }
 function chPaint(){
   var html="", moves=chSel?chMoves(chSel[0],chSel[1]):[];
