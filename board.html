@@ -428,15 +428,32 @@ function chDo(sr,sc,r,c){
   if(p==="p" && r===7) ch[r][c]="q";
 }
 function chVal(p){ return {P:1,N:3,B:3,R:5,Q:9,K:0,p:1,n:3,b:3,r:5,q:9,k:0}[p]||0; }
+var chLast=null;
+function chScore(m){
+  var cap=ch[m[2]][m[3]], s=chVal(cap)*12;
+  var p=ch[m[0]][m[1]];
+  if(chLast && chLast[0]===m[2] && chLast[1]===m[3] && chLast[2]===m[0] && chLast[3]===m[1]) s-=20;
+  if(chLast && chLast[0]===m[0] && chLast[1]===m[1] && !cap) s-=4;
+  s += (3.5-Math.abs(m[2]-3.5)) + (3.5-Math.abs(m[3]-3.5));
+  if(p==="p" && m[2]>m[0]) s+=2;
+  if(p==="n"||p==="b") s+=1;
+  var saved=ch[m[2]][m[3]];
+  ch[m[2]][m[3]]=p; ch[m[0]][m[1]]="";
+  if(chInCheck(true)) s+=8;
+  if(chInCheck(false)) s-=30;
+  ch[m[0]][m[1]]=p; ch[m[2]][m[3]]=saved;
+  return s;
+}
 function chAi(){
   var moves=chAll(false);
   if(!moves.length){ chOver=true; document.getElementById("chmsg").textContent=chInCheck(false)?"You win.":"Draw."; chPaint(); return; }
-  var best=moves[0], bestS=-99;
-  for(var i=0;i<moves.length;i++){
-    var m=moves[i], cap=ch[m[2]][m[3]], s=chVal(cap);
-    if(s>bestS){ bestS=s; best=m; }
-  }
-  chDo(best[0],best[1],best[2],best[3]);
+  var scored=[];
+  for(var i=0;i<moves.length;i++) scored.push([chScore(moves[i]), moves[i]]);
+  scored.sort(function(a,b){return b[0]-a[0];});
+  var top=scored.filter(function(x){return x[0]>=scored[0][0]-1;});
+  var pick=top[Math.floor(Math.random()*top.length)][1];
+  chDo(pick[0],pick[1],pick[2],pick[3]);
+  chLast=pick;
   chTurn="w";
   if(!chAll(true).length){ chOver=true; document.getElementById("chmsg").textContent=chInCheck(true)?"Black checkmates.":"Draw."; chPaint(); return; }
   document.getElementById("chmsg").textContent=chInCheck(true)?"Check — your turn":"Your turn";
