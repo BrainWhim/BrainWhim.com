@@ -88,12 +88,36 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 @keyframes slideIn{from{transform:translateY(-18%) scale(.92);opacity:.35}to{transform:none;opacity:1}}
 #room-ch .to .pcimg{animation:slideIn .45s ease}
 .pcsvg{width:82%;height:82%;filter:drop-shadow(0 3px 2px rgba(0,0,0,.32));pointer-events:none}
+.sitbar{display:flex;justify-content:center;margin:8px 0 0;position:relative;z-index:2}
+.sitbar button{border:0;border-radius:999px;padding:10px 18px;background:#fff;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+body.seated .sitbar .sit{display:none}
+body:not(.seated) .sitbar .stand{display:none}
+body:not(.seated) #room-ch h1,
+body:not(.seated) #room-ch .sub,
+body:not(.seated) #room-ch .bar,
+body:not(.seated) #room-ch .taken,
+body:not(.seated) #room-ch .seat{display:none}
+body:not(.seated) .wrap{background:transparent;border-color:transparent;box-shadow:none;max-width:none;margin:0;padding:0}
+body:not(.seated) #room-ch .parlor{background:transparent;border:0;box-shadow:none;padding:0}
+body:not(.seated) #stage{
+  perspective:900px;min-height:calc(100vh - 180px);position:relative
+}
+body:not(.seated) #tableBoard{
+  position:absolute;left:50%;top:46%;width:min(34vw,300px);
+  transform:translate(-50%,-42%) rotateX(58deg);
+  transform-origin:center center;
+  filter:drop-shadow(0 18px 16px rgba(0,0,0,.28));
+  transition:transform .8s cubic-bezier(.2,.7,.2,1),width .8s,top .8s,left .8s,filter .8s
+}
+body:not(.seated) #room-ch .parlor .sqgrid{border:3px solid #b8b3aa;border-radius:4px}
+body.seated #tableBoard{transition:transform .8s cubic-bezier(.2,.7,.2,1),width .8s}
 @media(max-width:700px){
 header{height:64px;padding:0 10px}
 .brand{font-size:18px}
 .brand img{width:52px;height:52px}
 .hdr a{font-size:13px;margin-left:10px}
 .wrap{margin:12px 8px 28px;padding:14px 8px}
+body:not(.seated) #tableBoard{width:min(56vw,260px);top:50%}
 }
 </style>
 </head>
@@ -125,15 +149,23 @@ header{height:64px;padding:0 10px}
 </div>
 </div>
 <div id="room-ch">
+<div class="sitbar">
+<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="stand" type="button" onclick="standUp()">Back to the garden</button>
+</div>
 <h1>Garden Chess</h1>
 <p class="sub">You are cobalt with gold. Emerald answers. Tap a piece, then a square.</p>
 <div class="bar"><span class="msg" id="chmsg">Your turn</span><button type="button" onclick="chNew()">New game</button></div>
+<div id="stage">
+<div id="tableBoard">
 <div class="parlor">
 <div class="seat north" title="Emerald"></div>
 <div class="taken" id="chBotTook"><span class="lab">Emerald took</span></div>
 <div class="sqgrid" id="chboard"></div>
 <div class="taken" id="chYouTook"><span class="lab">You took</span></div>
 <div class="seat south" title="You"></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -144,7 +176,11 @@ function showRoom(id,btn){
   document.getElementById("room-ch").hidden = id!=="ch";
   var all=document.querySelectorAll(".games button");
   for(var i=0;i<all.length;i++) all[i].classList.toggle("on", all[i]===btn);
+  if(id==="ch") standUp();
+  else document.body.classList.add("seated");
 }
+function sitDown(){ document.body.classList.add("seated"); }
+function standUp(){ document.body.classList.remove("seated"); }
 
 /* -------- Connect Four (working set) -------- */
 var c4g,c4over,c4last,c4wins;
