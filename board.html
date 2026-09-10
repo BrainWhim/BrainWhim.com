@@ -126,17 +126,15 @@ body.seated #tableBoard{animation:popBoard .7s cubic-bezier(.2,.8,.2,1)}
   to{transform:none;opacity:1}
 }
 .bgwrap{display:flex;flex-direction:column;gap:10px;align-items:center}
-.bgboard{width:100%;max-width:520px;display:grid;grid-template-columns:repeat(13,1fr);grid-template-rows:140px 36px 140px;background:#2a1810;border:6px solid #c9a227;border-radius:8px;overflow:hidden}
-.bgpt{position:relative;min-height:140px;cursor:pointer}
-.bgpt.top{align-self:start}
-.bgtri{width:0;height:0;border-left:50% solid transparent}
+.bgboard{width:100%;max-width:560px;display:grid;grid-template-columns:repeat(6,1fr) 28px repeat(6,1fr);grid-template-rows:160px 160px;background:#2a1810;border:6px solid #c9a227;border-radius:8px;overflow:hidden}
+.bgpt{position:relative;min-height:160px;border:0;padding:0;cursor:pointer}
 .bgpt .stack{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:2px}
 .bgpt.top .stack{top:4px}
 .bgpt.bot .stack{bottom:4px;flex-direction:column-reverse}
-.bgchk{width:18px;height:18px;border-radius:50%;border:2px solid #c9a227;flex:0 0 auto}
+.bgchk{width:16px;height:16px;border-radius:50%;border:2px solid #c9a227;flex:0 0 auto}
 .bgchk.w{background:#f3ead8}
 .bgchk.b{background:#163A8A}
-.bgbar{grid-column:7;background:#1a100c;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#e8d48a;font-size:10px}
+.bgbar{background:#1a100c;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#e8d48a;font-size:9px;padding:4px 2px;text-align:center}
 .bgdice{min-height:28px;font-weight:700}
 .bgroll{border:0;border-radius:999px;padding:8px 16px;background:var(--navy);color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
 @media(max-width:900px){
@@ -708,30 +706,29 @@ var bgPts, bgBar, bgOff, bgDice, bgTurn, bgSel, bgOver;
 function bgNew(){
   bgPts=[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
   function fill(pt,n,s){ for(var i=0;i<n;i++) bgPts[pt].push(s); }
-  fill(1,2,1); fill(12,5,1); fill(17,3,1); fill(19,5,1);
-  fill(24,2,2); fill(13,5,2); fill(8,3,2); fill(6,5,2);
+  fill(24,2,1); fill(13,5,1); fill(8,3,1); fill(6,5,1);
+  fill(1,2,2); fill(12,5,2); fill(17,3,2); fill(19,5,2);
   bgBar={1:0,2:0}; bgOff={1:0,2:0}; bgDice=[]; bgTurn=1; bgSel=null; bgOver=false;
   document.getElementById("bgmsg").textContent="Roll to start";
   bgPaint();
 }
 function bgPaint(){
-  var html="", i, p;
+  var html="", p;
   function col(pt, top){
-    var odd=pt%2;
-    var bg=odd?"#7a1c1c":"#e8d4a8";
+    var dark=pt%2===1;
+    var bg=dark?"#6b1a1a":"#e6d2a4";
     var stack="";
     var arr=bgPts[pt]||[];
-    for(var k=0;k<arr.length && k<6;k++) stack+='<div class="bgchk '+(arr[k]===1?"w":"b")+'"></div>';
-    if(arr.length>6) stack+='<div class="bgchk '+(arr[0]===1?"w":"b")+'" style="font-size:9px;color:#163A8A;display:flex;align-items:center;justify-content:center">'+(arr.length)+'</div>';
+    var show=Math.min(arr.length,5);
+    for(var k=0;k<show;k++) stack+='<div class="bgchk '+(arr[k]===1?"w":"b")+'"></div>';
+    if(arr.length>5) stack+='<div class="bgchk '+(arr[0]===1?"w":"b")+'" style="font-size:8px;display:flex;align-items:center;justify-content:center;color:#163A8A">'+arr.length+'</div>';
     return '<button type="button" class="bgpt '+(top?"top":"bot")+'" style="background:'+bg+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
   }
-  html+='<div class="bgbar">BAR<br>'+bgBar[1]+' / '+bgBar[2]+'</div>';
   for(p=13;p<=18;p++) html+=col(p,true);
-  html+='<div class="bgbar">OFF<br>'+bgOff[1]+' / '+bgOff[2]+'</div>';
+  html+='<div class="bgbar">BAR<br>I '+bgBar[1]+'<br>N '+bgBar[2]+'</div>';
   for(p=19;p<=24;p++) html+=col(p,true);
-  html+='<div class="bgbar"></div>';
   for(p=12;p>=7;p--) html+=col(p,false);
-  html+='<div class="bgbar"></div>';
+  html+='<div class="bgbar">OFF<br>I '+bgOff[1]+'<br>N '+bgOff[2]+'</div>';
   for(p=6;p>=1;p--) html+=col(p,false);
   var board=document.getElementById("bgboard");
   if(board) board.innerHTML=html;
