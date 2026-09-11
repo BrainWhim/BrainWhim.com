@@ -762,6 +762,27 @@ function bgHome(side){
   }
   return true;
 }
+function bgHighestHome(side){
+  if(side===1){
+    for(var p=6;p>=1;p--) if((bgPts[p]||[]).indexOf(1)>=0) return p;
+    return 0;
+  }
+  for(var q=19;q<=24;q++) if((bgPts[q]||[]).indexOf(2)>=0) return q;
+  return 25;
+}
+function bgCanBear(from, steps, side){
+  if(!bgHome(side) || from===0) return false;
+  if(side===1){
+    var dest1=from-steps;
+    if(dest1===0) return true;
+    if(dest1<0) return from===bgHighestHome(1);
+    return false;
+  }
+  var dest2=from+steps;
+  if(dest2===25) return true;
+  if(dest2>25) return from===bgHighestHome(2);
+  return false;
+}
 function bgMoves(side){
   var out=[], i, p, dest, used={};
   function add(from, dies, dest){
@@ -773,10 +794,7 @@ function bgMoves(side){
   function tryDest(from, steps, dies){
     dest=from===0 ? (side===1?25-steps:steps) : (side===1?from-steps:from+steps);
     if(dest>=1&&dest<=24){ if(bgOpen(dest,side)) add(from, dies, dest); }
-    else if(from!==0 && bgHome(side)){
-      if(side===1 && dest<=0) add(from, dies, 25);
-      if(side===2 && dest>=25) add(from, dies, 25);
-    }
+    else if(bgCanBear(from, steps, side)) add(from, dies, 25);
   }
   var dice=bgDice.slice();
   if(bgBar[side]){
@@ -785,11 +803,9 @@ function bgMoves(side){
   }
   var uniq=[], seen={};
   for(i=0;i<dice.length;i++) if(!seen[dice[i]]){ seen[dice[i]]=1; uniq.push(dice[i]); }
-  var sum=0; for(i=0;i<dice.length;i++) sum+=dice[i];
   for(p=1;p<=24;p++){
     if((bgPts[p]||[]).indexOf(side)<0) continue;
     for(i=0;i<uniq.length;i++) tryDest(p, uniq[i], [uniq[i]]);
-    if(dice.length>=2) tryDest(p, sum, dice.slice());
   }
   return out;
 }
@@ -854,7 +870,7 @@ function bgClick(pt){
     var hit=null;
     for(var i=0;i<moves.length;i++){
       if(moves[i].from===bgSel && moves[i].dest===pt){
-        if(!hit || moves[i].dies.length>hit.dies.length) hit=moves[i];
+        if(!hit || moves[i].dies.length<hit.dies.length) hit=moves[i];
       }
     }
     if(hit){
