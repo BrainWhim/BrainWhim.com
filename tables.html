@@ -74,10 +74,14 @@ body{background-attachment:scroll}
 <div class="rooms">
 <article class="room">
 <h2>Garden chess</h2>
-<p>Cobalt and gold vs ivory. Your painted pieces. House always sits.</p>
+<p>Cobalt and gold vs ivory. Open a table, send the code, they sit across from you.</p>
 <div class="row">
 <a class="btn go" href="board.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" onclick="openChessTable()">Play a person</button>
+</div>
+<div class="row" style="margin-top:8px">
+<input id="joinCode" maxlength="6" placeholder="CODE" style="width:90px;padding:8px;border-radius:8px;border:0;text-transform:uppercase">
+<button class="btn ghost" type="button" onclick="joinChessTable()">Join table</button>
 </div>
 </article>
 <article class="room">
@@ -110,7 +114,35 @@ body{background-attachment:scroll}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script>
-var sb=null;
+var sb=null, sessionUser=null;
+function code4(){ var s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", o=""; for(var i=0;i<4;i++) o+=s[Math.floor(Math.random()*s.length)]; return o; }
+async function openChessTable(){
+  if(!sb){ alert("play-config.js is missing."); return; }
+  var s=(await sb.auth.getSession()).data.session;
+  if(!s){ alert("Sign in first."); return; }
+  var code=code4();
+  var start={
+    board:[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]],
+    turn:"w", last:null, over:false, rights:{wk:1,wq:1,bk:1,bq:1}, ep:null
+  };
+  var r=await sb.from("rooms").insert({code:code, game:"chess", status:"lobby", host:s.user.id, state:start}).select().single();
+  if(r.error){ alert(r.error.message); return; }
+  location.href="chess-room.html?code="+code;
+}
+async function joinChessTable(){
+  if(!sb){ alert("play-config.js is missing."); return; }
+  var s=(await sb.auth.getSession()).data.session;
+  if(!s){ alert("Sign in first."); return; }
+  var code=(document.getElementById("joinCode").value||"").trim().toUpperCase();
+  if(code.length<4){ alert("Enter the 4-letter table code."); return; }
+  var q=await sb.from("rooms").select("*").eq("code", code).single();
+  if(q.error){ alert("No table with that code."); return; }
+  if(q.data.host!==s.user.id && !q.data.guest){
+    var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", q.data.id);
+    if(u.error){ alert(u.error.message); return; }
+  }
+  location.href="chess-room.html?code="+code;
+}
 function ready(){
   var cfg=window.BW_PLAY||{};
   var who=document.getElementById("who");

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess table · BrainWhim</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#1A2744;
+background:#1a1410 url("garden-parlor.jpg") center/cover no-repeat fixed}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 4%;background:var(--navy);height:72px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
+.brand img{width:56px;height:56px;object-fit:contain}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+header a{color:#fff;font-weight:700;text-decoration:none;margin-left:12px;font-size:14px}
+.wrap{max-width:520px;margin:18px auto 40px;padding:16px;background:linear-gradient(180deg,rgba(255,252,247,.92),rgba(236,228,214,.9));border:1px solid rgba(184,154,90,.55);border-radius:20px}
+h1{margin:0 0 4px;font-size:20px;text-align:center}
+.meta,.msg{text-align:center;font-size:13px;margin:0 0 8px}
+.code{letter-spacing:.2em;font-weight:800}
+.parlor{background:linear-gradient(165deg,#3a2a1c,#6b4a2e 18%,#3a2a1c);padding:10px;border-radius:8px}
+.sqgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));border:6px solid #c9a66b}
+.sq{aspect-ratio:1;border:0;padding:0;cursor:pointer;display:flex;align-items:flex-end;justify-content:center}
+.lt{background:#F6F1E4}
+.dk{background:#C5DFD4}
+.sel{outline:3px solid #C9A227;outline-offset:-3px}
+.mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
+.to{box-shadow:inset 0 0 0 4px #C9A227}
+.pcimg{width:86%;height:auto;object-fit:contain;pointer-events:none}
+.row{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.btn{border:0;border-radius:999px;padding:8px 14px;background:var(--navy);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
+@media(max-width:700px){body{background-attachment:scroll}header{height:56px}}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<div><a href="tables.html">Tables</a><a href="board.html">House</a><a href="index.html">Home</a></div>
+</header>
+<div class="wrap">
+  <h1>Garden chess</h1>
+  <p class="meta">Table <span class="code" id="codeLab">----</span> · <span id="seatLab">…</span></p>
+  <p class="msg" id="chmsg">Connecting…</p>
+  <div class="parlor"><div class="sqgrid" id="chboard"></div></div>
+  <div class="row"><a class="btn" href="tables.html">Leave table</a></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script>
+var sb, room, me, myColor=null;
+var ch, chSel, chOver, chTurn, chLast=null, chEp=null, chRights={wk:1,wq:1,bk:1,bq:1};
+var chYouTook=[], chBotTook=[];
+var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
+if(CODE) CODE=CODE.toUpperCase();
+
+function pieceHTML(p){
+  return '<img class="pcimg" alt="" src="piece-'+(chWhite(p)?"w":"b")+'-'+p.toUpperCase()+'.png?v=14">';
+}
+function chWhite(p){ return p && p===p.toUpperCase(); }
+function chOn(r,c){ return r>=0&&c>=0&&r<8&&c<8; }
+function chFind(chPiece){
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++) if(ch[r][c]===chPiece) return [r,c];
+  return null;
+}
+function chAttacks(white){
+  var hits={};
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    var p=ch[r][c]; if(!p) continue;
+    if(chWhite(p)!==white) continue;
+    var raw=chRaw(r,c,true);
+    for(var i=0;i<raw.length;i++) hits[raw[i][0]+","+raw[i][1]]=1;
+  }
+  return hits;
+}
+function chInCheck(white){
+  var k=chFind(white?"K":"k"); if(!k) return true;
+  return !!chAttacks(!white)[k[0]+","+k[1]];
+}
+function chRaw(r,c,forAttack){
+  var p=ch[r][c], out=[], i, nr, nc;
+  if(!p) return out;
+  var w=chWhite(p), t=p.toUpperCase();
+  function slide(dr,dc){
+    nr=r+dr; nc=c+dc;
+    while(chOn(nr,nc)){
+      if(!ch[nr][nc]) out.push([nr,nc]);
+      else { if(chWhite(ch[nr][nc])!==w) out.push([nr,nc]); break; }
+      nr+=dr; nc+=dc;
+    }
+  }
+  if(t==="P"){
+    var dir=w?-1:1, start=w?6:1;
+    if(!forAttack){
+      if(chOn(r+dir,c)&&!ch[r+dir][c]){
+        out.push([r+dir,c]);
+        if(r===start && !ch[r+dir*2][c]) out.push([r+dir*2,c]);
+      }
+    }
+    for(i=-1;i<=1;i+=2){
+      nr=r+dir; nc=c+i;
+      if(chOn(nr,nc) && (forAttack || (ch[nr][nc] && chWhite(ch[nr][nc])!==w))) out.push([nr,nc]);
+      if(!forAttack && chEp && nr===chEp[0] && nc===chEp[1]) out.push([nr,nc]);
+    }
+  }
+  if(t==="N"){
+    var kn=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    for(i=0;i<8;i++){ nr=r+kn[i][0]; nc=c+kn[i][1]; if(chOn(nr,nc)&&(!ch[nr][nc]||chWhite(ch[nr][nc])!==w)) out.push([nr,nc]); }
+  }
+  if(t==="B"||t==="Q"){ slide(-1,-1);slide(-1,1);slide(1,-1);slide(1,1); }
+  if(t==="R"||t==="Q"){ slide(-1,0);slide(1,0);slide(0,-1);slide(0,1); }
+  if(t==="K"){
+    for(nr=r-1;nr<=r+1;nr++) for(nc=c-1;nc<=c+1;nc++){
+      if((nr!==r||nc!==c)&&chOn(nr,nc)&&(!ch[nr][nc]||chWhite(ch[nr][nc])!==w)) out.push([nr,nc]);
+    }
+  }
+  return out;
+}
+function chMoves(r,c){
+  var p=ch[r][c], raw=chRaw(r,c,false), legal=[];
+  for(var i=0;i<raw.length;i++){
+    var nr=raw[i][0], nc=raw[i][1], cap=ch[nr][nc];
+    ch[nr][nc]=p; ch[r][c]="";
+    if(!chInCheck(chWhite(p))) legal.push([nr,nc]);
+    ch[r][c]=p; ch[nr][nc]=cap;
+  }
+  return legal;
+}
+function chAll(white){
+  var a=[];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    if(!ch[r][c] || chWhite(ch[r][c])!==white) continue;
+    var m=chMoves(r,c);
+    for(var i=0;i<m.length;i++) a.push([r,c,m[i][0],m[i][1]]);
+  }
+  return a;
+}
+function chDo(sr,sc,r,c){
+  var p=ch[sr][sc], cap=ch[r][c];
+  if((p==="P"||p==="p") && !cap && sc!==c && chEp && r===chEp[0] && c===chEp[1]){
+    cap=ch[sr][c]; ch[sr][c]="";
+  }
+  ch[r][c]=p; ch[sr][sc]="";
+  if((p==="P"||p==="p") && Math.abs(r-sr)===2) chEp=[(r+sr)/2,c]; else chEp=null;
+  if(p==="P" && r===0) ch[r][c]="Q";
+  if(p==="p" && r===7) ch[r][c]="q";
+}
+function snapshot(){
+  return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp};
+}
+function applySnap(s){
+  if(!s||!s.board) return;
+  ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over; chRights=s.rights||chRights; chEp=s.ep||null;
+}
+function chPaint(){
+  var html="", moves=chSel?chMoves(chSel[0],chSel[1]):[];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    var dark=(r+c)%2===1;
+    var cls="sq "+(dark?"dk":"lt");
+    if(chSel && chSel[0]===r && chSel[1]===c) cls+=" sel";
+    if(moves.some(function(m){return m[0]===r&&m[1]===c})) cls+=" mv";
+    if(chLast && chLast[2]===r && chLast[3]===c) cls+=" to";
+    var p=ch[r][c];
+    html+='<button type="button" class="'+cls+'" onclick="chClick('+r+','+c+')">'+(p?pieceHTML(p):"")+'</button>';
+  }
+  document.getElementById("chboard").innerHTML=html;
+}
+function setMsg(t){ document.getElementById("chmsg").textContent=t; }
+async function pushState(){
+  if(!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:chOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+}
+function chClick(r,c){
+  if(chOver || !myColor) return;
+  if(chTurn!==myColor) return;
+  var mine=myColor==="w";
+  if(chSel){
+    var ok=chMoves(chSel[0],chSel[1]).some(function(m){return m[0]===r&&m[1]===c});
+    if(ok){
+      chDo(chSel[0],chSel[1],r,c);
+      chLast=[chSel[0],chSel[1],r,c];
+      chSel=null;
+      var opp=myColor==="w"?false:true;
+      if(!chAll(opp).length){
+        chOver=true;
+        setMsg(chInCheck(opp)?"Checkmate.":"Draw.");
+      } else {
+        chTurn=myColor==="w"?"b":"w";
+        setMsg(chTurn==="w"?"White to move":"Black to move");
+      }
+      chPaint();
+      pushState();
+      return;
+    }
+  }
+  if(ch[r][c] && chWhite(ch[r][c])===mine){ chSel=[r,c]; chPaint(); }
+  else { chSel=null; chPaint(); }
+}
+async function boot(){
+  document.getElementById("codeLab").textContent=CODE||"—";
+  var cfg=window.BW_PLAY||{};
+  if(!CODE||!cfg.url){ setMsg("Missing table code or play-config.js"); return; }
+  sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ setMsg("Sign in on Tables first."); return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code", CODE).single();
+  if(q.error){ setMsg(q.error.message); return; }
+  room=q.data;
+  if(room.host===me) myColor="w";
+  else if(room.guest===me) myColor="b";
+  else if(!room.guest){
+    var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
+    if(!u.error){ room=u.data; myColor="b"; }
+  }
+  document.getElementById("seatLab").textContent=myColor==="w"?"You are ivory (white)": myColor==="b"?"You are emerald (black)":"Watching";
+  applySnap(room.state);
+  if(!ch) applySnap({board:[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]],turn:"w"});
+  setMsg(!room.guest && myColor==="w" ? "Waiting for black. Share code "+CODE : (chTurn==="w"?"White to move":"Black to move"));
+  chPaint();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
+    room=payload.new;
+    applySnap(room.state);
+    chSel=null;
+    setMsg(chOver?"Game over": (chTurn==="w"?"White to move":"Black to move"));
+    chPaint();
+    if(room.guest) document.getElementById("seatLab").textContent=myColor==="w"?"You are ivory (white)":"You are emerald (black)";
+  }).subscribe();
+}
+boot();
+</script>
+</body>
+</html>
