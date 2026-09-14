@@ -30,6 +30,9 @@ h1{margin:0 0 4px;font-size:20px;text-align:center}
 .pcimg{width:72%;max-height:92%;height:auto;object-fit:contain;pointer-events:none}
 .row{display:flex;gap:8px;justify-content:center;margin-top:10px}
 .btn{border:0;border-radius:999px;padding:8px 14px;background:var(--navy);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
+.tray{min-height:36px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:6px 2px;font-size:11px;font-weight:700}
+.tray .lab{margin-right:6px;opacity:.75}
+.tray .pcimg{width:22px;height:22px}
 @media(max-width:700px){body{background-attachment:scroll}header{height:56px}}
 </style>
 </head>
@@ -43,7 +46,9 @@ h1{margin:0 0 4px;font-size:20px;text-align:center}
   <p class="meta" style="opacity:.7;font-size:11px">table v2 · cobalt sits first</p>
   <p class="meta">Table <span class="code" id="codeLab">----</span> · <span id="seatLab">…</span></p>
   <p class="msg" id="chmsg">Connecting…</p>
+  <div class="tray" id="trayOpp"></div>
   <div class="parlor"><div class="sqgrid" id="chboard"></div></div>
+  <div class="tray" id="trayYou"></div>
   <div class="row"><a class="btn" href="tables.html">Leave table</a></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -51,7 +56,7 @@ h1{margin:0 0 4px;font-size:20px;text-align:center}
 <script>
 var sb, room, me, myColor=null;
 var ch, chSel, chOver, chTurn, chLast=null, chEp=null, chRights={wk:1,wq:1,bk:1,bq:1};
-var chYouTook=[], chBotTook=[];
+var tookW=[], tookB=[];
 var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
 if(CODE) CODE=CODE.toUpperCase();
 
@@ -141,17 +146,22 @@ function chDo(sr,sc,r,c){
   if((p==="P"||p==="p") && !cap && sc!==c && chEp && r===chEp[0] && c===chEp[1]){
     cap=ch[sr][c]; ch[sr][c]="";
   }
+  if(cap){
+    if(chWhite(p)) tookW.push(cap);
+    else tookB.push(cap);
+  }
   ch[r][c]=p; ch[sr][sc]="";
   if((p==="P"||p==="p") && Math.abs(r-sr)===2) chEp=[(r+sr)/2,c]; else chEp=null;
   if(p==="P" && r===0) ch[r][c]="Q";
   if(p==="p" && r===7) ch[r][c]="q";
 }
 function snapshot(){
-  return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp};
+  return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp, tookW:tookW, tookB:tookB};
 }
 function applySnap(s){
   if(!s||!s.board) return;
   ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over; chRights=s.rights||chRights; chEp=s.ep||null;
+  tookW=s.tookW||[]; tookB=s.tookB||[];
 }
 function flipBoard(){ return myColor==="b"; }
 function viewR(r){ return flipBoard()?7-r:r; }
@@ -175,6 +185,19 @@ function chPaint(){
     html+='<button type="button" class="'+cls+'" onclick="chClick('+r+','+c+')">'+(p?pieceHTML(p):"")+'</button>';
   }
   document.getElementById("chboard").innerHTML=html;
+  function tray(id, arr, label){
+    var el=document.getElementById(id); if(!el) return;
+    var h='<span class="lab">'+label+'</span>';
+    for(var i=0;i<arr.length;i++) h+=pieceHTML(arr[i]);
+    el.innerHTML=h;
+  }
+  if(myColor==="b"){
+    tray("trayOpp", tookW, "Cobalt took");
+    tray("trayYou", tookB, "You took");
+  } else {
+    tray("trayOpp", tookB, "Ivory took");
+    tray("trayYou", tookW, "You took");
+  }
 }
 function setMsg(t){ document.getElementById("chmsg").textContent=t; }
 async function pushState(){
