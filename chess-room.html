@@ -18,7 +18,7 @@ header a{color:#fff;font-weight:700;text-decoration:none;margin-left:12px;font-s
 .wrap{max-width:520px;margin:18px auto 40px;padding:16px;background:linear-gradient(180deg,rgba(255,252,247,.92),rgba(236,228,214,.9));border:1px solid rgba(184,154,90,.55);border-radius:20px}
 h1{margin:0 0 4px;font-size:20px;text-align:center}
 .meta,.msg{text-align:center;font-size:13px;margin:0 0 8px}
-.code{letter-spacing:.2em;font-weight:800}
+.code{letter-spacing:.08em;font-weight:800}
 .parlor{background:linear-gradient(165deg,#3a2a1c,#6b4a2e 18%,#3a2a1c);padding:10px;border-radius:8px}
 .sqgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));border:6px solid #c9a66b}
 .sq{aspect-ratio:1;border:0;padding:0;cursor:pointer;display:flex;align-items:flex-end;justify-content:center}
@@ -27,7 +27,7 @@ h1{margin:0 0 4px;font-size:20px;text-align:center}
 .sel{outline:3px solid #C9A227;outline-offset:-3px}
 .mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
 .to{box-shadow:inset 0 0 0 4px #C9A227}
-.pcimg{width:86%;height:auto;object-fit:contain;pointer-events:none}
+.pcimg{width:72%;max-height:92%;height:auto;object-fit:contain;pointer-events:none}
 .row{display:flex;gap:8px;justify-content:center;margin-top:10px}
 .btn{border:0;border-radius:999px;padding:8px 14px;background:var(--navy);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
 @media(max-width:700px){body{background-attachment:scroll}header{height:56px}}
@@ -152,9 +152,19 @@ function applySnap(s){
   if(!s||!s.board) return;
   ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over; chRights=s.rights||chRights; chEp=s.ep||null;
 }
+function flipBoard(){ return myColor==="b"; }
+function viewR(r){ return flipBoard()?7-r:r; }
+function viewC(c){ return flipBoard()?7-c:c; }
+function nameSide(t){ return t==="w"?"Cobalt":"Ivory"; }
+function turnMsg(){
+  if(chOver) return "Game over";
+  if(myColor && chTurn===myColor) return "Your move — "+nameSide(chTurn);
+  return nameSide(chTurn)+" to move";
+}
 function chPaint(){
   var html="", moves=chSel?chMoves(chSel[0],chSel[1]):[];
-  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+  for(var vr=0;vr<8;vr++) for(var vc=0;vc<8;vc++){
+    var r=viewR(vr), c=viewC(vc);
     var dark=(r+c)%2===1;
     var cls="sq "+(dark?"dk":"lt");
     if(chSel && chSel[0]===r && chSel[1]===c) cls+=" sel";
@@ -186,7 +196,7 @@ function chClick(r,c){
         setMsg(chInCheck(opp)?"Checkmate.":"Draw.");
       } else {
         chTurn=myColor==="w"?"b":"w";
-        setMsg(chTurn==="w"?"White to move":"Black to move");
+        setMsg(turnMsg());
       }
       chPaint();
       pushState();
@@ -213,18 +223,18 @@ async function boot(){
     var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
     if(!u.error){ room=u.data; myColor="b"; }
   }
-  document.getElementById("seatLab").textContent=myColor==="w"?"You are ivory (white)": myColor==="b"?"You are emerald (black)":"Watching";
+  document.getElementById("seatLab").textContent=myColor==="w"?"You are cobalt": myColor==="b"?"You are ivory":"Watching";
   applySnap(room.state);
   if(!ch) applySnap({board:[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]],turn:"w"});
-  setMsg(!room.guest && myColor==="w" ? "Waiting for black. Share code "+CODE : (chTurn==="w"?"White to move":"Black to move"));
+  setMsg(!room.guest && myColor==="w" ? "Waiting for ivory. Share code "+CODE : turnMsg());
   chPaint();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
     room=payload.new;
     applySnap(room.state);
     chSel=null;
-    setMsg(chOver?"Game over": (chTurn==="w"?"White to move":"Black to move"));
+    setMsg(!room.guest && myColor==="w" ? "Waiting for ivory. Share code "+CODE : turnMsg());
     chPaint();
-    if(room.guest) document.getElementById("seatLab").textContent=myColor==="w"?"You are ivory (white)":"You are emerald (black)";
+    if(room.guest) document.getElementById("seatLab").textContent=myColor==="w"?"You are cobalt": myColor==="b"?"You are ivory":"Watching";
   }).subscribe();
 }
 boot();
