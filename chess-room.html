@@ -105,7 +105,7 @@ h1{display:none}
 <div class="wrap">
   <div class="hud">
     <h1>Garden chess</h1>
-    <p class="meta">Table <span class="code" id="codeLab">----</span> · <span id="seatLab">…</span></p>
+    <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
     <p class="msg" id="chmsg">Connecting…</p>
   </div>
   <div class="tray" id="trayOpp"></div>
@@ -342,7 +342,8 @@ function chClick(r,c){
   else { chSel=null; chPaint(); }
 }
 async function boot(){
-  document.getElementById("codeLab").textContent=CODE||"—";
+  var online=/(?:^|[?&])online=1/.test(location.search);
+  document.getElementById("codeLab").textContent=online?"Online table":("Table "+(CODE||"—"));
   var cfg=window.BW_PLAY||{};
   if(!CODE||!cfg.url){ setMsg("Missing table code or play-config.js"); return; }
   sb=supabase.createClient(cfg.url, cfg.anonKey);
@@ -366,14 +367,14 @@ async function boot(){
 
   applySnap(room.state);
   if(!ch) applySnap({board:[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]],turn:"w"});
-  setMsg(!room.guest && myColor==="w" ? "Waiting for ivory. Share code "+CODE : turnMsg());
+  setMsg(!room.guest && myColor==="w" ? "Waiting for someone online to sit…" : turnMsg());
   chPaint();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
     var prev=chLast?chLast.join(","):"";
     room=payload.new;
     applySnap(room.state);
     chSel=null;
-    setMsg(!room.guest && myColor==="w" ? "Waiting for ivory. Share code "+CODE : turnMsg());
+    setMsg(!room.guest && myColor==="w" ? "Waiting for someone online to sit…" : turnMsg());
     if(room.guest) document.getElementById("seatLab").textContent=myColor==="w"?"You are cobalt": myColor==="b"?"You are ivory":"Watching";
     var now=chLast?chLast.join(","):"";
     if(now && now!==prev && chLast){

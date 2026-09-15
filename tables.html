@@ -13,7 +13,7 @@ body{min-height:100dvh;background:#cfc6b4 url("garden-parlor.jpg") center 32%/co
 .veil{display:none}
 header{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:0 4%;background:var(--navy);height:72px}
 .brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
-.brand img{width:56px;height:56px;object-fit:contain;margin-right:-7px}
+.brand img{width:56px;height:56px;object-fit:contain;margin-right:-4px}
 .whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1.1em}
 .hdr{display:flex;align-items:center;gap:8px}
 .hdr a{color:#fff;font-weight:700;font-size:16px;text-decoration:none;margin-left:10px}
@@ -50,10 +50,9 @@ h1{margin:0 0 4px;font-size:26px;text-align:center;color:#1A2744}
 #authForm.closed,#authOut.closed{display:none !important}
 @media(max-width:700px){
 header{height:64px;padding:0 10px}
-.brand{font-size:16px}
-.brand img{width:44px;height:44px;margin-right:-8px}
-.hdr a{font-size:12px;margin-left:6px}
-.bell{padding:5px 8px}
+.brand{font-size:18px}
+.brand img{width:52px;height:52px}
+.hdr a{font-size:13px;margin-left:10px}
 .rooms{grid-template-columns:1fr}
 body{background-attachment:scroll}
 }
@@ -76,7 +75,7 @@ body{background-attachment:scroll}
 <main>
 <div class="intro">
 <h1>The tables</h1>
-<p class="lead">Sit vs the house for free. Log in with email. Invite friends with your public name (example: brainwhim) — do not type an @.</p>
+<p class="lead">Three ways to sit: vs the house, vs anyone waiting online, or invite a friend by their public name (no @).</p>
 </div>
 <section class="auth" id="authBox">
   <h2>Your seat</h2>
@@ -108,11 +107,12 @@ body{background-attachment:scroll}
 <div class="rooms">
 <article class="room">
 <h2>Garden chess</h2>
-<p>Cobalt and gold vs ivory. Find anyone waiting, or invite a friend by username.</p>
+<p>Cobalt and gold vs ivory. Play the house, sit with anyone online, or invite a friend.</p>
 <div class="row">
 <a class="btn go" href="board.html">Sit vs the house</a>
-<button class="btn go" type="button" onclick="findRandomChess()">Find a player</button>
+<button class="btn go" type="button" id="onlineBtn" onclick="playOnlineChess()">Play someone online</button>
 </div>
+<p class="hint" id="waitHint" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
 <div class="row" style="margin-top:8px">
 <input id="inviteName" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
 <button class="btn ghost" type="button" onclick="inviteChess()">Invite friend</button>
@@ -143,12 +143,12 @@ body{background-attachment:scroll}
 </div>
 </article>
 </div>
-<p class="note">House games still open on the parlor boards. Member tables need this page plus play-config.js in the same folder.</p>
+<p class="note">Play someone online seats the next person who taps the same button. No code. Invite friend is only for a person you name. Skill levels and a who’s-online list come next.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script>
-var sb=null, sessionUser=null, myName="", noticeCh=null;
+var sb=null, sessionUser=null, myName="", noticeCh=null, waitTimer=null, waitRoom=null;
 function cleanName(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9_]/g,"").slice(0,20); }
 function code4(){ var s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", o=""; for(var i=0;i<4;i++) o+=s[Math.floor(Math.random()*s.length)]; return o; }
 function startBoard(){
@@ -167,18 +167,40 @@ async function makeRoom(kind){
   if(r.error){ alert(r.error.message); return null; }
   return r.data;
 }
-async function findRandomChess(){
+function setWaiting(on){
+  var h=document.getElementById("waitHint");
+  var b=document.getElementById("onlineBtn");
+  if(h) h.style.display=on?"block":"none";
+  if(b){ b.disabled=!!on; b.textContent=on?"Waiting for a player…":"Play someone online"; }
+}
+async function cancelWait(){
+  if(waitTimer){ clearInterval(waitTimer); waitTimer=null; }
+  if(waitRoom && sb){ await sb.from("rooms").update({status:"closed"}).eq("id", waitRoom.id); }
+  waitRoom=null; setWaiting(false);
+}
+async function checkWait(){
+  if(!waitRoom) return;
+  var q=await sb.from("rooms").select("id,code,guest,status").eq("id", waitRoom.id).single();
+  if(q.data && q.data.guest){
+    clearInterval(waitTimer); waitTimer=null;
+    location.href="chess-room.html?code="+q.data.code+"&online=1";
+  }
+}
+async function playOnlineChess(){
   var s=await needSession(); if(!s) return;
-  var q=await sb.from("rooms").select("*").eq("game","chess").eq("status","lobby").eq("kind","open").is("guest",null).neq("host", s.user.id).order("created_at",{ascending:true}).limit(1);
+  var q=await sb.from("rooms").select("*").eq("game","chess").eq("status","lobby").is("guest",null).neq("host", s.user.id).order("created_at",{ascending:true}).limit(5);
   if(q.error){ alert(q.error.message); return; }
-  if(q.data && q.data[0]){
-    var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", q.data[0].id).is("guest", null).select().single();
+  var open=(q.data||[]).filter(function(r){ return !r.kind || r.kind==="open"; })[0];
+  if(open){
+    var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
     if(u.error){ alert(u.error.message); return; }
-    location.href="chess-room.html?code="+u.data.code;
+    location.href="chess-room.html?code="+u.data.code+"&online=1";
     return;
   }
-  var room=await makeRoom("open");
-  if(room) location.href="chess-room.html?code="+room.code;
+  waitRoom=await makeRoom("open");
+  if(!waitRoom) return;
+  setWaiting(true);
+  waitTimer=setInterval(checkWait, 2000);
 }
 async function inviteChess(){
   var s=await needSession(); if(!s) return;
