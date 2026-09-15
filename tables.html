@@ -45,7 +45,9 @@ h1{margin:0 0 4px;font-size:26px;text-align:center;color:#1A2744}
 .auth h2{margin:0 0 6px;font-size:16px;text-align:center;color:#1A2744}
 .auth input{width:100%;margin:0 0 8px;padding:10px 12px;border-radius:10px;border:1px solid #d7c9b0;background:#fff;color:#1A2744;font-family:inherit}
 .auth .who{text-align:center;font-size:13px;margin:0 0 8px;color:#1A2744}
+.hint{text-align:center;font-size:12px;line-height:1.4;color:#5a5044;margin:0 0 10px}
 .err{color:#9b2c2c;font-size:12px;text-align:center;min-height:16px}
+#authForm.closed,#authOut.closed{display:none !important}
 @media(max-width:700px){
 header{height:64px;padding:0 10px}
 .brand{font-size:18px}
@@ -73,22 +75,26 @@ body{background-attachment:scroll}
 <main>
 <div class="intro">
 <h1>The tables</h1>
-<p class="lead">Sit vs the house for free. Sign in to find a player or invite a friend by username — no table codes.</p>
+<p class="lead">Sit vs the house for free. Log in with email. Invite friends with your public name (example: brainwhim) — do not type an @.</p>
 </div>
 <section class="auth" id="authBox">
   <h2>Your seat</h2>
   <p class="who" id="who">Checking…</p>
+  <p class="hint" id="seatHint">Email + password to sign in. Username is only your public name for invites.</p>
   <p class="err" id="authErr"></p>
   <div id="authForm">
-    <input id="uname" type="text" maxlength="20" autocomplete="username" placeholder="username (letters, numbers)">
-    <input id="email" type="email" autocomplete="email" placeholder="you@email.com">
+    <input id="email" type="email" autocomplete="username" placeholder="email">
     <input id="pass" type="password" autocomplete="current-password" placeholder="password (6+ characters)">
+    <div id="createExtra" style="display:none">
+      <input id="uname" type="text" maxlength="20" autocomplete="off" placeholder="public username (no @)">
+    </div>
     <div class="row" style="justify-content:center">
       <button class="btn go" type="button" onclick="bwSignIn()">Sign in</button>
-      <button class="btn ghost" type="button" onclick="bwSignUp()">Create account</button>
+      <button class="btn ghost" type="button" onclick="showCreate()">Create account</button>
+      <button class="btn go" type="button" id="createGo" style="display:none" onclick="bwSignUp()">Save account</button>
     </div>
   </div>
-  <div id="authOut" hidden>
+  <div id="authOut" class="closed">
     <div class="row" id="needName" style="display:none;margin-bottom:8px">
       <input id="unameLater" maxlength="20" placeholder="choose a username">
       <button class="btn go" type="button" onclick="saveUsername()">Save name</button>
@@ -107,7 +113,7 @@ body{background-attachment:scroll}
 <button class="btn go" type="button" onclick="findRandomChess()">Find a player</button>
 </div>
 <div class="row" style="margin-top:8px">
-<input id="inviteName" maxlength="20" placeholder="friend username" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<input id="inviteName" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
 <button class="btn ghost" type="button" onclick="inviteChess()">Invite friend</button>
 </div>
 </article>
@@ -268,19 +274,29 @@ async function paint(session){
   sessionUser=session && session.user ? session.user : null;
   if(sessionUser){
     var prof=await loadProfile(sessionUser);
-    who.textContent="Signed in as @"+(prof && prof.username ? prof.username : myName);
-    form.hidden=true; out.hidden=false;
+    var handle=cleanName((prof && prof.username) || myName);
+    who.textContent=handle ? ("Signed in as "+handle) : "Signed in";
+    document.getElementById("seatHint").textContent=handle
+      ? ("Friends invite you as "+handle+" — no @. You still log in with email.")
+      : "Save a public username so friends can invite you.";
+    form.classList.add("closed"); out.classList.remove("closed");
     document.getElementById("needName").style.display=(prof && prof.username)?"none":"flex";
     listenNotices();
   } else {
     myName="";
     who.textContent="Sign in to keep a seat";
-    form.hidden=false; out.hidden=true;
+    document.getElementById("seatHint").textContent="Email + password to sign in. Username is only your public name for invites.";
+    form.classList.remove("closed"); out.classList.add("closed");
     document.getElementById("mailDot").classList.remove("on");
     document.getElementById("mailList").textContent="Sign in to see invites.";
   }
 }
 function bwErr(e){ document.getElementById("authErr").textContent=e? (e.message||String(e)) : ""; }
+function showCreate(){
+  document.getElementById("createExtra").style.display="block";
+  document.getElementById("createGo").style.display="inline-block";
+  document.getElementById("seatHint").textContent="Create: email, password, and a public name with no @. Then confirm the email.";
+}
 async function bwSignUp(){
   bwErr("");
   var username=cleanName(document.getElementById("uname").value);
@@ -292,7 +308,7 @@ async function bwSignUp(){
   if(r.data.user){
     await sb.from("profiles").upsert({id:r.data.user.id, username:username, display_name:username});
   }
-  document.getElementById("who").textContent="Check "+email+" for a confirm link, then sign in as @"+username+".";
+  document.getElementById("who").textContent="Check "+email+" to confirm, then sign in with that email. Friends will find you as "+username+".";
 }
 async function bwSignIn(){
   bwErr("");
@@ -310,7 +326,8 @@ async function saveUsername(){
   var r=await sb.from("profiles").upsert({id:sessionUser.id, username:username, display_name:username});
   if(r.error){ bwErr(r.error); return; }
   myName=username;
-  document.getElementById("who").textContent="Signed in as @"+username;
+  document.getElementById("who").textContent="Signed in as "+username;
+  document.getElementById("seatHint").textContent="Friends invite you as "+username+" — no @.";
   document.getElementById("needName").style.display="none";
 }
 ready();
