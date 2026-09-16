@@ -86,6 +86,7 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 .pc{font-size:clamp(20px,5.2vw,32px);line-height:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.28))}
 .pc.w{color:#163A8A;text-shadow:0 0 1px #C9A227,0 1px 0 #0a1f4a}
 .pc.b{color:#146B4A;text-shadow:0 0 1px #C9A227,0 1px 0 #083322}
+.ckimg{width:86%;height:108%;object-fit:contain;object-position:bottom center;pointer-events:none;filter:drop-shadow(0 6px 4px rgba(0,0,0,.32))}
 .pcimg{width:78%;height:92%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 6px 4px rgba(0,0,0,.28));pointer-events:none;background:transparent;margin:0 auto}
 #room-ch .pcimg{
   width:92%;height:138%;object-fit:contain;object-position:bottom center;
@@ -193,14 +194,8 @@ body.seated[data-scene="ch"] .parlor .sqgrid{
   box-shadow:0 8px 16px rgba(40,30,16,.18)
 }
 body.seated[data-scene="ch"] .seat{display:none}
-body.seated[data-scene="ch"] #stage{padding-bottom:64px}
 body.seated[data-scene="ch"] .taken{
-  justify-content:center;background:rgba(255,252,247,.92);border-radius:12px;
-  padding:4px 10px;margin:6px auto;max-width:420px;position:relative;z-index:5
-}
-body.seated[data-scene="ch"] #chYouTook{margin-top:12px}
-body.seated[data-scene="ch"] .taken:not(:has(img)){
-  height:0;min-height:0;padding:0;margin:0;opacity:0;overflow:hidden
+  justify-content:center;background:rgba(255,252,247,.9);border-radius:12px;padding:4px 10px;margin:6px auto;max-width:420px
 }
 body.seated[data-scene="ch"] .taken .lab{color:#1A2744}
 @media(max-width:700px){
@@ -304,7 +299,7 @@ body{background-size:cover;background-position:center 16%}
 <body data-scene="ch">
 <header>
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
-<div class="hdr"><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></div>
+<div class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="index.html">Home</a></div>
 </header>
 <div class="games">
 <button type="button" onclick="showRoom('c4',this)">Connect Four</button>
@@ -317,6 +312,7 @@ body{background-size:cover;background-position:center 16%}
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the beach</button>
+<a class="stand" href="tables.html">Tables</a>
 </div>
 <h1>Beach Connect Four</h1>
 <p class="sub">You are cobalt. Ivory answers. Tap a column to drop.</p>
@@ -327,6 +323,7 @@ body{background-size:cover;background-position:center 16%}
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the garden</button>
+<a class="stand" href="tables.html">Tables</a>
 </div>
 <h1>Garden Checkers</h1>
 <p class="sub">You are cobalt. Ivory answers. Jump when you can. Kings go both ways.</p>
@@ -341,6 +338,7 @@ body{background-size:cover;background-position:center 16%}
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the garden</button>
+<a class="stand" href="tables.html">Tables</a>
 </div>
 <h1>Garden Chess</h1>
 <p class="sub">You are cobalt with gold. Ivory answers. Tap a piece, then a square.</p>
@@ -359,6 +357,7 @@ body{background-size:cover;background-position:center 16%}
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the library</button>
+<a class="stand" href="tables.html">Tables</a>
 </div>
 <h1>Library Backgammon</h1>
 <p class="sub">You are ivory, moving home to the lower right. Hit singles. Bear off when all are home.</p>
@@ -470,9 +469,8 @@ function ckPaint(){
     var inside="";
     var v=ck[r][c];
     if(v){
-      var side=(v===1||v===3)?"redm":"blkm";
-      var king=(v===3||v===4);
-      inside='<div class="manwrap"><div class="man '+side+(king?" king":"")+'"></div></div>';
+      var src="checker-"+((v===1||v===3)?"w":"b")+((v===3||v===4)?"-K":"")+".png";
+      inside='<img class="ckimg" alt="" src="'+src+'">';
     }
     html+='<button type="button" class="'+cls+'" onclick="ckClick('+r+','+c+')">'+inside+'</button>';
   }
@@ -480,7 +478,10 @@ function ckPaint(){
   function ckTray(id, arr, label, cls){
     var el=document.getElementById(id); if(!el) return;
     var h='<span class="lab">'+label+'</span>';
-    for(var i=0;i<arr.length;i++) h+='<div class="man '+cls+'" style="width:16px;height:16px"></div>';
+    for(var i=0;i<arr.length;i++){
+      var src="checker-"+((arr[i]===1||arr[i]===3)?"w":"b")+((arr[i]===3||arr[i]===4)?"-K":"")+".png";
+      h+='<img class="ckimg" alt="" src="'+src+'" style="width:22px;height:22px">';
+    }
     el.innerHTML=h;
   }
   ckTray("ckBotTook", ckBotTook||[], "Ivory took", "redm");
