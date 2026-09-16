@@ -367,7 +367,7 @@ body{background-size:cover;background-position:center 16%}
 <div id="room-ck" hidden>
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the garden</button>
+<button class="stand" type="button" onclick="standUp()">Back to the checkers garden</button>
 <a class="stand" href="tables.html">Tables</a>
 </div>
 <h1>Garden Checkers</h1>
@@ -386,7 +386,7 @@ body{background-size:cover;background-position:center 16%}
 <div id="room-ch">
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the garden</button>
+<button class="stand" type="button" onclick="standUp()">Back to the chess garden</button>
 <a class="stand" href="tables.html">Tables</a>
 </div>
 <h1>Garden Chess</h1>
@@ -427,7 +427,12 @@ function showRoom(id,btn){
   document.getElementById("room-bg").hidden = id!=="bg";
   document.body.setAttribute("data-scene", id);
   var all=document.querySelectorAll(".games button");
+  if(!btn){
+    var map={c4:0,ck:1,ch:2,bg:3};
+    btn=all[map[id]];
+  }
   for(var i=0;i<all.length;i++) all[i].classList.toggle("on", all[i]===btn);
+  try{ history.replaceState(null,"","board.html?scene="+id); }catch(e){}
   standUp();
 }
 function sitDown(){ document.body.classList.add("seated"); }
@@ -1103,6 +1108,15 @@ function bgAi(){
 }
 
 c4New(); ckNew(); chNew(); bgNew();
+(function(){
+  var s="ch";
+  try{
+    var q=new URLSearchParams(location.search);
+    var v=q.get("scene");
+    if(v==="c4"||v==="ck"||v==="ch"||v==="bg") s=v;
+  }catch(e){}
+  showRoom(s);
+})();
 </script>
 </body>
 </html>
