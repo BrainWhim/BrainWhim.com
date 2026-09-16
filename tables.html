@@ -110,20 +110,25 @@ body{background-attachment:scroll}
 <p>Cobalt and gold vs ivory. Play the house, sit with anyone online, or invite a friend.</p>
 <div class="row">
 <a class="btn go" href="board.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtn" onclick="playOnlineChess()">Play someone online</button>
+<button class="btn go" type="button" id="onlineBtnChess" onclick="playOnline('chess')">Play someone online</button>
 </div>
-<p class="hint" id="waitHint" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<p class="hint waitHint" id="waitHintChess" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
 <div class="row" style="margin-top:8px">
 <input id="inviteName" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteChess()">Invite friend</button>
+<button class="btn ghost" type="button" onclick="inviteFriend('chess')">Invite friend</button>
 </div>
 </article>
 <article class="room">
 <h2>Garden checkers</h2>
-<p>Same table. Jump when you can.</p>
+<p>Same table. Jump when you can. Play the house, sit with anyone online, or invite a friend.</p>
 <div class="row">
 <a class="btn go" href="board.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" id="onlineBtnCk" onclick="playOnline('checkers')">Play someone online</button>
+</div>
+<p class="hint waitHint" id="waitHintCheckers" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<div class="row" style="margin-top:8px">
+<input id="inviteNameCk" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<button class="btn ghost" type="button" onclick="inviteFriend('checkers')">Invite friend</button>
 </div>
 </article>
 <article class="room">
@@ -161,17 +166,32 @@ async function needSession(){
   if(!s){ alert("Sign in first."); return null; }
   return s;
 }
-async function makeRoom(kind){
+function roomPage(game){ return game==="checkers"?"checkers-room.html":"chess-room.html"; }
+function startState(game){
+  if(game==="checkers"){
+    var b=[],r,c;
+    for(r=0;r<8;r++){ b[r]=[]; for(c=0;c<8;c++){ b[r][c]=0; if((r+c)%2===1 && r<3) b[r][c]=2; if((r+c)%2===1 && r>4) b[r][c]=1; } }
+    return {board:b, turn:1, last:null, over:false, took1:[], took2:[]};
+  }
+  return startBoard();
+}
+async function makeRoom(kind, game){
   var s=await needSession(); if(!s) return null;
-  var r=await sb.from("rooms").insert({code:code4(), game:"chess", status:"lobby", kind:kind||"open", host:s.user.id, state:startBoard()}).select().single();
+  game=game||"chess";
+  var r=await sb.from("rooms").insert({code:code4(), game:game, status:"lobby", kind:kind||"open", host:s.user.id, state:startState(game)}).select().single();
   if(r.error){ alert(r.error.message); return null; }
   return r.data;
 }
-function setWaiting(on){
-  var h=document.getElementById("waitHint");
-  var b=document.getElementById("onlineBtn");
-  if(h) h.style.display=on?"block":"none";
-  if(b){ b.disabled=!!on; b.textContent=on?"Waiting for a player…":"Play someone online"; }
+function setWaiting(on, game){
+  document.querySelectorAll(".waitHint").forEach(function(el){ el.style.display="none"; });
+  ["onlineBtnChess","onlineBtnCk"].forEach(function(id){
+    var b=document.getElementById(id); if(b){ b.disabled=false; b.textContent="Play someone online"; }
+  });
+  if(!on) return;
+  var h=document.getElementById(game==="checkers"?"waitHintCheckers":"waitHintChess");
+  var b=document.getElementById(game==="checkers"?"onlineBtnCk":"onlineBtnChess");
+  if(h) h.style.display="block";
+  if(b){ b.disabled=true; b.textContent="Waiting for a player…"; }
 }
 async function cancelWait(){
   if(waitTimer){ clearInterval(waitTimer); waitTimer=null; }
@@ -180,44 +200,48 @@ async function cancelWait(){
 }
 async function checkWait(){
   if(!waitRoom) return;
-  var q=await sb.from("rooms").select("id,code,guest,status").eq("id", waitRoom.id).single();
+  var q=await sb.from("rooms").select("id,code,guest,game,status").eq("id", waitRoom.id).single();
   if(q.data && q.data.guest){
     clearInterval(waitTimer); waitTimer=null;
-    location.href="chess-room.html?code="+q.data.code+"&online=1";
+    location.href=roomPage(q.data.game)+"?code="+q.data.code+"&online=1";
   }
 }
-async function playOnlineChess(){
+async function playOnline(game){
   var s=await needSession(); if(!s) return;
-  var q=await sb.from("rooms").select("*").eq("game","chess").eq("status","lobby").is("guest",null).neq("host", s.user.id).order("created_at",{ascending:true}).limit(5);
+  game=game||"chess";
+  var q=await sb.from("rooms").select("*").eq("game",game).eq("status","lobby").is("guest",null).neq("host", s.user.id).order("created_at",{ascending:true}).limit(5);
   if(q.error){ alert(q.error.message); return; }
   var open=(q.data||[]).filter(function(r){ return !r.kind || r.kind==="open"; })[0];
   if(open){
     var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
     if(u.error){ alert(u.error.message); return; }
-    location.href="chess-room.html?code="+u.data.code+"&online=1";
+    location.href=roomPage(game)+"?code="+u.data.code+"&online=1";
     return;
   }
-  waitRoom=await makeRoom("open");
+  waitRoom=await makeRoom("open", game);
   if(!waitRoom) return;
-  setWaiting(true);
+  setWaiting(true, game);
   waitTimer=setInterval(checkWait, 2000);
 }
-async function inviteChess(){
+async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
-  var name=cleanName(document.getElementById("inviteName").value);
+  game=game||"chess";
+  var box=document.getElementById(game==="checkers"?"inviteNameCk":"inviteName");
+  var name=cleanName(box && box.value);
   if(name.length<3){ alert("Enter your friend's username."); return; }
   var p=await sb.from("profiles").select("id,username,display_name").ilike("username", name).maybeSingle();
   if(p.error){ alert(p.error.message); return; }
   if(!p.data){ alert("No player with that username."); return; }
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
-  var room=await makeRoom("private");
+  var room=await makeRoom("private", game);
   if(!room) return;
+  var label=game==="checkers"?"garden checkers":"garden chess";
   var n=await sb.from("notices").insert({
-    to_id:p.data.id, from_id:s.user.id, kind:"invite", game:"chess", room_code:room.code,
-    body:(myName||"A player")+" invited you to garden chess."
+    to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
+    body:(myName||"A player")+" invited you to "+label+"."
   });
   if(n.error){ alert(n.error.message); return; }
-  location.href="chess-room.html?code="+room.code;
+  location.href=roomPage(game)+"?code="+room.code;
 }
 async function acceptInvite(id, code){
   var s=await needSession(); if(!s) return;
@@ -228,7 +252,7 @@ async function acceptInvite(id, code){
     if(u.error){ alert(u.error.message); return; }
   }
   await sb.from("notices").update({status:"accepted", read:true}).eq("id", id);
-  location.href="chess-room.html?code="+code;
+  location.href=roomPage(q.data.game)+"?code="+code;
 }
 async function declineInvite(id){
   await sb.from("notices").update({status:"declined", read:true}).eq("id", id);
