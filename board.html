@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Board Night · BrainWhim Play</title>
+<title>Board Games · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#1A2744;--whim:#7EB6D9}
@@ -127,7 +127,9 @@ body:not(.seated) #c4Table,
 body:not(.seated) #room-bg h1,
 body:not(.seated) #room-bg .sub,
 body:not(.seated) #room-bg .bar,
-body:not(.seated) #room-bg .bgwrap{display:none!important}
+body:not(.seated) #room-bg .bgwrap,
+body:not(.seated) #bgStage,
+body:not(.seated) #bgTable{display:none!important}
 body:not(.seated) .wrap{background:transparent;border-color:transparent;box-shadow:none;max-width:none;margin:0;padding:0}
 body:not(.seated) .sitbar{margin:8px 0 0}
 body.seated .wrap{
@@ -138,8 +140,65 @@ body.seated .wrap{
   backdrop-filter:blur(10px);
   border-radius:22px
 }
+body.seated[data-scene="bg"] .games{display:none}
+body.seated[data-scene="bg"]{
+  background-size:150% auto;background-position:center 18%
+}
+body.seated[data-scene="bg"] .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:6;margin:0}
+body.seated[data-scene="bg"] h1,
+body.seated[data-scene="bg"] .sub{display:none}
+body.seated[data-scene="bg"] .bar{
+  position:sticky;top:8px;z-index:5;margin:8px auto;max-width:280px;
+  padding:6px 10px;border-radius:999px;background:rgba(255,252,247,.9);
+  justify-content:center
+}
 body.seated[data-scene="bg"] .wrap{
-  background:linear-gradient(180deg,rgba(250,246,238,.94),rgba(232,222,206,.9));
+  max-width:860px;margin:0 auto;padding:4px 8px 72px;
+  background:transparent;border:0;box-shadow:none;backdrop-filter:none
+}
+body.seated[data-scene="bg"] #bgStage{
+  perspective:920px;perspective-origin:50% 70%;padding:0
+}
+body.seated[data-scene="bg"] #bgTable{
+  width:min(640px,94vw);margin:8px auto 0;
+  transform:rotateX(18deg) scale(1.04);transform-origin:50% 55%;transform-style:preserve-3d
+}
+body.seated[data-scene="bg"] .bgwrap{gap:8px}
+body.seated[data-scene="bg"] .bgframe{
+  max-width:none;width:100%;
+  padding:18px 16px 20px;
+  border-radius:6px;
+  background:
+    linear-gradient(180deg,#f8f3e8,#efe6d4);
+  border:18px solid #c6a15a;
+  outline:5px solid #f3ead6;
+  outline-offset:-24px;
+  box-shadow:
+    0 28px 40px rgba(30,22,12,.4),
+    0 0 0 2px #8a6e3e,
+    0 0 0 6px #e8d7a8,
+    0 0 0 8px #b8893a,
+    inset 0 1px 0 #fff8ee,
+    inset 0 0 0 3px #d4b56a
+}
+body.seated[data-scene="bg"] .bgboard{
+  background:
+    linear-gradient(180deg,#f7f2ea 0%,#efe8dc 55%,#e6ddd0 100%);
+  border:2px solid #d4c4a4;
+  box-shadow:inset 0 0 22px rgba(140,120,90,.16)
+}
+body.seated[data-scene="bg"] .bgbar{
+  background:linear-gradient(180deg,#e8d7a8,#c9a66b 55%,#b8893a);
+  color:#3a2a12;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 0 0 1px #8a6e3e
+}
+body.seated[data-scene="bg"] .bgmid{
+  background:linear-gradient(180deg,#e8d7a8,#c9a66b 40%,#a67c2e);
+  color:#3a2a12;
+  letter-spacing:.08em
+}
+@media(max-width:700px){
+  body.seated[data-scene="bg"] #bgTable{width:96vw;margin-top:4px;transform:rotateX(12deg) scale(1.02)}
 }
 body.seated[data-scene="c4"] .games{display:none}
 body.seated[data-scene="c4"]{
@@ -345,8 +404,8 @@ overflow:hidden}
 .bgpt::before{content:"";position:absolute;left:6%;right:6%;height:92%;filter:drop-shadow(0 2px 2px rgba(40,30,20,.18))}
 .bgpt.top::before{top:0;clip-path:polygon(50% 100%,0 0,100% 0);background:linear-gradient(180deg,#fbfaf6,#e8e2d6)}
 .bgpt.bot::before{bottom:0;clip-path:polygon(50% 0,0 100%,100% 100%);background:linear-gradient(0deg,#fbfaf6,#e8e2d6)}
-.bgpt.dark.top::before{background:linear-gradient(180deg,#6a7c92,#3d4e63)}
-.bgpt.dark.bot::before{background:linear-gradient(0deg,#6a7c92,#3d4e63)}
+.bgpt.dark.top::before{background:linear-gradient(180deg,#8a9aad,#5b6d82)}
+.bgpt.dark.bot::before{background:linear-gradient(0deg,#8a9aad,#5b6d82)}
 .bgpt.can::after,.bgpt.dest::after,.bgpt.pick::after,.bgpt.last::after{
   content:"";position:absolute;left:6%;right:6%;height:92%;pointer-events:none;z-index:2;border-radius:0
 }
@@ -366,7 +425,7 @@ overflow:hidden}
 .bgchk{width:26px;height:26px;border-radius:50%;flex:0 0 auto;
 box-shadow:0 4px 0 rgba(0,0,0,.22),inset 0 -4px 5px rgba(0,0,0,.2),inset 0 3px 4px rgba(255,255,255,.45)}
 .bgchk.w{background:radial-gradient(circle at 32% 26%,#fff,#efe6d4 52%,#d2c3a4);border:1px solid #c9b48a}
-.bgchk.b{background:radial-gradient(circle at 32% 26%,#5a6f88,#243246 55%,#101820);border:1px solid #0c141c}
+.bgchk.b{background:radial-gradient(circle at 32% 26%,#8aa0b4,#4d6278 52%,#2a3a4c);border:1px solid #243246}
 .bgbar{background:linear-gradient(180deg,#e8e0d2,#cfc3ae);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#1A2744;font-size:9px;font-weight:700;padding:4px 2px;text-align:center;border:0;cursor:pointer;font-family:inherit;box-shadow:inset 0 0 0 1px #b8893a}
 .bgbar.can{box-shadow:inset 0 0 0 3px #C9A227}
 .bgbar.dest{box-shadow:inset 0 0 0 3px #2bb7e8;background:#d6eef5}
@@ -482,6 +541,8 @@ body{background-size:cover;background-position:center 16%}
 <h1>Library Backgammon</h1>
 <p class="sub">You are ivory, moving home to the lower right. Hit singles. Bear off when all are home.</p>
 <div class="bar"><span class="msg" id="bgmsg">Roll to start</span><button type="button" onclick="bgNew()">New game</button></div>
+<div id="bgStage">
+<div id="bgTable">
 <div class="bgwrap">
 <div class="bgdice" id="bgdice"></div>
 <div class="bgframe"><div class="bgboard" id="bgboard"></div></div>
