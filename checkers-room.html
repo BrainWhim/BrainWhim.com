@@ -31,11 +31,12 @@ h1{display:none}
 .sel{outline:3px solid #C9A227;outline-offset:-3px}
 .mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
 .to{box-shadow:inset 0 0 0 4px #C9A227}
-.manwrap{width:68%;height:68%;display:flex;align-items:center;justify-content:center;position:relative}
-.man{width:100%;height:100%;border-radius:50%;pointer-events:none}
-.redm{background:radial-gradient(circle at 32% 28%,#5b8fe8,#163A8A 52%,#0c214e);box-shadow:0 3px 0 #0a1c40,inset 0 -3px 5px rgba(0,0,0,.3)}
-.blkm{background:radial-gradient(circle at 32% 28%,#e8d9b0,#d7c49a 40%,#c4b48a);box-shadow:0 3px 0 #8a7a55,inset 0 -3px 5px rgba(0,0,0,.2)}
-.king::after{content:"♛";position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:.85em;color:#E8C15A;pointer-events:none}
+.manwrap{width:72%;height:72%;display:flex;align-items:center;justify-content:center;position:relative}
+.man{width:100%;height:100%;border-radius:50%;pointer-events:none;box-sizing:border-box;border:2px solid #E2C56A}
+.redm{background:radial-gradient(circle at 32% 26%,#9ec4f5 0%,#2a5fb3 38%,#163A8A 62%,#0b1f4a 100%);box-shadow:0 8px 10px rgba(0,0,0,.35),inset 0 3px 4px rgba(255,255,255,.35),inset 0 -4px 6px rgba(0,0,0,.35)}
+.blkm{background:radial-gradient(circle at 32% 26%,#fff6e4 0%,#e8d7b0 38%,#c9b17a 62%,#8a7344 100%);box-shadow:0 8px 10px rgba(0,0,0,.28),inset 0 3px 4px rgba(255,255,255,.5),inset 0 -4px 6px rgba(0,0,0,.22)}
+.king::after{content:"♛";position:absolute;top:-7px;left:50%;transform:translateX(-50%);font-size:.9em;color:#F0D48A;text-shadow:0 1px 2px #5a4010;pointer-events:none}
+.flyer{position:fixed;z-index:80;pointer-events:none;transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .55s ease;will-change:transform}
 .row{display:flex;gap:8px;justify-content:center;position:fixed;left:0;right:0;bottom:10px;z-index:6}
 .btn{border:0;border-radius:999px;padding:8px 14px;background:rgba(26,39,68,.88);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
 .tray{min-height:28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;margin:6px auto;font-size:11px;font-weight:700;background:rgba(255,252,247,.92);border-radius:12px;padding:4px 10px;max-width:420px;position:relative;z-index:5}
@@ -63,7 +64,7 @@ h1{display:none}
 <script src="play-config.js"></script>
 <script>
 var sb, room, me, mySide=null;
-var ck, ckTurn=1, ckSel=null, ckOver=false, ckLast=null, took1=[], took2=[];
+var ck, ckTurn=1, ckSel=null, ckOver=false, ckLast=null, took1=[], took2=[], flying=null, busy=false;
 var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
 if(CODE) CODE=CODE.toUpperCase();
 function ckSide(v){ if(v===1||v===3) return 1; if(v===2||v===4) return 2; return 0; }
@@ -142,11 +143,12 @@ function ckPaint(){
     if(ckSel && ckCanLand(ckSel[0],ckSel[1],r,c)) cls+=" mv";
     if(ckLast && ckLast[2]===r && ckLast[3]===c) cls+=" to";
     var v=ck[r][c], inside="";
+    if(flying && flying[0]===r && flying[1]===c) v=0;
     if(v){
       var side=(v===1||v===3)?"redm":"blkm";
       inside='<div class="manwrap"><div class="man '+side+(ckKing(v)?" king":"")+'"></div></div>';
     }
-    html+='<button type="button" class="'+cls+'" onclick="ckClick('+r+','+c+')">'+inside+'</button>';
+    html+='<button type="button" class="'+cls+'" data-r="'+r+'" data-c="'+c+'" onclick="ckClick('+r+','+c+')">'+inside+'</button>';
   }
   document.getElementById("ckboard").innerHTML=html;
   function tray(id, arr, label, cls){
@@ -158,19 +160,57 @@ function ckPaint(){
   if(mySide===2){ tray("trayOpp", took1, "Cobalt took", "blkm"); tray("trayYou", took2, "You took", "redm"); }
   else { tray("trayOpp", took2, "Ivory took", "redm"); tray("trayYou", took1, "You took", "blkm"); }
 }
+function squareEl(r,c){ return document.querySelector('#ckboard .sq[data-r="'+r+'"][data-c="'+c+'"]'); }
+function flyMan(sr,sc,er,ec, cls, king, done){
+  var a=squareEl(sr,sc), b=squareEl(er,ec);
+  if(!a||!b){ if(done) done(); return; }
+  var ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  var fl=document.createElement("div");
+  fl.className="flyer manwrap";
+  fl.innerHTML='<div class="man '+cls+(king?" king":"")+'"></div>';
+  var w=ra.width*0.72, h=ra.height*0.72;
+  fl.style.width=w+"px"; fl.style.height=h+"px";
+  fl.style.left=(ra.left+(ra.width-w)/2)+"px";
+  fl.style.top=(ra.top+(ra.height-h)/2)+"px";
+  document.body.appendChild(fl);
+  flying=[er,ec];
+  ckPaint();
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      var lift=Math.min(64, Math.hypot(rb.left-ra.left, rb.top-ra.top)*0.22);
+      fl.style.filter="drop-shadow(0 24px 14px rgba(0,0,0,.3))";
+      fl.style.transform="translate("+(rb.left-ra.left)+"px,"+(rb.top-ra.top-lift)+"px) scale(1.14)";
+      setTimeout(function(){
+        fl.style.transform="translate("+(rb.left-ra.left)+"px,"+(rb.top-ra.top)+"px) scale(1)";
+        fl.style.filter="drop-shadow(0 8px 5px rgba(0,0,0,.28))";
+      }, 280);
+    });
+  });
+  setTimeout(function(){
+    if(fl.parentNode) fl.parentNode.removeChild(fl);
+    flying=null; busy=false; ckPaint();
+    if(done) done();
+  }, 580);
+}
 async function pushState(){
   if(!room) return;
   await sb.from("rooms").update({state:snapshot(), status:ckOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
 }
 function ckClick(r,c){
-  if(ckOver || !mySide || ckTurn!==mySide) return;
+  if(ckOver || !mySide || ckTurn!==mySide || busy) return;
   if(ckSel && ckCanLand(ckSel[0],ckSel[1],r,c)){
-    ckLast=[ckSel[0],ckSel[1],r,c];
-    var jumped=ckMove(ckSel[0],ckSel[1],r,c);
-    if(jumped && ckJumpsFrom(r,c).length){ ckSel=[r,c]; ckPaint(); setMsg("Jump again"); pushState(); return; }
-    ckSel=null;
-    if(!ckHas(3-mySide)){ ckOver=true; setMsg("You win."); ckPaint(); pushState(); return; }
-    ckTurn=3-mySide; setMsg(turnMsg()); ckPaint(); pushState(); return;
+    var sr=ckSel[0], sc=ckSel[1], v=ck[sr][sc];
+    var cls=(v===1||v===3)?"redm":"blkm", king=ckKing(v);
+    ckLast=[sr,sc,r,c];
+    busy=true;
+    var jumped=ckMove(sr,sc,r,c);
+    flyMan(sr,sc,r,c, cls, king, function(){
+      if(jumped && ckJumpsFrom(r,c).length){ ckSel=[r,c]; setMsg("Jump again"); ckPaint(); pushState(); return; }
+      ckSel=null;
+      if(!ckHas(3-mySide)){ ckOver=true; setMsg("You win."); ckPaint(); pushState(); return; }
+      ckTurn=3-mySide; setMsg(turnMsg()); ckPaint(); pushState();
+    });
+    return;
   }
   if(ckSide(ck[r][c])===mySide){ ckSel=[r,c]; ckPaint(); }
   else { ckSel=null; ckPaint(); }
