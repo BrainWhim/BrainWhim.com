@@ -122,6 +122,8 @@ body:not(.seated) #room-c4 h1,
 body:not(.seated) #room-c4 .sub,
 body:not(.seated) #room-c4 .bar,
 body:not(.seated) #room-c4 .frame,
+body:not(.seated) #c4Stage,
+body:not(.seated) #c4Table,
 body:not(.seated) #room-bg h1,
 body:not(.seated) #room-bg .sub,
 body:not(.seated) #room-bg .bar,
@@ -139,8 +141,49 @@ body.seated .wrap{
 body.seated[data-scene="bg"] .wrap{
   background:linear-gradient(180deg,rgba(250,246,238,.94),rgba(232,222,206,.9));
 }
+body.seated[data-scene="c4"] .games{display:none}
+body.seated[data-scene="c4"]{
+  background-size:150% auto;background-position:center 28%
+}
+body.seated[data-scene="c4"] .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:6;margin:0}
+body.seated[data-scene="c4"] h1,
+body.seated[data-scene="c4"] .sub{display:none}
+body.seated[data-scene="c4"] .bar{
+  position:sticky;top:8px;z-index:5;margin:8px auto;max-width:280px;
+  padding:6px 10px;border-radius:999px;background:rgba(255,252,247,.9);
+  justify-content:center
+}
 body.seated[data-scene="c4"] .wrap{
-  background:linear-gradient(180deg,rgba(232,246,250,.92),rgba(210,232,236,.88));
+  max-width:780px;margin:0 auto;padding:4px 8px 72px;
+  background:transparent;border:0;box-shadow:none;backdrop-filter:none
+}
+body.seated[data-scene="c4"] #c4Stage{
+  perspective:920px;perspective-origin:50% 70%;padding:0
+}
+body.seated[data-scene="c4"] #c4Table{
+  width:min(520px,92vw);margin:8px auto 0;
+  transform:rotateX(22deg) scale(1.06);transform-origin:50% 55%;transform-style:preserve-3d
+}
+body.seated[data-scene="c4"] .parlor{
+  background:radial-gradient(120% 80% at 50% 30%, #fffdf8 0%, #f3ead6 58%, #e4d4b8 100%);
+  border:14px solid #c9b08a;
+  outline:6px solid #c5e4ee;
+  outline-offset:-20px;
+  border-radius:0;
+  padding:22px 22px 26px;
+  box-shadow:0 28px 40px rgba(30,22,12,.38),inset 0 1px 0 #fff,inset 0 0 0 3px #d7c49a
+}
+body.seated[data-scene="c4"] .parlor::after{display:none}
+body.seated[data-scene="c4"] .c4{
+  background:linear-gradient(180deg,#16325C,#10243f 60%,#0b1a30);
+  padding:12px 10px 14px;border:8px solid #e8d7a8;border-radius:0;
+  box-shadow:0 8px 16px rgba(40,30,16,.18), inset 0 0 0 2px #c9b08a
+}
+body.seated[data-scene="c4"] .hole{
+  box-shadow:inset 0 8px 12px rgba(0,0,0,.45),inset 0 -2px 0 rgba(255,255,255,.08)
+}
+@media(max-width:700px){
+  body.seated[data-scene="c4"] #c4Table{width:94vw;margin-top:4px;transform:rotateX(16deg) scale(1.04)}
 }
 body.seated h1{font-size:22px;letter-spacing:.01em}
 body.seated .sub{font-size:12px;opacity:.85}
@@ -384,7 +427,13 @@ body{background-size:cover;background-position:center 16%}
 <h1>Beach Connect Four</h1>
 <p class="sub">You are cobalt. Ivory answers. Tap a column to drop.</p>
 <div class="bar"><span class="msg" id="c4msg">Your turn</span><button type="button" onclick="c4New()">New game</button></div>
-<div class="frame"><div class="c4" id="c4board"></div></div>
+<div id="c4Stage">
+<div id="c4Table">
+<div class="parlor">
+<div class="c4" id="c4board"></div>
+</div>
+</div>
+</div>
 </div>
 <div id="room-ck" hidden>
 <div class="sitbar">
@@ -461,23 +510,51 @@ function sitDown(){ document.body.classList.add("seated"); }
 function standUp(){ document.body.classList.remove("seated"); }
 
 /* -------- Connect Four (working set) -------- */
-var c4g,c4over,c4last,c4wins;
+var c4g,c4over,c4last,c4wins,c4Busy=false,c4Flying=null;
 function c4New(){
-  c4g=[]; c4over=false; c4last=null; c4wins=[];
+  c4g=[]; c4over=false; c4last=null; c4wins=[]; c4Busy=false; c4Flying=null;
   for(var r=0;r<6;r++) c4g[r]=[0,0,0,0,0,0,0];
   document.getElementById("c4msg").textContent="Your turn";
   c4Paint();
 }
+function c4Hole(r,c){ return document.querySelector('#c4board .hole[data-r="'+r+'"][data-c="'+c+'"]'); }
 function c4Paint(){
   var html="";
   for(var r=0;r<6;r++) for(var c=0;c<7;c++){
     var cls="hole";
-    if(c4g[r][c]===1) cls+=" p1";
-    if(c4g[r][c]===2) cls+=" p2";
+    var v=c4g[r][c];
+    if(c4Flying && c4Flying[0]===r && c4Flying[1]===c) v=0;
+    if(v===1) cls+=" p1";
+    if(v===2) cls+=" p2";
     if(c4wins.some(function(w){return w[0]===r&&w[1]===c})) cls+=" win";
-    html+='<button type="button" class="'+cls+'" onclick="c4Play('+c+')"></button>';
+    html+='<button type="button" class="'+cls+'" data-r="'+r+'" data-c="'+c+'" onclick="c4Play('+c+')"></button>';
   }
   document.getElementById("c4board").innerHTML=html;
+}
+function dropDisc(r,c,p,done){
+  var dest=c4Hole(r,c), top=c4Hole(0,c)||dest;
+  if(!dest||!top){ if(done) done(); return; }
+  var rd=dest.getBoundingClientRect(), rt=top.getBoundingClientRect();
+  var fl=document.createElement("div");
+  fl.className="flyer hole "+(p===1?"p1":"p2");
+  var w=rd.width, h=rd.height;
+  fl.style.width=w+"px"; fl.style.height=h+"px"; fl.style.borderRadius="50%";
+  fl.style.left=rt.left+"px";
+  fl.style.top=(rt.top-h-8)+"px";
+  document.body.appendChild(fl);
+  c4Flying=[r,c];
+  c4Paint();
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      fl.style.filter="drop-shadow(0 18px 10px rgba(0,0,0,.35))";
+      fl.style.transform="translate(0px,"+(rd.top-(rt.top-h-8))+"px)";
+    });
+  });
+  setTimeout(function(){
+    if(fl.parentNode) fl.parentNode.removeChild(fl);
+    c4Flying=null; c4Busy=false; c4Paint();
+    if(done) done();
+  }, 520);
 }
 function c4Row(c){ for(var r=5;r>=0;r--) if(c4g[r][c]===0) return r; return -1; }
 function c4Line(p){
@@ -497,13 +574,15 @@ function c4Line(p){
   return null;
 }
 function c4Play(c){
-  if(c4over) return;
+  if(c4over||c4Busy) return;
   var r=c4Row(c);
   if(r<0){ document.getElementById("c4msg").textContent="That column is full"; return; }
-  c4g[r][c]=1; c4last=[r,c];
-  var w=c4Line(1);
-  if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Cobalt connects four."; c4Paint(); return; }
-  c4Paint(); c4Ai();
+  c4g[r][c]=1; c4last=[r,c]; c4Busy=true;
+  dropDisc(r,c,1,function(){
+    var w=c4Line(1);
+    if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Cobalt connects four."; c4Paint(); return; }
+    c4Ai();
+  });
 }
 function c4Ai(){
   var choice=-1,c,r,w;
@@ -511,10 +590,12 @@ function c4Ai(){
   if(choice<0) for(c=0;c<7;c++){ r=c4Row(c); if(r<0) continue; c4g[r][c]=1; w=c4Line(1); c4g[r][c]=0; if(w){ choice=c; break; } }
   if(choice<0){ var o=[3,2,4,1,5,0,6]; for(var i=0;i<7;i++) if(c4Row(o[i])>=0){ choice=o[i]; break; } }
   if(choice<0){ c4over=true; document.getElementById("c4msg").textContent="The board is full."; return; }
-  r=c4Row(choice); c4g[r][choice]=2;
-  w=c4Line(2);
-  if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Ivory connects four."; c4Paint(); return; }
-  document.getElementById("c4msg").textContent="Your turn"; c4Paint();
+  r=c4Row(choice); c4g[r][choice]=2; c4Busy=true;
+  dropDisc(r,choice,2,function(){
+    w=c4Line(2);
+    if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Ivory connects four."; c4Paint(); return; }
+    document.getElementById("c4msg").textContent="Your turn"; c4Paint();
+  });
 }
 
 /* -------- Checkers -------- */
