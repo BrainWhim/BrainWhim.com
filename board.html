@@ -160,7 +160,8 @@ body.seated[data-scene="bg"] #bgStage{
   perspective:920px;perspective-origin:50% 70%;padding:0
 }
 body.seated[data-scene="bg"] #bgTable{
-  width:min(620px,92vw);margin:8px auto 0;background:transparent;transform:none
+  width:min(620px,92vw);margin:8px auto 0;background:transparent;
+  transform:rotateX(18deg) scale(1.04);transform-origin:50% 55%;transform-style:preserve-3d
 }
 body.seated[data-scene="bg"] .bgwrap{gap:8px;background:transparent}
 body.seated[data-scene="bg"] .bgframe{
@@ -179,7 +180,7 @@ body.seated[data-scene="bg"] .bgframe{
 }
 body.seated[data-scene="bg"] .bgboard{
   position:relative;inset:auto;display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr)) 36px repeat(6,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr)) 44px repeat(6,minmax(0,1fr));
   grid-template-rows:1fr 1fr;
   min-height:420px;height:min(58vh,520px);
   background:linear-gradient(180deg,#fbf8f3,#ece6dc);
@@ -196,13 +197,18 @@ body.seated[data-scene="bg"] .bgchk{
 body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-12px}
 body.seated[data-scene="bg"] .bgpt.bot .bgchk{margin-top:-12px}
 body.seated[data-scene="bg"] .bgbar{
-  position:relative;font-size:9px;padding:6px 2px;line-height:1.2;
-  background:linear-gradient(180deg,#e8d7a8,#c9a66b 55%,#b8893a);
-  color:#3a2a12;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)
+  position:relative;font-size:0;padding:4px 2px;
+  background:linear-gradient(180deg,#c9a66b,#8a6e3e 55%,#6e552c);
+  color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0
 }
+body.seated[data-scene="bg"] .bgbar.off{
+  justify-content:flex-end
+}
+body.seated[data-scene="bg"] .bgbar .bgchk{width:28px;height:28px;margin:-10px 0 0}
 body.seated[data-scene="bg"] .bgmid{display:none}
 @media(max-width:700px){
-  body.seated[data-scene="bg"] #bgTable{width:96vw;margin-top:4px}
+  body.seated[data-scene="bg"] #bgTable{width:96vw;margin-top:4px;transform:rotateX(14deg) scale(1.02)}
   body.seated[data-scene="bg"] .bgboard{min-height:340px;height:52vh}
   body.seated[data-scene="bg"] .bgchk{width:26px;height:26px}
   body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-10px}
@@ -1222,11 +1228,18 @@ function bgPaint(){
   }
   for(p=13;p<=18;p++) html+=col(p,true);
   var barCls="bgbar"+(bgBar[1]&&can[0]&&bgSel==null?" can":"")+(bgSel===0?" pick":"");
-  html+='<button type="button" class="'+barCls+'" onclick="bgClick(0)">BAR<br>You '+bgBar[1]+'<br>Lib '+bgBar[2]+'</button>';
+  function pile(n, side){
+    var s="", k, src=side===1?"checker-w.png":"checker-b.png";
+    var show=Math.min(n,5);
+    for(k=0;k<show;k++) s+='<img class="bgchk" alt="" src="'+src+'">';
+    if(n>5) s+='<span style="font-size:9px;font-weight:800;color:#fff">'+n+'</span>';
+    return s;
+  }
+  html+='<button type="button" class="'+barCls+'" onclick="bgClick(0)" title="Bar">'+pile(bgBar[2],2)+pile(bgBar[1],1)+'</button>';
   for(p=19;p<=24;p++) html+=col(p,true);
   for(p=12;p>=7;p--) html+=col(p,false);
   var offCls="bgbar"+(dests[25]?" dest":"");
-  html+='<button type="button" class="'+offCls+'" onclick="bgClick(25)">OFF<br>You '+bgOff[1]+'<br>Lib '+bgOff[2]+'</button>';
+  html+='<button type="button" class="'+offCls+' off" onclick="bgClick(25)" title="Borne off">'+pile(bgOff[1],1)+pile(bgOff[2],2)+'</button>';
   for(p=6;p>=1;p--) html+=col(p,false);
   var board=document.getElementById("bgboard");
   if(board) board.innerHTML=html;
