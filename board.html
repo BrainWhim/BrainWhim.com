@@ -238,6 +238,9 @@ body.seated[data-scene="bg"] .bgbar.off{
 }
 body.seated[data-scene="bg"] .bgbar .bgchk{width:28px;height:28px;margin:-10px 0 0}
 body.seated[data-scene="bg"] .bgmid{display:none}
+body.seated[data-scene="bg"] .bgfelt{
+  margin-top:-8px;justify-content:flex-end;padding-right:18px
+}
 @media(max-width:700px){
   body.seated[data-scene="bg"] #bgTable{width:96vw;margin-top:4px;transform:rotateX(14deg) scale(1.02)}
   body.seated[data-scene="bg"] .bgboard{min-height:260px;height:40vh}
@@ -474,7 +477,54 @@ filter:drop-shadow(0 4px 3px rgba(0,0,0,.35))}
 .bgbar.dest{box-shadow:inset 0 0 0 3px #2bb7e8;background:#d6eef5}
 .bgbar.pick{box-shadow:inset 0 0 0 3px #163A8A}
 .bgmid{grid-column:1/-1;background:linear-gradient(180deg,#d4b56a,#b8893a);color:#1A2744;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;letter-spacing:.03em}
-.bgdice{min-height:52px;display:flex;gap:10px;align-items:center;justify-content:center;font-weight:700}
+.bgfelt{
+  display:flex;align-items:flex-end;justify-content:center;gap:18px;
+  min-height:72px;padding:4px 8px 2px
+}
+.bgcup{
+  position:relative;width:72px;height:86px;border:0;padding:0;background:transparent;
+  cursor:pointer;font-family:inherit;flex:0 0 72px;z-index:4
+}
+.bgcup-body{
+  position:absolute;left:8px;right:8px;top:18px;bottom:4px;
+  background:
+    radial-gradient(ellipse at 30% 20%,rgba(255,220,170,.18),transparent 42%),
+    linear-gradient(90deg,#4a2416,#7a3d24 18%,#3a1c12 50%,#6a3220 82%,#2a140c);
+  border-radius:8px 8px 18px 18px;
+  box-shadow:
+    inset 6px 0 10px rgba(0,0,0,.35),
+    inset -6px 0 10px rgba(0,0,0,.28),
+    0 10px 16px rgba(20,10,4,.35);
+}
+.bgcup-rim{
+  position:absolute;left:4px;right:4px;top:8px;height:22px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at 50% 40%,#3a1c12 36%,#1a0c08 70%);
+  box-shadow:
+    0 0 0 3px #c9a45a,
+    0 0 0 5px #8a6a2e,
+    inset 0 4px 6px rgba(0,0,0,.55);
+}
+.bgcup-label{
+  position:absolute;left:0;right:0;bottom:-18px;text-align:center;
+  font-size:10px;font-weight:800;letter-spacing:.04em;color:#f3ead6;text-shadow:0 1px 2px rgba(0,0,0,.45)
+}
+.bgcup.lift .bgcup-body,.bgcup.lift .bgcup-rim{animation:cupLift .55s ease}
+.bgcup.shake .bgcup-body,.bgcup.shake .bgcup-rim{animation:cupShake .55s ease}
+@keyframes cupLift{
+  0%{transform:translateY(0) rotate(0)}
+  55%{transform:translateY(-28px) rotate(-18deg)}
+  100%{transform:translateY(-18px) rotate(-8deg)}
+}
+@keyframes cupShake{
+  0%{transform:translateY(-18px) rotate(-8deg)}
+  20%{transform:translateY(-26px) rotate(16deg)}
+  40%{transform:translateY(-22px) rotate(-14deg)}
+  60%{transform:translateY(-28px) rotate(12deg)}
+  80%{transform:translateY(-16px) rotate(-6deg)}
+  100%{transform:translateY(0) rotate(0)}
+}
+.bgdice{min-height:52px;display:flex;gap:10px;align-items:center;justify-content:center;font-weight:700;flex:1}
 .die{
   width:46px;height:46px;border-radius:10px;padding:7px;box-sizing:border-box;
   display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;
@@ -493,7 +543,7 @@ filter:drop-shadow(0 4px 3px rgba(0,0,0,.35))}
 .die[data-n="6"] i:nth-child(1),.die[data-n="6"] i:nth-child(3),.die[data-n="6"] i:nth-child(4),.die[data-n="6"] i:nth-child(6),.die[data-n="6"] i:nth-child(7),.die[data-n="6"] i:nth-child(9){opacity:1}
 .die.wait{opacity:.45;filter:grayscale(.15)}
 @keyframes dieIn{from{transform:rotateX(40deg) rotateY(-30deg) scale(.7);opacity:0}to{transform:rotateX(12deg) rotateY(-8deg) scale(1);opacity:1}}
-.bgroll{border:0;border-radius:999px;padding:8px 16px;background:var(--navy);color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
+.bgroll{display:none}
 @media(max-width:900px){
 body{background-size:cover;background-position:center 20%;background-color:#6d8a6a}
 }
@@ -587,9 +637,15 @@ body{background-size:cover;background-position:center 16%}
 <div id="bgStage">
 <div id="bgTable">
 <div class="bgwrap">
-<div class="bgdice" id="bgdice"></div>
 <div class="bgframe"><div class="bgboard" id="bgboard"></div></div>
-<button class="bgroll" type="button" onclick="bgRoll()">Roll dice</button>
+<div class="bgfelt">
+  <div class="bgdice" id="bgdice"></div>
+  <button class="bgcup" id="bgcup" type="button" onclick="bgRoll()" aria-label="Shake the dice cup">
+    <span class="bgcup-rim"></span>
+    <span class="bgcup-body"></span>
+    <span class="bgcup-label">Shake</span>
+  </button>
+</div>
 </div>
 </div>
 </div>
@@ -1172,7 +1228,7 @@ function bgNew(){
   fill(24,2,1); fill(13,5,1); fill(8,3,1); fill(6,5,1);
   fill(1,2,2); fill(12,5,2); fill(17,3,2); fill(19,5,2);
   bgBar={1:0,2:0}; bgOff={1:0,2:0}; bgDice=[]; bgTurn=1; bgSel=null; bgOver=false; bgLast=null;
-  document.getElementById("bgmsg").textContent="Tap Roll dice — gold can move, blue is the landing";
+  document.getElementById("bgmsg").textContent="Shake the cup — gold can move, blue is the landing";
   bgPaint();
 }
 function bgOpen(pt, side){
@@ -1277,9 +1333,10 @@ function bgPaint(){
   var d=document.getElementById("bgdice");
   if(d){
     if(!bgDice.length){
-      d.innerHTML = bgTurn===1 ? '<span class="die wait" data-n="1">'+bgPips()+'</span><span class="die wait" data-n="1">'+bgPips()+'</span>' : '';
+      d.innerHTML = "";
     } else {
-      d.innerHTML = bgDice.map(function(n){ return '<span class="die" data-n="'+n+'">'+bgPips()+'</span>'; }).join("");
+      var shown = bgDice.length>=4 ? [bgDice[0],bgDice[0]] : bgDice.slice(0,2);
+      d.innerHTML = shown.map(function(n){ return '<span class="die" data-n="'+n+'">'+bgPips()+'</span>'; }).join("");
     }
   }
 }
@@ -1335,16 +1392,28 @@ function bgAfter(){
 }
 function bgRoll(){
   if(bgOver||bgTurn!==1||bgDice.length) return;
-  var a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6);
-  bgDice=a===b?[a,a,a,a]:[a,b];
-  bgSel=null; bgLast=null;
-  document.getElementById("bgmsg").textContent="Rolled "+a+" + "+b+" = "+(a+b)+". Gold then bright blue.";
-  if(!bgMoves(1).length){
-    document.getElementById("bgmsg").textContent="No move with "+a+" and "+b+".";
-    setTimeout(function(){ bgDice=[]; bgTurn=2; bgAi(); },1200);
-    return;
-  }
-  bgPaint();
+  var cup=document.getElementById("bgcup");
+  var tray=document.getElementById("bgdice");
+  if(tray) tray.innerHTML="";
+  if(cup){ cup.classList.remove("shake"); cup.classList.add("lift"); }
+  document.getElementById("bgmsg").textContent="Shaking…";
+  setTimeout(function(){
+    if(cup){ cup.classList.remove("lift"); cup.classList.add("shake"); }
+  },280);
+  setTimeout(function(){
+    if(cup) cup.classList.remove("shake","lift");
+    var a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6);
+    bgDice=a===b?[a,a,a,a]:[a,b];
+    bgSel=null; bgLast=null;
+    document.getElementById("bgmsg").textContent="Rolled "+a+" + "+b+" = "+(a+b)+". Gold then bright blue.";
+    if(!bgMoves(1).length){
+      document.getElementById("bgmsg").textContent="No move with "+a+" and "+b+".";
+      bgPaint();
+      setTimeout(function(){ bgDice=[]; bgTurn=2; bgAi(); },1200);
+      return;
+    }
+    bgPaint();
+  },900);
 }
 function bgAi(){
   if(bgOver) return;
