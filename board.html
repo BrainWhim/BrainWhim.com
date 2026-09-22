@@ -160,63 +160,53 @@ body.seated[data-scene="bg"] #bgStage{
   perspective:920px;perspective-origin:50% 70%;padding:0
 }
 body.seated[data-scene="bg"] #bgTable{
-  width:min(640px,90vw);margin:4px auto 0;background:transparent;
-  transform:none
+  width:min(620px,92vw);margin:8px auto 0;background:transparent;transform:none
 }
 body.seated[data-scene="bg"] .bgwrap{gap:8px;background:transparent}
 body.seated[data-scene="bg"] .bgframe{
-  position:relative;
-  max-width:none;width:100%;
-  aspect-ratio:1112 / 1030;
-  padding:0;
-  border-radius:0;
-  border:0;
-  outline:none;
-  background-color:transparent;
-  background-image:url("backgammon-field.jpg");
-  background-position:center;
-  background-size:100% 100%;
-  background-repeat:no-repeat;
-  overflow:hidden;
-  box-shadow:0 22px 36px rgba(30,22,12,.35)
+  position:relative;max-width:none;width:100%;
+  padding:14px 12px 16px;
+  border-radius:6px;
+  background:
+    linear-gradient(180deg,#f4efe4,#e8dfd0);
+  border:10px solid #d7c389;
+  box-shadow:
+    0 0 0 3px #8a6e3e,
+    0 0 0 6px #f3ead6,
+    0 0 0 8px #b8893a,
+    0 22px 36px rgba(30,22,12,.35);
+  overflow:hidden
 }
-body.seated[data-scene="bg"] .bgframe::before,
-body.seated[data-scene="bg"] .bgframe::after{content:none;display:none}
 body.seated[data-scene="bg"] .bgboard{
-  position:absolute;inset:0;z-index:3;
-  display:block;
-  background:transparent;border:0;box-shadow:none
+  position:relative;inset:auto;display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr)) 36px repeat(6,minmax(0,1fr));
+  grid-template-rows:1fr 1fr;
+  min-height:420px;height:min(58vh,520px);
+  background:linear-gradient(180deg,#fbf8f3,#ece6dc);
+  border:1px solid #d4c7b0
 }
 body.seated[data-scene="bg"] .bgpt{
-  position:absolute;min-height:0;overflow:visible;margin:0;padding:0;border:0;background:transparent
+  position:relative;min-height:0;overflow:visible;margin:0;padding:0;border:0;background:transparent
 }
-body.seated[data-scene="bg"] .bgpt::before{display:none}
-body.seated[data-scene="bg"] .bgpt.can::after,
-body.seated[data-scene="bg"] .bgpt.dest::after,
-body.seated[data-scene="bg"] .bgpt.pick::after,
-body.seated[data-scene="bg"] .bgpt.last::after{
-  left:8%;right:8%;height:96%
-}
-body.seated[data-scene="bg"] .bgpt .stack{left:50%;transform:translateX(-50%);gap:0}
-body.seated[data-scene="bg"] .bgpt.top .stack{top:4px}
-body.seated[data-scene="bg"] .bgpt.bot .stack{bottom:4px}
+body.seated[data-scene="bg"] .bgpt::before{display:block;opacity:.95}
 body.seated[data-scene="bg"] .bgchk{
-  width:36px;height:36px;max-width:none;display:block;
-  margin:0;padding:0;
+  width:34px;height:34px;max-width:none;display:block;margin:0;padding:0;
   filter:drop-shadow(0 3px 2px rgba(0,0,0,.35))
 }
-body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-14px}
-body.seated[data-scene="bg"] .bgpt.bot .bgchk{margin-top:-14px}
+body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-12px}
+body.seated[data-scene="bg"] .bgpt.bot .bgchk{margin-top:-12px}
 body.seated[data-scene="bg"] .bgbar{
-  position:absolute;font-size:8px;padding:4px 1px;line-height:1.15;
-  background:transparent;color:#3a2a12;box-shadow:none;border:0
+  position:relative;font-size:9px;padding:6px 2px;line-height:1.2;
+  background:linear-gradient(180deg,#e8d7a8,#c9a66b 55%,#b8893a);
+  color:#3a2a12;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)
 }
 body.seated[data-scene="bg"] .bgmid{display:none}
 @media(max-width:700px){
-  body.seated[data-scene="bg"] #bgTable{width:94vw;margin-top:4px;transform:none}
-  body.seated[data-scene="bg"] .bgchk{width:30px;height:30px}
-  body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-12px}
-  body.seated[data-scene="bg"] .bgpt.bot .bgchk{margin-top:-12px}
+  body.seated[data-scene="bg"] #bgTable{width:96vw;margin-top:4px}
+  body.seated[data-scene="bg"] .bgboard{min-height:340px;height:52vh}
+  body.seated[data-scene="bg"] .bgchk{width:26px;height:26px}
+  body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-10px}
+  body.seated[data-scene="bg"] .bgpt.bot .bgchk{margin-top:-10px}
 }
 body.seated[data-scene="c4"] .games{display:none}
 body.seated[data-scene="c4"]{
@@ -1217,19 +1207,8 @@ function bgPaint(){
     if(bgSel===moves[i].from) dests[moves[i].dest]=1;
   }
   var html="", p;
-  function slot(pt){
-    var i, left0, top, leftTable;
-    if(pt>=13&&pt<=18){ i=pt-13; leftTable=1; top=1; }
-    else if(pt>=19&&pt<=24){ i=pt-19; leftTable=0; top=1; }
-    else if(pt>=7&&pt<=12){ i=12-pt; leftTable=1; top=0; }
-    else { i=6-pt; leftTable=0; top=0; }
-    var x0=leftTable?5.6:53.0;
-    var w=6.85;
-    return {left:x0+i*w, top: top?5.2:56.4, w:w, h:33.2, isTop:top};
-  }
-  function col(pt){
-    var s=slot(pt);
-    var cls="bgpt "+(s.isTop?"top":"bot")+(pt%2===1?" dark":"");
+  function col(pt, isTop){
+    var cls="bgpt "+(isTop?"top":"bot")+(pt%2===1?" dark":"");
     if(bgLast && (bgLast[0]===pt||bgLast[1]===pt)) cls+=" last";
     if(bgSel===pt) cls+=" pick";
     else if(dests[pt]) cls+=" dest";
@@ -1239,13 +1218,16 @@ function bgPaint(){
     var show=Math.min(arr.length,5);
     for(var k=0;k<show;k++) stack+='<img class="bgchk" alt="" src="'+(arr[k]===1?"checker-w.png":"checker-b.png")+'">';
     if(arr.length>5) stack+='<span style="font-size:9px;font-weight:800;color:#1A2744">'+arr.length+'</span>';
-    return '<button type="button" class="'+cls+'" style="left:'+s.left+'%;top:'+s.top+'%;width:'+s.w+'%;height:'+s.h+'%" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
+    return '<button type="button" class="'+cls+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
   }
-  for(p=1;p<=24;p++) html+=col(p);
+  for(p=13;p<=18;p++) html+=col(p,true);
   var barCls="bgbar"+(bgBar[1]&&can[0]&&bgSel==null?" can":"")+(bgSel===0?" pick":"");
-  html+='<button type="button" class="'+barCls+'" style="left:47.4%;top:5.2%;width:5.2%;height:33.2%" onclick="bgClick(0)">BAR<br>You '+bgBar[1]+'<br>Lib '+bgBar[2]+'</button>';
+  html+='<button type="button" class="'+barCls+'" onclick="bgClick(0)">BAR<br>You '+bgBar[1]+'<br>Lib '+bgBar[2]+'</button>';
+  for(p=19;p<=24;p++) html+=col(p,true);
+  for(p=12;p>=7;p--) html+=col(p,false);
   var offCls="bgbar"+(dests[25]?" dest":"");
-  html+='<button type="button" class="'+offCls+'" style="left:47.4%;top:56.4%;width:5.2%;height:33.2%" onclick="bgClick(25)">OFF<br>You '+bgOff[1]+'<br>Lib '+bgOff[2]+'</button>';
+  html+='<button type="button" class="'+offCls+'" onclick="bgClick(25)">OFF<br>You '+bgOff[1]+'<br>Lib '+bgOff[2]+'</button>';
+  for(p=6;p>=1;p--) html+=col(p,false);
   var board=document.getElementById("bgboard");
   if(board) board.innerHTML=html;
   var d=document.getElementById("bgdice");
