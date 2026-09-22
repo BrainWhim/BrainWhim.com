@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dominoes · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+html,body{min-height:100%;min-height:100dvh}
+body{margin:0;font-family:Montserrat,sans-serif;color:var(--navy);
+  background-color:#6d8a6a;
+  background-image:url("dominoes-parlor.jpg"),linear-gradient(180deg,#c9d6c0,#8aa078);
+  background-size:cover;background-position:center 40%;background-repeat:no-repeat}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
+.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
+.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1.1em}
+.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:8px}
+.games{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:16px auto 10px;max-width:640px;padding:0 12px;position:relative;z-index:2}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;text-decoration:none;color:var(--navy)}
+.games a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sitbar{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;position:relative;z-index:2}
+.sitbar button,.sitbar a.stand{border:0;border-radius:999px;padding:10px 18px;background:#fff;color:var(--navy);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(0,0,0,.18);text-decoration:none;display:inline-flex}
+body.seated .sitbar .sit{display:none}
+body:not(.seated) .sitbar .stand{display:none}
+body:not(.seated) .live{display:none}
+body.seated .live{display:block}
+body.seated{background-position:center 12%}
+body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:6;margin:0}
+.live{max-width:980px;margin:8px auto 88px;padding:8px 10px 16px}
+.titlewrap{text-align:center}
+h1{text-align:center;margin:4px 0 2px;font-size:22px;background:rgba(255,252,247,.82);display:inline-block;padding:4px 14px;border-radius:999px}
+.sub{text-align:center;color:#3a2a12;font-size:13px;margin:0 0 10px}
+.table{
+  background:linear-gradient(180deg,#3b2412,#2a180c);
+  padding:14px;border-radius:14px;
+  box-shadow:0 0 0 3px #c9a45a,0 18px 36px rgba(0,0,0,.3)
+}
+.felt{background:linear-gradient(180deg,#2f6a3e,#1b3f26);border:3px solid #d7b56a;border-radius:8px;min-height:220px;padding:12px}
+.meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#f4ead0;font-size:12px;font-weight:700;margin-bottom:8px}
+.chain{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:88px;align-items:center}
+.hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.hint{text-align:center;margin:8px 0 0;background:rgba(255,252,247,.9);display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
+.tile{width:36px;height:72px;border:0;padding:3px;border-radius:6px;cursor:pointer;background:linear-gradient(180deg,#fffdf6,#e8dcc0);box-shadow:2px 3px 0 #8a6e3e,0 6px 10px rgba(0,0,0,.2);display:flex;flex-direction:column}
+.tile.hz{width:72px;height:36px;flex-direction:row}
+.tile.playable{outline:2px solid #C9A227}
+.tile:disabled{opacity:.55;cursor:default}
+.half{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:1px;padding:2px}
+.tile.hz .half{border-right:1px solid #c9b07a}
+.tile:not(.hz) .half:first-child{border-bottom:1px solid #c9b07a}
+.half i{width:5px;height:5px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
+.half[data-n="1"] i:nth-child(5){opacity:1}
+.half[data-n="2"] i:nth-child(1),.half[data-n="2"] i:nth-child(9){opacity:1}
+.half[data-n="3"] i:nth-child(1),.half[data-n="3"] i:nth-child(5),.half[data-n="3"] i:nth-child(9){opacity:1}
+.half[data-n="4"] i:nth-child(1),.half[data-n="4"] i:nth-child(3),.half[data-n="4"] i:nth-child(7),.half[data-n="4"] i:nth-child(9){opacity:1}
+.half[data-n="5"] i:nth-child(1),.half[data-n="5"] i:nth-child(3),.half[data-n="5"] i:nth-child(5),.half[data-n="5"] i:nth-child(7),.half[data-n="5"] i:nth-child(9){opacity:1}
+.half[data-n="6"] i:nth-child(1),.half[data-n="6"] i:nth-child(3),.half[data-n="6"] i:nth-child(4),.half[data-n="6"] i:nth-child(6),.half[data-n="6"] i:nth-child(7),.half[data-n="6"] i:nth-child(9){opacity:1}
+.back{background:repeating-linear-gradient(45deg,#1A2744,#1A2744 4px,#2a3d66 4px,#2a3d66 8px)}
+.back .half{display:none}
+.acts{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.acts button{border:0;border-radius:999px;padding:8px 14px;background:#fff;color:var(--navy);font-weight:700;cursor:pointer;font-family:inherit}
+@media(max-width:800px){
+  header{display:grid;grid-template-columns:1fr auto;padding:6px 10px 8px}
+  .brand{font-size:18px}.brand img{width:48px;height:48px}
+  .hdr{grid-column:1/-1;justify-content:center;padding-top:4px}
+}
+#winveil{position:fixed;inset:0;background:rgba(12,18,32,.46);display:none;align-items:center;justify-content:center;z-index:90;backdrop-filter:blur(4px)}
+#winveil.on{display:flex}
+.wincard{width:min(420px,90vw);text-align:center;padding:28px 22px 22px;border-radius:22px;background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35);animation:winPop .45s ease}
+#winveil.win .wincard{animation:winBurst .7s cubic-bezier(.15,1.4,.3,1)}
+.wincard h2{margin:0 0 16px;font-size:28px}
+.wincard .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex}
+.wincard .go{background:#1A2744;color:#fff}
+.wincard .ghost{background:#fff;color:#1A2744;box-shadow:inset 0 0 0 1px #d7c9b0}
+@keyframes winPop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+@keyframes winBurst{0%{transform:scale(.4);opacity:0}55%{transform:scale(1.08)}100%{transform:none}}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="board.html?scene=ck">Checkers</a>
+<a href="board.html?scene=ch">Chess</a>
+<a href="board.html?scene=bg">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a class="on" href="dominoes.html">Dominoes</a>
+</div>
+<div class="sitbar">
+<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="stand" type="button" onclick="standUp()">Back to the sunroom</button>
+<a class="stand" href="tables.html">Return to tables</a>
+<button class="stand" type="button" onclick="newGame()">New game</button>
+</div>
+<div class="live">
+  <div class="titlewrap"><h1>Sunroom Dominoes</h1></div>
+  <p class="sub">Double-six draw. Match either end. Empty your hand first.</p>
+  <div class="table">
+    <div class="felt">
+      <div class="meta">
+        <span>House tiles: <b id="houseN">7</b></span>
+        <span>Boneyard: <b id="boneN">14</b></span>
+        <span>Ends: <b id="ends">—</b></span>
+      </div>
+      <div class="chain" id="chain"></div>
+    </div>
+    <div class="hand" id="hand"></div>
+    <div class="acts">
+      <button type="button" onclick="drawTile()">Draw from boneyard</button>
+    </div>
+  </div>
+  <div style="text-align:center"><p class="hint" id="msg">Sit, then play a matching tile.</p></div>
+</div>
+<div id="winveil">
+  <div class="wincard">
+    <h2 id="winTitle">Congratulations! You win!</h2>
+    <div class="row">
+      <button class="go" type="button" id="winAgain">Play again?</button>
+      <a class="ghost" href="tables.html">Return to Tables</a>
+    </div>
+  </div>
+</div>
+<script>
+function sitDown(){ document.body.classList.add("seated"); }
+function standUp(){ document.body.classList.remove("seated"); }
+function hideBanner(){ document.getElementById("winveil").className=""; }
+function showBanner(kind){
+  document.getElementById("winTitle").textContent = kind==="win" ? "Congratulations! You win!" : kind==="draw" ? "It's a Draw!" : "Better luck next time!";
+  document.getElementById("winAgain").onclick=function(){ hideBanner(); newGame(); };
+  document.getElementById("winveil").className="on "+kind;
+}
+function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>"}
+function tileEl(a,b,hz,cls){
+  return '<button class="tile'+(hz?" hz":"")+(cls?(" "+cls):"")+'" data-a="'+a+'" data-b="'+b+'"><span class="half" data-n="'+a+'">'+pips()+'</span><span class="half" data-n="'+b+'">'+pips()+'</span></button>';
+}
+var you=[], house=[], bone=[], chain=[], turn="you", over=false;
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function ends(){ if(!chain.length) return [null,null]; return [chain[0][0], chain[chain.length-1][1]]; }
+function canPlay(t){ if(!chain.length) return true; var e=ends(); return t[0]===e[0]||t[0]===e[1]||t[1]===e[0]||t[1]===e[1]; }
+function legal(hand){ return hand.filter(canPlay); }
+function place(t, side){
+  if(!chain.length){ chain.push([t[0],t[1]]); return; }
+  var e=ends();
+  if(side==="L"){
+    if(t[1]===e[0]) chain.unshift([t[0],t[1]]);
+    else if(t[0]===e[0]) chain.unshift([t[1],t[0]]);
+  } else {
+    if(t[0]===e[1]) chain.push([t[0],t[1]]);
+    else if(t[1]===e[1]) chain.push([t[1],t[0]]);
+  }
+}
+function chooseSide(t){
+  if(!chain.length) return "R";
+  var e=ends();
+  var L = t[0]===e[0]||t[1]===e[0];
+  var R = t[0]===e[1]||t[1]===e[1];
+  if(L && !R) return "L";
+  if(R && !L) return "R";
+  return "R";
+}
+function paint(){
+  var e=ends();
+  document.getElementById("houseN").textContent=house.length;
+  document.getElementById("boneN").textContent=bone.length;
+  document.getElementById("ends").textContent = chain.length ? (e[0]+" · "+e[1]) : "any";
+  document.getElementById("chain").innerHTML = chain.map(function(t){ return tileEl(t[0],t[1],true); }).join("") || '<span style="color:#e8f3e8">The table is open.</span>';
+  document.getElementById("hand").innerHTML = you.map(function(t,i){
+    var ok = turn==="you" && !over && canPlay(t);
+    return tileEl(t[0],t[1],false, ok?"playable":"").replace("<button","<button "+(ok?"":"disabled")+" onclick=\"playYou("+i+")\"");
+  }).join("");
+}
+function playYou(i){
+  if(over||turn!=="you") return;
+  var t=you[i]; if(!canPlay(t)) return;
+  you.splice(i,1); place(t, chooseSide(t));
+  if(!you.length){ over=true; paint(); showBanner("win"); return; }
+  turn="house"; paint(); setTimeout(houseTurn, 550);
+}
+function drawTile(){
+  if(over||turn!=="you") return;
+  if(legal(you).length){ document.getElementById("msg").textContent="You still have a play."; return; }
+  if(bone.length){ you.push(bone.pop()); document.getElementById("msg").textContent="Drawn."; paint(); return; }
+  document.getElementById("msg").textContent="Boneyard is empty. Passing.";
+  turn="house"; paint(); setTimeout(houseTurn, 400);
+}
+function houseTurn(){
+  if(over) return;
+  var plays=legal(house);
+  if(!plays.length){
+    if(bone.length){ house.push(bone.pop()); document.getElementById("msg").textContent="House draws."; paint(); setTimeout(houseTurn, 500); return; }
+    if(!legal(you).length && !bone.length){ blockWin(); return; }
+    turn="you"; document.getElementById("msg").textContent="House passes. Your play."; paint(); return;
+  }
+  plays.sort(function(a,b){ return (b[0]===b[1])-(a[0]===a[1]) || (b[0]+b[1])-(a[0]+a[1]); });
+  var t=plays[0];
+  house.splice(house.indexOf(t),1);
+  place(t, chooseSide(t));
+  if(!house.length){ over=true; paint(); showBanner("lose"); return; }
+  turn="you"; document.getElementById("msg").textContent="House played. Your turn."; paint();
+}
+function pipsSum(h){ return h.reduce(function(s,t){return s+t[0]+t[1]},0); }
+function blockWin(){
+  over=true; paint();
+  var y=pipsSum(you), h=pipsSum(house);
+  showBanner(y<h?"win":h<y?"lose":"draw");
+}
+function newGame(){
+  var pack=[]; for(var a=0;a<=6;a++) for(var b=a;b<=6;b++) pack.push([a,b]);
+  shuffle(pack);
+  you=pack.splice(0,7); house=pack.splice(0,7); bone=pack; chain=[]; turn="you"; over=false;
+  document.getElementById("msg").textContent="Play any tile to open, then match an end.";
+  paint();
+}
+newGame();
+</script>
+</body>
+</html>
