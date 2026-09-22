@@ -13,7 +13,7 @@ body{
   margin:0;font-family:Montserrat,sans-serif;color:var(--navy);
   background-color:#8a6a48;
   background-image:url("yahtzee-parlor.jpg");
-  background-size:cover;background-position:center 42%;background-repeat:no-repeat;background-attachment:scroll
+  background-size:cover;background-position:center 36%;background-repeat:no-repeat;background-attachment:scroll
 }
 header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
 .brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
@@ -32,59 +32,91 @@ body:not(.seated) .sitbar .stand{display:none}
 body:not(.seated) .live{display:none}
 body.seated .live{display:block}
 body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:6;margin:0}
-.live{
-  max-width:980px;margin:10px auto 80px;padding:14px 12px;
-  background:rgba(255,252,247,.92);border-radius:18px;
-  box-shadow:0 18px 40px rgba(0,0,0,.28)
-}
-.table{display:grid;grid-template-columns:1fr 280px;gap:16px}
-@media(max-width:800px){
-  .table{grid-template-columns:1fr}
+.live{max-width:1180px;margin:8px auto 88px;padding:8px 10px 16px;background:transparent}
+h1{text-align:center;margin:4px 0 2px;font-size:22px;color:#1A2744;background:rgba(255,252,247,.82);display:inline-block;padding:4px 14px;border-radius:999px}
+.sub{text-align:center;color:#3a2a12;font-size:13px;margin:0 0 10px}
+.titlewrap{text-align:center}
+.stage{display:grid;grid-template-columns:210px 1fr 210px;gap:12px;align-items:start}
+@media(max-width:900px){
+  .stage{grid-template-columns:1fr}
   header{display:grid;grid-template-columns:1fr auto;height:auto;padding:6px 10px 8px}
   .brand{font-size:18px}
   .brand img{width:48px;height:48px}
   .hdr{grid-column:1/-1;justify-content:center;padding-top:4px}
   .hdr a{font-size:13px;margin-left:8px}
 }
-h1{text-align:center;margin:8px 0 4px;font-size:24px}
-.sub{text-align:center;color:#4B5E73;font-size:13px;margin:0 0 10px}
+.boardwrap{perspective:900px;padding:8px 8px 0}
+.board{
+  transform:rotateX(16deg) scale(1.02);transform-origin:50% 60%;
+  background:
+    linear-gradient(180deg,#6b4220,#3b2412);
+  padding:16px 16px 20px;border-radius:8px;
+  box-shadow:0 0 0 3px #c9a45a,0 0 0 6px #8a6a2e,0 22px 36px rgba(0,0,0,.35)
+}
 .felt{
-  background:linear-gradient(180deg,#2e5a3a,#1e3d28);
-  border-radius:14px;padding:18px 16px 22px;min-height:260px;
-  box-shadow:inset 0 0 0 3px #c9a45a
+  position:relative;height:220px;
+  background:
+    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.08),transparent 50%),
+    linear-gradient(180deg,#2f6a3e,#1b3f26);
+  border:3px solid #d7b56a;border-radius:4px;
+  box-shadow:inset 0 0 28px rgba(0,0,0,.28)
 }
-.dice{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;min-height:86px}
+.dicebox{position:absolute;inset:8px}
 .die{
-  width:62px;height:62px;border-radius:12px;padding:8px;border:0;cursor:pointer;
-  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;
-  background:linear-gradient(145deg,#fffdf6,#e8d7b0);box-shadow:3px 5px 0 #8a6e3e,0 8px 14px rgba(0,0,0,.25)
+  position:absolute;width:52px;height:52px;border-radius:10px;padding:6px;border:0;cursor:pointer;
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;
+  background:linear-gradient(145deg,#fffdf6,#e8d7b0);box-shadow:3px 5px 0 #8a6e3e,0 8px 14px rgba(0,0,0,.25);
+  transition:left .55s cubic-bezier(.2,.7,.2,1), top .55s cubic-bezier(.2,.7,.2,1), transform .55s ease;
+  z-index:2
 }
-.die.held{outline:3px solid #C9A227;transform:translateY(-8px)}
-.die i{width:8px;height:8px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
+.die.held{outline:3px solid #C9A227;z-index:3}
+.die.tumble{animation:tumble .7s ease}
+@keyframes tumble{
+  0%{transform:rotate(0) scale(1)}
+  25%{transform:rotate(80deg) scale(1.12)}
+  50%{transform:rotate(-50deg) scale(.92)}
+  75%{transform:rotate(30deg) scale(1.06)}
+  100%{transform:rotate(0) scale(1)}
+}
+.die i{width:7px;height:7px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
 .die[data-n="1"] i:nth-child(5){opacity:1}
 .die[data-n="2"] i:nth-child(1),.die[data-n="2"] i:nth-child(9){opacity:1}
 .die[data-n="3"] i:nth-child(1),.die[data-n="3"] i:nth-child(5),.die[data-n="3"] i:nth-child(9){opacity:1}
 .die[data-n="4"] i:nth-child(1),.die[data-n="4"] i:nth-child(3),.die[data-n="4"] i:nth-child(7),.die[data-n="4"] i:nth-child(9){opacity:1}
 .die[data-n="5"] i:nth-child(1),.die[data-n="5"] i:nth-child(3),.die[data-n="5"] i:nth-child(5),.die[data-n="5"] i:nth-child(7),.die[data-n="5"] i:nth-child(9){opacity:1}
 .die[data-n="6"] i:nth-child(1),.die[data-n="6"] i:nth-child(3),.die[data-n="6"] i:nth-child(4),.die[data-n="6"] i:nth-child(6),.die[data-n="6"] i:nth-child(7),.die[data-n="6"] i:nth-child(9){opacity:1}
-.cuprow{display:flex;justify-content:center;margin-top:18px}
-.bgcup{position:relative;width:78px;height:92px;border:0;background:transparent;cursor:pointer}
+.cuprow{display:flex;justify-content:center;margin-top:10px}
+.bgcup{position:relative;width:72px;height:86px;border:0;background:transparent;cursor:pointer}
 .bgcup-body{position:absolute;left:8px;right:8px;top:18px;bottom:4px;border-radius:8px 8px 18px 18px;
   background:radial-gradient(ellipse at 30% 18%,rgba(255,248,220,.55),transparent 46%),linear-gradient(90deg,#c9a45a,#efe0b0 20%,#d4b56e 48%,#f3e6c0 78%,#b8893a);
   box-shadow:0 10px 16px rgba(0,0,0,.28)}
 .bgcup-rim{position:absolute;left:4px;right:4px;top:8px;height:22px;border-radius:50%;
   background:radial-gradient(ellipse at 50% 40%,#f7edd0 28%,#d4b56e 70%);
   box-shadow:0 0 0 3px #f3e6c0,0 0 0 5px #b8893a}
-.bgcup-label{position:absolute;left:0;right:0;bottom:-18px;text-align:center;font-size:11px;font-weight:800;color:#3a2a12}
+.bgcup-label{position:absolute;left:0;right:0;bottom:-16px;text-align:center;font-size:11px;font-weight:800;color:#3a2a12}
 .bgcup.shake .bgcup-body,.bgcup.shake .bgcup-rim{animation:cupShake .55s ease}
 @keyframes cupShake{0%{transform:rotate(-8deg)}25%{transform:rotate(14deg)}50%{transform:rotate(-12deg)}100%{transform:none}}
-.hint{text-align:center;color:#e8f3e8;font-size:13px;margin-top:22px}
-.card h2{margin:0 0 8px;font-size:16px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eadfcd;font-size:14px}
-.row button{border:0;background:#1A2744;color:#fff;border-radius:999px;padding:4px 10px;font-weight:700;cursor:pointer;font-family:inherit}
-.row button[disabled]{opacity:.4;cursor:default}
-.row .val{min-width:28px;text-align:right;font-weight:800}
-.total{font-weight:800;padding-top:8px}
+.hint{text-align:center;color:#1A2744;font-size:13px;margin:8px 0 0;background:rgba(255,252,247,.8);display:inline-block;padding:4px 12px;border-radius:999px}
+.padwrap{position:relative}
+.pad{
+  background:#f7f1e2;border:8px solid #1A2744;border-radius:4px;
+  box-shadow:0 10px 22px rgba(0,0,0,.22), inset 0 0 0 2px #c9a45a;
+  padding:10px 10px 14px;min-height:280px
+}
+.pad.house{border-color:#3a2412}
+.pad h2{margin:0 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.row{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;border-bottom:1px dashed #d2c4a6;font-size:12px}
+.row button{border:0;background:#1A2744;color:#fff;border-radius:999px;padding:2px 8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:11px}
+.row button[disabled]{opacity:.35;cursor:default}
+.row .val{min-width:22px;text-align:right;font-weight:800}
+.total{font-weight:800;padding-top:6px;border-bottom:0}
+.pencil{
+  position:absolute;right:-18px;top:40px;width:14px;height:110px;border-radius:3px 3px 2px 2px;
+  background:linear-gradient(90deg,#e8c15a,#f3e0a0 40%,#c9a227);
+  box-shadow:2px 4px 6px rgba(0,0,0,.25);transform:rotate(12deg);pointer-events:none
+}
+.pencil::before{content:"";position:absolute;top:-10px;left:0;right:0;height:12px;background:#f4d7c4;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.pencil::after{content:"";position:absolute;bottom:-8px;left:2px;right:2px;height:10px;background:#c9c4bc;border-radius:0 0 2px 2px}
 </style>
 </head>
 <body>
@@ -95,30 +127,42 @@ h1{text-align:center;margin:8px 0 4px;font-size:24px}
 <div class="sitbar">
 <button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the parlor</button>
-<a class="stand" href="board.html">Return to tables</a>
+<a class="stand" href="tables.html">Return to tables</a>
 <button class="stand" type="button" onclick="newGame()">New game</button>
 </div>
 <div class="live">
-  <h1>Club Yahtzee</h1>
-  <p class="sub">Shake the cup. Tap a die to hold it. Score a line each turn.</p>
-  <div class="table">
-    <div class="felt">
-      <div class="dice" id="dice"></div>
+  <div class="titlewrap"><h1>Club Yahtzee</h1></div>
+  <p class="sub">You shake first. The house keeps its own pad.</p>
+  <div class="stage">
+    <div class="padwrap">
+      <div class="pad" id="youPad"></div>
+      <div class="pencil"></div>
+    </div>
+    <div>
+      <div class="boardwrap">
+        <div class="board">
+          <div class="felt"><div class="dicebox" id="dice"></div></div>
+        </div>
+      </div>
       <div class="cuprow">
         <button class="bgcup" id="cup" type="button" onclick="roll()">
           <span class="bgcup-rim"></span><span class="bgcup-body"></span>
           <span class="bgcup-label">Shake</span>
         </button>
       </div>
-      <p class="hint" id="msg">Shake to start your turn</p>
+      <div style="text-align:center"><p class="hint" id="msg">Shake to start your turn</p></div>
     </div>
-    <div class="card" id="card"></div>
+    <div class="padwrap">
+      <div class="pad house" id="housePad"></div>
+      <div class="pencil"></div>
+    </div>
   </div>
 </div>
 <script>
 function sitDown(){ document.body.classList.add("seated"); }
 function standUp(){ document.body.classList.remove("seated"); }
-var dice=[0,0,0,0,0], held=[0,0,0,0,0], rolls=0, turn=1, scores={};
+var dice=[0,0,0,0,0], held=[0,0,0,0,0], rolls=0, whose="you", busy=false;
+var you={}, house={};
 var CATS=[
   ["ones","Aces",function(d){return sumFace(d,1)}],
   ["twos","Twos",function(d){return sumFace(d,2)}],
@@ -146,47 +190,115 @@ function straight(d,len){
   return best>=len;
 }
 function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>"}
-function paintDice(){
-  document.getElementById("dice").innerHTML=dice.map(function(n,i){
-    return '<button class="die'+(held[i]?" held":"")+'" data-n="'+(n||1)+'" onclick="hold('+i+')">'+pips()+'</button>';
+function linePos(i){ return {left:(6+i*18)+"%", top:"58%"}; }
+function paintDice(scatter){
+  var box=document.getElementById("dice");
+  box.innerHTML=dice.map(function(n,i){
+    var pos = (!n) ? linePos(i) : (scatter && !held[i] ? {left:(8+Math.random()*70)+"%", top:(8+Math.random()*55)+"%"} : linePos(i));
+    return '<button class="die'+(held[i]?" held":"")+(scatter&&!held[i]?" tumble":"")+'" data-n="'+(n||1)+'" style="left:'+pos.left+';top:'+pos.top+'" onclick="hold('+i+')">'+pips()+'</button>';
   }).join("");
+  if(scatter){
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        var els=box.querySelectorAll(".die");
+        els.forEach(function(el,i){
+          if(held[i]) return;
+          var p=linePos(i);
+          el.style.left=p.left; el.style.top=p.top;
+        });
+      });
+    });
+    setTimeout(function(){
+      box.querySelectorAll(".tumble").forEach(function(el){ el.classList.remove("tumble"); });
+    },720);
+  }
 }
-function paintCard(){
-  var upper=0, html="<h2>Scorecard</h2>";
+function totalOf(book){
+  var u=0,t=0;
+  CATS.forEach(function(c,i){ if(book[c[0]]!=null){ t+=book[c[0]]; if(i<6) u+=book[c[0]]; }});
+  if(u>=63) t+=35;
+  return {upper:u, total:t};
+}
+function paintPad(id, book, canUse){
+  var tot=totalOf(book), html="<h2>"+(id==="youPad"?"You":"House")+"</h2>";
   CATS.forEach(function(c,i){
-    if(i===6) html+='<div class="row total"><span>Upper</span><span class="val">'+upper+'</span></div><div class="row"><span>Bonus</span><span class="val">'+(upper>=63?35:0)+'</span></div>';
-    var used=scores[c[0]]!=null;
-    var preview=dice[0]?c[2](dice):"";
-    html+='<div class="row"><span>'+c[1]+'</span><span class="val">'+(used?scores[c[0]]:(preview===""?"":preview))+'</span><button '+(used||!dice[0]||!rolls?"disabled":"")+' onclick="score(\''+c[0]+'\')">Use</button></div>';
-    if(i<6 && used) upper+=scores[c[0]];
+    if(i===6) html+='<div class="row total"><span>Upper</span><span class="val">'+tot.upper+'</span></div><div class="row"><span>Bonus</span><span class="val">'+(tot.upper>=63?35:0)+'</span></div>';
+    var used=book[c[0]]!=null;
+    var preview=(canUse && dice[0])?c[2](dice):"";
+    html+='<div class="row"><span>'+c[1]+'</span><span class="val">'+(used?book[c[0]]:(preview===""?"":preview))+'</span>';
+    if(canUse) html+='<button '+(used||!dice[0]||!rolls||whose!=="you"?"disabled":"")+' onclick="score(\''+c[0]+'\')">Use</button>';
+    html+='</div>';
   });
-  var tot=0; Object.keys(scores).forEach(function(k){tot+=scores[k]});
-  if(upper>=63) tot+=35;
-  html+='<div class="row total"><span>Total</span><span class="val">'+tot+'</span></div>';
-  document.getElementById("card").innerHTML=html;
+  html+='<div class="row total"><span>Total</span><span class="val">'+tot.total+'</span></div>';
+  document.getElementById(id).innerHTML=html;
 }
-function hold(i){ if(!rolls||!dice[0]) return; held[i]=held[i]?0:1; paintDice(); }
+function paintAll(scatter){ paintDice(scatter); paintPad("youPad",you,true); paintPad("housePad",house,false); }
+function hold(i){ if(busy||whose!=="you"||!rolls||!dice[0]) return; held[i]=held[i]?0:1; paintDice(false); }
 function roll(){
-  if(rolls>=3) return;
-  var cup=document.getElementById("cup");
-  cup.classList.add("shake");
-  setTimeout(function(){ cup.classList.remove("shake");
+  if(busy||whose!=="you"||rolls>=3) return;
+  busy=true;
+  document.getElementById("cup").classList.add("shake");
+  setTimeout(function(){
+    document.getElementById("cup").classList.remove("shake");
     for(var i=0;i<5;i++) if(!held[i]) dice[i]=1+Math.floor(Math.random()*6);
     rolls++;
-    document.getElementById("msg").textContent="Roll "+rolls+" of 3 — tap dice to hold, then use a line.";
-    paintDice(); paintCard();
-  },500);
+    document.getElementById("msg").textContent="Roll "+rolls+" of 3 — tap to hold, then Use a line.";
+    paintAll(true);
+    setTimeout(function(){ busy=false; },750);
+  },480);
 }
+function openLeft(book){ return CATS.filter(function(c){return book[c[0]]==null}); }
 function score(key){
+  if(busy||whose!=="you") return;
   var cat=CATS.filter(function(c){return c[0]===key})[0];
-  if(!cat||scores[key]!=null||!dice[0]) return;
-  scores[key]=cat[2](dice);
-  dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; turn++;
-  var left=CATS.some(function(c){return scores[c[0]]==null});
-  document.getElementById("msg").textContent=left?"Shake for turn "+turn:"Game over.";
-  paintDice(); paintCard();
+  if(!cat||you[key]!=null||!dice[0]) return;
+  you[key]=cat[2](dice);
+  paintAll(false);
+  if(!openLeft(you).length && !openLeft(house).length){ endGame(); return; }
+  whose="house"; rolls=0; held=[0,0,0,0,0]; dice=[0,0,0,0,0];
+  document.getElementById("msg").textContent="House is shaking…";
+  paintAll(false);
+  setTimeout(housePlay,600);
 }
-function newGame(){ dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; turn=1; scores={}; document.getElementById("msg").textContent="Shake to start your turn"; paintDice(); paintCard(); }
+function housePlay(){
+  busy=true; rolls=0; held=[0,0,0,0,0];
+  function toss(done){
+    document.getElementById("cup").classList.add("shake");
+    setTimeout(function(){
+      document.getElementById("cup").classList.remove("shake");
+      for(var i=0;i<5;i++) if(!held[i]) dice[i]=1+Math.floor(Math.random()*6);
+      rolls++;
+      var c=counts(dice), face=1, best=0;
+      for(var f=1;f<=6;f++) if(c[f]>=best){best=c[f];face=f;}
+      held=dice.map(function(n){return n===face?1:0});
+      paintAll(true);
+      setTimeout(done,800);
+    },420);
+  }
+  toss(function(){
+    toss(function(){
+      toss(function(){
+        var left=openLeft(house), best=left[0], bestV=-1;
+        left.forEach(function(c){ var v=c[2](dice); if(v>bestV){bestV=v;best=c;} });
+        house[best[0]]=best[2](dice);
+        dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; whose="you"; busy=false;
+        var over=!openLeft(you).length && !openLeft(house).length;
+        document.getElementById("msg").textContent=over?"":"Your shake. House took "+best[1]+".";
+        paintAll(false);
+        if(over) endGame();
+      });
+    });
+  });
+}
+function endGame(){
+  var y=totalOf(you).total, h=totalOf(house).total;
+  document.getElementById("msg").textContent = y>h ? "You win "+y+" to "+h+"." : h>y ? "House wins "+h+" to "+y+"." : "Tie at "+y+".";
+}
+function newGame(){
+  dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; whose="you"; busy=false; you={}; house={};
+  document.getElementById("msg").textContent="Shake to start your turn";
+  paintAll(false);
+}
 newGame();
 </script>
 </body>
