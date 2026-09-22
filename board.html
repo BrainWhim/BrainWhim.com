@@ -183,21 +183,17 @@ body.seated[data-scene="bg"] .bgframe{
 body.seated[data-scene="bg"] .bgframe::before,
 body.seated[data-scene="bg"] .bgframe::after{content:none;display:none}
 body.seated[data-scene="bg"] .bgboard{
-  position:absolute;z-index:3;
-  top:9.2%;left:4.3%;right:6.4%;bottom:17.5%;
-  width:auto;height:auto;
-  background:transparent;
-  border:0;
-  box-shadow:none;
-  grid-template-columns:repeat(6,minmax(0,1fr)) 7.2% repeat(6,minmax(0,1fr));
-  grid-template-rows:37% 26% 37%;
-  min-height:0
+  position:absolute;inset:0;z-index:3;
+  display:block;
+  background:transparent;border:0;box-shadow:none
 }
-body.seated[data-scene="bg"] .bgpt{min-height:0;overflow:visible}
+body.seated[data-scene="bg"] .bgpt{
+  position:absolute;min-height:0;overflow:visible;margin:0;padding:0;border:0;background:transparent
+}
 body.seated[data-scene="bg"] .bgpt::before{display:none}
-body.seated[data-scene="bg"] .bgpt .stack{gap:0}
-body.seated[data-scene="bg"] .bgpt.top .stack{top:0}
-body.seated[data-scene="bg"] .bgpt.bot .stack{bottom:0}
+body.seated[data-scene="bg"] .bgpt .stack{left:50%;transform:translateX(-50%);gap:0}
+body.seated[data-scene="bg"] .bgpt.top .stack{top:4px}
+body.seated[data-scene="bg"] .bgpt.bot .stack{bottom:4px}
 body.seated[data-scene="bg"] .bgchk{
   width:48px;height:48px;max-width:none;display:block;
   margin:0;padding:0;
@@ -206,13 +202,10 @@ body.seated[data-scene="bg"] .bgchk{
 body.seated[data-scene="bg"] .bgpt.top .bgchk{margin-bottom:-20px}
 body.seated[data-scene="bg"] .bgpt.bot .bgchk{margin-top:-20px}
 body.seated[data-scene="bg"] .bgbar{
-  font-size:8px;padding:4px 1px;line-height:1.15;
-  align-self:center;height:42%;
+  position:absolute;font-size:8px;padding:4px 1px;line-height:1.15;
   background:transparent;color:#3a2a12;box-shadow:none;border:0
 }
-body.seated[data-scene="bg"] .bgmid{
-  display:block;grid-column:1/-1;background:transparent;border:0;color:transparent
-}
+body.seated[data-scene="bg"] .bgmid{display:none}
 @media(max-width:700px){
   body.seated[data-scene="bg"] #bgTable{width:94vw;margin-top:4px;transform:none}
   body.seated[data-scene="bg"] .bgchk{width:40px;height:40px}
@@ -1218,8 +1211,19 @@ function bgPaint(){
     if(bgSel===moves[i].from) dests[moves[i].dest]=1;
   }
   var html="", p;
-  function col(pt, top){
-    var cls="bgpt "+(top?"top":"bot")+(pt%2===1?" dark":"");
+  function slot(pt){
+    var i, left0, top, leftTable;
+    if(pt>=13&&pt<=18){ i=pt-13; leftTable=1; top=1; }
+    else if(pt>=19&&pt<=24){ i=pt-19; leftTable=0; top=1; }
+    else if(pt>=7&&pt<=12){ i=12-pt; leftTable=1; top=0; }
+    else { i=6-pt; leftTable=0; top=0; }
+    var x0=leftTable?5.1:52.6;
+    var w=6.72;
+    return {left:(x0+i*w), top: top?8.6:59.2, w:w, h:31.6, isTop:top};
+  }
+  function col(pt){
+    var s=slot(pt);
+    var cls="bgpt "+(s.isTop?"top":"bot")+(pt%2===1?" dark":"");
     if(bgLast && (bgLast[0]===pt||bgLast[1]===pt)) cls+=" last";
     if(bgSel===pt) cls+=" pick";
     else if(dests[pt]) cls+=" dest";
@@ -1229,17 +1233,13 @@ function bgPaint(){
     var show=Math.min(arr.length,5);
     for(var k=0;k<show;k++) stack+='<img class="bgchk" alt="" src="'+(arr[k]===1?"checker-w.png":"checker-b.png")+'">';
     if(arr.length>5) stack+='<span style="font-size:9px;font-weight:800;color:#1A2744">'+arr.length+'</span>';
-    return '<button type="button" class="'+cls+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
+    return '<button type="button" class="'+cls+'" style="left:'+s.left+'%;top:'+s.top+'%;width:'+s.w+'%;height:'+s.h+'%" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
   }
-  for(p=13;p<=18;p++) html+=col(p,true);
+  for(p=1;p<=24;p++) html+=col(p);
   var barCls="bgbar"+(bgBar[1]&&can[0]&&bgSel==null?" can":"")+(bgSel===0?" pick":"");
-  html+='<button type="button" class="'+barCls+'" onclick="bgClick(0)">BAR<br>You '+bgBar[1]+'<br>Lib '+bgBar[2]+'</button>';
-  for(p=19;p<=24;p++) html+=col(p,true);
-  html+='<div class="bgmid"></div>';
-  for(p=12;p>=7;p--) html+=col(p,false);
+  html+='<button type="button" class="'+barCls+'" style="left:47.4%;top:8.6%;width:5.2%;height:31.6%" onclick="bgClick(0)">BAR<br>You '+bgBar[1]+'<br>Lib '+bgBar[2]+'</button>';
   var offCls="bgbar"+(dests[25]?" dest":"");
-  html+='<button type="button" class="'+offCls+'" onclick="bgClick(25)">OFF<br>You '+bgOff[1]+'<br>Lib '+bgOff[2]+'</button>';
-  for(p=6;p>=1;p--) html+=col(p,false);
+  html+='<button type="button" class="'+offCls+'" style="left:47.4%;top:59.2%;width:5.2%;height:31.6%" onclick="bgClick(25)">OFF<br>You '+bgOff[1]+'<br>Lib '+bgOff[2]+'</button>';
   var board=document.getElementById("bgboard");
   if(board) board.innerHTML=html;
   var d=document.getElementById("bgdice");
