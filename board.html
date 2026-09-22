@@ -1311,7 +1311,7 @@ function bgPaint(){
     var show=Math.min(arr.length,5);
     for(var k=0;k<show;k++) stack+='<img class="bgchk" alt="" src="'+(arr[k]===1?"checker-w.png":"checker-b.png")+'">';
     if(arr.length>5) stack+='<span style="font-size:9px;font-weight:800;color:#1A2744">'+arr.length+'</span>';
-    return '<button type="button" class="'+cls+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
+    return '<button type="button" class="'+cls+'" data-pt="'+pt+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
   }
   for(p=13;p<=18;p++) html+=col(p,true);
   var barCls="bgbar"+(bgBar[1]&&can[0]&&bgSel==null?" can":"")+(bgSel===0?" pick":"");
@@ -1322,9 +1322,9 @@ function bgPaint(){
     if(n>5) s+='<span style="font-size:9px;font-weight:800;color:#fff">'+n+'</span>';
     return s;
   }
-  html+='<div class="bghinge"><button type="button" class="'+barCls+'" onclick="bgClick(0)" title="Bar">'+pile(bgBar[2],2)+pile(bgBar[1],1)+'</button>';
+  html+='<div class="bghinge"><button type="button" class="'+barCls+'" data-pt="0" onclick="bgClick(0)" title="Bar">'+pile(bgBar[2],2)+pile(bgBar[1],1)+'</button>';
   var offCls="bgbar off"+(dests[25]?" dest":"");
-  html+='<button type="button" class="'+offCls+'" onclick="bgClick(25)" title="Borne off">'+pile(bgOff[1],1)+pile(bgOff[2],2)+'</button></div>';
+  html+='<button type="button" class="'+offCls+'" data-pt="25" onclick="bgClick(25)" title="Borne off">'+pile(bgOff[1],1)+pile(bgOff[2],2)+'</button></div>';
   for(p=19;p<=24;p++) html+=col(p,true);
   for(p=12;p>=7;p--) html+=col(p,false);
   for(p=6;p>=1;p--) html+=col(p,false);
@@ -1359,8 +1359,40 @@ function bgUseDies(dies){
     if(ix>=0) bgDice.splice(ix,1);
   }
 }
+var bgBusy=false;
+function bgEl(pt){ return document.querySelector('#bgboard [data-pt="'+pt+'"]'); }
+function bgFly(from, dest, side, done){
+  var a=bgEl(from), b=bgEl(dest);
+  if(!a||!b){ if(done) done(); return; }
+  var ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  var fl=document.createElement("img");
+  fl.className="flyer";
+  fl.src=side===1?"checker-w.png":"checker-b.png";
+  var w=44, h=44;
+  fl.style.width=w+"px"; fl.style.height=h+"px";
+  fl.style.left=(ra.left+(ra.width-w)/2)+"px";
+  fl.style.top=(ra.top+(from>=13?4:ra.height-h-4))+"px";
+  document.body.appendChild(fl);
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      var dx=rb.left+(rb.width-w)/2-ra.left-(ra.width-w)/2;
+      var destTop=dest>=13&&dest<=24 ? rb.top+4 : (dest===0||dest===25 ? rb.top+rb.height/2-h/2 : rb.top+rb.height-h-4);
+      var dy=destTop-parseFloat(fl.style.top);
+      fl.style.filter="drop-shadow(0 22px 12px rgba(0,0,0,.32))";
+      fl.style.transform="translate("+dx+"px,"+(dy-28)+"px) scale(1.16)";
+      setTimeout(function(){
+        fl.style.transform="translate("+dx+"px,"+dy+"px) scale(1)";
+        fl.style.filter="drop-shadow(0 6px 4px rgba(0,0,0,.28))";
+      }, 280);
+    });
+  });
+  setTimeout(function(){
+    if(fl.parentNode) fl.parentNode.removeChild(fl);
+    if(done) done();
+  }, 580);
+}
 function bgClick(pt){
-  if(bgOver||bgTurn!==1||!bgDice.length) return;
+  if(bgBusy||bgOver||bgTurn!==1||!bgDice.length) return;
   var moves=bgMoves(1);
   if(bgSel!=null){
     var hit=null;
@@ -1370,10 +1402,14 @@ function bgClick(pt){
       }
     }
     if(hit){
-      bgApply(hit.from, hit.dies, hit.dest, 1);
-      bgUseDies(hit.dies);
-      bgSel=null;
-      bgAfter();
+      bgBusy=true;
+      bgFly(hit.from, hit.dest, 1, function(){
+        bgApply(hit.from, hit.dies, hit.dest, 1);
+        bgUseDies(hit.dies);
+        bgSel=null;
+        bgBusy=false;
+        bgAfter();
+      });
       return;
     }
   }
@@ -1431,11 +1467,13 @@ function bgAi(){
       return;
     }
     var m=moves[Math.floor(Math.random()*moves.length)];
-    bgApply(m.from,m.dies,m.dest,2);
-    bgUseDies(m.dies);
-    document.getElementById("bgmsg").textContent="Library: "+(m.from||"bar")+" → "+(m.dest===25?"off":m.dest);
-    bgPaint();
-    setTimeout(step,1100);
+    bgFly(m.from,m.dest,2,function(){
+      bgApply(m.from,m.dies,m.dest,2);
+      bgUseDies(m.dies);
+      document.getElementById("bgmsg").textContent="Library: "+(m.from||"bar")+" → "+(m.dest===25?"off":m.dest);
+      bgPaint();
+      setTimeout(step,420);
+    });
   }
   setTimeout(step,900);
 }
