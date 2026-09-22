@@ -133,22 +133,19 @@ h1{text-align:center;margin:4px 0 2px;font-size:22px;color:#1A2744;background:rg
 #winveil.on{display:flex}
 .wincard{position:relative;overflow:hidden;width:min(420px,90vw);text-align:center;padding:28px 22px 22px;border-radius:22px;
   background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;
-  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35)}
+  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35);
+  animation:winPop .45s ease}
 #winveil.win .wincard{animation:winBurst .7s cubic-bezier(.15,1.4,.3,1);box-shadow:0 0 0 3px #e8c15a,0 0 0 8px #1A2744,0 0 40px rgba(201,162,39,.55),0 28px 50px rgba(0,0,0,.35)}
-#winveil.lose .wincard{animation:loseDrop .8s ease;background:linear-gradient(180deg,#e8edf4,#cfd6e0);box-shadow:0 0 0 3px #8aa0b8,0 0 0 7px #1A2744,0 20px 36px rgba(0,0,0,.3)}
-#winveil.draw .wincard{animation:winPop .55s ease}
-.wincard h2{margin:0 0 8px;font-size:32px;letter-spacing:.04em}
+.wincard h2{margin:0 0 16px;font-size:28px;letter-spacing:.02em;line-height:1.25}
 #winveil.win .wincard h2{color:#8a6a18}
-#winveil.lose .wincard h2{color:#3a4a62}
-.wincard p{margin:0 0 16px;color:#4B5E73;font-weight:600}
+.wincard p{display:none}
 .wincard .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none}
+.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
 .wincard .go{background:#1A2744;color:#fff}
 .wincard .ghost{background:#fff;color:#1A2744;box-shadow:inset 0 0 0 1px #d7c9b0}
 #winveil.win .spark{position:absolute;width:8px;height:8px;border-radius:50%;background:#e8c15a;opacity:0;animation:spark 1.1s ease-out forwards}
-@keyframes winPop{from{transform:scale(.72) translateY(18px);opacity:0}to{transform:none;opacity:1}}
+@keyframes winPop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
 @keyframes winBurst{0%{transform:scale(.4) rotate(-6deg);opacity:0}55%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:none}}
-@keyframes loseDrop{0%{transform:translateY(-28px) scale(1.04);opacity:0;filter:saturate(.6)}100%{transform:none;opacity:1;filter:none}}
 @keyframes spark{0%{transform:translate(0,0) scale(.4);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(0);opacity:0}}
 
 </style>
@@ -203,13 +200,14 @@ h1{text-align:center;margin:4px 0 2px;font-size:22px;color:#1A2744;background:rg
 
 <div id="winveil" onclick="if(event.target.id==='winveil')hideBanner()">
   <div class="wincard">
-    <h2 id="winTitle">You win</h2>
+    <h2 id="winTitle">Congratulations! You win!</h2>
     <p id="winSub"></p>
     <div class="row">
-      <button class="go" type="button" id="winAgain">Play again</button>
-      <button class="ghost" type="button" onclick="hideBanner()">Stay at the board</button>
+      <button class="go" type="button" id="winAgain">Play again?</button>
+      <a class="ghost" href="tables.html">Return to Tables</a>
     </div>
   </div>
+</div>
 </div>
 
 <script>
@@ -218,12 +216,17 @@ function hideBanner(){ var v=document.getElementById("winveil"); if(v) v.classNa
 function showBanner(title, sub, again, kind){
   var v=document.getElementById("winveil");
   if(!v) return;
+  var raw=((title||"")+" "+(sub||"")).toLowerCase();
   if(!kind){
-    var s=(title+" "+(sub||"")).toLowerCase();
-    kind = /house wins|closed the net|ivory wins|library/.test(s) ? "lose" : /draw|tie/.test(s) ? "draw" : "win";
+    kind = /house wins|closed the net|ivory wins|library|better luck|black checkmate|ivory connects/.test(raw) ? "lose" : /draw|tie/.test(raw) ? "draw" : "win";
   }
-  document.getElementById("winTitle").textContent=title;
-  document.getElementById("winSub").textContent=sub||"";
+  var headline;
+  if(kind==="lose") headline="Better luck next time!";
+  else if(kind==="draw") headline="It's a Draw!";
+  else if(/checkmate/.test(raw)) headline="Congratulations! Checkmate!";
+  else headline="Congratulations! You win!";
+  document.getElementById("winTitle").textContent=headline;
+  document.getElementById("winSub").textContent="";
   var b=document.getElementById("winAgain");
   b.onclick=function(){ hideBanner(); if(again) again(); };
   v.className="on "+kind;
