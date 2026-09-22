@@ -556,6 +556,21 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padd
 .wrap{margin:12px 8px 28px;padding:14px 8px}
 body{background-size:cover;background-position:center 16%}
 }
+
+#winveil{position:fixed;inset:0;background:rgba(12,18,32,.46);display:none;align-items:center;justify-content:center;z-index:90;backdrop-filter:blur(4px)}
+#winveil.on{display:flex}
+.wincard{width:min(420px,90vw);text-align:center;padding:28px 22px 22px;border-radius:22px;
+  background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;
+  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35);
+  animation:winPop .55s cubic-bezier(.2,1.2,.3,1)}
+.wincard h2{margin:0 0 8px;font-size:32px;letter-spacing:.04em}
+.wincard p{margin:0 0 16px;color:#4B5E73;font-weight:600}
+.wincard .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none}
+.wincard .go{background:#1A2744;color:#fff}
+.wincard .ghost{background:#fff;color:#1A2744;box-shadow:inset 0 0 0 1px #d7c9b0}
+@keyframes winPop{from{transform:scale(.72) translateY(18px);opacity:0}to{transform:none;opacity:1}}
+
 </style>
 </head>
 <body data-scene="ch">
@@ -650,7 +665,30 @@ body{background-size:cover;background-position:center 16%}
 </div>
 </div>
 </div>
+
+<div id="winveil" onclick="if(event.target.id==='winveil')hideBanner()">
+  <div class="wincard">
+    <h2 id="winTitle">You win</h2>
+    <p id="winSub"></p>
+    <div class="row">
+      <button class="go" type="button" id="winAgain">Play again</button>
+      <button class="ghost" type="button" onclick="hideBanner()">Keep looking</button>
+    </div>
+  </div>
+</div>
+
 <script>
+
+function hideBanner(){ var v=document.getElementById("winveil"); if(v) v.classList.remove("on"); }
+function showBanner(title, sub, again){
+  var v=document.getElementById("winveil");
+  if(!v) return;
+  document.getElementById("winTitle").textContent=title;
+  document.getElementById("winSub").textContent=sub||"";
+  var b=document.getElementById("winAgain");
+  b.onclick=function(){ hideBanner(); if(again) again(); };
+  v.classList.add("on");
+}
 function showRoom(id,btn){
   document.getElementById("room-c4").hidden = id!=="c4";
   document.getElementById("room-ck").hidden = id!=="ck";
@@ -740,7 +778,7 @@ function c4Play(c){
   c4g[r][c]=1; c4last=[r,c]; c4Busy=true;
   dropDisc(r,c,1,function(){
     var w=c4Line(1);
-    if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Cobalt connects four."; c4Paint(); return; }
+    if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Cobalt connects four."; c4Paint(); showBanner("You win","Four in a line.",c4New); return; }
     c4Ai();
   });
 }
@@ -753,7 +791,7 @@ function c4Ai(){
   r=c4Row(choice); c4g[r][choice]=2; c4Busy=true;
   dropDisc(r,choice,2,function(){
     w=c4Line(2);
-    if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Ivory connects four."; c4Paint(); return; }
+    if(w){ c4over=true; c4wins=w; document.getElementById("c4msg").textContent="Ivory connects four."; c4Paint(); showBanner("House wins","Ivory connected four.",c4New); return; }
     document.getElementById("c4msg").textContent="Your turn"; c4Paint();
   });
 }
@@ -907,7 +945,7 @@ function ckClick(r,c){
         return;
       }
       ckSel=null;
-      if(!ckHas(2)){ ckOver=true; document.getElementById("ckmsg").textContent="You win."; ckPaint(); return; }
+      if(!ckHas(2)){ ckOver=true; document.getElementById("ckmsg").textContent="You win."; ckPaint(); showBanner("You win","The house has no move.",ckNew); return; }
       ckTurn=2; ckPaint(); setTimeout(ckAi, 320);
     });
     return;
@@ -932,7 +970,7 @@ function ckAi(){
       for(var k=0;k<st.length;k++) moves.push([r,c,st[k][0],st[k][1]]);
     }
   }
-  if(!moves.length){ ckOver=true; document.getElementById("ckmsg").textContent="You win."; ckPaint(); return; }
+  if(!moves.length){ ckOver=true; document.getElementById("ckmsg").textContent="You win."; ckPaint(); showBanner("You win","The house has no move.",ckNew); return; }
   function playOne(m, after){
     ckLast=[m[0],m[1],m[2],m[3]];
     var jumped=ckMove(m[0],m[1],m[2],m[3]);
@@ -946,7 +984,7 @@ function ckAi(){
     });
   }
   playOne(moves[Math.floor(Math.random()*moves.length)], function(){
-    if(!ckHas(1)){ ckOver=true; document.getElementById("ckmsg").textContent="Ivory wins."; ckPaint(); return; }
+    if(!ckHas(1)){ ckOver=true; document.getElementById("ckmsg").textContent="Ivory wins."; ckPaint(); showBanner("House wins","Your last man fell.",ckNew); return; }
     ckTurn=1; document.getElementById("ckmsg").textContent="Your turn"; ckPaint();
   });
 }
@@ -1110,7 +1148,7 @@ function chClick(r,c){
       var fs=chSel[0],fc=chSel[1],html=pieceHTML(ch[fs][fc]);
       chLast=[fs,fc,r,c]; chDo(fs,fc,r,c); chSel=null; chPaint();
       chFly(fs,fc,r,c,html,function(){
-        if(!chAll(false).length){ chOver=true; document.getElementById("chmsg").textContent=chInCheck(false)?"Checkmate.":"Draw."; return; }
+        if(!chAll(false).length){ chOver=true; var mate=chInCheck(false); document.getElementById("chmsg").textContent=mate?"Checkmate.":"Draw."; showBanner(mate?"Checkmate":"Draw", mate?"The house king has nowhere to go.":"No legal moves.", chNew); return; }
         chTurn="b"; document.getElementById("chmsg").textContent="Black is thinking…"; setTimeout(chAi,400);
       });
       return;
@@ -1201,7 +1239,7 @@ function chScore(m){
 }
 function chAi(){
   var moves=chAll(false);
-  if(!moves.length){ chOver=true; document.getElementById("chmsg").textContent=chInCheck(false)?"You win.":"Draw."; chPaint(); return; }
+  if(!moves.length){ chOver=true; var mate=chInCheck(false); document.getElementById("chmsg").textContent=mate?"You win.":"Draw."; chPaint(); showBanner(mate?"Checkmate":"Draw", mate?"You trapped the house king.":"No legal moves.", chNew); return; }
   var scored=[];
   for(var i=0;i<moves.length;i++) scored.push([chScore(moves[i]), moves[i]]);
   scored.sort(function(a,b){return b[0]-a[0];});
@@ -1213,7 +1251,7 @@ function chAi(){
   chTurn="w";
   chPaint();
   chFly(pick[0],pick[1],pick[2],pick[3],html,function(){
-    if(!chAll(true).length){ chOver=true; document.getElementById("chmsg").textContent=chInCheck(true)?"Black checkmates.":"Draw."; chPaint(); return; }
+    if(!chAll(true).length){ chOver=true; var mate=chInCheck(true); document.getElementById("chmsg").textContent=mate?"Black checkmates.":"Draw."; chPaint(); showBanner(mate?"Checkmate":"Draw", mate?"The house closed the net.":"No legal moves.", chNew); return; }
     document.getElementById("chmsg").textContent=chInCheck(true)?"Check — your turn":"Your turn";
     chPaint();
   });
@@ -1418,7 +1456,7 @@ function bgClick(pt){
   else { bgSel=null; bgPaint(); }
 }
 function bgAfter(){
-  if(bgOff[1]>=15){ bgOver=true; document.getElementById("bgmsg").textContent="You bear off — you win."; bgPaint(); return; }
+  if(bgOff[1]>=15){ bgOver=true; document.getElementById("bgmsg").textContent="You bear off — you win."; bgPaint(); showBanner("You win","Every checker is home.",bgNew); return; }
   if(!bgDice.length || !bgMoves(1).length){
     bgTurn=2; bgSel=null; bgDice=[]; document.getElementById("bgmsg").textContent="Library plays…"; bgPaint();
     setTimeout(bgAi,700); return;
@@ -1460,7 +1498,7 @@ function bgAi(){
   function step(){
     var moves=bgMoves(2);
     if(!moves.length || bgOver){
-      if(bgOff[2]>=15){ bgOver=true; document.getElementById("bgmsg").textContent="Library bears off."; bgPaint(); return; }
+      if(bgOff[2]>=15){ bgOver=true; document.getElementById("bgmsg").textContent="Library bears off."; bgPaint(); showBanner("House wins","The library bore off first.",bgNew); return; }
       bgTurn=1; bgDice=[]; bgSel=null;
       document.getElementById("bgmsg").textContent="Your roll";
       bgPaint();

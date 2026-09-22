@@ -128,6 +128,21 @@ h1{text-align:center;margin:4px 0 2px;font-size:22px;color:#1A2744;background:rg
 }
 .pencil::before{content:"";position:absolute;top:-10px;left:0;right:0;height:12px;background:#f4d7c4;clip-path:polygon(50% 0,100% 100%,0 100%)}
 .pencil::after{content:"";position:absolute;bottom:-8px;left:2px;right:2px;height:10px;background:#c9c4bc;border-radius:0 0 2px 2px}
+
+#winveil{position:fixed;inset:0;background:rgba(12,18,32,.46);display:none;align-items:center;justify-content:center;z-index:90;backdrop-filter:blur(4px)}
+#winveil.on{display:flex}
+.wincard{width:min(420px,90vw);text-align:center;padding:28px 22px 22px;border-radius:22px;
+  background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;
+  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35);
+  animation:winPop .55s cubic-bezier(.2,1.2,.3,1)}
+.wincard h2{margin:0 0 8px;font-size:32px;letter-spacing:.04em}
+.wincard p{margin:0 0 16px;color:#4B5E73;font-weight:600}
+.wincard .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none}
+.wincard .go{background:#1A2744;color:#fff}
+.wincard .ghost{background:#fff;color:#1A2744;box-shadow:inset 0 0 0 1px #d7c9b0}
+@keyframes winPop{from{transform:scale(.72) translateY(18px);opacity:0}to{transform:none;opacity:1}}
+
 </style>
 </head>
 <body>
@@ -177,7 +192,30 @@ h1{text-align:center;margin:4px 0 2px;font-size:22px;color:#1A2744;background:rg
     </div>
   </div>
 </div>
+
+<div id="winveil" onclick="if(event.target.id==='winveil')hideBanner()">
+  <div class="wincard">
+    <h2 id="winTitle">You win</h2>
+    <p id="winSub"></p>
+    <div class="row">
+      <button class="go" type="button" id="winAgain">Play again</button>
+      <button class="ghost" type="button" onclick="hideBanner()">Keep looking</button>
+    </div>
+  </div>
+</div>
+
 <script>
+
+function hideBanner(){ var v=document.getElementById("winveil"); if(v) v.classList.remove("on"); }
+function showBanner(title, sub, again){
+  var v=document.getElementById("winveil");
+  if(!v) return;
+  document.getElementById("winTitle").textContent=title;
+  document.getElementById("winSub").textContent=sub||"";
+  var b=document.getElementById("winAgain");
+  b.onclick=function(){ hideBanner(); if(again) again(); };
+  v.classList.add("on");
+}
 function sitDown(){ document.body.classList.add("seated"); }
 function standUp(){ document.body.classList.remove("seated"); }
 var dice=[0,0,0,0,0], held=[0,0,0,0,0], rolls=0, whose="you", busy=false;
@@ -311,7 +349,10 @@ function housePlay(){
 }
 function endGame(){
   var y=totalOf(you).total, h=totalOf(house).total;
-  document.getElementById("msg").textContent = y>h ? "You win "+y+" to "+h+"." : h>y ? "House wins "+h+" to "+y+"." : "Tie at "+y+".";
+  var title = y>h ? "You win" : h>y ? "House wins" : "Tie";
+  var sub = y+" to "+h+".";
+  document.getElementById("msg").textContent = title+" "+sub;
+  showBanner(title, sub, newGame);
 }
 function newGame(){
   dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; whose="you"; busy=false; you={}; house={};
