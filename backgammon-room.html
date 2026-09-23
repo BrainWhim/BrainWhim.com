@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backgammon table · BrainWhim</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#f6f1e8;
+background:#8a6a48 url("library-bg.jpg") center 18%/cover no-repeat fixed}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
+.brand img{width:56px;height:56px;object-fit:contain}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+header a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-size:14px}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px)}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
+.games a.on{background:#1A2744;color:#fff;border-color:#1A2744}
+.wrap{max-width:860px;margin:0 auto;padding:4px 8px 80px}
+.hud{max-width:340px;margin:8px auto;background:rgba(255,252,247,.92);border-radius:999px;padding:6px 12px}
+.meta,.msg{text-align:center;font-size:12px;margin:0 0 2px;color:#1A2744}
+.stage{perspective:920px;perspective-origin:50% 70%}
+.table{width:min(720px,94vw);margin:8px auto 0;transform:rotateX(18deg) scale(1.04);transform-origin:50% 55%}
+.bgframe{padding:14px 12px 16px;border-radius:6px;background:linear-gradient(180deg,#f4efe4,#e8dfd0);border:10px solid #d7c389;box-shadow:0 0 0 3px #8a6e3e,0 0 0 6px #f3ead6,0 0 0 8px #b8893a,0 22px 36px rgba(30,22,12,.35)}
+.bgboard{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) 52px repeat(6,minmax(0,1fr));grid-template-rows:1fr 1fr;min-height:320px;height:min(44vh,400px);background:radial-gradient(ellipse at 18% 24%,rgba(255,236,180,.45),transparent 48%),linear-gradient(180deg,#e2c98a,#d4b56e 50%,#c9a85c)}
+.bgpt{position:relative;min-height:0;border:0;padding:0;background:transparent;cursor:pointer}
+.bgpt::before{content:"";position:absolute;left:5%;right:5%;height:98%}
+.bgpt.top::before{top:0;clip-path:polygon(50% 100%,0 0,100% 0);background:linear-gradient(180deg,#fffdf6,#f3ead4)}
+.bgpt.bot::before{bottom:0;clip-path:polygon(50% 0,0 100%,100% 100%);background:linear-gradient(0deg,#fffdf6,#f3ead4)}
+.bgpt.dark.top::before{background:linear-gradient(180deg,#3a5a82,#1e3a58)}
+.bgpt.dark.bot::before{background:linear-gradient(0deg,#3a5a82,#1e3a58)}
+.bgpt.can::after,.bgpt.dest::after,.bgpt.pick::after{content:"";position:absolute;left:18%;right:18%;height:28%;border-radius:50%;z-index:2;pointer-events:none}
+.bgpt.top.can::after,.bgpt.top.dest::after,.bgpt.top.pick::after{bottom:8%}
+.bgpt.bot.can::after,.bgpt.bot.dest::after,.bgpt.bot.pick::after{top:8%}
+.bgpt.can::after{background:rgba(201,162,39,.4)}
+.bgpt.dest::after{background:rgba(43,183,232,.45)}
+.bgpt.pick::after{background:rgba(22,58,138,.4)}
+.bgpt .stack{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;z-index:1}
+.bgpt.top .stack{top:-12px}
+.bgpt.bot .stack{bottom:0;flex-direction:column-reverse}
+.bgchk{width:44px;height:44px;display:block;filter:drop-shadow(0 3px 2px rgba(0,0,0,.4));pointer-events:none}
+.bgpt.top .bgchk{margin-bottom:-16px}
+.bgpt.bot .bgchk{margin-top:-16px}
+.bghinge{grid-column:7;grid-row:1 / span 2;display:flex;flex-direction:column;background:linear-gradient(90deg,#8a6a2e,#e8d090 18%,#c9a45a 36%,#7a5a22 50%,#c9a45a 64%,#e8d090 82%,#8a6a2e);border-left:1px solid #5c4214;border-right:1px solid #5c4214}
+.bgbar{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.bgbar.off{flex:0 0 50%;justify-content:flex-end;border-top:2px solid #5c4214}
+.bgbar .bgchk{width:28px;height:28px;margin:-10px 0 0}
+.bgfelt{display:flex;align-items:flex-end;justify-content:center;gap:18px;min-height:72px;padding:4px 8px}
+.bgcup{position:relative;width:72px;height:86px;border:0;background:transparent;cursor:pointer}
+.bgcup-body{position:absolute;left:8px;right:8px;top:18px;bottom:4px;background:linear-gradient(90deg,#c9a45a,#efe0b0 20%,#d4b56e 48%,#f3e6c0 78%,#b8893a);border-radius:8px 8px 18px 18px}
+.bgcup-rim{position:absolute;left:4px;right:4px;top:8px;height:22px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#f7edd0 28%,#d4b56e 70%)}
+.bgcup-label{position:absolute;left:0;right:0;bottom:-18px;text-align:center;font-size:10px;font-weight:800;color:#f7edd0;text-shadow:0 1px 3px #000}
+.bgcup.lift .bgcup-body,.bgcup.lift .bgcup-rim{animation:cupLift .55s ease}
+.bgcup.shake .bgcup-body,.bgcup.shake .bgcup-rim{animation:cupShake .55s ease}
+@keyframes cupLift{55%{transform:translateY(-28px) rotate(-18deg)}100%{transform:translateY(-18px) rotate(-8deg)}}
+@keyframes cupShake{20%{transform:translateY(-26px) rotate(16deg)}100%{transform:none}}
+.bgdice{min-height:52px;display:flex;gap:10px;align-items:center;justify-content:center;flex:1}
+.die{width:46px;height:46px;border-radius:10px;padding:7px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;background:linear-gradient(145deg,#fffdf6,#d4c09a);box-shadow:3px 5px 0 #8a6e3e}
+.die i{width:7px;height:7px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
+.die[data-n="1"] i:nth-child(5),.die[data-n="2"] i:nth-child(1),.die[data-n="2"] i:nth-child(9),.die[data-n="3"] i:nth-child(1),.die[data-n="3"] i:nth-child(5),.die[data-n="3"] i:nth-child(9){opacity:1}
+.die[data-n="4"] i:nth-child(1),.die[data-n="4"] i:nth-child(3),.die[data-n="4"] i:nth-child(7),.die[data-n="4"] i:nth-child(9){opacity:1}
+.die[data-n="5"] i:nth-child(1),.die[data-n="5"] i:nth-child(3),.die[data-n="5"] i:nth-child(5),.die[data-n="5"] i:nth-child(7),.die[data-n="5"] i:nth-child(9){opacity:1}
+.die[data-n="6"] i:nth-child(1),.die[data-n="6"] i:nth-child(3),.die[data-n="6"] i:nth-child(4),.die[data-n="6"] i:nth-child(6),.die[data-n="6"] i:nth-child(7),.die[data-n="6"] i:nth-child(9){opacity:1}
+.row{display:flex;gap:8px;justify-content:center;position:fixed;left:0;right:0;bottom:10px;z-index:6}
+.btn{border:0;border-radius:999px;padding:8px 14px;background:#fff;color:#1A2744;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 6px 16px rgba(0,0,0,.16)}
+.flyer{position:fixed;z-index:80;pointer-events:none;filter:drop-shadow(0 18px 10px rgba(0,0,0,.35));transition:transform .55s cubic-bezier(.2,.7,.2,1)}
+@media(max-width:700px){
+  .table{width:96vw;transform:rotateX(14deg) scale(1.02)}
+  .bgboard{min-height:260px;height:40vh}
+  .bgchk{width:34px;height:34px}
+}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="backgammon.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="checkers.html">Checkers</a>
+<a href="chess.html">Chess</a>
+<a class="on" href="backgammon.html">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a href="dominoes.html">Dominoes</a>
+<a href="othello.html">Othello</a>
+<a href="mancala.html">Mancala</a>
+<a href="cribbage.html">Cribbage</a>
+<a href="shutbox.html">Shut the Box</a>
+<a href="morris.html">Morris</a>
+</div>
+<div class="wrap">
+  <div class="hud">
+    <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
+    <p class="msg" id="bgmsg">Connecting…</p>
+  </div>
+  <div class="stage">
+    <div class="table">
+      <div class="bgframe"><div class="bgboard" id="bgboard"></div></div>
+      <div class="bgfelt">
+        <button class="bgcup" id="bgcup" type="button" onclick="bgRoll()">
+          <span class="bgcup-body"></span><span class="bgcup-rim"></span>
+          <span class="bgcup-label">Shake</span>
+        </button>
+        <div class="bgdice" id="bgdice"></div>
+      </div>
+    </div>
+  </div>
+  <div class="row"><a class="btn" href="tables.html">Return to tables</a></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script>
+var sb, room, me, mySide=null, busy=false;
+var bgPts, bgBar, bgOff, bgDice, bgTurn, bgSel, bgOver, bgLast;
+var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
+function setMsg(t){ document.getElementById("bgmsg").textContent=t; }
+function bgPips(){ return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>"; }
+function startBg(){
+  var pts=[]; for(var i=0;i<25;i++) pts[i]=[];
+  function fill(pt,n,s){ for(var i=0;i<n;i++) pts[pt].push(s); }
+  fill(24,2,1); fill(13,5,1); fill(8,3,1); fill(6,5,1);
+  fill(1,2,2); fill(12,5,2); fill(17,3,2); fill(19,5,2);
+  return {pts:pts, bar:{1:0,2:0}, off:{1:0,2:0}, dice:[], turn:1, last:null, over:false};
+}
+function snapshot(){ return {pts:bgPts, bar:bgBar, off:bgOff, dice:bgDice, turn:bgTurn, last:bgLast, over:bgOver}; }
+function applySnap(s){
+  if(!s) s=startBg();
+  bgPts=s.pts||startBg().pts;
+  bgBar=s.bar||{1:0,2:0}; bgOff=s.off||{1:0,2:0};
+  bgDice=s.dice||[]; bgTurn=s.turn||1; bgLast=s.last||null; bgOver=!!s.over; bgSel=null;
+}
+function bgOpen(pt, side){ var t=bgPts[pt]||[]; return !t.length || t[0]===side || t.length===1; }
+function bgHome(side){
+  if(bgBar[side]) return false;
+  var lo=side===1?1:19, hi=side===1?6:24, p,i;
+  for(p=1;p<=24;p++) if(p<lo||p>hi) for(i=0;i<(bgPts[p]||[]).length;i++) if(bgPts[p][i]===side) return false;
+  return true;
+}
+function bgHighestHome(side){
+  if(side===1){ for(var p=6;p>=1;p--) if((bgPts[p]||[]).indexOf(1)>=0) return p; return 0; }
+  for(var q=19;q<=24;q++) if((bgPts[q]||[]).indexOf(2)>=0) return q; return 25;
+}
+function bgCanBear(from, steps, side){
+  if(!bgHome(side)||from===0) return false;
+  if(side===1){ var d=from-steps; if(d===0) return true; if(d<0) return from===bgHighestHome(1); return false; }
+  var e=from+steps; if(e===25) return true; if(e>25) return from===bgHighestHome(2); return false;
+}
+function bgMoves(side){
+  var out=[], i,p,dest,used={};
+  function add(from,dies,dest){ var k=from+":"+dest+":"+dies.join(","); if(used[k]) return; used[k]=1; out.push({from:from,dies:dies,dest:dest}); }
+  function tryDest(from,steps,dies){
+    dest=from===0?(side===1?25-steps:steps):(side===1?from-steps:from+steps);
+    if(dest>=1&&dest<=24){ if(bgOpen(dest,side)) add(from,dies,dest); }
+    else if(bgCanBear(from,steps,side)) add(from,dies,25);
+  }
+  var dice=bgDice.slice();
+  if(bgBar[side]){ for(i=0;i<dice.length;i++) tryDest(0,dice[i],[dice[i]]); return out; }
+  var uniq=[], seen={};
+  for(i=0;i<dice.length;i++) if(!seen[dice[i]]){ seen[dice[i]]=1; uniq.push(dice[i]); }
+  for(p=1;p<=24;p++){
+    if((bgPts[p]||[]).indexOf(side)<0) continue;
+    for(i=0;i<uniq.length;i++) tryDest(p,uniq[i],[uniq[i]]);
+  }
+  return out;
+}
+function bgPaint(){
+  var mine=mySide && bgTurn===mySide && !bgOver;
+  var moves=mine && bgDice.length ? bgMoves(mySide) : [];
+  var can={}, dests={};
+  for(var i=0;i<moves.length;i++){ can[moves[i].from]=1; if(bgSel===moves[i].from) dests[moves[i].dest]=1; }
+  function col(pt,isTop){
+    var cls="bgpt "+(isTop?"top":"bot")+(pt%2===1?" dark":"");
+    if(bgSel===pt) cls+=" pick"; else if(dests[pt]) cls+=" dest"; else if(can[pt]&&bgSel==null) cls+=" can";
+    var stack="", arr=bgPts[pt]||[], show=Math.min(arr.length,5), k;
+    for(k=0;k<show;k++) stack+='<img class="bgchk" alt="" src="'+(arr[k]===1?"checker-w.png":"checker-b.png")+'">';
+    if(arr.length>5) stack+='<span style="font-size:9px;font-weight:800;color:#1A2744">'+arr.length+'</span>';
+    return '<button type="button" class="'+cls+'" data-pt="'+pt+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
+  }
+  var html="", p;
+  for(p=13;p<=18;p++) html+=col(p,true);
+  var barCls="bgbar"+(bgBar[mySide]&&can[0]&&bgSel==null?" can":"")+(bgSel===0?" pick":"");
+  function pile(n,side){
+    var s="",k,src=side===1?"checker-w.png":"checker-b.png",show=Math.min(n,5);
+    for(k=0;k<show;k++) s+='<img class="bgchk" alt="" src="'+src+'">';
+    if(n>5) s+='<span style="font-size:9px;font-weight:800;color:#fff">'+n+'</span>';
+    return s;
+  }
+  html+='<div class="bghinge"><button type="button" class="'+barCls+'" data-pt="0" onclick="bgClick(0)">'+pile(bgBar[2],2)+pile(bgBar[1],1)+'</button>';
+  html+='<button type="button" class="bgbar off'+(dests[25]?" dest":"")+'" data-pt="25" onclick="bgClick(25)">'+pile(bgOff[1],1)+pile(bgOff[2],2)+'</button></div>';
+  for(p=19;p<=24;p++) html+=col(p,true);
+  for(p=12;p>=7;p--) html+=col(p,false);
+  for(p=6;p>=1;p--) html+=col(p,false);
+  document.getElementById("bgboard").innerHTML=html;
+  var d=document.getElementById("bgdice");
+  if(!bgDice.length) d.innerHTML="";
+  else {
+    var shown=bgDice.length>=4?[bgDice[0],bgDice[0]]:bgDice.slice(0,2);
+    d.innerHTML=shown.map(function(n){ return '<span class="die" data-n="'+n+'">'+bgPips()+'</span>'; }).join("");
+  }
+}
+function bgApply(from,dies,dest,side){
+  if(from===0) bgBar[side]--;
+  else { var arr=bgPts[from], ix=arr.lastIndexOf(side); if(ix>=0) arr.splice(ix,1); }
+  if(dest===25){ bgOff[side]++; bgLast=[from,25]; return; }
+  var t=bgPts[dest];
+  if(t.length===1 && t[0]!==side){ bgBar[t[0]]++; bgPts[dest]=[]; }
+  bgPts[dest].push(side); bgLast=[from,dest];
+}
+function bgUseDies(dies){ for(var i=0;i<dies.length;i++){ var ix=bgDice.indexOf(dies[i]); if(ix>=0) bgDice.splice(ix,1); } }
+function bgEl(pt){ return document.querySelector('#bgboard [data-pt="'+pt+'"]'); }
+function bgFly(from,dest,side,done){
+  var a=bgEl(from), b=bgEl(dest);
+  if(!a||!b){ if(done) done(); return; }
+  var ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  var fl=document.createElement("img"); fl.className="flyer"; fl.src=side===1?"checker-w.png":"checker-b.png";
+  var w=44; fl.style.width=w+"px"; fl.style.height=w+"px";
+  fl.style.left=(ra.left+(ra.width-w)/2)+"px"; fl.style.top=(ra.top+8)+"px";
+  document.body.appendChild(fl);
+  requestAnimationFrame(function(){
+    var dx=rb.left+(rb.width-w)/2-ra.left-(ra.width-w)/2;
+    var dy=rb.top+8-ra.top-8;
+    fl.style.transform="translate("+dx+"px,"+dy+"px)";
+  });
+  setTimeout(function(){ if(fl.parentNode) fl.parentNode.removeChild(fl); if(done) done(); }, 560);
+}
+function turnMsg(){
+  if(!room || !room.guest) return "Waiting for someone to sit…";
+  if(bgOver) return bgOff[1]>=15 ? "Ivory bears off." : "Cobalt bears off.";
+  if(bgTurn!==mySide) return "Opponent to play.";
+  if(!bgDice.length) return "Your shake.";
+  return "Gold = pick up. Blue = land.";
+}
+async function pushState(){
+  if(!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:bgOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+}
+function bgClick(pt){
+  if(busy||bgOver||!mySide||bgTurn!==mySide||!bgDice.length) return;
+  var moves=bgMoves(mySide);
+  if(bgSel!=null){
+    var hit=null,i;
+    for(i=0;i<moves.length;i++) if(moves[i].from===bgSel && moves[i].dest===pt){ if(!hit||moves[i].dies.length<hit.dies.length) hit=moves[i]; }
+    if(hit){
+      busy=true;
+      bgFly(hit.from,hit.dest,mySide,function(){
+        bgApply(hit.from,hit.dies,hit.dest,mySide);
+        bgUseDies(hit.dies);
+        bgSel=null;
+        if(bgOff[mySide]>=15){ bgOver=true; setMsg("You bear off."); }
+        else if(!bgDice.length || !bgMoves(mySide).length){ bgTurn=mySide===1?2:1; bgDice=[]; setMsg("Opponent to play."); }
+        else setMsg(turnMsg());
+        busy=false; bgPaint(); pushState();
+      });
+      return;
+    }
+  }
+  if(moves.some(function(m){return m.from===pt;})){ bgSel=pt; bgPaint(); }
+  else { bgSel=null; bgPaint(); }
+}
+function bgRoll(){
+  if(busy||bgOver||!mySide||bgTurn!==mySide||bgDice.length) return;
+  var cup=document.getElementById("bgcup");
+  cup.classList.add("lift");
+  setTimeout(function(){ cup.classList.remove("lift"); cup.classList.add("shake"); },280);
+  setTimeout(function(){
+    cup.classList.remove("shake","lift");
+    var a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6);
+    bgDice=a===b?[a,a,a,a]:[a,b]; bgSel=null; bgLast=null;
+    if(!bgMoves(mySide).length){
+      setMsg("No move with "+a+" and "+b+".");
+      bgPaint();
+      setTimeout(function(){ bgDice=[]; bgTurn=mySide===1?2:1; setMsg("Opponent to play."); bgPaint(); pushState(); },900);
+      return;
+    }
+    setMsg("Rolled "+a+" + "+b+".");
+    bgPaint(); pushState();
+  },900);
+}
+async function boot(){
+  var online=/(?:^|[?&])online=1/.test(location.search);
+  document.getElementById("codeLab").textContent=online?"Online table":("Table "+(CODE||"—"));
+  var cfg=window.BW_PLAY||{};
+  if(!CODE||!cfg.url){ setMsg("Missing table code or play-config.js"); return; }
+  sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ setMsg("Sign in on Tables first."); return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code", CODE).single();
+  if(q.error){ setMsg(q.error.message); return; }
+  room=q.data;
+  if(room.host===me) mySide=1;
+  else if(room.guest===me) mySide=2;
+  else if(!room.guest){
+    var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
+    if(!u.error){ room=u.data; mySide=2; }
+  }
+  document.getElementById("seatLab").textContent=mySide===1?"You are ivory": mySide===2?"You are cobalt":"Watching";
+  applySnap(room.state && room.state.pts ? room.state : startBg());
+  setMsg(turnMsg()); bgPaint();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
+    room=payload.new;
+    applySnap(room.state);
+    setMsg(turnMsg());
+    if(room.guest) document.getElementById("seatLab").textContent=mySide===1?"You are ivory": mySide===2?"You are cobalt":"Watching";
+    bgPaint();
+  }).subscribe();
+}
+boot();
+</script>
+</body>
+</html>

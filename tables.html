@@ -139,7 +139,12 @@ body{background-attachment:scroll}
 <p>Marble and gold. Bear off with both dice.</p>
 <div class="row">
 <a class="btn go" href="backgammon.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" id="onlineBtnBg" onclick="playOnline('backgammon')">Play someone online</button>
+</div>
+<p class="hint waitHint" id="waitHintBg" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<div class="row" style="margin-top:8px">
+<input id="inviteNameBg" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<button class="btn ghost" type="button" onclick="inviteFriend('backgammon')">Invite friend</button>
 </div>
 </article>
 <article class="room">
@@ -217,13 +222,25 @@ async function needSession(){
   if(!s){ alert("Sign in first."); return null; }
   return s;
 }
-function roomPage(game){ return game==="checkers"?"checkers-room.html":"chess-room.html"; }
+function roomPage(game){
+  if(game==="checkers") return "checkers-room.html";
+  if(game==="backgammon") return "backgammon-room.html";
+  return "chess-room.html";
+}
+function startBg(){
+  var pts=[]; for(var i=0;i<25;i++) pts[i]=[];
+  function fill(pt,n,s){ for(var k=0;k<n;k++) pts[pt].push(s); }
+  fill(24,2,1); fill(13,5,1); fill(8,3,1); fill(6,5,1);
+  fill(1,2,2); fill(12,5,2); fill(17,3,2); fill(19,5,2);
+  return {pts:pts, bar:{1:0,2:0}, off:{1:0,2:0}, dice:[], turn:1, last:null, over:false};
+}
 function startState(game){
   if(game==="checkers"){
     var b=[],r,c;
     for(r=0;r<8;r++){ b[r]=[]; for(c=0;c<8;c++){ b[r][c]=0; if((r+c)%2===1 && r<3) b[r][c]=2; if((r+c)%2===1 && r>4) b[r][c]=1; } }
     return {board:b, turn:1, last:null, over:false, took1:[], took2:[]};
   }
+  if(game==="backgammon") return startBg();
   return startBoard();
 }
 async function makeRoom(kind, game){
@@ -235,12 +252,12 @@ async function makeRoom(kind, game){
 }
 function setWaiting(on, game){
   document.querySelectorAll(".waitHint").forEach(function(el){ el.style.display="none"; });
-  ["onlineBtnChess","onlineBtnCk"].forEach(function(id){
+  ["onlineBtnChess","onlineBtnCk","onlineBtnBg"].forEach(function(id){
     var b=document.getElementById(id); if(b){ b.disabled=false; b.textContent="Play someone online"; }
   });
   if(!on) return;
-  var h=document.getElementById(game==="checkers"?"waitHintCheckers":"waitHintChess");
-  var b=document.getElementById(game==="checkers"?"onlineBtnCk":"onlineBtnChess");
+  var h=document.getElementById(game==="checkers"?"waitHintCheckers":game==="backgammon"?"waitHintBg":"waitHintChess");
+  var b=document.getElementById(game==="checkers"?"onlineBtnCk":game==="backgammon"?"onlineBtnBg":"onlineBtnChess");
   if(h) h.style.display="block";
   if(b){ b.disabled=true; b.textContent="Waiting for a player…"; }
 }
@@ -277,7 +294,7 @@ async function playOnline(game){
 async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
-  var box=document.getElementById(game==="checkers"?"inviteNameCk":"inviteName");
+  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":"inviteName");
   var name=cleanName(box && box.value);
   if(name.length<3){ alert("Enter your friend's username."); return; }
   var p=await sb.from("profiles").select("id,username,display_name").ilike("username", name).maybeSingle();
@@ -286,7 +303,7 @@ async function inviteFriend(game){
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
     body:(myName||"A player")+" invited you to "+label+"."
