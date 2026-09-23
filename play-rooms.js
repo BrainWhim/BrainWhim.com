@@ -4,7 +4,8 @@ window.BW_ROOMS={
   backgammon:"backgammon-room.html",
   othello:"othello-room.html",
   morris:"morris-room.html",
-  mancala:"mancala-room.html"
+  mancala:"mancala-room.html",
+  dominoes:"dominoes-room.html"
 };
 function bwGuessGame(room){
   if(!room) return "";
@@ -13,6 +14,7 @@ function bwGuessGame(room){
   var st=room.state||{};
   if(st.pts) return "backgammon";
   if(st.y && st.h) return "mancala";
+  if(st.h1 && st.h2 && st.bone) return "dominoes";
   if(st.placed || (st.board && st.board.length===24)) return "morris";
   if(st.took1 || st.took2) return "checkers";
   if(st.board && st.board.length===8 && typeof (st.board[0]&&st.board[0][0])==="number") return "othello";

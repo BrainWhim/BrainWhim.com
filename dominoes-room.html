@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dominoes table · BrainWhim</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#1A2744;
+background:#2f4a32 url("dominoes-parlor.jpg") center/cover no-repeat fixed}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
+.brand img{width:56px;height:56px;object-fit:contain}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+header a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-size:14px}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;background:rgba(255,252,247,.78);border-radius:16px}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
+.games a.on{background:#1A2744;color:#fff}
+.wrap{max-width:980px;margin:0 auto;padding:4px 10px 88px}
+.hud{max-width:420px;margin:8px auto;background:rgba(255,252,247,.92);border-radius:999px;padding:6px 12px}
+.meta,.msg{text-align:center;font-size:12px;margin:0 0 2px}
+.felt{background:linear-gradient(180deg,#2f6a3e,#1b3f26);border:4px solid #c9a45a;border-radius:10px;padding:8px}
+.stats{display:flex;justify-content:space-between;color:#f4ead0;font-size:12px;font-weight:700;margin-bottom:6px}
+.field{position:relative;height:240px;overflow:hidden}
+.hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.tile{width:32px;height:64px;border:0;padding:2px;border-radius:6px;cursor:pointer;background:linear-gradient(160deg,#fffef8,#d4c09a);box-shadow:1px 2px 0 #8a6e3e;display:flex;flex-direction:column}
+.tile.hz{width:64px;height:32px;flex-direction:row}
+.tile.playable{outline:2px solid #C9A227}
+.tile:disabled{opacity:.55}
+.half{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:1px}
+.half i{width:5px;height:5px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
+.tile.hz .half + .half{border-left:1px solid #c9b07a}
+.tile:not(.hz) .half:first-child{border-bottom:1px solid #c9b07a}
+.half[data-n="1"] i:nth-child(5){opacity:1}
+.half[data-n="2"] i:nth-child(1),.half[data-n="2"] i:nth-child(9){opacity:1}
+.half[data-n="3"] i:nth-child(1),.half[data-n="3"] i:nth-child(5),.half[data-n="3"] i:nth-child(9){opacity:1}
+.half[data-n="4"] i:nth-child(1),.half[data-n="4"] i:nth-child(3),.half[data-n="4"] i:nth-child(7),.half[data-n="4"] i:nth-child(9){opacity:1}
+.half[data-n="5"] i:nth-child(1),.half[data-n="5"] i:nth-child(3),.half[data-n="5"] i:nth-child(5),.half[data-n="5"] i:nth-child(7),.half[data-n="5"] i:nth-child(9){opacity:1}
+.half[data-n="6"] i:nth-child(1),.half[data-n="6"] i:nth-child(3),.half[data-n="6"] i:nth-child(4),.half[data-n="6"] i:nth-child(6),.half[data-n="6"] i:nth-child(7),.half[data-n="6"] i:nth-child(9){opacity:1}
+.acts{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.acts button,.row a{border:0;border-radius:999px;padding:8px 14px;background:#1A2744;color:#fff;font-weight:700;text-decoration:none;font-family:inherit}
+.row{display:flex;gap:8px;justify-content:center;position:fixed;left:0;right:0;bottom:10px}
+.row a{background:#fff;color:#1A2744;box-shadow:0 6px 16px rgba(0,0,0,.16)}
+@media(max-width:700px){.field{height:180px}}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="dominoes.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="checkers.html">Checkers</a><a href="chess.html">Chess</a><a href="backgammon.html">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a><a class="on" href="dominoes.html">Dominoes</a><a href="othello.html">Othello</a>
+<a href="mancala.html">Mancala</a><a href="cribbage.html">Cribbage</a><a href="shutbox.html">Shut the Box</a><a href="morris.html">Morris</a>
+</div>
+<div class="wrap">
+  <div class="hud">
+    <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
+    <p class="msg" id="msg">Connecting…</p>
+  </div>
+  <div class="felt">
+    <div class="stats"><span>Opp <b id="oppN">7</b></span><span>Boneyard <b id="boneN">14</b></span><span>Ends <b id="ends">—</b></span></div>
+    <div class="field" id="field"></div>
+  </div>
+  <div class="hand" id="hand"></div>
+  <div class="acts"><button type="button" onclick="drawTile()">Draw / pass</button></div>
+  <div class="row"><a href="tables.html">Return to tables</a></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js"></script>
+<script>
+var sb, room, me, mySide=null, h1=[], h2=[], bone=[], chain=[], turn=1, over=false;
+var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
+function setMsg(t){ document.getElementById("msg").textContent=t; }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=a[i]; a[i]=a[j]; a[j]=x; } return a; }
+function startDo(){
+  var pack=[]; for(var a=0;a<=6;a++) for(var b=a;b<=6;b++) pack.push([a,b]);
+  shuffle(pack);
+  return {game:"dominoes", h1:pack.splice(0,7), h2:pack.splice(0,7), bone:pack, chain:[], turn:1, over:false};
+}
+function snapshot(){ return {game:"dominoes", h1:h1, h2:h2, bone:bone, chain:chain, turn:turn, over:over}; }
+function applySnap(s){
+  if(!s||!s.h1) s=startDo();
+  h1=s.h1; h2=s.h2; bone=s.bone||[]; chain=s.chain||[]; turn=s.turn||1; over=!!s.over;
+}
+function mine(){ return mySide===1?h1:h2; }
+function opp(){ return mySide===1?h2:h1; }
+function leftEnd(){ return chain.length?chain[0][0]:null; }
+function rightEnd(){ return chain.length?chain[chain.length-1][1]:null; }
+function canPlay(t){
+  if(!chain.length) return true;
+  var L=leftEnd(), R=rightEnd();
+  return t[0]===L||t[1]===L||t[0]===R||t[1]===R;
+}
+function legal(h){ return (h||[]).filter(canPlay); }
+function attach(t){
+  if(!chain.length){ chain.push([t[0],t[1]]); return true; }
+  var L=leftEnd(), R=rightEnd();
+  if(t[1]===L){ chain.unshift([t[0],t[1]]); return true; }
+  if(t[0]===L){ chain.unshift([t[1],t[0]]); return true; }
+  if(t[0]===R){ chain.push([t[0],t[1]]); return true; }
+  if(t[1]===R){ chain.push([t[1],t[0]]); return true; }
+  return false;
+}
+function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>";}
+function tileHTML(a,b,hz,cls){
+  return '<button class="tile'+(hz?" hz":"")+(cls?(" "+cls):"")+'"><span class="half" data-n="'+a+'">'+pips()+'</span><span class="half" data-n="'+b+'">'+pips()+'</span></button>';
+}
+function layoutSnake(){
+  var placed=[], dirs=[[1,0],[0,1],[-1,0],[0,-1]], d=0, x=0, y=0;
+  if(!chain.length) return placed;
+  function hz(){ return d%2===0; }
+  function pushTile(t){
+    var H=hz();
+    placed.push({a:t[0],b:t[1],x:x,y:y,hz:H});
+    x += dirs[d][0]*(H?2:1); y += dirs[d][1]*(H?1:2);
+  }
+  pushTile(chain[0]);
+  for(var i=1;i<chain.length;i++){
+    var nx=x+dirs[d][0]*2, ny=y+dirs[d][1]*2;
+    if(Math.abs(nx)>9 || Math.abs(ny)>4) d=(d+1)%4;
+    pushTile(chain[i]);
+  }
+  return placed;
+}
+function turnMsg(){
+  if(!room||!room.guest) return "Waiting for someone to sit…";
+  if(over){
+    if(!mine().length) return "You emptied your hand. You win.";
+    if(!opp().length) return "Opponent emptied their hand.";
+    return "Blocked.";
+  }
+  if(turn!==mySide) return "Opponent to play.";
+  if(!legal(mine()).length) return bone.length?"No play — draw from the boneyard.":"No play — pass.";
+  return chain.length?"Match an open end.":"Play any tile to open.";
+}
+function paint(){
+  document.getElementById("oppN").textContent=opp().length;
+  document.getElementById("boneN").textContent=bone.length;
+  document.getElementById("ends").textContent=chain.length?(leftEnd()+" · "+rightEnd()):"any";
+  var field=document.getElementById("field");
+  var placed=layoutSnake();
+  if(!placed.length){
+    field.innerHTML='<span style="color:#e8f3e8;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px">Play any tile to open</span>';
+  } else {
+    var minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+    placed.forEach(function(p){
+      var w=p.hz?2:1, hh=p.hz?1:2;
+      minx=Math.min(minx,p.x); miny=Math.min(miny,p.y);
+      maxx=Math.max(maxx,p.x+w); maxy=Math.max(maxy,p.y+hh);
+    });
+    var fw=field.clientWidth||320, fh=field.clientHeight||240;
+    var U=Math.max(14, Math.min((fw-12)/(maxx-minx+0.4), (fh-12)/(maxy-miny+0.4), 30));
+    var ox=(fw-((maxx-minx)*U))/2 - minx*U;
+    var oy=(fh-((maxy-miny)*U))/2 - miny*U;
+    field.innerHTML=placed.map(function(p){
+      var w=p.hz?U*2:U, hh=p.hz?U:U*2;
+      return '<div style="position:absolute;left:'+(ox+p.x*U)+'px;top:'+(oy+p.y*U)+'px;width:'+w+'px;height:'+hh+'px">'+
+        tileHTML(p.a,p.b,p.hz,"").replace("<button",'<button style="width:100%;height:100%;box-shadow:none"')+
+      '</div>';
+    }).join("");
+  }
+  var hand=mine();
+  document.getElementById("hand").innerHTML=hand.map(function(t,i){
+    var ok=mySide&&turn===mySide&&!over&&canPlay(t);
+    return tileHTML(t[0],t[1],false,ok?"playable":"").replace("<button",'<button '+(ok?"":"disabled")+' onclick="playTile('+i+')"');
+  }).join("");
+}
+async function pushState(){
+  if(!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:over?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+}
+function pipsSum(h){ return h.reduce(function(s,t){return s+t[0]+t[1];},0); }
+function afterPlay(){
+  if(!mine().length){ over=true; setMsg(turnMsg()); paint(); pushState(); return; }
+  turn=3-mySide;
+  setMsg(turnMsg()); paint(); pushState();
+}
+function playTile(i){
+  if(over||!mySide||turn!==mySide) return;
+  var hand=mine(), t=hand[i];
+  if(!canPlay(t)||!attach(t)) return;
+  hand.splice(i,1);
+  afterPlay();
+}
+function drawTile(){
+  if(over||!mySide||turn!==mySide) return;
+  if(legal(mine()).length){ setMsg("You still have a play."); return; }
+  if(bone.length){ mine().push(bone.pop()); setMsg("Drawn."); paint(); pushState(); return; }
+  if(!legal(opp()).length){
+    over=true;
+    var y=pipsSum(mine()), o=pipsSum(opp());
+    setMsg(y<o?"Blocked — you win on pips.":o<y?"Blocked — opponent wins on pips.":"Blocked — draw.");
+    paint(); pushState(); return;
+  }
+  turn=3-mySide; setMsg("Passed."); paint(); pushState();
+}
+async function boot(){
+  var online=/(?:^|[?&])online=1/.test(location.search);
+  document.getElementById("codeLab").textContent=online?"Online table":("Table "+(CODE||"—"));
+  var cfg=window.BW_PLAY||{};
+  if(!CODE||!cfg.url){ setMsg("Missing table code or play-config.js"); return; }
+  sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ setMsg("Sign in on Tables first."); return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code", CODE).single();
+  if(q.error){ setMsg(q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room), CODE)) return;
+  if(room.host===me) mySide=1;
+  else if(room.guest===me) mySide=2;
+  else if(!room.guest){
+    var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
+    if(!u.error){ room=u.data; mySide=2; }
+  }
+  document.getElementById("seatLab").textContent=mySide===1?"You are host": mySide===2?"You are guest":"Watching";
+  applySnap(room.state && room.state.h1 ? room.state : startDo());
+  setMsg(turnMsg()); paint();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
+    room=payload.new; applySnap(room.state); setMsg(turnMsg()); paint();
+  }).subscribe();
+}
+boot();
+</script>
+</body>
+</html>
