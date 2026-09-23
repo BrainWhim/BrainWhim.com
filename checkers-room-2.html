@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkers table · BrainWhim</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#1A2744;
+background-color:#1a1410;
+background-image:linear-gradient(180deg,rgba(20,16,12,.08),rgba(20,16,12,.28)),url("checkers-parlor.jpg");
+background-position:center,center 22%;background-size:cover,150% auto;background-repeat:no-repeat;background-attachment:scroll}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
+.brand img{width:56px;height:56px;object-fit:contain;margin-right:-9px}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+header a,.hdr a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-size:14px}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px)}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
+.games a.on{background:#1A2744;color:#fff;border-color:#1A2744}
+.wrap{max-width:780px;margin:0 auto;padding:4px 8px 72px}
+.hud{max-width:320px;margin:8px auto;background:rgba(255,252,247,.9);border-radius:999px;padding:6px 12px}
+h1{display:none}
+.meta,.msg{text-align:center;font-size:12px;margin:0 0 2px}
+.stage{perspective:920px;perspective-origin:50% 70%;padding:0}
+.table{width:min(560px,92vw);margin:0 auto;transform:rotateX(24deg) scale(1.08);transform-origin:50% 55%;transform-style:preserve-3d}
+.table-top{background:radial-gradient(120% 80% at 50% 30%,#fffdf8,#f3ead6 58%,#e4d4b8);padding:22px 22px 26px;border-radius:0;border:14px solid #6f9e8a;outline:6px solid #cfe4d8;outline-offset:-20px;box-shadow:0 28px 40px rgba(30,22,12,.38),inset 0 1px 0 #fff,inset 0 0 0 3px #d7c49a}
+.sqgrid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));border:8px solid #e8d7a8;box-shadow:inset 0 0 0 2px #6f9e8a}
+.sq{aspect-ratio:1;border:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lt{background:#F6F1E4}
+.dk{background:#B7D6C8}
+.sel{outline:3px solid #C9A227;outline-offset:-3px}
+.mv{box-shadow:inset 0 0 0 3px rgba(30,75,154,.45)}
+.to{box-shadow:inset 0 0 0 4px #C9A227}
+.ckimg{width:82%;height:82%;max-height:56px;object-fit:contain;object-position:center center;pointer-events:none;filter:drop-shadow(0 5px 3px rgba(0,0,0,.32))}
+.flyer{position:fixed;z-index:80;pointer-events:none;transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .55s ease;will-change:transform;object-fit:contain}
+.row{display:flex;gap:8px;justify-content:center;position:fixed;left:0;right:0;bottom:10px;z-index:6}
+.btn{border:0;border-radius:999px;padding:8px 14px;background:rgba(26,39,68,.88);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none}
+.tray{min-height:28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;margin:0 auto 6px;font-size:12px;font-weight:700;color:#1A2744;background:rgba(255,252,247,.96);border-radius:12px;padding:4px 12px;max-width:420px;position:relative;z-index:6}
+.table-top + .tray{margin:6px auto 0}
+.tray:not(:has(img)){height:0;min-height:0;padding:0;margin:0;opacity:0;overflow:hidden}
+.tray .ckimg{width:22px;height:22px;filter:none}
+@media(max-width:700px){
+header{display:grid;grid-template-columns:1fr;height:auto;padding:6px 10px 8px}
+.hdr{justify-content:center;width:100%;padding-top:4px}
+.table{width:94vw;transform:rotateX(18deg) scale(1.06)}
+}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="board.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a class="on" href="board.html?scene=ck">Checkers</a>
+<a href="board.html?scene=ch">Chess</a>
+<a href="backgammon.html">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a href="dominoes.html">Dominoes</a>
+<a href="othello.html">Othello</a>
+<a href="mancala.html">Mancala</a>
+<a href="cribbage.html">Cribbage</a>
+<a href="shutbox.html">Shut the Box</a>
+<a href="morris.html">Morris</a>
+</div>
+<div class="wrap">
+  <div class="hud">
+    <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
+    <p class="msg" id="ckmsg">Connecting…</p>
+  </div>
+  <div class="stage"><div class="table"><div class="tray" id="trayOpp"></div><div class="table-top"><div class="sqgrid" id="ckboard"></div></div><div class="tray" id="trayYou"></div></div></div>
+  <div class="row"><a class="btn" href="tables.html">Return to tables</a></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script>
+var sb, room, me, mySide=null;
+var ck, ckTurn=1, ckSel=null, ckOver=false, ckLast=null, took1=[], took2=[], flying=null, busy=false;
+var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
+if(CODE) CODE=CODE.toUpperCase();
+function ckSide(v){ if(v===1||v===3) return 1; if(v===2||v===4) return 2; return 0; }
+function ckKing(v){ return v===3||v===4; }
+function manSrc(v){ return "checker-"+((v===1||v===3)?"w":"b")+(ckKing(v)?"-K":"")+".png"; }
+function manHTML(v){ return '<img class="ckimg" alt="" src="'+manSrc(v)+'">'; }
+function ckAt(r,c){ return (r<0||c<0||r>7||c>7)?null:ck[r][c]; }
+function ckJumpsFrom(r,c){
+  var v=ck[r][c], side=ckSide(v), out=[];
+  var dirs=ckKing(v)?[[-1,-1],[-1,1],[1,-1],[1,1]]:(side===1?[[-1,-1],[-1,1]]:[[1,-1],[1,1]]);
+  for(var i=0;i<dirs.length;i++){
+    var mr=r+dirs[i][0], mc=c+dirs[i][1], lr=r+dirs[i][0]*2, lc=c+dirs[i][1]*2;
+    var mid=ckAt(mr,mc), land=ckAt(lr,lc);
+    if(mid && ckSide(mid)===3-side && land===0) out.push([lr,lc,mr,mc]);
+  }
+  return out;
+}
+function ckStepsFrom(r,c){
+  var v=ck[r][c], side=ckSide(v), out=[];
+  var dirs=ckKing(v)?[[-1,-1],[-1,1],[1,-1],[1,1]]:(side===1?[[-1,-1],[-1,1]]:[[1,-1],[1,1]]);
+  for(var i=0;i<dirs.length;i++){
+    var nr=r+dirs[i][0], nc=c+dirs[i][1];
+    if(ckAt(nr,nc)===0) out.push([nr,nc]);
+  }
+  return out;
+}
+function ckAllJumps(side){
+  var a=[];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++) if(ckSide(ck[r][c])===side && ckJumpsFrom(r,c).length) a.push([r,c]);
+  return a;
+}
+function ckCanLand(sr,sc,r,c){
+  var js=ckJumpsFrom(sr,sc);
+  for(var i=0;i<js.length;i++) if(js[i][0]===r&&js[i][1]===c) return true;
+  if(ckAllJumps(ckSide(ck[sr][sc])).length) return false;
+  var st=ckStepsFrom(sr,sc);
+  for(i=0;i<st.length;i++) if(st[i][0]===r&&st[i][1]===c) return true;
+  return false;
+}
+function ckMove(sr,sc,r,c){
+  var v=ck[sr][sc], js=ckJumpsFrom(sr,sc), jumped=null;
+  for(var i=0;i<js.length;i++) if(js[i][0]===r&&js[i][1]===c) jumped=js[i];
+  ck[sr][sc]=0; ck[r][c]=v;
+  if(jumped){
+    var cap=ck[jumped[2]][jumped[3]];
+    ck[jumped[2]][jumped[3]]=0;
+    if(ckSide(v)===1) took1.push(cap); else took2.push(cap);
+  }
+  if(v===1 && r===0) ck[r][c]=3;
+  if(v===2 && r===7) ck[r][c]=4;
+  return jumped;
+}
+function ckHas(side){
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++) if(ckSide(ck[r][c])===side) return true;
+  return false;
+}
+function flipBoard(){ return mySide===2; }
+function viewR(r){ return flipBoard()?7-r:r; }
+function viewC(c){ return flipBoard()?7-c:c; }
+function snapshot(){ return {board:ck, turn:ckTurn, last:ckLast, over:ckOver, took1:took1, took2:took2}; }
+function applySnap(s){
+  if(!s||!s.board) return;
+  ck=s.board; ckTurn=s.turn||1; ckLast=s.last||null; ckOver=!!s.over; took1=s.took1||[]; took2=s.took2||[];
+}
+function setMsg(t){ document.getElementById("ckmsg").textContent=t; }
+function turnMsg(){
+  if(ckOver) return "Game over";
+  if(mySide && ckTurn===mySide) return "Your move";
+  return (ckTurn===1?"Cobalt":"Ivory")+" to move";
+}
+function ckPaint(){
+  var html="";
+  for(var vr=0;vr<8;vr++) for(var vc=0;vc<8;vc++){
+    var r=viewR(vr), c=viewC(vc);
+    var dark=(r+c)%2===1;
+    var cls="sq "+(dark?"dk":"lt");
+    if(ckSel && ckSel[0]===r && ckSel[1]===c) cls+=" sel";
+    if(ckSel && ckCanLand(ckSel[0],ckSel[1],r,c)) cls+=" mv";
+    if(ckLast && ckLast[2]===r && ckLast[3]===c) cls+=" to";
+    var v=ck[r][c], inside="";
+    if(flying && flying[0]===r && flying[1]===c) v=0;
+    if(v) inside=manHTML(v);
+    html+='<button type="button" class="'+cls+'" data-r="'+r+'" data-c="'+c+'" onclick="ckClick('+r+','+c+')">'+inside+'</button>';
+  }
+  document.getElementById("ckboard").innerHTML=html;
+  function tray(id, arr, label, cls){
+    var el=document.getElementById(id); if(!el) return;
+    var h='<span class="lab">'+label+'</span>';
+    for(var i=0;i<arr.length;i++) h+=manHTML(arr[i]);
+    el.innerHTML=h;
+  }
+  tray("trayOpp", mySide===2?took1:took2, "Opponent took");
+  tray("trayYou", mySide===2?took2:took1, "You took");
+}
+function squareEl(r,c){ return document.querySelector('#ckboard .sq[data-r="'+r+'"][data-c="'+c+'"]'); }
+function flyMan(sr,sc,er,ec, piece, done){
+  var a=squareEl(sr,sc), b=squareEl(er,ec);
+  if(!a||!b){ if(done) done(); return; }
+  var ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  var fl=document.createElement("img");
+  fl.className="flyer";
+  fl.src=manSrc(piece);
+  var w=ra.width*0.82, h=ra.height*0.82;
+  fl.style.width=w+"px"; fl.style.height=h+"px";
+  fl.style.left=(ra.left+(ra.width-w)/2)+"px";
+  fl.style.top=(ra.top+(ra.height-h)/2)+"px";
+  document.body.appendChild(fl);
+  flying=[er,ec];
+  ckPaint();
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      var lift=Math.min(64, Math.hypot(rb.left-ra.left, rb.top-ra.top)*0.22);
+      fl.style.filter="drop-shadow(0 24px 14px rgba(0,0,0,.3))";
+      fl.style.transform="translate("+(rb.left-ra.left)+"px,"+(rb.top-ra.top-lift)+"px) scale(1.14)";
+      setTimeout(function(){
+        fl.style.transform="translate("+(rb.left-ra.left)+"px,"+(rb.top-ra.top)+"px) scale(1)";
+        fl.style.filter="drop-shadow(0 8px 5px rgba(0,0,0,.28))";
+      }, 280);
+    });
+  });
+  setTimeout(function(){
+    if(fl.parentNode) fl.parentNode.removeChild(fl);
+    flying=null; busy=false; ckPaint();
+    if(done) done();
+  }, 580);
+}
+async function pushState(){
+  if(!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:ckOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+}
+function ckClick(r,c){
+  if(ckOver || !mySide || ckTurn!==mySide || busy) return;
+  if(ckSel && ckCanLand(ckSel[0],ckSel[1],r,c)){
+    var sr=ckSel[0], sc=ckSel[1], v=ck[sr][sc];
+    ckLast=[sr,sc,r,c];
+    busy=true;
+    var jumped=ckMove(sr,sc,r,c);
+    flyMan(sr,sc,r,c, ck[r][c], function(){
+      if(jumped && ckJumpsFrom(r,c).length){ ckSel=[r,c]; setMsg("Jump again"); ckPaint(); pushState(); return; }
+      ckSel=null;
+      if(!ckHas(3-mySide)){ ckOver=true; setMsg("You win."); ckPaint(); pushState(); return; }
+      ckTurn=3-mySide; setMsg(turnMsg()); ckPaint(); pushState();
+    });
+    return;
+  }
+  if(ckSide(ck[r][c])===mySide){ ckSel=[r,c]; ckPaint(); }
+  else { ckSel=null; ckPaint(); }
+}
+async function boot(){
+  var online=/(?:^|[?&])online=1/.test(location.search);
+  document.getElementById("codeLab").textContent=online?"Online table":("Table "+(CODE||"—"));
+  var cfg=window.BW_PLAY||{};
+  if(!CODE||!cfg.url){ setMsg("Missing table or play-config.js"); return; }
+  sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ setMsg("Sign in on Tables first."); return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code", CODE).single();
+  if(q.error){ setMsg(q.error.message); return; }
+  room=q.data;
+  if(room.host===me) mySide=1;
+  else if(room.guest===me) mySide=2;
+  else if(!room.guest){
+    var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
+    if(!u.error){ room=u.data; mySide=2; }
+  }
+  document.getElementById("seatLab").textContent=mySide===1?"You are cobalt": mySide===2?"You are ivory":"Watching";
+  applySnap(room.state);
+  if(!ck){
+    applySnap(function(){ var b=[],r,c; for(r=0;r<8;r++){ b[r]=[]; for(c=0;c<8;c++){ b[r][c]=0; if((r+c)%2===1&&r<3)b[r][c]=2; if((r+c)%2===1&&r>4)b[r][c]=1; } } return {board:b,turn:1}; }());
+  }
+  setMsg(!room.guest && mySide===1 ? "Waiting for someone online to sit…" : turnMsg());
+  ckPaint();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
+    room=payload.new; applySnap(room.state); ckSel=null;
+    setMsg(!room.guest && mySide===1 ? "Waiting for someone online to sit…" : turnMsg());
+    ckPaint();
+    if(room.guest) document.getElementById("seatLab").textContent=mySide===1?"You are cobalt":"You are ivory";
+  }).subscribe();
+}
+boot();
+</script>
+</body>
+</html>
