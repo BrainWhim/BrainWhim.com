@@ -238,7 +238,30 @@ async function needSession(){
   if(!s){ alert("Sign in first."); return null; }
   return s;
 }
-function roomPage(game){ return bwRoomPage(game) || "chess-room.html"; }
+var ROOM_PAGES={
+  chess:"chess-room.html",
+  checkers:"checkers-room.html",
+  backgammon:"backgammon-room.html",
+  othello:"othello-room.html",
+  morris:"morris-room.html",
+  mancala:"mancala-room.html"
+};
+function roomPage(game){
+  game=String(game||"").toLowerCase();
+  if(typeof bwRoomPage==="function"){
+    var p=bwRoomPage(game);
+    if(p) return p;
+  }
+  return ROOM_PAGES[game]||"";
+}
+function goRoom(game, code, extra){
+  game=String(game||"").toLowerCase();
+  var page=roomPage(game);
+  if(!page){ alert("That table is not on the map yet ("+game+")."); return; }
+  var q="?code="+encodeURIComponent(code||"")+"&game="+encodeURIComponent(game);
+  if(extra) q+="&"+String(extra).replace(/^[?&]/,"");
+  location.href=page+q;
+}
 function startBg(){
   var pts=[]; for(var i=0;i<25;i++) pts[i]=[];
   function fill(pt,n,s){ for(var k=0;k<n;k++) pts[pt].push(s); }
@@ -292,7 +315,7 @@ async function checkWait(){
   var q=await sb.from("rooms").select("id,code,guest,game,status").eq("id", waitRoom.id).single();
   if(q.data && q.data.guest){
     clearInterval(waitTimer); waitTimer=null;
-    location.href=bwRoomHref(bwGuessGame(q.data), q.data.code, "online=1");
+    goRoom((typeof bwGuessGame==="function"?bwGuessGame(q.data):q.data.game), q.data.code, "online=1");
   }
 }
 async function playOnline(game){
@@ -304,7 +327,7 @@ async function playOnline(game){
   if(open){
     var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
     if(u.error){ alert(u.error.message); return; }
-    location.href=bwRoomHref(game, u.data.code, "online=1");
+    goRoom(game, u.data.code, "online=1");
     return;
   }
   waitRoom=await makeRoom("open", game);
@@ -330,7 +353,7 @@ async function inviteFriend(game){
     body:(myName||"A player")+" invited you to "+label+"."
   });
   if(n.error){ alert(n.error.message); return; }
-  location.href=bwRoomHref(game, room.code);
+  goRoom(game, room.code);
 }
 async function acceptInvite(id, code, gameHint){
   var s=await needSession(); if(!s) return;
@@ -342,7 +365,7 @@ async function acceptInvite(id, code, gameHint){
   }
   await sb.from("notices").update({status:"accepted", read:true}).eq("id", id);
   var game=gameHint||q.data.game||"chess";
-  location.href=bwRoomHref(game, code, "online=1");
+  goRoom(game, code, "online=1");
 }
 async function declineInvite(id){
   await sb.from("notices").update({status:"declined", read:true}).eq("id", id);
