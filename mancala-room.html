@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mancala table · BrainWhim</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#1A2744;
+background:#c9a45a url("mancala-pavilion.jpg") center/cover no-repeat fixed}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
+.brand img{width:56px;height:56px;object-fit:contain}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+header a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-size:14px}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px)}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
+.games a.on{background:#1A2744;color:#fff;border-color:#1A2744}
+.wrap{max-width:640px;margin:0 auto;padding:4px 10px 80px}
+.hud{max-width:360px;margin:8px auto;background:rgba(255,252,247,.92);border-radius:999px;padding:6px 12px}
+.meta,.msg{text-align:center;font-size:12px;margin:0 0 2px;color:#1A2744}
+.stage{perspective:1100px;padding:6px 4px}
+.frame{transform:rotateX(14deg);transform-origin:50% 90%;padding:11px;border-radius:44px;background:linear-gradient(160deg,#f3d7a0,#c9a45a 30%,#7a5420 55%,#e8c98a 82%,#5a3a14);box-shadow:0 24px 36px rgba(0,0,0,.4),0 6px 0 #5a3a14}
+.wood{display:grid;grid-template-columns:78px 1fr 78px;gap:10px;padding:14px 12px;border-radius:34px;background:linear-gradient(160deg,#f0d09a,#e2b56a 35%,#c48a42)}
+.store{border-radius:46px;background:radial-gradient(ellipse at 40% 28%,#e8c07a,#b87532 62%,#8a4e18);min-height:176px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#4a2c12;font-weight:700;font-size:11px}
+.pits{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:1fr 1fr;gap:10px}
+.pit{border:0;border-radius:46%;background:radial-gradient(circle at 35% 26%,#efd09a,#c48a42 58%,#8f5a22);min-height:78px;cursor:pointer;padding:8px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:4px}
+.pit.ok{box-shadow:inset 0 0 0 3px #fff3b0}
+.gem{width:14px;height:14px;border-radius:50%;box-shadow:0 2px 2px rgba(0,0,0,.28),inset 2px 2px 3px rgba(255,255,255,.75)}
+.g0{background:radial-gradient(circle at 32% 28%,#d7f3ff,#1468a8)}
+.g1{background:radial-gradient(circle at 32% 28%,#fff6c2,#c06a00)}
+.g2{background:radial-gradient(circle at 32% 28%,#e4ffd8,#1a7a38)}
+.g3{background:radial-gradient(circle at 32% 28%,#ffd3e0,#9b1b3a)}
+.g4{background:radial-gradient(circle at 32% 28%,#fff,#2a2a2a)}
+.g5{background:radial-gradient(circle at 32% 28%,#f0e0ff,#5a2a9a)}
+.row{display:flex;gap:8px;justify-content:center;position:fixed;left:0;right:0;bottom:10px;z-index:6}
+.btn{border:0;border-radius:999px;padding:8px 14px;background:#fff;color:#1A2744;font-weight:700;text-decoration:none;box-shadow:0 6px 16px rgba(0,0,0,.16)}
+@media(max-width:700px){.wood{grid-template-columns:56px 1fr 56px}.store{min-height:140px}.pit{min-height:56px}}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="mancala.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="checkers.html">Checkers</a>
+<a href="chess.html">Chess</a>
+<a href="backgammon.html">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a href="dominoes.html">Dominoes</a>
+<a href="othello.html">Othello</a>
+<a class="on" href="mancala.html">Mancala</a>
+<a href="cribbage.html">Cribbage</a>
+<a href="shutbox.html">Shut the Box</a>
+<a href="morris.html">Morris</a>
+</div>
+<div class="wrap">
+  <div class="hud">
+    <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
+    <p class="msg" id="msg">Connecting…</p>
+  </div>
+  <div class="stage"><div class="frame"><div class="wood" id="bowl"></div></div></div>
+  <div class="row"><a class="btn" href="tables.html">Return to tables</a></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js"></script>
+<script>
+var sb, room, me, mySide=null, y=[], ys=0, h=[], hs=0, turn=1, over=false;
+var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
+function setMsg(t){ document.getElementById("msg").textContent=t; }
+function startMk(){ return {game:"mancala", y:[4,4,4,4,4,4], h:[4,4,4,4,4,4], ys:0, hs:0, turn:1, over:false}; }
+function snapshot(){ return {game:"mancala", y:y.slice(), h:h.slice(), ys:ys, hs:hs, turn:turn, over:over}; }
+function applySnap(s){
+  if(!s||!s.y) s=startMk();
+  y=s.y.slice(); h=s.h.slice(); ys=s.ys||0; hs=s.hs||0; turn=s.turn||1; over=!!s.over;
+}
+function gems(n){
+  var s=""; for(var i=0;i<n && i<16;i++) s+='<i class="gem g'+(i%6)+'"></i>';
+  if(n>16) s+='<b style="font-size:11px">+'+(n-16)+'</b>';
+  return s;
+}
+function mine(){ return mySide===1?y:h; }
+function turnMsg(){
+  if(!room||!room.guest) return "Waiting for someone to sit…";
+  if(over){
+    var a=ys,b=hs;
+    if(a===b) return "Draw "+a+"–"+b+".";
+    if((mySide===1&&a>b)||(mySide===2&&b>a)) return "You win "+Math.max(a,b)+"–"+Math.min(a,b)+".";
+    return "Opponent wins "+Math.max(a,b)+"–"+Math.min(a,b)+".";
+  }
+  if(turn!==mySide) return "Opponent to sow.";
+  return "Your near cups. Tap one to sow.";
+}
+function paint(){
+  var far=mySide===2?y:h, near=mySide===2?h:y, left=mySide===2?ys:hs, right=mySide===2?hs:ys;
+  var leftLab=mySide===2?"Host":"Opp", rightLab="You";
+  var html='<div class="store">'+leftLab+gems(left)+'</div><div class="pits">';
+  for(var i=5;i>=0;i--) html+='<button class="pit" disabled>'+gems(far[i])+'</button>';
+  for(var i=0;i<6;i++){
+    var ok=mySide&&turn===mySide&&!over&&near[i]>0;
+    html+='<button class="pit'+(ok?" ok":"")+'" '+(ok?"":"disabled")+' onclick="sowPit('+i+')">'+gems(near[i])+'</button>';
+  }
+  html+='</div><div class="store">'+rightLab+gems(right)+'</div>';
+  document.getElementById("bowl").innerHTML=html;
+}
+function sow(isHost, idx){
+  var n=isHost?y[idx]:h[idx];
+  if(isHost) y[idx]=0; else h[idx]=0;
+  var pos=idx, side=isHost?"y":"h";
+  while(n--){
+    if(side==="y"){
+      pos++;
+      if(pos<6){ y[pos]++; if(n===0) return landY(pos,isHost); }
+      else { if(isHost){ ys++; if(n===0) return true; } side="h"; pos=-1; }
+    } else {
+      pos++;
+      if(pos<6){ h[pos]++; if(n===0) return landH(pos,isHost); }
+      else { if(!isHost){ hs++; if(n===0) return true; } side="y"; pos=-1; }
+    }
+  }
+  return false;
+}
+function landY(pos,isHost){
+  if(isHost && y[pos]===1 && h[5-pos]>0){ ys+=1+h[5-pos]; y[pos]=0; h[5-pos]=0; }
+  return false;
+}
+function landH(pos,isHost){
+  if(!isHost && h[pos]===1 && y[5-pos]>0){ hs+=1+y[5-pos]; h[pos]=0; y[5-pos]=0; }
+  return false;
+}
+function emptySide(){ return y.every(function(v){return v===0;}) || h.every(function(v){return v===0;}); }
+function finish(){
+  y.forEach(function(v){ys+=v;}); h.forEach(function(v){hs+=v;});
+  y=[0,0,0,0,0,0]; h=[0,0,0,0,0,0]; over=true;
+}
+async function pushState(){
+  if(!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:over?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+}
+function sowPit(i){
+  if(over||!mySide||turn!==mySide) return;
+  var side=mine();
+  if(!side[i]) return;
+  var extra=sow(mySide===1,i);
+  if(emptySide()) finish();
+  else if(extra){ setMsg("Extra turn. Sow again."); paint(); pushState(); return; }
+  else turn=3-mySide;
+  setMsg(turnMsg()); paint(); pushState();
+}
+async function boot(){
+  var online=/(?:^|[?&])online=1/.test(location.search);
+  document.getElementById("codeLab").textContent=online?"Online table":("Table "+(CODE||"—"));
+  var cfg=window.BW_PLAY||{};
+  if(!CODE||!cfg.url){ setMsg("Missing table code or play-config.js"); return; }
+  sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ setMsg("Sign in on Tables first."); return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code", CODE).single();
+  if(q.error){ setMsg(q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room), CODE)) return;
+  if(room.host===me) mySide=1;
+  else if(room.guest===me) mySide=2;
+  else if(!room.guest){
+    var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
+    if(!u.error){ room=u.data; mySide=2; }
+  }
+  document.getElementById("seatLab").textContent=mySide===1?"You sit near (host)": mySide===2?"You sit near (guest)":"Watching";
+  applySnap(room.state && room.state.y ? room.state : startMk());
+  setMsg(turnMsg()); paint();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
+    room=payload.new;
+    applySnap(room.state);
+    setMsg(turnMsg()); paint();
+  }).subscribe();
+}
+boot();
+</script>
+</body>
+</html>

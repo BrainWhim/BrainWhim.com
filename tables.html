@@ -181,7 +181,12 @@ body{background-attachment:scroll}
 <p>Sow the glass stones. Land in your store for another turn.</p>
 <div class="row">
 <a class="btn go" href="mancala.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" id="onlineBtnMk" onclick="playOnline('mancala')">Play someone online</button>
+</div>
+<p class="hint waitHint" id="waitHintMk" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<div class="row" style="margin-top:8px">
+<input id="inviteNameMk" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<button class="btn ghost" type="button" onclick="inviteFriend('mancala')">Invite friend</button>
 </div>
 </article>
 <article class="room">
@@ -254,6 +259,7 @@ function startState(game){
     return {board:b, turn:1, over:false, last:null};
   }
   if(game==="morris") return {game:"morris", board:Array(24).fill(0), placed:{1:0,2:0}, turn:1, phase:"place", remove:false, over:false, last:null};
+  if(game==="mancala") return {game:"mancala", y:[4,4,4,4,4,4], h:[4,4,4,4,4,4], ys:0, hs:0, turn:1, over:false};
   return startBoard();
 }
 async function makeRoom(kind, game){
@@ -265,12 +271,12 @@ async function makeRoom(kind, game){
 }
 function setWaiting(on, game){
   document.querySelectorAll(".waitHint").forEach(function(el){ el.style.display="none"; });
-  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt","onlineBtnMo"].forEach(function(id){
+  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt","onlineBtnMo","onlineBtnMk"].forEach(function(id){
     var b=document.getElementById(id); if(b){ b.disabled=false; b.textContent="Play someone online"; }
   });
   if(!on) return;
-  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt",morris:"waitHintMo"};
-  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt",morris:"onlineBtnMo"};
+  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt",morris:"waitHintMo",mancala:"waitHintMk"};
+  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt",morris:"onlineBtnMo",mancala:"onlineBtnMk"};
   var h=document.getElementById(hintMap[game]||"waitHintChess");
   var b=document.getElementById(btnMap[game]||"onlineBtnChess");
   if(h) h.style.display="block";
@@ -309,7 +315,7 @@ async function playOnline(game){
 async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
-  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":game==="morris"?"inviteNameMo":"inviteName");
+  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":game==="morris"?"inviteNameMo":game==="mancala"?"inviteNameMk":"inviteName");
   var name=cleanName(box && box.value);
   if(name.length<3){ alert("Enter your friend's username."); return; }
   var p=await sb.from("profiles").select("id,username,display_name").ilike("username", name).maybeSingle();
@@ -318,7 +324,7 @@ async function inviteFriend(game){
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
     body:(myName||"A player")+" invited you to "+label+"."
