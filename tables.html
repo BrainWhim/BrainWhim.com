@@ -324,7 +324,7 @@ async function inviteFriend(game){
   if(n.error){ alert(n.error.message); return; }
   location.href=roomPage(game)+"?code="+room.code;
 }
-async function acceptInvite(id, code){
+async function acceptInvite(id, code, gameHint){
   var s=await needSession(); if(!s) return;
   var q=await sb.from("rooms").select("*").eq("code", code).single();
   if(q.error){ alert("That table closed."); return; }
@@ -333,16 +333,17 @@ async function acceptInvite(id, code){
     if(u.error){ alert(u.error.message); return; }
   }
   await sb.from("notices").update({status:"accepted", read:true}).eq("id", id);
-  location.href=roomPage(q.data.game)+"?code="+code;
+  var game=gameHint||q.data.game||"chess";
+  location.href=roomPage(game)+"?code="+code+"&online=1";
 }
 async function declineInvite(id){
   await sb.from("notices").update({status:"declined", read:true}).eq("id", id);
   loadMail();
 }
 function toggleMail(){ document.getElementById("mailPane").classList.toggle("on"); loadMail(); }
-function showToast(text, code, nid){
+function showToast(text, code, nid, game){
   var el=document.getElementById("toast");
-  el.innerHTML=text+' <button class="btn go" type="button" style="margin-left:8px" onclick="acceptInvite(\''+nid+'\',\''+code+'\')">Sit down</button>';
+  el.innerHTML=text+' <button class="btn go" type="button" style="margin-left:8px" onclick="acceptInvite(\''+nid+'\',\''+code+'\',\''+(game||'')+'\')">Sit down</button>';
   el.classList.add("on");
   setTimeout(function(){ el.classList.remove("on"); }, 12000);
 }
@@ -362,7 +363,7 @@ async function loadMail(){
   if(!rows.length){ document.getElementById("mailList").textContent="No notes yet."; return; }
   document.getElementById("mailList").innerHTML=rows.map(function(n){
     var act=n.status==="pending" && n.room_code
-      ? '<div class="row" style="margin-top:6px"><button class="btn go" type="button" onclick="acceptInvite(\''+n.id+'\',\''+n.room_code+'\')">Join</button><button class="btn ghost" type="button" onclick="declineInvite(\''+n.id+'\')">Not now</button></div>'
+      ? '<div class="row" style="margin-top:6px"><button class="btn go" type="button" onclick="acceptInvite(\''+n.id+'\',\''+n.room_code+'\',\''+(n.game||'')+'\')">Join</button><button class="btn ghost" type="button" onclick="declineInvite(\''+n.id+'\')">Not now</button></div>'
       : '<div style="opacity:.7;margin-top:4px">'+n.status+'</div>';
     return '<div class="note-row">'+(n.body||"Invite")+' '+act+'</div>';
   }).join("");
@@ -374,7 +375,7 @@ function listenNotices(){
     event:"INSERT", schema:"public", table:"notices", filter:"to_id=eq."+sessionUser.id
   }, function(payload){
     var n=payload.new;
-    showToast(n.body||"You were invited to a table.", n.room_code, n.id);
+    showToast(n.body||"You were invited to a table.", n.room_code, n.id, n.game);
     loadMail();
   }).subscribe();
   loadMail();
