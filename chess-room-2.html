@@ -21,7 +21,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 .whim{font-family:Pacifico,cursive;color:var(--whim)}
 .hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
 header a,.hdr a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-size:14px}
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px)}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
 .games a.on{background:#1A2744;color:#fff;border-color:#1A2744}
 .wrap{max-width:780px;margin:0 auto;padding:4px 8px 72px}
@@ -112,8 +112,8 @@ h1{display:none}
 <nav class="hdr"><a href="tables.html">Tables</a><a href="board.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
 <div class="games">
-<a href="board.html?scene=ck">Checkers</a>
-<a class="on" href="board.html?scene=ch">Chess</a>
+<a href="checkers.html">Checkers</a>
+<a class="on" href="chess.html">Chess</a>
 <a href="backgammon.html">Backgammon</a>
 <a href="yahtzee.html">Yahtzee</a>
 <a href="dominoes.html">Dominoes</a>
@@ -369,6 +369,14 @@ async function boot(){
   var q=await sb.from("rooms").select("*").eq("code", CODE).single();
   if(q.error){ setMsg(q.error.message); return; }
   room=q.data;
+  var g=(room.game||"").toLowerCase();
+  var st=room.state||{};
+  var bounce=null;
+  if(g==="backgammon"||st.pts) bounce="backgammon-room.html";
+  else if(g==="morris"||(st.board&&st.board.length===24)||st.placed) bounce="morris-room.html";
+  else if(g==="othello") bounce="othello-room.html";
+  else if(g==="checkers"||st.took1||st.took2) bounce="checkers-room.html";
+  if(bounce){ location.replace(bounce+location.search); return; }
   if(room.host===me) myColor="w";
   else if(room.guest===me) myColor="b";
   else if(!room.guest){
