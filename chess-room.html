@@ -21,6 +21,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 .whim{font-family:Pacifico,cursive;color:var(--whim)}
 .hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
 header a,.hdr a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-size:14px}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
+.games a.on{background:#1A2744;color:#fff;border-color:#1A2744}
 .wrap{max-width:780px;margin:0 auto;padding:4px 8px 72px}
 .hud{max-width:320px;margin:8px auto;background:rgba(255,252,247,.9);backdrop-filter:blur(8px);border-radius:999px;padding:6px 12px;border:1px solid rgba(255,255,255,.6)}
 h1{display:none}
@@ -108,17 +111,17 @@ h1{display:none}
 <a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="board.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
-<div class="games" style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:12px;position:relative;z-index:2">
-<a href="board.html?scene=ck" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Checkers</a>
-<a href="board.html?scene=ch" style="border-radius:999px;padding:7px 12px;background:#1A2744;color:#fff;text-decoration:none;font-weight:700;font-size:12px">Chess</a>
-<a href="board.html?scene=bg" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Backgammon</a>
-<a href="yahtzee.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Yahtzee</a>
-<a href="dominoes.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Dominoes</a>
-<a href="othello.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Othello</a>
-<a href="mancala.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Mancala</a>
-<a href="cribbage.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Cribbage</a>
-<a href="shutbox.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Shut the Box</a>
-<a href="morris.html" style="border-radius:999px;padding:7px 12px;background:#fff;color:#1A2744;text-decoration:none;font-weight:700;font-size:12px">Morris</a>
+<div class="games">
+<a href="checkers.html">Checkers</a>
+<a class="on" href="chess.html">Chess</a>
+<a href="backgammon.html">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a href="dominoes.html">Dominoes</a>
+<a href="othello.html">Othello</a>
+<a href="mancala.html">Mancala</a>
+<a href="cribbage.html">Cribbage</a>
+<a href="shutbox.html">Shut the Box</a>
+<a href="morris.html">Morris</a>
 </div>
 <div class="wrap">
   <div class="hud">
@@ -139,6 +142,7 @@ h1{display:none}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
+<script src="play-rooms.js"></script>
 <script>
 var sb, room, me, myColor=null;
 var ch, chSel, chOver, chTurn, chLast=null, chEp=null, chRights={wk:1,wq:1,bk:1,bq:1};
@@ -366,6 +370,15 @@ async function boot(){
   var q=await sb.from("rooms").select("*").eq("code", CODE).single();
   if(q.error){ setMsg(q.error.message); return; }
   room=q.data;
+  if(typeof bwSendToGame==='function' && bwSendToGame(bwGuessGame(room), CODE)) return;
+  var g=(room.game||"").toLowerCase();
+  var st=room.state||{};
+  var bounce=null;
+  if(g==="backgammon"||st.pts) bounce="backgammon-room.html";
+  else if(g==="morris"||(st.board&&st.board.length===24)||st.placed) bounce="morris-room.html";
+  else if(g==="othello") bounce="othello-room.html";
+  else if(g==="checkers"||st.took1||st.took2) bounce="checkers-room.html";
+  if(bounce){ location.replace(bounce+location.search); return; }
   if(room.host===me) myColor="w";
   else if(room.guest===me) myColor="b";
   else if(!room.guest){

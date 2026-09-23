@@ -69,6 +69,7 @@ header a{color:#fff;font-weight:700;text-decoration:none;margin-left:8px;font-si
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
+<script src="play-rooms.js"></script>
 <script>
 var sb, room, me, mySide=null, g=[], turn=1, over=false, last=null;
 var D=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
@@ -152,6 +153,7 @@ async function boot(){
   var q=await sb.from("rooms").select("*").eq("code", CODE).single();
   if(q.error){ setMsg(q.error.message); return; }
   room=q.data;
+  if(typeof bwSendToGame==='function' && bwSendToGame(bwGuessGame(room), CODE)) return;
   if(room.host===me) mySide=1;
   else if(room.guest===me) mySide=2;
   else if(!room.guest){
