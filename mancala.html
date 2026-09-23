@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mancala · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9;--gold:#c9a45a}
+*{box-sizing:border-box}
+body{margin:0;font-family:Montserrat,sans-serif;color:#1A2744;
+  background:#3a2a18 url("mancala-pavilion.jpg") center 52%/cover no-repeat}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
+.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:8px}
+.games,.sitbar{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:12px auto 8px;max-width:820px;padding:0 10px;position:relative;z-index:2}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;text-decoration:none;color:var(--navy)}
+.games a.on{background:var(--navy);color:#fff}
+.sitbar button,.sitbar a,.helpbtn{border:0;border-radius:999px;padding:10px 14px;background:#fff;color:var(--navy);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+body.seated .sit{display:none}body:not(.seated) .stand{display:none}
+body:not(.seated) .live{display:none}body.seated .live{display:block}
+.live{max-width:640px;margin:8px auto 36px;padding:8px 10px}
+h1{display:inline-block;margin:4px 0;font-size:22px;background:rgba(255,252,247,.9);padding:4px 14px;border-radius:999px}
+.sub{width:fit-content;margin:0 auto 10px;background:rgba(255,252,247,.82);padding:3px 12px;border-radius:999px;font-size:13px}
+.stage{perspective:1100px}
+.wood{
+  transform:rotateX(14deg);transform-origin:50% 90%;
+  display:grid;grid-template-columns:78px 1fr 78px;gap:10px;
+  padding:16px 14px;border-radius:40px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.22),transparent 28%),
+    repeating-linear-gradient(90deg,rgba(160,90,30,.07) 0 3px,transparent 3px 14px),
+    linear-gradient(160deg,#f0d09a,#e2b56a 35%,#c48a42 68%,#e8c07a);
+  box-shadow:0 22px 34px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.store{
+  border:0;border-radius:46px;
+  background:radial-gradient(ellipse at 40% 28%,#e8c07a,#b87532 62%,#8a4e18);
+  box-shadow:inset 0 10px 18px rgba(80,40,10,.4);
+  min-height:176px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  color:#4a2c12;font-weight:700;font-size:11px
+}
+.pits{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:1fr 1fr;gap:10px}
+.pit{
+  border:0;border-radius:46%;
+  background:radial-gradient(circle at 35% 26%,#efd09a,#c48a42 58%,#8f5a22);
+  box-shadow:inset 0 10px 14px rgba(70,35,8,.38);
+  min-height:78px;cursor:pointer;padding:8px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:4px
+}
+.pit.ok{box-shadow:inset 0 0 0 3px #fff3b0, inset 0 10px 14px rgba(70,35,8,.38)}
+.gem{
+  width:14px;height:14px;border-radius:50%;
+  box-shadow:0 2px 2px rgba(0,0,0,.28), inset 2px 2px 3px rgba(255,255,255,.75), inset -2px -2px 3px rgba(0,0,0,.2)
+}
+.g0{background:radial-gradient(circle at 32% 28%,#d7f3ff 0 18%,#4eb3f0 42%,#1468a8)}
+.g1{background:radial-gradient(circle at 32% 28%,#fff6c2 0 18%,#f0b429 42%,#c06a00)}
+.g2{background:radial-gradient(circle at 32% 28%,#e4ffd8 0 18%,#5ad16e 42%,#1a7a38)}
+.g3{background:radial-gradient(circle at 32% 28%,#ffd3e0 0 18%,#ef5a86 42%,#9b1b3a)}
+.g4{background:radial-gradient(circle at 32% 28%,#fff 0 16%,#c8c8c8 40%,#2a2a2a)}
+.g5{background:radial-gradient(circle at 32% 28%,#f0e0ff 0 18%,#b57cff 42%,#5a2a9a)}
+.hint{text-align:center;margin:10px 0 0}
+.hint span{background:rgba(255,252,247,.92);display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
+@media(max-width:800px){header{display:grid;grid-template-columns:1fr auto}.brand{font-size:18px}.brand img{width:48px;height:48px}.hdr{grid-column:1/-1;justify-content:center}}
+#winveil,#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:16px}
+#winveil.on,#helpveil.on{display:flex}
+.card{width:min(480px,94vw);padding:22px;border-radius:20px;background:linear-gradient(180deg,#fffdf8,#f3ead6);box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744}
+.card h2{margin:0 0 12px;text-align:center}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.card button,.card a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;text-decoration:none;cursor:pointer}
+.go{background:#1A2744;color:#fff}.ghost{background:#fff;color:#1A2744}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="board.html?scene=ck">Checkers</a>
+<a href="board.html?scene=ch">Chess</a>
+<a href="board.html?scene=bg">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a href="dominoes.html">Dominoes</a>
+<a href="othello.html">Othello</a>
+<a class="on" href="mancala.html">Mancala</a>
+<a href="cribbage.html">Cribbage</a>
+</div>
+<div class="sitbar">
+<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="stand" type="button" onclick="standUp()">Back to the pavilion</button>
+<a class="stand" href="tables.html">Return to tables</a>
+<button class="stand" type="button" onclick="newGame()">New game</button>
+<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
+<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
+</div>
+<div class="live">
+  <div style="text-align:center"><h1>Pavilion Mancala</h1></div>
+  <p class="sub">Sow the glass stones. Your cups are the near row. Land in your store for another turn.</p>
+  <div class="stage"><div class="wood" id="bowl"></div></div>
+  <div class="hint"><span id="msg">Your cups are the near row. Tap one to sow.</span></div>
+</div>
+<div id="winveil"><div class="card"><h2 id="winTitle">Congratulations! You win!</h2><div class="row"><button class="go" type="button" onclick="hideBanner();newGame()">Play again?</button><a class="ghost" href="tables.html">Return to Tables</a></div></div></div>
+<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()"><div class="card"><h2 id="helpTitle">How to play</h2><div id="helpBody"></div><div class="row"><button class="go" type="button" onclick="hideHelp()">Got it</button></div></div></div>
+<script>
+function sitDown(){document.body.classList.add("seated");paint()}
+function standUp(){document.body.classList.remove("seated")}
+function hideBanner(){document.getElementById("winveil").className=""}
+function hideHelp(){document.getElementById("helpveil").className=""}
+function showHelp(k){
+  document.getElementById("helpTitle").textContent=k==="score"?"Scoring rules":"How to play";
+  document.getElementById("helpBody").innerHTML=k==="score"
+    ?"<ul><li>When a side has no stones left in its cups, the other side drops remaining stones into their store.</li><li>The higher store wins.</li></ul>"
+    :"<ol><li>Each of the six cups on your near row starts with four stones.</li><li>Tap a cup. Stones sow one-by-one counter-clockwise, including your store, skipping the house store.</li><li>If the last stone lands in your store, you sow again.</li><li>If the last stone lands in an empty cup of yours, you capture that stone and the opposite house cup into your store.</li></ol>";
+  document.getElementById("helpveil").className="on";
+}
+var y=[], ys=0, h=[], hs=0, turn="you", over=false;
+function newGame(){
+  y=[4,4,4,4,4,4]; h=[4,4,4,4,4,4]; ys=0; hs=0; turn="you"; over=false;
+  document.getElementById("msg").textContent="Your cups are the near row. Tap one to sow.";
+  hideBanner(); paint();
+}
+function gems(n){
+  var s=""; for(var i=0;i<n && i<16;i++) s+='<i class="gem g'+(i%6)+'"></i>';
+  if(n>16) s+='<b style="font-size:11px;color:#3a2410">+'+(n-16)+'</b>';
+  return s;
+}
+function paint(){
+  var html='<div class="store">House'+gems(hs)+'</div><div class="pits">';
+  for(var i=5;i>=0;i--) html+='<button class="pit" disabled>'+gems(h[i])+'</button>';
+  for(var i=0;i<6;i++){
+    var ok=turn==="you"&&!over&&y[i]>0;
+    html+='<button class="pit'+(ok?" ok":"")+'" '+(ok?"":"disabled")+' onclick="sowYou('+i+')">'+gems(y[i])+'</button>';
+  }
+  html+='</div><div class="store">You'+gems(ys)+'</div>';
+  document.getElementById("bowl").innerHTML=html;
+}
+function sowYou(i){
+  if(over||turn!=="you"||!y[i]) return;
+  var extra=sow(true,i);
+  if(emptySide()){ finish(); return; }
+  if(extra){ document.getElementById("msg").textContent="Extra turn. Sow again."; paint(); return; }
+  turn="house"; paint(); setTimeout(houseTurn,420);
+}
+function sow(isYou, idx){
+  var n=isYou?y[idx]:h[idx];
+  if(isYou) y[idx]=0; else h[idx]=0;
+  var pos=idx, side=isYou?"y":"h";
+  while(n--){
+    if(side==="y"){
+      pos++;
+      if(pos<6){ y[pos]++; if(n===0) return landYou(pos); }
+      else { ys++; side="h"; pos=-1; if(n===0) return isYou; }
+    } else {
+      pos++;
+      if(pos<6){ h[pos]++; if(n===0) return landHouse(pos,isYou); }
+      else { if(!isYou){ hs++; if(n===0) return !isYou; } side="y"; pos=-1; }
+    }
+  }
+  return false;
+}
+function landYou(pos){
+  if(y[pos]===1 && h[5-pos]>0){ ys+=1+h[5-pos]; y[pos]=0; h[5-pos]=0; }
+  return false;
+}
+function landHouse(pos,isYou){
+  if(!isYou && h[pos]===1 && y[5-pos]>0){ hs+=1+y[5-pos]; h[pos]=0; y[5-pos]=0; }
+  return false;
+}
+function emptySide(){ return y.every(function(v){return v===0}) || h.every(function(v){return v===0}); }
+function finish(){
+  y.forEach(function(v){ys+=v}); h.forEach(function(v){hs+=v});
+  y=[0,0,0,0,0,0]; h=[0,0,0,0,0,0]; over=true; paint();
+  var k=ys>hs?"win":hs>ys?"lose":"draw";
+  document.getElementById("winTitle").textContent=k==="win"?"Congratulations! You win!":k==="draw"?"It's a Draw!":"Better luck next time!";
+  document.getElementById("winveil").className="on";
+}
+function houseTurn(){
+  if(over) return;
+  var opts=[]; for(var i=0;i<6;i++) if(h[i]) opts.push(i);
+  if(!opts.length){ finish(); return; }
+  var pick=opts[0], best=-1;
+  opts.forEach(function(i){
+    var score=h[i]; if(i+h[i]===6) score+=20;
+    if(score>best){best=score;pick=i;}
+  });
+  var extra=sow(false,pick);
+  if(emptySide()){ finish(); return; }
+  if(extra){ document.getElementById("msg").textContent="House sows again."; paint(); setTimeout(houseTurn,420); return; }
+  turn="you"; document.getElementById("msg").textContent="House sowed. Your turn."; paint();
+}
+newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cribbage · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;font-family:Montserrat,sans-serif;color:#1A2744;
+  background:#3a2a1c url("cribbage-snug.jpg") center 52%/cover no-repeat}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
+.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:8px}
+.games,.sitbar{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:12px auto 8px;max-width:860px;padding:0 10px;position:relative;z-index:2}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;text-decoration:none;color:var(--navy)}
+.games a.on{background:var(--navy);color:#fff}
+.sitbar button,.sitbar a,.helpbtn{border:0;border-radius:999px;padding:10px 14px;background:#fff;color:var(--navy);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+body.seated .sit{display:none}body:not(.seated) .stand{display:none}
+body:not(.seated) .live{display:none}body.seated .live{display:block}
+.live{max-width:640px;margin:8px auto 36px;padding:8px 10px}
+h1{display:inline-block;margin:4px 0;font-size:22px;background:rgba(255,252,247,.9);padding:4px 14px;border-radius:999px}
+.sub{width:fit-content;margin:0 auto 10px;background:rgba(255,252,247,.82);padding:3px 12px;border-radius:999px;font-size:13px}
+.table{background:linear-gradient(180deg,#5a3a22,#2c1b10);padding:14px;border-radius:16px;box-shadow:0 0 0 3px #c9a45a,0 16px 32px rgba(0,0,0,.35);color:#f4ead0}
+.track{display:flex;gap:4px;margin-bottom:10px}
+.peg{flex:1;background:#1a1008;border-radius:8px;padding:8px;text-align:center}
+.peg b{display:block;font-size:22px;color:#e8c15a}
+.rowc{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:46px;margin:8px 0}
+.cardx{width:46px;height:64px;border-radius:6px;background:linear-gradient(#fffef8,#f0e2c4);color:#1A2744;border:0;box-shadow:1px 2px 0 #8a6e3e;font-weight:700;cursor:pointer;font-family:inherit}
+.cardx.red{color:#9B1B2E}.cardx.on{outline:2px solid #e8c15a}
+.cardx.back{background:linear-gradient(#1A2744,#0d1628);color:#7EB6D9}
+.meta{display:flex;justify-content:space-between;font-size:12px;font-weight:700}
+.hint{text-align:center;margin:10px 0 0}
+.hint span{background:rgba(255,252,247,.92);color:#1A2744;display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
+.acts{text-align:center;margin-top:8px}
+.acts button{border:0;border-radius:999px;padding:8px 14px;background:#1A2744;color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
+@media(max-width:800px){header{display:grid;grid-template-columns:1fr auto}.brand{font-size:18px}.brand img{width:48px;height:48px}.hdr{grid-column:1/-1;justify-content:center}}
+#winveil,#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:16px}
+#winveil.on,#helpveil.on{display:flex}
+.box{width:min(500px,94vw);padding:22px;border-radius:20px;background:linear-gradient(180deg,#fffdf8,#f3ead6);box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744}
+.box h2{margin:0 0 12px;text-align:center}
+.box li{margin:0 0 6px;font-size:14px}
+.go{background:#1A2744;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
+.ghost{background:#fff;color:#1A2744;border-radius:999px;padding:10px 16px;text-decoration:none;font-weight:700;box-shadow:inset 0 0 0 1px #d7c9b0}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="board.html?scene=ck">Checkers</a>
+<a href="board.html?scene=ch">Chess</a>
+<a href="board.html?scene=bg">Backgammon</a>
+<a href="yahtzee.html">Yahtzee</a>
+<a href="dominoes.html">Dominoes</a>
+<a href="othello.html">Othello</a>
+<a href="mancala.html">Mancala</a>
+<a class="on" href="cribbage.html">Cribbage</a>
+</div>
+<div class="sitbar">
+<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="stand" type="button" onclick="standUp()">Back to the snug</button>
+<a class="stand" href="tables.html">Return to tables</a>
+<button class="stand" type="button" onclick="newGame()">New game</button>
+<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
+<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
+</div>
+<div class="live">
+  <div style="text-align:center"><h1>Club Cribbage</h1></div>
+  <p class="sub">First to 121. Discard two to the crib, then play and show.</p>
+  <div class="table">
+    <div class="track">
+      <div class="peg">You<b id="ys">0</b></div>
+      <div class="peg">House<b id="hs">0</b></div>
+      <div class="peg">Count<b id="cnt">0</b></div>
+    </div>
+    <div class="meta"><span>Starter</span><span id="phaseLab">Discard 2</span></div>
+    <div class="rowc" id="starter"></div>
+    <div class="meta">House</div>
+    <div class="rowc" id="houseRow"></div>
+    <div class="meta">The play</div>
+    <div class="rowc" id="playRow"></div>
+    <div class="meta">Your hand</div>
+    <div class="rowc" id="youRow"></div>
+    <div class="acts"><button type="button" id="actBtn" onclick="act()">Toss to crib</button></div>
+  </div>
+  <div class="hint"><span id="msg">Choose two cards for the crib.</span></div>
+</div>
+<div id="winveil"><div class="box"><h2 id="winTitle">Congratulations! You win!</h2><div class="row"><button class="go" type="button" onclick="hideBanner();newGame()">Play again?</button><a class="ghost" href="tables.html">Return to Tables</a></div></div></div>
+<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()"><div class="box"><h2 id="helpTitle">How to play</h2><div id="helpBody"></div><div class="row"><button class="go" type="button" onclick="hideHelp()">Got it</button></div></div></div>
+<script>
+function sitDown(){document.body.classList.add("seated");paint()}
+function standUp(){document.body.classList.remove("seated")}
+function hideBanner(){document.getElementById("winveil").className=""}
+function hideHelp(){document.getElementById("helpveil").className=""}
+function showHelp(k){
+  document.getElementById("helpTitle").textContent=k==="score"?"Scoring rules":"How to play";
+  document.getElementById("helpBody").innerHTML=k==="score"
+    ?"<ul><li>Play: 15 and 31 score 2. Pairs 2 / three of a kind 6 / four 12. A run of n scores n. Last card of a sequence scores 1.</li><li>Show: every combination that makes 15 is 2. Pairs and runs as above. Four-card flush is 4, five is 5. Jack of the starter suit (nobs) is 1. His heels (jack as starter) is 2 to the dealer.</li><li>First to 121 wins.</li></ul>"
+    :"<ol><li>Six cards each. Toss two into the crib.</li><li>A starter is cut. If it is a jack, the dealer pegs 2.</li><li>Play cards that keep the running count at 31 or under. Then show the four-card hands and the crib.</li><li>You deal first this table. After each hand the deal switches.</li></ol>";
+  document.getElementById("helpveil").className="on";
+}
+var SUIT=["♣","♦","♥","♠"], RNK=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+function mkDeck(){ var d=[]; for(var s=0;s<4;s++) for(var r=0;r<13;r++) d.push({s:s,r:r,id:s+"-"+r}); return d; }
+function val(c){ return c.r===0?1:c.r>=10?10:c.r+1; }
+function face(c){ return RNK[c.r]+SUIT[c.s]; }
+function red(c){ return c.s===1||c.s===2; }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+var you=[], house=[], crib=[], starter=null, deck=[], phase="discard", sel=[], pile=[], count=0, ys=0, hs=0, dealer="you", over=false, playTurn="you";
+function add(who,n){
+  if(who==="you"){ ys=Math.min(121,ys+n); if(ys>=121) end("win"); }
+  else { hs=Math.min(121,hs+n); if(hs>=121) end("lose"); }
+}
+function end(k){ over=true; document.getElementById("winTitle").textContent=k==="win"?"Congratulations! You win!":k==="draw"?"It's a Draw!":"Better luck next time!"; document.getElementById("winveil").className="on"; }
+function dealHand(){
+  deck=shuffle(mkDeck()); you=deck.splice(0,6); house=deck.splice(0,6); crib=[]; starter=null; sel=[]; pile=[]; count=0; phase="discard"; playTurn=dealer==="you"?"house":"you";
+  document.getElementById("msg").textContent="Choose two cards for the crib.";
+  document.getElementById("actBtn").textContent="Toss to crib";
+  document.getElementById("actBtn").style.display="inline-block";
+}
+function newGame(){ ys=0; hs=0; dealer="you"; over=false; hideBanner(); dealHand(); paint(); }
+function toggle(i){
+  if(phase!=="discard") return;
+  var x=sel.indexOf(i); if(x>=0) sel.splice(x,1); else if(sel.length<2) sel.push(i);
+  paint();
+}
+function act(){
+  if(over) return;
+  if(phase==="discard"){
+    if(sel.length!==2){ document.getElementById("msg").textContent="Pick two cards."; return; }
+    sel.sort(function(a,b){return b-a});
+    sel.forEach(function(i){ crib.push(you[i]); you.splice(i,1); });
+    house.sort(function(a,b){return val(a)-val(b)});
+    crib.push(house.shift()); crib.push(house.shift());
+    starter=deck.pop();
+    if(starter.r===10) add(dealer,2);
+    phase="play"; count=0; pile=[];
+    document.getElementById("actBtn").style.display="none";
+    document.getElementById("msg").textContent="Play a card. Stay at 31 or under.";
+    paint();
+    if(playTurn==="house") setTimeout(housePlay,400);
+    return;
+  }
+}
+function legal(hand){ return hand.filter(function(c){return count+val(c)<=31}); }
+function playCard(who,c){
+  count+=val(c); pile.push(c);
+  if(count===15) add(who,2);
+  if(count===31) add(who,2);
+  var n=1; for(var i=pile.length-2;i>=0 && pile[i].r===c.r;i--) n++;
+  if(n===2) add(who,2); if(n===3) add(who,6); if(n===4) add(who,12);
+  var run=0;
+  for(var len=Math.min(pile.length,7);len>=3;len--){
+    var slice=pile.slice(-len).map(function(x){return x.r}).sort(function(a,b){return a-b});
+    var ok=true; for(var i=1;i<slice.length;i++) if(slice[i]!==slice[i-1]+1) ok=false;
+    if(ok){ run=len; break; }
+  }
+  if(run) add(who,run);
+}
+function afterPlay(){
+  var yL=legal(you), hL=legal(house);
+  if(!yL.length && !hL.length){
+    if(count!==31) add(playTurn==="you"?"house":"you",1);
+    if(!you.length && !house.length){ showHands(); return; }
+    count=0; pile=[]; 
+    playTurn = you.length? "you" : "house";
+    document.getElementById("msg").textContent="New count. "+(playTurn==="you"?"Your play.":"House plays.");
+    paint();
+    if(playTurn==="house") setTimeout(housePlay,400);
+    return;
+  }
+  if(playTurn==="you" && !yL.length){ playTurn="house"; document.getElementById("msg").textContent="You cannot play. House goes."; paint(); setTimeout(housePlay,400); return; }
+  if(playTurn==="house" && !hL.length){ playTurn="you"; document.getElementById("msg").textContent="House cannot play. Your card."; paint(); return; }
+}
+function playYou(i){
+  if(over||phase!=="play"||playTurn!=="you") return;
+  var c=you[i]; if(count+val(c)>31) return;
+  you.splice(i,1); playCard("you",c); playTurn="house";
+  document.getElementById("msg").textContent="Count "+count+".";
+  paint(); afterPlay();
+  if(phase==="play" && playTurn==="house" && !over) setTimeout(housePlay,450);
+}
+function housePlay(){
+  if(over||phase!=="play") return;
+  var opts=legal(house);
+  if(!opts.length){ afterPlay(); return; }
+  opts.sort(function(a,b){ return Math.abs(15-(count+val(a)))-Math.abs(15-(count+val(b))); });
+  var c=opts[0]; house.splice(house.indexOf(c),1); playCard("house",c); playTurn="you";
+  document.getElementById("msg").textContent="House played "+face(c)+". Count "+count+".";
+  paint(); afterPlay();
+}
+function combos(arr){
+  var out=[[]];
+  arr.forEach(function(c){ var n=out.length; for(var i=0;i<n;i++) out.push(out[i].concat([c])); });
+  return out.slice(1);
+}
+function scoreHand(hand,st,isCrib){
+  var all=hand.concat([st]), pts=0;
+  combos(all).forEach(function(g){ if(g.reduce(function(s,c){return s+val(c)},0)===15) pts+=2; });
+  var byR={}; all.forEach(function(c){ byR[c.r]=(byR[c.r]||0)+1; });
+  Object.keys(byR).forEach(function(r){ var n=byR[r]; if(n===2) pts+=2; if(n===3) pts+=6; if(n===4) pts+=12; });
+  var rs=all.map(function(c){return c.r}).sort(function(a,b){return a-b});
+  /* simple run: unique ranks consecutive * multiplicity */
+  var uniq=[], seen={}; rs.forEach(function(r){ if(!seen[r]){uniq.push(r);seen[r]=1;} });
+  var runLen=1,best=1;
+  for(var i=1;i<uniq.length;i++){ if(uniq[i]===uniq[i-1]+1) runLen++; else runLen=1; if(runLen>=3) best=Math.max(best,runLen); }
+  if(best>=3){ var mul=1; uniq.slice(uniq.length-best).forEach(function(){}); 
+    var start=0; for(var i=0;i<=uniq.length-best;i++){ var ok=true; for(var k=1;k<best;k++) if(uniq[i+k]!==uniq[i]+k) ok=false; if(ok){ var m=1; for(var k=0;k<best;k++) m*=byR[uniq[i]+k]; pts+=best*m; } }
+  }
+  var suits=hand.map(function(c){return c.s});
+  if(suits.every(function(s){return s===suits[0]})){ pts+=4; if(!isCrib && st.s===suits[0]) pts+=1; if(isCrib && st.s===suits[0]) pts+=1; }
+  hand.forEach(function(c){ if(c.r===10 && c.s===st.s) pts+=1; });
+  return pts;
+}
+function showHands(){
+  phase="show";
+  var y=scoreHand(you.concat([]),starter,false);
+  var h=scoreHand(house.concat([]),starter,false);
+  var c=scoreHand(crib,starter,true);
+  add("you",y); add("house",h);
+  if(dealer==="you") add("you",c); else add("house",c);
+  document.getElementById("msg").textContent="Show — you "+y+", house "+h+", crib "+c+" to the dealer.";
+  document.getElementById("actBtn").style.display="inline-block";
+  document.getElementById("actBtn").textContent="Next hand";
+  document.getElementById("actBtn").onclick=function(){ if(over) return; dealer=dealer==="you"?"house":"you"; dealHand(); document.getElementById("actBtn").onclick=act; paint(); };
+  paint();
+}
+function el(c,cls,fn){
+  return '<button class="cardx '+(red(c)?"red ":"")+(cls||"")+'" '+(fn||"")+'>'+face(c)+'</button>';
+}
+function paint(){
+  document.getElementById("ys").textContent=ys;
+  document.getElementById("hs").textContent=hs;
+  document.getElementById("cnt").textContent=count;
+  document.getElementById("phaseLab").textContent=phase==="discard"?"Discard 2":phase==="play"?"The play":"The show";
+  document.getElementById("starter").innerHTML=starter?el(starter):'<button class="cardx back">BW</button>';
+  document.getElementById("houseRow").innerHTML=house.map(function(c){ return phase==="show"?el(c):'<button class="cardx back">BW</button>'; }).join("");
+  document.getElementById("playRow").innerHTML=pile.map(function(c){return el(c);}).join("");
+  document.getElementById("youRow").innerHTML=you.map(function(c,i){
+    var on=phase==="discard"&&sel.indexOf(i)>=0;
+    var fn=phase==="discard"?'onclick="toggle('+i+')"':(phase==="play"?'onclick="playYou('+i+')"':'');
+    return el(c,on?"on":"",fn);
+  }).join("");
+}
+newGame();
+</script>
+</body>
+</html>
