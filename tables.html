@@ -168,7 +168,12 @@ body{background-attachment:scroll}
 <p>Cobalt and ivory discs on a green grid. Flip a line. Most discs win.</p>
 <div class="row">
 <a class="btn go" href="othello.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" id="onlineBtnOt" onclick="playOnline('othello')">Play someone online</button>
+</div>
+<p class="hint waitHint" id="waitHintOt" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<div class="row" style="margin-top:8px">
+<input id="inviteNameOt" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<button class="btn ghost" type="button" onclick="inviteFriend('othello')">Invite friend</button>
 </div>
 </article>
 <article class="room">
@@ -225,6 +230,7 @@ async function needSession(){
 function roomPage(game){
   if(game==="checkers") return "checkers-room.html";
   if(game==="backgammon") return "backgammon-room.html";
+  if(game==="othello") return "othello-room.html";
   return "chess-room.html";
 }
 function startBg(){
@@ -241,6 +247,11 @@ function startState(game){
     return {board:b, turn:1, last:null, over:false, took1:[], took2:[]};
   }
   if(game==="backgammon") return startBg();
+  if(game==="othello"){
+    var b=[],r; for(r=0;r<8;r++) b[r]=[0,0,0,0,0,0,0,0];
+    b[3][3]=2; b[3][4]=1; b[4][3]=1; b[4][4]=2;
+    return {board:b, turn:1, over:false, last:null};
+  }
   return startBoard();
 }
 async function makeRoom(kind, game){
@@ -252,12 +263,14 @@ async function makeRoom(kind, game){
 }
 function setWaiting(on, game){
   document.querySelectorAll(".waitHint").forEach(function(el){ el.style.display="none"; });
-  ["onlineBtnChess","onlineBtnCk","onlineBtnBg"].forEach(function(id){
+  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt"].forEach(function(id){
     var b=document.getElementById(id); if(b){ b.disabled=false; b.textContent="Play someone online"; }
   });
   if(!on) return;
-  var h=document.getElementById(game==="checkers"?"waitHintCheckers":game==="backgammon"?"waitHintBg":"waitHintChess");
-  var b=document.getElementById(game==="checkers"?"onlineBtnCk":game==="backgammon"?"onlineBtnBg":"onlineBtnChess");
+  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt"};
+  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt"};
+  var h=document.getElementById(hintMap[game]||"waitHintChess");
+  var b=document.getElementById(btnMap[game]||"onlineBtnChess");
   if(h) h.style.display="block";
   if(b){ b.disabled=true; b.textContent="Waiting for a player…"; }
 }
@@ -294,7 +307,7 @@ async function playOnline(game){
 async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
-  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":"inviteName");
+  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":"inviteName");
   var name=cleanName(box && box.value);
   if(name.length<3){ alert("Enter your friend's username."); return; }
   var p=await sb.from("profiles").select("id,username,display_name").ilike("username", name).maybeSingle();
@@ -303,7 +316,7 @@ async function inviteFriend(game){
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
     body:(myName||"A player")+" invited you to "+label+"."
