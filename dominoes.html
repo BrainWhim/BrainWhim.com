@@ -53,21 +53,21 @@ h1{text-align:center;margin:4px 0 2px;font-size:22px;background:rgba(255,252,247
 .hub{display:flex;align-items:center;justify-content:center}
 .hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
 .hint{text-align:center;margin:8px 0 0;background:rgba(255,252,247,.9);display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
-.felt{--ts:1}
-.tile{width:calc(34px * var(--ts));height:calc(68px * var(--ts));border:0;padding:3px;border-radius:7px;cursor:pointer;
+.tile{width:34px;height:68px;border:0;padding:2px;border-radius:7px;cursor:pointer;
   background:linear-gradient(160deg,#fffef8,#f0e2c4 55%,#d4c09a);
   box-shadow:2px 3px 0 #8a6e3e,0 8px 12px rgba(0,0,0,.22),inset 0 1px 0 #fff;
-  display:flex;flex-direction:column;flex:0 0 auto}
-.tile.hz{width:calc(68px * var(--ts));height:calc(34px * var(--ts));flex-direction:row}
-.tile.spin{width:calc(52px * var(--ts));height:calc(52px * var(--ts));flex-direction:column;outline:2px solid #e8c15a}
-.hand .tile{--ts:1;width:34px;height:68px}
-.hand .tile.spin{width:52px;height:52px}
+  display:flex;flex-direction:column;flex:0 0 auto;overflow:hidden}
+.boardgrid{--ts:1}
+.boardgrid .tile{width:calc(28px * var(--ts));height:calc(56px * var(--ts))}
+.boardgrid .tile.hz{width:calc(56px * var(--ts));height:calc(28px * var(--ts));flex-direction:row}
+.boardgrid .tile.spin{width:calc(40px * var(--ts));height:calc(40px * var(--ts));outline:2px solid #e8c15a;z-index:2}
+.hub{position:relative;z-index:3}
 .tile.playable{outline:2px solid #C9A227}
 .tile:disabled{opacity:.55;cursor:default}
-.half{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:1px;padding:2px}
+.half{flex:1;min-height:0;min-width:0;overflow:hidden;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0;padding:1px}
+.half i{width:4px;height:4px;max-width:70%;max-height:70%;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
 .tile.hz .half+ .half{border-left:1px solid #c9b07a}
 .tile:not(.hz) .half:first-child{border-bottom:1px solid #c9b07a}
-.half i{width:5px;height:5px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
 .half[data-n="1"] i:nth-child(5){opacity:1}
 .half[data-n="2"] i:nth-child(1),.half[data-n="2"] i:nth-child(9){opacity:1}
 .half[data-n="3"] i:nth-child(1),.half[data-n="3"] i:nth-child(5),.half[data-n="3"] i:nth-child(9){opacity:1}
@@ -216,7 +216,7 @@ function paint(){
   });
   document.getElementById("hand").innerHTML = you.map(function(t,i){
     var ok = turn==="you" && !over && canPlay(t);
-    return tileEl(t[0],t[1], t[0]===t[1]?"spin":"", ok?"playable":"").replace("<button","<button "+(ok?"":"disabled")+" onclick=\"playYou("+i+")\"");
+    return tileEl(t[0],t[1], "", ok?"playable":"").replace("<button","<button "+(ok?"":"disabled")+" onclick=\"playYou("+i+")\"");
   }).join("");
 }
 function playYou(i){
