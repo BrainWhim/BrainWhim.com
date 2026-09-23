@@ -125,6 +125,8 @@ function startBg(){
   fill(1,2,2); fill(12,5,2); fill(17,3,2); fill(19,5,2);
   return {pts:pts, bar:{1:0,2:0}, off:{1:0,2:0}, dice:[], turn:1, last:null, over:false};
 }
+function flipView(){ return mySide===2; }
+function realPt(pt){ if(pt===0||pt===25) return pt; return flipView()?25-pt:pt; }
 function snapshot(){ return {pts:bgPts, bar:bgBar, off:bgOff, dice:bgDice, turn:bgTurn, last:bgLast, over:bgOver}; }
 function applySnap(s){
   if(!s) s=startBg();
@@ -172,9 +174,10 @@ function bgPaint(){
   var can={}, dests={};
   for(var i=0;i<moves.length;i++){ can[moves[i].from]=1; if(bgSel===moves[i].from) dests[moves[i].dest]=1; }
   function col(pt,isTop){
+    var rp=realPt(pt);
     var cls="bgpt "+(isTop?"top":"bot")+(pt%2===1?" dark":"");
-    if(bgSel===pt) cls+=" pick"; else if(dests[pt]) cls+=" dest"; else if(can[pt]&&bgSel==null) cls+=" can";
-    var stack="", arr=bgPts[pt]||[], show=Math.min(arr.length,5), k;
+    if(bgSel===rp) cls+=" pick"; else if(dests[rp]) cls+=" dest"; else if(can[rp]&&bgSel==null) cls+=" can";
+    var stack="", arr=bgPts[rp]||[], show=Math.min(arr.length,5), k;
     for(k=0;k<show;k++) stack+='<img class="bgchk" alt="" src="'+(arr[k]===1?"checker-w.png":"checker-b.png")+'">';
     if(arr.length>5) stack+='<span style="font-size:9px;font-weight:800;color:#1A2744">'+arr.length+'</span>';
     return '<button type="button" class="'+cls+'" data-pt="'+pt+'" onclick="bgClick('+pt+')"><div class="stack">'+stack+'</div></button>';
@@ -210,7 +213,8 @@ function bgApply(from,dies,dest,side){
   bgPts[dest].push(side); bgLast=[from,dest];
 }
 function bgUseDies(dies){ for(var i=0;i<dies.length;i++){ var ix=bgDice.indexOf(dies[i]); if(ix>=0) bgDice.splice(ix,1); } }
-function bgEl(pt){ return document.querySelector('#bgboard [data-pt="'+pt+'"]'); }
+function bgEl(pt){ return document.querySelector('#bgboard [data-pt="'+showSlot(pt)+'"]'); }
+function showSlot(pt){ if(pt===0||pt===25) return pt; return flipView()?25-pt:pt; }
 function bgFly(from,dest,side,done){
   var a=bgEl(from), b=bgEl(dest);
   if(!a||!b){ if(done) done(); return; }
@@ -238,6 +242,7 @@ async function pushState(){
   await sb.from("rooms").update({state:snapshot(), status:bgOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
 }
 function bgClick(pt){
+  pt=realPt(pt);
   if(busy||bgOver||!mySide||bgTurn!==mySide||!bgDice.length) return;
   var moves=bgMoves(mySide);
   if(bgSel!=null){
@@ -297,14 +302,14 @@ async function boot(){
     var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
     if(!u.error){ room=u.data; mySide=2; }
   }
-  document.getElementById("seatLab").textContent=mySide===1?"You are ivory": mySide===2?"You are cobalt":"Watching";
+  document.getElementById("seatLab").textContent=mySide===1?"You are ivory (cream)": mySide===2?"You are cobalt (blue)":"Watching";
   applySnap(room.state && room.state.pts ? room.state : startBg());
   setMsg(turnMsg()); bgPaint();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
     room=payload.new;
     applySnap(room.state);
     setMsg(turnMsg());
-    if(room.guest) document.getElementById("seatLab").textContent=mySide===1?"You are ivory": mySide===2?"You are cobalt":"Watching";
+    if(room.guest) document.getElementById("seatLab").textContent=mySide===1?"You are ivory (cream)": mySide===2?"You are cobalt (blue)":"Watching";
     bgPaint();
   }).subscribe();
 }
