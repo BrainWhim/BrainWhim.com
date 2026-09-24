@@ -204,7 +204,12 @@ body{background-attachment:scroll}
 <p>First to 121 in the snug. Toss two to the crib, then play and show.</p>
 <div class="row">
 <a class="btn go" href="cribbage.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" id="onlineBtnCr" onclick="playOnline('cribbage')">Play someone online</button>
+</div>
+<p class="hint waitHint" id="waitHintCr" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<div class="row" style="margin-top:8px">
+<input id="inviteNameCr" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<button class="btn ghost" type="button" onclick="inviteFriend('cribbage')">Invite friend</button>
 </div>
 </article>
 <article class="room">
@@ -256,7 +261,8 @@ var ROOM_PAGES={
   morris:"morris-room.html",
   mancala:"mancala-room.html",
   dominoes:"dominoes-room.html",
-  yahtzee:"yahtzee-room.html"
+  yahtzee:"yahtzee-room.html",
+  cribbage:"cribbage-room.html"
 };
 function roomPage(game){
   game=String(game||"").toLowerCase();
@@ -302,6 +308,12 @@ function startState(game){
     return {game:"dominoes", h1:pack.splice(0,7), h2:pack.splice(0,7), bone:pack, chain:[], turn:1, over:false};
   }
   if(game==="yahtzee") return {game:"yahtzee", p1:{}, p2:{}, dice:[0,0,0,0,0], held:[0,0,0,0,0], rolls:0, turn:1, over:false};
+  if(game==="cribbage"){
+    var d=[],s,r,i,j,tmp;
+    for(s=0;s<4;s++) for(r=0;r<13;r++) d.push({s:s,r:r,id:s+"-"+r});
+    for(i=d.length-1;i>0;i--){ j=Math.floor(Math.random()*(i+1)); tmp=d[i]; d[i]=d[j]; d[j]=tmp; }
+    return {game:"cribbage", h1:d.splice(0,6), h2:d.splice(0,6), crib:[], starter:null, deck:d, phase:"discard", pile:[], count:0, s1:0, s2:0, dealer:1, playTurn:2, tossed:{1:false,2:false}, over:false};
+  }
   return startBoard();
 }
 async function makeRoom(kind, game){
@@ -313,12 +325,12 @@ async function makeRoom(kind, game){
 }
 function setWaiting(on, game){
   document.querySelectorAll(".waitHint").forEach(function(el){ el.style.display="none"; });
-  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt","onlineBtnMo","onlineBtnMk","onlineBtnDo","onlineBtnYz"].forEach(function(id){
+  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt","onlineBtnMo","onlineBtnMk","onlineBtnDo","onlineBtnYz","onlineBtnCr"].forEach(function(id){
     var b=document.getElementById(id); if(b){ b.disabled=false; b.textContent="Play someone online"; }
   });
   if(!on) return;
-  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt",morris:"waitHintMo",mancala:"waitHintMk",dominoes:"waitHintDo",yahtzee:"waitHintYz"};
-  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt",morris:"onlineBtnMo",mancala:"onlineBtnMk",dominoes:"onlineBtnDo",yahtzee:"onlineBtnYz"};
+  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt",morris:"waitHintMo",mancala:"waitHintMk",dominoes:"waitHintDo",yahtzee:"waitHintYz",cribbage:"waitHintCr"};
+  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt",morris:"onlineBtnMo",mancala:"onlineBtnMk",dominoes:"onlineBtnDo",yahtzee:"onlineBtnYz",cribbage:"onlineBtnCr"};
   var h=document.getElementById(hintMap[game]||"waitHintChess");
   var b=document.getElementById(btnMap[game]||"onlineBtnChess");
   if(h) h.style.display="block";
@@ -357,7 +369,7 @@ async function playOnline(game){
 async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
-  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":game==="morris"?"inviteNameMo":game==="mancala"?"inviteNameMk":game==="dominoes"?"inviteNameDo":game==="yahtzee"?"inviteNameYz":"inviteName");
+  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":game==="morris"?"inviteNameMo":game==="mancala"?"inviteNameMk":game==="dominoes"?"inviteNameDo":game==="yahtzee"?"inviteNameYz":game==="cribbage"?"inviteNameCr":"inviteName");
   var name=cleanName(box && box.value);
   if(name.length<3){ alert("Enter your friend's username."); return; }
   var p=await sb.from("profiles").select("id,username,display_name").ilike("username", name).maybeSingle();
@@ -366,7 +378,7 @@ async function inviteFriend(game){
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":game==="cribbage"?"club cribbage":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
     body:(myName||"A player")+" invited you to "+label+"."
