@@ -12,9 +12,9 @@ html,body{margin:0;min-height:100%;font-family:Montserrat,sans-serif;color:#1A27
 body{min-height:100dvh;background:#cfc6b4 url("garden-parlor.jpg") center 32%/cover no-repeat fixed}
 .veil{display:none}
 header{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px}
-.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:22px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
 .brand img{width:56px;height:56px;object-fit:contain;margin-right:-4px}
-.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1.1em}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
 .bell{margin-left:auto}
 .hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
 .hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:8px}
@@ -152,7 +152,12 @@ body{background-attachment:scroll}
 <p>Gold cup, five dice, thirteen lines. Shake, hold, and score in the sunlit parlor.</p>
 <div class="row">
 <a class="btn go" href="yahtzee.html">Sit vs the house</a>
-<button class="btn lock" type="button">Play a person · member</button>
+<button class="btn go" type="button" id="onlineBtnYz" onclick="playOnline('yahtzee')">Play someone online</button>
+</div>
+<p class="hint waitHint" id="waitHintYz" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
+<div class="row" style="margin-top:8px">
+<input id="inviteNameYz" maxlength="20" placeholder="friend name — no @" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
+<button class="btn ghost" type="button" onclick="inviteFriend('yahtzee')">Invite friend</button>
 </div>
 </article>
 <article class="room">
@@ -250,7 +255,8 @@ var ROOM_PAGES={
   othello:"othello-room.html",
   morris:"morris-room.html",
   mancala:"mancala-room.html",
-  dominoes:"dominoes-room.html"
+  dominoes:"dominoes-room.html",
+  yahtzee:"yahtzee-room.html"
 };
 function roomPage(game){
   game=String(game||"").toLowerCase();
@@ -295,6 +301,7 @@ function startState(game){
     for(a=pack.length-1;a>0;a--){ b=Math.floor(Math.random()*(a+1)); var x=pack[a]; pack[a]=pack[b]; pack[b]=x; }
     return {game:"dominoes", h1:pack.splice(0,7), h2:pack.splice(0,7), bone:pack, chain:[], turn:1, over:false};
   }
+  if(game==="yahtzee") return {game:"yahtzee", p1:{}, p2:{}, dice:[0,0,0,0,0], held:[0,0,0,0,0], rolls:0, turn:1, over:false};
   return startBoard();
 }
 async function makeRoom(kind, game){
@@ -306,12 +313,12 @@ async function makeRoom(kind, game){
 }
 function setWaiting(on, game){
   document.querySelectorAll(".waitHint").forEach(function(el){ el.style.display="none"; });
-  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt","onlineBtnMo","onlineBtnMk","onlineBtnDo"].forEach(function(id){
+  ["onlineBtnChess","onlineBtnCk","onlineBtnBg","onlineBtnOt","onlineBtnMo","onlineBtnMk","onlineBtnDo","onlineBtnYz"].forEach(function(id){
     var b=document.getElementById(id); if(b){ b.disabled=false; b.textContent="Play someone online"; }
   });
   if(!on) return;
-  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt",morris:"waitHintMo",mancala:"waitHintMk",dominoes:"waitHintDo"};
-  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt",morris:"onlineBtnMo",mancala:"onlineBtnMk",dominoes:"onlineBtnDo"};
+  var hintMap={checkers:"waitHintCheckers",backgammon:"waitHintBg",othello:"waitHintOt",morris:"waitHintMo",mancala:"waitHintMk",dominoes:"waitHintDo",yahtzee:"waitHintYz"};
+  var btnMap={checkers:"onlineBtnCk",backgammon:"onlineBtnBg",othello:"onlineBtnOt",morris:"onlineBtnMo",mancala:"onlineBtnMk",dominoes:"onlineBtnDo",yahtzee:"onlineBtnYz"};
   var h=document.getElementById(hintMap[game]||"waitHintChess");
   var b=document.getElementById(btnMap[game]||"onlineBtnChess");
   if(h) h.style.display="block";
@@ -350,7 +357,7 @@ async function playOnline(game){
 async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
-  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":game==="morris"?"inviteNameMo":game==="mancala"?"inviteNameMk":game==="dominoes"?"inviteNameDo":"inviteName");
+  var box=document.getElementById(game==="checkers"?"inviteNameCk":game==="backgammon"?"inviteNameBg":game==="othello"?"inviteNameOt":game==="morris"?"inviteNameMo":game==="mancala"?"inviteNameMk":game==="dominoes"?"inviteNameDo":game==="yahtzee"?"inviteNameYz":"inviteName");
   var name=cleanName(box && box.value);
   if(name.length<3){ alert("Enter your friend's username."); return; }
   var p=await sb.from("profiles").select("id,username,display_name").ilike("username", name).maybeSingle();
@@ -359,7 +366,7 @@ async function inviteFriend(game){
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
     body:(myName||"A player")+" invited you to "+label+"."

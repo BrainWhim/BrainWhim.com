@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yahtzee table · BrainWhim</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#1A2744;
+background:#8a6a48 url("yahtzee-parlor.jpg") center 36%/cover no-repeat fixed}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
+.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
+.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
+.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:16px}
+.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:0}
+.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;background:rgba(255,252,247,.78);border-radius:16px}
+.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:#1A2744}
+.games a.on{background:#1A2744;color:#fff}
+.wrap{max-width:1100px;margin:0 auto;padding:4px 10px 88px}
+.hud{max-width:420px;margin:8px auto;background:rgba(255,252,247,.92);border-radius:999px;padding:6px 12px}
+.meta,.msg{text-align:center;font-size:12px;margin:0 0 2px}
+.stage{display:grid;grid-template-columns:200px minmax(240px,380px) 200px;gap:10px;align-items:start;justify-content:center}
+.felt{background:linear-gradient(180deg,#2f6a3e,#1b3f26);border:4px solid #c9a45a;border-radius:10px;padding:10px;min-height:220px;position:relative}
+.dicebox{position:relative;height:150px}
+.die{position:absolute;width:44px;height:44px;border:0;border-radius:8px;background:linear-gradient(#fff,#e8dcc0);box-shadow:1px 2px 0 #8a6e3e;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:4px;cursor:pointer}
+.die.held{outline:3px solid #C9A227}
+.die i{width:6px;height:6px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
+.die[data-n="1"] i:nth-child(5){opacity:1}
+.die[data-n="2"] i:nth-child(1),.die[data-n="2"] i:nth-child(9){opacity:1}
+.die[data-n="3"] i:nth-child(1),.die[data-n="3"] i:nth-child(5),.die[data-n="3"] i:nth-child(9){opacity:1}
+.die[data-n="4"] i:nth-child(1),.die[data-n="4"] i:nth-child(3),.die[data-n="4"] i:nth-child(7),.die[data-n="4"] i:nth-child(9){opacity:1}
+.die[data-n="5"] i:nth-child(1),.die[data-n="5"] i:nth-child(3),.die[data-n="5"] i:nth-child(5),.die[data-n="5"] i:nth-child(7),.die[data-n="5"] i:nth-child(9){opacity:1}
+.die[data-n="6"] i:nth-child(1),.die[data-n="6"] i:nth-child(3),.die[data-n="6"] i:nth-child(4),.die[data-n="6"] i:nth-child(6),.die[data-n="6"] i:nth-child(7),.die[data-n="6"] i:nth-child(9){opacity:1}
+.bgcup{position:absolute;right:10px;top:10px;border:0;background:none;cursor:pointer;width:54px;height:70px}
+.bgcup-body{display:block;width:48px;height:52px;margin:8px auto 0;background:linear-gradient(#e8c15a,#b8860b);border-radius:0 0 18px 18px}
+.bgcup-label{font-size:10px;font-weight:800;color:#fff}
+.pad{background:#f7f1e2;border:6px solid #c9a45a;border-radius:8px;padding:8px;font-size:12px}
+.pad h2{margin:0 0 6px;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 28px 40px;gap:4px;align-items:center;padding:2px 0;border-bottom:1px solid #e6d7b8}
+.pad.opp .row{grid-template-columns:1fr 28px}
+.row button{border:0;border-radius:999px;background:#1A2744;color:#fff;font-size:10px;font-weight:700;padding:3px 6px}
+.row button:disabled{opacity:.35}
+.row.total{font-weight:800}
+.foot{display:flex;gap:8px;justify-content:center;position:fixed;left:0;right:0;bottom:10px}
+.foot a{border-radius:999px;padding:8px 14px;background:#fff;color:#1A2744;font-weight:700;text-decoration:none;box-shadow:0 6px 16px rgba(0,0,0,.16)}
+@media(max-width:700px){
+header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padding:6px 10px 8px}
+.brand{font-size:18px;grid-column:1;grid-row:1}
+.brand img{width:48px;height:48px}
+.hdr{grid-column:1 / -1;grid-row:2;justify-content:center;width:100%;padding-top:4px;gap:12px}
+.hdr a{font-size:13px;margin-left:0}
+.stage{grid-template-columns:1fr 1fr;gap:6px}
+.stage .feltwrap{grid-column:1/-1;order:-1}
+.die{width:36px;height:36px}
+}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="tables.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="yahtzee.html">House</a><a href="play.html">Play</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="games">
+<a href="checkers.html">Checkers</a><a href="chess.html">Chess</a><a href="backgammon.html">Backgammon</a>
+<a class="on" href="yahtzee.html">Yahtzee</a><a href="dominoes.html">Dominoes</a><a href="othello.html">Othello</a>
+<a href="mancala.html">Mancala</a><a href="cribbage.html">Cribbage</a><a href="shutbox.html">Shut the Box</a><a href="morris.html">Morris</a>
+</div>
+<div class="wrap">
+  <div class="hud">
+    <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
+    <p class="msg" id="msg">Connecting…</p>
+  </div>
+  <div class="stage">
+    <div class="pad opp" id="oppPad"></div>
+    <div class="feltwrap"><div class="felt">
+      <button class="bgcup" type="button" onclick="roll()"><span class="bgcup-body"></span><span class="bgcup-label">Shake</span></button>
+      <div class="dicebox" id="dicebox"></div>
+    </div></div>
+    <div class="pad" id="youPad"></div>
+  </div>
+  <div class="foot"><a href="tables.html">Return to tables</a></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js"></script>
+<script>
+var sb, room, me, mySide=null, dice=[0,0,0,0,0], held=[0,0,0,0,0], rolls=0, turn=1, over=false, p1={}, p2={};
+var CODE=(location.search.match(/code=([A-Za-z0-9]+)/)||[])[1];
+var CATS=[
+  ["ones","Aces",function(d){return sumFace(d,1)}],
+  ["twos","Twos",function(d){return sumFace(d,2)}],
+  ["threes","Threes",function(d){return sumFace(d,3)}],
+  ["fours","Fours",function(d){return sumFace(d,4)}],
+  ["fives","Fives",function(d){return sumFace(d,5)}],
+  ["sixes","Sixes",function(d){return sumFace(d,6)}],
+  ["3k","3 of a kind",function(d){return ofKind(d,3)?sum(d):0}],
+  ["4k","4 of a kind",function(d){return ofKind(d,4)?sum(d):0}],
+  ["fh","Full house",function(d){return fullHouse(d)?25:0}],
+  ["ss","Small straight",function(d){return straight(d,4)?30:0}],
+  ["ls","Large straight",function(d){return straight(d,5)?40:0}],
+  ["yz","Yahtzee",function(d){return ofKind(d,5)?50:0}],
+  ["ch","Chance",function(d){return sum(d)}]
+];
+function setMsg(t){ document.getElementById("msg").textContent=t; }
+function startYz(){ return {game:"yahtzee", p1:{}, p2:{}, dice:[0,0,0,0,0], held:[0,0,0,0,0], rolls:0, turn:1, over:false}; }
+function snapshot(){ return {game:"yahtzee", p1:p1, p2:p2, dice:dice.slice(), held:held.slice(), rolls:rolls, turn:turn, over:over}; }
+function applySnap(s){
+  if(!s||s.game!=="yahtzee"&&!s.p1&&s.dice===undefined) s=startYz();
+  p1=s.p1||{}; p2=s.p2||{}; dice=(s.dice||[0,0,0,0,0]).slice(); held=(s.held||[0,0,0,0,0]).slice();
+  rolls=s.rolls||0; turn=s.turn||1; over=!!s.over;
+}
+function mineBook(){ return mySide===1?p1:p2; }
+function oppBook(){ return mySide===1?p2:p1; }
+function sum(d){return d.reduce(function(a,b){return a+b;},0);}
+function sumFace(d,n){return d.filter(function(x){return x===n;}).length*n;}
+function counts(d){var c=[0,0,0,0,0,0,0]; d.forEach(function(n){c[n]++;}); return c;}
+function ofKind(d,n){return counts(d).some(function(x){return x>=n;});}
+function fullHouse(d){var c=counts(d).filter(function(x){return x;}); return c.indexOf(3)>=0&&c.indexOf(2)>=0;}
+function straight(d,len){
+  var u=[].concat(d).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+  var run=1,best=1,i;
+  for(i=1;i<u.length;i++){ run=u[i]===u[i-1]+1?run+1:1; if(run>best) best=run; }
+  return best>=len;
+}
+function totalOf(book){
+  var u=0,t=0;
+  CATS.forEach(function(c,i){ if(book[c[0]]!=null){ t+=book[c[0]]; if(i<6) u+=book[c[0]]; }});
+  if(u>=63) t+=35;
+  return {upper:u,total:t};
+}
+function openLeft(book){ return CATS.filter(function(c){return book[c[0]]==null;}); }
+function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>";}
+function paintDice(){
+  var box=document.getElementById("dicebox");
+  box.innerHTML=dice.map(function(n,i){
+    var left=(6+i*18)+"%";
+    return '<button class="die'+(held[i]?" held":"")+'" data-n="'+(n||1)+'" style="left:'+left+';top:40%" onclick="hold('+i+')">'+pips()+'</button>';
+  }).join("");
+}
+function paintPad(id, book, mine){
+  var tot=totalOf(book), html="<h2>"+(mine?"You":"Opponent")+"</h2>";
+  var can=mine && mySide && turn===mySide && !over && rolls>0 && dice[0];
+  CATS.forEach(function(c,i){
+    if(i===6) html+='<div class="row total"><span>Upper</span><span>'+tot.upper+'</span></div><div class="row"><span>Bonus</span><span>'+(tot.upper>=63?35:0)+'</span></div>';
+    var used=book[c[0]]!=null;
+    var preview=(can && dice[0])?c[2](dice):"";
+    html+='<div class="row"><span>'+c[1]+'</span><span>'+(used?book[c[0]]:(preview===""?"":preview))+'</span>';
+    if(mine) html+='<button '+(used||!can?"disabled":"")+' onclick="score(\''+c[0]+'\')">Use</button>';
+    html+="</div>";
+  });
+  html+='<div class="row total"><span>Total</span><span>'+tot.total+'</span></div>';
+  document.getElementById(id).innerHTML=html;
+}
+function turnMsg(){
+  if(!room||!room.guest) return "Waiting for someone to sit…";
+  if(over){
+    var a=totalOf(p1).total, b=totalOf(p2).total;
+    if(a===b) return "Draw "+a+"–"+b+".";
+    if((mySide===1&&a>b)||(mySide===2&&b>a)) return "You win "+Math.max(a,b)+"–"+Math.min(a,b)+".";
+    return "Opponent wins "+Math.max(a,b)+"–"+Math.min(a,b)+".";
+  }
+  if(turn!==mySide) return "Opponent is shaking.";
+  if(!rolls) return "Shake to start your turn.";
+  return "Roll "+rolls+" of 3 — hold dice, then Use a line.";
+}
+function paint(){ paintDice(); paintPad("youPad", mineBook(), true); paintPad("oppPad", oppBook(), false); }
+async function pushState(){
+  if(!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:over?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+}
+function hold(i){
+  if(over||!mySide||turn!==mySide||!rolls||!dice[0]) return;
+  held[i]=held[i]?0:1; paint(); pushState();
+}
+function roll(){
+  if(over||!mySide||turn!==mySide||rolls>=3) return;
+  for(var i=0;i<5;i++) if(!held[i]) dice[i]=1+Math.floor(Math.random()*6);
+  rolls++; setMsg(turnMsg()); paint(); pushState();
+}
+function score(key){
+  if(over||!mySide||turn!==mySide||!rolls||!dice[0]) return;
+  var cat=CATS.filter(function(c){return c[0]===key;})[0];
+  var book=mineBook();
+  if(!cat||book[key]!=null) return;
+  book[key]=cat[2](dice);
+  dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0;
+  if(!openLeft(p1).length && !openLeft(p2).length) over=true;
+  else turn=3-mySide;
+  setMsg(turnMsg()); paint(); pushState();
+}
+async function boot(){
+  var online=/(?:^|[?&])online=1/.test(location.search);
+  document.getElementById("codeLab").textContent=online?"Online table":("Table "+(CODE||"—"));
+  var cfg=window.BW_PLAY||{};
+  if(!CODE||!cfg.url){ setMsg("Missing table code or play-config.js"); return; }
+  sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ setMsg("Sign in on Tables first."); return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code", CODE).single();
+  if(q.error){ setMsg(q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room), CODE)) return;
+  if(room.host===me) mySide=1;
+  else if(room.guest===me) mySide=2;
+  else if(!room.guest){
+    var u=await sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id).select().single();
+    if(!u.error){ room=u.data; mySide=2; }
+  }
+  document.getElementById("seatLab").textContent=mySide===1?"You shake first": mySide===2?"Opponent shakes first":"Watching";
+  applySnap(room.state && room.state.game==="yahtzee" ? room.state : startYz());
+  setMsg(turnMsg()); paint();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
+    room=payload.new; applySnap(room.state); setMsg(turnMsg()); paint();
+  }).subscribe();
+}
+boot();
+</script>
+</body>
+</html>
