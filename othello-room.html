@@ -134,6 +134,10 @@ function paint(){
 async function pushState(){
   if(!room) return;
   await sb.from("rooms").update({state:snapshot(), status:over?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+  if(over && window.bwRateGame){
+    var c1=0,c2=0,r,c; for(r=0;r<8;r++) for(c=0;c<8;c++){ if(board[r][c]===1) c1++; if(board[r][c]===2) c2++; }
+    bwRateGame(sb,room,me,c1===c2?0:c1>c2?1:2);
+  }
 }
 function afterMove(){
   if(!moves(1).length && !moves(2).length){ over=true; setMsg(turnMsg()); paint(); pushState(); return; }

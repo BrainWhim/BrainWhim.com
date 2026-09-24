@@ -50,3 +50,69 @@ function bwSendToGame(game, code){
   location.replace(bwRoomHref(game, code||"", location.search.indexOf("online=1")>=0?"online=1":""));
   return true;
 }
+function bwTitle(pts){
+  pts=Number(pts||0);
+  if(pts<=100) return "New";
+  if(pts<=500) return "Beginner";
+  if(pts<=1000) return "Club";
+  return "Expert";
+}
+function bwTitleIndex(pts){
+  var t=bwTitle(pts);
+  return t==="New"?0:t==="Beginner"?1:t==="Club"?2:3;
+}
+function bwCanMatch(a,b){
+  return Math.abs(bwTitleIndex(a)-bwTitleIndex(b))<=1;
+}
+function bwRateDelta(myPts, oppPts, result){
+  if(result==="draw") return 0;
+  var d=bwTitleIndex(oppPts)-bwTitleIndex(myPts);
+  if(result==="win") return d>0?12:d<0?4:8;
+  return d>0?-2:d<0?-8:-4;
+}
+window.bwTitle=bwTitle;
+window.bwCanMatch=bwCanMatch;
+window.bwRateGame=async function(sb, room, me, winnerSide){
+  try{
+    if(!sb||!room||!me||winnerSide==null) return;
+    var st=Object.assign({}, room.state||{});
+    if(st.rated) return;
+    if(room.host!==me) return;
+    st.rated=true;
+    await sb.from("rooms").update({state:st, status:"done"}).eq("id", room.id);
+    var host=room.host, guest=room.guest;
+    if(!host||!guest) return;
+    var q=await sb.from("profiles").select("id,skill_points").in("id",[host,guest]);
+    if(q.error||!q.data) return;
+    var map={}; q.data.forEach(function(p){ map[p.id]=Number(p.skill_points||0); });
+    var hp=map[host]||0, gp=map[guest]||0;
+    var hostRes=winnerSide===0?"draw":(winnerSide===1?"win":"lose");
+    var guestRes=winnerSide===0?"draw":(winnerSide===2?"win":"lose");
+    var hd=bwRateDelta(hp,gp,hostRes), gd=bwRateDelta(gp,hp,guestRes);
+    await sb.from("profiles").update({skill_points:Math.max(0,hp+hd)}).eq("id",host);
+    await sb.from("profiles").update({skill_points:Math.max(0,gp+gd)}).eq("id",guest);
+    room.state=st;
+  }catch(e){}
+};
+(function bwPresence(){
+  function tick(){
+    var cfg=window.BW_PLAY||{};
+    if(!cfg.url || typeof supabase==="undefined") return;
+    if(!window.__bwSb) window.__bwSb=supabase.createClient(cfg.url, cfg.anonKey);
+    window.__bwSb.auth.getSession().then(function(r){
+      var u=r.data && r.data.session && r.data.session.user;
+      if(!u) return;
+      window.__bwSb.from("profiles").update({last_seen:new Date().toISOString()}).eq("id", u.id);
+    });
+  }
+  function start(){
+    tick();
+    if(window.__bwBeat) clearInterval(window.__bwBeat);
+    window.__bwBeat=setInterval(tick, 20000);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) tick(); });
+})();
+
+

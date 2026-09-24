@@ -78,7 +78,7 @@ body{background-attachment:scroll}
 <main>
 <div class="intro">
 <h1>The tables</h1>
-<p class="lead">Three ways to sit: vs the house, vs anyone waiting online, or invite a friend by their public name (no @).</p>
+<p class="lead">Play the house free. Sit with other people three times a day — members play unlimited. Guests are welcome in the parlor.</p>
 </div>
 <section class="auth" id="authBox">
   <h2>Your seat</h2>
@@ -94,6 +94,7 @@ body{background-attachment:scroll}
     <div class="row" style="justify-content:center">
       <button class="btn go" type="button" onclick="bwSignIn()">Sign in</button>
       <button class="btn ghost" type="button" onclick="showCreate()">Create account</button>
+      <button class="btn ghost" type="button" onclick="playAsGuest()">Play as guest</button>
       <button class="btn go" type="button" id="createGo" style="display:none" onclick="bwSignUp()">Save account</button>
     </div>
   </div>
@@ -106,6 +107,11 @@ body{background-attachment:scroll}
       <button class="btn ghost" type="button" onclick="bwSignOut()">Sign out</button>
     </div>
   </div>
+</section>
+<section class="auth" id="lobbyBox">
+  <h2>Players online</h2>
+  <p class="hint" id="rankHint">Titles are earned: New 0–100 · Beginner 101–500 · Club 501–1000 · Expert 1001+</p>
+  <div id="onlineList" class="hint">Sign in or sit as a guest to see the parlor.</div>
 </section>
 <div class="rooms">
 <article class="room">
@@ -239,13 +245,13 @@ body{background-attachment:scroll}
 </div>
 </article>
 </div>
-<p class="note">Play someone online seats the next person who taps the same button. No code. Invite friend is only for a person you name. Skill levels and a who’s-online list come next.</p>
+<p class="note">House play is free. Online play is 3 games a day unless you’re a member. Online matchmaking stays inside neighboring titles (New with Beginner, Club with Expert, and so on). Invite friend skips the title gate.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
 <script>
-var sb=null, sessionUser=null, myName="", noticeCh=null, waitTimer=null, waitRoom=null;
+var sb=null, sessionUser=null, myName="", noticeCh=null, waitTimer=null, waitRoom=null, beatTimer=null, myPts=0, myMember=false;
 function cleanName(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9_]/g,"").slice(0,20); }
 function code4(){ var s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", o=""; for(var i=0;i<4;i++) o+=s[Math.floor(Math.random()*s.length)]; return o; }
 function startBoard(){
@@ -326,7 +332,8 @@ function startState(game){
 async function makeRoom(kind, game){
   var s=await needSession(); if(!s) return null;
   game=game||"chess";
-  var r=await sb.from("rooms").insert({code:code4(), game:game, status:"lobby", kind:kind||"open", host:s.user.id, state:startState(game)}).select().single();
+  var st=startState(game); st.hostPts=myPts||0;
+  var r=await sb.from("rooms").insert({code:code4(), game:game, status:"lobby", kind:kind||"open", host:s.user.id, state:st}).select().single();
   if(r.error){ alert(r.error.message); return null; }
   return r.data;
 }
@@ -359,9 +366,14 @@ async function checkWait(){
 async function playOnline(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
+  if(!(await canPlayOnline())) return;
   var q=await sb.from("rooms").select("*").eq("game",game).eq("status","lobby").is("guest",null).neq("host", s.user.id).order("created_at",{ascending:true}).limit(5);
   if(q.error){ alert(q.error.message); return; }
-  var open=(q.data||[]).filter(function(r){ return !r.kind || r.kind==="open"; })[0];
+  var open=(q.data||[]).filter(function(r){
+    if(r.kind && r.kind!=="open") return false;
+    var hp=(r.state && r.state.hostPts)!=null?r.state.hostPts:0;
+    return typeof bwCanMatch==="function"?bwCanMatch(myPts, hp):true;
+  })[0];
   if(open){
     var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
     if(u.error){ alert(u.error.message); return; }
@@ -480,14 +492,76 @@ async function paint(session){
     form.classList.add("closed"); out.classList.remove("closed");
     document.getElementById("needName").style.display=(prof && prof.username)?"none":"flex";
     listenNotices();
+    myPts=Number((prof && prof.skill_points)||0);
+    myMember=!!(prof && prof.member);
+    var title=typeof bwTitle==="function"?bwTitle(myPts):"New";
+    who.textContent=(handle||"Signed in")+" · "+title+" · "+myPts+" pts"+(myMember?" · member":"");
+    startPresence();
   } else {
-    myName="";
+    stopPresence();
+    myName=""; myPts=0; myMember=false;
     who.textContent="Sign in to keep a seat";
     document.getElementById("seatHint").textContent="Email + password to sign in. Username is only your public name for invites.";
     form.classList.remove("closed"); out.classList.add("closed");
     document.getElementById("mailDot").classList.remove("on");
     document.getElementById("mailList").textContent="Sign in to see invites.";
+    document.getElementById("onlineList").textContent="Sign in to see who’s in the parlor.";
   }
+}
+function todayStamp(){ return new Date().toISOString().slice(0,10); }
+async function canPlayOnline(){
+  var prof=await loadProfile(sessionUser);
+  if(prof && prof.member) return true;
+  var day=todayStamp();
+  var count=Number((prof && prof.online_count)||0);
+  if(!prof || prof.online_day!==day) count=0;
+  if(count>=3){
+    alert("That’s 3 online games today. Sit vs the house as much as you like, or become a member for unlimited tables.");
+    return false;
+  }
+  await sb.from("profiles").update({online_day:day, online_count:count+1, last_seen:new Date().toISOString()}).eq("id", sessionUser.id);
+  return true;
+}
+async function playAsGuest(){
+  bwErr("");
+  if(!sb) return;
+  var r=await sb.auth.signInAnonymously();
+  if(r.error){
+    bwErr({message:"Turn on Anonymous in Supabase → Authentication → Providers, then try Play as guest again."});
+    return;
+  }
+  var n="Guest "+(1000+Math.floor(Math.random()*9000));
+  var un=cleanName(n);
+  if(r.data.user){
+    await sb.from("profiles").upsert({id:r.data.user.id, username:un, display_name:n, is_guest:true, skill_points:0});
+  }
+}
+async function beat(){
+  if(!sb || !sessionUser) return;
+  await sb.from("profiles").update({last_seen:new Date().toISOString()}).eq("id", sessionUser.id);
+}
+async function refreshOnline(){
+  var box=document.getElementById("onlineList");
+  if(!sb || !sessionUser){ box.textContent="Sign in or sit as a guest to see the parlor."; return; }
+  var since=new Date(Date.now()-120000).toISOString();
+  var q=await sb.from("profiles").select("username,display_name,skill_points,is_guest,last_seen").gte("last_seen", since).order("last_seen",{ascending:false}).limit(24);
+  if(q.error){ box.textContent="Players online needs supabase-ladder.sql run once."; return; }
+  var rows=q.data||[];
+  if(!rows.length){ box.textContent="Just you in the parlor right now."; return; }
+  box.innerHTML=rows.map(function(p){
+    var label=p.display_name||p.username||"Guest";
+    var title=typeof bwTitle==="function"?bwTitle(p.skill_points):"New";
+    var mine=cleanName(p.username)===myName;
+    return '<span style="display:inline-block;margin:3px 4px;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid #d7c9b0">'+(mine?"you · ":"")+label+" · "+title+"</span>";
+  }).join("");
+}
+function startPresence(){
+  beat(); refreshOnline();
+  if(beatTimer) clearInterval(beatTimer);
+  beatTimer=setInterval(function(){ beat(); refreshOnline(); }, 20000);
+}
+function stopPresence(){
+  if(beatTimer){ clearInterval(beatTimer); beatTimer=null; }
 }
 function bwErr(e){ document.getElementById("authErr").textContent=e? (e.message||String(e)) : ""; }
 function showCreate(){
