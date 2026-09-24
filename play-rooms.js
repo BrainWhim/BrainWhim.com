@@ -7,7 +7,8 @@ window.BW_ROOMS={
   mancala:"mancala-room.html",
   dominoes:"dominoes-room.html",
   yahtzee:"yahtzee-room.html",
-  cribbage:"cribbage-room.html"
+  cribbage:"cribbage-room.html",
+  shutbox:"shutbox-room.html"
 };
 function bwGuessGame(room){
   if(!room) return "";
@@ -15,6 +16,7 @@ function bwGuessGame(room){
   if(window.BW_ROOMS[g]) return g;
   var st=room.state||{};
   if(st.pts) return "backgammon";
+  if(st.game==="shutbox" || (Array.isArray(st.open) && "score1" in st)) return "shutbox";
   if(st.y && st.h) return "mancala";
   if(st.game==="cribbage" || st.tossed) return "cribbage";
   if(st.game==="yahtzee" || (st.p1!==undefined && st.dice && st.rolls!==undefined)) return "yahtzee";
