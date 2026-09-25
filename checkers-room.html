@@ -80,6 +80,7 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padd
   <div class="hud">
     <p class="meta"><span id="codeLab">Online table</span> · <span id="seatLab">…</span></p>
     <p class="msg" id="ckmsg">Connecting…</p>
+    <p class="msg" id="ckcount" style="opacity:.75"></p>
   </div>
   <div class="stage"><div class="table"><div class="tray" id="trayOpp"></div><div class="table-top"><div class="sqgrid" id="ckboard"></div></div><div class="tray" id="trayYou"></div></div></div>
   <div class="row"><a class="btn" href="tables.html">Return to tables</a></div>
@@ -148,6 +149,23 @@ function ckHas(side){
   for(var r=0;r<8;r++) for(var c=0;c<8;c++) if(ckSide(ck[r][c])===side) return true;
   return false;
 }
+function ckCount(side){
+  var n=0,r,c; for(r=0;r<8;r++) for(c=0;c<8;c++) if(ckSide(ck[r][c])===side) n++;
+  return n;
+}
+function settleEnd(){
+  if(!ck || ckOver) return false;
+  var c1=ckCount(1), c2=ckCount(2);
+  var el=document.getElementById("ckcount");
+  if(el) el.textContent="Cobalt "+c1+" · Ivory "+c2+" · took "+took1.length+"/"+took2.length;
+  var winner=0;
+  if(took1.length>=12 || (c2<=0 && c1>0)) winner=1;
+  else if(took2.length>=12 || (c1<=0 && c2>0)) winner=2;
+  else if(mySide && !ckCanMove(3-mySide) && ckCanMove(mySide)) winner=mySide;
+  if(!winner) return false;
+  ckOver=true; window.ckWinner=winner; showEnd(winner);
+  return true;
+}
 function ckCanMove(side){
   if(ckAllJumps(side).length) return true;
   for(var r=0;r<8;r++) for(var c=0;c<8;c++) if(ckSide(ck[r][c])===side && ckStepsFrom(r,c).length) return true;
@@ -179,6 +197,7 @@ function turnMsg(){
   return (ckTurn===1?"Cobalt":"Ivory")+" to move";
 }
 function ckPaint(){
+  settleEnd();
   var html="";
   for(var vr=0;vr<8;vr++) for(var vc=0;vc<8;vc++){
     var r=viewR(vr), c=viewC(vc);
@@ -289,8 +308,9 @@ async function boot(){
   ckPaint();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
     room=payload.new; applySnap(room.state); ckSel=null;
-    setMsg(!room.guest && mySide===1 ? "Waiting for someone online to sit…" : turnMsg());
+    if(!ckOver) setMsg(!room.guest && mySide===1 ? "Waiting for someone online to sit…" : turnMsg());
     ckPaint();
+    if(ckOver && window.ckWinner) showEnd(window.ckWinner);
     if(room.guest) document.getElementById("seatLab").textContent=mySide===1?"You are cobalt":"You are ivory";
   }).subscribe();
 }
