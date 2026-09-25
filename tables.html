@@ -112,7 +112,7 @@ body{background-attachment:scroll}
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
   <p class="who" id="who">Checking…</p>
-  <p class="hint" id="seatHint">Sign in, create an account, or sit as a guest.</p>
+  <p class="hint" id="seatHint">Sign in with email or your public name, or sit as a guest.</p>
   <p class="err" id="authErr"></p>
   <div id="authForm">
     <div class="row" style="justify-content:center;margin-bottom:8px">
@@ -561,7 +561,7 @@ async function paint(session){
     stopPresence();
     myName=""; myPts=0; myMember=false;
     who.textContent="Sign in to keep a seat";
-    document.getElementById("seatHint").textContent="Email + password to sign in. Username is only your public name for invites.";
+    document.getElementById("seatHint").textContent="Sign in with email or your public name, or sit as a guest.";
     form.classList.remove("closed"); out.classList.add("closed");
     document.getElementById("mailDot").classList.remove("on");
     document.getElementById("mailList").textContent="Sign in to see invites.";
@@ -674,12 +674,15 @@ async function bwSignIn(){
   var password=document.getElementById("pass").value;
   var email=raw;
   if(raw && raw.indexOf("@")<0){
-    var p=await sb.from("profiles").select("email,username").ilike("username", cleanName(raw)).maybeSingle();
-    if(p.data && p.data.email) email=p.data.email;
-    else { bwErr({message:"Use the email for that name, or add it on your next visit."}); return; }
+    var look=await sb.rpc("email_for_username", {n: raw});
+    if(look.error || !look.data){ bwErr({message:"Use the email for this account this time. After one email sign-in, the public name will work too."}); return; }
+    email=look.data;
   }
   var r=await sb.auth.signInWithPassword({email:email, password:password});
   if(r.error) bwErr(r.error);
+  else if(r.data && r.data.user){
+    await sb.from("profiles").update({email:r.data.user.email}).eq("id", r.data.user.id);
+  }
 }
 async function bwForgot(){
   bwErr("");
