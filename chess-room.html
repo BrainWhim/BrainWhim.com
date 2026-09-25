@@ -331,6 +331,11 @@ function flyPiece(sr,sc,r,c, piece, done){
 async function pushState(){
   if(!room) return;
   await sb.from("rooms").update({state:snapshot(), status:chOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+  if(chOver && window.bwRateGame){
+    var oppWhite=myColor!=="w";
+    var mate=typeof chInCheck==="function"?chInCheck(oppWhite):true;
+    bwRateGame(sb, room, me, mate?(myColor==="w"?1:2):0);
+  }
 }
 function chClick(r,c){
   if(chOver || !myColor || busy) return;

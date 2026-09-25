@@ -77,7 +77,6 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     if(!sb||!room||!me||winnerSide==null) return;
     var st=Object.assign({}, room.state||{});
     if(st.rated) return;
-    if(room.host!==me) return;
     st.rated=true;
     await sb.from("rooms").update({state:st, status:"done"}).eq("id", room.id);
     var host=room.host, guest=room.guest;
