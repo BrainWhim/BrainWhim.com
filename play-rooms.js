@@ -242,5 +242,78 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   else start();
 })();
 
-
-
+(function bwSets(){
+  var file=(location.pathname.split("/").pop()||"").toLowerCase();
+  if(!/chess|checkers/.test(file)) return;
+  var SETS=[
+    {id:"classic", name:"Classic", need:0, member:false},
+    {id:"dusk", name:"Dusk", need:101, member:false},
+    {id:"gilded", name:"Gilded", need:501, member:true}
+  ];
+  function allowed(set, pts, member){
+    if(set.need<=0) return true;
+    if(member) return true;
+    return (pts||0)>=set.need;
+  }
+  function apply(id){
+    document.body.setAttribute("data-set", id||"classic");
+    try{ localStorage.setItem("bwSet", id||"classic"); }catch(e){}
+  }
+  function injectCss(){
+    var s=document.createElement("style");
+    s.textContent='body[data-set="dusk"] .pcimg,body[data-set="dusk"] .ckimg{filter:hue-rotate(42deg) saturate(1.15) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
+      'body[data-set="gilded"] .pcimg,body[data-set="gilded"] .ckimg{filter:sepia(.35) saturate(1.45) hue-rotate(8deg) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
+      '.bw-sets-btn{border:0;border-radius:999px;padding:6px 12px;background:#fff;color:#1A2744;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;margin-left:8px}'+
+      '.bw-sets{display:none;position:fixed;right:16px;top:80px;z-index:45;width:min(280px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;color:#1A2744}'+
+      '.bw-sets.on{display:block}.bw-sets h3{margin:0 0 8px;font-size:14px}.bw-sets button{display:block;width:100%;text-align:left;margin:0 0 6px;border:1px solid #d7c9b0;background:#fff;border-radius:12px;padding:8px 10px;font-weight:700;cursor:pointer}'+
+      '.bw-sets button.on{border-color:#1A2744;background:#1A2744;color:#fff}.bw-sets button.lock{opacity:.55;cursor:default}';
+    document.head.appendChild(s);
+  }
+  function panel(pts, member){
+    var cur=document.body.getAttribute("data-set")||"classic";
+    return SETS.map(function(set){
+      var ok=allowed(set,pts,member);
+      var extra=ok?"":(" · unlock at "+(set.need>=501?"Club or member":"Beginner"));
+      return '<button type="button" class="'+(set.id===cur?"on":"")+(ok?"":" lock")+'" data-set="'+set.id+'">'+set.name+extra+"</button>";
+    }).join("");
+  }
+  async function boot(){
+    injectCss();
+    var saved="classic";
+    try{ saved=localStorage.getItem("bwSet")||"classic"; }catch(e){}
+    var pts=0, member=false;
+    try{
+      var cfg=window.BW_PLAY||{};
+      if(cfg.url && typeof supabase!=="undefined"){
+        if(!window.__bwSb) window.__bwSb=supabase.createClient(cfg.url, cfg.anonKey);
+        var sess=(await window.__bwSb.auth.getSession()).data.session;
+        if(sess){
+          var q=await window.__bwSb.from("profiles").select("skill_points,member").eq("id", sess.user.id).maybeSingle();
+          if(q.data){ pts=Number(q.data.skill_points||0); member=!!q.data.member; }
+        }
+      }
+    }catch(e){}
+    if(!allowed(SETS.filter(function(s){return s.id===saved;})[0]||SETS[0], pts, member)) saved="classic";
+    apply(saved);
+    var btn=document.createElement("button");
+    btn.className="bw-sets-btn"; btn.type="button"; btn.textContent="Sets";
+    var nav=document.querySelector("header nav")||document.querySelector("header");
+    if(nav) nav.appendChild(btn);
+    var box=document.createElement("div");
+    box.className="bw-sets"; box.id="bwSets";
+    box.innerHTML="<h3>Piece sets</h3><div id=\"bwSetList\"></div>";
+    document.body.appendChild(box);
+    function paint(){ document.getElementById("bwSetList").innerHTML=panel(pts, member); }
+    paint();
+    btn.onclick=function(){ box.classList.toggle("on"); paint(); };
+    box.onclick=function(ev){
+      var b=ev.target.closest("button[data-set]"); if(!b) return;
+      var id=b.getAttribute("data-set");
+      var set=SETS.filter(function(s){return s.id===id;})[0];
+      if(!allowed(set,pts,member)){ alert(id==="gilded"?"Gilded unlocks at Club or with a membership.":"Dusk unlocks at Beginner (101 pts)."); return; }
+      apply(id); paint();
+    };
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
