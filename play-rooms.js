@@ -125,7 +125,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     if(document.getElementById("bellBtn")) return;
     if(!document.querySelector("header")) return;
     var css=document.createElement("style");
-    css.textContent='.bw-bell{position:relative;border:0;background:#fff;color:#1A2744;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:auto}.bw-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#c45c6a;color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;padding:0 4px}.bw-bell .dot.on{display:flex}.bw-mailpane{display:none;position:absolute;right:4%;top:80px;z-index:30;width:min(360px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;box-shadow:0 16px 32px rgba(40,30,16,.22);color:#1A2744}.bw-mailpane.on{display:block}.bw-mailpane h3{margin:0 0 8px;font-size:14px}.bw-note{border-top:1px solid #eadfcb;padding:8px 0;font-size:13px}.bw-note:first-of-type{border-top:0}.bw-toast{position:fixed;right:16px;bottom:16px;z-index:40;max-width:320px;background:#1A2744;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 12px 28px rgba(0,0,0,.28);display:none}.bw-toast.on{display:block}.bw-toast .btn{border:0;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;background:#fff;color:#1A2744;margin-left:8px}';
+    css.textContent='header .bw-bell,.hdr .bw-bell{display:inline-flex!important;align-items:center;justify-content:center;position:relative;border:0;background:#fff;color:#1A2744;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:8px;flex-shrink:0;z-index:9}.bw-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#c45c6a;color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;padding:0 4px}.bw-bell .dot.on{display:flex}.bw-mailpane{display:none;position:fixed;right:16px;top:76px;z-index:40;width:min(360px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;box-shadow:0 16px 32px rgba(40,30,16,.22);color:#1A2744}.bw-mailpane.on{display:block}.bw-mailpane h3{margin:0 0 8px;font-size:14px}.bw-note{border-top:1px solid #eadfcb;padding:8px 0;font-size:13px}.bw-note:first-of-type{border-top:0}.bw-toast{position:fixed;right:16px;bottom:16px;z-index:40;max-width:320px;background:#1A2744;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 12px 28px rgba(0,0,0,.28);display:none}.bw-toast.on{display:block}.bw-toast .btn{border:0;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;background:#fff;color:#1A2744;margin-left:8px}';
     document.head.appendChild(css);
     var header=document.querySelector("header");
     header.style.position=header.style.position||"relative";
@@ -133,8 +133,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     bell.className="bw-bell"; bell.id="bellBtn"; bell.type="button";
     bell.innerHTML='✉ <span class="dot" id="mailDot">0</span>';
     bell.onclick=function(){ toggle(); };
-    var nav=header.querySelector("nav");
-    if(nav) header.insertBefore(bell, nav);
+    var nav=header.querySelector("nav.hdr")||header.querySelector("nav");
+    if(nav) nav.appendChild(bell);
     else header.appendChild(bell);
     var pane=document.createElement("div");
     pane.className="bw-mailpane"; pane.id="mailPane";
