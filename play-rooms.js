@@ -263,7 +263,10 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var s=document.createElement("style");
     s.textContent='body[data-set="dusk"] .pcimg,body[data-set="dusk"] .ckimg{filter:hue-rotate(42deg) saturate(1.15) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
       'body[data-set="gilded"] .pcimg,body[data-set="gilded"] .ckimg{filter:sepia(.35) saturate(1.45) hue-rotate(8deg) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
-      '.bw-sets-btn{border:0;border-radius:999px;padding:6px 12px;background:#fff;color:#1A2744;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;margin-left:8px}'+
+      '.bw-member{max-width:640px;margin:0 auto 8px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;background:rgba(255,252,247,.84);border-radius:16px;backdrop-filter:blur(8px)}'+
+      '.bw-member p{margin:0;font-size:12px;font-weight:600;color:#1A2744;width:100%;text-align:center}'+
+      '.bw-sets-btn,.bw-sub-btn{border:0;border-radius:999px;padding:6px 12px;background:#fff;color:#1A2744;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid #d7c9b0}'+
+      '.bw-sub-btn{background:#1A2744;color:#fff;border-color:#1A2744}'+
       '.bw-sets{display:none;position:fixed;right:16px;top:80px;z-index:45;width:min(280px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;color:#1A2744}'+
       '.bw-sets.on{display:block}.bw-sets h3{margin:0 0 8px;font-size:14px}.bw-sets button{display:block;width:100%;text-align:left;margin:0 0 6px;border:1px solid #d7c9b0;background:#fff;border-radius:12px;padding:8px 10px;font-weight:700;cursor:pointer}'+
       '.bw-sets button.on{border-color:#1A2744;background:#1A2744;color:#fff}.bw-sets button.lock{opacity:.55;cursor:default}';
@@ -295,10 +298,18 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     }catch(e){}
     if(!allowed(SETS.filter(function(s){return s.id===saved;})[0]||SETS[0], pts, member)) saved="classic";
     apply(saved);
+    var bar=document.createElement("div");
+    bar.className="bw-member";
+    bar.innerHTML='<p>Membership: unlimited online tables, extra piece sets, and badges as you climb.</p>';
     var btn=document.createElement("button");
-    btn.className="bw-sets-btn"; btn.type="button"; btn.textContent="Sets";
-    var nav=document.querySelector("header nav")||document.querySelector("header");
-    if(nav) nav.appendChild(btn);
+    btn.className="bw-sets-btn"; btn.type="button"; btn.textContent="Piece sets";
+    var sub=document.createElement("button");
+    sub.className="bw-sub-btn"; sub.type="button"; sub.textContent="Subscribe";
+    sub.onclick=function(){ alert("Stripe checkout comes next. Membership will unlock unlimited online play and the extra sets."); };
+    bar.appendChild(btn); bar.appendChild(sub);
+    var games=document.querySelector(".games");
+    if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);
+    else document.body.insertBefore(bar, document.body.children[1]||null);
     var box=document.createElement("div");
     box.className="bw-sets"; box.id="bwSets";
     box.innerHTML="<h3>Piece sets</h3><div id=\"bwSetList\"></div>";
