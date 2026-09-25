@@ -114,5 +114,118 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   else start();
   document.addEventListener("visibilitychange", function(){ if(!document.hidden) tick(); });
 })();
+(function bwMailEverywhere(){
+  function sbClient(){
+    var cfg=window.BW_PLAY||{};
+    if(!cfg.url || typeof supabase==="undefined") return null;
+    if(!window.__bwSb) window.__bwSb=supabase.createClient(cfg.url, cfg.anonKey);
+    return window.__bwSb;
+  }
+  function inject(){
+    if(document.getElementById("bellBtn")) return;
+    if(!document.querySelector("header")) return;
+    var css=document.createElement("style");
+    css.textContent='.bw-bell{position:relative;border:0;background:#fff;color:#1A2744;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:auto}.bw-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#c45c6a;color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;padding:0 4px}.bw-bell .dot.on{display:flex}.bw-mailpane{display:none;position:absolute;right:4%;top:80px;z-index:30;width:min(360px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;box-shadow:0 16px 32px rgba(40,30,16,.22);color:#1A2744}.bw-mailpane.on{display:block}.bw-mailpane h3{margin:0 0 8px;font-size:14px}.bw-note{border-top:1px solid #eadfcb;padding:8px 0;font-size:13px}.bw-note:first-of-type{border-top:0}.bw-toast{position:fixed;right:16px;bottom:16px;z-index:40;max-width:320px;background:#1A2744;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 12px 28px rgba(0,0,0,.28);display:none}.bw-toast.on{display:block}.bw-toast .btn{border:0;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;background:#fff;color:#1A2744;margin-left:8px}';
+    document.head.appendChild(css);
+    var header=document.querySelector("header");
+    header.style.position=header.style.position||"relative";
+    var bell=document.createElement("button");
+    bell.className="bw-bell"; bell.id="bellBtn"; bell.type="button";
+    bell.innerHTML='✉ <span class="dot" id="mailDot">0</span>';
+    bell.onclick=function(){ toggle(); };
+    var nav=header.querySelector("nav");
+    if(nav) header.insertBefore(bell, nav);
+    else header.appendChild(bell);
+    var pane=document.createElement("div");
+    pane.className="bw-mailpane"; pane.id="mailPane";
+    pane.innerHTML='<h3>Mailbox</h3><div id="mailList">Sign in to see invites.</div>';
+    document.body.appendChild(pane);
+    var toast=document.createElement("div");
+    toast.className="bw-toast"; toast.id="bwToast";
+    document.body.appendChild(toast);
+  }
+  function toggle(){
+    var pane=document.getElementById("mailPane");
+    if(pane) pane.classList.toggle("on");
+    load();
+  }
+  window.toggleMail=toggle;
+  function showToast(text, code, nid, game){
+    var el=document.getElementById("bwToast")||document.getElementById("toast");
+    if(!el) return;
+    el.innerHTML=text+' <button class="btn" type="button">Sit down</button>';
+    var b=el.querySelector("button");
+    if(b) b.onclick=function(){ accept(nid, code, game); };
+    el.classList.add("on");
+    setTimeout(function(){ el.classList.remove("on"); }, 12000);
+  }
+  async function accept(id, code, gameHint){
+    var client=sbClient(); if(!client) return;
+    var s=(await client.auth.getSession()).data.session;
+    if(!s){ location.href="tables.html"; return; }
+    var q=await client.from("rooms").select("*").eq("code", code).single();
+    if(q.error){ alert("That table closed."); return; }
+    if(q.data.host!==s.user.id && !q.data.guest){
+      var u=await client.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", q.data.id);
+      if(u.error){ alert(u.error.message); return; }
+    }
+    if(id) await client.from("notices").update({status:"accepted", read:true}).eq("id", id);
+    var game=gameHint||q.data.game||"chess";
+    location.href=bwRoomHref(game, code, "online=1");
+  }
+  window.acceptInvite=window.acceptInvite||accept;
+  window.bwAcceptInvite=accept;
+  async function decline(id){
+    var client=sbClient(); if(!client) return;
+    await client.from("notices").update({status:"declined", read:true}).eq("id", id);
+    load();
+  }
+  window.declineInvite=window.declineInvite||decline;
+  async function load(){
+    var list=document.getElementById("mailList");
+    var dot=document.getElementById("mailDot");
+    var client=sbClient();
+    if(!client || !list) return;
+    var s=(await client.auth.getSession()).data.session;
+    if(!s){ list.textContent="Sign in on Tables to see invites."; if(dot) dot.classList.remove("on"); return; }
+    var q=await client.from("notices").select("*").eq("to_id", s.user.id).order("created_at",{ascending:false}).limit(12);
+    if(q.error){ list.textContent=q.error.message; return; }
+    var rows=q.data||[];
+    var pending=rows.filter(function(n){ return n.status==="pending"; });
+    if(dot){
+      if(pending.length){ dot.textContent=String(pending.length); dot.classList.add("on"); }
+      else dot.classList.remove("on");
+    }
+    if(!rows.length){ list.textContent="No notes yet."; return; }
+    list.innerHTML=rows.map(function(n){
+      var act=n.status==="pending" && n.room_code
+        ? '<div style="margin-top:6px"><button type="button" onclick="bwAcceptInvite(\''+n.id+'\',\''+n.room_code+'\',\''+(n.game||'')+'\')" style="border:0;border-radius:999px;padding:7px 12px;background:#1A2744;color:#fff;font-weight:700;margin-right:6px">Join</button><button type="button" onclick="declineInvite(\''+n.id+'\')" style="border:0;border-radius:999px;padding:7px 12px;background:#fff;border:1px solid #d7c9b0;font-weight:700">Not now</button></div>'
+        : '<div style="opacity:.7;margin-top:4px">'+n.status+'</div>';
+      return '<div class="bw-note">'+(n.body||"Invite")+" "+act+"</div>";
+    }).join("");
+  }
+  async function listen(){
+    var client=sbClient(); if(!client) return;
+    var s=(await client.auth.getSession()).data.session;
+    if(!s) return;
+    if(window.__bwMailCh) client.removeChannel(window.__bwMailCh);
+    window.__bwMailCh=client.channel("mail-"+s.user.id).on("postgres_changes",{
+      event:"INSERT", schema:"public", table:"notices", filter:"to_id=eq."+s.user.id
+    }, function(payload){
+      var n=payload.new;
+      showToast(n.body||"You were invited to a table.", n.room_code, n.id, n.game);
+      load();
+    }).subscribe();
+    load();
+  }
+  function start(){
+    var already=!!document.getElementById("bellBtn");
+    inject();
+    if(!already) listen();
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+
 
 
