@@ -244,7 +244,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 
 (function bwSets(){
   var file=(location.pathname.split("/").pop()||"").toLowerCase();
-  if(!/chess|checkers/.test(file)) return;
+  if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board)/.test(file)) return;
   var SETS=[
     {id:"classic", name:"Classic", need:0, member:false},
     {id:"dusk", name:"Dusk", need:101, member:false},
@@ -302,10 +302,16 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     bar.className="bw-member";
     bar.innerHTML='<p>Membership: unlimited online tables, extra piece sets, and badges as you climb.</p>';
     var btn=document.createElement("button");
-    btn.className="bw-sets-btn"; btn.type="button"; btn.textContent="Piece sets";
+    var label=/yahtzee|shutbox/.test(file)?"Dice sets":/mancala/.test(file)?"Stone sets":/dominoes/.test(file)?"Tile sets":/othello|cribbage|morris|backgammon/.test(file)?"Table sets":"Piece sets";
+    btn.className="bw-sets-btn"; btn.type="button"; btn.textContent=label;
     var sub=document.createElement("button");
     sub.className="bw-sub-btn"; sub.type="button"; sub.textContent="Subscribe";
-    sub.onclick=function(){ alert("Stripe checkout comes next. Membership will unlock unlimited online play and the extra sets."); };
+    if(member){
+      sub.textContent="Member";
+      sub.onclick=function(){ alert("This seat is a member: unlimited online tables and extra sets."); };
+    } else {
+      sub.onclick=function(){ location.href="member.html"; };
+    }
     bar.appendChild(btn); bar.appendChild(sub);
     var games=document.querySelector(".games");
     if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);

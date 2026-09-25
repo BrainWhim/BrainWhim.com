@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Membership · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2744;--whim:#7EB6D9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;font-family:Montserrat,sans-serif;color:#1A2744;
+background:#cfc6b4 url("garden-parlor.jpg") center 32%/cover no-repeat fixed}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
+.brand img{width:56px;height:56px;object-fit:contain;margin-right:-4px}
+.whim{font-family:Pacifico,cursive;color:var(--whim)}
+.hdr{display:flex;gap:16px;flex-wrap:wrap}
+.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none}
+.card{max-width:520px;margin:36px auto;padding:22px 22px 20px;background:rgba(255,250,242,.94);border:1px solid rgba(201,166,107,.5);border-radius:20px;box-shadow:0 16px 32px rgba(40,30,16,.16)}
+h1{margin:0 0 8px;font-size:24px;text-align:center}
+p{margin:0 0 12px;line-height:1.45;font-size:14px;color:#3a3228}
+ul{margin:0 0 16px;padding-left:18px;color:#3a3228;font-size:14px;line-height:1.5}
+.btn{display:inline-block;border:0;border-radius:999px;padding:10px 16px;background:#1A2744;color:#fff;font-weight:700;text-decoration:none}
+.who{text-align:center;font-weight:700;margin:0 0 12px}
+@media(max-width:700px){
+header{display:grid;grid-template-columns:1fr auto;padding:6px 10px 8px}
+.brand{font-size:18px}.brand img{width:48px;height:48px}
+.hdr{grid-column:1/-1;justify-content:center;padding-top:4px;gap:12px}
+.hdr a{font-size:13px}
+body{background-attachment:scroll}
+}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<div class="card">
+<h1>Parlor membership</h1>
+<p class="who" id="who">Checking your seat…</p>
+<p>Paid checkout stays off until the parlor is ready. For testing, membership is a flag on your profile.</p>
+<ul>
+<li>Unlimited online tables (no 3-a-day cap)</li>
+<li>Extra piece, dice, and table sets</li>
+<li>Badges as your title climbs</li>
+<li>House play stays free for everyone</li>
+</ul>
+<p>To test the paid room on this account, in Supabase → Table Editor → <b>profiles</b> set <b>member</b> to true for your user, then refresh.</p>
+<p style="text-align:center"><a class="btn" href="tables.html">Back to the tables</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js"></script>
+<script>
+(async function(){
+  var who=document.getElementById("who");
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url||typeof supabase==="undefined"){ who.textContent="Add play-config.js first."; return; }
+  var sb=supabase.createClient(cfg.url, cfg.anonKey);
+  var s=(await sb.auth.getSession()).data.session;
+  if(!s){ who.textContent="Sign in on Tables first."; return; }
+  var p=await sb.from("profiles").select("username,display_name,member,skill_points").eq("id", s.user.id).maybeSingle();
+  var name=(p.data&&(p.data.username||p.data.display_name))||"You";
+  who.textContent=p.data&&p.data.member ? (name+" · Member") : (name+" · Guest seat");
+})();
+</script>
+</body>
+</html>
