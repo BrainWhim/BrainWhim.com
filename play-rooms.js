@@ -144,9 +144,19 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     toast.className="bw-toast"; toast.id="bwToast";
     document.body.appendChild(toast);
   }
+  function placePane(){
+    var pane=document.getElementById("mailPane");
+    var header=document.querySelector("header");
+    if(!pane) return;
+    var bottom=header?header.getBoundingClientRect().bottom:72;
+    pane.style.top=Math.max(bottom+8, 76)+"px";
+  }
   function toggle(){
     var pane=document.getElementById("mailPane");
-    if(pane) pane.classList.toggle("on");
+    if(pane){
+      pane.classList.toggle("on");
+      if(pane.classList.contains("on")) placePane();
+    }
     load();
   }
   window.toggleMail=toggle;
