@@ -91,8 +91,11 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var hostRes=winnerSide===0?"draw":(winnerSide===1?"win":"lose");
     var guestRes=winnerSide===0?"draw":(winnerSide===2?"win":"lose");
     var hd=bwRateDelta(hp,gp,hostRes), gd=bwRateDelta(gp,hp,guestRes);
-    await sb.from("profiles").update({skill_points:Math.max(0,hp+hd)}).eq("id",host);
-    await sb.from("profiles").update({skill_points:Math.max(0,gp+gd)}).eq("id",guest);
+    var rpc=await sb.rpc("apply_skill_delta", {a:host, da:hd, b:guest, db:gd});
+    if(rpc.error){
+      await sb.from("profiles").update({skill_points:Math.max(0,hp+hd)}).eq("id",host);
+      await sb.from("profiles").update({skill_points:Math.max(0,gp+gd)}).eq("id",guest);
+    }
     room.state=st;
   }catch(e){}
 };
