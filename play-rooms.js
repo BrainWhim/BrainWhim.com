@@ -244,7 +244,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 
 (function bwSets(){
   var file=(location.pathname.split("/").pop()||"").toLowerCase();
-  if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board|play)/.test(file)) return;
+  if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board)/.test(file)) return;
   var SETS=[
     {id:"classic", name:"Classic", need:0, member:false},
     {id:"ivory", name:"Ivory · Onyx", need:0, member:false},
