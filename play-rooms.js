@@ -243,7 +243,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 })();
 
 (function bwSets(){
-  if(!document.querySelector("#chboard, #ckboard, .sqgrid")) return;
+  var file=(location.pathname.split("/").pop()||"").toLowerCase();
+  if(!/^(chess|chess-room|checkers|checkers-room)(\.html)?$/.test(file)) return;
   var SETS=[
     {id:"classic", name:"Classic", need:0, member:false},
     {id:"ivory", name:"Ivory · Onyx", need:0, member:false},
@@ -344,9 +345,23 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       sub.onclick=function(){ location.href="member.html"; };
     }
     bar.appendChild(btn); bar.appendChild(sub);
-    var games=document.querySelector(".games");
-    if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);
-    else document.body.insertBefore(bar, document.body.children[1]||null);
+    var hdr=document.querySelector("header .hdr")||document.querySelector("header");
+    if(hdr){
+      var headBtn=document.createElement("button");
+      headBtn.className="bw-sets-btn"; headBtn.type="button"; headBtn.textContent="Piece sets";
+      headBtn.style.marginLeft="8px";
+      hdr.appendChild(headBtn);
+      headBtn.onclick=function(){ box.classList.toggle("on"); paint(); };
+    }
+    var sit=document.querySelector("#room-ch .sitbar, .sitbar");
+    if(sit){
+      var sitBtn=document.createElement("button");
+      sitBtn.className="helpbtn"; sitBtn.type="button"; sitBtn.textContent="Piece sets";
+      sit.appendChild(sitBtn);
+      sitBtn.onclick=function(){ box.classList.toggle("on"); paint(); };
+    }
+    bar.style.display="none";
+    document.body.appendChild(bar);
     var box=document.createElement("div");
     box.className="bw-sets"; box.id="bwSets";
     box.innerHTML="<h3>Piece sets</h3><div id=\"bwSetList\"></div>";
