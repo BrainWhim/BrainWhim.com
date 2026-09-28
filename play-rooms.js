@@ -259,17 +259,31 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="ivory") return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".jpg";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-w-")+L+".jpg";
+    if(set==="ivory") return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".png?v=sets3";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=sets3";
     return "piece-"+s+"-"+L+".png?v=14";
   }
   window.bwPieceFile=pieceFile;
   function restylePieces(){
     document.querySelectorAll("img.pcimg, img.flyer").forEach(function(img){
-      var m=(img.getAttribute("src")||"").match(/piece-(?:[a-z]+-)?([wb])-([KQRBNP])/i);
-      if(!m) return;
-      img.src=pieceFile(m[1].toLowerCase(), m[2]);
+      var side=img.getAttribute("data-side");
+      var letter=img.getAttribute("data-piece");
+      if(!side||!letter){
+        var m=(img.getAttribute("src")||"").match(/piece-(?:ivory-w|onyx-b|gold-w|silver-b|silver-w)-([KQRBNP])/i);
+        if(m){
+          letter=m[1];
+          side=/onyx-b|silver-b|piece-b-/.test(img.getAttribute("src")||"")?"b":"w";
+        } else {
+          m=(img.getAttribute("src")||"").match(/piece-([wb])-([KQRBNP])/i);
+          if(!m) return;
+          side=m[1].toLowerCase(); letter=m[2];
+        }
+      }
+      img.setAttribute("data-side", side);
+      img.setAttribute("data-piece", letter);
+      img.src=pieceFile(side, letter);
     });
+    if(typeof window.chPaint==="function") try{ window.chPaint(); }catch(e){}
   }
   function apply(id){
     document.body.setAttribute("data-set", id||"classic");
