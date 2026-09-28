@@ -259,8 +259,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="ivory") return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".png?v=sets4";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=sets4";
+    if(set==="ivory") return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=5";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=5";
     return "piece-"+s+"-"+L+".png?v=14";
   }
   window.bwPieceFile=pieceFile;
@@ -365,11 +365,13 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
         headBtn.onclick=openSets;
       }
     }
-    bar.style.display="none";
-    document.body.appendChild(bar);
+    bar.style.display="";
+    var games=document.querySelector(".games");
+    if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);
+    else document.body.appendChild(bar);
     var box=document.createElement("div");
     box.className="bw-sets"; box.id="bwSets";
-    box.innerHTML="<h3>Piece sets</h3><div id=\"bwSetList\"></div>";
+    box.innerHTML="<h3>Piece sets · v5</h3><div id=\"bwSetList\"></div>";
     document.body.appendChild(box);
     function paint(){ document.getElementById("bwSetList").innerHTML=panel(pts, member); }
     paint();
