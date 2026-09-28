@@ -345,20 +345,25 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       sub.onclick=function(){ location.href="member.html"; };
     }
     bar.appendChild(btn); bar.appendChild(sub);
-    var hdr=document.querySelector("header .hdr")||document.querySelector("header");
-    if(hdr){
-      var headBtn=document.createElement("button");
-      headBtn.className="bw-sets-btn"; headBtn.type="button"; headBtn.textContent="Piece sets";
-      headBtn.style.marginLeft="8px";
-      hdr.appendChild(headBtn);
-      headBtn.onclick=function(){ box.classList.toggle("on"); paint(); };
-    }
-    var sit=document.querySelector("#room-ch .sitbar, .sitbar");
+    function openSets(){ var el=document.getElementById("bwSets"); if(el){ el.classList.toggle("on"); paint(); } }
+    var sit=document.querySelector("#room-ch .sitbar") || document.querySelector(".sitbar");
     if(sit){
-      var sitBtn=document.createElement("button");
-      sitBtn.className="helpbtn"; sitBtn.type="button"; sitBtn.textContent="Piece sets";
-      sit.appendChild(sitBtn);
-      sitBtn.onclick=function(){ box.classList.toggle("on"); paint(); };
+      var before=document.createElement("button");
+      before.className="sit"; before.type="button"; before.textContent="Piece sets";
+      before.onclick=openSets;
+      sit.appendChild(before);
+      var after=document.createElement("button");
+      after.className="stand"; after.type="button"; after.textContent="Piece sets";
+      after.onclick=openSets;
+      sit.appendChild(after);
+    } else {
+      var hdr=document.querySelector("header .hdr")||document.querySelector("header");
+      if(hdr){
+        var headBtn=document.createElement("button");
+        headBtn.className="bw-sets-btn"; headBtn.type="button"; headBtn.textContent="Piece sets";
+        hdr.appendChild(headBtn);
+        headBtn.onclick=openSets;
+      }
     }
     bar.style.display="none";
     document.body.appendChild(bar);
