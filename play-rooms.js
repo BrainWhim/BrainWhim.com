@@ -244,11 +244,11 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 
 (function bwSets(){
   var file=(location.pathname.split("/").pop()||"").toLowerCase();
-  if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board)/.test(file)) return;
+  if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board|play)/.test(file)) return;
   var SETS=[
     {id:"classic", name:"Classic", need:0, member:false},
-    {id:"ivory", name:"Ivory · Onyx", need:101, member:false},
-    {id:"gold", name:"Gold · Silver", need:1001, member:true}
+    {id:"ivory", name:"Ivory · Onyx", need:0, member:false},
+    {id:"gold", name:"Gold · Silver", need:0, member:false}
   ];
   function allowed(set, pts, member){
     if(set.need<=0) return true;
@@ -281,11 +281,11 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     s.textContent='body[data-set="dusk"] img[src*="piece-w-"],body[data-set="dusk"] img[src*="checker-w"]{filter:hue-rotate(210deg) saturate(1.85) brightness(1.06) drop-shadow(0 0 6px rgba(120,80,200,.55)) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
       'body[data-set="gilded"] img[src*="piece-w-"],body[data-set="gilded"] img[src*="checker-w"]{filter:sepia(.85) saturate(2.1) hue-rotate(-18deg) brightness(1.12) drop-shadow(0 0 7px rgba(218,170,60,.7)) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
       'body[data-set="dusk"] img[src*="piece-b-"],body[data-set="dusk"] img[src*="checker-b"],body[data-set="gilded"] img[src*="piece-b-"],body[data-set="gilded"] img[src*="checker-b"]{filter:drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
-      '.bw-member{max-width:640px;margin:0 auto 8px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;background:rgba(255,252,247,.84);border-radius:16px;backdrop-filter:blur(8px)}'+
+      '.bw-member{max-width:640px;margin:0 auto 8px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;background:rgba(255,252,247,.94);border-radius:16px;backdrop-filter:blur(8px);position:relative;z-index:20}'+
       '.bw-member p{margin:0;font-size:12px;font-weight:600;color:#1A2744;width:100%;text-align:center}'+
       '.bw-sets-btn,.bw-sub-btn{border:0;border-radius:999px;padding:6px 12px;background:#fff;color:#1A2744;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid #d7c9b0}'+
       '.bw-sub-btn{background:#1A2744;color:#fff;border-color:#1A2744}'+
-      '.bw-sets{display:none;position:fixed;right:16px;top:80px;z-index:45;width:min(280px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;color:#1A2744}'+
+      '.bw-sets{display:none;position:fixed;right:12px;top:88px;z-index:80;width:min(280px,92vw);background:rgba(255,250,242,.98);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;color:#1A2744;box-shadow:0 16px 40px rgba(0,0,0,.28)}'+
       '.bw-sets.on{display:block}.bw-sets h3{margin:0 0 8px;font-size:14px}.bw-sets button{display:block;width:100%;text-align:left;margin:0 0 6px;border:1px solid #d7c9b0;background:#fff;border-radius:12px;padding:8px 10px;font-weight:700;cursor:pointer}'+
       '.bw-sets button.on{border-color:#1A2744;background:#1A2744;color:#fff}.bw-sets button.lock{opacity:.55;cursor:default}';
     document.head.appendChild(s);
@@ -318,7 +318,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     apply(saved);
     var bar=document.createElement("div");
     bar.className="bw-member";
-    bar.innerHTML='<p>Membership: unlimited online tables, extra piece sets, and badges as you climb.</p>';
+    bar.innerHTML='<p>Choose a piece set. Ivory and Gold are photo sets.</p>';
     var btn=document.createElement("button");
     var label=/yahtzee|shutbox/.test(file)?"Dice sets":/mancala/.test(file)?"Stone sets":/dominoes/.test(file)?"Tile sets":/othello|cribbage|morris|backgammon/.test(file)?"Table sets":"Piece sets";
     btn.className="bw-sets-btn"; btn.type="button"; btn.textContent=label;
