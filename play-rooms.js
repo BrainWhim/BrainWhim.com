@@ -261,8 +261,9 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   }
   function injectCss(){
     var s=document.createElement("style");
-    s.textContent='body[data-set="dusk"] .pcimg,body[data-set="dusk"] .ckimg{filter:hue-rotate(210deg) saturate(1.85) brightness(1.06) drop-shadow(0 0 6px rgba(120,80,200,.55)) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
-      'body[data-set="gilded"] .pcimg,body[data-set="gilded"] .ckimg{filter:sepia(.85) saturate(2.1) hue-rotate(-18deg) brightness(1.12) drop-shadow(0 0 7px rgba(218,170,60,.7)) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
+    s.textContent='body[data-set="dusk"] img[src*="piece-w-"],body[data-set="dusk"] img[src*="checker-w"]{filter:hue-rotate(210deg) saturate(1.85) brightness(1.06) drop-shadow(0 0 6px rgba(120,80,200,.55)) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
+      'body[data-set="gilded"] img[src*="piece-w-"],body[data-set="gilded"] img[src*="checker-w"]{filter:sepia(.85) saturate(2.1) hue-rotate(-18deg) brightness(1.12) drop-shadow(0 0 7px rgba(218,170,60,.7)) drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
+      'body[data-set="dusk"] img[src*="piece-b-"],body[data-set="dusk"] img[src*="checker-b"],body[data-set="gilded"] img[src*="piece-b-"],body[data-set="gilded"] img[src*="checker-b"]{filter:drop-shadow(0 5px 3px rgba(0,0,0,.32))!important}'+
       '.bw-member{max-width:640px;margin:0 auto 8px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;background:rgba(255,252,247,.84);border-radius:16px;backdrop-filter:blur(8px)}'+
       '.bw-member p{margin:0;font-size:12px;font-weight:600;color:#1A2744;width:100%;text-align:center}'+
       '.bw-sets-btn,.bw-sub-btn{border:0;border-radius:999px;padding:6px 12px;background:#fff;color:#1A2744;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid #d7c9b0}'+
