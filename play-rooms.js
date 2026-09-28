@@ -243,8 +243,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 })();
 
 (function bwSets(){
-  var file=(location.pathname.split("/").pop()||"").toLowerCase();
-  if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board)/.test(file)) return;
+  if(!document.querySelector("#chboard, #ckboard, .sqgrid")) return;
   var SETS=[
     {id:"classic", name:"Classic", need:0, member:false},
     {id:"ivory", name:"Ivory · Onyx", need:0, member:false},
@@ -259,8 +258,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="ivory") return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".png?v=sets3";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=sets3";
+    if(set==="ivory") return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".png?v=sets4";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=sets4";
     return "piece-"+s+"-"+L+".png?v=14";
   }
   window.bwPieceFile=pieceFile;
