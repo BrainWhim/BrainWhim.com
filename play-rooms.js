@@ -247,17 +247,34 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   if(!/(chess|checkers|backgammon|yahtzee|dominoes|othello|mancala|cribbage|shutbox|morris|board)/.test(file)) return;
   var SETS=[
     {id:"classic", name:"Classic", need:0, member:false},
-    {id:"dusk", name:"Dusk", need:101, member:false},
-    {id:"gilded", name:"Gilded", need:501, member:true}
+    {id:"ivory", name:"Ivory · Onyx", need:101, member:false},
+    {id:"gold", name:"Gold · Silver", need:1001, member:true}
   ];
   function allowed(set, pts, member){
     if(set.need<=0) return true;
     if(member) return true;
     return (pts||0)>=set.need;
   }
+  function pieceFile(side, letter, setId){
+    var set=setId||document.body.getAttribute("data-set")||"classic";
+    var L=(letter||"P").toUpperCase();
+    var s=side==="b"?"b":"w";
+    if(set==="ivory") return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".jpg";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-w-")+L+".jpg";
+    return "piece-"+s+"-"+L+".png?v=14";
+  }
+  window.bwPieceFile=pieceFile;
+  function restylePieces(){
+    document.querySelectorAll("img.pcimg, img.flyer").forEach(function(img){
+      var m=(img.getAttribute("src")||"").match(/piece-(?:[a-z]+-)?([wb])-([KQRBNP])/i);
+      if(!m) return;
+      img.src=pieceFile(m[1].toLowerCase(), m[2]);
+    });
+  }
   function apply(id){
     document.body.setAttribute("data-set", id||"classic");
     try{ localStorage.setItem("bwSet", id||"classic"); }catch(e){}
+    restylePieces();
   }
   function injectCss(){
     var s=document.createElement("style");
@@ -328,7 +345,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       var b=ev.target.closest("button[data-set]"); if(!b) return;
       var id=b.getAttribute("data-set");
       var set=SETS.filter(function(s){return s.id===id;})[0];
-      if(!allowed(set,pts,member)){ alert(id==="gilded"?"Gilded unlocks at Club or with a membership.":"Dusk unlocks at Beginner (101 pts)."); return; }
+      if(!allowed(set,pts,member)){ alert(set.member?"This set unlocks with a membership or at Club.":"Ivory · Onyx unlocks at Beginner (101 pts)."); return; }
       apply(id); paint();
     };
   }
