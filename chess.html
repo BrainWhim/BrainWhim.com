@@ -97,8 +97,8 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
   filter:drop-shadow(0 6px 4px rgba(0,0,0,.38));z-index:2;
   transform:rotateX(-24deg);transform-origin:50% 100%
 }
-body.board-flat #room-ch .pcimg{transform:none;height:100%;bottom:2%}
-body.board-flat .flyer{transform:none}
+body.board-overhead #room-ch .pcimg{transform:rotateX(-50deg);height:108%;bottom:6%}
+body.board-overhead .flyer{transform:rotateX(-50deg);transform-origin:50% 100%}
 #room-ch .taken .pcimg{width:20px!important;height:20px!important;position:static;left:auto;bottom:auto;filter:none}
 @keyframes slideIn{from{transform:translateY(-18%) scale(.92);opacity:.35}to{transform:none;opacity:1}}
 #room-ch .to .pcimg{animation:slideIn .45s ease}
@@ -401,8 +401,12 @@ body.seated[data-scene="ch"] #tableBoard{
   transform:rotateX(24deg) scale(1.08);transform-origin:50% 55%;transform-style:preserve-3d;
   animation:none
 }
-body.board-flat.seated[data-scene="ch"] #stage{perspective:none}
-body.board-flat.seated[data-scene="ch"] #tableBoard{transform:none;margin:12px auto 18px}
+body.board-overhead.seated[data-scene="ch"] #stage{perspective:1100px;perspective-origin:50% 18%}
+body.board-overhead.seated[data-scene="ch"] #tableBoard{
+  transform:rotateX(52deg) scale(1.12);
+  transform-origin:50% 100%;
+  margin:8px auto 28px
+}
 body.seated[data-scene="ch"] .parlor{
   position:relative;
   background:
@@ -439,7 +443,7 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padd
 .hdr a{font-size:13px;margin-left:0}
 
   body.seated[data-scene="ch"] #tableBoard{width:94vw;margin-top:4px;transform:rotateX(18deg) scale(1.06)}
-  body.board-flat.seated[data-scene="ch"] #tableBoard{transform:none}
+  body.board-overhead.seated[data-scene="ch"] #tableBoard{transform:rotateX(46deg) scale(1.08);transform-origin:50% 100%}
   body.seated[data-scene="ck"] #ckTable{width:94vw;margin-top:4px;transform:rotateX(18deg) scale(1.06)}
 }
 body.seated .taken .lab{color:#1A2744;font-weight:700;font-size:12px}
@@ -699,7 +703,7 @@ body.seated .bar button{display:none}
 <button class="stand" type="button" onclick="chNew()">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
-<button class="stand" type="button" id="bwBoardBtn" onclick="toggleBoardView()">Flat board</button>
+<button class="stand" type="button" id="bwBoardBtn" onclick="toggleBoardView()">Overhead view</button>
 </div>
 <h1>Garden Chess</h1>
 <p class="sub">You are cobalt with gold. Ivory answers. Tap a piece, then a square.</p>
@@ -1338,9 +1342,9 @@ function chFly(sr,sc,er,ec,html,done){
   if(!a||!b){ if(done)done(); return; }
   var dest=b.querySelector(".pcsvg, .pcimg");
   if(dest) dest.style.opacity="0";
-  var flat=document.body.classList.contains("board-flat");
+  var overhead=document.body.classList.contains("board-overhead");
   var w=a.offsetWidth*0.92;
-  var h=a.offsetHeight*(flat?1:1.38);
+  var h=a.offsetHeight*(overhead?1.08:1.38);
   var gx=board.offsetLeft, gy=board.offsetTop;
   var fl=document.createElement("div");
   fl.id="flyer"; fl.className="flyer";
@@ -1363,13 +1367,21 @@ function chFly(sr,sc,er,ec,html,done){
   });
 }
 function toggleBoardView(){
-  document.body.classList.toggle("board-flat");
-  var on=document.body.classList.contains("board-flat");
-  try{ localStorage.setItem("bwBoardView", on?"flat":"tilt"); }catch(e){}
+  document.body.classList.remove("board-flat");
+  document.body.classList.toggle("board-overhead");
+  var on=document.body.classList.contains("board-overhead");
+  try{ localStorage.setItem("bwBoardView", on?"overhead":"garden"); }catch(e){}
   var btn=document.getElementById("bwBoardBtn");
-  if(btn) btn.textContent=on?"Tilted board":"Flat board";
+  if(btn) btn.textContent=on?"Garden view":"Overhead view";
 }
-try{ if(localStorage.getItem("bwBoardView")==="flat"){ document.body.classList.add("board-flat"); var b=document.getElementById("bwBoardBtn"); if(b) b.textContent="Tilted board"; } }catch(e){}
+try{
+  var v=localStorage.getItem("bwBoardView");
+  if(v==="overhead"||v==="flat"){
+    document.body.classList.add("board-overhead");
+    var b=document.getElementById("bwBoardBtn");
+    if(b) b.textContent="Garden view";
+  }
+}catch(e){}
 
 function chScore(m){
   var cap=ch[m[2]][m[3]], s=chVal(cap)*12;
