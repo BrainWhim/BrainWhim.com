@@ -89,13 +89,16 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 .pc.b{color:#146B4A;text-shadow:0 0 1px #C9A227,0 1px 0 #083322}
 .ckimg{width:82%;height:82%;max-height:56px;object-fit:contain;object-position:center center;pointer-events:none;filter:drop-shadow(0 5px 3px rgba(0,0,0,.32))}
 #room-ck .sq{position:relative;overflow:visible;align-items:center;justify-content:center;padding:0}
-.flyer{position:fixed;z-index:80;pointer-events:none;transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .55s ease;will-change:transform;object-fit:contain}
+.flyer{position:absolute;z-index:80;pointer-events:none;transition:left .55s cubic-bezier(.2,.7,.2,1),top .55s cubic-bezier(.2,.7,.2,1),filter .55s ease;will-change:left,top;object-fit:contain;object-position:bottom center}
 .pcimg{width:78%;height:92%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 6px 4px rgba(0,0,0,.28));pointer-events:none;background:transparent;margin:0 auto}
 #room-ch .pcimg{
   width:92%;height:138%;object-fit:contain;object-position:bottom center;
-  position:absolute;left:4%;bottom:2%;margin:0;
-  filter:drop-shadow(0 6px 4px rgba(0,0,0,.38));z-index:2
+  position:absolute;left:4%;bottom:4%;margin:0;
+  filter:drop-shadow(0 6px 4px rgba(0,0,0,.38));z-index:2;
+  transform:rotateX(-24deg);transform-origin:50% 100%
 }
+body.board-flat #room-ch .pcimg{transform:none;height:100%;bottom:2%}
+body.board-flat .flyer{transform:none}
 #room-ch .taken .pcimg{width:20px!important;height:20px!important;position:static;left:auto;bottom:auto;filter:none}
 @keyframes slideIn{from{transform:translateY(-18%) scale(.92);opacity:.35}to{transform:none;opacity:1}}
 #room-ch .to .pcimg{animation:slideIn .45s ease}
@@ -398,7 +401,10 @@ body.seated[data-scene="ch"] #tableBoard{
   transform:rotateX(24deg) scale(1.08);transform-origin:50% 55%;transform-style:preserve-3d;
   animation:none
 }
+body.board-flat.seated[data-scene="ch"] #stage{perspective:none}
+body.board-flat.seated[data-scene="ch"] #tableBoard{transform:none;margin:12px auto 18px}
 body.seated[data-scene="ch"] .parlor{
+  position:relative;
   background:
     radial-gradient(120% 80% at 50% 30%, #fffdf8 0%, #f3ead6 58%, #e4d4b8 100%);
   border:14px solid #c4bfb4;
@@ -408,13 +414,14 @@ body.seated[data-scene="ch"] .parlor{
   padding:22px 22px 26px;
   box-shadow:
     0 28px 40px rgba(30,22,12,.38),
+    0 8px 0 #b7a078,
     inset 0 1px 0 rgba(255,255,255,.55),
     inset 0 0 0 3px #d7c49a,
     inset 0 0 18px rgba(90,80,60,.12)
 }
 body.seated[data-scene="ch"] .parlor::after{display:none}
 body.seated[data-scene="ch"] .parlor .sqgrid{
-  border:8px solid #e8d7a8;border-radius:0;overflow:visible;
+  border:8px solid #e8d7a8;border-radius:0;overflow:visible;position:relative;
   box-shadow:0 8px 16px rgba(40,30,16,.18), inset 0 0 0 2px #c4bfb4
 }
 body.seated[data-scene="ch"] .seat{display:none}
@@ -432,6 +439,7 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padd
 .hdr a{font-size:13px;margin-left:0}
 
   body.seated[data-scene="ch"] #tableBoard{width:94vw;margin-top:4px;transform:rotateX(18deg) scale(1.06)}
+  body.board-flat.seated[data-scene="ch"] #tableBoard{transform:none}
   body.seated[data-scene="ck"] #ckTable{width:94vw;margin-top:4px;transform:rotateX(18deg) scale(1.06)}
 }
 body.seated .taken .lab{color:#1A2744;font-weight:700;font-size:12px}
@@ -691,6 +699,7 @@ body.seated .bar button{display:none}
 <button class="stand" type="button" onclick="chNew()">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
+<button class="stand" type="button" id="bwBoardBtn" onclick="toggleBoardView()">Flat board</button>
 </div>
 <h1>Garden Chess</h1>
 <p class="sub">You are cobalt with gold. Ivory answers. Tap a piece, then a square.</p>
@@ -1168,7 +1177,7 @@ function chPaint(){
     if(chLast && chLast[0]===r && chLast[1]===c) cls+=" from";
     if(chLast && chLast[2]===r && chLast[3]===c) cls+=" to";
     var p=ch[r][c];
-    html+='<button type="button" class="'+cls+'" onclick="chClick('+r+','+c+')">'+(p?pieceHTML(p):"")+'</button>';
+    html+='<button type="button" class="'+cls+'" data-r="'+r+'" data-c="'+c+'" onclick="chClick('+r+','+c+')">'+(p?pieceHTML(p):"")+'</button>';
   }
   document.getElementById("chboard").innerHTML=html;
   function tray(id, arr, label){
@@ -1322,36 +1331,45 @@ function chVal(p){ return {P:1,N:3,B:3,R:5,Q:9,K:0,p:1,n:3,b:3,r:5,q:9,k:0}[p]||
 var chLast=null, chFlying=false;
 function chFly(sr,sc,er,ec,html,done){
   var board=document.getElementById("chboard");
-  if(!board){ if(done)done(); return; }
-  var cells=board.querySelectorAll(".sq");
-  var a=cells[sr*8+sc], b=cells[er*8+ec];
+  var host=board && board.parentNode;
+  if(!board||!host){ if(done)done(); return; }
+  var a=board.querySelector('.sq[data-r="'+sr+'"][data-c="'+sc+'"]') || board.querySelectorAll(".sq")[sr*8+sc];
+  var b=board.querySelector('.sq[data-r="'+er+'"][data-c="'+ec+'"]') || board.querySelectorAll(".sq")[er*8+ec];
   if(!a||!b){ if(done)done(); return; }
-  var ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
   var dest=b.querySelector(".pcsvg, .pcimg");
   if(dest) dest.style.opacity="0";
+  var flat=document.body.classList.contains("board-flat");
+  var w=a.offsetWidth*0.92;
+  var h=a.offsetHeight*(flat?1:1.38);
+  var gx=board.offsetLeft, gy=board.offsetTop;
   var fl=document.createElement("div");
-  fl.id="flyer";
+  fl.id="flyer"; fl.className="flyer";
   fl.innerHTML=html;
-  var w=ra.width, h=ra.height;
-  fl.style.left=ra.left+"px"; fl.style.top=ra.top+"px"; fl.style.width=w+"px"; fl.style.height=h+"px";
-  fl.style.display="flex"; fl.style.alignItems="center"; fl.style.justifyContent="center";
-  fl.style.transform="translate(0,0) scale(1)";
-  document.body.appendChild(fl);
+  fl.style.width=w+"px"; fl.style.height=h+"px";
+  fl.style.left=(gx+a.offsetLeft+a.offsetWidth*0.04)+"px";
+  fl.style.top=(gy+a.offsetTop+a.offsetHeight*0.96-h)+"px";
+  fl.style.display="flex"; fl.style.alignItems="flex-end"; fl.style.justifyContent="center";
+  host.appendChild(fl);
   chFlying=true;
   requestAnimationFrame(function(){
-    var dx=rb.left-ra.left, dy=rb.top-ra.top;
-    fl.style.transform="translate("+dx+"px,"+(dy-24)+"px) scale(1.18)";
+    fl.style.left=(gx+b.offsetLeft+b.offsetWidth*0.04)+"px";
+    fl.style.top=(gy+b.offsetTop+b.offsetHeight*0.96-h)+"px";
     setTimeout(function(){
-      fl.style.transform="translate("+dx+"px,"+dy+"px) scale(1)";
-      setTimeout(function(){
-        if(fl.parentNode) fl.parentNode.removeChild(fl);
-        if(dest) dest.style.opacity="1";
-        chFlying=false;
-        if(done) done();
-      },220);
-    },340);
+      if(fl.parentNode) fl.parentNode.removeChild(fl);
+      if(dest) dest.style.opacity="1";
+      chFlying=false;
+      if(done) done();
+    },560);
   });
 }
+function toggleBoardView(){
+  document.body.classList.toggle("board-flat");
+  var on=document.body.classList.contains("board-flat");
+  try{ localStorage.setItem("bwBoardView", on?"flat":"tilt"); }catch(e){}
+  var btn=document.getElementById("bwBoardBtn");
+  if(btn) btn.textContent=on?"Tilted board":"Flat board";
+}
+try{ if(localStorage.getItem("bwBoardView")==="flat"){ document.body.classList.add("board-flat"); var b=document.getElementById("bwBoardBtn"); if(b) b.textContent="Tilted board"; } }catch(e){}
 
 function chScore(m){
   var cap=ch[m[2]][m[3]], s=chVal(cap)*12;
