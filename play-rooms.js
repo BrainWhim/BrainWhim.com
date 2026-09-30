@@ -246,9 +246,9 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   var file=(location.pathname.split("/").pop()||"").toLowerCase();
   if(!/^(chess|chess-room|checkers|checkers-room)(\.html)?$/.test(file)) return;
   var SETS=[
-    {id:"classic", name:"Classic", need:0, member:false},
-    {id:"ivory", name:"Ivory · Onyx", need:0, member:false},
-    {id:"gold", name:"Gold · Silver", need:0, member:false}
+    {id:"classic", name:"Ivory · Onyx", need:0, member:false},
+    {id:"cobalt", name:"Cobalt · Emerald", need:501, member:true},
+    {id:"gold", name:"Gold · Silver", need:501, member:true}
   ];
   function allowed(set, pts, member){
     if(set.need<=0) return true;
@@ -259,9 +259,9 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="ivory") return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=5";
     if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=5";
-    return "piece-"+s+"-"+L+".png?v=14";
+    if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=14";
+    return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=6";
   }
   window.bwPieceFile=pieceFile;
   function restylePieces(){
@@ -332,7 +332,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     apply(saved);
     var bar=document.createElement("div");
     bar.className="bw-member";
-    bar.innerHTML='<p>Choose a piece set. Ivory and Gold are photo sets.</p>';
+    bar.innerHTML='<p>Ivory · Onyx is the house set. Cobalt and Gold are Club.</p>';
     var btn=document.createElement("button");
     var label=/yahtzee|shutbox/.test(file)?"Dice sets":/mancala/.test(file)?"Stone sets":/dominoes/.test(file)?"Tile sets":/othello|cribbage|morris|backgammon/.test(file)?"Table sets":"Piece sets";
     btn.className="bw-sets-btn"; btn.type="button"; btn.textContent=label;
@@ -380,7 +380,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       var b=ev.target.closest("button[data-set]"); if(!b) return;
       var id=b.getAttribute("data-set");
       var set=SETS.filter(function(s){return s.id===id;})[0];
-      if(!allowed(set,pts,member)){ alert(set.member?"This set unlocks with a membership or at Club.":"Ivory · Onyx unlocks at Beginner (101 pts)."); return; }
+      if(!allowed(set,pts,member)){ alert("This set unlocks with a membership or at Club (501 pts)."); return; }
       apply(id); paint();
     };
   }
