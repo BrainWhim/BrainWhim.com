@@ -72,19 +72,22 @@ h1{text-align:center;margin:0 0 4px;font-size:24px}
 #room-ch .dk{background:#A8CDB8}
 #room-ch .sq,#chboard .sq{
   position:relative;overflow:visible;align-items:flex-end;justify-content:center;padding:0;z-index:1;
-  -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
-  outline:none;user-select:none;background-clip:padding-box
+  -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent !important;
+  outline:none;user-select:none;cursor:pointer;border:0;color:inherit;
+  background-color:transparent
 }
+#room-ch .sq.lt,#chboard .sq.lt{background:#F3EBDA !important}
+#room-ch .sq.dk,#chboard .sq.dk{background:#A8CDB8 !important}
+#room-ch .sq:hover{filter:brightness(0.97)}
 #room-ch .sq:focus,#room-ch .sq:focus-visible,#room-ch .sq:active,
 #chboard .sq:focus,#chboard .sq:focus-visible,#chboard .sq:active{
-  outline:none;-webkit-tap-highlight-color:transparent
+  outline:none !important;-webkit-tap-highlight-color:transparent !important;filter:none
 }
-#room-ch .sq.lt:focus,#room-ch .sq.lt:active,#room-ch .sq.lt:focus-visible{background:#F3EBDA}
-#room-ch .sq.dk:focus,#room-ch .sq.dk:active,#room-ch .sq.dk:focus-visible{background:#A8CDB8}
 #room-ch .sq.occ{z-index:3}
 #room-ch .sel,#room-ck .sel{outline:3px solid #C9A227;outline-offset:-3px;z-index:4}
-#room-ch .mv,#room-ck .mv{box-shadow:none;background-image:radial-gradient(circle at 50% 72%,rgba(201,162,39,.55) 0 6px,transparent 7px)}
-#room-ch .mv.occ{background-image:none;box-shadow:inset 0 0 0 3px rgba(201,162,39,.55)}
+#room-ch .mv{box-shadow:inset 0 0 0 3px rgba(201,162,39,.7);background-image:none}
+#room-ck .mv{box-shadow:none;background-image:radial-gradient(circle at 50% 72%,rgba(201,162,39,.55) 0 6px,transparent 7px)}
+#room-ch .mv.occ{box-shadow:inset 0 0 0 3px rgba(201,162,39,.7)}
 #room-ck .from{box-shadow:inset 0 0 0 3px rgba(201,162,39,.55)}
 #room-ck .to{box-shadow:inset 0 0 0 4px #C9A227;background:#e8d48a}
 #room-ck .to .man{animation:slideIn .4s ease}
@@ -414,7 +417,7 @@ body.seated[data-scene="ch"] #stage{
 }
 body.seated[data-scene="ch"] #tableBoard{
   width:min(560px,92vw);margin:0 auto;
-  transform:rotateX(24deg) scale(1.08);transform-origin:50% 55%;transform-style:preserve-3d;
+  transform:rotateX(8deg) scale(1.04);transform-origin:50% 55%;transform-style:preserve-3d;
   animation:none
 }
 body.board-overhead.seated[data-scene="ch"] #stage{perspective:1100px;perspective-origin:50% 18%}
@@ -440,9 +443,7 @@ body.seated[data-scene="ch"] .parlor{
     inset 0 0 18px rgba(90,80,60,.12)
 }
 body.seated[data-scene="ch"] .parlor::after{display:none}
-body.seated[data-scene="ch"] .parlor,
-body.seated[data-scene="ch"] .parlor .sqgrid,
-body.seated[data-scene="ch"] .sq{
+body.seated[data-scene="ch"] .parlor{
   transform-style:preserve-3d
 }
 body.seated[data-scene="ch"] .parlor .sqgrid{
@@ -1206,9 +1207,15 @@ function chPaint(){
     if(chLast && chLast[0]===r && chLast[1]===c) cls+=" from";
     if(chLast && chLast[2]===r && chLast[3]===c) cls+=" to";
     var p=ch[r][c];
-    html+='<button type="button" class="'+cls+'" data-r="'+r+'" data-c="'+c+'" onclick="chClick('+r+','+c+')">'+(p?pieceHTML(p):"")+'</button>';
+    html+='<div class="'+cls+'" data-r="'+r+'" data-c="'+c+'" role="button">'+(p?pieceHTML(p):"")+'</div>';
   }
-  document.getElementById("chboard").innerHTML=html;
+  var board=document.getElementById("chboard");
+  board.innerHTML=html;
+  board.onclick=function(e){
+    var cell=e.target.closest?e.target.closest(".sq"):null;
+    if(!cell||!board.contains(cell)) return;
+    chClick(+cell.getAttribute("data-r"), +cell.getAttribute("data-c"));
+  };
   function tray(id, arr, label){
     var el=document.getElementById(id);
     if(!el) return;
