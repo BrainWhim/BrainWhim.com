@@ -259,7 +259,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=9";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-silver-b-")+L+".png?v=10";
     if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=14";
     return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=6";
   }
