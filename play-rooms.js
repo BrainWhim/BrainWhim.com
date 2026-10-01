@@ -248,7 +248,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   var SETS=[
     {id:"classic", name:"Ivory · Onyx", need:0, member:false},
     {id:"cobalt", name:"Cobalt · Emerald", need:501, member:true},
-    {id:"gold", name:"Gold · Silver", need:501, member:true}
+    {id:"gold", name:"Gold · Onyx", need:501, member:true}
   ];
   function allowed(set, pts, member){
     if(set.need<=0) return true;
@@ -259,7 +259,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-gold-b-")+L+".png?v=13";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-gold-b-")+L+".png?v=14";
     if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=14";
     return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=6";
   }
@@ -269,10 +269,10 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       var side=img.getAttribute("data-side");
       var letter=img.getAttribute("data-piece");
       if(!side||!letter){
-        var m=(img.getAttribute("src")||"").match(/piece-(?:ivory-w|onyx-b|gold-w|silver-b|silver-w)-([KQRBNP])/i);
+        var m=(img.getAttribute("src")||"").match(/piece-(?:parlor-w|parlor-b|ivory-w|onyx-b|gold-w|gold-b|silver-b|silver-w)-([KQRBNP])/i);
         if(m){
           letter=m[1];
-          side=/onyx-b|silver-b|piece-b-/.test(img.getAttribute("src")||"")?"b":"w";
+          side=/onyx-b|gold-b|silver-b|parlor-b|piece-b-/.test(img.getAttribute("src")||"")?"b":"w";
         } else {
           m=(img.getAttribute("src")||"").match(/piece-([wb])-([KQRBNP])/i);
           if(!m) return;
