@@ -261,7 +261,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var s=side==="b"?"b":"w";
     if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-gold-b-")+L+".png?v=19";
     if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=19";
-    return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=6";
+    return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".png?v=7";
   }
   window.bwPieceFile=pieceFile;
   function restylePieces(){
