@@ -259,8 +259,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-gold-b-")+L+".png?v=17";
-    if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=17";
+    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-gold-b-")+L+".png?v=18";
+    if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=18";
     return (s==="w"?"piece-parlor-w-":"piece-parlor-b-")+L+".png?v=6";
   }
   window.bwPieceFile=pieceFile;
