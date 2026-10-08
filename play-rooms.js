@@ -347,7 +347,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     bar.appendChild(btn); bar.appendChild(sub);
     function openSets(){ var el=document.getElementById("bwSets"); if(el){ el.classList.toggle("on"); paint(); } }
     var sit=document.querySelector("#room-ch .sitbar") || document.querySelector(".sitbar");
-    if(sit){
+    if(sit && !document.getElementById("room-ch")){
       var before=document.createElement("button");
       before.className="sit"; before.type="button"; before.textContent="Piece sets";
       before.onclick=openSets;
@@ -356,7 +356,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       after.className="stand"; after.type="button"; after.textContent="Piece sets";
       after.onclick=openSets;
       sit.appendChild(after);
-    } else {
+    } else if(!document.getElementById("room-ch")) {
       var hdr=document.querySelector("header .hdr")||document.querySelector("header");
       if(hdr){
         var headBtn=document.createElement("button");
