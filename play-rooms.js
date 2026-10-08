@@ -332,7 +332,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     apply(saved);
     var bar=document.createElement("div");
     bar.className="bw-member";
-    bar.innerHTML='<p>Ivory · Onyx is the house set. Cobalt and Gold are Club.</p>';
+    bar.innerHTML='<p>House set is Ivory · Onyx. Club opens Cobalt and Gold.</p>';
     var btn=document.createElement("button");
     var label=/yahtzee|shutbox/.test(file)?"Dice sets":/mancala/.test(file)?"Stone sets":/dominoes/.test(file)?"Tile sets":/othello|cribbage|morris|backgammon/.test(file)?"Table sets":"Piece sets";
     btn.className="bw-sets-btn"; btn.type="button"; btn.textContent=label;
@@ -366,13 +366,17 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       }
     }
     bar.style.display="";
-    var games=document.querySelector(".games");
-    if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);
-    else document.body.appendChild(bar);
+    var room=document.getElementById("room-ch");
+    if(room) room.appendChild(bar);
+    else {
+      var games=document.querySelector(".games");
+      if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);
+      else document.body.appendChild(bar);
+    }
     var box=document.createElement("div");
     box.className="bw-sets"; box.id="bwSets";
-    box.innerHTML="<h3>Piece sets · v5</h3><div id=\"bwSetList\"></div>";
-    document.body.appendChild(box);
+    box.innerHTML="<h3>Sets</h3><div id=\"bwSetList\"></div>";
+    if(room) room.appendChild(box); else document.body.appendChild(box);
     function paint(){ document.getElementById("bwSetList").innerHTML=panel(pts, member); }
     paint();
     btn.onclick=function(){ box.classList.toggle("on"); paint(); };
