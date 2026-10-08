@@ -302,7 +302,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       '.bw-sets{display:none;position:fixed;right:12px;top:88px;z-index:80;width:min(280px,92vw);background:rgba(255,250,242,.98);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;color:#1A2744;box-shadow:0 16px 40px rgba(0,0,0,.28)}'+
       '.bw-sets.on{display:block}.bw-sets h3{margin:0 0 8px;font-size:14px}.bw-sets button{display:block;width:100%;text-align:left;margin:0 0 6px;border:1px solid #d7c9b0;background:#fff;border-radius:12px;padding:8px 10px;font-weight:700;cursor:pointer}'+
       '.bw-sets button.on{border-color:#1A2744;background:#1A2744;color:#fff}.bw-sets button.lock{opacity:.6;cursor:default}'+
-      '.set-row{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:12px 16px;gap:3px}.set-name{font-size:14px;font-weight:650;letter-spacing:.01em}.set-sub{font-size:11px;font-style:italic;letter-spacing:.04em;color:rgba(255,255,255,.62)}';
+      '.set-row{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:14px 16px;gap:4px}.set-name{font-size:14px;font-weight:650;letter-spacing:.01em}.set-sub{font-size:11px;font-style:italic;letter-spacing:.04em;color:rgba(255,255,255,.62)}';
     document.head.appendChild(s);
   }
   function panel(pts, member){
@@ -335,7 +335,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     apply(saved);
     var bar=document.createElement("div");
     bar.className="bw-member";
-    bar.innerHTML='';
+    bar.innerHTML='<p class="acct">Account & settings</p>';
     var btn=document.createElement("button");
     var label=/yahtzee|shutbox/.test(file)?"Dice sets":/mancala/.test(file)?"Stone sets":/dominoes/.test(file)?"Tile sets":/othello|cribbage|morris|backgammon/.test(file)?"Table sets":"Piece sets";
     btn.className="bw-sets-btn"; btn.type="button"; btn.textContent=label;
