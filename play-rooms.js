@@ -300,7 +300,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       '.bw-sets-btn,.bw-sub-btn{border:0;border-radius:999px;padding:6px 12px;background:#fff;color:#1A2744;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid #d7c9b0}'+
       '.bw-sub-btn{background:#1A2744;color:#fff;border-color:#1A2744}'+
       '.bw-sets{display:none;position:fixed;right:12px;top:88px;z-index:80;width:min(280px,92vw);background:rgba(255,250,242,.98);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;color:#1A2744;box-shadow:0 16px 40px rgba(0,0,0,.28)}'+
-      '.bw-sets.on{display:block}.bw-sets h3{margin:0 0 8px;font-size:14px}.bw-sets button{display:block;width:100%;text-align:left;margin:0 0 6px;border:1px solid #d7c9b0;background:#fff;border-radius:12px;padding:8px 10px;font-weight:700;cursor:pointer}'+
+      '.bw-sets.on{display:block}.bw-sets.on{position:static;width:auto;background:transparent;border:0;box-shadow:none;padding:0;color:inherit}.bw-sets h3{margin:0 0 8px;font-size:14px}.bw-sets button{display:block;width:100%;text-align:left;margin:0 0 6px;border:1px solid #d7c9b0;background:#fff;border-radius:12px;padding:8px 10px;font-weight:700;cursor:pointer}'+
       '.bw-sets button.on{border-color:#1A2744;background:#1A2744;color:#fff}.bw-sets button.lock{opacity:.6;cursor:default}'+
       '.set-row{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:14px 16px;gap:4px}.set-name{font-size:14px;font-weight:650;letter-spacing:.01em}.set-sub{font-size:11px;font-style:italic;letter-spacing:.04em;color:rgba(255,255,255,.62)}.set-row{position:relative}.upgrade{position:absolute;right:12px;top:12px;background:rgba(212,175,55,.2);border:1px solid #d4af37;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;letter-spacing:.06em;text-transform:uppercase}';
     document.head.appendChild(s);
@@ -371,7 +371,9 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     }
     bar.style.display="";
     var room=document.getElementById("room-ch");
-    if(room) room.appendChild(bar);
+    var home=document.getElementById("setHome");
+    if(home) home.appendChild(bar);
+    else if(room) room.appendChild(bar);
     else {
       var games=document.querySelector(".games");
       if(games && games.parentNode) games.parentNode.insertBefore(bar, games.nextSibling);
@@ -380,7 +382,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var box=document.createElement("div");
     box.className="bw-sets"; box.id="bwSets";
     box.innerHTML="<h3>Sets</h3><div id=\"bwSetList\"></div>";
-    if(room) room.appendChild(box); else document.body.appendChild(box);
+    if(home){ home.appendChild(box); box.classList.add("on"); }
+    else if(room) room.appendChild(box); else document.body.appendChild(box);
     function paint(){ document.getElementById("bwSetList").innerHTML=panel(pts, member); }
     paint();
     btn.onclick=function(){ box.classList.toggle("on"); paint(); };
