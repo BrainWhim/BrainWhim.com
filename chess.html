@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- bw-mobile-stack 2026-10-09-0925 -->
+<!-- bw-mobile-stack 2026-10-09-0930 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1369,9 +1369,30 @@ function bwMobile(){
 window.addEventListener("resize", bwMobile);
 window.addEventListener("load", bwMobile);
 
+
+function bwPhoneFix(){
+  if(window.innerWidth>900) return;
+  document.documentElement.style.setProperty("overflow-y","auto","important");
+  document.body.style.setProperty("overflow","auto","important");
+  document.body.style.setProperty("height","auto","important");
+  var side=document.querySelector("#room-ch .side-right");
+  var group=document.querySelector("#room-ch .menu-buttons-group");
+  if(!side||!group) return;
+  side.style.cssText="position:relative;display:flex;flex-direction:column;width:92%;max-width:480px;height:auto;max-height:none;overflow:visible;padding:16px;margin:0 auto 48px;box-sizing:border-box";
+  group.style.cssText="position:static;display:flex;flex-direction:column;gap:10px;width:100%;height:auto;max-height:none;overflow:visible";
+  var mem=document.querySelector("#room-ch .bw-member");
+  if(mem && mem.parentNode!==group) group.insertBefore(mem, group.firstChild);
+  if(mem) mem.style.cssText="position:static;background:none;box-shadow:none;border:0;padding:0;margin:0 0 8px;width:100%";
+  group.querySelectorAll("button,a").forEach(function(b){
+    b.style.setProperty("position","static","important");
+    b.style.setProperty("width","100%","important");
+  });
+}
+
 function sitDown(){
   document.body.classList.add("seated");
   bwMobile();
+  bwPhoneFix();
   document.body.style.setProperty("overflow","auto","important");
   document.documentElement.style.overflowY="auto";
   var sit=document.querySelector("#room-ch .menu-buttons-group");
