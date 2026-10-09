@@ -35,9 +35,10 @@
       return sb.from("rooms").select("*").eq("code", CODE).single();
     }).then(function(q){
       room=q.data; if(!room) return;
-      if(room.host===me) myColor="w";
+      var seat=(location.search.match(/seat=([wb])/)||[])[1];
+      if(seat) myColor=seat;
+      else if(room.host===me) myColor="w";
       else if(room.guest===me) myColor="b";
-      else if(!room.guest && me){ myColor="b"; room.guest=me; sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id); }
       var m0=document.getElementById("chmsg");
       if(m0) m0.textContent = (myColor==="w" ? "Your turn" : "Waiting for cobalt") + " · " + CODE;
       if(room.state&&room.state.board) apply(room.state);
