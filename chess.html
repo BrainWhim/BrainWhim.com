@@ -1065,6 +1065,18 @@ body.seated[data-scene="ch"] .side .taken{
   border:0!important;box-shadow:none!important;outline:none!important;
 }
 
+
+#winveil.win .wincard, #winveil .wincard.victory-modal{
+  background:rgba(255,255,255,.85)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;
+  border:1px solid rgba(212,175,55,.4)!important;border-radius:16px!important;
+  box-shadow:0 20px 50px rgba(0,0,0,.3)!important;padding:32px 40px!important;
+}
+.wincard .kicker{margin:0;font-size:12px;font-weight:700;letter-spacing:.1em;color:#b59410;text-transform:uppercase}
+.wincard h2{font-size:32px!important;font-weight:800!important;color:#1e293b!important;margin:4px 0 24px!important}
+.wincard .row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.wincard .go{background:#1a2a40!important;color:#fff!important;font-weight:600;padding:12px 24px!important;width:140px;justify-content:center;border-radius:8px!important}
+.wincard .ghost{background:transparent!important;color:#1a2a40!important;border:1px solid rgba(26,42,64,.3)!important;font-weight:500;padding:12px 24px!important;width:140px;justify-content:center;border-radius:8px!important;box-shadow:none!important}
+
 </style>
 </head>
 <body data-scene="ch">
@@ -1183,8 +1195,9 @@ body.seated[data-scene="ch"] .side .taken{
 </div>
 
 <div id="winveil" onclick="if(event.target.id==='winveil')hideBanner()">
-  <div class="wincard">
-    <h2 id="winTitle">Congratulations! You win!</h2>
+  <div class="wincard victory-modal">
+    <p class="kicker" id="winKicker">Congratulations</p>
+    <h2 id="winTitle">Checkmate!</h2>
     <p id="winSub"></p>
     <div class="row">
       <button class="go" type="button" id="winAgain">Play again?</button>
@@ -1243,9 +1256,11 @@ function showBanner(title, sub, again, kind){
   var headline;
   if(kind==="lose") headline="Better luck next time!";
   else if(kind==="draw") headline="It's a Draw!";
-  else if(/checkmate/.test(raw)) headline="Congratulations! Checkmate!";
-  else headline="Congratulations! You win!";
+  else if(/checkmate/.test(raw)) headline="Checkmate!";
+  else headline="You win!";
   document.getElementById("winTitle").textContent=headline;
+  var k=document.getElementById("winKicker");
+  if(k) k.textContent = kind==="lose" ? "Game over" : kind==="draw" ? "Well played" : "Congratulations";
   document.getElementById("winSub").textContent="";
   var b=document.getElementById("winAgain");
   b.onclick=function(){ hideBanner(); if(again) again(); };
