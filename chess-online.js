@@ -20,7 +20,7 @@
       if(s.rights) chRights=s.rights; chEp=s.ep||null;
       if(typeof chPaint==="function") chPaint();
       var m=document.getElementById("chmsg");
-      if(m) m.textContent = myColor&&chTurn===myColor ? "Your turn" : "Opponent to move";
+      if(m) m.textContent = (myColor&&chTurn===myColor ? "Your turn" : "Opponent to move") + " · " + CODE;
     }
     async function publish(){
       if(!room||sending) return;
@@ -39,12 +39,20 @@
       else if(room.guest===me) myColor="b";
       else if(!room.guest && me){ myColor="b"; room.guest=me; sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id); }
       var m0=document.getElementById("chmsg");
-      if(m0) m0.textContent = myColor==="w" ? "Your turn" : "Waiting for cobalt";
+      if(m0) m0.textContent = (myColor==="w" ? "Your turn" : "Waiting for cobalt") + " · " + CODE;
       if(room.state&&room.state.board) apply(room.state);
       else publish();
       sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
         if(payload.new && payload.new.state) apply(payload.new.state);
       }).subscribe();
+      setInterval(function(){
+        sb.from("rooms").select("state,guest,host").eq("code", CODE).single().then(function(r){
+          if(!r.data) return;
+          if(!myColor && r.data.host===me) myColor="w";
+          if(!myColor && r.data.guest===me) myColor="b";
+          if(r.data.state && r.data.state.board) apply(r.data.state);
+        });
+      }, 2000);
     });
   }
   window.addEventListener("load", boot);
