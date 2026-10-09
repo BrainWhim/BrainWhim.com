@@ -1280,8 +1280,39 @@ function showRoom(id,btn){
   standUp();
 }
 function newGame(){ if(document.body.getAttribute('data-scene')==='ck') ckNew(); else if(document.body.getAttribute('data-scene')==='bg') bgNew(); else chNew(); }
+
+function bwMobile(){
+  var row=document.querySelector("#room-ch.play-row");
+  if(!row) return;
+  var narrow=window.innerWidth<=900;
+  row.style.setProperty("display","flex","important");
+  row.style.setProperty("flex-direction",narrow?"column":"row","important");
+  row.style.setProperty("align-items",narrow?"center":"stretch","important");
+  row.style.setProperty("width","100%","important");
+  row.style.setProperty("overflow-x",narrow?"hidden":"visible","important");
+  var board=document.querySelector("#room-ch .board-col");
+  if(board){
+    board.style.setProperty("order",narrow?"1":"2","important");
+    board.style.setProperty("width",narrow?"100%":"","important");
+    board.style.setProperty("max-width",narrow?"100vw":"","important");
+  }
+  var left=document.querySelector("#room-ch .side-left");
+  var right=document.querySelector("#room-ch .side-right");
+  if(left) left.style.setProperty("order",narrow?"2":"1","important");
+  if(right) right.style.setProperty("order",narrow?"3":"3","important");
+  [left,right].forEach(function(el){
+    if(!el) return;
+    el.style.setProperty("width",narrow?"100%":"260px","important");
+    el.style.setProperty("max-width",narrow?"450px":"260px","important");
+    el.style.setProperty("height","auto","important");
+  });
+}
+window.addEventListener("resize", bwMobile);
+window.addEventListener("load", bwMobile);
+
 function sitDown(){
   document.body.classList.add("seated");
+  bwMobile();
   var sit=document.querySelector("#room-ch .sit");
   if(sit) sit.style.setProperty("display","none","important");
   ["chBotTook","chYouTook"].forEach(function(id){
