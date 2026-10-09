@@ -22,6 +22,7 @@
       var m=document.getElementById("chmsg");
       if(m) m.textContent = (myColor&&chTurn===myColor ? "Your turn" : "Opponent to move") + " · " + CODE;
     }
+    window.bwPublish=publish;
     async function publish(){
       if(!room||sending) return;
       sending=true;
@@ -36,7 +37,7 @@
     }).then(function(q){
       room=q.data; if(!room) return;
       var seat=(location.search.match(/seat=([wb])/)||[])[1];
-      if(seat) myColor=seat;
+      if(seat){ myColor=seat; window.bwMyColor=seat; }
       else if(room.host===me) myColor="w";
       else if(room.guest===me) myColor="b";
       var m0=document.getElementById("chmsg");

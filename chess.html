@@ -1915,20 +1915,26 @@ function chAll(white){
   return a;
 }
 function chClick(r,c){
-  if(chOver||chTurn!=="w"||chFlying) return;
+  var mine=window.bwOnline?(window.bwMyColor||"w"):"w";
+  if(chOver||chFlying) return;
+  if(chTurn!==mine) return;
   if(chSel){
     var ok=chMoves(chSel[0],chSel[1]).some(function(m){return m[0]===r&&m[1]===c});
     if(ok){
       var fs=chSel[0],fc=chSel[1],html=pieceHTML(ch[fs][fc]);
       chLast=[fs,fc,r,c]; chDo(fs,fc,r,c); chSel=null; chPaint();
       chFly(fs,fc,r,c,html,function(){
-        if(!chAll(false).length){ chOver=true; var mate=chInCheck(false); document.getElementById("chmsg").textContent=mate?"Checkmate.":"Draw."; showBanner(mate?"Checkmate":"Draw", mate?"The house king has nowhere to go.":"No legal moves.", chNew); return; }
-        chTurn="b"; document.getElementById("chmsg").textContent="Black is thinking…"; if(!window.bwOnline) setTimeout(chAi,400);
+        var opp=mine==="w"?"b":"w";
+        if(!chAll(opp==="w").length){ chOver=true; var mate=chInCheck(opp==="w"); document.getElementById("chmsg").textContent=mate?"Checkmate.":"Draw."; showBanner(mate?"Checkmate":"Draw", mate?"No legal move.":"No legal moves.", chNew); return; }
+        chTurn=opp;
+        document.getElementById("chmsg").textContent=window.bwOnline?"Opponent to move":"Black is thinking…";
+        if(!window.bwOnline) setTimeout(chAi,400);
+        if(window.bwOnline && typeof window.bwPublish==="function") window.bwPublish();
       });
       return;
     }
   }
-  if(ch[r][c] && chWhite(ch[r][c])){ chSel=[r,c]; chPaint(); }
+  if(ch[r][c] && chWhite(ch[r][c])===(mine==="w")){ chSel=[r,c]; chPaint(); }
   else { chSel=null; chPaint(); }
 }
 var chYouTook=[], chBotTook=[];
