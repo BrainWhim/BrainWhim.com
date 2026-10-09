@@ -20,7 +20,7 @@
       if(s.rights) chRights=s.rights; chEp=s.ep||null;
       if(typeof chPaint==="function") chPaint();
       var m=document.getElementById("chmsg");
-      if(m) m.textContent = (myColor&&chTurn===myColor ? "Your turn" : "Opponent to move") + " · " + CODE;
+      if(m) m.textContent = (myColor&&chTurn===myColor ? "Your turn" : "Opponent to move");
     }
     window.bwPublish=publish;
     async function publish(){
@@ -41,7 +41,7 @@
       else if(room.host===me) myColor="w";
       else if(room.guest===me) myColor="b";
       var m0=document.getElementById("chmsg");
-      if(m0) m0.textContent = (myColor==="w" ? "Your turn" : "Waiting for cobalt") + " · " + CODE;
+      if(m0) m0.textContent = (myColor==="w" ? "Your turn. You go first." : "Opponent goes first.");
       if(room.state&&room.state.board) apply(room.state);
       else publish();
       sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
