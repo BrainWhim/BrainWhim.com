@@ -10,9 +10,7 @@
     if(msg) msg.textContent="Online table";
     if(!window.supabase || typeof BW_PLAY==="undefined") return;
     var sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
-    var me=localStorage.getItem("bwId")||("p"+Math.random().toString(36).slice(2,8));
-    localStorage.setItem("bwId", me);
-    var room, myColor, sending=false;
+    var room, myColor, sending=false, me=null;
     function snap(){
       return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp};
     }
@@ -32,11 +30,16 @@
     }
     var orig=chPaint;
     chPaint=function(){ orig(); if(window.bwOnline && room && chTurn!==myColor) publish(); };
-    sb.from("rooms").select("*").eq("code", CODE).single().then(function(q){
+    sb.auth.getSession().then(function(sess){
+      me=sess&&sess.data&&sess.data.session?sess.data.session.user.id:null;
+      return sb.from("rooms").select("*").eq("code", CODE).single();
+    }).then(function(q){
       room=q.data; if(!room) return;
       if(room.host===me) myColor="w";
       else if(room.guest===me) myColor="b";
-      else if(!room.guest){ myColor="b"; sb.from("rooms").update({guest:me}).eq("id", room.id); }
+      else if(!room.guest && me){ myColor="b"; room.guest=me; sb.from("rooms").update({guest:me, status:"live"}).eq("id", room.id); }
+      var m0=document.getElementById("chmsg");
+      if(m0) m0.textContent = myColor==="w" ? "Your turn" : "Waiting for cobalt";
       if(room.state&&room.state.board) apply(room.state);
       else publish();
       sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
