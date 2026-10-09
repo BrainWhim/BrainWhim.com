@@ -1285,6 +1285,29 @@ function bwMobile(){
   var row=document.querySelector("#room-ch.play-row");
   if(!row) return;
   var narrow=window.innerWidth<=900;
+  var board=document.querySelector("#room-ch .board-col");
+  var bot=document.getElementById("chBotTook");
+  var you=document.getElementById("chYouTook");
+  var left=document.querySelector("#room-ch .side-left");
+  var right=document.querySelector("#room-ch .side-right");
+  if(narrow && board && bot && you){
+    row.insertBefore(bot, board);
+    if(board.nextSibling!==you) board.parentNode.insertBefore(you, board.nextSibling);
+    [bot,you].forEach(function(el){
+      el.style.setProperty("display","flex","important");
+      el.style.setProperty("flex-direction","row","important");
+      el.style.setProperty("justify-content","space-between","important");
+      el.style.setProperty("align-items","center","important");
+      el.style.setProperty("width","100%","important");
+      el.style.setProperty("padding","4px 8px","important");
+      el.style.setProperty("margin","0","important");
+      el.style.setProperty("order", el.id==="chBotTook"?"0":"1","important");
+    });
+    if(board) board.style.setProperty("order","1","important");
+  } else if(left && right && bot && you){
+    left.appendChild(bot);
+    right.appendChild(you);
+  }
   row.style.setProperty("display","flex","important");
   row.style.setProperty("flex-direction",narrow?"column":"row","important");
   row.style.setProperty("align-items",narrow?"center":"stretch","important");
@@ -2208,7 +2231,7 @@ c4New(); ckNew(); chNew(); bgNew();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=sets4"></script>
+<script src="play-rooms.js?v=sets5"></script>
 
 <script>
 (function(){
@@ -2263,6 +2286,12 @@ body.seated[data-scene="ch"] #chBotTook,body.seated[data-scene="ch"] #chYouTook{
   body.seated[data-scene="ch"] .side-left button,
   body.seated[data-scene="ch"] .side-right button,
   body.seated[data-scene="ch"] .side-right a.stand{width:100%!important;padding:14px!important}
+}
+
+@media (max-width: 900px) {
+  body[data-scene="ch"] .play-row{padding-bottom:80px!important}
+  body[data-scene="ch"] #chBotTook,body[data-scene="ch"] #chYouTook{order:0}
+  body[data-scene="ch"] .taken .caps{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
 }
 </style>
 </body>
