@@ -423,22 +423,20 @@ async function checkWait(){
     goRoom((typeof bwGuessGame==="function"?bwGuessGame(q.data):q.data.game), q.data.code, "online=1");
   }
 }
+async function findOpen(game, me){
+  var q=await sb.from("rooms").select("*").eq("game",game).eq("status","lobby").is("guest",null).neq("host", me).order("created_at",{ascending:true}).limit(5);
+  if(q.error) return null;
+  return (q.data||[]).filter(function(r){ return !r.kind || r.kind==="open"; })[0]||null;
+}
 async function playOnline(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
   if(!(await canPlayOnline())) return;
-  var q=await sb.from("rooms").select("*").eq("game",game).eq("status","lobby").is("guest",null).neq("host", s.user.id).order("created_at",{ascending:true}).limit(5);
-  if(q.error){ alert(q.error.message); return; }
-  var open=(q.data||[]).filter(function(r){
-    if(r.kind && r.kind!=="open") return false;
-    var hp=(r.state && r.state.hostPts)!=null?r.state.hostPts:0;
-    return typeof bwCanMatch==="function"?bwCanMatch(myPts, hp):true;
-  })[0];
+  var open=await findOpen(game, s.user.id);
+  if(!open){ await new Promise(function(r){ setTimeout(r, 1200); }); open=await findOpen(game, s.user.id); }
   if(open){
     var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
-    if(u.error){ alert(u.error.message); return; }
-    goRoom(game, u.data.code, "online=1&seat=b");
-    return;
+    if(!u.error){ goRoom(game, u.data.code, "online=1&seat=b"); return; }
   }
   waitRoom=await makeRoom("open", game);
   if(!waitRoom) return;
