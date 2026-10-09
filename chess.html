@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- bw-mobile-stack 2026-10-09-0915 -->
+<!-- bw-mobile-stack 2026-10-09-0925 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -280,7 +280,7 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padd
   body.seated[data-scene="ch"] #tableBoard{width:min(94vw, calc(100dvh - 150px));transform:rotateX(4deg) scale(1)}
   body.seated[data-scene="ch"] #room-ch{display:block;min-height:0;padding:8px 8px 88px}
   body.seated[data-scene="ch"] .bar{position:sticky;top:6px;flex-direction:row;max-width:280px;margin:6px auto;border-radius:999px}
-  body.seated[data-scene="ch"] .sitbar{position:fixed;left:0;right:0;bottom:8px;flex-direction:row;flex-wrap:wrap;justify-content:center}
+  body.seated[data-scene="ch"] .sitbar{position:static;flex-direction:column;flex-wrap:nowrap}
   body.seated[data-scene="bg"] #bgTable{width:96vw;margin-top:4px;transform:rotateX(14deg) scale(1.02)}
   body.seated[data-scene="bg"] .bgboard{min-height:260px;height:40vh}
   body.seated[data-scene="bg"] .bgchk{width:34px;height:34px}
@@ -701,14 +701,14 @@ body{background-size:cover;background-position:center 16%}
 
 
 body.seated .games{display:none}
-body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
+body.seated:not([data-scene="ch"]) .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
 body.seated[data-scene="ch"] .sitbar{position:static;left:auto;right:auto;bottom:auto;padding:0;max-width:none}
 body.seated .sit{display:none}
 body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none}
 body.seated .bar button{display:none}
 
 
-body.seated[data-scene="ch"]{overflow:hidden}
+body.seated[data-scene="ch"]{overflow:auto}
 body.seated[data-scene="ch"] .wrap{padding:0!important;margin:0!important;width:100%!important;max-width:none!important}
 body.seated[data-scene="ch"] #room-ch{
   display:grid!important;
@@ -1372,6 +1372,23 @@ window.addEventListener("load", bwMobile);
 function sitDown(){
   document.body.classList.add("seated");
   bwMobile();
+  document.body.style.setProperty("overflow","auto","important");
+  document.documentElement.style.overflowY="auto";
+  var sit=document.querySelector("#room-ch .menu-buttons-group");
+  if(sit){
+    sit.style.setProperty("position","static","important");
+    sit.style.setProperty("height","auto","important");
+    sit.style.setProperty("max-height","none","important");
+    sit.style.setProperty("overflow","visible","important");
+    sit.style.setProperty("display","flex","important");
+    sit.style.setProperty("flex-direction","column","important");
+  }
+  var side=document.querySelector("#room-ch .side-right");
+  if(side){
+    side.style.setProperty("height","auto","important");
+    side.style.setProperty("overflow","visible","important");
+    side.style.setProperty("position","relative","important");
+  }
   var sit=document.querySelector("#room-ch .sit");
   if(sit) sit.style.setProperty("display","none","important");
   ["chBotTook","chYouTook"].forEach(function(id){
