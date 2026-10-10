@@ -16,6 +16,7 @@
     ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over;
     if(s.rights) chRights=s.rights; chEp=s.ep||null; if(s.you) chYouTook=s.you; if(s.bot) chBotTook=s.bot;
     if(typeof chPaint==="function") chPaint();
+    if(chOver){ line("Game over"); if(typeof showBanner==="function") showBanner(chTurn===seat?"Checkmate":"Game over", chTurn===seat?"No legal move.":"Your opponent won.", typeof chNew==="function"?chNew:null); return; }
     line(chTurn===seat?"Your turn":"Opponent to move");
   }
   async function publish(){
