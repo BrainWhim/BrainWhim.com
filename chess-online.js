@@ -1,22 +1,17 @@
 
 (function(){
   var q=new URLSearchParams(location.search);
-  var isMulti=q.get("mode")==="multiplayer"||!!q.get("match_id")||!!q.get("code");
-  if(!isMulti) return;
+  if(!(q.get("mode")==="multiplayer"||q.get("match_id")||q.get("code"))) return;
   var CODE=(q.get("match_id")||q.get("code")||"").toUpperCase();
   var seat=q.get("seat")==="b"?"b":"w";
-  window.bwOnline=true;
-  window.bwMyColor=seat;
-  function line(text){
-    var m=document.getElementById("chmsg");
-    if(m) m.textContent=text+(CODE?" · "+CODE:"");
-  }
+  window.bwOnline=true; window.bwMyColor=seat;
+  function line(text){ var m=document.getElementById("chmsg"); if(m) m.textContent=text+" · "+CODE; }
   function boot(){
     if(typeof sitDown==="function") sitDown();
-    line(seat==="b"?"Opponent goes first.":"Your turn. You go first.");
+    line(seat==="b"?"Opponent goes first":"Your turn. You go first");
     if(!CODE||!window.supabase||typeof BW_PLAY==="undefined"){ line("Not linked"); return; }
     var sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
-    var room=null, pending=false;
+    var room=null, pending=false, seen="";
     function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp}; }
     function apply(s){
       if(!s||!s.board) return;
@@ -27,26 +22,19 @@
     }
     async function publish(){
       if(!room){ pending=true; return; }
-      pending=false;
       var up=await sb.from("rooms").update({state:snap(), status:"live", updated_at:new Date().toISOString()}).eq("id", room.id);
-      if(up.error) line("Save failed");
-      else line("Sent");
+      line(up.error?"Save failed":"Sent");
     }
     window.bwPublish=publish;
-    sb.auth.getSession().then(function(){
-      return sb.from("rooms").select("*").eq("code", CODE).single();
-    }).then(function(res){
+    sb.from("rooms").select("id,state").eq("code", CODE).single().then(function(res){
       if(res.error||!res.data){ line("Table not found"); return; }
-      room=res.data;
-      line("Linked");
+      room=res.data; line("Linked");
       if(pending) publish();
-      else if(room.state&&room.state.board) apply(room.state);
       setInterval(function(){
         sb.from("rooms").select("state").eq("code", CODE).single().then(function(r){
           if(r.error){ line("Read failed"); return; }
-          var s=r.data&&r.data.state;
-          if(!s||!s.board) return;
-          if(JSON.stringify(s.last||[])!==JSON.stringify(chLast||[]) || s.turn!==chTurn) apply(s);
+          var s=r.data&&r.data.state, key=JSON.stringify(s&&s.last||[])+"|"+(s&&s.turn);
+          if(s&&s.board&&key!==seen){ seen=key; apply(s); }
         });
       }, 1000);
     });
