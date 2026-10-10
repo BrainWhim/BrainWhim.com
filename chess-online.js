@@ -7,49 +7,41 @@
   var seat=q.get("seat")==="b"?"b":"w";
   window.bwOnline=true;
   window.bwMyColor=seat;
-  function codeLine(extra){
-    var c=document.getElementById("chcode");
-    if(c) c.textContent="Table "+(CODE||"—")+(extra||"");
-  }
-  function say(extra){
-    var m=document.getElementById("chmsg");
-    if(!m) return;
-    var base=typeof chTurn==="undefined" ? (seat==="b"?"Opponent goes first.":"Your turn. You go first.") : (chTurn===seat?"Your turn":"Opponent to move");
-    m.textContent=base; codeLine(extra?extra:"");
-  }
   function boot(){
     if(typeof sitDown==="function") sitDown();
-    say();
-    codeLine();
-    if(!CODE||!window.supabase||typeof BW_PLAY==="undefined"){ say(" · not linked"); return; }
+    var msg=document.getElementById("chmsg");
+    if(msg) msg.textContent=(seat==="b"?"Opponent goes first.":"Your turn. You go first.")+(CODE?" · "+CODE:"");
+    if(!CODE||!window.supabase||typeof BW_PLAY==="undefined") return;
     var sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
-    var room=null;
+    var room=null, pending=false;
     function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp}; }
     function apply(s){
       if(!s||!s.board) return;
       ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over;
       if(s.rights) chRights=s.rights; chEp=s.ep||null;
       if(typeof chPaint==="function") chPaint();
-      say();
+      var m=document.getElementById("chmsg");
+      if(m) m.textContent=(chTurn===seat?"Your turn":"Opponent to move")+(CODE?" · "+CODE:"");
     }
     async function publish(){
-      if(!room){ say(" · no room"); return; }
+      if(!room){ pending=true; return; }
+      pending=false;
       var up=await sb.from("rooms").update({state:snap(), status:"live", updated_at:new Date().toISOString()}).eq("id", room.id);
-      if(up.error) say(" · save failed");
+      var m=document.getElementById("chmsg");
+      if(up.error && m) m.textContent="Move did not save · "+CODE;
     }
     window.bwPublish=publish;
     sb.from("rooms").select("*").eq("code", CODE).single().then(function(res){
-      if(res.error||!res.data){ say(" · table missing"); return; }
+      var m=document.getElementById("chmsg");
+      if(res.error||!res.data){ if(m) m.textContent="Table not found · "+CODE; return; }
       room=res.data;
-      if(room.state&&room.state.board) apply(room.state); else publish();
+      if(pending) publish();
+      else if(room.state&&room.state.board) apply(room.state);
       setInterval(function(){
         sb.from("rooms").select("state").eq("code", CODE).single().then(function(r){
-          if(r.error){ say(" · read failed"); return; }
           var s=r.data&&r.data.state;
           if(!s||!s.board) return;
-          var key=JSON.stringify(s.last||[])+"|"+s.turn;
-          var here=JSON.stringify(chLast||[])+"|"+chTurn;
-          if(key!==here) apply(s);
+          if(JSON.stringify(s.last||[])!==JSON.stringify(chLast||[]) || s.turn!==chTurn) apply(s);
         });
       }, 1000);
     });
