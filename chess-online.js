@@ -10,11 +10,11 @@
     var c=document.getElementById("chcode"); if(c) c.textContent=CODE+" · "+text;
   }
   var sb, room=null, pending=false, seen="";
-  function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp}; }
+  function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp, you:chYouTook, bot:chBotTook}; }
   function apply(s){
     if(!s||!s.board) return;
     ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over;
-    if(s.rights) chRights=s.rights; chEp=s.ep||null;
+    if(s.rights) chRights=s.rights; chEp=s.ep||null; if(s.you) chYouTook=s.you; if(s.bot) chBotTook=s.bot;
     if(typeof chPaint==="function") chPaint();
     line(chTurn===seat?"Your turn":"Opponent to move");
   }
