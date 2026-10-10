@@ -7,15 +7,20 @@
   var seat=q.get("seat")==="b"?"b":"w";
   window.bwOnline=true;
   window.bwMyColor=seat;
+  function codeLine(extra){
+    var c=document.getElementById("chcode");
+    if(c) c.textContent="Table "+(CODE||"—")+(extra||"");
+  }
   function say(extra){
     var m=document.getElementById("chmsg");
     if(!m) return;
     var base=typeof chTurn==="undefined" ? (seat==="b"?"Opponent goes first.":"Your turn. You go first.") : (chTurn===seat?"Your turn":"Opponent to move");
-    m.textContent=base+" · "+(CODE||"no table")+(extra?extra:"");
+    m.textContent=base; codeLine(extra?extra:"");
   }
   function boot(){
     if(typeof sitDown==="function") sitDown();
     say();
+    codeLine();
     if(!CODE||!window.supabase||typeof BW_PLAY==="undefined"){ say(" · not linked"); return; }
     var sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
     var room=null;
