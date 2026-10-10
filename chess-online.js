@@ -5,7 +5,10 @@
   var CODE=(q.get("match_id")||q.get("code")||"").toUpperCase();
   var seat=q.get("seat")==="b"?"b":"w";
   window.bwOnline=true; window.bwMyColor=seat;
-  function line(text){ var m=document.getElementById("chmsg"); if(m) m.textContent=text+" · "+CODE; }
+  function line(text){
+    var m=document.getElementById("chmsg"); if(m) m.textContent=text;
+    var c=document.getElementById("chcode"); if(c) c.textContent=CODE+" · "+text;
+  }
   var sb, room=null, pending=false, seen="";
   function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp}; }
   function apply(s){
