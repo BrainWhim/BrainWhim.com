@@ -436,11 +436,11 @@ async function playOnline(game){
   if(!open){ await new Promise(function(r){ setTimeout(r, 1200); }); open=await findOpen(game, s.user.id); }
   if(open){
     var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
-    if(!u.error){ goRoom(game, u.data.code, "online=1&seat=b"); return; }
+    if(!u.error){ goRoom(game, u.data.code, "mode=multiplayer&match_id="+encodeURIComponent(u.data.code)+"&seat=b"); return; }
   }
   waitRoom=await makeRoom("open", game);
   if(!waitRoom) return;
-  goRoom(game, waitRoom.code, "online=1&seat=w");
+  goRoom(game, waitRoom.code, "mode=multiplayer&match_id="+encodeURIComponent(waitRoom.code)+"&seat=w");
 }
 async function inviteFriend(game){
   var s=await needSession(); if(!s) return;
