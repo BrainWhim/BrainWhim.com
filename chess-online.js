@@ -7,11 +7,16 @@
   var seat=q.get("seat")==="b"?"b":"w";
   window.bwOnline=true;
   window.bwMyColor=seat;
+  function say(){
+    var m=document.getElementById("chmsg");
+    if(!m) return;
+    if(typeof chTurn==="undefined") m.textContent=seat==="b"?"Opponent goes first.":"Your turn. You go first.";
+    else m.textContent=chTurn===seat?"Your turn":"Opponent to move";
+  }
   function boot(){
     if(typeof sitDown==="function") sitDown();
-    var msg=document.getElementById("chmsg");
-    if(msg) msg.textContent = seat==="b" ? "Opponent goes first." : "Your turn. You go first.";
-    if(!CODE || !window.supabase || typeof BW_PLAY==="undefined") return;
+    say();
+    if(!CODE||!window.supabase||typeof BW_PLAY==="undefined") return;
     var sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
     var room=null, sending=false;
     function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp}; }
@@ -20,27 +25,28 @@
       ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over;
       if(s.rights) chRights=s.rights; chEp=s.ep||null;
       if(typeof chPaint==="function") chPaint();
-      var m=document.getElementById("chmsg");
-      if(m) m.textContent = chTurn===window.bwMyColor ? "Your turn" : "Opponent to move";
+      say();
     }
     async function publish(){
-      if(!room||sending) return;
+      if(!room) return;
       sending=true;
-      await sb.from("rooms").update({state:snap(), status:chOver?"done":"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+      var up=await sb.from("rooms").update({state:snap(), status:"live", updated_at:new Date().toISOString()}).eq("id", room.id);
       sending=false;
+      if(up.error && document.getElementById("chmsg")) document.getElementById("chmsg").textContent="Move did not save";
     }
     window.bwPublish=publish;
     sb.from("rooms").select("*").eq("code", CODE).single().then(function(res){
-      room=res.data; if(!room) return;
+      room=res.data;
+      if(!room){ var m=document.getElementById("chmsg"); if(m) m.textContent="Table not found"; return; }
       if(room.state&&room.state.board) apply(room.state); else publish();
-      sb.channel("match-"+CODE).on("postgres_changes",{event:"UPDATE", schema:"public", table:"rooms", filter:"code=eq."+CODE}, function(payload){
-        if(payload.new&&payload.new.state) apply(payload.new.state);
-      }).subscribe();
       setInterval(function(){
         sb.from("rooms").select("state").eq("code", CODE).single().then(function(r){
-          if(r.data&&r.data.state&&r.data.state.turn&&r.data.state.turn!==chTurn) apply(r.data.state);
+          var s=r.data&&r.data.state;
+          if(!s||!s.board) return;
+          var changed=!chLast||!s.last||s.last.join()!==(chLast||[]).join()||s.turn!==chTurn;
+          if(changed) apply(s);
         });
-      }, 1500);
+      }, 1000);
     });
   }
   if(document.readyState==="complete") boot(); else window.addEventListener("load", boot);
