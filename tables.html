@@ -80,6 +80,25 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;padding:6px 10px 
 body{background-attachment:scroll}
 }
 </style>
+
+<style id="cosmic-glass">
+.intro,.auth,.onlinepane,.note,.toolbar,.poster{
+  background:rgba(15,23,42,.65)!important;
+  backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;
+  border:1px solid rgba(255,255,255,.15)!important;
+  border-radius:16px!important;
+  box-shadow:0 20px 40px rgba(0,0,0,.4)!important;
+  color:#fff!important;
+}
+.intro h1,.intro p,.auth h2,.auth .who,.auth .hint,.note,.onlinepane,.toolbar{color:#fff!important}
+.btn.ghost,.btn.go{background:rgba(255,255,255,.1)!important;border:1px solid rgba(255,255,255,.2)!important;color:#fff!important;font-weight:600!important;border-radius:20px!important}
+.auth input,.poster input{background:rgba(255,255,255,.08)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important}
+.rooms{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))!important;gap:24px!important;width:100%!important;max-width:1200px!important;margin:0 auto!important;padding:16px!important;box-sizing:border-box!important}
+.poster .shot img{width:100%!important;height:180px!important;object-fit:cover!important;border-radius:12px!important}
+@media (max-width:900px){
+  .intro,.auth{width:94%!important;margin:12px auto!important}
+}
+</style>
 </head>
 <body>
 <div class="veil"></div>
@@ -424,9 +443,9 @@ async function checkWait(){
   }
 }
 async function findOpen(game, me){
-  var q=await sb.from("rooms").select("*").eq("game",game).eq("status","lobby").is("guest",null).order("created_at",{ascending:true}).limit(5);
-  if(q.error) return null;
-  return (q.data||[]).filter(function(r){ return !r.kind || r.kind==="open"; })[0]||null;
+  var q=await sb.from("rooms").select("*").eq("game",game).is("guest",null).in("status",["lobby","live"]).order("created_at",{ascending:true}).limit(8);
+  if(q.error){ alert(q.error.message); return null; }
+  return (q.data||[]).filter(function(r){ return r.host!==me && (!r.kind || r.kind==="open"); })[0]||null;
 }
 async function playOnline(game){
   var s=await needSession(); if(!s) return;
@@ -436,7 +455,8 @@ async function playOnline(game){
   if(!open){ await new Promise(function(r){ setTimeout(r, 1200); }); open=await findOpen(game, s.user.id); }
   if(open){
     var u=await sb.from("rooms").update({guest:s.user.id, status:"live"}).eq("id", open.id).is("guest", null).select().single();
-    if(!u.error){ goRoom(game, u.data.code, "mode=multiplayer&match_id="+encodeURIComponent(u.data.code)+"&seat=b"); return; }
+    if(u.error){ alert("Could not join "+open.code+": "+u.error.message); return; }
+    goRoom(game, u.data.code, "mode=multiplayer&match_id="+encodeURIComponent(u.data.code)+"&seat=b"); return;
   }
   waitRoom=await makeRoom("open", game);
   if(!waitRoom) return;
@@ -637,6 +657,9 @@ function showCreate(){
 }
 function openPoster(btn){
   var card=btn.closest(".poster");
+  var game=card&&card.getAttribute("data-game");
+  var page=roomPage(game);
+  if(page){ location.href=page; return; }
   document.querySelectorAll(".poster").forEach(function(el){ if(el!==card) el.classList.remove("open"); });
   card.classList.toggle("open");
 }
@@ -704,6 +727,15 @@ async function saveUsername(){
   document.getElementById("needName").style.display="none";
 }
 ready();
+</script>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search);
+  var match=q.get("match");
+  if(match && typeof playOnline==="function") setTimeout(function(){ playOnline(match); }, 400);
+  var invite=q.get("invite"), game=q.get("game")||"chess";
+  if(invite && typeof inviteFriend==="function") setTimeout(function(){ var box=document.getElementById("inviteName"); if(box) box.value=invite; inviteFriend(game); }, 500);
+})();
 </script>
 </body>
 </html>
