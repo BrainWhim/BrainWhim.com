@@ -7,18 +7,18 @@
   var seat=q.get("seat")==="b"?"b":"w";
   window.bwOnline=true;
   window.bwMyColor=seat;
-  function say(){
+  function say(extra){
     var m=document.getElementById("chmsg");
     if(!m) return;
-    if(typeof chTurn==="undefined") m.textContent=seat==="b"?"Opponent goes first.":"Your turn. You go first.";
-    else m.textContent=chTurn===seat?"Your turn":"Opponent to move";
+    var base=typeof chTurn==="undefined" ? (seat==="b"?"Opponent goes first.":"Your turn. You go first.") : (chTurn===seat?"Your turn":"Opponent to move");
+    m.textContent=base+" · "+(CODE||"no table")+(extra?extra:"");
   }
   function boot(){
     if(typeof sitDown==="function") sitDown();
     say();
-    if(!CODE||!window.supabase||typeof BW_PLAY==="undefined") return;
+    if(!CODE||!window.supabase||typeof BW_PLAY==="undefined"){ say(" · not linked"); return; }
     var sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
-    var room=null, sending=false;
+    var room=null;
     function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp}; }
     function apply(s){
       if(!s||!s.board) return;
@@ -28,23 +28,23 @@
       say();
     }
     async function publish(){
-      if(!room) return;
-      sending=true;
+      if(!room){ say(" · no room"); return; }
       var up=await sb.from("rooms").update({state:snap(), status:"live", updated_at:new Date().toISOString()}).eq("id", room.id);
-      sending=false;
-      if(up.error && document.getElementById("chmsg")) document.getElementById("chmsg").textContent="Move did not save";
+      if(up.error) say(" · save failed");
     }
     window.bwPublish=publish;
     sb.from("rooms").select("*").eq("code", CODE).single().then(function(res){
+      if(res.error||!res.data){ say(" · table missing"); return; }
       room=res.data;
-      if(!room){ var m=document.getElementById("chmsg"); if(m) m.textContent="Table not found"; return; }
       if(room.state&&room.state.board) apply(room.state); else publish();
       setInterval(function(){
         sb.from("rooms").select("state").eq("code", CODE).single().then(function(r){
+          if(r.error){ say(" · read failed"); return; }
           var s=r.data&&r.data.state;
           if(!s||!s.board) return;
-          var changed=!chLast||!s.last||s.last.join()!==(chLast||[]).join()||s.turn!==chTurn;
-          if(changed) apply(s);
+          var key=JSON.stringify(s.last||[])+"|"+s.turn;
+          var here=JSON.stringify(chLast||[])+"|"+chTurn;
+          if(key!==here) apply(s);
         });
       }, 1000);
     });
