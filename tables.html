@@ -85,34 +85,36 @@ body{background-attachment:scroll}
 /* ==========================================
    1. GLOBAL SYSTEM & PAGE VIEWPORT FRAMEWORK
    ========================================== */
-body {
+body, html {
   display: flex !important;
   flex-direction: column !important;
   width: 100vw !important;
   height: 100vh !important;
   overflow: hidden !important;
   margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Master 3-Column Layout Container */
-.tables-layout {
-  flex: 1 !important;
+/* Aggressively clear out the old max-width container your builder hardcoded */
+main, .tables-layout, [class*='layout'], [class*='wrapper'] {
   display: flex !important;
   flex-direction: row !important;
   width: 100vw !important;
+  max-width: 100vw !important; /* Forces the page to break free from the 920px width limit */
   height: calc(100vh - 80px) !important;
   overflow: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
   gap: 0 !important;
-  justify-content: stretch !important;
+  justify-content: space-between !important;
 }
 
 /* ==========================================
-   2. UNIVERSAL FLOATING HOOD NAVIGATION
+   2. UNIVERSAL FLOATING NAVIGATION HEADER
    ========================================== */
 header {
   height: 80px !important;
+  width: 100vw !important;
   background: rgba(15, 23, 42, 0.45) !important; /* Premium dark-slate veil */
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
@@ -123,6 +125,7 @@ header {
   padding: 0 40px !important;
   position: relative !important;
   z-index: 10 !important;
+  box-sizing: border-box !important;
 }
 
 /* ==========================================
@@ -131,6 +134,7 @@ header {
 .dashboard-sidebar-left, 
 .dashboard-sidebar-right {
   width: 290px !important;
+  max-width: 290px !important;
   height: 100% !important;
   background: rgba(15, 23, 42, 0.6) !important; /* Rich space vignette tint */
   backdrop-filter: blur(20px) !important;
@@ -141,19 +145,22 @@ header {
   flex-direction: column !important;
   flex-shrink: 0 !important;
   border-radius: 0 !important;
+  position: relative !important;
 }
 
-/* Clean border gutters matching your live chess board page */
 .dashboard-sidebar-left { 
   border-right: 1px solid rgba(255, 255, 255, 0.1) !important; 
 }
 .dashboard-sidebar-right { 
   border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-  margin-left: auto !important; /* The core layout mechanism pushing it back to the absolute right side */
 }
 
-/* Clean compartmentalized glass boxes inside sidebars */
-.sidebar-glass-container {
+/* Structural Glass Containers Internal Overrides */
+.sidebar-glass-container, #mailPane, #onlinePane, .titles-ranking-box, .mailpane, .onlinepane {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   background: rgba(255, 255, 255, 0.05) !important; /* Internal tray depth */
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px !important;
@@ -161,11 +168,16 @@ header {
   margin-bottom: 20px !important;
   box-sizing: border-box !important;
   width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: none !important;
 }
 
 .sidebar-glass-container h2, 
 .sidebar-glass-container h3, 
-.sidebar-glass-container h4 {
+.sidebar-glass-container h4,
+#mailPane h3, #onlinePane h4, .titles-ranking-box h4 {
   color: #ffffff !important;
   margin: 0 0 12px 0 !important;
   font-size: 14px !important;
@@ -174,21 +186,19 @@ header {
   text-transform: uppercase !important;
 }
 
-/* Defend sidebar typography contrast against background floral patterns */
+/* Typography Enhancements for Dark Backdrop Legibility */
 .dashboard-sidebar-left *, 
 .dashboard-sidebar-right * {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7) !important;
 }
-
-.dashboard-sidebar-left div, 
-.dashboard-sidebar-left p, 
-.dashboard-sidebar-right div, 
-.dashboard-sidebar-right p {
+.dashboard-sidebar-left div, .dashboard-sidebar-left p, 
+.dashboard-sidebar-right div, .dashboard-sidebar-right p,
+#onlinePane p, #onlinePane div, .titles-ranking-box p {
   color: #ffffff !important;
   font-weight: 600 !important;
 }
 
-/* Rebuilt premium text inputs */
+/* Premium Account Form Inputs */
 .auth input, .glass-input {
   background: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
@@ -201,10 +211,8 @@ header {
   margin-bottom: 10px !important;
 }
 
-/* Sleek glass plate system replacing clunky old pill buttons */
-.dashboard-sidebar-left button, 
-[class*='auth-btn'], 
-.dashboard-sidebar-left .btn {
+/* Sleek Auth Glass Plates */
+.dashboard-sidebar-left button, [class*='auth-btn'], .dashboard-sidebar-left .btn {
   background: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -216,14 +224,12 @@ header {
   margin-bottom: 8px !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  box-shadow: none !important;
 }
 .dashboard-sidebar-left button:hover {
   background: rgba(255, 255, 255, 0.16) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Clean layout styling inside right panel queues */
 .message-feed-scroll {
   max-height: 160px !important;
   overflow-y: auto !important;
@@ -242,24 +248,23 @@ header {
   font-size: 13px !important;
   letter-spacing: 0.03em !important;
   line-height: 1.8 !important;
-  margin: 0 !important;
-  color: #f1f5f9 !important;
+  margin: 0 0 6px 0 !important;
 }
 
 /* ==========================================
    4. MONETIZATION LOCK CONTAINER BAR
    ========================================== */
 .premium-passport-card {
-  background: rgba(26, 42, 64, 0.4) !important; /* Premium branding navy tint */
-  border: 1px solid rgba(212, 175, 55, 0.35) !important; /* Soft luxury gold contour line */
+  background: rgba(26, 42, 64, 0.4) !important;
+  border: 1px solid rgba(212, 175, 55, 0.35) !important;
   border-radius: 12px !important;
   padding: 16px !important;
-  margin-top: auto !important; /* Dynamically locks container down at bottom-left corner */
+  margin-top: auto !important; /* Locks container layout perfectly to the left sidebar bottom */
   position: relative !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
 }
 .premium-passport-card h5 {
-  color: #e5c158 !important; /* Fine gold text styling */
+  color: #e5c158 !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   letter-spacing: 0.08em !important;
@@ -274,7 +279,7 @@ header {
 }
 .upgrade-club-btn {
   width: 100% !important;
-  background: linear-gradient(135deg, #d4af37 0%, #b5942b 100%) !important; /* Gold ribbon luster track */
+  background: linear-gradient(135deg, #d4af37 0%, #b5942b 100%) !important;
   color: #0f172a !important;
   border: none !important;
   padding: 11px !important;
@@ -290,18 +295,16 @@ header {
    5. EXPANSIVE CENTRAL ROOM CHOICE GRID
    ========================================== */
 .rooms, .main-tables-grid-content {
-  flex: 1 !important; /* Autogrow channel eating remaining real estate between sidebars */
+  flex: 1 !important; /* Smoothly drinks up all open viewport canvas spaces */
   height: 100% !important;
   overflow-y: auto !important;
   padding: 40px !important;
   box-sizing: border-box !important;
   max-width: none !important;
   margin: 0 !important;
-  
-  /* Hard constraint layout fix forcing exact side-by-side gallery pairs */
   display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 24px !important;
+  grid-template-columns: 1fr 1fr !important; /* Standardized pairs tracking track */
+  gap: 28px !important;
 }
 
 .rooms .poster {
@@ -311,10 +314,8 @@ header {
   overflow: hidden !important;
   text-decoration: none !important;
   min-height: 170px !important;
-  background: #1A2744 !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18) !important;
   transition: transform 0.2s ease-in-out !important;
-  cursor: pointer !important;
 }
 .rooms .poster:hover {
   transform: translateY(-4px) !important;
@@ -332,7 +333,7 @@ header {
   right: 0 !important;
   bottom: 0 !important;
   width: 100% !important;
-  background: rgba(15, 23, 42, 0.65) !important; /* Translucent slate ribbon banner base */
+  background: rgba(15, 23, 42, 0.65) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   color: #ffffff !important;
@@ -346,10 +347,10 @@ header {
 }
 
 /* ==========================================
-   6. RESPONSIVE MOBILE HANDSET SPECIFICATIONS
+   6. RESPONSIVE MOBILE MULTIMEDIA OVERRIDES
    ========================================== */
 @media (max-width: 900px) {
-  .tables-layout {
+  main, .tables-layout {
     flex-direction: column !important;
     overflow-y: auto !important;
     height: auto !important;
@@ -358,45 +359,17 @@ header {
   .dashboard-sidebar-right, 
   .rooms {
     width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
     flex: none !important;
-    max-width: 100% !important;
   }
   .rooms, .main-tables-grid-content {
-    grid-template-columns: 1fr !important; /* Collapse grid into clean 1-column mobile strip */
+    grid-template-columns: 1fr !important;
     padding: 20px !important;
   }
 }
-/* ==========================================
-   7. TARGETED PANEL ALIGNMENT PATCH
-   ========================================== */
-/* Force both panels to behave like normal blocks inside the right sidebar */
-#mailPane, #onlinePane, .mailpane, .onlinepane {
-  position: relative !important;
-  top: 0 !important;
-  right: 0 !important;
-  left: 0 !important;
-  margin: 0 0 20px 0 !important; /* Elegant vertical stack breathing space */
-  width: 100% !important;
-  max-width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  box-shadow: none !important;
-  background: rgba(255, 255, 255, 0.05) !important; /* Seamless inset glass match */
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Ensure the titles inside match our typography tracker rules */
-#mailPane h3, #onlinePane h4 {
-  color: #ffffff !important;
-  margin: 0 0 10px 0 !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
-}
-
 </style>
+
 </head>
 <body>
 <div class="veil"></div>
