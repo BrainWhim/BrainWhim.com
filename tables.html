@@ -96,6 +96,24 @@ header{height:80px!important;background:rgba(15,23,42,.45)!important;backdrop-fi
 @media (max-width:900px){
   .dash{width:94%!important;flex-direction:column!important;align-items:stretch!important}
 }
+
+.tables-layout{display:flex;justify-content:center;align-items:flex-start;gap:18px;padding:18px 16px 40px}
+.dashboard-sidebar-left,.dashboard-sidebar-right{width:260px;flex:0 0 260px;display:flex;flex-direction:column;gap:14px;background:rgba(255,255,255,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;color:#fff;min-height:70vh}
+.dashboard-sidebar-left h2,.dashboard-sidebar-left h4,.dashboard-sidebar-right h3,.dashboard-sidebar-right h4{margin:0 0 8px;color:#fff}
+.titles-key p,.membership-incentive-box{font-size:12px;line-height:1.45;color:rgba(255,255,255,.82)}
+.membership-incentive-box{background:rgba(212,175,55,.08)!important;border:1px solid rgba(212,175,55,.3)!important;border-radius:12px!important;padding:16px!important;margin-top:auto!important}
+.rooms{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:900px}
+.rooms .poster{position:relative;display:block;border-radius:14px;overflow:hidden;text-decoration:none;min-height:160px}
+.rooms .poster img{width:100%;height:180px;object-fit:cover;display:block}
+.rooms .poster span{position:absolute;left:0;right:0;bottom:0;padding:24px 12px 10px;background:linear-gradient(transparent,rgba(16,22,36,.82));color:#fff;font-weight:800}
+.mailpane,.onlinepane{position:static!important;display:block!important;width:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+.glass-input{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.2)!important;color:#fff!important;padding:10px!important;border-radius:8px!important;width:100%!important;box-sizing:border-box!important}
+.gold-send-btn{background:linear-gradient(135deg,#d4af37 0%,#aa8416 100%)!important;color:#0f172a!important;font-weight:700!important;width:100%!important;border:none!important;padding:10px!important;border-radius:8px!important;margin-top:8px!important;cursor:pointer!important}
+.dash{display:none}
+@media (max-width:900px){
+  .tables-layout{flex-direction:column;align-items:center}
+  .dashboard-sidebar-left,.dashboard-sidebar-right,.rooms{width:94%;max-width:480px;flex:none}
+}
 </style>
 </head>
 <body>
@@ -112,213 +130,77 @@ header{height:80px!important;background:rgba(15,23,42,.45)!important;backdrop-fi
   <div id="mailList">Sign in to see invites.</div>
 </div>
 <div class="toast" id="toast"></div>
-<main>
-<div class="dash">
-<div class="intro">
-<h1>The tables</h1>
-<p class="lead">Choose a room. Sit vs the house, or sit with someone in the parlor.</p>
-</div>
-<div class="toolbar">
-  <button class="btn ghost" type="button" onclick="toggleOnline()">Players online</button>
-  <button class="btn ghost" type="button" onclick="toggleLadder()">Titles</button>
-</div>
+<main class="tables-layout">
+<aside class="dashboard-sidebar-left">
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
   <p class="who" id="who">Checking…</p>
   <p class="hint" id="seatHint">Sign in with email or your public name, or sit as a guest.</p>
   <p class="err" id="authErr"></p>
   <div id="authForm">
-    <div class="row" style="justify-content:center;margin-bottom:8px">
-      <button class="btn go" type="button" onclick="showSignIn()">Sign in</button>
-      <button class="btn ghost" type="button" onclick="showCreate()">Create account</button>
-      <button class="btn ghost" type="button" onclick="playAsGuest()">Play as guest</button>
-    </div>
+    <button class="btn go" type="button" onclick="showSignIn()">Sign in</button>
+    <button class="btn ghost" type="button" onclick="showCreate()">Create account</button>
+    <button class="btn ghost" type="button" onclick="playAsGuest()">Play as guest</button>
     <div id="signFields" class="hidden">
       <input id="email" autocomplete="username" placeholder="email or username">
       <input id="pass" type="password" autocomplete="current-password" placeholder="password">
-      <div class="row" style="justify-content:center">
-        <button class="btn go" type="button" onclick="bwSignIn()">Enter</button>
-        <button class="btn ghost" type="button" onclick="bwForgot()">Forgot password</button>
-      </div>
+      <button class="btn go" type="button" onclick="bwSignIn()">Enter</button>
+      <button class="btn ghost" type="button" onclick="bwForgot()">Forgot password</button>
     </div>
     <div id="createExtra" class="hidden">
       <input id="emailCreate" type="email" placeholder="email">
       <input id="passCreate" type="password" placeholder="password (6+ characters)">
       <input id="uname" type="text" maxlength="20" placeholder="public name">
-      <div class="row" style="justify-content:center">
-        <button class="btn go" type="button" id="createGo" onclick="bwSignUp()">Save account</button>
-      </div>
+      <button class="btn go" type="button" id="createGo" onclick="bwSignUp()">Save account</button>
     </div>
   </div>
   <div id="authOut" class="closed">
-    <div class="row" id="needName" style="display:none;margin-bottom:8px">
+    <div id="needName" style="display:none">
       <input id="unameLater" maxlength="20" placeholder="choose a public name">
       <button class="btn go" type="button" onclick="saveUsername()">Save name</button>
     </div>
-    <div class="row" style="justify-content:center">
-      <button class="btn ghost" type="button" onclick="bwSignOut()">Sign out</button>
-    </div>
+    <button class="btn ghost" type="button" onclick="bwSignOut()">Sign out</button>
   </div>
 </section>
+<div class="titles-key">
+  <h4>Titles</h4>
+  <p>New 0–100</p>
+  <p>Beginner 101–500</p>
+  <p>Club 501–1000</p>
+  <p>Expert 1001+</p>
 </div>
-<div class="onlinepane" id="onlinePane">
-  <p class="hint" id="ladderHint" style="display:none">New 0–100 · Beginner 101–500 · Club 501–1000 · Expert 1001+. You meet neighboring titles online.</p>
+<div class="membership-incentive-box">House is free. Three online games a day for guests and new accounts. Members play people as often as they like.</div>
+</aside>
+<div class="rooms">
+<a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span>Garden chess</span></a>
+<a class="poster" href="checkers-room.html"><img src="checkers-parlor.jpg" alt=""><span>Garden checkers</span></a>
+<a class="poster" href="backgammon-room.html"><img src="library-bg.jpg" alt=""><span>Library backgammon</span></a>
+<a class="poster" href="yahtzee-room.html"><img src="yahtzee-parlor.jpg" alt=""><span>Club Yahtzee</span></a>
+<a class="poster" href="dominoes-room.html"><img src="dominoes-parlor.jpg" alt=""><span>Sunroom dominoes</span></a>
+<a class="poster" href="othello-room.html"><img src="othello-terrace.jpg" alt=""><span>Night terrace Othello</span></a>
+<a class="poster" href="mancala-room.html"><img src="mancala-pavilion.jpg" alt=""><span>Pavilion Mancala</span></a>
+<a class="poster" href="cribbage-room.html"><img src="cribbage-snug.jpg" alt=""><span>Club Cribbage</span></a>
+<a class="poster" href="shutbox-room.html"><img src="shutbox-tavern.jpg" alt=""><span>Tavern Shut the Box</span></a>
+<a class="poster" href="morris-room.html"><img src="morris-cloister.jpg" alt=""><span>Cloister Morris</span></a>
+</div>
+<aside class="dashboard-sidebar-right">
+<div class="mailpane on" id="mailPane">
+  <h3>Mailbox</h3>
+  <div id="mailList">Sign in to see invites.</div>
+</div>
+<div class="onlinepane on" id="onlinePane">
+  <h4>Players online</h4>
+  <p class="hint" id="ladderHint">You meet neighboring titles online.</p>
   <div id="onlineList" class="hint">Sign in to see who’s here.</div>
 </div>
-<div class="rooms">
+<div class="sidebar-invite-hub">
+  <h4>Invite a Challenger</h4>
+  <input type="text" id="inviteName" maxlength="20" placeholder="Enter friend's public name..." class="glass-input">
+  <button class="gold-send-btn" type="button" onclick="inviteFriend('chess')">Send Invite</button>
+</div>
+</aside>
+</main>
 
-<article class="poster" data-game="chess">
-<button class="shot" type="button" onclick="openPoster(this)" style="background:url(garden-parlor.jpg) center/cover no-repeat"><img src="garden-parlor.jpg" alt="Garden chess"><span>Garden chess</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="chess.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnChess" onclick="playOnline('chess')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintChess" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteName" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('chess')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="checkers">
-<button class="shot" type="button" onclick="openPoster(this)" style="background:url(checkers-parlor.jpg) center/cover no-repeat"><img src="checkers-parlor.jpg" alt="Garden checkers"><span>Garden checkers</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="checkers.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnCk" onclick="playOnline('checkers')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintCheckers" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameCk" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('checkers')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="backgammon">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="library-bg.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Library backgammon</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="backgammon.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnBg" onclick="playOnline('backgammon')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintBg" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameBg" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('backgammon')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="yahtzee">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="yahtzee-parlor.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Club Yahtzee</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="yahtzee.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnYz" onclick="playOnline('yahtzee')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintYz" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameYz" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('yahtzee')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="dominoes">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="dominoes-parlor.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Sunroom dominoes</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="dominoes.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnDo" onclick="playOnline('dominoes')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintDo" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameDo" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('dominoes')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="othello">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="othello-terrace.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Night terrace Othello</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="othello.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnOt" onclick="playOnline('othello')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintOt" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameOt" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('othello')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="mancala">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="mancala-pavilion.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Pavilion Mancala</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="mancala.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnMk" onclick="playOnline('mancala')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintMk" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameMk" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('mancala')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="cribbage">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="cribbage-snug.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Club Cribbage</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="cribbage.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnCr" onclick="playOnline('cribbage')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintCr" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameCr" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('cribbage')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="shutbox">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="shutbox-tavern.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Tavern Shut the Box</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="shutbox.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnSb" onclick="playOnline('shutbox')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintSb" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameSb" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('shutbox')">Invite friend</button>
-</div>
-
-</div>
-</article>
-<article class="poster" data-game="morris">
-<button class="shot" type="button" onclick="openPoster(this)"><img src="morris-cloister.jpg" alt="" onerror="this.src='garden-parlor.jpg'"><span>Cloister Morris</span></button>
-<div class="opts">
-<div class="row">
-<a class="btn go" href="morris.html">Sit vs the house</a>
-<button class="btn go" type="button" id="onlineBtnMo" onclick="playOnline('morris')">Play someone online</button>
-</div>
-<p class="hint waitHint" id="waitHintMo" style="display:none;margin-top:8px">Waiting for another player to sit… <button class="btn ghost" type="button" onclick="cancelWait()">Cancel</button></p>
-<div class="row" style="margin-top:8px">
-<input id="inviteNameMo" maxlength="20" placeholder="friend's public name" style="flex:1;min-width:140px;padding:8px;border-radius:8px;border:1px solid #d7c9b0;background:#fff;color:#1A2744">
-<button class="btn ghost" type="button" onclick="inviteFriend('morris')">Invite friend</button>
-</div>
-
-</div>
-</article>
-</div>
-<p class="note">House is free. Three online games a day for guests and new accounts. Members play people as often as they like.</p>
 <nav class="dock">
 <button type="button" onclick="document.getElementById('authBox').scrollIntoView({behavior:'smooth'})">You</button>
 <button type="button" onclick="toggleMail()">Mail</button>
