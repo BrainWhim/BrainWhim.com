@@ -408,35 +408,39 @@ header {
    6. PREMIUM RESPONSIVE MOBILE APP ARCHITECTURE
    ========================================== */
 @media (max-width: 900px) {
-  /* Prevent the body from stretching out awkwardly */
+  /* Allow the structural body layer to expand naturally for vertical scrolling */
   body, html {
-    overflow: hidden !important;
-    height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    height: 100% !important;
     width: 100vw !important;
+    background-attachment: scroll !important;
   }
 
-  /* Core vertical mobile scrolling engine container */
+  /* Unchain the scrolling layout tracks so your content flows smoothly down past row 4 */
   main, .tables-layout, [class*='layout'], [class*='wrapper'] {
+    display: flex !important;
     flex-direction: column !important;
-    height: calc(100vh - 80px - 70px) !important; /* Spaces cleanly between top header and bottom navbar */
+    height: auto !important;
+    min-height: calc(100vh - 80px) !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    overflow-y: auto !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    overflow-y: visible !important;
+    padding-bottom: 90px !important; /* Elegant margin bumper preventing bottom bar clipping */
+    box-sizing: border-box !important;
   }
 
-  /* Compress parlor rooms into elegant, compact side-by-side grid pairs */
+  /* Compact modern side-by-side room grid rows */
   .rooms, .main-tables-grid-content {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important; /* Force pristine modern grid rows */
+    grid-template-columns: 1fr 1fr !important;
     gap: 14px !important;
     padding: 16px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
 
-  /* Make parlor room cards scale cleanly like miniature application tiles */
+  /* Responsive miniature tile sizing */
   .rooms .poster {
     min-height: 110px !important;
     height: auto !important;
@@ -456,23 +460,16 @@ header {
     text-align: center !important;
   }
 
-  /* Transform sidebars into clean, hidden utilities that won't clutter the initial entry screen */
-  .dashboard-sidebar-left, 
-  .dashboard-sidebar-right {
-    display: none !important; /* Temporarily tucked away until our upcoming slide-up drawer hooks fire */
-  }
-
   /* ==========================================
      6B. FIXED GLASSMORPHIC BOTTOM NAVIGATION DECK
      ========================================== */
-  /* This script dynamically injects a beautiful app deck right at the user's fingertips */
   .mobile-app-navigation-bar {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
     height: 70px !important;
-    background: rgba(15, 23, 42, 0.75) !important; /* Deep cosmic slate veil tint */
+    background: rgba(15, 23, 42, 0.85) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -485,7 +482,6 @@ header {
     box-sizing: border-box !important;
   }
 
-  /* Navigation Action Buttons Inside Mobile Tab Bar */
   .mobile-nav-action-tab {
     display: flex !important;
     flex-direction: column !important;
@@ -498,20 +494,48 @@ header {
     letter-spacing: 0.05em !important;
     text-decoration: none !important;
     cursor: pointer !important;
-    opacity: 0.8 !important;
+    opacity: 0.75 !important;
     transition: all 0.2s ease !important;
   }
   .mobile-nav-action-tab:hover, .mobile-nav-action-tab.active {
     opacity: 1 !important;
-    color: #7EB6D9 !important; /* Lights up with your signature sky blue brand highlight */
+    color: #7EB6D9 !important;
   }
   .mobile-nav-action-tab-icon {
     font-size: 20px !important;
     margin-bottom: 4px !important;
   }
+
+  /* ==========================================
+     6C. PREMIUM MOBILE SLIDE-UP GLASS DRAWER ENGINE
+     ========================================== */
+  /* This dynamic override completely formats the desktop sidebars into overlay sheets */
+  .dashboard-sidebar-left, 
+  .dashboard-sidebar-right {
+    display: flex !important;
+    position: fixed !important;
+    bottom: -100vh !important; /* Park drawers completely hidden underneath screen viewport edge */
+    left: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 75vh !important; /* Standard presentation depth covering three-quarters screen */
+    background: rgba(15, 23, 42, 0.95) !important; /* Thick midnight space shielding overlay */
+    backdrop-filter: blur(25px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px 20px 0 0 !important; /* Smooth curvature edges */
+    z-index: 9998 !important;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important; /* Silk smooth animation track */
+    padding: 24px 20px 90px 20px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Activation trigger classes command sheets to instantly glide upward on call */
+  .dashboard-sidebar-left.drawer-open,
+  .dashboard-sidebar-right.drawer-open {
+    transform: translateY(-100vh) !important; /* Drives overlay straight up onto monitor visible area */
+  }
 }
 
-/* Hide the custom deck entirely whenever the page scales back up to desktop screens */
 @media (min-width: 901px) {
   .mobile-app-navigation-bar {
     display: none !important;
@@ -1028,23 +1052,74 @@ ready();
 </script>
 <!-- Fixed Mobile Application Navigation Deck -->
 <div class="mobile-app-navigation-bar">
-  <div class="mobile-nav-action-tab active">
+  <div class="mobile-nav-action-tab active" id="tab-parlors" onclick="closeAllDrawers()">
     <span class="mobile-nav-action-tab-icon">🏰</span>
     <span>Parlors</span>
   </div>
-  <div class="mobile-nav-action-tab" onclick="alert('Profile Drawer Coming Next Turn!')">
+  <div class="mobile-nav-action-tab" id="tab-seat" onclick="toggleDrawer('left', this)">
     <span class="mobile-nav-action-tab-icon">👤</span>
     <span>Your Seat</span>
   </div>
-  <div class="mobile-nav-action-tab" onclick="alert('Mailbox Drawer Coming Next Turn!')">
+  <div class="mobile-nav-action-tab" id="tab-mail" onclick="toggleDrawer('right', this)">
     <span class="mobile-nav-action-tab-icon">✉️</span>
     <span>Mail</span>
   </div>
-  <div class="mobile-nav-action-tab" onclick="alert('Leaderboard Drawer Coming Next Turn!')">
-    <span class="mobile-nav-action-tab-icon">✨</span>
-    <span>Universe</span>
-  </div>
 </div>
+
+<!-- Lightweight UI Navigation Orchestrator Script Block -->
+<script>
+function toggleDrawer(sidebarSide, clickedTab) {
+  // Isolate target element handles
+  var leftSidebar = document.querySelector('.dashboard-sidebar-left');
+  var rightSidebar = document.querySelector('.dashboard-sidebar-right');
+  var mailPane = document.getElementById('mailPane');
+  var onlinePane = document.getElementById('onlinePane');
+  var tabs = document.querySelectorAll('.mobile-nav-action-tab');
+  
+  // Wipe text highlights clean
+  tabs.forEach(t => t.classList.remove('active'));
+  
+  if (sidebarSide === 'left') {
+    rightSidebar.classList.remove('drawer-open');
+    leftSidebar.classList.toggle('drawer-open');
+  } else if (sidebarSide === 'right') {
+    leftSidebar.classList.remove('drawer-open');
+    rightSidebar.classList.toggle('drawer-open');
+    
+    // Smooth layout toggle sorting right side containers beautifully inside the view canvas sheet
+    if(mailPane && onlinePane) {
+      mailPane.style.display = 'flex';
+      onlinePane.style.display = 'flex';
+    }
+  }
+  
+  // Manage highlighted navigation text nodes dynamically
+  if (leftSidebar.classList.contains('drawer-open') || rightSidebar.classList.contains('drawer-open')) {
+    clickedTab.classList.add('active');
+  } else {
+    document.getElementById('tab-parlors').classList.add('active');
+  }
+}
+
+function closeAllDrawers() {
+  document.querySelector('.dashboard-sidebar-left').classList.remove('drawer-open');
+  document.querySelector('.dashboard-sidebar-right').classList.remove('drawer-open');
+  document.querySelectorAll('.mobile-nav-action-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-parlors').classList.add('active');
+}
+
+// Ensure clicking on the background room cards automatically sheets drawers closed cleanly
+document.addEventListener('DOMContentLoaded', function() {
+  var roomGrid = document.querySelector('.rooms') || document.querySelector('.main-tables-grid-content');
+  if(roomGrid) {
+    roomGrid.addEventListener('click', function(e) {
+      if(!e.target.closest('.mobile-app-navigation-bar')) {
+        closeAllDrawers();
+      }
+    });
+  }
+});
+</script>
 
 </body>
 </html>
