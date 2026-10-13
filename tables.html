@@ -81,6 +81,29 @@ header{display:grid;grid-template-columns:1fr auto;height:auto;padding:6px 10px 
 .rooms{grid-template-columns:1fr}
 body{background-attachment:scroll}
 }
+
+  .drawer-handle {
+    display: none;
+  }
+  @media (max-width: 900px) {
+    .drawer-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      margin: -4px 0 8px 0;
+      cursor: grab;
+      touch-action: none;
+    }
+    .drawer-handle span {
+      width: 48px;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.55);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+  }
+
 </style>
 <style id="cosmic-glass">
 /* ==========================================
@@ -614,24 +637,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.querySelectorAll('.dashboard-sidebar-left, .dashboard-sidebar-right').forEach(function(drawer){
     if(!drawer) return;
-    var startY = 0, lastY = 0, dragging = false;
+    var startY = 0, lastY = 0, startT = 0, dragging = false;
+    function inGrabZone(e){
+      var top = drawer.getBoundingClientRect().top;
+      var y = e.touches[0].clientY;
+      if (y - top < 64) return true;
+      if (e.target.closest && e.target.closest('.drawer-handle')) return true;
+      return drawer.scrollTop <= 0 && y - top < 120;
+    }
     drawer.addEventListener('touchstart', function(e){
       startY = e.touches[0].clientY;
       lastY = startY;
-      dragging = startY - drawer.getBoundingClientRect().top < 36;
+      startT = Date.now();
+      dragging = inGrabZone(e);
     }, {passive: true});
     drawer.addEventListener('touchmove', function(e){
       if(!dragging) return;
       lastY = e.touches[0].clientY;
-      var dy = Math.max(0, lastY - startY);
+      var dy = lastY - startY;
+      if (dy > 6 && e.cancelable) e.preventDefault();
+      dy = Math.max(0, dy);
       drawer.style.transition = 'none';
       drawer.style.transform = 'translateY(' + dy + 'px)';
-    }, {passive: true});
+    }, {passive: false});
     drawer.addEventListener('touchend', function(){
       if(!dragging) return;
       dragging = false;
+      var dy = lastY - startY;
+      var dt = Math.max(1, Date.now() - startT);
+      var flick = dy > 28 && (dy / dt) > 0.45;
       drawer.style.transition = '';
-      if(lastY - startY > 80){ closeMobileDrawers(); }
+      if (dy > 56 || flick) { closeMobileDrawers(); }
       drawer.style.transform = '';
     });
   });
@@ -692,6 +728,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="toast" id="toast"></div>
 <main class="tables-layout">
 <aside class="dashboard-sidebar-left">
+  <div class="drawer-handle" aria-hidden="true"><span></span></div>
 <div class="sidebar-glass-container">
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
@@ -744,6 +781,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <a class="poster" href="morris-room.html"><img src="morris-cloister.jpg" alt=""><span>Cloister Morris</span></a>
 </div>
 <aside class="dashboard-sidebar-right">
+  <div class="drawer-handle" aria-hidden="true"><span></span></div>
 <div class="sidebar-glass-container mailpane on" id="mailPane">
   <h3>Mailbox</h3>
   <div class="message-feed-scroll" id="mailList">
