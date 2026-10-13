@@ -1092,8 +1092,11 @@ async function playAsGuest(){
     var r=await sb.auth.signInAnonymously();
     if(!r.error && r.data && r.data.user){
       await sb.from("profiles").upsert({id:r.data.user.id, username:un, display_name:n, is_guest:true, skill_points:0});
+      if(typeof closeMobileDrawers==="function") closeMobileDrawers();
       return;
     }
+    var why = (r && r.error && r.error.message) ? r.error.message : "Supabase did not return a guest session.";
+    window._bwGuestWhy = why;
   }
   localStorage.setItem("bwGuest", JSON.stringify({name:n, username:un, at:Date.now()}));
   myName=un;
@@ -1101,7 +1104,7 @@ async function playAsGuest(){
   if(who) who.textContent="Sitting as "+n;
   var hint=document.getElementById("seatHint");
   if(hint) hint.textContent="You are in as a guest. Sit down and play the house.";
-  bwErr({message:"Guest seat is open. Online play against another person needs Anonymous turned on in Supabase, under Authentication, then Providers."});
+  bwErr({message:"You are seated as a guest and can play the house. Online play is paused: "+(window._bwGuestWhy||"Supabase did not open a guest session.")});
   if(typeof closeMobileDrawers==="function") closeMobileDrawers();
 }
 async function beat(){
