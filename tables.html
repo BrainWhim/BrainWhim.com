@@ -387,7 +387,7 @@ header {
     left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    height: 94vh !important; /* 👈 Raised height to take up the full screen area safely */
+    height: 90vh !important; /* 👈 Raised height to take up the full screen area safely */
     background: rgba(15, 23, 42, 0.96) !important; 
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
@@ -405,7 +405,7 @@ header {
   /* Moves the sheet up smoothly to align flush with its tall height */
   .dashboard-sidebar-left.drawer-open,
   .dashboard-sidebar-right.drawer-open {
-    transform: translateY(-94vh) !important; /* 👈 Perfectly matches the container's tall height */
+    transform: translateY(-90vh) !important; /* 👈 Perfectly matches the container's tall height */
     pointer-events: auto !important;
   }
 
@@ -656,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
   <p class="who" id="who">Checking…</p>
-  <p class="hint" id="seatHint">Sign in with email or your public name, or sit as a guest.</p>
+  <p class="hint" id="seatHint">Sign in with email or your username, or sit as a guest.</p>
   <p class="err" id="authErr"></p>
   <div id="authForm">
     <button class="btn go" type="button" onclick="showSignIn()">Sign in</button>
@@ -671,13 +671,13 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="createExtra" class="hidden">
       <input id="emailCreate" type="email" placeholder="email">
       <input id="passCreate" type="password" placeholder="password (6+ characters)">
-      <input id="uname" type="text" maxlength="20" placeholder="public name">
+      <input id="uname" type="text" maxlength="20" placeholder="username">
       <button class="btn go" type="button" id="createGo" onclick="bwSignUp()">Save account</button>
     </div>
   </div>
   <div id="authOut" class="closed">
     <div id="needName" style="display:none">
-      <input id="unameLater" maxlength="20" placeholder="choose a public name">
+      <input id="unameLater" maxlength="20" placeholder="choose a username">
       <button class="btn go" type="button" onclick="saveUsername()">Save name</button>
     </div>
     <button class="btn ghost" type="button" onclick="bwSignOut()">Sign out</button>
@@ -985,7 +985,7 @@ async function paint(session){
     stopPresence();
     myName=""; myPts=0; myMember=false;
     who.textContent="Sign in to keep a seat";
-    document.getElementById("seatHint").textContent="Sign in with email or your public name, or sit as a guest.";
+    document.getElementById("seatHint").textContent="Sign in with email or your username, or sit as a guest.";
     form.classList.remove("closed"); out.classList.add("closed");
     document.getElementById("mailDot").classList.remove("on");
     document.getElementById("mailList").innerHTML = 'Please <span class="sidebar-auth-redirect" onclick="if(typeof showSignIn===\'function\'){ showSignIn(); } var input=document.getElementById(\'email\'); if(input){ setTimeout(function(){ input.focus(); input.style.transition=\'all 0.3s ease\'; input.style.boxShadow=\'0 0 12px rgba(201,166,107,0.95)\'; input.style.borderColor=\'#C9A66B\'; }, 50); setTimeout(function(){ if(input){ input.style.boxShadow=\'none\'; input.style.borderColor=\'rgba(255,255,255,0.2)\'; } }, 1250); }">Sign In</span> to view invites.';
@@ -1055,12 +1055,12 @@ function hideAuthPanels(){
 function showSignIn(){
   hideAuthPanels();
   document.getElementById("signFields").classList.remove("hidden");
-  document.getElementById("seatHint").textContent="Use your email or public name, and your password.";
+  document.getElementById("seatHint").textContent="Use your email or username, and your password.";
 }
 function showCreate(){
   hideAuthPanels();
   document.getElementById("createExtra").classList.remove("hidden");
-  document.getElementById("seatHint").textContent="Email, password, and the public name friends will use to invite you.";
+  document.getElementById("seatHint").textContent="Email, password, and the username friends will use to invite you.";
 }
 function openPoster(btn){
   var card=btn.closest(".poster");
@@ -1087,7 +1087,7 @@ async function bwSignUp(){
   var username=cleanName(document.getElementById("uname").value);
   var email=(document.getElementById("emailCreate")||document.getElementById("email")).value.trim();
   var password=(document.getElementById("passCreate")||document.getElementById("pass")).value;
-  if(username.length<3){ bwErr({message:"Pick a public name (3+ letters or numbers)."}); return; }
+  if(username.length<3){ bwErr({message:"Pick a username (3+ letters or numbers)."}); return; }
   var r=await sb.auth.signUp({email:email, password:password, options:{data:{username:username, display_name:username}}});
   if(r.error){ bwErr(r.error); return; }
   if(r.data.user){
@@ -1102,7 +1102,7 @@ async function bwSignIn(){
   var email=raw;
   if(raw && raw.indexOf("@")<0){
     var look=await sb.rpc("email_for_username", {n: raw});
-    if(look.error || !look.data){ bwErr({message:"Use the email for this account this time. After one email sign-in, the public name will work too."}); return; }
+    if(look.error || !look.data){ bwErr({message:"Use the email for this account this time. After one email sign-in, the username will work too."}); return; }
     email=look.data;
   }
   var r=await sb.auth.signInWithPassword({email:email, password:password});
