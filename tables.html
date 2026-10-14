@@ -544,7 +544,7 @@ header {
     <span class="mobile-nav-action-tab-icon">🪑</span>
     <span>Rooms</span>
   </div>
-  <div class="mobile-nav-action-tab" id="tab-join" onclick="openTargetMobileDrawer('left')">
+  <div class="mobile-nav-action-tab" id="tab-join" onclick="location.href='play.html#seat'">
     <span class="mobile-nav-action-tab-icon">👤</span>
     <span>Join</span>
   </div>
@@ -749,11 +749,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
   <p class="who" id="who">Checking…</p>
-  <p class="hint" id="seatHint">Sign in with email or your username, or sit as a guest.</p>
+  <p class="hint" id="seatHint">Sign in lives on the Play landing.</p>
   <p class="err" id="authErr"></p>
   <div id="authForm">
-    <button class="btn go" type="button" onclick="showSignIn()">Sign in</button>
-    <button class="btn ghost" type="button" onclick="showCreate()">Create account</button>
+    <a class="btn go" href="play.html#seat">Sign in on Play</a>
+    <a class="btn ghost" href="play.html#seat">Create account</a>
     <button class="btn ghost" type="button" onclick="playAsGuest()">Play as guest</button>
     <div id="signFields" class="hidden">
       <input id="email" autocomplete="username" placeholder="email or username">
@@ -785,6 +785,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </aside>
 <div class="rooms main-tables-grid-content">
+<div class="guest-prompt" id="guestPrompt" style="display:none;margin:0 0 16px;padding:12px 16px;border-radius:12px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.35);color:#fff;text-align:center">
+  Playing as a guest. <a href="play.html#seat" style="color:#e5c158;font-weight:700">Join the Club</a> for unlimited play and the full piece sets.
+</div>
 <a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Garden Chess<em class="playnow">Play Now</em></span></a>
 <a class="poster" href="checkers-room.html"><img src="checkers-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Garden Checkers<em class="playnow">Play Now</em></span></a>
 <a class="poster" href="backgammon-room.html"><img src="library-bg.jpg" alt=""><span class="room-badge">Play vs House</span><span>Library Backgammon<em class="playnow">Play Now</em></span></a>
@@ -1061,6 +1064,8 @@ async function paint(session){
   var out=document.getElementById("authOut");
   sessionUser=session && session.user ? session.user : null;
   if(typeof applyGuestNav==="function") applyGuestNav();
+  var gp=document.getElementById("guestPrompt");
+  if(gp) gp.style.display = (sessionUser && !sessionUser.is_anonymous && myMember) ? "none" : "block";
   if(sessionUser){
     var prof=await loadProfile(sessionUser);
     var handle=cleanName((prof && prof.username) || myName);

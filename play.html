@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Play · BrainWhim</title>
 
     <!-- Google Fonts - BrainWhim Brand Typography -->
@@ -1601,7 +1601,22 @@
             }
         }
 
-    </style>
+    
+.seat-strip{position:relative;z-index:5;display:flex;justify-content:center;padding:10px 16px 0}
+.seat-strip button{background:rgba(15,23,42,.55);color:#fff;border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(12px);border-radius:999px;padding:8px 16px;font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
+.seat-panel{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(8,12,20,.5);backdrop-filter:blur(8px)}
+.seat-panel.on{display:flex}
+.seat-card{width:min(420px,92vw);background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:24px;color:#fff}
+.seat-card h3{margin:0 0 6px;font-size:18px}
+.seat-card p{margin:0 0 14px;color:rgba(255,255,255,.75);font-size:13px}
+.seat-card input{width:100%;box-sizing:border-box;margin:0 0 8px;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;min-height:44px}
+.seat-card .row{display:flex;flex-direction:column;gap:8px}
+.seat-card button.act{min-height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer}
+.seat-card button.gold{border-color:#d4af37;background:#1A2744}
+.seat-card .err{color:#f6c37a;font-size:12px;min-height:16px;margin:6px 0}
+
+</style>
+<link rel="stylesheet" href="mobile-frame.css">
 </head>
 
 <body class="theme-play">
@@ -1708,7 +1723,31 @@
         <button type="button" id="whimMobileClose" aria-label="Close">✕</button>
     </div>
 
-    <main class="space-canvas" id="apps">
+    
+<div class="seat-strip">
+  <button type="button" id="seatStatus" onclick="document.getElementById('seatPanel').classList.add('on')">Playing as Guest  ·  Sign In</button>
+</div>
+<div class="seat-panel" id="seatPanel" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="seat-card">
+    <h3>Your seat</h3>
+    <p id="seatLead">Sign in, create an account, or play as a guest.</p>
+    <div class="row" id="seatChoices">
+      <button class="act" type="button" onclick="showSeat('in')">Sign in</button>
+      <button class="act" type="button" onclick="showSeat('new')">Create account</button>
+      <button class="act gold" type="button" onclick="playGuest()">Play as guest</button>
+    </div>
+    <div id="seatFields" style="display:none;margin-top:12px">
+      <input id="seatEmail" type="email" placeholder="Email" autocomplete="username">
+      <input id="seatPass" type="password" placeholder="Password" autocomplete="current-password">
+      <input id="seatName" type="text" placeholder="Public name" style="display:none" autocomplete="off">
+      <button class="act gold" type="button" id="seatGo" onclick="seatSubmit()">Continue</button>
+    </div>
+    <div class="err" id="seatErr"></div>
+    <button class="act" type="button" onclick="document.getElementById('seatPanel').classList.remove('on')" style="margin-top:8px">Close</button>
+  </div>
+</div>
+
+<main class="space-canvas" id="apps">
         <div class="aurora-glow green-light"></div>
         <div class="aurora-glow blue-light"></div>
 
@@ -1976,6 +2015,54 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script>
+var sb=null, seatMode='in';
+(function(){
+  var cfg=window.BW_PLAY||{};
+  if(cfg.url && cfg.anonKey) sb=supabase.createClient(cfg.url, cfg.anonKey);
+})();
+function showSeat(mode){
+  seatMode=mode;
+  document.getElementById('seatFields').style.display='block';
+  document.getElementById('seatName').style.display = mode==='new' ? 'block' : 'none';
+  document.getElementById('seatLead').textContent = mode==='new' ? 'Create your seat.' : 'Welcome back.';
+}
+async function playGuest(){
+  document.getElementById('seatErr').textContent='';
+  if(!sb){ document.getElementById('seatErr').textContent='Sign-in is not connected yet.'; return; }
+  var r=await sb.auth.signInAnonymously();
+  if(r.error){ document.getElementById('seatErr').textContent=r.error.message; return; }
+  document.getElementById('seatPanel').classList.remove('on');
+  paintSeat();
+}
+async function seatSubmit(){
+  var email=document.getElementById('seatEmail').value.trim();
+  var pass=document.getElementById('seatPass').value;
+  var name=document.getElementById('seatName').value.trim();
+  document.getElementById('seatErr').textContent='';
+  if(!sb){ document.getElementById('seatErr').textContent='Sign-in is not connected yet.'; return; }
+  var r = seatMode==='new'
+    ? await sb.auth.signUp({email:email, password:pass, options:{data:{display_name:name}}})
+    : await sb.auth.signInWithPassword({email:email, password:pass});
+  if(r.error){ document.getElementById('seatErr').textContent=r.error.message; return; }
+  document.getElementById('seatPanel').classList.remove('on');
+  paintSeat();
+}
+async function paintSeat(){
+  var btn=document.getElementById('seatStatus');
+  if(!sb){ btn.textContent='Playing as Guest  ·  Sign In'; return; }
+  var s=await sb.auth.getSession();
+  var u=s.data.session && s.data.session.user;
+  if(!u || u.is_anonymous){ btn.textContent='Playing as Guest  ·  Sign In / Join Club'; return; }
+  btn.textContent='Signed in  ·  Your seat';
+}
+document.addEventListener('DOMContentLoaded', paintSeat);
+if(location.hash==='#seat') document.getElementById('seatPanel').classList.add('on');
+</script>
+
 </body>
 
 </html>
