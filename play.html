@@ -1615,6 +1615,15 @@
 .seat-card button.gold{border-color:#d4af37;background:#1A2744}
 .seat-card .err{color:#f6c37a;font-size:12px;min-height:16px;margin:6px 0}
 
+
+.play-hub{position:relative;z-index:5;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:8px 20px 0;max-width:920px;margin:0 auto}
+.play-card{flex:1 1 280px;max-width:420px;background:rgba(15,23,42,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.play-card h3{margin:0 0 8px;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.play-card p{margin:0 0 14px;color:rgba(255,255,255,.8);font-size:13px;line-height:1.5}
+.play-card .gold{color:#e5c158}
+.play-card a.act{display:inline-block;min-height:44px;line-height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-weight:700;text-decoration:none}
+.play-card a.club{border-color:#d4af37}
+
 </style>
 <link rel="stylesheet" href="mobile-frame.css">
 </head>
@@ -1744,6 +1753,20 @@
     </div>
     <div class="err" id="seatErr"></div>
     <button class="act" type="button" onclick="document.getElementById('seatPanel').classList.remove('on')" style="margin-top:8px">Close</button>
+  </div>
+</div>
+
+
+<div class="play-hub">
+  <div class="play-card">
+    <h3>Your seat</h3>
+    <p id="playSeatLine">Playing as a guest. Sign in to keep your name, or sit down and play the house.</p>
+    <a class="act" href="#seat" onclick="document.getElementById('seatPanel').classList.add('on');return false;">Sign in</a>
+  </div>
+  <div class="play-card">
+    <h3 class="gold">Club membership</h3>
+    <p>Guests play three games a day with the house set. The club opens all ten rooms, the piece sets, and unlimited play.</p>
+    <a class="act club" href="index.html#club">Join the Club</a>
   </div>
 </div>
 
@@ -2056,8 +2079,8 @@ async function paintSeat(){
   if(!sb){ btn.textContent='Playing as Guest  ·  Sign In'; return; }
   var s=await sb.auth.getSession();
   var u=s.data.session && s.data.session.user;
-  if(!u || u.is_anonymous){ btn.textContent='Playing as Guest  ·  Sign In / Join Club'; return; }
-  btn.textContent='Signed in  ·  Your seat';
+  if(!u || u.is_anonymous){ btn.textContent='Playing as Guest  ·  Sign In / Join Club'; var l=document.getElementById('playSeatLine'); if(l) l.textContent='Playing as a guest. Sign in to keep your name, or sit down and play the house.'; return; }
+  btn.textContent='Signed in  ·  Your seat'; var l=document.getElementById('playSeatLine'); if(l) l.textContent='You have a seat. Your name follows you into every room.';
 }
 document.addEventListener('DOMContentLoaded', paintSeat);
 if(location.hash==='#seat') document.getElementById('seatPanel').classList.add('on');
