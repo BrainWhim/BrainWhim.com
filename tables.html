@@ -105,7 +105,7 @@ body{background-attachment:scroll}
   }
 
 
-.room-badge{position:absolute;top:10px;right:10px;z-index:2;background:rgba(15,23,42,0.72);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px)}
+.room-badge{position:absolute !important;top:10px !important;right:10px !important;left:auto !important;bottom:auto !important;width:auto !important;z-index:3;background:rgba(15,23,42,0.72);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px)}
 .poster .playnow{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-top:2px}
 .bw-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(8,12,20,.45);backdrop-filter:blur(6px)}
 .bw-modal.on{display:flex}
@@ -303,10 +303,11 @@ header {
 /* ==========================================
    5. EXPANSIVE CENTRAL ROOM CHOICE GRID
    ========================================== */
+.center-lane{flex:1;height:100%;overflow-y:auto;display:flex;flex-direction:column}
 .rooms, .main-tables-grid-content {
   flex: 1 !important;
-  height: 100% !important;
-  overflow-y: auto !important;
+  height: auto !important;
+  overflow-y: visible !important;
   padding: 40px !important;
   box-sizing: border-box !important;
   max-width: none !important;
@@ -318,7 +319,7 @@ header {
 .rooms .poster { position: relative !important; display: block !important; border-radius: 12px !important; overflow: hidden !important; text-decoration: none !important; min-height: 170px !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18) !important; transition: transform 0.2s ease-in-out !important; }
 .rooms .poster:hover { transform: translateY(-4px) !important; }
 .rooms .poster img { width: 100% !important; height: 180px !important; object-fit: cover !important; display: block !important; border-radius: 12px !important; }
-.rooms .poster span { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; background: rgba(15, 23, 42, 0.65) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; color: #ffffff !important; font-weight: 700 !important; font-size: 15px !important; letter-spacing: 0.05em !important; padding: 12px 16px !important; box-sizing: border-box !important; border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; }
+.rooms .poster span:not(.room-badge) { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; background: rgba(15, 23, 42, 0.65) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; color: #ffffff !important; font-weight: 700 !important; font-size: 15px !important; letter-spacing: 0.05em !important; padding: 12px 16px !important; box-sizing: border-box !important; border-bottom-left-radius: 12px !important; border-bottom-right-radius: 12px !important; }
 /* ==========================================
    6. PREMIUM RESPONSIVE MOBILE APP ARCHITECTURE
    ========================================== */
@@ -378,7 +379,8 @@ header {
     box-sizing: border-box !important;
   }
 
-  .rooms, .main-tables-grid-content {
+  .center-lane{flex:1;height:100%;overflow-y:auto;display:flex;flex-direction:column}
+.rooms, .main-tables-grid-content {
     display: grid !important;
     grid-template-columns: 1fr !important;
     gap: 14px !important;
@@ -784,10 +786,11 @@ document.addEventListener('DOMContentLoaded', function() {
   <button class="upgrade-club-btn" type="button" onclick="location.href='index.html#club'">Join The Club</button>
 </div>
 </aside>
-<div class="rooms main-tables-grid-content">
+<div class="center-lane">
 <div class="guest-prompt" id="guestPrompt" style="display:none;margin:0 0 16px;padding:12px 16px;border-radius:12px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.35);color:#fff;text-align:center">
   Playing as a guest. <a href="play.html#seat" style="color:#e5c158;font-weight:700">Join the Club</a> for unlimited play and the full piece sets.
 </div>
+<div class="rooms main-tables-grid-content">
 <a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Garden Chess<em class="playnow">Play Now</em></span></a>
 <a class="poster" href="checkers-room.html"><img src="checkers-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Garden Checkers<em class="playnow">Play Now</em></span></a>
 <a class="poster" href="backgammon-room.html"><img src="library-bg.jpg" alt=""><span class="room-badge">Play vs House</span><span>Library Backgammon<em class="playnow">Play Now</em></span></a>
@@ -798,6 +801,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <a class="poster" href="cribbage-room.html"><img src="cribbage-snug.jpg" alt=""><span class="room-badge">Play vs House</span><span>Club Cribbage<em class="playnow">Play Now</em></span></a>
 <a class="poster" href="shutbox-room.html"><img src="shutbox-tavern.jpg" alt=""><span class="room-badge">Play vs House</span><span>Tavern Shut the Box<em class="playnow">Play Now</em></span></a>
 <a class="poster" href="morris-room.html"><img src="morris-cloister.jpg" alt=""><span class="room-badge">Play vs House</span><span>Cloister Morris<em class="playnow">Play Now</em></span></a>
+</div>
 </div>
 <aside class="dashboard-sidebar-right">
   <div class="drawer-handle" aria-hidden="true"><span></span></div>
@@ -1069,6 +1073,7 @@ async function paint(session){
   if(sessionUser){
     var prof=await loadProfile(sessionUser);
     var handle=cleanName((prof && prof.username) || myName);
+    if(sessionUser.is_anonymous || (prof && prof.is_guest) || (handle && handle.indexOf("guest")===0)) handle="Guest";
     who.textContent=handle ? ("Signed in as "+handle) : "Signed in";
     document.getElementById("seatHint").textContent=handle
       ? ("Friends invite you as "+handle+".")
