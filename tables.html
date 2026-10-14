@@ -104,6 +104,17 @@ body{background-attachment:scroll}
     }
   }
 
+
+.room-badge{position:absolute;top:10px;right:10px;z-index:2;background:rgba(15,23,42,0.72);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px)}
+.poster .playnow{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-top:2px}
+.bw-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(8,12,20,.45);backdrop-filter:blur(6px)}
+.bw-modal.on{display:flex}
+.bw-modal .card{width:min(420px,90vw);background:rgba(15,23,42,.82);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:28px;color:#fff;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.bw-modal h3{margin:0 0 8px;font-size:18px}
+.bw-modal p{margin:0 0 18px;color:rgba(255,255,255,.8);font-size:14px;line-height:1.5}
+.bw-modal button{background:#1A2744;color:#fff;border:1px solid #d4af37;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+.mobile-nav-action-tab.guest-hidden{display:none !important}
+
 </style>
 <style id="cosmic-glass">
 /* ==========================================
@@ -529,6 +540,10 @@ header {
 
 <!-- Fixed Mobile Application Navigation Deck -->
 <div class="mobile-app-navigation-bar">
+  <div class="mobile-nav-action-tab" id="tab-rooms" onclick="closeMobileDrawers(); window.scrollTo({top:0,behavior:'smooth'})">
+    <span class="mobile-nav-action-tab-icon">🪑</span>
+    <span>Rooms</span>
+  </div>
   <div class="mobile-nav-action-tab" id="tab-join" onclick="openTargetMobileDrawer('left')">
     <span class="mobile-nav-action-tab-icon">👤</span>
     <span>Join</span>
@@ -537,11 +552,11 @@ header {
     <span class="mobile-nav-action-tab-icon">🔮</span>
     <span>Universe</span>
   </div>
-  <div class="mobile-nav-action-tab" id="tab-mail" onclick="openTargetMobileDrawer('mail')">
+  <div class="mobile-nav-action-tab" id="tab-mail" class="needs-auth" onclick="openTargetMobileDrawer('mail')">
     <span class="mobile-nav-action-tab-icon">✉️</span>
     <span>Mail</span>
   </div>
-  <div class="mobile-nav-action-tab" id="tab-avatar" onclick="openTargetMobileDrawer('avatar')">
+  <div class="mobile-nav-action-tab" id="tab-avatar" class="needs-auth" onclick="openTargetMobileDrawer('avatar')">
     <span class="mobile-nav-action-tab-icon">🎭</span>
     <span>Identity</span>
   </div>
@@ -595,7 +610,7 @@ function openTargetMobileDrawer(targetZone) {
     document.getElementById('tab-mail').classList.add('active');
   }
   else if (targetZone === 'avatar') {
-    alert('BrainWhim Club Member Avatar Studio Coming Soon!');
+    openHouseModal('Identity','Your portrait studio is being furnished. It will live here when the club is ready.');
     document.getElementById('tab-avatar').classList.add('active');
   }
 }
@@ -633,6 +648,7 @@ function injectMobileMailboxRedirect() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  if(typeof applyGuestNav==='function') applyGuestNav();
   injectMobileMailboxRedirect();
 
   document.querySelectorAll('.dashboard-sidebar-left, .dashboard-sidebar-right').forEach(function(drawer){
@@ -769,16 +785,16 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </aside>
 <div class="rooms main-tables-grid-content">
-<a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span>Garden Chess</span></a>
-<a class="poster" href="checkers-room.html"><img src="checkers-parlor.jpg" alt=""><span>Garden Checkers</span></a>
-<a class="poster" href="backgammon-room.html"><img src="library-bg.jpg" alt=""><span>Library Backgammon</span></a>
-<a class="poster" href="yahtzee-room.html"><img src="yahtzee-parlor.jpg" alt=""><span>Club Yahtzee</span></a>
-<a class="poster" href="dominoes-room.html"><img src="dominoes-parlor.jpg" alt=""><span>Sunroom Dominoes</span></a>
-<a class="poster" href="othello-room.html"><img src="othello-terrace.jpg" alt=""><span>Night Terrace Othello</span></a>
-<a class="poster" href="mancala-room.html"><img src="mancala-pavilion.jpg" alt=""><span>Pavilion Mancala</span></a>
-<a class="poster" href="cribbage-room.html"><img src="cribbage-snug.jpg" alt=""><span>Club Cribbage</span></a>
-<a class="poster" href="shutbox-room.html"><img src="shutbox-tavern.jpg" alt=""><span>Tavern Shut the Box</span></a>
-<a class="poster" href="morris-room.html"><img src="morris-cloister.jpg" alt=""><span>Cloister Morris</span></a>
+<a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Garden Chess<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="checkers-room.html"><img src="checkers-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Garden Checkers<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="backgammon-room.html"><img src="library-bg.jpg" alt=""><span class="room-badge">Play vs House</span><span>Library Backgammon<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="yahtzee-room.html"><img src="yahtzee-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Club Yahtzee<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="dominoes-room.html"><img src="dominoes-parlor.jpg" alt=""><span class="room-badge">Play vs House</span><span>Sunroom Dominoes<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="othello-room.html"><img src="othello-terrace.jpg" alt=""><span class="room-badge">Play vs House</span><span>Night Terrace Othello<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="mancala-room.html"><img src="mancala-pavilion.jpg" alt=""><span class="room-badge">Play vs House</span><span>Pavilion Mancala<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="cribbage-room.html"><img src="cribbage-snug.jpg" alt=""><span class="room-badge">Play vs House</span><span>Club Cribbage<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="shutbox-room.html"><img src="shutbox-tavern.jpg" alt=""><span class="room-badge">Play vs House</span><span>Tavern Shut the Box<em class="playnow">Play Now</em></span></a>
+<a class="poster" href="morris-room.html"><img src="morris-cloister.jpg" alt=""><span class="room-badge">Play vs House</span><span>Cloister Morris<em class="playnow">Play Now</em></span></a>
 </div>
 <aside class="dashboard-sidebar-right">
   <div class="drawer-handle" aria-hidden="true"><span></span></div>
@@ -1044,6 +1060,7 @@ async function paint(session){
   var form=document.getElementById("authForm");
   var out=document.getElementById("authOut");
   sessionUser=session && session.user ? session.user : null;
+  if(typeof applyGuestNav==="function") applyGuestNav();
   if(sessionUser){
     var prof=await loadProfile(sessionUser);
     var handle=cleanName((prof && prof.username) || myName);
@@ -1248,5 +1265,27 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+<div class="bw-modal" id="houseModal" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="card">
+    <h3 id="houseModalTitle">BrainWhim</h3>
+    <p id="houseModalBody"></p>
+    <button type="button" onclick="document.getElementById('houseModal').classList.remove('on')">Close</button>
+  </div>
+</div>
+<script>
+function openHouseModal(title, body){
+  document.getElementById('houseModalTitle').textContent = title;
+  document.getElementById('houseModalBody').textContent = body;
+  document.getElementById('houseModal').classList.add('on');
+}
+function applyGuestNav(){
+  var known = (typeof sessionUser !== 'undefined' && sessionUser && !sessionUser.is_anonymous);
+  document.querySelectorAll('.needs-auth').forEach(function(el){
+    el.classList.toggle('guest-hidden', !known);
+  });
+}
+</script>
+
 </body>
 </html>
