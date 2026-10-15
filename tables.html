@@ -14,7 +14,7 @@
 html,body{margin:0;min-height:100%;font-family:Montserrat,sans-serif;color:#1A2744}
 body{min-height:100dvh;background:#0a1630 url("galaxy-home.jpg") center/cover no-repeat fixed}
 .veil{display:none}
-header{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:rgba(15,23,42,0.4);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);min-height:72px;border-bottom:1px solid rgba(255,255,255,0.12)}
+header{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:rgba(15,23,42,0.38);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);min-height:72px;border-bottom:1px solid rgba(255,255,255,0.12)}
 .brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
 .brand img{width:56px;height:56px;object-fit:contain;margin-right:-4px}
 .whim{font-family:Pacifico,cursive;color:var(--whim)}
@@ -147,6 +147,10 @@ body{background-attachment:scroll}
 .player-row .who{flex:1;text-align:left}
 .player-row .rank{color:rgba(255,255,255,0.55);font-weight:500;font-size:11px;letter-spacing:.04em}
 
+
+.titles-ranking-box p.here{color:#e5c158 !important;font-weight:700}
+.titles-ranking-box p.here::before{content:"●  ";color:#e5c158}
+
 </style>
 <style id="cosmic-glass">
 /* ==========================================
@@ -193,8 +197,8 @@ header {
   height: 80px !important;
   width: 100vw !important;
   background: rgba(15, 23, 42, 0.38) !important; 
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
   display: flex !important;
   align-items: center !important;
@@ -807,7 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <input id="unameLater" maxlength="20" placeholder="choose a username">
       <button class="btn go" type="button" onclick="saveUsername()">Save name</button>
     </div>
-    <button class="btn ghost" type="button" onclick="bwSignOut()">Sign out</button>
+    <button class="btn ghost" type="button" id="seatAction" onclick="seatAction()">Sign out</button>
   </div>
 </section>
 </div>
@@ -848,10 +852,10 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 <div class="sidebar-glass-container titles-ranking-box">
   <h4>✨ Celestial Standing</h4>
-  <p>Novice Seeker (0–100)</p>
-  <p>Grand Strategist (101–500)</p>
-  <p>Parlor Master (501–1000)</p>
-  <p>Cosmic Vanguard (1001+)</p>
+  <p id="tier0">Novice Seeker (0–100)</p>
+  <p id="tier1">Grand Strategist (101–500)</p>
+  <p id="tier2">Parlor Master (501–1000)</p>
+  <p id="tier3">Cosmic Vanguard (1001+)</p>
 </div>
 </aside>
 
@@ -1101,6 +1105,8 @@ async function paint(session){
     var prof=await loadProfile(sessionUser);
     var handle=cleanName((prof && prof.username) || myName);
     if(sessionUser.is_anonymous || (prof && prof.is_guest) || (handle && handle.indexOf("guest")===0)) handle="Guest";
+    var seatBtn=document.getElementById("seatAction");
+    if(seatBtn) seatBtn.textContent = (sessionUser.is_anonymous||handle==="Guest") ? "Sign in" : "Sign out";
     who.textContent=handle ? ("Signed in as "+handle) : "Signed in";
     document.getElementById("seatHint").textContent=handle
       ? ("Friends invite you as "+handle+".")
@@ -1109,6 +1115,8 @@ async function paint(session){
     document.getElementById("needName").style.display=(prof && prof.username)?"none":"flex";
     listenNotices();
     myPts=Number((prof && prof.skill_points)||0);
+    var tier = myPts>=1001?3:myPts>=501?2:myPts>=101?1:0;
+    for(var i=0;i<4;i++){ var el=document.getElementById("tier"+i); if(el) el.classList.toggle("here", i===tier); }
     myMember=!!(prof && prof.member);
     var title=typeof bwTitle==="function"?bwTitle(myPts):"New";
     who.textContent=(handle||"Signed in")+" · "+title+" · "+myPts+" pts"+(myMember?" · member":"");
@@ -1262,6 +1270,11 @@ async function bwForgot(){
   var r=await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin+"/tables.html"});
   if(r.error) bwErr(r.error);
   else document.getElementById("seatHint").textContent="Check that inbox for a reset link.";
+}
+
+function seatAction(){
+  if(!sessionUser || sessionUser.is_anonymous){ location.href="play.html#seat"; return; }
+  bwSignOut();
 }
 async function bwSignOut(){ await sb.auth.signOut(); }
 async function saveUsername(){
