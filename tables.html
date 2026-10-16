@@ -1578,16 +1578,28 @@ document.addEventListener('DOMContentLoaded', function() {
       btn.addEventListener('click', function(e) { if (window.innerWidth <= 900) { e.stopPropagation(); } });
     }
   });
-  setTimeout(function() {
-    var mobileBar = document.querySelector('.mobile-app-navigation-bar');
-    if (mobileBar) {
-      mobileBar.style.setProperty('position', 'fixed', 'important');
-      mobileBar.style.setProperty('bottom', '0px', 'important');
-      mobileBar.style.setProperty('padding', '0px', 'important');
-      mobileBar.style.setProperty('margin', '0px 0px 8px 0px', 'important');
-      mobileBar.style.setProperty('height', '64px', 'important');
-    }
-  }, 100);
+  function anchorDock(){
+    var bar = document.querySelector('.mobile-app-navigation-bar');
+    if (!bar) return;
+    if (window.innerWidth > 900) return;
+    bar.style.setProperty('position', 'fixed', 'important');
+    bar.style.setProperty('margin', '0', 'important');
+    bar.style.setProperty('height', '64px', 'important');
+    var vv = window.visualViewport;
+    var gap = vv ? Math.max(0, window.innerHeight - vv.offsetTop - vv.height) : 0;
+    var safe = 0;
+    try { safe = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0; } catch(e){}
+    var inset = parseFloat(getComputedStyle(document.documentElement).paddingBottom) || 0;
+    bar.style.setProperty('bottom', (gap + 8) + 'px', 'important');
+  }
+  document.documentElement.style.setProperty('--sab', 'env(safe-area-inset-bottom)');
+  anchorDock();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', anchorDock);
+    window.visualViewport.addEventListener('scroll', anchorDock);
+  }
+  window.addEventListener('resize', anchorDock);
+  window.addEventListener('orientationchange', anchorDock);
 });
 
 </script>
