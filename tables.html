@@ -1580,13 +1580,16 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   function anchorDock(){
     var bar = document.querySelector('.mobile-app-navigation-bar');
-    if (!bar) return;
-    if (window.innerWidth > 900) return;
+    if (!bar || window.innerWidth > 900) return;
+    var vv = window.visualViewport;
+    var layoutH = document.documentElement.clientHeight;
+    var visualBottom = vv ? (vv.offsetTop + vv.height) : layoutH;
+    var lift = Math.max(8, layoutH - visualBottom + 8);
     bar.style.setProperty('position', 'fixed', 'important');
     bar.style.setProperty('left', '50%', 'important');
     bar.style.setProperty('transform', 'translateX(-50%)', 'important');
     bar.style.setProperty('top', 'auto', 'important');
-    bar.style.setProperty('bottom', '0px', 'important');
+    bar.style.setProperty('bottom', lift + 'px', 'important');
     bar.style.setProperty('margin', '0', 'important');
     bar.style.setProperty('height', '64px', 'important');
     bar.style.setProperty('background', 'rgba(28, 39, 58, 0.4)', 'important');
@@ -1594,6 +1597,10 @@ document.addEventListener('DOMContentLoaded', function() {
     bar.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
   }
   anchorDock();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', anchorDock);
+    window.visualViewport.addEventListener('scroll', anchorDock);
+  }
   window.addEventListener('orientationchange', anchorDock);
 });
 
