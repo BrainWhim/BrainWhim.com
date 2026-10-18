@@ -11,8 +11,27 @@
   }
   var sb, room=null, pending=false, seen="";
   function snap(){ return {board:ch, turn:chTurn, last:chLast, over:chOver, rights:chRights, ep:chEp, you:chYouTook, bot:chBotTook}; }
+  /* The other player (or anyone who can write to this table) controls the saved
+     game data. Only accept a board that is exactly 8x8 of real piece letters or empty
+     squares; anything else is ignored. */
+  var PIECE=/^[pnbrqkPNBRQK]$/;
+  function okBoard(b){
+    if(!Array.isArray(b)||b.length!==8) return false;
+    for(var r=0;r<8;r++){
+      if(!Array.isArray(b[r])||b[r].length!==8) return false;
+      for(var c=0;c<8;c++){ var v=b[r][c]; if(v!=null && v!=="" && !PIECE.test(String(v))) return false; }
+    }
+    return true;
+  }
+  function okTray(a){
+    if(a==null) return true;
+    if(!Array.isArray(a)||a.length>32) return false;
+    for(var i=0;i<a.length;i++) if(!PIECE.test(String(a[i]))) return false;
+    return true;
+  }
   function apply(s){
     if(!s||!s.board) return;
+    if(!okBoard(s.board)||!okTray(s.you)||!okTray(s.bot)) return;
     ch=s.board; chTurn=s.turn||"w"; chLast=s.last||null; chOver=!!s.over;
     if(s.rights) chRights=s.rights; chEp=s.ep||null; if(s.you) chYouTook=s.you; if(s.bot) chBotTook=s.bot;
     if(typeof chPaint==="function") chPaint();

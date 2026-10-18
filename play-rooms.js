@@ -1,3 +1,13 @@
+/* SAFE RENDERING HELPER
+   Text that comes from the database (names, invite messages) must go on the page
+   as plain TEXT, never as HTML. This builds an element and sets its text safely,
+   so a malicious value can never run as code. Use it instead of innerHTML for data. */
+window.bwMakeEl=function(tag, cls, text){
+  var e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(text!=null) e.textContent=String(text);
+  return e;
+};
 window.BW_ROOMS={
   chess:"chess-room.html",
   checkers:"checkers-room.html",
@@ -168,9 +178,11 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   function showToast(text, code, nid, game){
     var el=document.getElementById("bwToast")||document.getElementById("toast");
     if(!el) return;
-    el.innerHTML=text+' <button class="btn" type="button">Sit down</button>';
-    var b=el.querySelector("button");
-    if(b) b.onclick=function(){ accept(nid, code, game); };
+    el.textContent=text;   // plain text only, never HTML
+    var b=bwMakeEl("button","btn","Sit down"); b.type="button";
+    b.onclick=function(){ accept(nid, code, game); };
+    el.appendChild(document.createTextNode(" "));
+    el.appendChild(b);
     el.classList.add("on");
     setTimeout(function(){ el.classList.remove("on"); }, 12000);
   }
@@ -212,12 +224,25 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       else dot.classList.remove("on");
     }
     if(!rows.length){ list.textContent="No notes yet."; return; }
-    list.innerHTML=rows.map(function(n){
-      var act=n.status==="pending" && n.room_code
-        ? '<div style="margin-top:6px"><button type="button" onclick="bwAcceptInvite(\''+n.id+'\',\''+n.room_code+'\',\''+(n.game||'')+'\')" style="border:0;border-radius:999px;padding:7px 12px;background:#1A2744;color:#fff;font-weight:700;margin-right:6px">Join</button><button type="button" onclick="declineInvite(\''+n.id+'\')" style="border:0;border-radius:999px;padding:7px 12px;background:#fff;border:1px solid #d7c9b0;font-weight:700">Not now</button></div>'
-        : '<div style="opacity:.7;margin-top:4px">'+n.status+'</div>';
-      return '<div class="bw-note">'+(n.body||"Invite")+" "+act+"</div>";
-    }).join("");
+    list.textContent="";
+    rows.forEach(function(n){
+      var row=bwMakeEl("div","bw-note");
+      row.appendChild(document.createTextNode((n.body||"Invite")+" "));   // plain text only
+      if(n.status==="pending" && n.room_code){
+        var act=bwMakeEl("div"); act.style.marginTop="6px";
+        var join=bwMakeEl("button","","Join"); join.type="button";
+        join.style.cssText="border:0;border-radius:999px;padding:7px 12px;background:#1A2744;color:#fff;font-weight:700;margin-right:6px";
+        join.onclick=function(){ accept(n.id, n.room_code, n.game||""); };
+        var no=bwMakeEl("button","","Not now"); no.type="button";
+        no.style.cssText="border:1px solid #d7c9b0;border-radius:999px;padding:7px 12px;background:#fff;font-weight:700";
+        no.onclick=function(){ decline(n.id); };
+        act.appendChild(join); act.appendChild(no); row.appendChild(act);
+      } else {
+        var st=bwMakeEl("div","",n.status); st.style.cssText="opacity:.7;margin-top:4px";
+        row.appendChild(st);
+      }
+      list.appendChild(row);
+    });
   }
   async function listen(){
     var client=sbClient(); if(!client) return;

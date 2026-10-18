@@ -1330,7 +1330,11 @@ async function declineInvite(id){
 function toggleMail(){ document.getElementById("mailPane").classList.toggle("on"); loadMail(); }
 function showToast(text, code, nid, game){
   var el=document.getElementById("toast");
-  el.innerHTML=text+' <button class="btn go" type="button" style="margin-left:8px" onclick="acceptInvite(\''+nid+'\',\''+code+'\',\''+(game||'')+'\')">Sit down</button>';
+  el.textContent=text;   // plain text only, never HTML
+  var sitBtn=bwMakeEl("button","btn go","Sit down"); sitBtn.type="button"; sitBtn.style.marginLeft="8px";
+  sitBtn.onclick=function(){ acceptInvite(nid, code, game||""); };
+  el.appendChild(document.createTextNode(" "));
+  el.appendChild(sitBtn);
   el.classList.add("on");
   setTimeout(function(){ el.classList.remove("on"); }, 12000);
 }
@@ -1348,12 +1352,24 @@ async function loadMail(){
   if(pending.length){ dot.textContent=String(pending.length); dot.classList.add("on"); }
   else dot.classList.remove("on");
   if(!rows.length){ document.getElementById("mailList").textContent="No notes yet."; return; }
-  document.getElementById("mailList").innerHTML=rows.map(function(n){
-    var act=n.status==="pending" && n.room_code
-      ? '<div class="row" style="margin-top:6px"><button class="btn go" type="button" onclick="acceptInvite(\''+n.id+'\',\''+n.room_code+'\',\''+(n.game||'')+'\')">Join</button><button class="btn ghost" type="button" onclick="declineInvite(\''+n.id+'\')">Not now</button></div>'
-      : '<div style="opacity:.7;margin-top:4px">'+n.status+'</div>';
-    return '<div class="note-row">'+(n.body||"Invite")+' '+act+'</div>';
-  }).join("");
+  var mailList=document.getElementById("mailList");
+  mailList.textContent="";
+  rows.forEach(function(n){
+    var row=bwMakeEl("div","note-row");
+    row.appendChild(document.createTextNode((n.body||"Invite")+" "));   // plain text only
+    if(n.status==="pending" && n.room_code){
+      var act=bwMakeEl("div","row"); act.style.marginTop="6px";
+      var join=bwMakeEl("button","btn go","Join"); join.type="button";
+      join.onclick=function(){ acceptInvite(n.id, n.room_code, n.game||""); };
+      var no=bwMakeEl("button","btn ghost","Not now"); no.type="button";
+      no.onclick=function(){ declineInvite(n.id); };
+      act.appendChild(join); act.appendChild(no); row.appendChild(act);
+    } else {
+      var st=bwMakeEl("div","",n.status); st.style.cssText="opacity:.7;margin-top:4px";
+      row.appendChild(st);
+    }
+    mailList.appendChild(row);
+  });
 }
 function listenNotices(){
   if(!sb || !sessionUser) return;
@@ -1469,13 +1485,18 @@ async function refreshOnline(){
   if(q.error){ box.textContent="Players online needs supabase-ladder.sql run once."; return; }
   var rows=q.data||[];
   if(!rows.length){ box.textContent="Just you in the parlor right now."; return; }
-  box.innerHTML=rows.map(function(p){
+  box.textContent="";
+  rows.forEach(function(p){
     var raw=p.username||"";
     var label=(p.is_guest || raw.indexOf("guest")===0) ? "Guest" : (p.display_name||raw||"Guest");
     var title=typeof bwTitle==="function"?bwTitle(p.skill_points):"New";
     var mine=cleanName(p.username)===myName;
-    return '<div class="player-row"><span class="dot"></span><span class="who">'+(mine?"You":label)+'</span><span class="rank">'+title+'</span></div>';
-  }).join("");
+    var row=bwMakeEl("div","player-row");
+    row.appendChild(bwMakeEl("span","dot"));
+    row.appendChild(bwMakeEl("span","who",mine?"You":label));   // plain text only
+    row.appendChild(bwMakeEl("span","rank",title));
+    box.appendChild(row);
+  });
 }
 function startPresence(){
   beat(); refreshOnline();
