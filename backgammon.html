@@ -622,6 +622,14 @@ body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none
 body.seated .bar button{display:none}
 
 </style>
+<script src="bw-auth.js"></script>
+<script>
+/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
+async function bwHouseGate(fn){
+  if(!window.BW){ fn(); return; }
+  if(await BW.startMatch({mode:"house"})) fn();
+}
+</script>
 </head>
 <body data-scene="ch">
 <header>
@@ -643,16 +651,16 @@ body.seated .bar button{display:none}
 <div class="wrap">
 <div id="room-c4" hidden>
 <div class="sitbar">
-<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the beach</button>
 <a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="newGame()">New game</button>
+<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
 </div>
 <h1>Beach Connect Four</h1>
 <p class="sub">You are cobalt. Ivory answers. Tap a column to drop.</p>
-<div class="bar"><span class="msg" id="c4msg">Your turn</span><button type="button" onclick="c4New()">New game</button></div>
+<div class="bar"><span class="msg" id="c4msg">Your turn</span><button type="button" onclick="bwHouseGate(c4New)">New game</button></div>
 <div id="c4Stage">
 <div id="c4Table">
 <div class="parlor">
@@ -663,16 +671,16 @@ body.seated .bar button{display:none}
 </div>
 <div id="room-ck" hidden>
 <div class="sitbar">
-<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the checkers garden</button>
 <a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="newGame()">New game</button>
+<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
 </div>
 <h1>Garden Checkers</h1>
 <p class="sub">You are cobalt. Ivory answers. Jump when you can. Kings go both ways.</p>
-<div class="bar"><span class="msg" id="ckmsg">Your turn</span><button type="button" onclick="ckNew()">New game</button></div>
+<div class="bar"><span class="msg" id="ckmsg">Your turn</span><button type="button" onclick="bwHouseGate(ckNew)">New game</button></div>
 <div id="ckStage">
 <div id="ckTable">
 <div class="taken" id="ckBotTook"><span class="lab">Opponent took</span></div>
@@ -685,16 +693,16 @@ body.seated .bar button{display:none}
 </div>
 <div id="room-ch">
 <div class="sitbar">
-<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the chess garden</button>
 <a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="chNew()">New game</button>
+<button class="stand" type="button" onclick="bwHouseGate(chNew)">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
 </div>
 <h1>Garden Chess</h1>
 <p class="sub">You are cobalt with gold. Ivory answers. Tap a piece, then a square.</p>
-<div class="bar"><span class="msg" id="chmsg">Your turn</span><button type="button" onclick="chNew()">New game</button></div>
+<div class="bar"><span class="msg" id="chmsg">Your turn</span><button type="button" onclick="bwHouseGate(chNew)">New game</button></div>
 <div id="stage">
 <div id="tableBoard">
 <div class="taken" id="chBotTook"><span class="lab">Opponent took</span></div>
@@ -707,16 +715,16 @@ body.seated .bar button{display:none}
 </div>
 <div id="room-bg" hidden>
 <div class="sitbar">
-<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the library</button>
 <a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="newGame()">New game</button>
+<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
 </div>
 <h1>Library Backgammon</h1>
 <p class="sub">You are ivory, moving home to the lower right. Hit singles. Bear off when all are home.</p>
-<div class="bar"><span class="msg" id="bgmsg">Roll to start</span><button type="button" onclick="bgNew()">New game</button></div>
+<div class="bar"><span class="msg" id="bgmsg">Roll to start</span><button type="button" onclick="bwHouseGate(bgNew)">New game</button></div>
 <div id="bgStage">
 <div id="bgTable">
 <div class="bgwrap">
@@ -800,7 +808,7 @@ function showBanner(title, sub, again, kind){
   document.getElementById("winTitle").textContent=headline;
   document.getElementById("winSub").textContent="";
   var b=document.getElementById("winAgain");
-  b.onclick=function(){ hideBanner(); if(again) again(); };
+  b.onclick=function(){ hideBanner(); if(again) bwHouseGate(again); };
   v.className="on "+kind;
   v.querySelectorAll(".spark").forEach(function(n){ n.remove(); });
   if(kind==="win"){

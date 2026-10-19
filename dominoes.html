@@ -119,6 +119,14 @@ body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none
 body.seated .bar button{display:none}
 
 </style>
+<script src="bw-auth.js"></script>
+<script>
+/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
+async function bwHouseGate(fn){
+  if(!window.BW){ fn(); return; }
+  if(await BW.startMatch({mode:"house"})) fn();
+}
+</script>
 </head>
 <body>
 <header>
@@ -138,10 +146,10 @@ body.seated .bar button{display:none}
 <a href="morris.html">Morris</a>
 </div>
 <div class="sitbar">
-<button class="sit" type="button" onclick="sitDown()">Sit down to play</button>
+<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
 <button class="stand" type="button" onclick="standUp()">Back to the sunroom</button>
 <a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="newGame()">New game</button>
+<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
 <button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
 <button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
 </div>
@@ -198,7 +206,7 @@ function standUp(){ document.body.classList.remove("seated"); }
 function hideBanner(){ document.getElementById("winveil").className=""; }
 function showBanner(kind){
   document.getElementById("winTitle").textContent = kind==="win" ? "Congratulations! You win!" : kind==="draw" ? "It's a Draw!" : "Better luck next time!";
-  document.getElementById("winAgain").onclick=function(){ hideBanner(); newGame(); };
+  document.getElementById("winAgain").onclick=function(){ hideBanner(); bwHouseGate(newGame); };
   document.getElementById("winveil").className="on "+kind;
 }
 function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>"}
