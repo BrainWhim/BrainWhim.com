@@ -630,9 +630,9 @@ header {
     <span class="mobile-nav-action-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
     <span>Rooms</span>
   </div>
-  <div class="mobile-nav-action-tab" id="tab-join" onclick="location.href='play.html#seat'">
+  <div class="mobile-nav-action-tab" id="tab-join" onclick="tabJoin()">
     <span class="mobile-nav-action-tab-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c1.2-3 3.6-4.5 7-4.5S17.8 16 19 19"/></svg></span>
-    <span>Join</span>
+    <span id="tabJoinLabel">Sign in</span>
   </div>
   <div class="mobile-nav-action-tab" id="tab-universe" onclick="openTargetMobileDrawer('universe')">
     <span class="mobile-nav-action-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3a13 13 0 0 0 0 18 13 13 0 0 0 0-18"/><path d="M3 12h18"/></svg></span>
@@ -650,6 +650,16 @@ header {
 
 <!-- Immersive Mobile Gestural Interface Engine -->
 <script>
+function tabJoin(){
+  if (typeof sessionUser !== 'undefined' && sessionUser) { openTargetMobileDrawer('left'); }
+  else { BW.openAuth(); }
+}
+function navJoin(){
+  if (typeof sessionUser !== 'undefined' && sessionUser) {
+    if (window.innerWidth <= 900) openTargetMobileDrawer('left');
+    else document.getElementById('authBox').scrollIntoView({behavior:'smooth'});
+  } else { BW.openAuth(); }
+}
 window.bwMailTap = function(){
   if(window.innerWidth<=900){ openTargetMobileDrawer('mail'); }
   else { var m=document.getElementById('mailPane'); if(m) m.scrollIntoView({behavior:'smooth',block:'center'}); }
@@ -708,30 +718,7 @@ function closeMobileDrawers() {
   document.querySelectorAll('.mobile-nav-action-tab').forEach(t => t.classList.remove('active'));
 }
 
-function injectMobileMailboxRedirect() {
-  if (window.innerWidth > 900) return;
-  var mailBoxElement = document.getElementById('mailList');
-  if(mailBoxElement) {
-    if (typeof sessionUser !== 'undefined' && sessionUser) return;
-    mailBoxElement.innerHTML = 'Please <span class="sidebar-auth-redirect" style="color:#7EB6D9; text-decoration:underline; font-weight:700; cursor:pointer;">Sign In</span> to view invites.';
-    
-    var linkNode = mailBoxElement.querySelector('.sidebar-auth-redirect');
-    if(linkNode) {
-      var redirectTrigger = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeMobileDrawers();
-        setTimeout(function(){ 
-          openTargetMobileDrawer('left'); 
-          var input = document.getElementById('email'); 
-          if(input){ input.focus(); }
-        }, 320);
-      };
-      linkNode.addEventListener('click', redirectTrigger);
-      linkNode.addEventListener('touchstart', redirectTrigger, {passive: false});
-    }
-  }
-}
+function injectMobileMailboxRedirect() { /* signed-out mailbox text is built by signedOutMail() */ }
 
 document.addEventListener('DOMContentLoaded', function() {
   if(typeof applyGuestNav==='function') applyGuestNav();
@@ -1050,6 +1037,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
+<script src="bw-auth.js"></script>
 </head>
 <body>
 <div class="veil"></div>
@@ -1058,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <div class="hdr-right">
 <nav class="hdr">
-  <a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a><a href="play.html#seat">Join</a>
+  <a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a><a href="#" id="navJoin" onclick="navJoin();return false;">Sign in</a>
 </nav>
 <button class="bell" id="bellBtn" type="button" onclick="window.bwMailTap && window.bwMailTap()" title="Mailbox" aria-label="Mailbox"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 7 9-7"/></svg><span class="dot" id="mailDot">0</span></button>
 </div>
@@ -1071,24 +1059,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
   <p class="who" id="who">Checking…</p>
-  <p class="hint" id="seatHint">Sign in lives on the Play landing.</p>
+  <p class="hint" id="seatHint">Sign in or create a free account. No page change.</p>
   <p class="err" id="authErr"></p>
   <div id="authForm">
-    <a class="btn go" href="play.html#seat">Sign in on Play</a>
-    <a class="btn ghost" href="play.html#seat">Create account</a>
-    <button class="btn ghost" type="button" onclick="playAsGuest()">Play as guest</button>
-    <div id="signFields" class="hidden">
-      <input id="email" autocomplete="username" placeholder="email or username">
-      <input id="pass" type="password" autocomplete="current-password" placeholder="password">
-      <button class="btn go" type="button" onclick="bwSignIn()">Enter</button>
-      <button class="btn ghost" type="button" onclick="bwForgot()">Forgot password</button>
-    </div>
-    <div id="createExtra" class="hidden">
-      <input id="emailCreate" type="email" placeholder="email">
-      <input id="passCreate" type="password" placeholder="password (6+ characters)">
-      <input id="uname" type="text" maxlength="20" placeholder="username">
-      <button class="btn go" type="button" id="createGo" onclick="bwSignUp()">Save account</button>
-    </div>
+    <button class="btn go" type="button" onclick="BW.openAuth()">Sign in or create account</button>
   </div>
   <div id="authOut" class="closed">
     <div id="needName" style="display:none">
@@ -1102,8 +1076,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="premium-passport-card">
   <div class="passport-glow"></div>
   <h5>✨ Club Membership</h5>
-  <p>Guests are limited to 3 daily online matches. Upgrade to unlock all 10 premium parlor rooms, custom piece sets, and unlimited global match play.</p>
-  <button class="upgrade-club-btn" type="button" onclick="location.href='index.html#club'">Join the Club</button>
+  <p>Guests get 3 matches a day against The House. A free account gets 3 a day, online or against The House, with your points saved. The Club is unlimited, with premium piece sets.</p>
+  <button class="upgrade-club-btn" type="button" onclick="location.href='member.html'">Join the Club</button>
 </div>
 <div class="whim-box" onclick="bwWhim()">
   <p class="whim-label">✨ Tap for Whims</p>
@@ -1166,11 +1140,17 @@ function startBoard(){
   return {board:[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]],
     turn:"w", last:null, over:false, rights:{wk:1,wq:1,bk:1,bq:1}, ep:null};
 }
-async function needSession(){
-  if(!sb){ alert("play-config.js is missing."); return null; }
-  var s=(await sb.auth.getSession()).data.session;
-  if(!s){ alert("Sign in first."); return null; }
-  return s;
+async function needSession(reason){
+  /* No alert, no redirect: if nobody is signed in, the sign-in window opens right here. */
+  return await BW.requireSession(reason || "Create a free account to play other people online. It takes a few seconds.");
+}
+function signedOutMail(){
+  var list=document.getElementById("mailList"); if(!list) return;
+  list.textContent="";
+  var b=bwMakeEl("button","","Sign in"); b.type="button";
+  b.style.cssText="border:0;background:none;padding:0;font:inherit;font-weight:700;color:#7EB6D9;text-decoration:underline;cursor:pointer";
+  b.onclick=function(){ BW.openAuth({reason:"Sign in to see your invites."}); };
+  list.appendChild(b); list.appendChild(document.createTextNode(" to view invites."));
 }
 var ROOM_PAGES={
   chess:"chess.html",
@@ -1279,7 +1259,7 @@ async function findOpen(game, me){
 async function playOnline(game){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
-  if(!(await canPlayOnline())) return;
+  if(!(await BW.startMatch({mode:"online"}))) return;
   var open=await findOpen(game, s.user.id);
   if(!open){ await new Promise(function(r){ setTimeout(r, 1200); }); open=await findOpen(game, s.user.id); }
   if(open){
@@ -1301,6 +1281,7 @@ async function inviteFriend(game){
   if(p.error){ alert(p.error.message); return; }
   if(!p.data){ alert("No player with that username."); return; }
   if(p.data.id===s.user.id){ alert("That’s you."); return; }
+  if(!(await BW.startMatch({mode:"online"}))) return;
   var room=await makeRoom("private", game);
   if(!room) return;
   var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":game==="cribbage"?"club cribbage":game==="shutbox"?"tavern Shut the Box":"garden chess";
@@ -1312,7 +1293,8 @@ async function inviteFriend(game){
   goRoom(game, room.code);
 }
 async function acceptInvite(id, code, gameHint){
-  var s=await needSession(); if(!s) return;
+  var s=await needSession("Sign in to join your friend's table."); if(!s) return;
+  if(!(await BW.startMatch({mode:"online"}))) return;
   var q=await sb.from("rooms").select("*").eq("code", code).single();
   if(q.error){ alert("That table closed."); return; }
   if(q.data.host!==s.user.id && !q.data.guest){
@@ -1340,7 +1322,7 @@ function showToast(text, code, nid, game){
 }
 async function loadMail(){
   if(!sb || !sessionUser){
-    document.getElementById("mailList").innerHTML = 'Please <span class="sidebar-auth-redirect" style="color:#7EB6D9;text-decoration:underline;font-weight:700;cursor:pointer" onclick="if(window.innerWidth<=900&&typeof openTargetMobileDrawer===\'function\'){openTargetMobileDrawer(\'left\')}else if(typeof showSignIn===\'function\'){showSignIn()}">Sign In</span> to view invites.';
+    signedOutMail();
     document.getElementById("mailDot").classList.remove("on");
     return;
   }
@@ -1384,20 +1366,18 @@ function listenNotices(){
   loadMail();
 }
 async function loadProfile(user){
-  var p=await sb.from("profiles").select("username,display_name,skill_points,member,email,online_day,online_count").eq("id", user.id).maybeSingle();
+  var p=await sb.from("profiles").select("username,display_name,skill_points,member,online_day,online_count").eq("id", user.id).maybeSingle();
   myName=(p.data && (p.data.username||p.data.display_name)) || (user.email||"").split("@")[0];
   return p.data;
 }
 function ready(){
-  var cfg=window.BW_PLAY||{};
   var who=document.getElementById("who");
-  if(!cfg.url || cfg.url.indexOf("YOUR-PROJECT")>=0){
-    who.textContent="Add your project URL and anon key to play-config.js";
-    return;
-  }
-  sb=supabase.createClient(cfg.url, cfg.anonKey);
-  sb.auth.onAuthStateChange(function(ev, session){ paint(session); });
-  sb.auth.getSession().then(function(r){ paint(r.data.session); });
+  sb=BW.client();
+  if(!sb){ who.textContent="Add your project URL and anon key to play-config.js"; return; }
+  BW.onChange(function(st){
+    if(st.event==="TOKEN_REFRESHED") return;
+    paint(st.user ? {user:st.user} : null);
+  });
 }
 async function paint(session){
   var who=document.getElementById("who");
@@ -1405,6 +1385,8 @@ async function paint(session){
   var out=document.getElementById("authOut");
   sessionUser=session && session.user ? session.user : null;
   if(typeof applyGuestNav==="function") applyGuestNav();
+  var tj=document.getElementById("tabJoinLabel"); if(tj) tj.textContent=sessionUser?"Account":"Sign in";
+  var nj=document.getElementById("navJoin"); if(nj) nj.textContent=sessionUser?"Account":"Sign in";
   if(sessionUser){
     var prof=await loadProfile(sessionUser);
     var handle=cleanName((prof && prof.username) || myName);
@@ -1429,49 +1411,12 @@ async function paint(session){
     stopPresence();
     myName=""; myPts=0; myMember=false;
     who.textContent="Sign in to keep a seat";
-    document.getElementById("seatHint").textContent="Sign in with email or your username, or sit as a guest.";
+    document.getElementById("seatHint").textContent="Sign in with your email, phone, or username. Guests can play The House (3 a day).";
     form.classList.remove("closed"); out.classList.add("closed");
     document.getElementById("mailDot").classList.remove("on");
-    document.getElementById("mailList").innerHTML = 'Please <span class="sidebar-auth-redirect" onclick="if(typeof showSignIn===\'function\'){ showSignIn(); } var input=document.getElementById(\'email\'); if(input){ setTimeout(function(){ input.focus(); input.style.transition=\'all 0.3s ease\'; input.style.boxShadow=\'0 0 12px rgba(201,166,107,0.95)\'; input.style.borderColor=\'#C9A66B\'; }, 50); setTimeout(function(){ if(input){ input.style.boxShadow=\'none\'; input.style.borderColor=\'rgba(255,255,255,0.2)\'; } }, 1250); }">Sign In</span> to view invites.';
+    signedOutMail();
     document.getElementById("onlineList").textContent="Sign in to see who’s in the parlor.";
   }
-}
-function todayStamp(){ return new Date().toISOString().slice(0,10); }
-async function canPlayOnline(){
-  var prof=await loadProfile(sessionUser);
-  if(prof && prof.member) return true;
-  var day=todayStamp();
-  var count=Number((prof && prof.online_count)||0);
-  if(!prof || prof.online_day!==day) count=0;
-  if(count>=3){
-    alert("That’s 3 online games today. Sit vs the house as much as you like, or become a member for unlimited tables.");
-    return false;
-  }
-  await sb.from("profiles").update({online_day:day, online_count:count+1, last_seen:new Date().toISOString()}).eq("id", sessionUser.id);
-  return true;
-}
-async function playAsGuest(){
-  bwErr("");
-  var n="Guest "+(1000+Math.floor(Math.random()*9000));
-  var un=cleanName(n);
-  if(sb){
-    var r=await sb.auth.signInAnonymously();
-    if(!r.error && r.data && r.data.user){
-      await sb.from("profiles").upsert({id:r.data.user.id, username:un, display_name:n, is_guest:true, skill_points:0});
-      if(typeof closeMobileDrawers==="function") closeMobileDrawers();
-      return;
-    }
-    var why = (r && r.error && r.error.message) ? r.error.message : "Supabase did not return a guest session.";
-    window._bwGuestWhy = why;
-  }
-  localStorage.setItem("bwGuest", JSON.stringify({name:n, username:un, at:Date.now()}));
-  myName=un;
-  var who=document.getElementById("who");
-  if(who) who.textContent="Sitting as "+n;
-  var hint=document.getElementById("seatHint");
-  if(hint) hint.textContent="You are in as a guest. Sit down and play the house.";
-  bwErr({message:"You are seated as a guest and can play the house. Online play is paused: "+(window._bwGuestWhy||"Supabase did not open a guest session.")});
-  if(typeof closeMobileDrawers==="function") closeMobileDrawers();
 }
 async function beat(){
   if(!sb || !sessionUser) return;
@@ -1507,20 +1452,6 @@ function stopPresence(){
   if(beatTimer){ clearInterval(beatTimer); beatTimer=null; }
 }
 function bwErr(e){ document.getElementById("authErr").textContent=e? (e.message||String(e)) : ""; }
-function hideAuthPanels(){
-  document.getElementById("signFields").classList.add("hidden");
-  document.getElementById("createExtra").classList.add("hidden");
-}
-function showSignIn(){
-  hideAuthPanels();
-  document.getElementById("signFields").classList.remove("hidden");
-  document.getElementById("seatHint").textContent="Use your email or username, and your password.";
-}
-function showCreate(){
-  hideAuthPanels();
-  document.getElementById("createExtra").classList.remove("hidden");
-  document.getElementById("seatHint").textContent="Email, password, and the username friends will use to invite you.";
-}
 function openPoster(btn){
   var card=btn.closest(".poster");
   var game=card&&card.getAttribute("data-game");
@@ -1541,51 +1472,11 @@ function toggleLadder(){
   var h=document.getElementById("ladderHint");
   h.style.display = h.style.display==="none"?"block":"none";
 }
-async function bwSignUp(){
-  bwErr("");
-  var username=cleanName(document.getElementById("uname").value);
-  var email=(document.getElementById("emailCreate")||document.getElementById("email")).value.trim();
-  var password=(document.getElementById("passCreate")||document.getElementById("pass")).value;
-  if(username.length<3){ bwErr({message:"Pick a username (3+ letters or numbers)."}); return; }
-  var r=await sb.auth.signUp({email:email, password:password, options:{data:{username:username, display_name:username}}});
-  if(r.error){ bwErr(r.error); return; }
-  if(r.data.user){
-    await sb.from("profiles").upsert({id:r.data.user.id, username:username, display_name:username, email:email});
-  }
-  document.getElementById("who").textContent="Check "+email+" to confirm, then sign in. Friends will find you as "+username+".";
-}
-async function bwSignIn(){
-  bwErr("");
-  var raw=document.getElementById("email").value.trim();
-  var password=document.getElementById("pass").value;
-  var email=raw;
-  if(raw && raw.indexOf("@")<0){
-    var look=await sb.rpc("email_for_username", {n: raw});
-    if(look.error || !look.data){ bwErr({message:"Use the email for this account this time. After one email sign-in, the username will work too."}); return; }
-    email=look.data;
-  }
-  var r=await sb.auth.signInWithPassword({email:email, password:password});
-  if(r.error) bwErr(r.error);
-  else if(r.data && r.data.user){
-    await sb.from("profiles").update({email:r.data.user.email}).eq("id", r.data.user.id);
-  }
-}
-async function bwForgot(){
-  bwErr("");
-  var raw=document.getElementById("email").value.trim();
-  var email=raw;
-  if(!email){ bwErr({message:"Enter your email first."}); return; }
-  if(email.indexOf("@")<0){ bwErr({message:"Password reset needs the email on the account."}); return; }
-  var r=await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin+"/tables.html"});
-  if(r.error) bwErr(r.error);
-  else document.getElementById("seatHint").textContent="Check that inbox for a reset link.";
-}
-
 function seatAction(){
-  if(!sessionUser || sessionUser.is_anonymous){ location.href="play.html#seat"; return; }
+  if(!sessionUser){ BW.openAuth(); return; }
   bwSignOut();
 }
-async function bwSignOut(){ await sb.auth.signOut(); }
+async function bwSignOut(){ await BW.signOut(); }
 async function saveUsername(){
   if(!sessionUser) return;
   var username=cleanName(document.getElementById("unameLater").value);

@@ -113,7 +113,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   function tick(){
     var cfg=window.BW_PLAY||{};
     if(!cfg.url || typeof supabase==="undefined") return;
-    if(!window.__bwSb) window.__bwSb=supabase.createClient(cfg.url, cfg.anonKey);
+    if(!window.__bwSb) window.__bwSb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url, cfg.anonKey);
     window.__bwSb.auth.getSession().then(function(r){
       var u=r.data && r.data.session && r.data.session.user;
       if(!u) return;
@@ -133,7 +133,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   function sbClient(){
     var cfg=window.BW_PLAY||{};
     if(!cfg.url || typeof supabase==="undefined") return null;
-    if(!window.__bwSb) window.__bwSb=supabase.createClient(cfg.url, cfg.anonKey);
+    if(!window.__bwSb) window.__bwSb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url, cfg.anonKey);
     return window.__bwSb;
   }
   function inject(){
@@ -189,7 +189,14 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
   async function accept(id, code, gameHint){
     var client=sbClient(); if(!client) return;
     var s=(await client.auth.getSession()).data.session;
-    if(!s){ location.href="tables.html"; return; }
+    if(!s || s.user.is_anonymous){
+      if(!window.BW){ location.href="tables.html"; return; }
+      var gate=await BW.openAuth({reason:"Sign in to join your friend's table."});
+      if(!gate.ok) return;
+      s=(await client.auth.getSession()).data.session;
+      if(!s) return;
+    }
+    if(window.BW && !(await BW.startMatch({mode:"online"}))) return;
     var q=await client.from("rooms").select("*").eq("code", code).single();
     if(q.error){ alert("That table closed."); return; }
     if(q.data.host!==s.user.id && !q.data.guest){
@@ -214,7 +221,14 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var client=sbClient();
     if(!client || !list) return;
     var s=(await client.auth.getSession()).data.session;
-    if(!s){ list.textContent="Sign in on Tables to see invites."; if(dot) dot.classList.remove("on"); return; }
+    if(!s || s.user.is_anonymous){
+      list.textContent="";
+      var lnk=bwMakeEl("button","","Sign in"); lnk.type="button";
+      lnk.style.cssText="border:0;background:none;padding:0;font:inherit;font-weight:700;color:#1A2744;text-decoration:underline;cursor:pointer";
+      lnk.onclick=function(){ if(window.BW) BW.openAuth({reason:"Sign in to see your invites."}); else location.href="tables.html"; };
+      list.appendChild(lnk); list.appendChild(document.createTextNode(" to see invites."));
+      if(dot) dot.classList.remove("on"); return;
+    }
     var q=await client.from("notices").select("*").eq("to_id", s.user.id).order("created_at",{ascending:false}).limit(12);
     if(q.error){ list.textContent=q.error.message; return; }
     var rows=q.data||[];
@@ -349,7 +363,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     try{
       var cfg=window.BW_PLAY||{};
       if(cfg.url && typeof supabase!=="undefined"){
-        if(!window.__bwSb) window.__bwSb=supabase.createClient(cfg.url, cfg.anonKey);
+        if(!window.__bwSb) window.__bwSb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url, cfg.anonKey);
         var sess=(await window.__bwSb.auth.getSession()).data.session;
         if(sess){
           var q=await window.__bwSb.from("profiles").select("skill_points,member").eq("id", sess.user.id).maybeSingle();

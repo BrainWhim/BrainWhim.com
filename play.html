@@ -1698,6 +1698,7 @@ header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,
 }
 </style>
 
+<script src="bw-auth.js"></script>
 </head>
 
 <body class="theme-play">
@@ -1787,34 +1788,14 @@ header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,
 
     
 <div class="seat-strip">
-  <button type="button" id="seatStatus" onclick="document.getElementById('seatPanel').classList.add('on')">Playing as Guest  ·  Sign In</button>
+  <button type="button" id="seatStatus" onclick="BW.openAuth()">Playing as Guest  ·  Sign In</button>
 </div>
-<div class="seat-panel" id="seatPanel" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="seat-card">
-    <h3>Your seat</h3>
-    <p id="seatLead">Sign in, create an account, or play as a guest.</p>
-    <div class="row" id="seatChoices">
-      <button class="act" type="button" onclick="showSeat('in')">Sign in</button>
-      <button class="act" type="button" onclick="showSeat('new')">Create account</button>
-      <button class="act gold" type="button" onclick="playGuest()">Play as guest</button>
-    </div>
-    <div id="seatFields" style="display:none;margin-top:12px">
-      <input id="seatEmail" type="email" placeholder="Email" autocomplete="username">
-      <input id="seatPass" type="password" placeholder="Password" autocomplete="current-password">
-      <input id="seatName" type="text" placeholder="Public name" style="display:none" autocomplete="off">
-      <button class="act gold" type="button" id="seatGo" onclick="seatSubmit()">Continue</button>
-    </div>
-    <div class="err" id="seatErr"></div>
-    <button class="act" type="button" onclick="document.getElementById('seatPanel').classList.remove('on')" style="margin-top:8px">Close</button>
-  </div>
-</div>
-
 
 <div class="play-frame">
 <aside class="play-side">
   <h3>Your seat</h3>
-  <p id="playSeatLine">Playing as a guest. Sign in to keep your name, or sit down and play the house.</p>
-  <button class="act" type="button" onclick="document.getElementById('seatPanel').classList.add('on')">Sign in</button>
+  <p id="playSeatLine">Playing as a guest: 3 matches a day against The House. Create a free account to save your points and play online.</p>
+  <button class="act" type="button" id="playSeatBtn" onclick="BW.openAuth()">Sign in</button>
 </aside>
 <main class="space-canvas" id="apps">
         <div class="aurora-glow green-light"></div>
@@ -1900,8 +1881,8 @@ header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,
     </main>
 <aside class="play-side">
   <h3 class="gold">Club membership</h3>
-  <p>Guests play three games a day with the house set. The club opens all ten rooms, the piece sets, and unlimited play.</p>
-  <a class="act club" href="index.html#club">Join the Club</a>
+  <p>Guests get 3 matches a day against The House. A free account gets 3 a day, online or against The House, with your points saved. The Club is unlimited, with premium piece sets.</p>
+  <a class="act club" href="member.html">Join the Club</a>
 </aside>
 </div>
 
@@ -2064,7 +2045,7 @@ header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,
                 if (pillar) pillar.scrollIntoView({ block: 'start' });
             }
         }
-        if (location.hash) {
+        if (location.hash && !window.BW_AUTH_HASH) {
             history.replaceState(null, '', window.location.pathname);
             window.scrollTo(0, 0);
         }
@@ -2073,7 +2054,7 @@ header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,
             history.scrollRestoration = 'manual';
         }
         window.addEventListener('load', function () {
-            if (location.hash) {
+            if (location.hash && !window.BW_AUTH_HASH) {
                 history.replaceState(null, '', window.location.pathname);
             }
             window.scrollTo(0, 0);
@@ -2090,52 +2071,22 @@ header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="play-config.js"></script>
 <script>
-var sb=null, seatMode='in';
-(function(){
-  var cfg=window.BW_PLAY||{};
-  if(cfg.url && cfg.anonKey) sb=supabase.createClient(cfg.url, cfg.anonKey);
-})();
-function showSeat(mode){
-  seatMode=mode;
-  document.getElementById('seatFields').style.display='block';
-  document.getElementById('seatName').style.display = mode==='new' ? 'block' : 'none';
-  document.getElementById('seatLead').textContent = mode==='new' ? 'Create your seat.' : 'Welcome back.';
-}
-async function playGuest(){
-  document.getElementById('seatErr').textContent='';
-  if(!sb){ document.getElementById('seatErr').textContent='Sign-in is not connected yet.'; return; }
-  var r=await sb.auth.signInAnonymously();
-  if(r.error){ document.getElementById('seatErr').textContent=r.error.message; return; }
-  document.getElementById('seatPanel').classList.remove('on');
-  paintSeat();
-}
-async function seatSubmit(){
-  var email=document.getElementById('seatEmail').value.trim();
-  var pass=document.getElementById('seatPass').value;
-  var name=document.getElementById('seatName').value.trim();
-  document.getElementById('seatErr').textContent='';
-  if(!sb){ document.getElementById('seatErr').textContent='Sign-in is not connected yet.'; return; }
-  var r = seatMode==='new'
-    ? await sb.auth.signUp({email:email, password:pass, options:{data:{display_name:name}}})
-    : await sb.auth.signInWithPassword({email:email, password:pass});
-  if(r.error){ document.getElementById('seatErr').textContent=r.error.message; return; }
-  document.getElementById('seatPanel').classList.remove('on');
-  paintSeat();
-}
-async function paintSeat(){
-  var btn=document.getElementById('seatStatus');
-  if(!sb){ btn.textContent='Playing as Guest  ·  Sign In'; return; }
-  var s=await sb.auth.getSession();
-  var u=s.data.session && s.data.session.user;
-  if(!u || u.is_anonymous){ btn.textContent='Playing as Guest  ·  Sign In / Join Club'; var l=document.getElementById('playSeatLine'); if(l) l.textContent='Playing as a guest. Sign in to keep your name, or sit down and play the house.'; return; }
-  btn.textContent='Signed in  ·  Your seat'; var l=document.getElementById('playSeatLine'); if(l) l.textContent='You have a seat. Your name follows you into every room.';
-}
-document.addEventListener('DOMContentLoaded', paintSeat);
-if(location.hash==='#seat') document.getElementById('seatPanel').classList.add('on');
+/* Sign-in lives in bw-auth.js (one modal, no redirects). This page only reflects who is signed in. */
+BW.onChange(function(st){
+  var btn=document.getElementById('seatStatus'), line=document.getElementById('playSeatLine'), side=document.getElementById('playSeatBtn');
+  if(st.user){
+    var name=(st.profile && (st.profile.username||st.profile.display_name)) || '';
+    var tier=st.member ? 'Club member' : 'Free account';
+    if(btn) btn.textContent=(name?name+'  ·  ':'')+tier;
+    if(line) line.textContent='You have a seat. Your name and points follow you into every room.';
+    if(side){ side.textContent='Sign out'; side.onclick=function(){ BW.signOut(); }; }
+  } else {
+    if(btn) btn.textContent='Playing as Guest  ·  Sign In';
+    if(line) line.textContent='Playing as a guest: 3 matches a day against The House. Create a free account to save your points and play online.';
+    if(side){ side.textContent='Sign in'; side.onclick=function(){ BW.openAuth(); }; }
+  }
+});
 </script>
 
 </body>
