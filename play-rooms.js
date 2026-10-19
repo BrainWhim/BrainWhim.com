@@ -205,7 +205,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     }
     if(id) await client.from("notices").update({status:"accepted", read:true}).eq("id", id);
     var game=gameHint||q.data.game||"chess";
-    location.href=bwRoomHref(game, code, "online=1");
+    var seat=(q.data.host===s.user.id)?"w":"b";
+    location.href=bwRoomHref(game, code, "online=1&mode=multiplayer&match_id="+encodeURIComponent(code)+"&seat="+seat);
   }
   window.acceptInvite=window.acceptInvite||accept;
   window.bwAcceptInvite=accept;

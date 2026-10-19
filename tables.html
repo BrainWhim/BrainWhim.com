@@ -763,7 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('click', function(e){
     if(window.innerWidth > 900) return;
     if(!document.body.classList.contains('drawer-active')) return;
-    if(e.target.closest('.dashboard-sidebar-left') || e.target.closest('.dashboard-sidebar-right') || e.target.closest('.mobile-app-navigation-bar')) return;
+    if(e.target.closest('.dashboard-sidebar-left') || e.target.closest('.dashboard-sidebar-right') || e.target.closest('.mobile-app-navigation-bar') || e.target.closest('#bellBtn') || e.target.closest('[onclick*="bwMailTap"]') || e.target.closest('.bwa-ov')) return;   /* the mail icon opens the drawer; don't let this same tap close it again */
     closeMobileDrawers();
   });
 
@@ -1293,7 +1293,7 @@ async function inviteFriend(game, nameOverride){
     body:(myName||"A player")+" invited you to "+label+"."
   });
   if(n.error){ alert(n.error.message); return; }
-  goRoom(game, room.code);
+  goRoom(game, room.code, "online=1&mode=multiplayer&match_id="+encodeURIComponent(room.code)+"&seat=w");   /* the inviter sits first (ivory) */
 }
 async function acceptInvite(id, code, gameHint){
   var s=await needSession("Sign in to join your friend's table."); if(!s) return;
@@ -1306,7 +1306,8 @@ async function acceptInvite(id, code, gameHint){
   }
   await sb.from("notices").update({status:"accepted", read:true}).eq("id", id);
   var game=gameHint||q.data.game||"chess";
-  goRoom(game, code, "online=1");
+  var mySeat=(q.data.host===s.user.id)?"w":"b";   /* whoever accepts sits opposite the inviter (onyx) */
+  goRoom(game, code, "online=1&mode=multiplayer&match_id="+encodeURIComponent(code)+"&seat="+mySeat);
 }
 async function declineInvite(id){
   await sb.from("notices").update({status:"declined", read:true}).eq("id", id);
