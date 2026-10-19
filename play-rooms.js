@@ -85,28 +85,17 @@ window.bwCanMatch=bwCanMatch;
 window.bwRateGame=async function(sb, room, me, winnerSide){
   try{
     if(!sb||!room||!me||winnerSide==null) return;
+    /* Each player's browser reports once. The server (bw_report_result in supabase-scores.sql)
+       decides whether points move; the browser can no longer write skill_points itself. */
+    if(room.__bwReported) return;
+    room.__bwReported=true;
     var st=Object.assign({}, room.state||{});
-    if(st.rated) return;
-    st.rated=true;
     st.over=true;
     st.winner=winnerSide;
     room.state=st;
     await sb.from("rooms").update({state:st, status:"done"}).eq("id", room.id);
-    var host=room.host, guest=room.guest;
-    if(!host||!guest) return;
-    var q=await sb.from("profiles").select("id,skill_points").in("id",[host,guest]);
-    if(q.error||!q.data) return;
-    var map={}; q.data.forEach(function(p){ map[p.id]=Number(p.skill_points||0); });
-    var hp=map[host]||0, gp=map[guest]||0;
-    var hostRes=winnerSide===0?"draw":(winnerSide===1?"win":"lose");
-    var guestRes=winnerSide===0?"draw":(winnerSide===2?"win":"lose");
-    var hd=bwRateDelta(hp,gp,hostRes), gd=bwRateDelta(gp,hp,guestRes);
-    var rpc=await sb.rpc("apply_skill_delta", {a:host, da:hd, b:guest, db:gd});
-    if(rpc.error){
-      await sb.from("profiles").update({skill_points:Math.max(0,hp+hd)}).eq("id",host);
-      await sb.from("profiles").update({skill_points:Math.max(0,gp+gd)}).eq("id",guest);
-    }
-    room.state=st;
+    var r=await sb.rpc("bw_report_result", {p_room:String(room.id), p_winner:Number(winnerSide)});
+    if(r.error) room.__bwReported=false;   /* let a later call retry if the server was unreachable */
   }catch(e){}
 };
 (function bwPresence(){
