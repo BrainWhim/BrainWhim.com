@@ -40,7 +40,7 @@
   }
   async function publish(){
     if(!room){ pending=true; line("Waiting for table"); return; }
-    var up=await sb.from("rooms").update({state:snap(), status:"live", updated_at:new Date().toISOString()}).eq("id", room.id);
+    var up=await sb.from("rooms").update({state:snap(), updated_at:new Date().toISOString()}).eq("id", room.id);
     line(up.error?"Save failed":"Sent");
   }
   window.bwPublish=publish;
@@ -48,7 +48,7 @@
     try{ if(typeof sitDown==="function") sitDown(); }catch(e){}
     line(seat==="b"?"Opponent goes first":"Your turn. You go first");
     if(!CODE||!window.supabase||typeof BW_PLAY==="undefined"){ line("Not linked"); return; }
-    sb=supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
+    sb=window.__bwSb||(window.BW&&BW.client&&BW.client())||supabase.createClient(BW_PLAY.url, BW_PLAY.anonKey);
     sb.from("rooms").select("id,state").eq("code", CODE).single().then(function(res){
       if(res.error||!res.data){ line("Table not found"); return; }
       room=res.data; line("Linked");
