@@ -42,10 +42,9 @@
     /* invitation (before sitting): a slim card just under the switcher */
     var intro = mk("section", "pk-intro"), card = mk("div", "pk-introcard");
     var txt = mk("div", "pk-introtxt");
-    txt.appendChild(mk("p", "pk-kick", "Take a seat"));
     txt.appendChild(mk("p", "pk-tag", C.invite || C.tagline || ""));
     card.appendChild(txt);
-    card.appendChild(btn("Sit down to play", "primary", function () { P.openSeat(); }, "pkSit"));
+    card.appendChild(btn("Take a Seat", "", function () { P.openSeat(); }, "pkSit"));
     intro.appendChild(card); room.appendChild(intro);
 
     /* playing area */
