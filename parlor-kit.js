@@ -36,17 +36,16 @@
     var sw = mk("nav", "pk-games");
     GAMES.forEach(function (g) { var a = mk("a", g[0] === C.game ? "on" : "", g[1]); a.href = g[2]; sw.appendChild(a); });
     room.appendChild(sw);
-    /* intro card (before sitting) */
+    /* room title: centered in the header, gold */
+    var hd = $("header");
+    if (hd) hd.appendChild(mk("span", "pk-htitle", C.title));
+    /* invitation (before sitting): a slim card just under the switcher */
     var intro = mk("section", "pk-intro"), card = mk("div", "pk-introcard");
-    card.appendChild(mk("p", "pk-kick", "Take your seat"));
-    card.appendChild(mk("h1", "pk-title", C.title));
-    if (C.tagline) card.appendChild(mk("p", "pk-tag", C.tagline));
+    var txt = mk("div", "pk-introtxt");
+    txt.appendChild(mk("p", "pk-kick", "Take a seat"));
+    txt.appendChild(mk("p", "pk-tag", C.invite || C.tagline || ""));
+    card.appendChild(txt);
     card.appendChild(btn("Sit down to play", "primary", function () { P.openSeat(); }, "pkSit"));
-    var links = mk("div", "pk-introlinks");
-    var h1 = mk("button", "", "How to play"); h1.type = "button"; h1.onclick = function () { P.help("play"); };
-    var h2 = mk("button", "", "Scoring"); h2.type = "button"; h2.onclick = function () { P.help("score"); };
-    var back = mk("a", "", "Back to tables"); back.href = C.home || "tables.html";
-    links.appendChild(h1); links.appendChild(h2); links.appendChild(back); card.appendChild(links);
     intro.appendChild(card); room.appendChild(intro);
 
     /* playing area */
