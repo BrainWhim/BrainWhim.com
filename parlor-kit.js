@@ -31,14 +31,13 @@
     if (C.bg) document.body.style.setProperty("--pk-bg", 'url("' + C.bg + '")');
 
     var room = $(".pk-room");
-    /* game switcher (glass pill, same as chess) */
+    /* game switcher (glass rectangle, same as chess) */
     var GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
     var sw = mk("nav", "pk-games");
     GAMES.forEach(function (g) { var a = mk("a", g[0] === C.game ? "on" : "", g[1]); a.href = g[2]; sw.appendChild(a); });
     room.appendChild(sw);
-    /* room title: centered in the header, gold */
-    var hd = $("header");
-    if (hd) hd.appendChild(mk("span", "pk-htitle", C.title));
+    /* phones: scroll the switcher so the current game is in view */
+    setTimeout(function () { var on = sw.querySelector(".on"); if (on && sw.scrollWidth > sw.clientWidth) sw.scrollLeft = on.offsetLeft - (sw.clientWidth - on.offsetWidth) / 2; }, 0);
     /* invitation (before sitting): a slim card just under the switcher */
     var intro = mk("section", "pk-intro"), card = mk("div", "pk-introcard");
     var txt = mk("div", "pk-introtxt");
@@ -141,6 +140,7 @@
 
   /* ---------------- help ---------------- */
   P.help = function (kind) {
+    sheet(null);
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring rules" : "How to play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
       (score ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
