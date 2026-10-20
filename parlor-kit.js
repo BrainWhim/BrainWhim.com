@@ -41,7 +41,10 @@
     /* invitation (before sitting): a slim card just under the switcher */
     var intro = mk("section", "pk-intro"), card = mk("div", "pk-introcard");
     var txt = mk("div", "pk-introtxt");
-    txt.appendChild(mk("p", "pk-tag", C.invite || C.tagline || ""));
+    /* one sentence per line on phones, one line on desktop */
+    var tag = mk("p", "pk-tag");
+    String(C.invite || C.tagline || "").split(/(?<=[.!?])\s+/).forEach(function (part, i) { if (i) tag.appendChild(document.createTextNode(" ")); tag.appendChild(mk("span", "", part)); });
+    txt.appendChild(tag);
     card.appendChild(txt);
     card.appendChild(btn("Take a Seat", "", function () { P.openSeat(); }, "pkSit"));
     intro.appendChild(card); room.appendChild(intro);
@@ -68,13 +71,16 @@
       r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.players.appendChild(r);
       p._row = r; p._nm = nm; p._sc = sc;
     });
-    el.mini = mk("div", "pk-mini");
+    /* phones: the opponent's score sits above the board and yours below it */
+    el.miniTop = mk("div", "pk-mini pk-mini-top"); el.mini = mk("div", "pk-mini pk-mini-bot");
     (C.players || []).forEach(function (p) {
       var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
       var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0");
-      r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.mini.appendChild(r); p._row2 = r; p._nm2 = nm; p._sc2 = sc;
+      r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); p._row2 = r; p._nm2 = nm; p._sc2 = sc;
     });
     stage.replaceChild(el.mini, stage.lastChild);
+    stage.insertBefore(el.miniTop, stage.firstChild);
+    P.mySeat(0);
     st.appendChild(el.players);
     left.appendChild(st);
 
@@ -136,6 +142,13 @@
   };
   P.score = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] != null) { if (p._sc) p._sc.textContent = arr[i]; if (p._sc2) p._sc2.textContent = arr[i]; } }); };
   P.turn = function (i) { (C.players || []).forEach(function (p, k) { if (p._row) { p._row.classList.toggle("turn", k === i); p._row2.classList.toggle("turn", k === i); } }); };
+  /* which player row is "me" (0 or 1): mine goes under the board on phones */
+  P.mySeat = function (i) {
+    var pl = C.players || []; if (pl.length < 2 || !el.mini) return;
+    var me = pl[i ? 1 : 0], them = pl[i ? 0 : 1];
+    el.miniTop.innerHTML = ""; el.mini.innerHTML = "";
+    el.miniTop.appendChild(them._row2); el.mini.appendChild(me._row2);
+  };
   P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { p._nm.textContent = arr[i]; p._nm2.textContent = arr[i]; } }); };
 
   /* ---------------- help ---------------- */

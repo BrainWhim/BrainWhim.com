@@ -61,8 +61,8 @@ body[data-set="onyx"]{--s1a:#6a6a72;--s1b:#26262c;--s1c:#050507;--s1r:#8c8c96;--
 /* sizes: desktop gets the hero board, phones the biggest square that fits above the floating bar */
 body.pk{--ot-size:min(calc(100vw - 2*var(--pk-side) - 110px),max(340px,calc(100dvh - var(--pk-hdr) - var(--pk-sw) - 40px)),880px)}
 @media (min-width:1000px) and (max-width:1180px){body.pk{--ot-size:min(calc(100vw - 2*var(--pk-side) - 80px),max(340px,calc(100dvh - var(--pk-hdr) - var(--pk-sw) - 40px)))}}
-@media (max-width:999px){body.pk{--ot-size:min(calc(100vw - 16px),calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 112px));--pk-size:var(--ot-size)}
-  .ot-stagepad{padding-top:6px}}
+@media (max-width:999px){body.pk{--ot-size:min(calc(100vw - 16px),calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 170px));--pk-size:var(--ot-size)}
+  .ot-stagepad{padding-top:0}}
 @media (prefers-reduced-motion:reduce){.ot-disc.flip,.ot-disc.drop,.ot-cell.ok::after{animation:none}}
 .ot-stagepad{width:100%;flex:none;display:flex;justify-content:center;align-items:flex-start;padding-top:0}
 </style>
@@ -206,6 +206,7 @@ async function bootOnline(){
   else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
   else mySide=0;   /* watching */
   Parlor.names(mySide===2?["Opponent (cobalt)","You (ivory)"]:["You (cobalt)","Opponent (ivory)"]);
+  Parlor.mySeat(mySide===2?1:0);
   applySnap(room.state&&room.state.board?room.state:null);
   paint(); if(over) end(); else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
