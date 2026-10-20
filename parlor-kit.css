@@ -1,0 +1,119 @@
+/* BrainWhim Parlor Kit — shared look for every live game room.
+   Before sitting: the parlor photo, sharp, with a glass card.
+   After sitting:  the same photo blurred behind, glass side cards, the BOARD is the hero.
+   Phones and narrow tablets: the board fills the screen and a floating bar holds the menus.
+   Page sets --pk-bg (photo) on <body>. Games draw only their own board inside .pk-stage. */
+:root{
+  --navy:#1A2744; --whim:#7EB6D9; --gold:#c9a45a;
+  --pk-hdr:72px;           /* header height */
+  --pk-side:250px;         /* side card width on desktop */
+  --pk-bar:64px;           /* floating bar height on phones */
+  --pk-glass:rgba(255,250,242,.42);
+  --pk-glass-line:rgba(255,255,255,.38);
+  --pk-ink:#1A2744;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body.pk{font-family:Montserrat,system-ui,sans-serif;color:var(--pk-ink);background:#1c2430;min-height:100dvh;overflow-x:hidden}
+body.pk::before{content:"";position:fixed;inset:0;z-index:0;background:var(--pk-bg,none) center 58%/cover no-repeat;transition:filter .5s,transform .5s}
+body.pk.seated::before{filter:blur(18px) saturate(.8) brightness(var(--pk-dim,.7));transform:scale(1.08)}
+
+/* ---------- header (same family as the rest of the site) ---------- */
+.pk header{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4%;height:var(--pk-hdr);background:var(--navy)}
+.pk .brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
+.pk .brand img{width:64px;height:64px;object-fit:contain;margin-right:-8px}
+.pk .whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
+.pk .hdr{display:flex;align-items:center;gap:16px}
+.pk .hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none}
+body.pk.seated header{background:rgba(15,23,42,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.12)}
+
+/* ---------- room ---------- */
+.pk-room{position:relative;z-index:1;min-height:calc(100dvh - var(--pk-hdr))}
+
+/* before sitting */
+.pk-intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;padding:0 16px 5vh;text-align:center}
+body.pk.seated .pk-intro{display:none}
+.pk-title{margin:0;font-size:clamp(20px,3.4vw,30px);background:rgba(255,252,247,.9);color:var(--navy);padding:6px 20px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.pk-tag{margin:0;font-size:14px;background:rgba(255,252,247,.82);color:var(--navy);padding:4px 14px;border-radius:999px;max-width:92vw}
+.pk-introrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+
+/* buttons */
+.pk-btn{appearance:none;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.72);color:var(--pk-ink);border-radius:999px;padding:10px 16px;font:700 13px/1 Montserrat,system-ui,sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 6px 16px rgba(0,0,0,.16);min-height:40px}
+.pk-btn:hover{background:#fff}
+.pk-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pk-btn.primary:hover{background:#25365f}
+.pk-btn[disabled]{opacity:.5;cursor:default}
+
+/* after sitting */
+.pk-play{display:none;position:relative;z-index:1}
+body.pk.seated .pk-play{display:grid;grid-template-columns:var(--pk-side) minmax(0,1fr) var(--pk-side);gap:20px;align-items:start;padding:20px 20px 28px;min-height:calc(100dvh - var(--pk-hdr))}
+.pk-stage{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px}
+
+/* glass side cards */
+.pk-side{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+.pk-card{padding:14px;border-radius:14px;background:var(--pk-glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--pk-glass-line);box-shadow:0 10px 28px rgba(0,0,0,.16);color:#fff}
+.pk-card h3{margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;opacity:.85}
+.pk-status{font-size:20px;font-weight:700;line-height:1.2;margin:0 0 4px}
+.pk-sub{font-size:12px;opacity:.85;margin:0}
+.pk-players{display:grid;gap:6px;margin-top:10px}
+.pk-pl{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.12);font-size:13px;font-weight:600}
+.pk-pl.turn{background:rgba(255,255,255,.34);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.pk-pl .sw{width:16px;height:16px;border-radius:50%;flex:0 0 16px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.pk-pl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-pl .sc{font-size:18px;font-weight:800}
+.pk-acct{font-size:13px;line-height:1.45}
+.pk-acct b{font-weight:800}
+.pk-acct .pk-btn{margin-top:8px;min-height:34px;padding:8px 12px;font-size:12px;width:100%}
+.pk-actions{display:flex;flex-direction:column;gap:8px}
+.pk-actions .pk-btn{width:100%;justify-content:flex-start;border-radius:12px;padding:10px 12px}
+.pk-sets{display:flex;flex-direction:column;gap:6px}
+.pk-set{display:flex;align-items:center;gap:8px;text-align:left;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;border-radius:10px;padding:7px 9px;font:600 12px Montserrat,system-ui,sans-serif;cursor:pointer}
+.pk-set.on{background:rgba(255,255,255,.9);color:var(--navy);border-color:#fff}
+.pk-set.lock{opacity:.7}
+.pk-set .dots{display:flex;gap:3px}
+.pk-set .dots i{width:14px;height:14px;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.pk-set small{display:block;font-weight:500;opacity:.8;font-size:10.5px}
+.pk-set .nm{flex:1}
+
+/* compact scoreboard under the board (phones/tablets only) */
+.pk-mini{display:none}
+/* ---------- floating bar + sheets (phones & narrow tablets) ---------- */
+.pk-bar,.pk-scrim{display:none}
+@media (max-width:999px){
+  :root{--pk-hdr:54px}
+  .pk .brand{font-size:20px}.pk .brand img{width:46px;height:46px}
+  .pk .hdr a{font-size:13px}.pk .hdr{gap:10px}
+  body.pk.seated .hdr a{display:none}           /* the bar holds the menus while playing */
+  body.pk.seated .pk-play{display:block;padding:6px 8px calc(var(--pk-bar) + 18px + env(safe-area-inset-bottom));min-height:calc(100dvh - var(--pk-hdr))}
+  .pk-stage{gap:6px}
+  .pk-mini{display:flex;gap:8px;width:var(--pk-size,100%);margin:4px auto 0;padding:0}
+  .pk-mini .pk-pl{flex:1;color:#fff;background:rgba(255,250,242,.2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3);padding:8px 10px}
+  .pk-mini .pk-pl.turn{background:rgba(255,255,255,.4)}
+  .pk-side{position:fixed;left:8px;right:8px;bottom:calc(var(--pk-bar) + 22px + env(safe-area-inset-bottom));z-index:60;margin:0;max-height:60dvh;overflow:auto;transform:translateY(130%);visibility:hidden;transition:transform .25s,visibility .25s}
+  .pk-side .pk-card{background:rgba(24,32,48,.9)}
+  body.pk.sheet-left .pk-left,body.pk.sheet-right .pk-right{transform:none;visibility:visible}
+  .pk-scrim{display:block;position:fixed;inset:0;z-index:55;background:rgba(8,12,22,.45);opacity:0;pointer-events:none;transition:opacity .2s}
+  body.pk.sheet-left .pk-scrim,body.pk.sheet-right .pk-scrim{opacity:1;pointer-events:auto}
+  body.pk.seated .pk-bar{display:flex;position:fixed;left:8px;right:8px;bottom:calc(10px + env(safe-area-inset-bottom));height:var(--pk-bar);z-index:70;align-items:center;gap:8px;padding:8px;border-radius:999px;background:rgba(255,250,242,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.5);box-shadow:0 10px 30px rgba(0,0,0,.28)}
+  .pk-bar .pk-btn{min-height:44px;padding:0 16px;box-shadow:none}
+  .pk-bar .pk-bstat{flex:1;min-width:0;text-align:center;font-weight:700;font-size:14px;color:var(--navy);line-height:1.15;overflow:hidden;cursor:pointer;background:none;border:0;font-family:inherit}
+  .pk-bar .pk-bstat small{display:block;font-weight:600;font-size:11px;opacity:.75}
+  .pk-intro{padding-bottom:4vh}
+}
+@media (min-width:1000px) and (max-width:1180px){ :root{--pk-side:215px} body.pk.seated .pk-play{gap:14px;padding:16px 14px} }
+
+/* ---------- modals ---------- */
+.pk-veil{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(12,18,32,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pk-veil.on{display:flex}
+.pk-modal{width:min(480px,94vw);max-height:84dvh;overflow:auto;padding:22px;border-radius:20px;background:linear-gradient(180deg,#fffdf8,#f3ead6);color:var(--navy);box-shadow:0 0 0 3px var(--gold),0 0 0 7px var(--navy),0 24px 60px rgba(0,0,0,.4)}
+.pk-modal h2{margin:0 0 10px;text-align:center;font-size:22px}
+.pk-modal p{margin:0 0 10px;font-size:14px;line-height:1.5}
+.pk-modal ol,.pk-modal ul{margin:0 0 12px;padding-left:20px;font-size:14px;line-height:1.5}
+.pk-modal li{margin:0 0 6px}
+.pk-modal .pk-kick{margin:0 0 4px;text-align:center;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;opacity:.7}
+.pk-modal .pk-stack{display:flex;flex-direction:column;gap:8px}
+.pk-modal .pk-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.pk-modal .pk-btn{background:#fff;border-color:#d7c9b0;box-shadow:none}
+.pk-modal .pk-btn.primary{background:var(--navy);border-color:var(--navy)}
+.pk-pts{text-align:center;font-weight:700}
+.pk-pts.good{color:#1f7a45}

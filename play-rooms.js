@@ -12,7 +12,7 @@ window.BW_ROOMS={
   chess:"chess-room.html",
   checkers:"checkers-room.html",
   backgammon:"backgammon-room.html",
-  othello:"othello-room.html",
+  othello:"othello.html",
   morris:"morris-room.html",
   mancala:"mancala-room.html",
   dominoes:"dominoes-room.html",

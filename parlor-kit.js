@@ -1,0 +1,279 @@
+/* BrainWhim Parlor Kit — shared behaviour for every live game room (pair with parlor-kit.css).
+   A game page only supplies: its board (inside the element passed as `stage`), its rules text,
+   and a few callbacks. The kit supplies: intro card, seat choice, daily-limit gate, side cards,
+   floating phone bar, rules window, result window, points for signed-in accounts, board-set picker.
+
+   Parlor.init({
+     game:'othello', title:'…', tagline:'…', bg:'photo.jpg', home:'tables.html',
+     players:[{name:'You', color:'#2d5084'}, {name:'The House', color:'#f3e6c4'}],
+     rules:{play:'<ol>…</ol>', score:'<ul>…</ul>'},
+     sets:[{id:'cobalt', name:'Cobalt · Ivory', need:0, dots:['#2d5084','#f3e6c4']}, …],
+     stage: element,
+     onNew: function(){ … start a fresh game … }
+   })
+   Then the game calls: Parlor.status(main, sub) · Parlor.score([a,b]) · Parlor.turn(0|1|-1)
+                        Parlor.finish('win'|'lose'|'draw', 'detail text') · Parlor.seatOnline(info)           */
+(function () {
+  "use strict";
+  var P = window.Parlor = {};
+  var C = null, mode = "house", seated = false, token = null, finished = false, started = 0;
+  var el = {}, accountInfo = { pts: 0, member: false, user: null };
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function mk(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function sb() { try { return window.BW && BW.client && BW.client(); } catch (e) { return null; } }
+
+  /* ---------------- building the page ---------------- */
+  function build() {
+    document.body.classList.add("pk");
+    if (C.bg) document.body.style.setProperty("--pk-bg", 'url("' + C.bg + '")');
+
+    var room = $(".pk-room");
+    /* intro card (before sitting) */
+    var intro = mk("section", "pk-intro");
+    intro.appendChild(mk("h1", "pk-title", C.title));
+    if (C.tagline) intro.appendChild(mk("p", "pk-tag", C.tagline));
+    var row = mk("div", "pk-introrow");
+    row.appendChild(btn("Sit down to play", "primary", function () { P.openSeat(); }, "pkSit"));
+    row.appendChild(btn("How to play", "", function () { P.help("play"); }));
+    row.appendChild(btn("Scoring", "", function () { P.help("score"); }));
+    var back = mk("a", "pk-btn", "Back to tables"); back.href = C.home || "tables.html"; row.appendChild(back);
+    intro.appendChild(row);
+    room.appendChild(intro);
+
+    /* playing area */
+    var play = mk("div", "pk-play");
+    var left = mk("aside", "pk-side pk-left"), right = mk("aside", "pk-side pk-right");
+    var stage = mk("section", "pk-stage");
+    if (C.stage) stage.appendChild(C.stage);
+    stage.appendChild(mk('div'));  /* mini scoreboard goes here, below */
+    play.appendChild(left); play.appendChild(stage); play.appendChild(right);
+    room.appendChild(play);
+    el.stage = stage; el.left = left; el.right = right;
+
+    /* left: status + players + account + sets */
+    var st = mk("div", "pk-card");
+    st.appendChild(mk("h3", "", "Table"));
+    el.status = mk("p", "pk-status", "Take your seat"); el.sub = mk("p", "pk-sub", "");
+    st.appendChild(el.status); st.appendChild(el.sub);
+    el.players = mk("div", "pk-players");
+    (C.players || []).forEach(function (p, i) {
+      var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
+      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0");
+      r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.players.appendChild(r);
+      p._row = r; p._nm = nm; p._sc = sc;
+    });
+    el.mini = mk("div", "pk-mini");
+    (C.players || []).forEach(function (p) {
+      var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
+      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0");
+      r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.mini.appendChild(r); p._row2 = r; p._nm2 = nm; p._sc2 = sc;
+    });
+    stage.replaceChild(el.mini, stage.lastChild);
+    st.appendChild(el.players);
+    left.appendChild(st);
+
+    el.acct = mk("div", "pk-card pk-acct");
+    left.appendChild(el.acct);
+
+    if (C.sets && C.sets.length) {
+      var sc = mk("div", "pk-card"); sc.appendChild(mk("h3", "", C.setsLabel || "Sets"));
+      el.sets = mk("div", "pk-sets"); sc.appendChild(el.sets); left.appendChild(sc);
+    }
+
+    /* right: actions */
+    var ac = mk("div", "pk-card"); ac.appendChild(mk("h3", "", "Menu"));
+    var list = mk("div", "pk-actions");
+    el.newBtn = btn("New game", "", function () { P.newGame(); });
+    list.appendChild(el.newBtn);
+    list.appendChild(btn("How to play", "", function () { P.help("play"); }));
+    list.appendChild(btn("Scoring rules", "", function () { P.help("score"); }));
+    list.appendChild(btn("Back to the room", "", function () { P.stand(); }));
+    var tb = mk("a", "pk-btn", "Tables"); tb.href = C.home || "tables.html"; list.appendChild(tb);
+    ac.appendChild(list); right.appendChild(ac);
+    el.mode = mk("p", "pk-sub", ""); el.mode.style.marginTop = "10px"; ac.appendChild(el.mode);
+
+    /* floating bar (phones) */
+    var bar = mk("div", "pk-bar");
+    bar.appendChild(btn("☰ Menu", "", function () { sheet("right"); }));
+    el.bstat = mk("button", "pk-bstat"); el.bstat.type = "button"; el.bstat.onclick = function () { sheet("left"); };
+    bar.appendChild(el.bstat);
+    bar.appendChild(btn("New", "primary", function () { P.newGame(); }));
+    document.body.appendChild(bar);
+    var scrim = mk("div", "pk-scrim"); scrim.onclick = function () { sheet(null); }; document.body.appendChild(scrim);
+
+    /* modals */
+    el.help = modal("pkHelp"); el.seat = modal("pkSeat"); el.end = modal("pkEnd");
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeAll(); sheet(null); } });
+    P.status("Take your seat", "");
+  }
+  function btn(label, cls, fn, id) {
+    var b = mk("button", "pk-btn" + (cls ? " " + cls : ""), label); b.type = "button"; if (id) b.id = id; b.onclick = fn; return b;
+  }
+  function modal(id) {
+    var v = mk("div", "pk-veil"); v.id = id; var m = mk("div", "pk-modal"); v.appendChild(m);
+    v.addEventListener("click", function (e) { if (e.target === v && id !== "pkEnd") v.classList.remove("on"); });
+    document.body.appendChild(v); return { veil: v, box: m };
+  }
+  function closeAll() { [el.help, el.seat, el.end].forEach(function (m) { if (m) m.veil.classList.remove("on"); }); }
+  function sheet(which) {
+    document.body.classList.toggle("sheet-left", which === "left");
+    document.body.classList.toggle("sheet-right", which === "right");
+  }
+  P.sheet = sheet;
+
+  /* ---------------- status, score, turn ---------------- */
+  P.status = function (main, sub) {
+    if (!el.status) return;
+    el.status.textContent = main || ""; el.sub.textContent = sub || "";
+    el.bstat.innerHTML = "<span></span><small></small>";
+    el.bstat.firstChild.textContent = main || ""; el.bstat.lastChild.textContent = sub || "";
+  };
+  P.score = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] != null) { if (p._sc) p._sc.textContent = arr[i]; if (p._sc2) p._sc2.textContent = arr[i]; } }); };
+  P.turn = function (i) { (C.players || []).forEach(function (p, k) { if (p._row) { p._row.classList.toggle("turn", k === i); p._row2.classList.toggle("turn", k === i); } }); };
+  P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { p._nm.textContent = arr[i]; p._nm2.textContent = arr[i]; } }); };
+
+  /* ---------------- help ---------------- */
+  P.help = function (kind) {
+    var score = kind === "score";
+    el.help.box.innerHTML = "<h2>" + (score ? "Scoring rules" : "How to play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
+      (score ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
+    var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "primary", function () { el.help.veil.classList.remove("on"); }));
+    el.help.box.appendChild(r); el.help.veil.classList.add("on");
+  };
+
+  /* ---------------- sitting down ---------------- */
+  P.openSeat = function () {
+    var b = el.seat.box; b.innerHTML = "";
+    b.appendChild(mk("p", "pk-kick", "Take your seat"));
+    b.appendChild(mk("h2", "", C.title));
+    var s = mk("div", "pk-stack");
+    s.appendChild(btn("Play The House", "primary", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
+    s.appendChild(btn("Match an online player", "", function () { location.href = (C.home || "tables.html") + "?match=" + encodeURIComponent(C.game); }));
+    var inv = mk("input"); inv.placeholder = "Friend's username"; inv.maxLength = 20;
+    inv.style.cssText = "border:1px solid #d7c9b0;border-radius:999px;padding:10px 14px;font:600 13px Montserrat,sans-serif;width:100%";
+    s.appendChild(inv);
+    s.appendChild(btn("Invite a friend", "", function () {
+      var n = (inv.value || "").trim(); if (!n) { inv.focus(); return; }
+      location.href = (C.home || "tables.html") + "?invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game);
+    }));
+    s.appendChild(btn("Close", "", function () { el.seat.veil.classList.remove("on"); }));
+    b.appendChild(s); el.seat.veil.classList.add("on");
+  };
+  async function gateAndBegin() {
+    /* the daily limit: 3 House games a day for guests and free accounts */
+    if (window.BW) { var ok = await BW.startMatch({ mode: "house" }); if (!ok) return false; }
+    token = null;
+    try {
+      var c = sb(), u = window.BW && BW.user && BW.user();
+      if (c && u) { var r = await c.rpc("bw_house_begin", { p_game: C.game }); if (r && r.data && r.data.ok) token = r.data.token; }
+    } catch (e) {}
+    started = Date.now(); finished = false; return true;
+  }
+  P.sitHouse = async function () {
+    if (!(await gateAndBegin())) return;
+    mode = "house"; seat();
+    el.mode.textContent = "Playing The House";
+    if (C.onNew) C.onNew("house");
+  };
+  /* online rooms: the daily limit was already applied on the Tables page when the match was made */
+  P.seatOnline = function (info) {
+    mode = "online"; seat(); token = null; finished = false;
+    el.mode.textContent = (info && info.label) || "Online table";
+    if (el.newBtn) el.newBtn.style.display = "none";
+    var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
+  };
+  function seat() { seated = true; document.body.classList.add("seated"); sheet(null); window.scrollTo(0, 0); }
+  P.stand = function () { seated = false; document.body.classList.remove("seated"); sheet(null); };
+  P.newGame = async function () {
+    if (mode === "online") return;
+    closeAll(); sheet(null);
+    if (!(await gateAndBegin())) return;
+    if (C.onNew) C.onNew("house");
+  };
+  P.mode = function () { return mode; };
+
+  /* ---------------- result ---------------- */
+  P.finish = async function (kind, detail) {
+    if (finished) return; finished = true;
+    var title = kind === "win" ? "Congratulations! You win!" : kind === "draw" ? "It's a draw" : "Better luck next time";
+    var b = el.end.box; b.innerHTML = "";
+    b.appendChild(mk("p", "pk-kick", kind === "win" ? "Victory" : kind === "draw" ? "Even match" : "Game over"));
+    b.appendChild(mk("h2", "", title));
+    if (detail) b.appendChild(mk("p", "pk-pts", detail));
+    var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
+    var r = mk("div", "pk-row");
+    if (mode === "house") r.appendChild(btn("Play again?", "primary", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
+    var back = mk("a", "pk-btn", "Return to Tables"); back.href = C.home || "tables.html"; r.appendChild(back);
+    b.appendChild(r); el.end.veil.classList.add("on");
+
+    if (mode !== "house") return;                       /* online results are scored by the room itself */
+    var u = window.BW && BW.user && BW.user();
+    if (!u) {                                           /* guests: invite them to keep their points */
+      pts.textContent = "Create a free account to earn points from every game.";
+      var cb = btn("Create account", "", function () { BW.openAuth({ reason: "Earn points and unlock sets." }); }); cb.style.marginTop = "6px"; b.insertBefore(cb, r);
+      return;
+    }
+    if (!token) { pts.textContent = ""; return; }
+    try {
+      var res = await sb().rpc("bw_house_finish", { p_token: token, p_result: kind });
+      var d = res && res.data;
+      if (d && d.ok && d.awarded > 0) { pts.textContent = "+" + d.awarded + " point" + (d.awarded > 1 ? "s" : "") + " added to your account"; pts.classList.add("good"); accountInfo.pts += d.awarded; renderAccount(); renderSets(); }
+      else if (d && d.ok && d.capped) pts.textContent = "You've reached today's House points. Play people online to keep climbing.";
+      else if (d && d.ok && kind !== "lose") pts.textContent = "Games under 45 seconds don't earn points.";
+    } catch (e) {}
+    token = null;
+  };
+
+  /* ---------------- account card + sets ---------------- */
+  async function loadAccount() {
+    var u = window.BW && BW.user && BW.user();
+    accountInfo.user = u || null;
+    var p = (window.BW && BW.profile && BW.profile()) || {};
+    accountInfo.pts = Number(p.skill_points || 0); accountInfo.member = !!p.member; accountInfo.name = p.display_name || p.username || "";
+    renderAccount(); renderSets();
+  }
+  function renderAccount() {
+    var a = el.acct; if (!a) return; a.innerHTML = "<h3 style=\"margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85\">Account</h3>";
+    var t = mk("div"); a.appendChild(t);
+    if (accountInfo.user) {
+      t.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><br>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club member" : "");
+      if (!accountInfo.member) a.appendChild(btn("Join the Club: unlimited games", "", function () { location.href = "member.html"; }));
+    } else {
+      t.textContent = "Playing as a guest. Create a free account to earn points and unlock sets.";
+      a.appendChild(btn("Create free account", "", function () { if (window.BW) BW.openAuth({ reason: "Earn points and unlock sets." }); }));
+    }
+  }
+  function setAllowed(s) { return !s.need || accountInfo.member || accountInfo.pts >= s.need; }
+  function renderSets() {
+    if (!el.sets) return; el.sets.innerHTML = "";
+    var cur = store("bwSet:" + C.game) || C.sets[0].id;
+    if (!C.sets.some(function (s) { return s.id === cur && setAllowed(s); })) cur = C.sets[0].id;
+    document.body.setAttribute("data-set", cur);
+    C.sets.forEach(function (s) {
+      var ok = setAllowed(s);
+      var b = mk("button", "pk-set" + (s.id === cur ? " on" : "") + (ok ? "" : " lock")); b.type = "button";
+      var dots = mk("span", "dots"); (s.dots || []).forEach(function (c) { var i = mk("i"); i.style.background = c; dots.appendChild(i); });
+      var nm = mk("span", "nm"); nm.appendChild(document.createTextNode(s.name + (ok ? "" : " 🔒")));
+      var sm = mk("small", "", ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
+      b.appendChild(dots); b.appendChild(nm);
+      b.onclick = function () {
+        if (!ok) { location.href = "member.html"; return; }
+        store("bwSet:" + C.game, s.id); renderSets();
+      };
+      el.sets.appendChild(b);
+    });
+  }
+
+  /* ---------------- start ---------------- */
+  P.init = function (cfg) {
+    C = cfg;
+    function go() {
+      build();
+      if (window.BW && BW.onChange) BW.onChange(loadAccount); else loadAccount();
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
+  };
+})();
