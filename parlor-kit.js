@@ -31,17 +31,23 @@
     if (C.bg) document.body.style.setProperty("--pk-bg", 'url("' + C.bg + '")');
 
     var room = $(".pk-room");
+    /* game switcher (glass pill, same as chess) */
+    var GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
+    var sw = mk("nav", "pk-games");
+    GAMES.forEach(function (g) { var a = mk("a", g[0] === C.game ? "on" : "", g[1]); a.href = g[2]; sw.appendChild(a); });
+    room.appendChild(sw);
     /* intro card (before sitting) */
-    var intro = mk("section", "pk-intro");
-    intro.appendChild(mk("h1", "pk-title", C.title));
-    if (C.tagline) intro.appendChild(mk("p", "pk-tag", C.tagline));
-    var row = mk("div", "pk-introrow");
-    row.appendChild(btn("Sit down to play", "primary", function () { P.openSeat(); }, "pkSit"));
-    row.appendChild(btn("How to play", "", function () { P.help("play"); }));
-    row.appendChild(btn("Scoring", "", function () { P.help("score"); }));
-    var back = mk("a", "pk-btn", "Back to tables"); back.href = C.home || "tables.html"; row.appendChild(back);
-    intro.appendChild(row);
-    room.appendChild(intro);
+    var intro = mk("section", "pk-intro"), card = mk("div", "pk-introcard");
+    card.appendChild(mk("p", "pk-kick", "Take your seat"));
+    card.appendChild(mk("h1", "pk-title", C.title));
+    if (C.tagline) card.appendChild(mk("p", "pk-tag", C.tagline));
+    card.appendChild(btn("Sit down to play", "primary", function () { P.openSeat(); }, "pkSit"));
+    var links = mk("div", "pk-introlinks");
+    var h1 = mk("button", "", "How to play"); h1.type = "button"; h1.onclick = function () { P.help("play"); };
+    var h2 = mk("button", "", "Scoring"); h2.type = "button"; h2.onclick = function () { P.help("score"); };
+    var back = mk("a", "", "Back to tables"); back.href = C.home || "tables.html";
+    links.appendChild(h1); links.appendChild(h2); links.appendChild(back); card.appendChild(links);
+    intro.appendChild(card); room.appendChild(intro);
 
     /* playing area */
     var play = mk("div", "pk-play");
@@ -140,7 +146,7 @@
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring rules" : "How to play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
       (score ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
-    var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "primary", function () { el.help.veil.classList.remove("on"); }));
+    var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
   };
 
@@ -148,18 +154,16 @@
   P.openSeat = function () {
     var b = el.seat.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", "Take your seat"));
-    b.appendChild(mk("h2", "", C.title));
     var s = mk("div", "pk-stack");
-    s.appendChild(btn("Play The House", "primary", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
-    s.appendChild(btn("Match an online player", "", function () { location.href = (C.home || "tables.html") + "?match=" + encodeURIComponent(C.game); }));
-    var inv = mk("input"); inv.placeholder = "Friend's username"; inv.maxLength = 20;
-    inv.style.cssText = "border:1px solid #d7c9b0;border-radius:999px;padding:10px 14px;font:600 13px Montserrat,sans-serif;width:100%";
-    s.appendChild(inv);
-    s.appendChild(btn("Invite a friend", "", function () {
+    s.appendChild(btn("Play vs. The House", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
+    s.appendChild(btn("Match an Online Player", "", function () { location.href = (C.home || "tables.html") + "?match=" + encodeURIComponent(C.game); }));
+    var f = mk("div", "pk-field"), inv = mk("input"); inv.placeholder = "Enter friend's public name..."; inv.maxLength = 20;
+    var sendB = btn("Send Invite", "", function () {
       var n = (inv.value || "").trim(); if (!n) { inv.focus(); return; }
       location.href = (C.home || "tables.html") + "?invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game);
-    }));
-    s.appendChild(btn("Close", "", function () { el.seat.veil.classList.remove("on"); }));
+    });
+    f.appendChild(inv); f.appendChild(sendB); s.appendChild(f);
+    s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
     b.appendChild(s); el.seat.veil.classList.add("on");
   };
   async function gateAndBegin() {
@@ -205,15 +209,15 @@
     if (detail) b.appendChild(mk("p", "pk-pts", detail));
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
     var r = mk("div", "pk-row");
-    if (mode === "house") r.appendChild(btn("Play again?", "primary", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
-    var back = mk("a", "pk-btn", "Return to Tables"); back.href = C.home || "tables.html"; r.appendChild(back);
+    if (mode === "house") r.appendChild(btn("Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
+    var back2 = mk("a", "pk-btn", "Return to Tables"); back2.href = C.home || "tables.html"; r.appendChild(back2);
     b.appendChild(r); el.end.veil.classList.add("on");
 
     if (mode !== "house") return;                       /* online results are scored by the room itself */
     var u = window.BW && BW.user && BW.user();
     if (!u) {                                           /* guests: invite them to keep their points */
       pts.textContent = "Create a free account to earn points from every game.";
-      var cb = btn("Create account", "", function () { BW.openAuth({ reason: "Earn points and unlock sets." }); }); cb.style.marginTop = "6px"; b.insertBefore(cb, r);
+      var cb = btn("Create account", "", function () { BW.openAuth({ reason: "Earn points and unlock sets." }); }); cb.style.margin = "8px 0 0"; b.insertBefore(cb, r);
       return;
     }
     if (!token) { pts.textContent = ""; return; }
