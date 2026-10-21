@@ -2,247 +2,545 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shut the Box · BrainWhim Play</title>
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tavern Shut the Box · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1021c">
 <style>
-:root{--navy:#1A2744;--whim:#7EB6D9;--gold:#c9a45a}
-*{box-sizing:border-box}
-html,body{min-height:100%}
-body{margin:0;font-family:Montserrat,sans-serif;color:#1A2744;background:#c4a878}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:#c4a878 url("shutbox-tavern.jpg") center / cover no-repeat}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
-.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
-.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
-.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
-.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:16px}
-.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:0}
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.games a,.games button{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:var(--navy);font-family:inherit;cursor:pointer}
-.games a.on,.games button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.sitbar{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:6px auto 8px;max-width:640px;padding:0 10px;position:relative;z-index:2}
-.sitbar button,.sitbar a,.helpbtn{border:0;border-radius:999px;padding:8px 12px;background:#fff;color:var(--navy);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.12)}
-body.seated .sit{display:none}body:not(.seated) .stand{display:none}
-body:not(.seated) .live{display:none}body.seated .live{display:block}
-.live{max-width:640px;margin:8px auto 36px;padding:8px 10px}
-h1{display:inline-block;margin:4px 0;font-size:22px;background:rgba(255,252,247,.9);padding:4px 14px;border-radius:999px}
-.sub{width:fit-content;margin:0 auto 10px;background:rgba(255,252,247,.82);padding:3px 12px;border-radius:999px;font-size:13px}
-.stage{perspective:1100px;padding:6px 4px 18px}
-.frame{
-  transform:rotateX(12deg);transform-origin:50% 90%;
-  padding:12px;border-radius:14px;
-  background:linear-gradient(160deg,#f3e2c4,#d7b07a 40%,#a07840);
-  box-shadow:0 22px 34px rgba(0,0,0,.32), 0 6px 0 #7a5428, inset 0 1px 0 rgba(255,255,255,.55)
+/* ===== Shut the Box: a real wooden box, drawn in 3D in the browser =====
+   The box, felt, tiles and dice are flat panels placed in 3D space. Their materials (wood grain, felt, ivory)
+   are painted in code when the page opens, so there are no picture files to load.
+   Boards (the Sets card): Tavern Oak is free; Walnut & Navy and Mahogany & Claret are for Club members.
+   Picture skins can replace the painted materials later: set --sb-wood-h / --sb-wood-v / --sb-felt-tex / --sb-tile
+   to url("…") in a body[data-set="…"] rule and leave that set out of DESIGNS below. */
+.sb-pad{width:100%;flex:none;display:flex;flex-direction:column;align-items:center;gap:12px}
+.sb-fit{position:relative;flex:none;overflow:hidden}
+.sb-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
+.sb-scene{position:relative;width:1000px;height:600px;perspective:2100px;perspective-origin:50% 18%}
+.sb-box{position:absolute;left:50px;top:4px;width:900px;height:560px;transform-style:preserve-3d;transform:rotateX(46deg)}
+.sb-box *{transform-style:preserve-3d}
+.sb-p{position:absolute;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.sb-tshadow{position:absolute;left:-30px;top:-10px;width:960px;height:610px;transform:translateZ(-79px);background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,.65),rgba(0,0,0,0) 70%);filter:blur(14px)}
+.sb-wh{background-image:var(--sb-wood-h);background-size:1200px 600px;background-repeat:no-repeat;background-color:#6b4626}
+.sb-wv{background-image:var(--sb-wood-v);background-size:600px 1200px;background-repeat:no-repeat;background-color:#6b4626}
+.sb-felt{left:36px;top:36px;width:828px;height:488px;transform:translateZ(-44px);background-image:var(--sb-felt-tex);background-size:256px 256px;background-color:var(--sb-felt,#1e4a2e)}
+.sb-felt::after{content:"";position:absolute;inset:0;background:
+  radial-gradient(ellipse 70% 80% at 42% 60%,rgba(255,220,160,.10),rgba(0,0,0,0) 60%),
+  linear-gradient(to bottom,rgba(0,0,0,.55),rgba(0,0,0,0) 12%),
+  linear-gradient(to right,rgba(0,0,0,.45),rgba(0,0,0,0) 6%,rgba(0,0,0,0) 94%,rgba(0,0,0,.35)),
+  linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 8%)}
+/* rim tops (lifted a hair off each other so Chrome draws them in the right order) */
+.sb-rim{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);transform:translateZ(1px)}
+.sb-rim::after,.sb-wall::after{content:"";position:absolute;inset:0}
+.sb-rim.t{left:0;top:0;width:900px;height:36px;background-position:0 0}
+.sb-rim.t::after{background:linear-gradient(to bottom,rgba(255,235,200,.22),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 75%,rgba(0,0,0,.35))}
+/* the front rim and front wall are split in two: long tilted panels can vanish halfway in Chrome */
+.sb-rim.b{top:524px;width:450px;height:36px;box-shadow:inset 0 1px 0 rgba(0,0,0,.25),inset 0 -1px 0 rgba(0,0,0,.25)}
+.sb-rim.b1{left:0;background-position:-150px -300px}.sb-rim.b2{left:450px;background-position:-600px -300px}
+.sb-rim.b::after{background:linear-gradient(to bottom,rgba(255,235,200,.28),rgba(0,0,0,0) 40%,rgba(0,0,0,0) 80%,rgba(0,0,0,.25))}
+.sb-rim.l{left:0;top:36px;width:36px;height:488px;background-position:-60px 0}
+.sb-rim.l::after{background:linear-gradient(to right,rgba(255,235,200,.22),rgba(0,0,0,0) 35%,rgba(0,0,0,.3))}
+.sb-rim.r{left:864px;top:36px;width:36px;height:488px;background-position:-300px -200px}
+.sb-rim.r::after{background:linear-gradient(to right,rgba(255,235,200,.15),rgba(0,0,0,0) 50%,rgba(0,0,0,.35))}
+.sb-wall{overflow:hidden}
+.sb-wall.ib{left:36px;top:36px;width:828px;height:14px;transform-origin:top;transform:rotateX(-90deg);background-position:-100px -40px}
+.sb-wall.ib::after{background:rgba(0,0,0,.35)}
+.sb-wall.il{left:36px;top:36px;width:44px;height:488px;transform-origin:left;transform:rotateY(90deg);background-position:-20px -100px}
+.sb-wall.il::after{background:linear-gradient(to right,rgba(0,0,0,.25),rgba(0,0,0,.6))}
+.sb-wall.ir{left:820px;top:36px;width:44px;height:488px;transform-origin:right;transform:rotateY(-90deg);background-position:-140px -300px}
+.sb-wall.ir::after{background:linear-gradient(to left,rgba(255,220,170,.08),rgba(0,0,0,.35))}
+.sb-wall.of{top:560px;width:450px;height:78px;transform-origin:top;transform:rotateX(-90deg)}
+.sb-wall.of1{left:0;background-position:-200px -120px}.sb-wall.of2{left:450px;background-position:-650px -120px}
+.sb-wall.of::after{background:linear-gradient(to bottom,rgba(255,230,190,.12),rgba(0,0,0,.25) 70%,rgba(0,0,0,.5))}
+.sb-wall.ol{left:-78px;top:0;width:78px;height:560px;transform-origin:right;transform:rotateY(-90deg);background-position:-10px -320px}
+.sb-wall.ol::after{background:rgba(255,230,190,.06)}
+.sb-wall.or{left:900px;top:0;width:78px;height:560px;transform-origin:left;transform:rotateY(90deg);background-position:-200px -10px}
+.sb-wall.or::after{background:rgba(0,0,0,.55)}
+.sb-shelf{left:36px;top:36px;width:828px;height:150px;transform:translateZ(-14px);background-position:-250px -60px}
+.sb-shelf::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,.05) 30%,rgba(255,230,190,.06) 85%,rgba(0,0,0,.2))}
+.sb-eng{position:absolute;z-index:1;top:58px;width:84px;text-align:center;font:700 30px "Cormorant Garamond",Georgia,serif;color:rgba(0,0,0,.42);text-shadow:0 1px 0 rgba(255,235,200,.18)}
+.sb-pool{position:absolute;z-index:1;top:18px;width:120px;height:110px;margin-left:-18px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .35s;
+  background:radial-gradient(ellipse at 50% 30%,rgba(255,214,120,.75),rgba(255,190,90,.25) 45%,rgba(255,190,90,0) 70%)}
+.sb-pool.on{opacity:1;animation:sb-pool 1.8s ease-in-out infinite}
+.sb-pool.sel{opacity:1;animation:none;filter:brightness(1.3)}
+@keyframes sb-pool{50%{opacity:.55}}
+.sb-hit{position:absolute;z-index:3;top:0;width:91px;height:150px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sb-wall.sf{left:36px;top:186px;width:828px;height:30px;transform-origin:top;transform:translateZ(-14px) rotateX(-90deg);background-position:-300px -20px}
+.sb-wall.sf::after{background:linear-gradient(to bottom,rgba(255,230,190,.12),rgba(0,0,0,.35))}
+.sb-rod{left:40px;top:50px;width:820px;height:7px;transform:translateZ(-9px);border-radius:4px;background:linear-gradient(to bottom,#7a5a26,#f5dc9a 35%,#b88d3e 60%,#5a3f17);box-shadow:0 3px 4px rgba(0,0,0,.5)}
+.sb-brass{background:linear-gradient(135deg,#6e4f1d 0%,#e9cf86 28%,#fff2c4 40%,#c49a45 58%,#7b5a22 100%)}
+.sb-cap{width:44px;height:44px;transform:translateZ(2.2px);border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,240,200,.35)}
+.sb-cap::before,.sb-cap::after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3cc,#8a6526 70%);box-shadow:0 1px 1px rgba(0,0,0,.5)}
+.sb-cap::before{left:9px;top:9px}.sb-cap::after{right:9px;bottom:9px}
+.sb-cap.c1{left:-4px;top:-4px}.sb-cap.c2{left:860px;top:-4px}.sb-cap.c3{left:-4px;top:520px}.sb-cap.c4{left:860px;top:520px}
+.sb-inlay{position:absolute;pointer-events:none;transform:translateZ(1.6px);background:linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526);box-shadow:0 0 1px rgba(0,0,0,.6)}
+.sb-plaque{left:350px;top:574px;width:200px;height:40px;transform-origin:top;transform:rotateX(-90deg) translateZ(1px) translateY(-14px);border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font:700 13px Montserrat,sans-serif;letter-spacing:.42em;padding-left:.42em;color:rgba(70,45,10,.85);text-shadow:0 1px 0 rgba(255,240,200,.6);box-shadow:0 2px 3px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,240,200,.4)}
+/* tiles: hinged on the brass rod; standing = open, tipped forward = shut */
+.sb-tile{position:absolute;top:-64px;width:84px;height:118px;transform-origin:50% 100%;transform:translateZ(-14px) rotateX(-90deg);transition:transform .55s cubic-bezier(.5,.05,.55,1.08);cursor:default;-webkit-tap-highlight-color:transparent}
+.sb-tile.sel{transform:translateZ(-14px) rotateX(-68deg)}
+.sb-tile.shut{transform:translateZ(-14px) rotateX(-180deg)}
+.sb-tile.tap{cursor:pointer}
+.sb-tile .f{position:absolute;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.sb-tile .front,.sb-tile .back{inset:0;border-radius:4px}
+.sb-tile .front{background:var(--sb-tile);background-size:256px 256px;background-color:#efe3c6;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 -14px 18px -10px rgba(0,0,0,.35),inset 0 10px 14px -10px rgba(255,255,255,.35)}
+.sb-tile .front::after{content:"";position:absolute;inset:0;border-radius:4px;transition:box-shadow .3s,background .3s}
+.sb-tile.play .front::after{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 20px 2px rgba(240,190,90,.55);animation:sb-glow 1.8s ease-in-out infinite}
+.sb-tile.sel .front::after{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 26px 6px rgba(250,205,110,.75);animation:none;background:rgba(255,215,130,.16)}
+@keyframes sb-glow{50%{box-shadow:inset 0 0 0 3px rgba(214,164,62,.55),inset 0 0 10px 1px rgba(240,190,90,.25)}}
+.sb-tile .back{transform:translateZ(-12px) rotateY(180deg);background:var(--sb-tile);background-size:256px 256px;background-color:#efe3c6;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 0 18px rgba(0,0,0,.25)}
+.sb-tile .back::after{content:"";position:absolute;left:14px;right:14px;top:50%;height:2px;margin-top:-1px;background:rgba(0,0,0,.18);box-shadow:0 1px 0 rgba(255,255,255,.15)}
+.sb-tile .top{left:0;top:0;width:84px;height:12px;transform-origin:top;transform:translateZ(-12px) rotateX(90deg);background:var(--sb-tile);background-color:#efe3c6;filter:brightness(1.12)}
+.sb-tile .sl{left:0;top:0;width:12px;height:118px;transform-origin:left;transform:translateZ(-12px) rotateY(-90deg);background:var(--sb-tile);background-color:#efe3c6;filter:brightness(.7)}
+.sb-tile .sr{left:72px;top:0;width:12px;height:118px;transform-origin:right;transform:translateZ(-12px) rotateY(90deg);background:var(--sb-tile);background-color:#efe3c6;filter:brightness(.55)}
+.sb-num{font:700 64px/1 "Cormorant Garamond",Georgia,serif;position:relative;top:-2px;color:var(--sb-num,#2a1c12);text-shadow:0 1px 0 rgba(255,255,255,.55),0 -1px 0 rgba(0,0,0,.35)}
+body[data-set="mahogany"] .sb-num{background:linear-gradient(170deg,#fff1bf 0%,#e2bd62 35%,#9c7326 60%,#f3d68b 85%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.8))}
+/* dice */
+.sb-die{position:absolute;left:0;top:0;width:58px;height:58px;margin:-29px 0 0 -29px}
+.sb-die.roll,.sb-dsh.roll{transition:transform 1.25s cubic-bezier(.12,.62,.22,1)}
+.sb-die .d{position:absolute;inset:0;border-radius:11px;background:var(--sb-die,#f4ead2);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),inset -4px -6px 10px rgba(0,0,0,.18),inset 4px 5px 8px rgba(255,255,255,.35)}
+.sb-die .core{position:absolute;inset:2px;background:var(--sb-die-core,#eadcbc);border-radius:6px}
+.sb-die .core.c2{transform:rotateY(90deg)}.sb-die .core.c3{transform:rotateX(90deg)}
+.sb-die .d i{width:10px;height:10px;border-radius:50%;margin:auto;background:radial-gradient(circle at 60% 65%,var(--sb-pip,#1d140d) 40%,var(--sb-pip2,#4a3626) 100%);box-shadow:inset 0 2px 2px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.4);visibility:hidden}
+.sb-die .d i.p{visibility:visible}
+.sb-dsh{position:absolute;left:0;top:0;width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.6),rgba(0,0,0,0) 68%);filter:blur(3px)}
+body.sb-quick .sb-tile,body.sb-quick .sb-die.roll,body.sb-quick .sb-dsh.roll{transition-duration:.01s}
+body.sb-quick .sb-tile.play .front::after,body.sb-quick .sb-pool.on{animation:none}
+/* roll buttons under the box */
+.sb-ctl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.sb-ctl .pk-btn{width:auto;min-width:150px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 2px 10px rgba(0,0,0,.25);color:#e6c25a;font-size:15px;font-weight:700;letter-spacing:.45px;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.sb-ctl .pk-btn:hover{background:rgba(15,23,42,.85);color:#f0d27a}
+.sb-ctl .pk-btn[disabled]{opacity:.45}
+.sb-ctl .pk-btn[hidden]{display:none}
+@media (max-width:999px){ .sb-ctl .pk-btn{min-width:130px;min-height:44px} }
+/* short landscape phones: roll buttons beside the box; the scores stay in the bar and the Table card */
+@media (max-width:999px) and (max-height:520px) and (orientation:landscape){
+  .sb-pad{flex-direction:row;justify-content:center;gap:14px}
+  .sb-ctl{flex-direction:column}
+  body.pk .pk-mini{display:none}
+  body.pk .pk-stage{min-height:0;padding-top:4px}
 }
-.boxin{background:linear-gradient(180deg,#eef6ea,#d5e4d0);padding:14px;border-radius:10px;color:#1A2744}
-.tiles{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-bottom:12px}
-.tile{
-  border:0;border-radius:8px;min-height:72px;cursor:pointer;font-family:inherit;font-weight:800;font-size:20px;
-  background:linear-gradient(#fff8e6,#e8d2a0);color:#3a2410;
-  box-shadow:0 4px 0 #8a6a2e, inset 0 1px 0 #fff
-}
-.tile.on{outline:3px solid #e8c15a;transform:translateY(-3px)}
-.tile.shut{background:linear-gradient(#3a2410,#1a1008);color:#6a5030;box-shadow:inset 0 6px 8px rgba(0,0,0,.45);cursor:default}
-.dice{display:flex;justify-content:center;gap:10px;margin:8px 0}
-.die{width:48px;height:48px;border-radius:10px;background:#fffef8;color:#1A2744;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;box-shadow:0 4px 0 #8a6e3e}
-.score{display:flex;gap:8px;margin-top:8px}
-.score div{flex:1;background:#1A2744;border-radius:8px;padding:8px;text-align:center;color:#fff}
-.score b{display:block;font-size:20px;color:#7EB6D9}
-.acts{text-align:center;margin-top:10px}
-.acts button{border:0;border-radius:999px;padding:8px 14px;background:#1A2744;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;margin:0 4px}
-.hint{text-align:center;margin:10px 0 0}
-.hint span{background:rgba(255,252,247,.92);display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
-@media(max-width:800px){
-header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padding:6px 10px 8px}
-.brand{font-size:18px;grid-column:1;grid-row:1}
-.brand img{width:48px;height:48px}
-.hdr{grid-column:1 / -1;grid-row:2;justify-content:center;width:100%;padding-top:4px;gap:12px}
-.hdr a{font-size:13px;margin-left:0}
-.tile{min-height:56px;font-size:16px}}
-#winveil,#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:16px}
-#winveil.on,#helpveil.on{display:flex}
-.card{width:min(480px,94vw);padding:22px;border-radius:20px;background:linear-gradient(180deg,#fffdf8,#f3ead6);box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744}
-.card h2{margin:0 0 12px;text-align:center}
-.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.card button,.card a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;text-decoration:none;cursor:pointer}
-.go{background:#1A2744;color:#fff}.ghost{background:#fff;color:#1A2744}
-
-body.seated .games{display:none}
-body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
-body.seated .sit{display:none}
-body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none}
-body.seated .bar button{display:none}
-
 </style>
 <script src="bw-auth.js"></script>
-<script>
-/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
-async function bwHouseGate(fn){
-  if(!window.BW){ fn(); return; }
-  if(await BW.startMatch({mode:"house"})) fn();
-}
-</script>
 </head>
 <body>
 <header>
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
-<div class="games">
-<a href="checkers.html">Checkers</a>
-<a href="chess.html">Chess</a>
-<a href="backgammon.html">Backgammon</a>
-<a href="yahtzee.html">Yahtzee</a>
-<a href="dominoes.html">Dominoes</a>
-<a href="othello.html">Othello</a>
-<a href="mancala.html">Mancala</a>
-<a href="cribbage.html">Cribbage</a>
-<a class="on" href="shutbox.html">Shut the Box</a>
-<a href="morris.html">Morris</a>
-</div>
-<div class="sitbar">
-<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the tavern</button>
-<a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
-<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
-<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
-</div>
-<div class="live">
-  <div style="text-align:center"><h1>Shut the Box</h1></div>
-  <p class="sub">Roll, shut numbers that add to the dice, lowest leftover wins.</p>
-  <div class="stage"><div class="frame"><div class="boxin">
-    <div class="tiles" id="tiles"></div>
-    <div class="dice"><div class="die" id="d1">·</div><div class="die" id="d2">·</div></div>
-    <div class="score">
-      <div>You<b id="ys">—</b></div>
-      <div>House<b id="hs">—</b></div>
-      <div>Need<b id="need">—</b></div>
-    </div>
-    <div class="acts">
-      <button type="button" onclick="roll()">Roll</button>
-      <button type="button" onclick="shut()">Shut tiles</button>
-    </div>
-  </div></div></div>
-  <div class="hint"><span id="msg">Sit and roll. You go first.</span></div>
-</div>
-<div id="winveil"><div class="card"><h2 id="winTitle">Congratulations! You win!</h2><div class="row"><button class="go" type="button" onclick="hideBanner();bwHouseGate(newGame)">Play again?</button><a class="ghost" href="tables.html">Return to Tables</a></div></div></div>
-<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()"><div class="card"><h2 id="helpTitle">How to play</h2><div id="helpBody"></div><div class="row"><button class="go" type="button" onclick="hideHelp()">Got it</button></div></div></div>
-<script>
-function sitDown(){document.body.classList.add("seated");paint()}
-function standUp(){document.body.classList.remove("seated")}
-function hideBanner(){document.getElementById("winveil").className=""}
-function hideHelp(){document.getElementById("helpveil").className=""}
-function showHelp(k){
-  document.getElementById("helpTitle").textContent=k==="score"?"Scoring rules":"How to play";
-  document.getElementById("helpBody").innerHTML=k==="score"
-    ?"<ul><li>When you cannot shut any tiles for the roll, your turn ends.</li><li>Your score is the sum of tiles still standing.</li><li>A shut box (all tiles down) is 0 — the best score.</li><li>Lower score wins. Tie is a draw.</li></ul>"
-    :"<ol><li>Tiles 1–9 start standing.</li><li>Roll two dice. If 7, 8 and 9 are already shut you may use one die.</li><li>Shut one or more standing tiles that add exactly to the roll.</li><li>Keep rolling until you cannot shut. Then the house takes its turn on a fresh box.</li></ol>";
-  document.getElementById("helpveil").className="on";
-}
-var open=[], pick=[], dice=[0,0], need=0, turn="you", youScore=null, houseScore=null, rolled=false, over=false;
-function newGame(){
-  open=[1,2,3,4,5,6,7,8,9]; pick=[]; dice=[0,0]; need=0; turn="you"; youScore=null; houseScore=null; rolled=false; over=false;
-  document.getElementById("msg").textContent="Roll the dice. Shut tiles that add to the roll.";
-  hideBanner(); paint();
-}
-function sumOpen(){ return open.reduce(function(a,b){return a+b;},0); }
-function oneDieOk(){ return [7,8,9].every(function(n){return open.indexOf(n)<0;}); }
-function canMake(target, tiles){
-  function rec(i,left){
-    if(left===0) return true;
-    if(i>=tiles.length||left<0) return false;
-    return rec(i+1,left-tiles[i])||rec(i+1,left);
-  }
-  return rec(0,target);
-}
-function roll(){
-  if(over||turn!=="you"||rolled) return;
-  var n=oneDieOk()?1:2;
-  dice[0]=1+Math.floor(Math.random()*6);
-  dice[1]=n===2?1+Math.floor(Math.random()*6):0;
-  need=dice[0]+dice[1];
-  pick=[]; rolled=true;
-  if(!canMake(need,open)){
-    youScore=sumOpen();
-    document.getElementById("msg").textContent="No shut. You score "+youScore+". House is up.";
-    paint(); setTimeout(houseTurn,700); return;
-  }
-  document.getElementById("msg").textContent="Shut tiles that add to "+need+".";
-  paint();
-}
-function toggle(n){
-  if(!rolled||turn!=="you"||open.indexOf(n)<0) return;
-  var i=pick.indexOf(n);
-  if(i>=0) pick.splice(i,1); else pick.push(n);
-  paint();
-}
-function shut(){
-  if(!rolled||turn!=="you") return;
-  var s=pick.reduce(function(a,b){return a+b;},0);
-  if(s!==need||!pick.length){ document.getElementById("msg").textContent="Those tiles must add to "+need+"."; return; }
-  pick.forEach(function(n){ open=open.filter(function(x){return x!==n;}); });
-  pick=[]; rolled=false; need=0; dice=[0,0];
-  if(!open.length){ youScore=0; document.getElementById("msg").textContent="You shut the box. House will try."; paint(); setTimeout(houseTurn,700); return; }
-  document.getElementById("msg").textContent="Good. Roll again.";
-  paint();
-}
-function houseTurn(){
-  turn="house"; open=[1,2,3,4,5,6,7,8,9];
-  function step(){
-    var n=oneDieOk()?1:2;
-    var a=1+Math.floor(Math.random()*6), b=n===2?1+Math.floor(Math.random()*6):0;
-    dice=[a,b]; need=a+b; paint();
-    var choice=bestShut(need,open);
-    if(!choice){
-      houseScore=sumOpen(); finish(); return;
-    }
-    setTimeout(function(){
-      choice.forEach(function(v){ open=open.filter(function(x){return x!==v;}); });
-      if(!open.length){ houseScore=0; finish(); return; }
-      setTimeout(step,500);
-    },500);
-  }
-  document.getElementById("msg").textContent="House is rolling.";
-  setTimeout(step,400);
-}
-function bestShut(t, tiles){
-  var best=null;
-  function rec(i,left,used){
-    if(left===0){ if(!best||used.length<best.length) best=used.slice(); return; }
-    if(i>=tiles.length||left<0) return;
-    used.push(tiles[i]); rec(i+1,left-tiles[i],used); used.pop();
-    rec(i+1,left,used);
-  }
-  rec(0,t,[]);
-  return best;
-}
-function finish(){
-  over=true; turn="";
-  var y=youScore, h=houseScore;
-  var title=y<h?"Congratulations! You win!":y>h?"Better luck next time!":"It's a Draw!";
-  document.getElementById("winTitle").textContent=title;
-  document.getElementById("msg").textContent="You "+y+" · House "+h;
-  document.getElementById("winveil").className="on";
-  paint();
-}
-function paint(){
-  var h="";
-  for(var n=1;n<=9;n++){
-    var shut=open.indexOf(n)<0, on=pick.indexOf(n)>=0;
-    h+='<button class="tile'+(shut?" shut":"")+(on?" on":"")+'" type="button" onclick="toggle('+n+')">'+n+"</button>";
-  }
-  document.getElementById("tiles").innerHTML=h;
-  document.getElementById("d1").textContent=dice[0]||"·";
-  document.getElementById("d2").textContent=dice[1]||"·";
-  document.getElementById("ys").textContent=youScore==null?"—":youScore;
-  document.getElementById("hs").textContent=houseScore==null?"—":houseScore;
-  document.getElementById("need").textContent=need||"—";
-}
-newGame();
-</script>
+<main class="pk-room"></main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
+<script src="parlor-kit.js?v=1021c"></script>
+<script>
+/* =====================================================================
+   Painted materials (no picture files): wood grain, felt, ivory/ebony
+   ===================================================================== */
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){
+  var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;
+  for(i=0;i<256;i++)p[i]=i; for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}
+  for(i=0;i<512;i++)P[i]=p[i&255]; for(i=0;i<256;i++)G[i]=r();
+  function f(x){return x*x*(3-2*x);}
+  return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;
+    var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};
+}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function wood(w,h,o){   /* grain runs along x */
+  var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;
+  var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);
+  for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+    var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v=v-Math.floor(v);
+    var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),streak=fbm(n2,x/180,y/1.6,3);
+    var tt=(1-ring)*o.ringAmt+streak*o.streakAmt+(o.fig?Math.max(0,Math.sin(x/o.fig+warp*6))*.18:0);tt=Math.min(1,Math.max(0,tt));
+    var i=(y*w+x)*4,k=r()<o.pores?.78:1,lum=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;
+    D[i]=mix(o.light[0],o.dark[0],tt)*k*lum;D[i+1]=mix(o.light[1],o.dark[1],tt)*k*lum;D[i+2]=mix(o.light[2],o.dark[2],tt)*k*lum;D[i+3]=255;}
+  g.putImageData(im,0,0);return c;
+}
+function rot(c){var d=document.createElement("canvas");d.width=c.height;d.height=c.width;var g=d.getContext("2d");g.translate(d.width,0);g.rotate(Math.PI/2);g.drawImage(c,0,0);return d;}
+function feltTex(rgb,seed){
+  var w=256,c=document.createElement("canvas");c.width=c.height=w;var g=c.getContext("2d"),im=g.createImageData(w,w),D=im.data,r=rng(seed),n=noise2(seed);
+  for(var y=0;y<w;y++)for(var x=0;x<w;x++){var i=(y*w+x)*4,k=.86+r()*.22+(fbm(n,x/22,y/22,3)-.5)*.14;D[i]=rgb[0]*k;D[i+1]=rgb[1]*k;D[i+2]=rgb[2]*k;D[i+3]=255;}
+  g.putImageData(im,0,0);return c.toDataURL("image/jpeg",.9);
+}
+function cssUrl(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
+var DESIGNS={
+  oak:{wood:{light:[178,128,78],dark:[96,58,28],freq:.055,turb:7,wx:260,wy:26,sharp:.55,ringAmt:.62,streakAmt:.45,pores:.035,blotch:.35,seed:11},
+    felt:[30,74,46],tile:{light:[244,233,208],dark:[214,196,160],freq:.02,turb:3,wx:300,wy:60,sharp:.9,ringAmt:.25,streakAmt:.35,pores:0,blotch:.12,seed:5},
+    num:"#2a1c12",die:"linear-gradient(145deg,#fbf3e0,#e6d6b2)",dieCore:"#eadcbc",pip:"#1d140d",pip2:"#4a3626"},
+  walnut:{wood:{light:[120,80,50],dark:[52,31,18],freq:.04,turb:9,wx:220,wy:20,sharp:.7,ringAmt:.7,streakAmt:.4,pores:.02,blotch:.3,seed:23,fig:40},
+    felt:[24,38,70],tile:{light:[226,192,140],dark:[180,138,88],freq:.05,turb:6,wx:200,wy:30,sharp:.6,ringAmt:.45,streakAmt:.4,pores:.01,blotch:.15,seed:9},
+    num:"#3a2416",die:"linear-gradient(145deg,#fbf6ea,#e4dccb)",dieCore:"#e8e0cf",pip:"#18264a",pip2:"#33476f"},
+  mahogany:{wood:{light:[150,62,38],dark:[70,22,12],freq:.035,turb:5,wx:420,wy:30,sharp:.9,ringAmt:.32,streakAmt:.5,pores:.012,blotch:.3,seed:41,fig:26},
+    felt:[92,20,34],tile:{light:[54,42,34],dark:[18,13,10],freq:.07,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},
+    num:"",die:"linear-gradient(145deg,#2c2420,#0f0b09)",dieCore:"#16110e",pip:"#f0d28a",pip2:"#9b7430"}
+};
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="oak";
+  if(k===curDesign) return; curDesign=k;
+  var d=DESIGNS[k];
+  if(!texCache[k]){ var h=wood(1200,600,d.wood); texCache[k]={h:cssUrl(h),v:cssUrl(rot(h)),felt:'url('+feltTex(d.felt,k.length*31)+')',tile:cssUrl(wood(256,256,d.tile))}; }
+  var m=texCache[k], s=boxEl.style;
+  s.setProperty("--sb-wood-h",m.h); s.setProperty("--sb-wood-v",m.v); s.setProperty("--sb-felt-tex",m.felt); s.setProperty("--sb-felt","rgb("+d.felt+")");
+  s.setProperty("--sb-tile",m.tile); s.setProperty("--sb-num",d.num||"transparent");
+  s.setProperty("--sb-die",d.die); s.setProperty("--sb-die-core",d.dieCore); s.setProperty("--sb-pip",d.pip); s.setProperty("--sb-pip2",d.pip2);
+}
+
+/* =====================================================================
+   Building the box
+   ===================================================================== */
+var stage=document.createElement("div"); stage.className="sb-pad";
+stage.innerHTML='<div class="sb-fit" id="sbFit"><div class="sb-scaler" id="sbScaler"><div class="sb-scene"><div class="sb-box" id="sbBox">'+
+  '<div class="sb-p sb-tshadow"></div>'+
+  '<div class="sb-p sb-wall of of1 sb-wh"></div><div class="sb-p sb-wall of of2 sb-wh"></div>'+
+  '<div class="sb-p sb-wall ol sb-wv"></div><div class="sb-p sb-wall or sb-wv"></div>'+
+  '<div class="sb-p sb-plaque sb-brass">BRAINWHIM</div>'+
+  '<div class="sb-p sb-felt"></div>'+
+  '<div class="sb-p sb-wall il sb-wv"></div><div class="sb-p sb-wall ir sb-wv"></div>'+
+  '<div class="sb-p sb-wall sf sb-wh"></div>'+
+  '<div class="sb-p sb-shelf sb-wh" id="sbShelf"></div>'+
+  '<div class="sb-p sb-wall ib sb-wh"></div>'+
+  '<div class="sb-p sb-rod"></div>'+
+  '<div id="sbTiles" style="position:absolute;left:0;top:0"></div>'+
+  '<div id="sbDice" style="position:absolute;left:0;top:0"></div>'+
+  '<div class="sb-p sb-rim t sb-wh"></div><div class="sb-p sb-rim b b1 sb-wh"></div><div class="sb-p sb-rim b b2 sb-wh"></div>'+
+  '<div class="sb-p sb-rim l sb-wv"></div><div class="sb-p sb-rim r sb-wv"></div>'+
+  '<div class="sb-p sb-inlay" style="left:30px;top:30px;width:840px;height:2px"></div>'+
+  '<div class="sb-p sb-inlay" style="left:30px;top:528px;width:420px;height:2px"></div><div class="sb-p sb-inlay" style="left:450px;top:528px;width:420px;height:2px"></div>'+
+  '<div class="sb-p sb-inlay" style="left:30px;top:30px;width:2px;height:500px"></div><div class="sb-p sb-inlay" style="left:868px;top:30px;width:2px;height:500px"></div>'+
+  '<div class="sb-p sb-cap c1 sb-brass"></div><div class="sb-p sb-cap c2 sb-brass"></div><div class="sb-p sb-cap c3 sb-brass"></div><div class="sb-p sb-cap c4 sb-brass"></div>'+
+  '</div></div></div></div>'+
+  '<div class="sb-ctl"><button type="button" class="pk-btn" id="sbRoll">Roll Dice</button><button type="button" class="pk-btn" id="sbRoll1" hidden>Roll One Die</button></div>';
+var boxEl=stage.querySelector("#sbBox"), tilesEl=[], pools=[];
+var R=36, GAP=7, TW=84;
+(function(){
+  var shelf=stage.querySelector("#sbShelf"), holder=stage.querySelector("#sbTiles");
+  for(var n=1;n<=9;n++){
+    var x=R+GAP+(n-1)*(TW+GAP+.2);
+    var pl=document.createElement("div"); pl.className="sb-pool"; pl.style.left=(x-R)+"px"; shelf.appendChild(pl); pools[n]=pl;
+    var e=document.createElement("div"); e.className="sb-eng"; e.style.left=(x-R)+"px"; e.textContent=n; shelf.appendChild(e);
+    var hit=document.createElement("div"); hit.className="sb-hit"; hit.style.left=(x-R-3)+"px"; shelf.appendChild(hit);
+    var t=document.createElement("div"); t.className="sb-tile"; t.style.left=x+"px"; t.setAttribute("role","button"); t.setAttribute("aria-label","Tile "+n);
+    t.innerHTML='<div class="f front"><span class="sb-num">'+n+'</span></div><div class="f back"></div><div class="f top"></div><div class="f sl"></div><div class="f sr"></div>';
+    holder.appendChild(t); tilesEl[n]=t;
+    (function(n){ t.onclick=function(){ tap(n); }; hit.onclick=function(){ tap(n); }; })(n);
+  }
+})();
+var PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+var FACE={1:"translateZ(29px)",6:"rotateY(180deg) translateZ(29px)",2:"rotateY(90deg) translateZ(29px)",5:"rotateY(-90deg) translateZ(29px)",3:"rotateX(90deg) translateZ(29px)",4:"rotateX(-90deg) translateZ(29px)"};
+var UP={1:[0,0],6:[0,180],2:[0,-90],5:[0,90],3:[-90,0],4:[90,0]};
+var dice=[];
+(function(){
+  var holder=stage.querySelector("#sbDice");
+  for(var i=0;i<2;i++){
+    var s=document.createElement("div"); s.className="sb-p sb-dsh"; holder.appendChild(s);
+    var d=document.createElement("div"); d.className="sb-die";
+    var h='<div class="core"></div><div class="core c2"></div><div class="core c3"></div>';
+    [1,2,3,4,5,6].forEach(function(v){ h+='<div class="d" style="transform:'+FACE[v]+'">'; for(var j=0;j<9;j++) h+='<i class="'+(PIPS[v].indexOf(j)>=0?"p":"")+'"></i>'; h+='</div>'; });
+    d.innerHTML=h; holder.appendChild(d); dice.push({el:d,sh:s,rx:0,ry:0,rz:0});
+  }
+})();
+function placeDie(o,x,y,ax,ay,az,anim){
+  o.el.classList.toggle("roll",anim); o.sh.classList.toggle("roll",anim);
+  o.el.style.transform="translate3d("+x+"px,"+y+"px,-15px) rotateZ("+az+"deg) rotateX("+ax+"deg) rotateY("+ay+"deg)";
+  o.sh.style.transform="translate3d("+(x+6)+"px,"+(y+8)+"px,-43px)";
+}
+function showDie(o,on){ o.el.style.visibility=o.sh.style.visibility=on?"visible":"hidden"; }
+function restDice(){ var a=UP[5],b=UP[3]; placeDie(dice[0],600,400,a[0],a[1],-24,false); placeDie(dice[1],690,430,b[0],b[1],31,false); dice[0].rx=a[0];dice[0].ry=a[1];dice[1].rx=b[0];dice[1].ry=b[1]; showDie(dice[0],true); showDie(dice[1],true); }
+/* tumble the dice to show these values; resolves when they settle */
+function rollDice(vals){
+  quick();
+  var n=vals.length;
+  Parlor.sfx("dice",{dur:Parlor.smooth()?1.15:.3});
+  dice.forEach(function(o,i){
+    if(i>=n){ showDie(o,false); return; } showDie(o,true);
+    placeDie(o,770+i*34,480-i*12,o.rx,o.ry,o.rz,false); void o.el.offsetWidth;
+    var up=UP[vals[i]], dir=Math.random()<.5?-1:1;
+    o.rx=up[0]+360*(2+Math.floor(Math.random()*2))*dir; o.ry=up[1]+360*(1+Math.floor(Math.random()*2)); o.rz=(Math.random()<.5?-1:1)*(18+Math.random()*50);
+    var tx=n===1?450:(330+i*170+Math.random()*60), ty=300+Math.random()*140;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ placeDie(o,tx,ty,o.rx,o.ry,o.rz,true); }); });
+  });
+  return Parlor.wait(1300);
+}
+function quick(){ document.body.classList.toggle("sb-quick",!Parlor.smooth()); }
+
+/* fit the box to the space it has (re-measured when you sit, and when the window changes) */
+function fit(){
+  var wide=window.innerWidth>=1000, availW, availH;
+  if(wide){
+    /* desktop: the space between the two side cards */
+    var side=window.innerWidth<=1180?215:260, gap=window.innerWidth<=1180?14:18, st=document.querySelector(".pk-stage");
+    availW=(st&&st.clientWidth)||(window.innerWidth-2*side-2*gap-32); availH=window.innerHeight-80-65-40-70;
+  } else {
+    /* phones and tablets: full width; height above the floating bar (short landscape screens may scroll a little) */
+    var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight;
+    if(shortL){ availW=window.innerWidth-12-170; availH=window.innerHeight-56-64-34-14; }
+    else { availW=window.innerWidth-12; availH=window.innerHeight-56-64-34-108-70; }
+  }
+  var s=Math.max(.2,Math.min(availW/1000,availH/600,1.15));
+  var f=document.getElementById("sbFit"), sc=document.getElementById("sbScaler"); if(!f) return;
+  sc.style.transform="scale("+s+")"; f.style.width=Math.round(1000*s)+"px"; f.style.height=Math.round(600*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(1000*s)+"px");
+}
+window.addEventListener("resize",fit);
+
+/* =====================================================================
+   The game
+   Each player plays a full box: roll, shut tiles that add up to the roll, until no tiles can make it.
+   The tiles still standing are the score; the lower score wins. Side 1 (you, or the host online) goes first.
+   Saved online as {game:"shutbox", open, pick, dice, need, turn, score1, score2, rolled, over, seq}.
+   ===================================================================== */
+var open=[1,2,3,4,5,6,7,8,9], sel=[], dv=[0,0], need=0, turn=1, score1=null, score2=null, rolled=false, over=false, busy=false;
+var mySide=1, online=false, sb=null, room=null, me=null, reported=false, seq=0, CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+
+function sumOf(a){ return a.reduce(function(x,y){ return x+y; },0); }
+function oneDieOk(o){ o=o||open; return o.indexOf(7)<0&&o.indexOf(8)<0&&o.indexOf(9)<0; }
+function combos(t,arr){ var out=[]; (function go(i,s,acc){ if(s===t){ out.push(acc.slice()); return; } if(s>t) return; for(var j=i;j<arr.length;j++){ acc.push(arr[j]); go(j+1,s+arr[j],acc); acc.pop(); } })(0,0,[]); return out; }
+function playable(){
+  if(!rolled||!need) return [];
+  var ok=combos(need,open.slice().sort(function(a,b){return a-b;})).filter(function(c){ return sel.every(function(s){ return c.indexOf(s)>=0; }); });
+  var set=[]; ok.forEach(function(c){ c.forEach(function(n){ if(sel.indexOf(n)<0&&set.indexOf(n)<0) set.push(n); }); }); return set;
+}
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function myTurn(){ return !over && !busy && seatedNow() && turn===mySide && (!online||(room&&room.guest&&mySide)); }
+
+function paint(){
+  var mine=myTurn()&&rolled, p=mine?playable():[];
+  for(var n=1;n<=9;n++){
+    var t=tilesEl[n], isOpen=open.indexOf(n)>=0;
+    t.classList.toggle("shut",!isOpen); t.classList.toggle("sel",sel.indexOf(n)>=0);
+    t.classList.toggle("play",mine&&isOpen&&p.indexOf(n)>=0); t.classList.toggle("tap",mine&&(p.indexOf(n)>=0||sel.indexOf(n)>=0));
+    pools[n].classList.toggle("on",mine&&isOpen&&p.indexOf(n)>=0); pools[n].classList.toggle("sel",sel.indexOf(n)>=0);
+  }
+  var rb=document.getElementById("sbRoll"), r1=document.getElementById("sbRoll1"), can=myTurn()&&!rolled;
+  if(rb){ rb.disabled=!can; r1.hidden=!oneDieOk(); r1.disabled=!can; rb.textContent=oneDieOk()?"Roll Two Dice":"Roll Dice"; }
+  var sc=function(v){ return v==null?"–":v; };
+  Parlor.score([sc(score1),sc(score2)]); Parlor.turn(over?-1:turn===1?0:1);
+}
+function say(a,b){ Parlor.status(a,b||""); }
+function who(side){ return side===mySide?"You":online?"Your opponent":"The House"; }
+function msg(){
+  if(over) return;
+  if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  if(turn===mySide){
+    if(!rolled) say(open.length===9?"Your box":"Roll again", oneDieOk()?"7, 8 and 9 are shut: roll one die or two":"Open tiles add up to "+sumOf(open));
+    else say("You rolled "+need,"Tap tiles that add up to "+need);
+  } else {
+    var mine=mySide===1?score1:score2;
+    say(online?"Your opponent's box":"The House is rolling…", mine!=null?"Your score: "+mine+". Lower wins.":"");
+  }
+}
+
+/* tiles change with a wooden clack, one after another */
+async function setOpen(next){
+  quick();
+  var before=open.slice(); open=next.slice(); sel=[];
+  var changed=[]; for(var n=1;n<=9;n++) if((before.indexOf(n)>=0)!==(open.indexOf(n)>=0)) changed.push(n);
+  for(var k=0;k<changed.length;k++){
+    var m=changed[k], up=open.indexOf(m)>=0;
+    tilesEl[m].classList.toggle("shut",!up); tilesEl[m].classList.remove("sel","play","tap"); pools[m].classList.remove("on","sel");
+    (function(m,up){ setTimeout(function(){ Parlor.sfx("tile",{pitch:up?1.15:.9+Math.random()*.2}); }, up?120:380); })(m,up);
+    await Parlor.wait(changed.length>3?110:170);
+  }
+  await Parlor.wait(changed.length?420:0);
+  paint();
+}
+
+/* ---------- your moves ---------- */
+async function humanRoll(count){
+  if(!myTurn()||rolled) return;
+  if(count===1&&!oneDieOk()) count=2;
+  busy=true; paint();
+  var vals=[1+Math.floor(Math.random()*6)]; if(count===2) vals.push(1+Math.floor(Math.random()*6));
+  dv=[vals[0],vals[1]||0]; need=vals[0]+(vals[1]||0); rolled=true; seq++;
+  say("Rolling…",""); push();
+  await rollDice(vals); busy=false;
+  if(!combos(need,open).length){ say("You rolled "+need,"No tiles make "+need+"."); paint(); await Parlor.wait(1100); await endBox(); return; }
+  paint(); msg();
+}
+async function tap(n){
+  if(!myTurn()||!rolled||open.indexOf(n)<0) return;
+  var i=sel.indexOf(n);
+  if(i>=0){ sel.splice(i,1); paint(); return; }
+  if(playable().indexOf(n)<0) return;
+  sel.push(n); Parlor.sfx("click",{pitch:1.4}); paint();
+  var s=sumOf(sel);
+  if(s===need){
+    busy=true; paint(); await Parlor.wait(260);
+    var next=open.filter(function(x){ return sel.indexOf(x)<0; });
+    await setOpen(next);
+    rolled=false; need=0; seq++; busy=false;
+    push();
+    if(!open.length){ say("You shut the box!","A perfect score: 0"); await Parlor.wait(900); await endBox(); return; }
+    paint(); msg();
+  } else say("You rolled "+need,"Chosen "+s+" of "+need);
+}
+
+/* ---------- end of a box: score it, then the other player goes, or the game ends ---------- */
+async function endBox(){
+  var sc=sumOf(open);
+  if(turn===1) score1=sc; else score2=sc;
+  rolled=false; need=0; sel=[];
+  if(score1!=null&&score2!=null){ over=true; seq++; paint(); await push(); end(); return; }
+  var was=turn; turn=3-turn; seq++;
+  say(who(was)+(sc===0?" shut the box!":" scored "+sc), turn===mySide?"Your box is next":(online?"Your opponent's box is next":"The House plays a fresh box"));
+  paint(); await Parlor.wait(1400);
+  busy=true; await setOpen([1,2,3,4,5,6,7,8,9]); busy=false;
+  push(); paint(); msg();
+  if(!online&&turn===2) houseTurn();
+}
+function winnerSide(){ return score1===score2?0:score1<score2?1:2; }
+function end(){
+  var w=winnerSide(), mine=mySide===2?score2:score1, theirs=mySide===2?score1:score2;
+  var kind=w===0?"draw":(w===mySide?"win":"lose");
+  say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over","You "+mine+" · "+(online?"Opponent":"The House")+" "+theirs);
+  if(online) report();
+  Parlor.finish(kind,"Your score "+mine+", "+(online?"your opponent":"The House")+" "+theirs+" (lower wins)");
+}
+
+/* ---------- The House ----------
+   It knows the best play for every position (worked out once below: the expected tiles left standing,
+   choosing one die or two, and which tiles to shut). At lower levels it sometimes makes a looser choice. */
+var EXP=null, BESTN=null, SUMS=[];
+function bitsOf(arr){ var m=0; arr.forEach(function(n){ m|=1<<(n-1); }); return m; }
+function tilesOf(m){ var a=[]; for(var n=1;n<=9;n++) if(m&(1<<(n-1))) a.push(n); return a; }
+function solve(){
+  if(EXP) return; EXP=new Float64Array(512); BESTN=new Uint8Array(512);
+  for(var m=0;m<512;m++){ var s=0; for(var n=1;n<=9;n++) if(m&(1<<(n-1))) s+=n; SUMS[m]=s; }
+  var P2=[],P1=[]; for(var t=0;t<=12;t++){ P2[t]=0; P1[t]=0; } for(var a=1;a<=6;a++){ P1[a]+=1/6; for(var b=1;b<=6;b++) P2[a+b]+=1/36; }
+  var order=[]; for(m=0;m<512;m++) order.push(m); order.sort(function(x,y){ return SUMS[x]-SUMS[y]; });
+  order.forEach(function(m){
+    if(!m){ EXP[0]=0; return; }
+    function exp(P){ var e=0; for(var t=1;t<=12;t++){ if(!P[t]) continue; var best=SUMS[m];
+      for(var sub=m;sub;sub=(sub-1)&m) if(SUMS[sub]===t){ var v=EXP[m^sub]; if(v<best) best=v; }
+      e+=P[t]*best; } return e; }
+    var e2=exp(P2), one=!(m&(7<<6)), e1=one?exp(P1):Infinity;
+    EXP[m]=Math.min(e1,e2); BESTN[m]=e1<e2?1:2;
+  });
+}
+function bestShut(t){ var m=bitsOf(open), best=null, bv=Infinity; for(var sub=m;sub;sub=(sub-1)&m) if(SUMS[sub]===t&&EXP[m^sub]<bv){ bv=EXP[m^sub]; best=sub; } return best==null?null:tilesOf(best); }
+async function houseTurn(){
+  solve();
+  while(!over&&!online&&turn===2){
+    await Parlor.wait(1000);
+    var sk=Parlor.skill(), loose=Math.random()<sk.loose;
+    var count=oneDieOk()?(loose?(Math.random()<.5?1:2):BESTN[bitsOf(open)]):2;
+    var vals=[1+Math.floor(Math.random()*6)]; if(count===2) vals.push(1+Math.floor(Math.random()*6));
+    dv=[vals[0],vals[1]||0]; need=vals[0]+(vals[1]||0); rolled=true; busy=true; paint();
+    say("The House rolls…","");
+    await rollDice(vals);
+    var opts=combos(need,open);
+    if(!opts.length){ say("The House rolled "+need,"No tiles make "+need+"."); await Parlor.wait(1000); busy=false; await endBox(); return; }
+    var pick=loose?opts[Math.floor(Math.random()*opts.length)]:bestShut(need);
+    say("The House rolled "+need,"It shuts "+pick.join(" + "));
+    await Parlor.wait(600);
+    for(var k=0;k<pick.length;k++){ sel.push(pick[k]); Parlor.sfx("click",{pitch:1.4}); paint(); await Parlor.wait(380); }
+    await Parlor.wait(250);
+    await setOpen(open.filter(function(x){ return pick.indexOf(x)<0; }));
+    rolled=false; need=0; busy=false;
+    if(!open.length){ say("The House shut the box!",""); await Parlor.wait(900); await endBox(); return; }
+  }
+}
+function newGame(){
+  open=[1,2,3,4,5,6,7,8,9]; sel=[]; dv=[0,0]; need=0; turn=1; score1=null; score2=null; rolled=false; over=false; busy=false; reported=false;
+  restDice(); paint(); msg();
+}
+
+/* ---------- online table (same page: ?code=XXXX) ---------- */
+function snapshot(){ return {game:"shutbox", open:open.slice(), pick:[], dice:dv.slice(), need:need, turn:turn, score1:score1, score2:score2, rolled:rolled, over:over, seq:seq}; }
+async function push(){
+  if(!online||!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
+  if(over) report();
+}
+function report(){ if(reported||!over||!room||!window.bwRateGame) return; reported=true; bwRateGame(sb,room,me,winnerSide()); }
+/* the other player's moves arrive one update at a time; each is replayed in order with the same dice and tiles */
+var queue=Promise.resolve();
+function remote(st){
+  queue=queue.then(async function(){
+    if(!st||st.seq==null||st.seq===seq) return;
+    var wasOver=over, prevTurn=turn;
+    seq=st.seq; score1=st.score1; score2=st.score2;
+    if(st.rolled&&st.need&&!(rolled&&need===st.need&&dv[0]===st.dice[0])){
+      rolled=true; need=st.need; dv=(st.dice||[0,0]).slice(); busy=true; paint();
+      say(online?"Your opponent rolls…":"","");
+      await rollDice(dv[1]?[dv[0],dv[1]]:[dv[0]]); busy=false;
+    }
+    var nextOpen=(st.open||[1,2,3,4,5,6,7,8,9]).slice();
+    if(st.turn!==prevTurn&&!st.over){
+      /* the box finished: show the last tiles, then the fresh box for the next player */
+      paint(); await Parlor.wait(600);
+    }
+    turn=st.turn||1; rolled=!!st.rolled; need=st.need||0; over=!!st.over;
+    busy=true; await setOpen(nextOpen); busy=false;
+    paint();
+    if(over&&!wasOver) end(); else msg();
+  });
+}
+function applySnap(s){
+  if(!s||!s.open) s={open:[1,2,3,4,5,6,7,8,9],dice:[0,0],need:0,turn:1,score1:null,score2:null,rolled:false,over:false,seq:0};
+  open=s.open.slice(); dv=(s.dice||[0,0]).slice(); need=s.need||0; turn=s.turn||1; score1=s.score1; score2=s.score2; rolled=!!s.rolled; over=!!s.over; seq=s.seq||0; sel=[];
+}
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ say("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ say("Sign in to join","Use Tables to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ say("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;   /* watching */
+  Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
+  Parlor.mySeat(mySide===2?1:0);
+  applySnap(room.state&&room.state.open?room.state:null);
+  if(rolled&&dv[0]){ var a=UP[dv[0]]; placeDie(dice[0],400,360,a[0],a[1],20,false); if(dv[1]){ var b=UP[dv[1]]; placeDie(dice[1],560,380,b[0],b[1],-30,false); } else showDie(dice[1],false); }
+  paint(); if(over) end(); else msg();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
+    var hadGuest=room&&room.guest; room=p.new;
+    var st=p.new.state||{};
+    if(!hadGuest&&room.guest){ paint(); msg(); }
+    if(st.seq!=null&&st.seq!==seq) remote(st);
+  }).subscribe();
+}
+
+/* ---------- hook up the kit ---------- */
+stage.querySelector("#sbRoll").onclick=function(){ humanRoll(2); };
+stage.querySelector("#sbRoll1").onclick=function(){ humanRoll(1); };
+Parlor.init({
+  game:"shutbox", title:"Tavern Shut the Box", bg:"shutbox-tavern.jpg", home:"tables.html", stage:stage,
+  tagline:"Roll the dice. Shut the box.", invite:"The lantern's lit and the dice are warm. Pull up a chair and shut the box.",
+  players:[{name:"You",color:"#efe3c6"},{name:"The House",color:"#8a5a2e"}],
+  setsLabel:"Boards",
+  sets:[
+    {id:"oak",name:"Tavern Oak",need:0,dots:["#a87444","#1e4a2e","#f1e6cc"]},
+    {id:"walnut",name:"Walnut & Navy",club:true,dots:["#5a3a22","#18264a","#d9b98a"]},
+    {id:"mahogany",name:"Mahogany & Claret",club:true,dots:["#8a3420","#5c1422","#d9b25a"]}
+  ],
+  rules:{
+    play:"<ol><li>The box starts with tiles 1 to 9 standing.</li><li>Roll the dice, then tap standing tiles that add up to the roll. They shut as soon as they make the total. Tap a chosen tile again to put it back.</li><li>The glowing tiles are the ones that can still make the roll.</li><li>Once 7, 8 and 9 are shut, you may roll one die instead of two.</li><li>Your turn ends when no standing tiles can make the roll. Then The House (or your opponent) plays a fresh box.</li></ol>",
+    score:"<ul><li>Your score is the total of the tiles still standing when your turn ends. Lower is better.</li><li>Shut every tile and you score 0: you've shut the box.</li><li>The lower score wins. Equal scores are a draw.</li></ul>"
+  },
+  onNew:function(){ mySide=1; newGame(); }
+});
+/* the board follows the Boards card (it sets body[data-set]) */
+new MutationObserver(function(){ applyDesign(document.body.getAttribute("data-set")||"oak"); fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"oak");
+  restDice(); fit(); paint();
+  if(CODE) bootOnline();
+});
+</script>
 </body>
 </html>

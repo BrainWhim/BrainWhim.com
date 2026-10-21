@@ -303,7 +303,8 @@
       a.appendChild(btn("Create Free Account", "", function () { if (window.BW) BW.openAuth({ reason: "Earn points and unlock sets." }); }));
     }
   }
-  function setAllowed(s) { return !s.need || accountInfo.member || accountInfo.pts >= s.need; }
+  /* a set is open when it's free, the player has enough points, or they're a Club member; `club:true` sets are for members only */
+  function setAllowed(s) { if (s.club) return accountInfo.member; return !s.need || accountInfo.member || accountInfo.pts >= s.need; }
   function renderSets() {
     if (!el.sets) return; el.sets.innerHTML = "";
     var cur = store("bwSet:" + C.game) || C.sets[0].id;
@@ -314,7 +315,7 @@
       var b = mk("button", "pk-set" + (s.id === cur ? " on" : "") + (ok ? "" : " lock")); b.type = "button";
       var dots = mk("span", "dots"); (s.dots || []).forEach(function (c) { var i = mk("i"); i.style.background = c; dots.appendChild(i); });
       var nm = mk("span", "nm"); nm.appendChild(document.createTextNode(s.name + (ok ? "" : " 🔒")));
-      var sm = mk("small", "", ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
+      var sm = mk("small", "", s.club ? (ok ? "Club board" : "Club members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
       b.appendChild(dots); b.appendChild(nm);
       b.onclick = function () {
         if (!ok) { location.href = "member.html"; return; }
@@ -361,7 +362,7 @@
     env(ac, g, t, peak, a, d); var last = o; if (filt) { var f = ac.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; o.connect(f); last = f; }
     last.connect(g); g.connect(master); o.start(t); o.stop(t + a + d + 0.02);
   }
-  /* Parlor.sfx(name, {pitch}) : whoosh, land, click (marble into a cup), store (marble into a store), flip, place, win, lose, draw */
+  /* Parlor.sfx(name, {pitch}) : whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, win, lose, draw */
   P.sfx = function (name, o) {
     if (!P.soundOn()) return; var ac = audio(); if (!ac) return; o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
     try {
@@ -376,6 +377,24 @@
       }
       else if (name === "flip") { var n2 = noise(ac, 0.07), bp2 = ac.createBiquadFilter(), g3 = ac.createGain(); bp2.type = "bandpass"; bp2.frequency.value = 1800 * p; bp2.Q.value = 1.2; env(ac, g3, t, 0.12, 0.004, 0.06); n2.connect(bp2); bp2.connect(g3); g3.connect(master); n2.start(t); n2.stop(t + 0.08); tone(ac, t + 0.03, "sine", 520 * p, 380 * p, 0.06, 0.003, 0.06); }
       else if (name === "place") { tone(ac, t, "sine", 240, 90, 0.2, 0.005, 0.13, ["lowpass", 420]); var n3 = noise(ac, 0.04), g4 = ac.createGain(); env(ac, g4, t, 0.06, 0.002, 0.03); n3.connect(g4); g4.connect(master); n3.start(t); n3.stop(t + 0.05); }
+      /* dice shaken and tumbling across felt: a run of soft knocks that slows down (o.dur seconds) */
+      else if (name === "dice") {
+        var dur = o.dur || 1.1, tk = 0, k2 = 0;
+        while (tk < dur && k2 < 14) {
+          var f0 = (700 + Math.random() * 900) * p, gD = ac.createGain(), nD = noise(ac, 0.035), bD = ac.createBiquadFilter();
+          bD.type = "bandpass"; bD.frequency.value = f0; bD.Q.value = 2.2; env(ac, gD, t + tk, 0.11 * (1 - tk / dur * 0.6), 0.002, 0.03);
+          nD.connect(bD); bD.connect(gD); gD.connect(master); nD.start(t + tk); nD.stop(t + tk + 0.05);
+          tone(ac, t + tk, "sine", 320 * p, 200 * p, 0.04, 0.002, 0.04, ["lowpass", 600]);
+          tk += 0.045 + Math.pow(k2 / 14, 1.6) * 0.16 + Math.random() * 0.03; k2++;
+        }
+      }
+      /* a wooden tile tipping down onto wood: a soft clack with a low knock */
+      else if (name === "tile") {
+        var nT = noise(ac, 0.05), bT = ac.createBiquadFilter(), gT = ac.createGain(); bT.type = "bandpass"; bT.frequency.value = 1300 * p; bT.Q.value = 3;
+        env(ac, gT, t, 0.16, 0.002, 0.045); nT.connect(bT); bT.connect(gT); gT.connect(master); nT.start(t); nT.stop(t + 0.06);
+        tone(ac, t, "sine", 210 * p, 120 * p, 0.16, 0.003, 0.09, ["lowpass", 500]);
+        tone(ac, t + 0.004, "triangle", 880 * p, 700 * p, 0.035, 0.002, 0.04);
+      }
       else if (name === "win") { [523, 659, 784, 1047].forEach(function (f, i) { tone(ac, t + i * 0.11, "triangle", f, 0, 0.12, 0.01, 0.4); }); }
       else if (name === "lose") { [392, 330].forEach(function (f, i) { tone(ac, t + i * 0.18, "sine", f, f * 0.97, 0.1, 0.02, 0.45); }); }
       else if (name === "draw") { [440, 440].forEach(function (f, i) { tone(ac, t + i * 0.16, "sine", f, 0, 0.08, 0.01, 0.25); }); }

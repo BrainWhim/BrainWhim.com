@@ -18,7 +18,7 @@ window.BW_ROOMS={
   dominoes:"dominoes-room.html",
   yahtzee:"yahtzee-room.html",
   cribbage:"cribbage-room.html",
-  shutbox:"shutbox-room.html"
+  shutbox:"shutbox.html"
 };
 function bwGuessGame(room){
   if(!room) return "";
