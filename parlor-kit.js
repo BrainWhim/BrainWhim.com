@@ -119,9 +119,9 @@
 
     /* floating bar (phones) */
     var bar = mk("div", "pk-bar");
-    el.menuBtn = btn("☰ Menu", "", function () { hint(false); sheet("right"); });
+    el.menuBtn = btn("☰ Menu", "", function () { hint(false); sheet(document.body.classList.contains("sheet-right") ? null : "right"); });
     bar.appendChild(el.menuBtn);
-    el.bstat = mk("button", "pk-bstat"); el.bstat.type = "button"; el.bstat.onclick = function () { sheet("left"); };
+    el.bstat = mk("button", "pk-bstat"); el.bstat.type = "button"; el.bstat.onclick = function () { sheet(document.body.classList.contains("sheet-left") ? null : "left"); };
     bar.appendChild(el.bstat);
     bar.appendChild(btn("New Game", "primary", function () { P.newGame(); }));
     document.body.appendChild(bar);
