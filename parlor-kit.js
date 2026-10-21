@@ -4,7 +4,7 @@
    floating phone bar, rules window, result window, points for signed-in accounts, board-set picker.
 
    Parlor.init({
-     game:'othello', title:'…', tagline:'…', bg:'photo.jpg', home:'tables.html',
+     game:'othello',  whim:true (optional: the Tap for Whims card), title:'…', tagline:'…', bg:'photo.jpg', home:'tables.html',
      players:[{name:'You', color:'#2d5084'}, {name:'The House', color:'#f3e6c4'}],
      rules:{play:'<ol>…</ol>', score:'<ul>…</ul>'},
      sets:[{id:'cobalt', name:'Cobalt · Ivory', need:0, dots:['#2d5084','#f3e6c4']}, …],
@@ -89,10 +89,18 @@
     el.acct = mk("div", "pk-card pk-acct");
     left.appendChild(el.acct);
 
+    /* the BrainWhim "Tap for Whims" card (same as the Tables page): bottom of the left card on desktop,
+       and on phones under your score, filling the spare space on wide boards (turned on with whim:true) */
+    if (C.whim) {
+      stage.appendChild(whimCard("pk-whim-m"));
+      document.body.classList.add("pk-has-whim");
+    }
+
     if (C.sets && C.sets.length) {
       var sc = mk("div", "pk-card"); el.setsCard = sc; sc.appendChild(mk("h3", "", C.setsLabel || "Sets"));
       el.sets = mk("div", "pk-sets"); sc.appendChild(el.sets); left.appendChild(sc);
     }
+    if (C.whim) left.appendChild(whimCard("pk-whim-desk"));   /* last, so it settles at the bottom of the card */
 
     /* right: actions */
     /* the menu: three groups, the same on desktop and in the phone sheet ("My Seat" shows on phones,
@@ -133,6 +141,14 @@
     el.hint.onclick = function () { hint(false); }; document.body.appendChild(el.hint);
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeAll(); sheet(null); } });
     P.status("Take your seat", "");
+  }
+  var WHIMS = ["Build something light enough to finish and strong enough to keep.","Catch the idea before it gets polite.","Some days need a system. Some days need a spark.","Your imagination called. It wants one small real step today.","A balanced life is part calculation, part daydream, part showing up.","Play is not the opposite of progress. Sometimes it is the path.","Turn the raw thought into a tool someone can actually use.","Do or do not. The small step counts."];
+  function whimCard(cls) {
+    var w = mk("button", "pk-whim " + cls); w.type = "button";
+    w.appendChild(mk("span", "pk-whim-label", "✨ Tap for Whims"));
+    var line = mk("span", "pk-whim-line", "A small spark, on purpose."); w.appendChild(line);
+    w.onclick = function () { var n; do { n = WHIMS[Math.floor(Math.random() * WHIMS.length)]; } while (n === line.textContent && WHIMS.length > 1); document.querySelectorAll(".pk-whim-line").forEach(function (l) { l.textContent = n; }); };
+    return w;
   }
   function btn(label, cls, fn, id) {
     var b = mk("button", "pk-btn" + (cls ? " " + cls : ""), label); b.type = "button"; if (id) b.id = id; b.onclick = fn; return b;
