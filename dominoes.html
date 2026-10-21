@@ -2,337 +2,488 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dominoes · BrainWhim Play</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sunroom Dominoes · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1021g">
 <style>
-:root{--navy:#1A2744;--whim:#7EB6D9}
-*{box-sizing:border-box}
-html,body{min-height:100%;min-height:100dvh}
-body{margin:0;font-family:Montserrat,sans-serif;color:var(--navy);
-  background-color:#6d8a6a;
-  background-image:url("dominoes-parlor.jpg"),linear-gradient(180deg,#c9d6c0,#8aa078);
-  background-size:cover;background-position:center 40%;background-repeat:no-repeat}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
-.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
-.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
-.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
-.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:16px}
-.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:0}
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:var(--navy)}
-.games a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.sitbar{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;position:relative;z-index:2}
-.sitbar button,.sitbar a.stand{border:0;border-radius:999px;padding:10px 18px;background:#fff;color:var(--navy);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(0,0,0,.18);text-decoration:none;display:inline-flex}
-body.seated .sitbar .sit{display:none}
-body:not(.seated) .sitbar .stand{display:none}
-body:not(.seated) .live{display:none}
-body.seated .live{display:block}
-body.seated{background-position:center 12%}
-body.seated .sitbar{position:relative;bottom:auto}
-.live{max-width:980px;margin:8px auto 88px;padding:8px 10px 16px}
-.titlewrap{text-align:center}
-h1{text-align:center;margin:4px 0 2px;font-size:22px;background:rgba(255,252,247,.82);display:inline-block;padding:4px 14px;border-radius:999px}
-.sub{text-align:center;color:#3a2a12;font-size:13px;margin:0 0 10px}
-.table{
-  background:linear-gradient(180deg,#f7f1e2,#e8dcc4);
-  padding:16px 16px 18px;border-radius:18px;
-  box-shadow:0 0 0 3px #d4b56e,0 0 0 7px #f4ead0,0 18px 36px rgba(0,0,0,.22)
-}
-
-.felt{
-  background:
-    radial-gradient(ellipse at 30% 18%,rgba(255,255,255,.1),transparent 46%),
-    linear-gradient(180deg,#2f6a3e,#1b3f26);
-  border:4px solid #c9a45a;border-radius:10px;padding:8px;
-  box-shadow:inset 0 0 28px rgba(0,0,0,.28)
-}
-.meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#f4ead0;font-size:12px;font-weight:700;margin-bottom:6px}
-.field{position:relative;height:260px;overflow:hidden}
-.field .tile{position:relative;margin:0;width:100%;height:100%}
-.field .tile.hz{flex-direction:row}
-.hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
-.hint{text-align:center;margin:8px 0 0;background:rgba(255,252,247,.9);display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
-.tile{width:32px;height:64px;border:0;padding:2px;border-radius:6px;cursor:pointer;
-  background:linear-gradient(160deg,#fffef8,#f0e2c4 55%,#d4c09a);
-  box-shadow:1px 2px 0 #8a6e3e,0 4px 8px rgba(0,0,0,.2),inset 0 1px 0 #fff;
-  display:flex;flex-direction:column;overflow:hidden}
-.tile.hz{width:64px;height:32px;flex-direction:row}
-.tile.playable{outline:2px solid #C9A227}
-.tile:disabled{opacity:.55;cursor:default}
-.half{flex:1;min-height:0;min-width:0;overflow:hidden;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:1px}
-.half i{width:5px;height:5px;max-width:70%;max-height:70%;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
-.tile.hz .half + .half{border-left:1px solid #c9b07a}
-.tile:not(.hz) .half:first-child{border-bottom:1px solid #c9b07a}
-.half[data-n="1"] i:nth-child(5){opacity:1}
-.half[data-n="2"] i:nth-child(1),.half[data-n="2"] i:nth-child(9){opacity:1}
-.half[data-n="3"] i:nth-child(1),.half[data-n="3"] i:nth-child(5),.half[data-n="3"] i:nth-child(9){opacity:1}
-.half[data-n="4"] i:nth-child(1),.half[data-n="4"] i:nth-child(3),.half[data-n="4"] i:nth-child(7),.half[data-n="4"] i:nth-child(9){opacity:1}
-.half[data-n="5"] i:nth-child(1),.half[data-n="5"] i:nth-child(3),.half[data-n="5"] i:nth-child(5),.half[data-n="5"] i:nth-child(7),.half[data-n="5"] i:nth-child(9){opacity:1}
-.half[data-n="6"] i:nth-child(1),.half[data-n="6"] i:nth-child(3),.half[data-n="6"] i:nth-child(4),.half[data-n="6"] i:nth-child(6),.half[data-n="6"] i:nth-child(7),.half[data-n="6"] i:nth-child(9){opacity:1}
-.acts{display:flex;justify-content:center;gap:8px;margin-top:8px}
-.acts button{border:0;border-radius:999px;padding:8px 14px;background:#1A2744;color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
-@media(max-width:800px){
-header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padding:6px 10px 8px}
-.brand{font-size:18px;grid-column:1;grid-row:1}
-.brand img{width:48px;height:48px}
-.hdr{grid-column:1 / -1;grid-row:2;justify-content:center;width:100%;padding-top:4px;gap:12px}
-.hdr a{font-size:13px;margin-left:0}
-
-  body.seated .games{margin:6px auto 4px}
-  body.seated .sub{display:none}
-  h1{font-size:16px}
-  .table{padding:8px}
-  .field{height:200px}
-  .hand{gap:4px;margin-top:8px}
-  .live{margin:4px auto 80px}
-}
-#winveil{position:fixed;inset:0;background:rgba(12,18,32,.46);display:none;align-items:center;justify-content:center;z-index:90;backdrop-filter:blur(4px)}
-#winveil.on{display:flex}
-.wincard{width:min(420px,90vw);text-align:center;padding:28px 22px 22px;border-radius:22px;background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35);animation:winPop .45s ease}
-#winveil.win .wincard{animation:winBurst .7s cubic-bezier(.15,1.4,.3,1)}
-.wincard h2{margin:0 0 16px;font-size:28px}
-.wincard .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex}
-.wincard .go{background:#1A2744;color:#fff}
-.wincard .ghost{background:#fff;color:#1A2744;box-shadow:inset 0 0 0 1px #d7c9b0}
-@keyframes winPop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
-@keyframes winBurst{0%{transform:scale(.4);opacity:0}55%{transform:scale(1.08)}100%{transform:none}}
-
-.helpbtn{border:0;border-radius:999px;padding:8px 12px;background:#fff;color:#1A2744;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.12)}
-#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:95;backdrop-filter:blur(4px);padding:16px}
-#helpveil.on{display:flex}
-.helpcard{width:min(520px,94vw);max-height:80vh;overflow:auto;text-align:left;padding:22px 20px 18px;border-radius:20px;
-  background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;
-  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35)}
-.helpcard h2{margin:0 0 10px;font-size:22px;text-align:center}
-.helpcard ol,.helpcard ul{margin:0 0 12px;padding-left:18px}
-.helpcard li{margin:0 0 6px;font-size:14px;line-height:1.4}
-.helpcard .row{display:flex;justify-content:center}
-.helpcard button{border:0;border-radius:999px;padding:10px 16px;background:#1A2744;color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
-
-
-body.seated .games{display:none}
-body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
-body.seated .sit{display:none}
-body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none}
-body.seated .bar button{display:none}
-
+/* ===== Dominoes: a felt tray seen from straight above (like the chess board), drawn in the browser =====
+   Tiles are thick 3D pieces; wood, felt and finishes are painted in code, so there are no picture files.
+   Boards (the Boards card): Garden Pearl is free; Sunroom Walnut and Midnight Ebony are for Club members.
+   Your hand lies face up along your side; your opponent's lies face down along the far side; the boneyard
+   waits in two face-down stacks in the top corner. Tile backs carry the gold BW monogram. */
+.do-pad{width:100%;flex:none;display:flex;justify-content:center}
+.do-fit{position:relative;flex:none;overflow:hidden}
+.do-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
+.do-scene{position:relative;width:900px;height:900px;perspective:3000px;perspective-origin:50% 50%}
+.do-tray{position:absolute;left:20px;top:20px;width:860px;height:860px;transform-style:preserve-3d}
+.do-tray *{transform-style:preserve-3d}
+/* the tiles sit a little below the tray's top plane, so the tray itself must not catch taps; only the playable pieces do */
+.do-tray,.do-tray *{pointer-events:none}
+.do-tray .dm.play,.do-tray .dm.play *,.do-tray .dm.glow,.do-tray .dm.glow *,.do-tray .do-ghost{pointer-events:auto}
+.do-p{position:absolute;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.do-tsh{left:-8px;top:-2px;width:876px;height:876px;transform:translateZ(-30px);border-radius:14px;background:rgba(0,0,0,.6);filter:blur(12px)}
+.do-wh{background-image:var(--do-wood);background-size:1200px 600px;background-repeat:no-repeat;background-color:var(--do-woodc)}
+.do-wv{background-image:var(--do-woodv);background-size:600px 1200px;background-repeat:no-repeat;background-color:var(--do-woodc)}
+.do-felt{width:394px;height:394px;transform:translateZ(-22px);background-image:var(--do-felt);background-size:256px 256px;background-color:var(--do-feltc)}
+.do-felt.a{left:36px;top:36px}.do-felt.b{left:430px;top:36px}.do-felt.c{left:36px;top:430px}.do-felt.d{left:430px;top:430px}
+.do-feltsh{left:36px;top:36px;width:788px;height:788px;transform:translateZ(-21.6px);pointer-events:none;
+  background:radial-gradient(ellipse 70% 70% at 45% 55%,rgba(255,240,200,.08),rgba(0,0,0,0) 60%),linear-gradient(to bottom,rgba(0,0,0,.5),rgba(0,0,0,0) 9%),linear-gradient(to right,rgba(0,0,0,.4),rgba(0,0,0,0) 5%,rgba(0,0,0,0) 95%,rgba(0,0,0,.35)),linear-gradient(to top,rgba(0,0,0,.3),rgba(0,0,0,0) 7%)}
+.do-rim{transform:translateZ(1px);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+.do-rim.b,.do-rim.t{box-shadow:inset 0 1px 0 rgba(0,0,0,.3),inset 0 -1px 0 rgba(0,0,0,.3)}
+.do-rim::after{content:"";position:absolute;inset:0}
+.do-rim.t{left:0;top:0;width:430px;height:36px}.do-rim.t2{left:430px;background-position:-430px 0}
+.do-rim.b{left:0;top:824px;width:430px;height:36px;background-position:-100px -300px}.do-rim.b2{left:430px;background-position:-530px -300px}
+.do-rim.t::after{background:linear-gradient(to bottom,rgba(255,235,200,.22),rgba(0,0,0,0) 40%,rgba(0,0,0,.3))}
+.do-rim.b::after{background:linear-gradient(to bottom,rgba(255,235,200,.3),rgba(0,0,0,0) 45%,rgba(0,0,0,.25))}
+.do-rim.l{left:0;top:36px;width:36px;height:788px;background-position:-40px 0}.do-rim.r{left:824px;top:36px;width:36px;height:788px;background-position:-300px -100px}
+.do-rim.l::after{background:linear-gradient(to right,rgba(255,235,200,.2),rgba(0,0,0,.3))}.do-rim.r::after{background:linear-gradient(to right,rgba(255,235,200,.12),rgba(0,0,0,.35))}
+.do-rack{left:136px;width:588px;height:118px;border-radius:10px;transform:translateZ(-21.4px);background:rgba(0,0,0,.18);box-shadow:inset 0 2px 8px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.08);pointer-events:none}
+.do-rack.near{top:722px}.do-rack.far{top:56px}
+.do-gold{position:absolute;pointer-events:none;transform:translateZ(1.6px);background:linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)}
+/* ---- a domino: stacked slabs make the edge, a face (or back) on top ---- */
+.dm{position:absolute;left:0;top:0;-webkit-tap-highlight-color:transparent}
+.dm .s,.dm .f,.dm .bk{position:absolute;inset:0;border-radius:var(--rad,7px)}
+.dm .s{background:var(--do-edge)}
+.dm .f{background:var(--do-face);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),inset 0 -5px 9px rgba(0,0,0,.18),inset 0 4px 7px rgba(255,255,255,.5);display:flex}
+.dm.v .f{flex-direction:column}
+.dm .bk{background:var(--do-back);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 -5px 9px rgba(0,0,0,.25),inset 0 4px 7px rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+/* tile backs: the gold-stamped BW monogram (B in Montserrat, W in the Pacifico of "Whim"), letters only */
+.dm .mono{display:flex;align-items:baseline;justify-content:center;line-height:1.25;opacity:.92}
+.dm.h .mono{transform:rotate(-90deg)}
+.dm .mono b,.dm .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,var(--do-emb) 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.dm .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}
+.dm .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+.dm .half{flex:1;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:14%}
+.dm.v .half{padding:14% 16%}
+.dm .half i{width:66%;aspect-ratio:1;border-radius:50%;margin:auto;visibility:hidden;background:radial-gradient(circle at 60% 65%,var(--do-pip) 45%,var(--do-pip2) 100%);box-shadow:inset 0 2px 2px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.55)}
+.dm .half i.on{visibility:visible}
+.dm .bar{flex:none;background:var(--do-bar);box-shadow:0 1px 0 rgba(255,255,255,.5)}
+.dm.h .bar{width:2px;margin:12% 0}.dm.v .bar{height:2px;margin:0 12%}
+.dm .spin{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3cc,#b8913f 55%,#6e4f1d);box-shadow:0 1px 1px rgba(0,0,0,.45)}
+.dm .sh{position:absolute;inset:-5px;border-radius:12px;background:rgba(0,0,0,.5);filter:blur(5px)}
+.dm.play{cursor:pointer}
+.dm.play .f{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.5)}
+.dm.pick .f{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 22px 6px rgba(250,205,110,.7)}
+.dm.glow{cursor:pointer}
+.dm.glow .bk{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.5);animation:do-glow 1.6s ease-in-out infinite}
+@keyframes do-glow{50%{box-shadow:inset 0 0 0 2px rgba(214,164,62,.5),inset 0 0 8px 1px rgba(240,190,90,.25)}}
+.do-ghost{position:absolute;left:0;top:0;border-radius:8px;border:3px dashed rgba(241,207,122,.95);background:rgba(255,214,120,.18);box-shadow:0 0 18px 4px rgba(255,206,110,.35);cursor:pointer;animation:do-ghost 1.4s ease-in-out infinite}
+@keyframes do-ghost{50%{background:rgba(255,214,120,.06);border-color:rgba(241,207,122,.55)}}
+/* coloured pips (Garden Pearl) */
+.do-colour .half[data-n="1"] i{--do-pip:#1f5fbf;--do-pip2:#5d8de0}.do-colour .half[data-n="2"] i{--do-pip:#2f8f4e;--do-pip2:#62c07f}.do-colour .half[data-n="3"] i{--do-pip:#c0392b;--do-pip2:#e27063}
+.do-colour .half[data-n="4"] i{--do-pip:#6b3fa0;--do-pip2:#9a74c9}.do-colour .half[data-n="5"] i{--do-pip:#c58a10;--do-pip2:#e7b54a}.do-colour .half[data-n="6"] i{--do-pip:#14141a;--do-pip2:#4a4a52}
+body.do-quick .dm.glow .bk,body.do-quick .do-ghost{animation:none}
+@media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
+.do-pad{flex-direction:column;align-items:center;gap:10px}
+/* phones: your hand moves out of the tray into a full-size row under it, so the tiles are easy to tap */
+.do-hand{display:none;position:relative;height:118px;border-radius:12px;transform-style:preserve-3d;background:var(--do-feltc,#16284a);background-image:var(--do-felt);background-size:256px 256px;
+  box-shadow:inset 0 0 0 3px var(--do-woodc,#e6dcc6),inset 0 4px 14px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35)}
+.do-hand *{transform-style:preserve-3d}
+body.do-bighand .do-hand{display:block}
+body.do-bighand .do-rack.near{display:none}
 </style>
 <script src="bw-auth.js"></script>
-<script>
-/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
-async function bwHouseGate(fn){
-  if(!window.BW){ fn(); return; }
-  if(await BW.startMatch({mode:"house"})) fn();
-}
-</script>
 </head>
 <body>
 <header>
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
-<div class="games">
-<a href="checkers.html">Checkers</a>
-<a href="chess.html">Chess</a>
-<a href="backgammon.html">Backgammon</a>
-<a href="yahtzee.html">Yahtzee</a>
-<a class="on" href="dominoes.html">Dominoes</a>
-<a href="othello.html">Othello</a>
-<a href="mancala.html">Mancala</a>
-<a href="cribbage.html">Cribbage</a>
-<a href="shutbox.html">Shut the Box</a>
-<a href="morris.html">Morris</a>
-</div>
-<div class="sitbar">
-<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the sunroom</button>
-<a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
-<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
-<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
-</div>
-<div class="live">
-  <div class="titlewrap"><h1>Sunroom Dominoes</h1></div>
-  <p class="sub">Match either open end. The train turns at the edge, like a real table.</p>
-  <div class="table">
-    <div class="felt">
-      <div class="meta">
-        <span>House tiles: <b id="houseN">7</b></span>
-        <span>Boneyard: <b id="boneN">14</b></span>
-        <span>Open ends: <b id="ends">—</b></span>
-      </div>
-      <div class="field" id="field"></div>
-    </div>
-    <div class="hand" id="hand"></div>
-    <div class="acts">
-      <button type="button" onclick="drawTile()">Draw from boneyard</button>
-    </div>
-  </div>
-  <div style="text-align:center"><p class="hint" id="msg">Play any tile to open. Then match an end.</p></div>
-</div>
-<div id="winveil">
-  <div class="wincard">
-    <h2 id="winTitle">Congratulations! You win!</h2>
-    <div class="row">
-      <button class="go" type="button" id="winAgain">Play again?</button>
-      <a class="ghost" href="tables.html">Return to Tables</a>
-    </div>
-  </div>
-</div>
+<main class="pk-room"></main>
 
-<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()">
-  <div class="helpcard">
-    <h2 id="helpTitle">How to play</h2>
-    <div id="helpBody"></div>
-    <div class="row"><button type="button" onclick="hideHelp()">Got it</button></div>
-  </div>
-</div>
-
-<script>
-
-function hideHelp(){ document.getElementById("helpveil").className=""; }
-function showHelp(kind){
-  document.getElementById("helpTitle").textContent = kind==="score" ? "Scoring rules" : "How to play";
-  document.getElementById("helpBody").innerHTML = kind==="score"
-    ? "<ul><li>First player to empty their hand wins the round.</li><li>If the game blocks (no one can play and the boneyard is empty), the lower pip total in hand wins.</li><li>Equal pip totals are a draw.</li></ul>"
-    : "<ol><li>Double-six set. You and the house each start with seven tiles.</li><li>Play any tile to open. After that, a tile must match an open end.</li><li>The train turns at the edge of the felt so tiles stay connected.</li><li>If you cannot play, draw from the boneyard. Pass only when the boneyard is empty.</li></ol>";
-  document.getElementById("helpveil").className="on";
-}
-
-function sitDown(){ document.body.classList.add("seated"); }
-function standUp(){ document.body.classList.remove("seated"); }
-function hideBanner(){ document.getElementById("winveil").className=""; }
-function showBanner(kind){
-  document.getElementById("winTitle").textContent = kind==="win" ? "Congratulations! You win!" : kind==="draw" ? "It's a Draw!" : "Better luck next time!";
-  document.getElementById("winAgain").onclick=function(){ hideBanner(); bwHouseGate(newGame); };
-  document.getElementById("winveil").className="on "+kind;
-}
-function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>"}
-function tileHTML(a,b,hz,cls){
-  return '<button class="tile'+(hz?" hz":"")+(cls?(" "+cls):"")+'"><span class="half" data-n="'+(a|0)+'">'+pips()+'</span><span class="half" data-n="'+(b|0)+'">'+pips()+'</span></button>';
-}
-var you=[], house=[], bone=[], chain=[], turn="you", over=false;
-function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=a[i]; a[i]=a[j]; a[j]=x; } return a; }
-function leftEnd(){ return chain.length? chain[0][0] : null; }
-function rightEnd(){ return chain.length? chain[chain.length-1][1] : null; }
-function canPlay(t){
-  if(!chain.length) return true;
-  var L=leftEnd(), R=rightEnd();
-  return t[0]===L||t[1]===L||t[0]===R||t[1]===R;
-}
-function legal(h){ return h.filter(canPlay); }
-function attach(t){
-  if(!chain.length){ chain.push([t[0],t[1]]); return true; }
-  var L=leftEnd(), R=rightEnd();
-  if(t[1]===L){ chain.unshift([t[0],t[1]]); return true; }
-  if(t[0]===L){ chain.unshift([t[1],t[0]]); return true; }
-  if(t[0]===R){ chain.push([t[0],t[1]]); return true; }
-  if(t[1]===R){ chain.push([t[1],t[0]]); return true; }
-  return false;
-}
-function layoutSnake(){
-  var U=28, placed=[];
-  if(!chain.length) return placed;
-  var dirs=[[1,0],[0,1],[-1,0],[0,-1]];
-  var d=0, x=0, y=0;
-  function hz(){ return d%2===0; }
-  function pushTile(t){
-    var H=hz();
-    placed.push({a:t[0],b:t[1],x:x,y:y,hz:H});
-    x += dirs[d][0]*(H?2:1);
-    y += dirs[d][1]*(H?1:2);
-  }
-  pushTile(chain[0]);
-  for(var i=1;i<chain.length;i++){
-    var nx=x+dirs[d][0]*2, ny=y+dirs[d][1]*2;
-    if(Math.abs(nx)>9 || Math.abs(ny)>4){
-      d=(d+1)%4;
-    }
-    pushTile(chain[i]);
-  }
-  return placed;
-}
-function paint(){
-  document.getElementById("houseN").textContent=house.length;
-  document.getElementById("boneN").textContent=bone.length;
-  document.getElementById("ends").textContent = chain.length ? (leftEnd()+" · "+rightEnd()) : "any";
-  var field=document.getElementById("field");
-  var placed=layoutSnake();
-  if(!placed.length){
-    field.innerHTML='<span style="color:#e8f3e8;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:13px">Play any tile to open</span>';
-  } else {
-    var minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
-    placed.forEach(function(p){
-      var w=p.hz?2:1, h=p.hz?1:2;
-      minx=Math.min(minx,p.x); miny=Math.min(miny,p.y);
-      maxx=Math.max(maxx,p.x+w); maxy=Math.max(maxy,p.y+h);
-    });
-    var fw=field.clientWidth||320, fh=field.clientHeight||240;
-    var U=Math.max(14, Math.min((fw-12)/(maxx-minx+0.4), (fh-12)/(maxy-miny+0.4), 30));
-    var ox=(fw-((maxx-minx)*U))/2 - minx*U;
-    var oy=(fh-((maxy-miny)*U))/2 - miny*U;
-    field.innerHTML=placed.map(function(p){
-      var w=p.hz?U*2:U, h=p.hz?U:U*2;
-      return '<div style="position:absolute;left:'+(ox+p.x*U)+'px;top:'+(oy+p.y*U)+'px;width:'+w+'px;height:'+h+'px">'+
-        tileHTML(p.a,p.b,p.hz,"").replace("<button",'<button style="width:100%;height:100%;box-shadow:none"') +
-      '</div>';
-    }).join("");
-  }
-  document.getElementById("hand").innerHTML = you.map(function(t,i){
-    var ok=turn==="you"&&!over&&canPlay(t);
-    return tileHTML(t[0],t[1],false,ok?"playable":"").replace("<button",'<button '+(ok?"":"disabled")+' onclick="playYou('+i+')"');
-  }).join("");
-}
-function playYou(i){
-  if(over||turn!=="you") return;
-  var t=you[i]; if(!canPlay(t)||!attach(t)) return;
-  you.splice(i,1);
-  if(!you.length){ over=true; paint(); showBanner("win"); return; }
-  turn="house"; paint(); setTimeout(houseTurn,500);
-}
-function drawTile(){
-  if(over||turn!=="you") return;
-  if(legal(you).length){ document.getElementById("msg").textContent="You still have a play."; return; }
-  if(bone.length){ you.push(bone.pop()); document.getElementById("msg").textContent="Drawn."; paint(); return; }
-  document.getElementById("msg").textContent="Boneyard empty. Passing.";
-  turn="house"; paint(); setTimeout(houseTurn,400);
-}
-function houseTurn(){
-  if(over) return;
-  var plays=legal(house);
-  if(!plays.length){
-    if(bone.length){ house.push(bone.pop()); document.getElementById("msg").textContent="House draws."; paint(); setTimeout(houseTurn,480); return; }
-    if(!legal(you).length && !bone.length){ blockWin(); return; }
-    turn="you"; document.getElementById("msg").textContent="House passes. Your play."; paint(); return;
-  }
-  plays.sort(function(a,b){ return (b[0]===b[1])-(a[0]===a[1]) || (b[0]+b[1])-(a[0]+a[1]); });
-  var t=plays[0];
-  house.splice(house.indexOf(t),1);
-  attach(t);
-  if(!house.length){ over=true; paint(); showBanner("lose"); return; }
-  turn="you"; document.getElementById("msg").textContent="House played. Your turn."; paint();
-}
-function pipsSum(h){ return h.reduce(function(s,t){return s+t[0]+t[1]},0); }
-function blockWin(){
-  over=true; paint();
-  var y=pipsSum(you), h=pipsSum(house);
-  showBanner(y<h?"win":h<y?"lose":"draw");
-}
-function newGame(){
-  var pack=[]; for(var a=0;a<=6;a++) for(var b=a;b<=6;b++) pack.push([a,b]);
-  shuffle(pack);
-  you=pack.splice(0,7); house=pack.splice(0,7); bone=pack;
-  chain=[]; turn="you"; over=false;
-  document.getElementById("msg").textContent="Play any tile to open. Then match an end.";
-  paint();
-}
-newGame();
-
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
+<script src="parlor-kit.js?v=1021g"></script>
+<script>
+/* =====================================================================
+   Painted materials
+   ===================================================================== */
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;for(i=0;i<256;i++)p[i]=i;for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}for(i=0;i<512;i++)P[i]=p[i&255];for(i=0;i<256;i++)G[i]=r();function f(x){return x*x*(3-2*x);}return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;for(var y=0;y<h;y++)for(var x=0;x<w;x++){var col=fn(x,y),i=(y*w+x)*4;D[i]=col[0];D[i+1]=col[1];D[i+2]=col[2];D[i+3]=255;}g.putImageData(im,0,0);return c;}
+function cssUrl(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
+function rot(c){var d=document.createElement("canvas");d.width=c.height;d.height=c.width;var g=d.getContext("2d");g.translate(d.width,0);g.rotate(Math.PI/2);g.drawImage(c,0,0);return d;}
+function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
+function feltFn(rgb,seed){var r=rng(seed),n=noise2(seed);return function(x,y){var k=.86+r()*.22+(fbm(n,x/22,y/22,3)-.5)*.14;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+var DESIGNS={
+  pearl:{wood:{light:[236,226,204],dark:[206,192,164],freq:.03,turb:5,wx:260,wy:30,sharp:.8,ringAmt:.3,streakAmt:.35,pores:0,blotch:.12,seed:12},woodc:"#e6dcc6",
+    felt:[22,40,74],face:"linear-gradient(150deg,#ffffff,#f4f1ea 55%,#e4ddd0)",edge:"#e2dbcd",pip:"#14141a",pip2:"#4a4a52",bar:"#c9b98f",back:"linear-gradient(150deg,#f4f1ea,#d9d1c0)",emb:"#b8913f",colour:true,dot:"#d9d1c0"},
+  walnut:{wood:{light:[120,78,46],dark:[58,34,18],freq:.04,turb:9,wx:220,wy:20,sharp:.7,ringAmt:.66,streakAmt:.42,pores:.02,blotch:.3,seed:23},woodc:"#5e3c22",
+    felt:[26,62,44],face:"linear-gradient(150deg,#fffdf4,#f1e7cf 60%,#e2d3b0)",edge:"#d9c9a4",pip:"#16110c",pip2:"#4a3a2a",bar:"#b9a57c",back:"linear-gradient(150deg,#2f4d8a,#1b2f5e)",emb:"#d9b25a",colour:false,dot:"#2f4d8a"},
+  ebony:{wood:{light:[132,52,32],dark:[62,20,12],freq:.035,turb:5,wx:420,wy:30,sharp:.9,ringAmt:.32,streakAmt:.5,pores:.012,blotch:.3,seed:41},woodc:"#6a2a18",
+    felt:[86,22,30],face:"linear-gradient(150deg,#3a3430,#1b1714 60%,#0e0b09)",edge:"#120e0c",pip:"#f6efdc",pip2:"#cdbf9c",bar:"#8f6a22",back:"linear-gradient(150deg,#3a3430,#141110)",emb:"#d9b25a",colour:false,dot:"#1b1714"}
+};
+
+/* =====================================================================
+   The tray
+   ===================================================================== */
+var stage=document.createElement("div"); stage.className="do-pad";
+stage.innerHTML='<div class="do-fit" id="doFit"><div class="do-scaler" id="doScaler"><div class="do-scene"><div class="do-tray" id="doTray">'+
+  '<div class="do-p do-tsh"></div>'+
+  '<div class="do-p do-felt a"></div><div class="do-p do-felt b"></div><div class="do-p do-felt c"></div><div class="do-p do-felt d"></div><div class="do-p do-feltsh"></div>'+
+  '<div class="do-p do-rack near"></div><div class="do-p do-rack far"></div>'+
+  '<div id="doTiles" style="position:absolute;left:0;top:0"></div>'+
+  '<div class="do-p do-rim t do-wh"></div><div class="do-p do-rim t t2 do-wh"></div><div class="do-p do-rim b do-wh"></div><div class="do-p do-rim b b2 do-wh"></div><div class="do-p do-rim l do-wv"></div><div class="do-p do-rim r do-wv"></div>'+
+  '<div class="do-gold" style="left:30px;top:30px;width:800px;height:2px"></div><div class="do-gold" style="left:30px;top:828px;width:400px;height:2px"></div><div class="do-gold" style="left:430px;top:828px;width:400px;height:2px"></div><div class="do-gold" style="left:30px;top:30px;width:2px;height:800px"></div><div class="do-gold" style="left:828px;top:30px;width:2px;height:800px"></div>'+
+  '</div></div></div></div><div class="do-hand" id="doHand"></div>';
+var trayEl=stage.querySelector("#doTray"), TL=stage.querySelector("#doTiles"), HB=stage.querySelector("#doHand"), FZ=-22;
+function bigHand(){ return document.body.classList.contains("do-bighand"); }
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="pearl"; if(k===curDesign) return; curDesign=k;
+  var d=DESIGNS[k]; if(!texCache[k]){ var w=canvasOf(1200,600,woodFn(d.wood)); texCache[k]={w:cssUrl(w),v:cssUrl(rot(w)),f:cssUrl(canvasOf(256,256,feltFn(d.felt,k.length*31)))}; }
+  var s=stage.style, b=document.body.style, t=texCache[k];   /* on the stage, so the tray and the phone hand bar share them */
+  s.setProperty("--do-wood",t.w); s.setProperty("--do-woodv",t.v); s.setProperty("--do-woodc",d.woodc); s.setProperty("--do-felt",t.f); s.setProperty("--do-feltc","rgb("+d.felt+")");
+  s.setProperty("--do-face",d.face); s.setProperty("--do-edge",d.edge); s.setProperty("--do-pip",d.pip); s.setProperty("--do-pip2",d.pip2); s.setProperty("--do-bar",d.bar); s.setProperty("--do-back",d.back); s.setProperty("--do-emb",d.emb);
+  b.setProperty("--do-dot",d.dot);
+  stage.classList.toggle("do-colour",d.colour);
+}
+var PIPS={0:[],1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function half(n){ var s='<div class="half" data-n="'+n+'">'; for(var k=0;k<9;k++) s+='<i class="'+(PIPS[n].indexOf(k)>=0?"on":"")+'"></i>'; return s+'</div>'; }
+/* a domino: w = short side, l = long side, dir h or v, face up or back up */
+function mkTile(a,b,o){
+  var holder=o.into||TL;
+  var w=o.w,l=o.l,hz=o.dir==="h",W=hz?l:w,H=hz?w:l,e=document.createElement("div");
+  e.className="dm "+(hz?"h":"v"); e.style.width=W+"px"; e.style.height=H+"px"; e.style.margin=(-H/2)+"px 0 0 "+(-W/2)+"px"; e.style.setProperty("--rad",Math.round(w*.14)+"px");
+  var th=o.th||12, s='<div class="sh" style="transform:translateZ(.5px)"></div>';
+  for(var k=0;k<6;k++) s+='<div class="s" style="transform:translateZ('+(1+k*th/6)+'px);filter:brightness('+(.78+k*.04)+')"></div>';
+  if(o.back) s+='<div class="bk" style="transform:translateZ('+(th+1)+'px);font-size:'+Math.round(w*.34)+'px"><span class="mono"><b>B</b><i>W</i></span></div>';
+  else s+='<div class="f" style="transform:translateZ('+(th+1)+'px)">'+half(a)+'<div class="bar"></div>'+half(b)+'<div class="spin"></div></div>';
+  e.innerHTML=s; holder.appendChild(e); return e;
+}
+function setAt(e,x,y,z,rz){ e._x=x; e._y=y; e.style.transform="translate3d("+x+"px,"+y+"px,"+(z||0)+"px)"+(rz?" rotateZ("+rz+"deg)":""); }
+function glide(e,to,z1,rz){
+  return new Promise(function(res){
+    if(!Parlor.smooth()){ setAt(e,to[0],to[1],z1); res(); return; }
+    var x0=e._x,y0=e._y,t0=performance.now(),d=Math.hypot(to[0]-x0,to[1]-y0),dur=Math.min(760,360+d*.5),lift=Math.min(110,40+d*.15);
+    (function step(now){ var p=Math.min(1,(now-t0)/dur),e2=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      setAt(e,x0+(to[0]-x0)*e2,y0+(to[1]-y0)*e2,FZ+Math.sin(Math.PI*p)*lift,(rz||0)*e2);
+      if(p<1) requestAnimationFrame(step); else res(); })(t0);
+  });
+}
+
+/* ---------- where things sit ---------- */
+var NEAR_Y=781, FAR_Y=115;
+function rowXY(n,k,y){ var sp=n>1?Math.min(72,520/(n-1)):0; return [430-(n-1)*sp/2+k*sp, y]; }
+function boneXY(k){ return [744+(k%2)*48, 108, FZ+Math.floor(k/2)*8]; }
+/* the train winds: from the first tile, one end runs right, turns down and comes back along the bottom;
+   the other runs left, turns up and comes back along the top, so the two ends never meet.
+   If a very long train would run past the end of its lane, every train tile shrinks a little until it fits. */
+var LEGS={
+  right:[[1,0,function(x,y){return x>796;}],[0,1,function(x,y){return y>706;}],[-1,0,function(x,y){return x<64;}]],
+  left:[[-1,0,function(x,y){return x<64;}],[0,-1,function(x,y){return y<178;}],[1,0,function(x,y){return x>796;}]]
+};
+function trainSpots(ch,start,sc){
+  var W=48*sc,L=96*sc,G=3*sc,spots=[],ok=true;
+  /* flip: show the halves the other way round, so the matching half always faces the tile it joins */
+  function put(t,cx,cy,dx,dy,flip){ var dbl=t[0]===t[1],horiz=dx!==0; spots.push({t:flip?[t[1],t[0]]:t,x:cx,y:cy,dir:dbl?(horiz?"v":"h"):(horiz?"h":"v"),w:W,l:L}); }
+  function run(list,legs,px,py,perp,rightArm){
+    var leg=0,dx=legs[0][0],dy=legs[0][1];
+    list.forEach(function(t){
+      var dbl=t[0]===t[1],len=dbl?W:L;
+      if(legs[leg][2](px+dx*(len+G),py+dy*(len+G))){
+        if(leg===legs.length-1) ok=false;
+        else { leg++; var ndx=legs[leg][0],ndy=legs[leg][1]; px=px-dx*(W/2+G)+ndx*(perp+G); py=py-dy*(W/2+G)+ndy*(perp+G); dx=ndx; dy=ndy; }
+      }
+      var back=dx<0||dy<0;   /* heading left or up */
+      put(t,px+dx*len/2,py+dy*len/2,dx,dy,rightArm?back:!back); px+=dx*(len+G); py+=dy*(len+G); perp=dbl?L/2:W/2;
+    });
+  }
+  if(!ch.length) return spots;
+  var first=ch[start],fd=first[0]===first[1],flen=fd?W:L,cx=430,cy=440;
+  put(first,cx,cy,1,0,false);
+  run(ch.slice(start+1),LEGS.right,cx+flen/2+G,cy,fd?L/2:W/2,true);
+  run(ch.slice(0,start).reverse(),LEGS.left,cx-flen/2-G,cy,fd?L/2:W/2,false);
+  return ok?spots:null;
+}
+function layoutFor(ch,start){ var sc=1,sp; while(!(sp=trainSpots(ch,start,sc))&&sc>.45) sc*=.92; return sp||trainSpots(ch,start,.45)||[]; }
+
+/* =====================================================================
+   The game. Saved online as {game:"dominoes", h1, h2, bone, chain, turn, over, startAt, passes, winner, seq, mv}
+   (the same format the old room page used, plus a few fields). Side 1 (you, or the host online) goes first.
+   ===================================================================== */
+var S, mySide=1, online=false, sb=null, room=null, me=null, reported=false, seq=0, busy=false, pickIdx=-1;
+var lacks={1:[],2:[]};   /* numbers each side has been seen unable to match (The House remembers yours) */
+var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=a[i]; a[i]=a[j]; a[j]=x; } return a; }
+function deal(){ var pack=[]; for(var a=0;a<=6;a++) for(var b=a;b<=6;b++) pack.push([a,b]); shuffle(pack);
+  return {h1:pack.splice(0,7),h2:pack.splice(0,7),bone:pack,chain:[],turn:1,over:false,startAt:0,passes:0,winner:0}; }
+function handOf(s){ return s===1?S.h1:S.h2; }
+function ends(){ return S.chain.length?[S.chain[0][0],S.chain[S.chain.length-1][1]]:null; }
+function fits(t){ var e=ends(); if(!e) return [0]; var out=[]; if(t[0]===e[0]||t[1]===e[0]) out.push(0); if(t[0]===e[1]||t[1]===e[1]) out.push(1); if(out.length===2&&e[0]===e[1]) out=[1]; return out; }
+function playable(s){ return handOf(s).map(function(t,i){ return fits(t).length?i:-1; }).filter(function(i){ return i>=0; }); }
+function pipSum(h){ return h.reduce(function(a,t){ return a+t[0]+t[1]; },0); }
+/* put tile t on side (0 = left end, 1 = right end) */
+function attach(t,side){
+  if(!S.chain.length){ S.chain.push([t[0],t[1]]); S.startAt=0; return; }
+  var e=ends();
+  if(side===0){ var L=e[0]; S.chain.unshift(t[1]===L?[t[0],t[1]]:[t[1],t[0]]); S.startAt++; }
+  else { var R=e[1]; S.chain.push(t[0]===R?[t[0],t[1]]:[t[1],t[0]]); }
+}
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function myTurn(){ return !S.over && !busy && seatedNow() && mySide && S.turn===mySide && (!online||(room&&room.guest)); }
+function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
+
+/* ---------- drawing everything from the state ---------- */
+function render(){
+  document.body.classList.toggle("do-quick",!Parlor.smooth());
+  TL.innerHTML="";
+  var near=mySide===2?2:1, far=3-near;
+  /* the train */
+  layoutFor(S.chain,S.startAt).forEach(function(p){ var e=mkTile(p.t[0],p.t[1],{w:p.w,l:p.l,dir:p.dir,th:12*Math.max(p.w/48,.7)}); setAt(e,p.x,p.y,FZ); });
+  /* the boneyard */
+  var mine=myTurn(), canPlay=mine?playable(mySide):[], mustDraw=mine&&!canPlay.length&&S.bone.length>0;
+  S.bone.forEach(function(t,k){ var e=mkTile(0,0,{w:40,l:80,dir:"v",th:8,back:true}); var q=boneXY(k); setAt(e,q[0],q[1],q[2]);
+    if(mustDraw&&k===S.bone.length-1){ e.classList.add("glow"); e.onclick=function(){ humanDraw(); }; } });
+  /* the far hand, face down */
+  var fh=handOf(far); fh.forEach(function(t,k){ var e=mkTile(0,0,{w:44,l:88,dir:"v",th:11,back:true}); var q=rowXY(fh.length,k,FAR_Y); setAt(e,q[0],q[1],FZ); e.dataset.k=k; e.classList.add("far"); });
+  /* the near hand: face up when it's yours (watchers see side 1's from the near side, face down) */
+  var nh=handOf(near), show=mySide===near, big=bigHand();
+  HB.innerHTML="";
+  if(big){ var bw=HB.clientWidth||360, bsp=nh.length>1?Math.min(56,(bw-60)/(nh.length-1)):0; HB._sp=bsp; }
+  nh.forEach(function(t,k){ var o={w:big?44:48,l:big?88:96,dir:"v",th:big?9:12,into:big?HB:TL};
+    var e=show?mkTile(t[0],t[1],o):(o.back=true,mkTile(0,0,o));
+    if(big){ var bw2=HB.clientWidth||360; setAt(e,bw2/2-(nh.length-1)*HB._sp/2+k*HB._sp,59,0); }
+    else { var q=rowXY(nh.length,k,NEAR_Y); setAt(e,q[0],q[1],FZ); }
+    e.dataset.k=k; e.classList.add("near");
+    if(show&&canPlay.indexOf(k)>=0){ e.classList.add("play"); if(k===pickIdx) e.classList.add("pick"); e.onclick=function(){ humanPick(k); }; } });
+  /* if a tile fits both ends, show where it can go */
+  if(mine&&pickIdx>=0){ [0,1].forEach(function(side){ var g=ghostAt(handOf(mySide)[pickIdx],side); if(!g) return;
+    var d=document.createElement("div"); d.className="do-ghost"; var W=g.dir==="h"?g.l:g.w,H=g.dir==="h"?g.w:g.l;
+    d.style.width=W+"px"; d.style.height=H+"px"; d.style.margin=(-H/2)+"px 0 0 "+(-W/2)+"px"; d.style.transform="translate3d("+g.x+"px,"+g.y+"px,-6px)";
+    d.onclick=function(){ humanPlay(pickIdx,side); }; TL.appendChild(d); }); }
+  Parlor.score([S.h1.length,S.h2.length]); Parlor.turn(S.over?-1:S.turn===1?0:1);
+}
+/* where tile t would land on side (0 left, 1 right): lay out the train with it and return its spot */
+function sim(t,side){
+  var keep=S, c={chain:S.chain.map(function(x){ return x.slice(); }),startAt:S.startAt}; S=c; attach(t,side); var ch=S.chain,st=S.startAt; S=keep;
+  var sp=layoutFor(ch,st), idx=side===0?0:ch.length-1;
+  /* spots are listed: first tile, then the right arm outward, then the left arm outward */
+  var order=[st]; for(var i=st+1;i<ch.length;i++) order.push(i); for(i=st-1;i>=0;i--) order.push(i);
+  return sp[order.indexOf(idx)];
+}
+function ghostAt(t,side){ return fits(t).indexOf(side)>=0?sim(t,side):null; }
+function say(a,b){ Parlor.status(a,b||""); }
+function msg(){
+  if(S.over) return;
+  if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  if(!mySide){ say(nameOf(S.turn)+" to play",""); return; }
+  if(S.turn!==mySide){ say(online?"Your opponent's turn":"The House is thinking…",""); return; }
+  var e=ends();
+  if(!e) say("Your turn","Play any tile to open the train");
+  else if(pickIdx>=0) say("Your turn","That tile fits both ends: tap where it goes");
+  else if(playable(mySide).length) say("Your turn","Match "+e[0]+" or "+e[1]+" · tap a glowing tile");
+  else if(S.bone.length) say("Nothing fits","Tap the boneyard to draw a tile");
+  else say("Nothing fits","The boneyard is empty: you pass");
+}
+
+/* ---------- moves (shared by you, The House and online replays) ---------- */
+async function doPlay(s,i,side){
+  var h=handOf(s), t=h[i], near=mySide===2?2:1;
+  var from=document.querySelectorAll(s===near?".dm.near":".dm.far")[i];
+  var spot=sim(t,side);
+  if(from&&spot){
+    var a=spot.t, x0=from._x, y0=from._y; /* a: the face as it will lie */
+    if(from.parentNode===HB){ /* from the phone hand bar: find where that is in the tray's own measurements */
+      var tr=trayEl.getBoundingClientRect(), hr=from.getBoundingClientRect(), sc=tr.width/860;
+      x0=(hr.left+hr.width/2-tr.left)/sc; y0=(hr.top+hr.height/2-tr.top)/sc; }
+    var fly=mkTile(a[0],a[1],{w:spot.w,l:spot.l,dir:spot.dir,th:12}); setAt(fly,x0,y0,FZ); from.style.visibility="hidden";
+    Parlor.sfx("whoosh"); await glide(fly,[spot.x,spot.y],FZ);
+  }
+  h.splice(i,1); attach(t,side); S.passes=0; lastMv={k:"play",s:s,t:t,side:side};
+  Parlor.sfx("tile",{pitch:1.35}); render();
+  if(t[0]===t[1]) await Parlor.wait(120);
+}
+async function doDraw(s){
+  if(!S.bone.length) return;
+  var near=mySide===2?2:1, k=S.bone.length-1, q=boneXY(k), h=handOf(s);
+  var fly=mkTile(0,0,{w:40,l:80,dir:"v",th:8,back:true}); setAt(fly,q[0],q[1],q[2]);
+  /* hide the top boneyard tile while its copy travels */
+  var bones=[].filter.call(TL.children,function(e){ return e!==fly&&!e.classList.contains("near")&&!e.classList.contains("far")&&e.querySelector(".bk"); });
+  if(bones[k]) bones[k].style.visibility="hidden";
+  var dest=rowXY(h.length+1,h.length,s===near?NEAR_Y:FAR_Y);
+  if(s===near&&bigHand()){ var tr=trayEl.getBoundingClientRect(), hb=HB.getBoundingClientRect(), sc=tr.width/860; dest=[(hb.left+hb.width/2-tr.left)/sc,(hb.top+hb.height/2-tr.top)/sc]; }
+  Parlor.sfx("whoosh"); await glide(fly,dest,FZ);
+  h.push(S.bone.pop()); lastMv={k:"draw",s:s}; Parlor.sfx("click",{pitch:.9}); render();
+}
+function doPass(s){ S.passes++; lastMv={k:"pass",s:s}; var e=ends(); if(e){ [e[0],e[1]].forEach(function(n){ if(lacks[s].indexOf(n)<0) lacks[s].push(n); }); } }
+/* after a play, draw or pass: is the game over, and whose turn is it? */
+function settle(s,played){
+  if(!handOf(s).length){ S.over=true; S.winner=s; return true; }
+  if(S.passes>=2){ var a=pipSum(S.h1),b=pipSum(S.h2); S.over=true; S.winner=a===b?0:a<b?1:2; return true; }
+  if(played!=="draw") S.turn=3-s;
+  return false;
+}
+
+/* ---------- your moves ---------- */
+function humanPick(i){
+  if(!myTurn()) return;
+  var f=fits(handOf(mySide)[i]); if(!f.length) return;
+  if(f.length===1){ humanPlay(i,f[0]); return; }
+  pickIdx=pickIdx===i?-1:i; Parlor.sfx("click",{pitch:1.5}); render(); msg();
+}
+async function humanPlay(i,side){
+  if(!myTurn()) return;
+  pickIdx=-1; busy=true; seq++;
+  await doPlay(mySide,i,side); busy=false;
+  next(mySide,"play");
+}
+async function humanDraw(){
+  if(!myTurn()||playable(mySide).length||!S.bone.length) return;
+  busy=true; seq++; await doDraw(mySide); busy=false;
+  /* keep drawing until something fits; pass when the boneyard runs out */
+  next(mySide,"draw");
+}
+function next(s,what){
+  var e=ends(); if(what==="draw"&&e){ [e[0],e[1]].forEach(function(n){ if(lacks[s].indexOf(n)<0) lacks[s].push(n); }); }
+  if(settle(s,what)){ push(); render(); end(); return; }
+  push(); render(); msg();
+  if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length&&!S.over){ autoPass(); return; }
+  if(!online&&S.turn===2) houseTurn();
+}
+async function autoPass(){
+  busy=true; say("Nothing fits","The boneyard is empty: you pass"); await Parlor.wait(1300); busy=false;
+  seq++; doPass(mySide); if(settle(mySide,"pass")){ push(); render(); end(); return; }
+  push(); render(); msg(); if(!online&&S.turn===2) houseTurn();
+}
+function end(){
+  var kind=S.winner===0?"draw":(S.winner===mySide?"win":"lose"), meS=mySide||1;
+  var why=S.passes>=2?"The game is blocked. Pips left: you "+pipSum(handOf(meS))+", "+(online?"opponent":"The House")+" "+pipSum(handOf(3-meS))+" (lower wins).":
+    (S.winner===meS?"You played your last tile.":(online?"Your opponent":"The House")+" played its last tile.");
+  say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over",""); render();
+  if(online) report();
+  Parlor.finish(kind,why);
+}
+
+/* ---------- The House ----------
+   It plays to its level: higher levels keep a spread of numbers, unload heavy tiles and doubles early,
+   and remember which numbers you couldn't match so they can leave you stuck. Lower levels play more loosely. */
+function scoreMove(t,side){
+  var keep=S, c={chain:S.chain.map(function(x){ return x.slice(); }),startAt:S.startAt}; S=c; attach(t,side); var e=ends(); S=keep;
+  var rest=S.h2.filter(function(x){ return x!==t; }), v=(t[0]+t[1])*1.2+(t[0]===t[1]?5:0);
+  [e[0],e[1]].forEach(function(n){ var mineN=rest.filter(function(x){ return x[0]===n||x[1]===n; }).length;
+    v+=mineN*3.5; if(!mineN) v-=3; if(lacks[1].indexOf(n)>=0) v+=7; });
+  return v;
+}
+async function houseTurn(){
+  if(S.over||online||S.turn!==2) return;
+  busy=true; render(); msg(); await Parlor.wait(950);
+  while(!playable(2).length&&S.bone.length){ say("The House draws",""); await doDraw(2); await Parlor.wait(250); }
+  var opts=[]; playable(2).forEach(function(i){ fits(S.h2[i]).forEach(function(side){ opts.push({i:i,side:side}); }); });
+  if(!opts.length){ busy=false; doPass(2); say("The House passes",""); if(settle(2,"pass")){ render(); end(); return; } render(); msg(); await Parlor.wait(600);
+    if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length) autoPass(); return; }
+  var sk=Parlor.skill(), pick;
+  if(Math.random()<sk.loose) pick=opts[Math.floor(Math.random()*opts.length)];
+  else { var best=-1e9; opts.forEach(function(o){ var v=scoreMove(S.h2[o.i],o.side)+Math.random()*(6-sk.depth); if(v>best){ best=v; pick=o; } }); }
+  await doPlay(2,pick.i,pick.side); busy=false;
+  next(2,"play");
+}
+function newGame(){ S=deal(); lacks={1:[],2:[]}; pickIdx=-1; busy=false; reported=false; render(); msg(); }
+
+/* ---------- online table (same page: ?code=XXXX) ---------- */
+var lastMv=null;
+function snapshot(){ return {game:"dominoes", h1:S.h1, h2:S.h2, bone:S.bone, chain:S.chain, turn:S.turn, over:S.over, startAt:S.startAt, passes:S.passes, winner:S.winner, seq:seq, mv:lastMv}; }
+async function push(){
+  if(!online||!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:S.over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
+  if(S.over) report();
+}
+function report(){ if(reported||!S.over||!room||!window.bwRateGame) return; reported=true; bwRateGame(sb,room,me,S.winner); }
+function fromSnap(s){
+  if(!s||!s.h1){ S=deal(); return; }
+  S={h1:s.h1,h2:s.h2,bone:s.bone||[],chain:s.chain||[],turn:s.turn||1,over:!!s.over,startAt:s.startAt!=null?s.startAt:Math.floor((s.chain||[]).length/2),passes:s.passes||0,
+     winner:s.winner!=null?s.winner:(s.over?(!(s.h1||[]).length?1:!(s.h2||[]).length?2:0):0)};
+  seq=s.seq||0;
+}
+var queue=Promise.resolve();
+function remote(s){
+  queue=queue.then(async function(){
+    if(!s||s.seq==null||s.seq===seq) return;
+    var mv=s.mv, wasOver=S.over;
+    if(mv&&mv.s&&mv.s!==mySide){
+      busy=true;
+      try{
+        if(mv.k==="play"){ var h=handOf(mv.s), i=h.findIndex(function(t){ return (t[0]===mv.t[0]&&t[1]===mv.t[1])||(t[0]===mv.t[1]&&t[1]===mv.t[0]); }); if(i>=0) await doPlay(mv.s,i,mv.side); }
+        else if(mv.k==="draw"&&S.bone.length) await doDraw(mv.s);
+      }catch(e){}
+      busy=false;
+    }
+    fromSnap(s); render();
+    if(S.over&&!wasOver) end(); else { msg(); if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length&&!S.over) autoPass(); }
+  });
+}
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ say("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ say("Sign in to join","Use Tables to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ say("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;   /* watching */
+  Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
+  Parlor.mySeat(mySide===2?1:0);
+  fromSnap(room.state&&room.state.h1?room.state:null);
+  render(); if(S.over) end(); else msg();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
+    var hadGuest=room&&room.guest; room=p.new; var s=p.new.state||{};
+    if(!hadGuest&&room.guest){ render(); msg(); }
+    if(s.seq!=null&&s.seq!==seq) remote(s);
+  }).subscribe();
+}
+
+/* ---------- fit the tray to its space ---------- */
+function fit(){
+  var wide=window.innerWidth>=1000, availW, availH;
+  if(wide){ var st2=document.querySelector(".pk-stage"); availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-80-65-40; }
+  else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight; availW=window.innerWidth-12; availH=shortL?window.innerHeight-56-64-34-10:window.innerHeight-56-64-34-100; }
+  var big=!wide&&Math.min(availW/900,availH/900)<.62;
+  if(big) availH-=128;   /* room for the hand bar */
+  var s=Math.max(.2,Math.min(availW/900,availH/900,1.2));
+  var f=document.getElementById("doFit"), sc=document.getElementById("doScaler"); if(!f) return;
+  var was=document.body.classList.contains("do-bighand"); document.body.classList.toggle("do-bighand",big);
+  if(HB) HB.style.width=Math.round(900*s)+"px";
+  if(was!==big&&S) setTimeout(render,0);
+  sc.style.transform="scale("+s+")"; f.style.width=Math.round(900*s)+"px"; f.style.height=Math.round(900*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(900*s)+"px");
+}
+window.addEventListener("resize",fit);
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"dominoes", title:"Sunroom Dominoes", bg:"dominoes-parlor.jpg", home:"tables.html", stage:stage,
+  tagline:"Match the ends. Empty your hand.", invite:"Sunlight on the felt and the tiles are shuffled. Sit down and lay the first domino.",
+  players:[{name:"You",color:"#f4f1ea"},{name:"The House",color:"var(--do-dot,#d9d1c0)"}],
+  setsLabel:"Boards",
+  sets:[
+    {id:"pearl",name:"Garden Pearl",need:0,dots:["#e6dcc6","#16284a","#c0392b"]},
+    {id:"walnut",name:"Sunroom Walnut",club:true,dots:["#5e3c22","#1a3e2c","#2f4d8a"]},
+    {id:"ebony",name:"Midnight Ebony",club:true,dots:["#6a2a18","#56161e","#1b1714"]}
+  ],
+  rules:{
+    play:"<ol><li>A double-six set: you and your opponent each draw seven tiles. You go first and may play any tile.</li><li>After that, each tile must match a number at one end of the train. Tap a glowing tile; if it fits both ends, tap the end where it goes.</li><li>If nothing fits, tap the boneyard to draw until something does. If the boneyard is empty, you pass.</li><li>The train turns at the edges of the felt so it always has room.</li></ol>",
+    score:"<ul><li>The first player to play their last tile wins.</li><li>If neither player can move (the game is blocked), the lower total of pips left in hand wins. Equal totals are a draw.</li></ul>"
+  },
+  onNew:function(){ mySide=1; newGame(); }
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"pearl"; if(k!==curDesign){ applyDesign(k); if(S) render(); } fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
+S=deal(); S.h1=S.h1;
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"pearl");
+  render(); fit();
+  if(CODE) bootOnline();
+});
+</script>
 </body>
 </html>
