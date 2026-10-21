@@ -378,7 +378,7 @@
     env(ac, g, t, peak, a, d); var last = o; if (filt) { var f = ac.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; o.connect(f); last = f; }
     last.connect(g); g.connect(master); o.start(t); o.stop(t + a + d + 0.02);
   }
-  /* Parlor.sfx(name, {pitch}) : whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, win, lose, draw */
+  /* Parlor.sfx(name, {pitch}) : whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, mill, win, lose, draw */
   P.sfx = function (name, o) {
     if (!P.soundOn()) return; var ac = audio(); if (!ac) return; o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
     try {
@@ -411,6 +411,8 @@
         tone(ac, t, "sine", 210 * p, 120 * p, 0.16, 0.003, 0.09, ["lowpass", 500]);
         tone(ac, t + 0.004, "triangle", 880 * p, 700 * p, 0.035, 0.002, 0.04);
       }
+      /* a mill: two soft bell notes */
+      else if (name === "mill") { tone(ac, t, "triangle", 784 * p, 0, 0.09, 0.006, 0.5); tone(ac, t + 0.12, "triangle", 1175 * p, 0, 0.08, 0.006, 0.6); tone(ac, t, "sine", 392 * p, 0, 0.05, 0.01, 0.5); }
       else if (name === "win") { [523, 659, 784, 1047].forEach(function (f, i) { tone(ac, t + i * 0.11, "triangle", f, 0, 0.12, 0.01, 0.4); }); }
       else if (name === "lose") { [392, 330].forEach(function (f, i) { tone(ac, t + i * 0.18, "sine", f, f * 0.97, 0.1, 0.02, 0.45); }); }
       else if (name === "draw") { [440, 440].forEach(function (f, i) { tone(ac, t + i * 0.16, "sine", f, 0, 0.08, 0.01, 0.25); }); }
