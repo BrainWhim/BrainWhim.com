@@ -2,229 +2,282 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mancala · BrainWhim Play</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pavilion Mancala · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css">
 <style>
-:root{--navy:#1A2744;--whim:#7EB6D9;--gold:#c9a45a}
-*{box-sizing:border-box}
-html,body{min-height:100%}
-body{margin:0;font-family:Montserrat,sans-serif;color:#1A2744;background:#c9b48a}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:#c9b48a url("mancala-pavilion.jpg") center / cover no-repeat}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
-.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
-.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
-.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
-.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:16px}
-.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:0}
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.games a,.games button{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:var(--navy);font-family:inherit;cursor:pointer}
-.games a.on,.games button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.sitbar{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:6px auto 8px;max-width:640px;padding:0 10px;position:relative;z-index:2}
-.sitbar button,.sitbar a,.helpbtn{border:0;border-radius:999px;padding:8px 12px;background:#fff;color:var(--navy);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.12)}
-body.seated .sit{display:none}body:not(.seated) .stand{display:none}
-body:not(.seated) .live{display:none}body.seated .live{display:block}
-.live{max-width:640px;margin:8px auto 36px;padding:8px 10px}
-h1{display:inline-block;margin:4px 0;font-size:22px;background:rgba(255,252,247,.9);padding:4px 14px;border-radius:999px}
-.sub{width:fit-content;margin:0 auto 10px;background:rgba(255,252,247,.82);padding:3px 12px;border-radius:999px;font-size:13px}
-.stage{perspective:1100px;padding:6px 4px 18px}
-.frame{
-  transform:rotateX(14deg);transform-origin:50% 90%;
-  padding:11px;border-radius:44px;
-  background:linear-gradient(160deg,#f3d7a0,#c9a45a 30%,#7a5420 55%,#e8c98a 82%,#5a3a14);
-  box-shadow:0 24px 36px rgba(0,0,0,.4), 0 6px 0 #5a3a14, inset 0 1px 0 rgba(255,255,255,.45);
-}
-.wood{
-  display:grid;grid-template-columns:78px 1fr 78px;gap:10px;
-  padding:14px 12px;border-radius:34px;
+/* ===== Mancala board: everything game-specific lives here =====
+   The board turns on its side on portrait phones (your store at the bottom, The House's at the top),
+   so the cups stay big enough to tap. Pictures can replace the CSS wood later:
+     --mk-board-img:url("mancala-board.png");  (a picture of the whole board, drawn on top of the wood colour) */
+:root{--mk-board-img:none}
+.mk-pad{width:100%;flex:none;display:flex;justify-content:center}
+.mk-board{position:relative;width:var(--mk-w);height:calc(var(--mk-w) * .4);flex:none;box-sizing:border-box;padding:calc(var(--mk-w) * .016);
+  border-radius:calc(var(--mk-w) * .07);
+  background:var(--mk-board-img) center/100% 100% no-repeat,linear-gradient(160deg,#f3d7a0,#c9a45a 30%,#7a5420 55%,#e8c98a 82%,#5a3a14);
+  box-shadow:0 2.4vmin 3.6vmin rgba(0,0,0,.5),0 .7vmin 0 #4a3012,inset 0 1px 0 rgba(255,255,255,.45)}
+.mk-wood{width:100%;height:100%;display:grid;grid-template-columns:1.35fr repeat(6,1fr) 1.35fr;grid-template-rows:1fr 1fr;gap:calc(var(--mk-w) * .014);
+  padding:calc(var(--mk-w) * .02);border-radius:calc(var(--mk-w) * .056);
   background:
-    linear-gradient(180deg,rgba(255,255,255,.18),transparent 28%),
-    repeating-linear-gradient(90deg,rgba(160,90,30,.07) 0 3px,transparent 3px 14px),
-    linear-gradient(160deg,#f0d09a,#e2b56a 35%,#c48a42 68%,#e8c07a);
-  box-shadow:inset 0 0 0 2px #8a5a22, inset 0 10px 18px rgba(80,40,10,.22);
-}
-.store{
-  border:0;border-radius:46px;
-  background:radial-gradient(ellipse at 40% 28%,#e8c07a,#b87532 62%,#8a4e18);
-  box-shadow:inset 0 10px 18px rgba(80,40,10,.4);
-  min-height:176px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  color:#4a2c12;font-weight:700;font-size:11px
-}
-.pits{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:1fr 1fr;gap:10px}
-.pit{
-  border:0;border-radius:46%;
-  background:radial-gradient(circle at 35% 26%,#efd09a,#c48a42 58%,#8f5a22);
-  box-shadow:inset 0 10px 14px rgba(70,35,8,.38);
-  min-height:78px;cursor:pointer;padding:8px;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:4px
-}
-.pit.ok{box-shadow:inset 0 0 0 3px #fff3b0, inset 0 10px 14px rgba(70,35,8,.38)}
-.gem{
-  width:14px;height:14px;border-radius:50%;
-  box-shadow:0 2px 2px rgba(0,0,0,.28), inset 2px 2px 3px rgba(255,255,255,.75), inset -2px -2px 3px rgba(0,0,0,.2)
-}
-.g0{background:radial-gradient(circle at 32% 28%,#d7f3ff 0 18%,#4eb3f0 42%,#1468a8)}
-.g1{background:radial-gradient(circle at 32% 28%,#fff6c2 0 18%,#f0b429 42%,#c06a00)}
-.g2{background:radial-gradient(circle at 32% 28%,#e4ffd8 0 18%,#5ad16e 42%,#1a7a38)}
-.g3{background:radial-gradient(circle at 32% 28%,#ffd3e0 0 18%,#ef5a86 42%,#9b1b3a)}
-.g4{background:radial-gradient(circle at 32% 28%,#fff 0 16%,#c8c8c8 40%,#2a2a2a)}
-.g5{background:radial-gradient(circle at 32% 28%,#f0e0ff 0 18%,#b57cff 42%,#5a2a9a)}
-.hint{text-align:center;margin:10px 0 0}
-.hint span{background:rgba(255,252,247,.92);display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
-@media(max-width:800px){
-header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padding:6px 10px 8px}
-.brand{font-size:18px;grid-column:1;grid-row:1}
-.brand img{width:48px;height:48px}
-.hdr{grid-column:1 / -1;grid-row:2;justify-content:center;width:100%;padding-top:4px;gap:12px}
-.hdr a{font-size:13px;margin-left:0}
-}
-#winveil,#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:16px}
-#winveil.on,#helpveil.on{display:flex}
-.card{width:min(480px,94vw);padding:22px;border-radius:20px;background:linear-gradient(180deg,#fffdf8,#f3ead6);box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744}
-.card h2{margin:0 0 12px;text-align:center}
-.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.card button,.card a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;text-decoration:none;cursor:pointer}
-.go{background:#1A2744;color:#fff}.ghost{background:#fff;color:#1A2744}
+    linear-gradient(180deg,rgba(255,255,255,.16),transparent 30%),
+    repeating-linear-gradient(90deg,rgba(120,60,20,.07) 0 3px,transparent 3px 15px),
+    linear-gradient(160deg,#e9c48a,#d7a35c 35%,#b77a38 68%,#deb06a);
+  box-shadow:inset 0 0 0 2px #7a4c1c,inset 0 1vmin 2vmin rgba(70,35,10,.28)}
+body.has-board-img .mk-wood{background:none;box-shadow:none}
+.mk-cell{position:relative;border:0;margin:0;padding:8%;min-width:0;min-height:0;font:inherit;color:inherit;cursor:default;-webkit-tap-highlight-color:transparent;
+  grid-column:var(--hc);grid-row:var(--hr);
+  border-radius:50%;background:radial-gradient(ellipse at 38% 28%,#e7c487,#b97c38 60%,#87501c);
+  box-shadow:inset 0 .9vmin 1.4vmin rgba(60,28,6,.5),0 1px 0 rgba(255,255,255,.35);
+  display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;transition:box-shadow .2s,background .2s}
+.mk-store{border-radius:999px;padding:12% 10%}
+.mk-cell.ok{cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,236,170,.95),0 0 1.6vmin rgba(255,214,110,.55),inset 0 .9vmin 1.4vmin rgba(60,28,6,.5)}
+.mk-cell.ok:hover{background:radial-gradient(ellipse at 38% 28%,#f1d29a,#c88a44 60%,#8f581f)}
+.mk-cell.flash{background:radial-gradient(ellipse at 38% 28%,#fbe3b0,#d79a52 60%,#9a6226)}
+.mk-cell.last{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),inset 0 .9vmin 1.4vmin rgba(60,28,6,.5)}
+.mk-n{position:absolute;right:9%;bottom:6%;font-size:calc(var(--mk-gem) * 1.05);font-weight:700;color:#fff6e0;text-shadow:0 1px 2px rgba(0,0,0,.6);line-height:1}
+.mk-store .mk-n{right:50%;transform:translateX(50%);bottom:7%;font-size:calc(var(--mk-gem) * 1.4)}
+.mk-gem{width:var(--mk-gem);height:var(--mk-gem);border-radius:50%;flex:none;
+  box-shadow:0 1px 2px rgba(0,0,0,.35),inset 1px 1px 2px rgba(255,255,255,.75),inset -1px -1px 2px rgba(0,0,0,.25)}
+.mk-gem.g0{background:radial-gradient(circle at 32% 28%,var(--a0) 0 18%,var(--b0) 45%,var(--c0))}
+.mk-gem.g1{background:radial-gradient(circle at 32% 28%,var(--a1) 0 18%,var(--b1) 45%,var(--c1))}
+.mk-gem.g2{background:radial-gradient(circle at 32% 28%,var(--a2) 0 18%,var(--b2) 45%,var(--c2))}
+.mk-gem.g3{background:radial-gradient(circle at 32% 28%,var(--a3) 0 18%,var(--b3) 45%,var(--c3))}
+.mk-more{font-size:calc(var(--mk-gem) * .95);font-weight:700;color:#fff3d6;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+/* stone sets (body[data-set] is chosen in the side card) */
+body,body[data-set="glass"]{--a0:#d7f3ff;--b0:#4eb3f0;--c0:#1468a8;--a1:#fff6c2;--b1:#f0b429;--c1:#c06a00;--a2:#e4ffd8;--b2:#5ad16e;--c2:#1a7a38;--a3:#ffd3e0;--b3:#ef5a86;--c3:#9b1b3a}
+body[data-set="pearl"]{--a0:#fff;--b0:#f4efe6;--c0:#b9ab94;--a1:#fff;--b1:#f7e3e6;--c1:#c39aa2;--a2:#fff;--b2:#e9eef5;--c2:#9aa7b8;--a3:#fff;--b3:#f3ead2;--c3:#bca779}
+body[data-set="ember"]{--a0:#ffe0b0;--b0:#e08a2c;--c0:#7a3a08;--a1:#ffc2b8;--b1:#b8322a;--c1:#5a0e0a;--a2:#8a8a92;--b2:#2c2c32;--c2:#050507;--a3:#fff0b8;--b3:#d9a83a;--c3:#6a4a10}
 
-body.seated .games{display:none}
-body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
-body.seated .sit{display:none}
-body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none}
-body.seated .bar button{display:none}
-
+/* sizes: desktop gets a wide hero board; portrait phones turn it on its side */
+body.pk{--mk-w:min(calc(100vw - 2*var(--pk-side) - 90px),calc((100dvh - var(--pk-hdr) - var(--pk-sw) - 60px) * 2.5),1000px);--mk-gem:calc(var(--mk-w) * .02)}
+body.pk .pk-stage{justify-content:center}
+@media (max-width:999px){
+  body.pk{--mk-w:min(calc(100vw - 16px),calc((100dvh - var(--pk-hdr) - var(--pk-bar) - 170px) * 2.5));--pk-size:var(--mk-w);--mk-gem:calc(var(--mk-w) * .022)}
+}
+@media (max-width:999px) and (orientation:portrait){
+  body.pk{--mk-h:min(calc((100vw - 16px) * 1.95),calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 170px));--mk-w:calc(var(--mk-h) / 1.95);--pk-size:var(--mk-w);--mk-gem:calc(var(--mk-w) * .05)}
+  .mk-board{height:var(--mk-h);padding:calc(var(--mk-w) * .035);border-radius:calc(var(--mk-w) * .14)}
+  .mk-wood{grid-template-columns:1fr 1fr;grid-template-rows:1.3fr repeat(6,1fr) 1.3fr;gap:calc(var(--mk-w) * .03);padding:calc(var(--mk-w) * .04);border-radius:calc(var(--mk-w) * .11)}
+  .mk-cell{grid-column:var(--vc);grid-row:var(--vr)}
+  body.pk .pk-mini{width:min(var(--mk-w) * 1.25,calc(100vw - 16px))}
+}
+@media (prefers-reduced-motion:reduce){.mk-cell{transition:none}}
 </style>
 <script src="bw-auth.js"></script>
-<script>
-/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
-async function bwHouseGate(fn){
-  if(!window.BW){ fn(); return; }
-  if(await BW.startMatch({mode:"house"})) fn();
-}
-</script>
 </head>
 <body>
 <header>
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
-<div class="games">
-<a href="checkers.html">Checkers</a>
-<a href="chess.html">Chess</a>
-<a href="backgammon.html">Backgammon</a>
-<a href="yahtzee.html">Yahtzee</a>
-<a href="dominoes.html">Dominoes</a>
-<a href="othello.html">Othello</a>
-<a class="on" href="mancala.html">Mancala</a>
-<a href="cribbage.html">Cribbage</a>
-<a href="shutbox.html">Shut the Box</a>
-<a href="morris.html">Morris</a>
-</div>
-<div class="sitbar">
-<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the pavilion</button>
-<a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
-<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
-<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
-</div>
-<div class="live">
-  <div style="text-align:center"><h1>Pavilion Mancala</h1></div>
-  <p class="sub">Sow the glass stones. Your cups are the near row. Land in your store for another turn.</p>
-  <div class="stage"><div class="frame"><div class="wood" id="bowl"></div></div></div>
-  <div class="hint"><span id="msg">Your cups are the near row. Tap one to sow.</span></div>
-</div>
-<div id="winveil"><div class="card"><h2 id="winTitle">Congratulations! You win!</h2><div class="row"><button class="go" type="button" onclick="hideBanner();bwHouseGate(newGame)">Play again?</button><a class="ghost" href="tables.html">Return to Tables</a></div></div></div>
-<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()"><div class="card"><h2 id="helpTitle">How to play</h2><div id="helpBody"></div><div class="row"><button class="go" type="button" onclick="hideHelp()">Got it</button></div></div></div>
-<script>
-function sitDown(){document.body.classList.add("seated");paint()}
-function standUp(){document.body.classList.remove("seated")}
-function hideBanner(){document.getElementById("winveil").className=""}
-function hideHelp(){document.getElementById("helpveil").className=""}
-function showHelp(k){
-  document.getElementById("helpTitle").textContent=k==="score"?"Scoring rules":"How to play";
-  document.getElementById("helpBody").innerHTML=k==="score"
-    ?"<ul><li>When a side has no stones left in its cups, the other side drops remaining stones into their store.</li><li>The higher store wins.</li></ul>"
-    :"<ol><li>Each of the six cups on your near row starts with four stones.</li><li>Tap a cup. Stones sow one-by-one counter-clockwise, including your store, skipping the house store.</li><li>If the last stone lands in your store, you sow again.</li><li>If the last stone lands in an empty cup of yours, you capture that stone and the opposite house cup into your store.</li></ol>";
-  document.getElementById("helpveil").className="on";
-}
-var y=[], ys=0, h=[], hs=0, turn="you", over=false;
-function newGame(){
-  y=[4,4,4,4,4,4]; h=[4,4,4,4,4,4]; ys=0; hs=0; turn="you"; over=false;
-  document.getElementById("msg").textContent="Your cups are the near row. Tap one to sow.";
-  hideBanner(); paint();
-}
-function gems(n){
-  var s=""; for(var i=0;i<n && i<16;i++) s+='<i class="gem g'+(i%6)+'"></i>';
-  if(n>16) s+='<b style="font-size:11px;color:#3a2410">+'+(n-16)+'</b>';
-  return s;
-}
-function paint(){
-  var html='<div class="store">House'+gems(hs)+'</div><div class="pits">';
-  for(var i=5;i>=0;i--) html+='<button class="pit" disabled>'+gems(h[i])+'</button>';
-  for(var i=0;i<6;i++){
-    var ok=turn==="you"&&!over&&y[i]>0;
-    html+='<button class="pit'+(ok?" ok":"")+'" '+(ok?"":"disabled")+' onclick="sowYou('+i+')">'+gems(y[i])+'</button>';
-  }
-  html+='</div><div class="store">You'+gems(ys)+'</div>';
-  document.getElementById("bowl").innerHTML=html;
-}
-function sowYou(i){
-  if(over||turn!=="you"||!y[i]) return;
-  var extra=sow(true,i);
-  if(emptySide()){ finish(); return; }
-  if(extra){ document.getElementById("msg").textContent="Extra turn. Sow again."; paint(); return; }
-  turn="house"; paint(); setTimeout(houseTurn,420);
-}
-function sow(isYou, idx){
-  var n=isYou?y[idx]:h[idx];
-  if(isYou) y[idx]=0; else h[idx]=0;
-  var pos=idx, side=isYou?"y":"h";
-  while(n--){
-    if(side==="y"){
-      pos++;
-      if(pos<6){ y[pos]++; if(n===0) return landYou(pos); }
-      else { ys++; side="h"; pos=-1; if(n===0) return isYou; }
-    } else {
-      pos++;
-      if(pos<6){ h[pos]++; if(n===0) return landHouse(pos,isYou); }
-      else { if(!isYou){ hs++; if(n===0) return !isYou; } side="y"; pos=-1; }
-    }
-  }
-  return false;
-}
-function landYou(pos){
-  if(y[pos]===1 && h[5-pos]>0){ ys+=1+h[5-pos]; y[pos]=0; h[5-pos]=0; }
-  return false;
-}
-function landHouse(pos,isYou){
-  if(!isYou && h[pos]===1 && y[5-pos]>0){ hs+=1+y[5-pos]; h[pos]=0; y[5-pos]=0; }
-  return false;
-}
-function emptySide(){ return y.every(function(v){return v===0}) || h.every(function(v){return v===0}); }
-function finish(){
-  y.forEach(function(v){ys+=v}); h.forEach(function(v){hs+=v});
-  y=[0,0,0,0,0,0]; h=[0,0,0,0,0,0]; over=true; paint();
-  var k=ys>hs?"win":hs>ys?"lose":"draw";
-  document.getElementById("winTitle").textContent=k==="win"?"Congratulations! You win!":k==="draw"?"It's a Draw!":"Better luck next time!";
-  document.getElementById("winveil").className="on";
-}
-function houseTurn(){
-  if(over) return;
-  var opts=[]; for(var i=0;i<6;i++) if(h[i]) opts.push(i);
-  if(!opts.length){ finish(); return; }
-  var pick=opts[0], best=-1;
-  opts.forEach(function(i){
-    var score=h[i]; if(i+h[i]===6) score+=20;
-    if(score>best){best=score;pick=i;}
-  });
-  var extra=sow(false,pick);
-  if(emptySide()){ finish(); return; }
-  if(extra){ document.getElementById("msg").textContent="House sows again."; paint(); setTimeout(houseTurn,420); return; }
-  turn="you"; document.getElementById("msg").textContent="House sowed. Your turn."; paint();
-}
-newGame();
-</script>
+<main class="pk-room"></main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
+<script src="parlor-kit.js"></script>
+<script>
+/* ---------- the board ----------
+   Internally the board is one ring of 14 slots, sown counter-clockwise:
+   0-5 = side 1's cups (the host, or you against The House), 6 = side 1's store,
+   7-12 = side 2's cups, 13 = side 2's store. Saved online as {y, h, ys, hs, turn, over}. */
+var stage=document.createElement("div"); stage.className="mk-pad";
+stage.innerHTML='<div class="mk-board"><div class="mk-wood" id="mkWood"></div></div>';
+var slots=[];
+
+var ring=[], turn=1, over=false, last=-1, busy=false;
+var mySide=1, online=false, sb=null, room=null, me=null, reported=false, CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+
+function fresh(){ return [4,4,4,4,4,4,0,4,4,4,4,4,4,0]; }
+function storeOf(s){ return s===1?6:13; }
+function cupsOf(s){ return s===1?[0,1,2,3,4,5]:[7,8,9,10,11,12]; }
+function ownerOfCup(i){ return i<6?1:(i>6&&i<13)?2:0; }
+function sideEmpty(b,s){ return cupsOf(s).every(function(i){ return b[i]===0; }); }
+
+/* one move: returns {b, steps, extra, capture} without touching the live board */
+function move(b,s,i){
+  b=b.slice(); var n=b[i], steps=[], skip=storeOf(3-s), pos=i; b[i]=0;
+  while(n>0){ pos=(pos+1)%14; if(pos===skip) continue; b[pos]++; n--; steps.push(pos); }
+  var extra=pos===storeOf(s), capture=null;
+  if(!extra && ownerOfCup(pos)===s && b[pos]===1 && b[12-pos]>0){
+    capture=b[pos]+b[12-pos]; b[storeOf(s)]+=capture; b[pos]=0; b[12-pos]=0;
+  }
+  var done=false;
+  if(sideEmpty(b,1)||sideEmpty(b,2)){
+    cupsOf(1).forEach(function(k){ b[6]+=b[k]; b[k]=0; }); cupsOf(2).forEach(function(k){ b[13]+=b[k]; b[k]=0; }); done=true;
+  }
+  return {b:b, steps:steps, extra:extra&&!done, capture:capture, done:done, lastPos:pos};
+}
+function winnerSide(){ return ring[6]===ring[13]?0:ring[6]>ring[13]?1:2; }
+
+/* ---------- drawing ---------- */
+function build(){
+  var w=document.getElementById("mkWood"); w.innerHTML=""; slots=[];
+  for(var i=0;i<14;i++){
+    var c=document.createElement("button"); c.type="button"; c.className="mk-cell"+(i===6||i===13?" mk-store":"");
+    (function(i){ c.onclick=function(){ play(i); }; })(i);
+    w.appendChild(c); slots.push(c);
+  }
+  place();
+}
+/* where each slot sits, from the viewer's side: their cups along the near row, their store on the right
+   (bottom on portrait phones); the other side's cups across the far row, their store on the left (top) */
+function place(){
+  var meS=mySide===2?2:1, mine=cupsOf(meS), theirs=cupsOf(3-meS);
+  function set(i,hc,hr,vc,vr,label){ var s=slots[i].style; s.setProperty("--hc",hc); s.setProperty("--hr",hr); s.setProperty("--vc",vc); s.setProperty("--vr",vr); slots[i].dataset.label=label; }
+  mine.forEach(function(idx,k){ set(idx,String(2+k),"2",1,String(2+k),"Your cup "+(k+1)); });
+  theirs.forEach(function(idx,k){ var j=5-k; set(idx,String(2+j),"1",2,String(2+j),"Opponent cup "+(k+1)); });
+  set(storeOf(3-meS),"1","1 / span 2","1 / span 2","1","Opponent store");
+  set(storeOf(meS),"8","1 / span 2","1 / span 2","8","Your store");
+}
+function gems(n,isStore){
+  var max=isStore?24:12, h="";
+  for(var i=0;i<Math.min(n,max);i++) h+='<i class="mk-gem g'+(i%4)+'"></i>';
+  if(n>max) h+='<span class="mk-more">+'+(n-max)+'</span>';
+  return h+'<span class="mk-n">'+n+'</span>';
+}
+function legal(){ return (!over && !busy && turn===mySide && seatedNow() && (!online||(room&&room.guest))) ? cupsOf(mySide).filter(function(i){ return ring[i]>0; }) : []; }
+function paint(){
+  var ok=legal();
+  for(var i=0;i<14;i++){
+    var c=slots[i]; c.innerHTML=gems(ring[i],i===6||i===13);
+    c.classList.toggle("ok",ok.indexOf(i)>=0); c.classList.toggle("last",i===last);
+    c.setAttribute("aria-label",c.dataset.label+": "+ring[i]+" stones"); c.disabled=ok.indexOf(i)<0;
+  }
+  Parlor.score([ring[6],ring[13]]); Parlor.turn(over?-1:turn===1?0:1);
+}
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function say(a,b){ Parlor.status(a,b||""); }
+function msg(){
+  if(over) return;
+  if(online && room && !room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  if(turn===mySide) say("Your turn","Tap a glowing cup on your side to sow");
+  else say(online?"Opponent's turn":"The House is thinking…","");
+}
+
+/* sow with a little rhythm: each stone lands one after another */
+function animate(s,i,res,done){
+  busy=true; var b=ring.slice(); b[i]=0; ring=b; last=-1; paint(); var k=0;
+  (function step(){
+    if(k<res.steps.length){
+      var p=res.steps[k++]; ring[p]++; paint(); slots[p].classList.add("flash");
+      (function(el){ setTimeout(function(){ el.classList.remove("flash"); },180); })(slots[p]);
+      setTimeout(step,reduce?0:130); return;
+    }
+    setTimeout(function(){ ring=res.b; last=res.lastPos; busy=false; paint(); done(); },res.capture?260:60);
+  })();
+}
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+function after(s,res){
+  if(res.done){ over=true; paint(); end(); push(); return; }
+  if(res.extra){ turn=s; paint(); say(s===mySide?"Extra turn":"Another turn for "+(online?"your opponent":"The House"),s===mySide?"Your last stone landed in your store":""); push(); if(!online&&turn===2) setTimeout(houseMove,650); return; }
+  turn=3-s; paint();
+  msg();
+  if(res.capture) say(s===mySide?"Captured "+res.capture+" stones!":(online?"Opponent":"The House")+" captured "+res.capture+" stones",turn===mySide?"Your turn":"");
+  push();
+  if(!online&&turn===2) setTimeout(houseMove,600);
+}
+function play(i){
+  if(legal().indexOf(i)<0) return;
+  var res=move(ring,mySide,i);
+  animate(mySide,i,res,function(){ after(mySide,res); });
+}
+function end(){
+  var w=winnerSide(), a=ring[6], b=ring[13];
+  var mine=mySide===2?b:a, theirs=mySide===2?a:b;
+  var kind=w===0?"draw":(w===mySide?"win":"lose");
+  say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over", mine+" – "+theirs);
+  if(online) report();
+  Parlor.finish(kind, "Your store "+mine+", "+(online?"opponent":"The House")+" "+theirs);
+}
+
+/* ---------- The House: looks a few moves ahead (extra turns included) ---------- */
+function search(b,s,depth,alpha,beta){
+  var moves=cupsOf(s).filter(function(i){ return b[i]>0; });
+  if(depth===0||!moves.length) return {v:(b[13]-b[6])*10+(cupsOf(2).reduce(function(t,i){return t+b[i];},0)-cupsOf(1).reduce(function(t,i){return t+b[i];},0))};
+  var best=null;
+  for(var m=0;m<moves.length;m++){
+    var r=move(b,s,moves[m]), v;
+    if(r.done) v=(r.b[13]-r.b[6])*100;
+    else v=search(r.b,r.extra?s:3-s,r.extra?depth:depth-1,alpha,beta).v;
+    if(s===2){ if(!best||v>best.v) best={v:v,i:moves[m]}; alpha=Math.max(alpha,v); }
+    else { if(!best||v<best.v) best={v:v,i:moves[m]}; beta=Math.min(beta,v); }
+    if(beta<=alpha) break;
+  }
+  return best;
+}
+function houseMove(){
+  if(over||online||turn!==2||busy) return;
+  var pick=search(ring,2,4,-1e9,1e9);
+  if(!pick||pick.i==null) return;
+  var res=move(ring,2,pick.i);
+  animate(2,pick.i,res,function(){ after(2,res); });
+}
+function newGame(){ ring=fresh(); turn=1; over=false; last=-1; busy=false; reported=false; paint(); msg(); }
+
+/* ---------- online table (same page: ?code=XXXX) ---------- */
+function snapshot(){ return {game:"mancala", y:ring.slice(0,6), ys:ring[6], h:ring.slice(7,13), hs:ring[13], turn:turn, over:over}; }
+function applySnap(s){
+  if(!s||!s.y) s={y:[4,4,4,4,4,4],h:[4,4,4,4,4,4],ys:0,hs:0,turn:1,over:false};
+  ring=s.y.concat([s.ys||0],s.h,[s.hs||0]); turn=s.turn||1; over=!!s.over;
+}
+async function push(){
+  if(!online||!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
+  if(over) report();
+}
+function report(){ if(reported||!over||!room||!window.bwRateGame) return; reported=true; bwRateGame(sb,room,me,winnerSide()); }
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ say("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ say("Sign in to join","Use Tables to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ say("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;   /* watching */
+  Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
+  Parlor.mySeat(mySide===2?1:0);
+  place();
+  applySnap(room.state&&room.state.y?room.state:null);
+  paint(); if(over) end(); else msg();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
+    var wasOver=over; room=p.new; applySnap(room.state); paint();
+    if(over&&!wasOver) end(); else msg();
+  }).subscribe();
+}
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"mancala", title:"Pavilion Mancala", bg:"mancala-pavilion.jpg", home:"tables.html", stage:stage,
+  tagline:"Sow the stones. Fill your store.", invite:"The pavilion is open to the breeze. Sit down and sow the first stones.",
+  players:[{name:"You",color:"#c98a3c"},{name:"The House",color:"#7a5420"}],
+  setsLabel:"Stone Sets",
+  sets:[
+    {id:"glass",name:"Sea Glass",need:0,dots:["#4eb3f0","#f0b429","#5ad16e"]},
+    {id:"pearl",name:"Pearl",need:300,dots:["#f4efe6","#f7e3e6","#e9eef5"]},
+    {id:"ember",name:"Ember & Onyx",need:501,dots:["#e08a2c","#b8322a","#2c2c32"]}
+  ],
+  rules:{
+    play:"<ol><li>Your six cups are the row nearest you, and your store is on your right (at the bottom on a phone). Each cup starts with four stones.</li><li>Tap one of your cups. Its stones are sown one at a time, counter-clockwise, into the next cups and your own store. The other player's store is skipped.</li><li>If your last stone lands in your store, you take another turn.</li><li>If your last stone lands in an empty cup on your side, you capture it and every stone in the cup across from it.</li><li>When either side runs out of stones, each player moves the stones left on their side into their own store.</li></ol>",
+    score:"<ul><li>The player with more stones in their store wins.</li><li>Equal stores are a draw.</li></ul>"
+  },
+  onNew:function(){ mySide=1; place(); newGame(); }
+});
+ring=fresh();   /* a board to look at before anyone sits */
+document.addEventListener("DOMContentLoaded",function(){
+  build(); paint();
+  if(CODE) bootOnline();
+});
+</script>
 </body>
 </html>

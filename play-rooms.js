@@ -14,7 +14,7 @@ window.BW_ROOMS={
   backgammon:"backgammon-room.html",
   othello:"othello.html",
   morris:"morris-room.html",
-  mancala:"mancala-room.html",
+  mancala:"mancala.html",
   dominoes:"dominoes-room.html",
   yahtzee:"yahtzee-room.html",
   cribbage:"cribbage-room.html",
