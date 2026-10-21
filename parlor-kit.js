@@ -83,6 +83,7 @@
     stage.insertBefore(el.miniTop, stage.firstChild);
     P.mySeat(0);
     st.appendChild(el.players);
+    el.info = mk("p", "pk-sub pk-info", ""); st.appendChild(el.info);   /* a game's own line, e.g. "Hand 3 · first to 100 points" */
     el.level = mk("p", "pk-sub pk-level", ""); st.appendChild(el.level);
     left.appendChild(st);
 
@@ -203,6 +204,7 @@
   };
   /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
   P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); return (a && a.offsetParent) ? a : (b && b.offsetParent ? b : null); };
+  P.info = function (text) { if (el.info) { el.info.textContent = text || ""; el.info.style.display = text ? "" : "none"; } };
   P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { p._nm.textContent = arr[i]; p._nm2.textContent = arr[i]; } }); };
 
   /* ---------------- help ---------------- */

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sunroom Dominoes · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1021g">
+<link rel="stylesheet" href="parlor-kit.css?v=1021h">
 <style>
 /* ===== Dominoes: a felt tray seen from straight above (like the chess board), drawn in the browser =====
    Tiles are thick 3D pieces; wood, felt and finishes are painted in code, so there are no picture files.
@@ -15,8 +15,8 @@
 .do-pad{width:100%;flex:none;display:flex;justify-content:center}
 .do-fit{position:relative;flex:none;overflow:hidden}
 .do-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
-.do-scene{position:relative;width:900px;height:900px;perspective:3000px;perspective-origin:50% 50%}
-.do-tray{position:absolute;left:20px;top:20px;width:860px;height:860px;transform-style:preserve-3d}
+.do-scene{position:relative;width:868px;height:868px;perspective:3000px;perspective-origin:50% 50%}
+.do-tray{position:absolute;left:4px;top:4px;width:860px;height:860px;transform-style:preserve-3d}
 .do-tray *{transform-style:preserve-3d}
 /* the tiles sit a little below the tray's top plane, so the tray itself must not catch taps; only the playable pieces do */
 .do-tray,.do-tray *{pointer-events:none}
@@ -77,17 +77,28 @@ body.do-quick .dm.glow .bk,body.do-quick .do-ghost{animation:none}
 @media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
 .do-pad{flex-direction:column;align-items:center;gap:10px}
 /* the Draw button: only shown when nothing in your hand fits (its space is kept so the board doesn't jump) */
-.do-ctl{display:flex;justify-content:center;min-height:46px}
-.do-ctl .pk-btn{width:auto;min-width:170px;min-height:44px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+.do-draw{position:absolute;z-index:5;left:50%;transform:translateX(-50%);width:auto;min-width:170px;min-height:44px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border:1px solid rgba(231,199,122,.55);box-shadow:0 2px 10px rgba(0,0,0,.25),0 0 16px rgba(240,190,90,.25);color:#e6c25a;font-size:15px;font-weight:700;letter-spacing:.45px}
-.do-ctl .pk-btn:hover{background:rgba(15,23,42,.85);color:#f0d27a}
-.do-ctl .pk-btn.off{visibility:hidden}
+.do-draw:hover{background:rgba(15,23,42,.85);color:#f0d27a}
+.do-draw.off{display:none}
+/* Deal Next Hand: over the middle of the felt between hands (phones: in the middle of the hand bar) */
+.do-next{top:40%!important}
+.do-hand .do-draw.do-next{left:50%;right:auto;top:50%!important;transform:translate(-50%,-50%);padding:11px 18px}
+/* phones: one slim score line above the tray (the two score strips step aside) */
+.do-score{display:none;width:var(--pk-size,100%);max-width:100%;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;font-size:13px;color:#fff;
+  background:rgba(255,250,242,.18);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3)}
+.do-score b{font-weight:700;margin-right:4px}.do-score .mid{font-size:11px;opacity:.8}
+body.do-bighand .do-score{display:flex}
+/* phones: a compact Draw button at the right end of the hand bar */
+.do-hand .do-draw{left:auto;right:8px;top:50%;transform:translateY(-50%);min-width:0;padding:10px 12px;font-size:14px}
 /* phones: your hand moves out of the tray into a full-size row under it, so the tiles are easy to tap */
-.do-hand{display:none;position:relative;height:118px;border-radius:12px;transform-style:preserve-3d;background:var(--do-feltc,#16284a);background-image:var(--do-felt);background-size:256px 256px;
+.do-hand{display:none;position:relative;height:96px;border-radius:12px;transform-style:preserve-3d;background:var(--do-feltc,#16284a);background-image:var(--do-felt);background-size:256px 256px;
   box-shadow:inset 0 0 0 3px var(--do-woodc,#e6dcc6),inset 0 4px 14px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35)}
 .do-hand *{transform-style:preserve-3d}
 body.do-bighand .do-hand{display:block}
 body.do-bighand .do-rack.near{display:none}
+/* phones: both hands are on the table and the bar says whose turn it is, so the two score strips step aside for a bigger tray */
+body.do-bighand.pk .pk-mini{display:none}
 </style>
 <script src="bw-auth.js"></script>
 </head>
@@ -101,7 +112,7 @@ body.do-bighand .do-rack.near{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
-<script src="parlor-kit.js?v=1021g"></script>
+<script src="parlor-kit.js?v=1021h"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -128,6 +139,7 @@ var DESIGNS={
    The tray
    ===================================================================== */
 var stage=document.createElement("div"); stage.className="do-pad";
+var scoreEl=document.createElement("div"); scoreEl.className="do-score";
 stage.innerHTML='<div class="do-fit" id="doFit"><div class="do-scaler" id="doScaler"><div class="do-scene"><div class="do-tray" id="doTray">'+
   '<div class="do-p do-tsh"></div>'+
   '<div class="do-p do-felt a"></div><div class="do-p do-felt b"></div><div class="do-p do-felt c"></div><div class="do-p do-felt d"></div><div class="do-p do-feltsh"></div>'+
@@ -135,9 +147,9 @@ stage.innerHTML='<div class="do-fit" id="doFit"><div class="do-scaler" id="doSca
   '<div id="doTiles" style="position:absolute;left:0;top:0"></div>'+
   '<div class="do-p do-rim t do-wh"></div><div class="do-p do-rim t t2 do-wh"></div><div class="do-p do-rim b do-wh"></div><div class="do-p do-rim b b2 do-wh"></div><div class="do-p do-rim l do-wv"></div><div class="do-p do-rim r do-wv"></div>'+
   '<div class="do-gold" style="left:30px;top:30px;width:800px;height:2px"></div><div class="do-gold" style="left:30px;top:828px;width:400px;height:2px"></div><div class="do-gold" style="left:430px;top:828px;width:400px;height:2px"></div><div class="do-gold" style="left:30px;top:30px;width:2px;height:800px"></div><div class="do-gold" style="left:828px;top:30px;width:2px;height:800px"></div>'+
-  '</div></div></div></div><div class="do-hand" id="doHand"></div>'+
-  '<div class="do-ctl"><button type="button" class="pk-btn" id="doDrawBtn">Draw a Tile</button></div>';
-var trayEl=stage.querySelector("#doTray"), TL=stage.querySelector("#doTiles"), HB=stage.querySelector("#doHand"), FZ=-22;
+  '</div></div></div><button type="button" class="pk-btn do-draw off" id="doDrawBtn">Draw a Tile</button><button type="button" class="pk-btn do-draw do-next off" id="doNextBtn">Deal Next Hand</button></div><div class="do-hand" id="doHand"></div>';
+stage.insertBefore(scoreEl,stage.firstChild);
+var fitEl=stage.querySelector("#doFit"), drawBtn=stage.querySelector("#doDrawBtn"), nextBtn=stage.querySelector("#doNextBtn"), trayEl=stage.querySelector("#doTray"), TL=stage.querySelector("#doTiles"), HB=stage.querySelector("#doHand"), FZ=-22;
 function bigHand(){ return document.body.classList.contains("do-bighand"); }
 var texCache={}, curDesign=null;
 function applyDesign(k){
@@ -218,8 +230,11 @@ var S, mySide=1, online=false, sb=null, room=null, me=null, reported=false, seq=
 var lacks={1:[],2:[]};   /* numbers each side has been seen unable to match (The House remembers yours) */
 var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
 function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=a[i]; a[i]=a[j]; a[j]=x; } return a; }
-function deal(){ var pack=[]; for(var a=0;a<=6;a++) for(var b=a;b<=6;b++) pack.push([a,b]); shuffle(pack);
-  return {h1:pack.splice(0,7),h2:pack.splice(0,7),bone:pack,chain:[],turn:1,over:false,startAt:0,passes:0,winner:0}; }
+/* a match is played to TARGET points over several hands; score[1] and score[2] carry from hand to hand */
+var TARGET=100;
+function deal(score,hand,leader){ var pack=[]; for(var a=0;a<=6;a++) for(var b=a;b<=6;b++) pack.push([a,b]); shuffle(pack); leader=leader||1;
+  return {h1:pack.splice(0,7),h2:pack.splice(0,7),bone:pack,chain:[],turn:leader,leader:leader,over:false,startAt:0,passes:0,winner:0,
+          score:score||[0,0,0],hand:hand||1,handOver:false,lastHand:null}; }
 function handOf(s){ return s===1?S.h1:S.h2; }
 function ends(){ return S.chain.length?[S.chain[0][0],S.chain[S.chain.length-1][1]]:null; }
 function fits(t){ var e=ends(); if(!e) return [0]; var out=[]; if(t[0]===e[0]||t[1]===e[0]) out.push(0); if(t[0]===e[1]||t[1]===e[1]) out.push(1); if(out.length===2&&e[0]===e[1]) out=[1]; return out; }
@@ -233,7 +248,7 @@ function attach(t,side){
   else { var R=e[1]; S.chain.push(t[0]===R?[t[0],t[1]]:[t[1],t[0]]); }
 }
 function seatedNow(){ return document.body.classList.contains("seated"); }
-function myTurn(){ return !S.over && !busy && seatedNow() && mySide && S.turn===mySide && (!online||(room&&room.guest)); }
+function myTurn(){ return !S.over && !S.handOver && !busy && seatedNow() && mySide && S.turn===mySide && (!online||(room&&room.guest)); }
 function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
 
 /* ---------- drawing everything from the state ---------- */
@@ -249,14 +264,15 @@ function render(){
     /* one boneyard in two neat stacks: both top tiles glow together, and either one draws the next tile */
     if(mustDraw&&k>=S.bone.length-2){ e.classList.add("glow"); e.onclick=function(){ humanDraw(); }; } });
   /* the far hand, face down */
-  var fh=handOf(far); fh.forEach(function(t,k){ var e=mkTile(0,0,{w:44,l:88,dir:"v",th:11,back:true}); var q=rowXY(fh.length,k,FAR_Y); setAt(e,q[0],q[1],FZ); e.dataset.k=k; e.classList.add("far"); });
+  var fh=handOf(far); fh.forEach(function(t,k){ var e=S.handOver?mkTile(t[0],t[1],{w:44,l:88,dir:"v",th:11}):mkTile(0,0,{w:44,l:88,dir:"v",th:11,back:true});   /* shown face up when the hand is counted */ var q=rowXY(fh.length,k,FAR_Y); setAt(e,q[0],q[1],FZ); e.dataset.k=k; e.classList.add("far"); });
   /* the near hand: face up when it's yours (watchers see side 1's from the near side, face down) */
   var nh=handOf(near), show=mySide===near, big=bigHand();
-  HB.innerHTML="";
-  if(big){ var bw=HB.clientWidth||360, bsp=nh.length>1?Math.min(56,(bw-60)/(nh.length-1)):0; HB._sp=bsp; }
-  nh.forEach(function(t,k){ var o={w:big?44:48,l:big?88:96,dir:"v",th:big?9:12,into:big?HB:TL};
+  [].slice.call(HB.querySelectorAll(".dm")).forEach(function(e){ e.remove(); });
+  var drawRoom=big&&mustDraw?78:0;
+  if(big){ var bw=HB.clientWidth||360, bsp=nh.length>1?Math.min(48,(bw-56-drawRoom)/(nh.length-1)):0; HB._sp=bsp; }
+  nh.forEach(function(t,k){ var o={w:big?38:48,l:big?76:96,dir:"v",th:big?8:12,into:big?HB:TL};
     var e=show?mkTile(t[0],t[1],o):(o.back=true,mkTile(0,0,o));
-    if(big){ var bw2=HB.clientWidth||360; setAt(e,bw2/2-(nh.length-1)*HB._sp/2+k*HB._sp,59,0); }
+    if(big){ var bw2=(HB.clientWidth||360)-drawRoom; setAt(e,bw2/2-(nh.length-1)*HB._sp/2+k*HB._sp,48,0); }
     else { var q=rowXY(nh.length,k,NEAR_Y); setAt(e,q[0],q[1],FZ); }
     e.dataset.k=k; e.classList.add("near");
     if(show&&canPlay.indexOf(k)>=0){ e.classList.add("play"); if(k===pickIdx) e.classList.add("pick"); e.onclick=function(){ humanPick(k); }; } });
@@ -265,8 +281,15 @@ function render(){
     var d=document.createElement("div"); d.className="do-ghost"; var W=g.dir==="h"?g.l:g.w,H=g.dir==="h"?g.w:g.l;
     d.style.width=W+"px"; d.style.height=H+"px"; d.style.margin=(-H/2)+"px 0 0 "+(-W/2)+"px"; d.style.transform="translate3d("+g.x+"px,"+g.y+"px,-6px)";
     d.onclick=function(){ humanPlay(pickIdx,side); }; TL.appendChild(d); }); }
-  var db=document.getElementById("doDrawBtn"); if(db) db.classList.toggle("off",!mustDraw);
-  Parlor.score([S.h1.length,S.h2.length]); Parlor.turn(S.over?-1:S.turn===1?0:1);
+  var db=drawBtn; db.classList.toggle("off",!mustDraw); db.textContent=big?"Draw":"Draw a Tile";
+  if(big&&db.parentNode!==HB){ HB.appendChild(db); db.style.top=""; } else if(!big&&db.parentNode!==fitEl){ fitEl.appendChild(db); fit(); }
+  /* the match score: in the Table card (desktop) and the slim score line above the tray (phones) */
+  Parlor.score([S.score[1],S.score[2]]); Parlor.turn(S.over||S.handOver?-1:S.turn===1?0:1);
+  if(Parlor.info) Parlor.info("Hand "+S.hand+" · first to "+TARGET+" points");
+  var me1=mySide===2?2:1;
+  scoreEl.innerHTML='<span><b>You</b> '+S.score[me1]+'</span><span class="mid">Hand '+S.hand+' · to '+TARGET+'</span><span><b>'+(online?"Opponent":"The House")+'</b> '+S.score[3-me1]+'</span>';
+  var showNext=S.handOver&&!S.over&&(!online||mySide===1); nextBtn.classList.toggle("off",!showNext);
+  if(big&&nextBtn.parentNode!==HB) HB.appendChild(nextBtn); else if(!big&&nextBtn.parentNode!==fitEl) fitEl.appendChild(nextBtn);
 }
 /* where tile t would land on side (0 left, 1 right): lay out the train with it and return its spot */
 function sim(t,side){
@@ -279,7 +302,7 @@ function sim(t,side){
 function ghostAt(t,side){ return fits(t).indexOf(side)>=0?sim(t,side):null; }
 function say(a,b){ Parlor.status(a,b||""); }
 function msg(){
-  if(S.over) return;
+  if(S.over||S.handOver) return;
   if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
   if(!mySide){ say(nameOf(S.turn)+" to play",""); return; }
   if(S.turn!==mySide){ say(online?"Your opponent's turn":"The House is thinking…",""); return; }
@@ -287,7 +310,7 @@ function msg(){
   if(!e) say("Your turn","Play any tile to open the train");
   else if(pickIdx>=0) say("Your turn","That tile fits both ends: tap where it goes");
   else if(playable(mySide).length) say("Your turn","Match "+e[0]+" or "+e[1]+" · tap a glowing tile");
-  else if(S.bone.length) say("Nothing fits","Tap Draw a Tile (or the glowing boneyard)");
+  else if(S.bone.length) say("Nothing fits",bigHand()?"Tap Draw (or the glowing boneyard)":"Tap Draw a Tile (or the glowing boneyard)");
   else say("Nothing fits","The boneyard is empty: you pass");
 }
 
@@ -322,11 +345,36 @@ async function doDraw(s){
 }
 function doPass(s){ S.passes++; lastMv={k:"pass",s:s}; var e=ends(); if(e){ [e[0],e[1]].forEach(function(n){ if(lacks[s].indexOf(n)<0) lacks[s].push(n); }); } }
 /* after a play, draw or pass: is the game over, and whose turn is it? */
+/* the hand ends when someone plays their last tile, or nobody can move (blocked).
+   The winner of the hand scores the pips left in the other hand; the match goes to the first to TARGET. */
 function settle(s,played){
-  if(!handOf(s).length){ S.over=true; S.winner=s; return true; }
-  if(S.passes>=2){ var a=pipSum(S.h1),b=pipSum(S.h2); S.over=true; S.winner=a===b?0:a<b?1:2; return true; }
-  if(played!=="draw") S.turn=3-s;
-  return false;
+  var w=-1, blocked=false;
+  if(!handOf(s).length) w=s;
+  else if(S.passes>=2){ var a=pipSum(S.h1),b=pipSum(S.h2); blocked=true; w=a===b?0:a<b?1:2; }
+  if(w<0){ if(played!=="draw") S.turn=3-s; return false; }
+  var pts=w?pipSum(handOf(3-w)):0;
+  if(w) S.score[w]+=pts;
+  S.handOver=true; S.lastHand={w:w,pts:pts,blocked:blocked};
+  if(w&&S.score[w]>=TARGET){ S.over=true; S.winner=w; }
+  return true;
+}
+function afterHand(){ if(S.over) end(); else handEnd(); }
+function handEnd(){
+  var L=S.lastHand||{w:0,pts:0}, me1=mySide||1, who=L.w===me1?"You win the hand":L.w?(online?"Your opponent wins the hand":"The House wins the hand"):"The hand is a draw";
+  var how=L.blocked?"Blocked: lower pips wins. ":"";
+  say(who,how+(L.w?"+"+L.pts+" points. ":"No points. ")+"You "+S.score[me1]+" · "+(online?"Opponent":"The House")+" "+S.score[3-me1]);
+  if(online&&mySide!==1) Parlor.status(who,"Waiting for your opponent to deal the next hand");
+  Parlor.sfx(L.w===me1?"mill":"flip");
+  render();
+}
+async function dealNext(){
+  if(!S.handOver||S.over) return;
+  if(online&&mySide!==1) return;
+  var L=S.lastHand||{w:0}, lead=L.w||S.leader;
+  S=deal(S.score,S.hand+1,lead); lacks={1:[],2:[]}; pickIdx=-1; seq++; lastMv={k:"deal"};
+  Parlor.sfx("dice",{dur:.5}); push(); render(); msg();
+  if(!online&&S.turn===2) houseTurn();
+  if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length) autoPass();
 }
 
 /* ---------- your moves ---------- */
@@ -350,21 +398,20 @@ async function humanDraw(){
 }
 function next(s,what){
   var e=ends(); if(what==="draw"&&e){ [e[0],e[1]].forEach(function(n){ if(lacks[s].indexOf(n)<0) lacks[s].push(n); }); }
-  if(settle(s,what)){ push(); render(); end(); return; }
+  if(settle(s,what)){ push(); render(); afterHand(); return; }
   push(); render(); msg();
   if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length&&!S.over){ autoPass(); return; }
   if(!online&&S.turn===2) houseTurn();
 }
 async function autoPass(){
   busy=true; say("Nothing fits","The boneyard is empty: you pass"); await Parlor.wait(1300); busy=false;
-  seq++; doPass(mySide); if(settle(mySide,"pass")){ push(); render(); end(); return; }
+  seq++; doPass(mySide); if(settle(mySide,"pass")){ push(); render(); afterHand(); return; }
   push(); render(); msg(); if(!online&&S.turn===2) houseTurn();
 }
 function end(){
   var kind=S.winner===0?"draw":(S.winner===mySide?"win":"lose"), meS=mySide||1;
-  var why=S.passes>=2?"The game is blocked. Pips left: you "+pipSum(handOf(meS))+", "+(online?"opponent":"The House")+" "+pipSum(handOf(3-meS))+" (lower wins).":
-    (S.winner===meS?"You played your last tile.":(online?"Your opponent":"The House")+" played its last tile.");
-  say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over",""); render();
+  var why="Final score: you "+S.score[meS]+", "+(online?"your opponent":"The House")+" "+S.score[3-meS]+" (first to "+TARGET+").";
+  say(kind==="win"?"You win the match!":kind==="draw"?"Draw":"Match over",why); render();
   if(online) report();
   Parlor.finish(kind,why);
 }
@@ -380,11 +427,11 @@ function scoreMove(t,side){
   return v;
 }
 async function houseTurn(){
-  if(S.over||online||S.turn!==2) return;
+  if(S.over||S.handOver||online||S.turn!==2) return;
   busy=true; render(); msg(); await Parlor.wait(950);
   while(!playable(2).length&&S.bone.length){ say("The House draws",""); await doDraw(2); await Parlor.wait(250); }
   var opts=[]; playable(2).forEach(function(i){ fits(S.h2[i]).forEach(function(side){ opts.push({i:i,side:side}); }); });
-  if(!opts.length){ busy=false; doPass(2); say("The House passes",""); if(settle(2,"pass")){ render(); end(); return; } render(); msg(); await Parlor.wait(600);
+  if(!opts.length){ busy=false; doPass(2); say("The House passes",""); if(settle(2,"pass")){ render(); afterHand(); return; } render(); msg(); await Parlor.wait(600);
     if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length) autoPass(); return; }
   var sk=Parlor.skill(), pick;
   if(Math.random()<sk.loose) pick=opts[Math.floor(Math.random()*opts.length)];
@@ -392,11 +439,12 @@ async function houseTurn(){
   await doPlay(2,pick.i,pick.side); busy=false;
   next(2,"play");
 }
-function newGame(){ S=deal(); lacks={1:[],2:[]}; pickIdx=-1; busy=false; reported=false; render(); msg(); }
+function newGame(){ S=deal([0,0,0],1,1); lacks={1:[],2:[]}; pickIdx=-1; busy=false; reported=false; render(); msg(); }
 
 /* ---------- online table (same page: ?code=XXXX) ---------- */
 var lastMv=null;
-function snapshot(){ return {game:"dominoes", h1:S.h1, h2:S.h2, bone:S.bone, chain:S.chain, turn:S.turn, over:S.over, startAt:S.startAt, passes:S.passes, winner:S.winner, seq:seq, mv:lastMv}; }
+function snapshot(){ return {game:"dominoes", h1:S.h1, h2:S.h2, bone:S.bone, chain:S.chain, turn:S.turn, over:S.over, startAt:S.startAt, passes:S.passes, winner:S.winner,
+  score:S.score, hand:S.hand, leader:S.leader, handOver:S.handOver, lastHand:S.lastHand, seq:seq, mv:lastMv}; }
 async function push(){
   if(!online||!room) return;
   await sb.from("rooms").update({state:snapshot(), status:S.over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
@@ -404,16 +452,17 @@ async function push(){
 }
 function report(){ if(reported||!S.over||!room||!window.bwRateGame) return; reported=true; bwRateGame(sb,room,me,S.winner); }
 function fromSnap(s){
-  if(!s||!s.h1){ S=deal(); return; }
+  if(!s||!s.h1){ S=deal([0,0,0],1,1); return; }
   S={h1:s.h1,h2:s.h2,bone:s.bone||[],chain:s.chain||[],turn:s.turn||1,over:!!s.over,startAt:s.startAt!=null?s.startAt:Math.floor((s.chain||[]).length/2),passes:s.passes||0,
-     winner:s.winner!=null?s.winner:(s.over?(!(s.h1||[]).length?1:!(s.h2||[]).length?2:0):0)};
+     winner:s.winner!=null?s.winner:(s.over?(!(s.h1||[]).length?1:!(s.h2||[]).length?2:0):0),
+     score:s.score||[0,0,0],hand:s.hand||1,leader:s.leader||1,handOver:!!s.handOver,lastHand:s.lastHand||null};
   seq=s.seq||0;
 }
 var queue=Promise.resolve();
 function remote(s){
   queue=queue.then(async function(){
     if(!s||s.seq==null||s.seq===seq) return;
-    var mv=s.mv, wasOver=S.over;
+    var mv=s.mv, wasOver=S.over, wasHandOver=S.handOver;
     if(mv&&mv.s&&mv.s!==mySide){
       busy=true;
       try{
@@ -422,8 +471,11 @@ function remote(s){
       }catch(e){}
       busy=false;
     }
+    if(mv&&mv.k==="deal") lacks={1:[],2:[]};
     fromSnap(s); render();
-    if(S.over&&!wasOver) end(); else { msg(); if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length&&!S.over) autoPass(); }
+    if(S.over&&!wasOver) end();
+    else if(S.handOver&&!wasHandOver) handEnd();
+    else { msg(); if(S.turn===mySide&&!S.handOver&&!playable(mySide).length&&!S.bone.length&&!S.over) autoPass(); }
   });
 }
 async function bootOnline(){
@@ -453,26 +505,36 @@ async function bootOnline(){
   }).subscribe();
 }
 
-/* ---------- fit the tray to its space ---------- */
+/* ---------- fit the tray to its space ----------
+   Desktop: the full height between the game switcher and the bottom of the window (like the chess board).
+   Phones: the full width; your hand sits in a slim bar under the tray and the score strips step aside. */
 function fit(){
-  var wide=window.innerWidth>=1000, availW, availH;
-  if(wide){ var st2=document.querySelector(".pk-stage"); availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-80-65-40; }
-  else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight; availW=window.innerWidth-12; availH=shortL?window.innerHeight-56-64-34-10:window.innerHeight-56-64-34-100; }
-  availH-=56;   /* the Draw button's row */
-  var big=!wide&&Math.min(availW/900,availH/900)<.62;
-  if(big) availH-=128;   /* room for the hand bar */
-  var s=Math.max(.2,Math.min(availW/900,availH/900,1.2));
-  var f=document.getElementById("doFit"), sc=document.getElementById("doScaler"); if(!f) return;
+  var W=868, wide=window.innerWidth>=1000, availW, availH, big=false;
+  if(wide){
+    var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+    availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22;
+  } else {
+    var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight;
+    availW=window.innerWidth-12;
+    big=!shortL&&window.innerWidth<700;
+    if(shortL) availH=window.innerHeight-56-64-34-10;
+    else if(big) availH=window.innerHeight-56-(64+30)-106-24-40;    /* header, floating bar, hand bar, score line */
+    else availH=window.innerHeight-56-64-34-100;
+  }
+  var s=Math.max(.2,Math.min(availW/W,availH/W,1.25));
+  var f=fitEl, sc=document.getElementById("doScaler"); if(!f) return;
   var was=document.body.classList.contains("do-bighand"); document.body.classList.toggle("do-bighand",big);
-  if(HB) HB.style.width=Math.round(900*s)+"px";
+  if(HB) HB.style.width=Math.round(W*s)+"px";
+  sc.style.transform="scale("+s+")"; f.style.width=Math.round(W*s)+"px"; f.style.height=Math.round(W*s)+"px";
+  drawBtn.style.top=big?"":Math.round((4+690)*s-22)+"px";   /* over the felt, just above your tiles (phones: in the hand bar) */
+  document.body.style.setProperty("--pk-size",Math.round(W*s)+"px");
   if(was!==big&&S) setTimeout(render,0);
-  sc.style.transform="scale("+s+")"; f.style.width=Math.round(900*s)+"px"; f.style.height=Math.round(900*s)+"px";
-  document.body.style.setProperty("--pk-size",Math.round(900*s)+"px");
 }
 window.addEventListener("resize",fit);
 
 /* ---------- hook up the kit ---------- */
 stage.querySelector("#doDrawBtn").onclick=function(){ humanDraw(); };
+nextBtn.onclick=function(){ dealNext(); };
 Parlor.init({
   game:"dominoes", title:"Sunroom Dominoes", bg:"dominoes-parlor.jpg", home:"tables.html", stage:stage,
   tagline:"Match the ends. Empty your hand.", invite:"Sunlight on the felt and the tiles are shuffled. Sit down and lay the first domino.",
@@ -484,8 +546,8 @@ Parlor.init({
     {id:"ebony",name:"Midnight Ebony",club:true,dots:["#6a2a18","#56161e","#1b1714"]}
   ],
   rules:{
-    play:"<ol><li>A double-six set: you and your opponent each draw seven tiles. You go first and may play any tile.</li><li>After that, each tile must match a number at one end of the train. Tap a glowing tile; if it fits both ends, tap the end where it goes.</li><li>If nothing fits, tap <b>Draw a Tile</b> (or the glowing boneyard by your tiles) until something does. If the boneyard is empty, you pass.</li><li>The train turns at the edges of the felt so it always has room.</li></ol>",
-    score:"<ul><li>The first player to play their last tile wins.</li><li>If neither player can move (the game is blocked), the lower total of pips left in hand wins. Equal totals are a draw.</li></ul>"
+    play:"<ol><li>A double-six set: you and your opponent each draw seven tiles. You lead the first hand and may play any tile.</li><li>After that, each tile must match a number at one end of the train. Tap a glowing tile; if it fits both ends, tap the end where it goes.</li><li>If nothing fits, tap <b>Draw a Tile</b> (or the glowing boneyard by your tiles) until something does. If the boneyard is empty, you pass.</li><li>The train turns at the edges of the felt so it always has room.</li><li>A match is several hands. The winner of each hand leads the next one.</li></ol>",
+    score:"<ul><li>A hand ends when someone plays their last tile. They score the pips left in their opponent's hand.</li><li>If neither player can move (the hand is blocked), the lower total of pips in hand wins the hand and scores the other hand's pips. Equal totals score nothing.</li><li>The first to <b>100 points</b> wins the match.</li></ul>"
   },
   onNew:function(){ mySide=1; newGame(); }
 });
