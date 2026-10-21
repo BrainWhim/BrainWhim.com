@@ -284,6 +284,33 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     if(member) return true;
     return (pts||0)>=set.need;
   }
+  /* Club member card: the same dark glass as the parlor pop-ups */
+  function bwMemberCard(pts){
+    if(!document.getElementById("bwGlassCss")){
+      var st=document.createElement("style"); st.id="bwGlassCss";
+      st.textContent='.bw-gveil{position:fixed;inset:0;z-index:130;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,12,22,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}'+
+        '.bw-gcard{width:min(420px,94vw);max-height:84dvh;overflow:auto;padding:22px;border-radius:18px;background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 50px rgba(0,0,0,.4);color:#fff;font-family:Montserrat,system-ui,sans-serif;text-align:left}'+
+        '.bw-gcard .k{margin:0 0 6px;text-align:center;color:#d4af37;font-size:12px;letter-spacing:.16em;text-transform:uppercase}'+
+        '.bw-gcard h2{margin:0 0 14px;text-align:center;font-size:21px}'+
+        '.bw-gcard ul{margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.5;color:rgba(255,255,255,.9)}.bw-gcard li{margin:0 0 6px}'+
+        '.bw-gcard .pts{text-align:center;font-size:13px;color:rgba(255,255,255,.75);margin:0 0 14px}'+
+        '.bw-gcard button{display:block;width:100%;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font:700 13px Montserrat,system-ui,sans-serif;cursor:pointer}'+
+        '.bw-gcard button:hover{background:rgba(255,255,255,.14)}';
+      document.head.appendChild(st);
+    }
+    var v=document.createElement("div"); v.className="bw-gveil";
+    v.innerHTML='<div class="bw-gcard" role="dialog" aria-label="Club membership"><p class="k">BrainWhim Club</p><h2>Your seat is a Club seat</h2>'+
+      '<ul><li><b>Unlimited games</b> every day, against The House and online players (free accounts get 3 a day).</li>'+
+      '<li><b>Every set unlocked</b> in every room: pieces, discs, dice, stones and tiles.</li>'+
+      '<li><b>More House points:</b> up to 20 games a day earn points (free accounts: 3).</li></ul>'+
+      '<p class="pts">'+(Number(pts)||0)+' points on your account</p><button type="button">Back to the table</button></div>';
+    function close(){ if(v.parentNode) v.parentNode.removeChild(v); document.removeEventListener("keydown",esc); }
+    function esc(e){ if(e.key==="Escape") close(); }
+    v.addEventListener("click",function(e){ if(e.target===v||e.target.tagName==="BUTTON") close(); });
+    document.addEventListener("keydown",esc);
+    document.body.appendChild(v);
+  }
+  window.bwMemberCard=bwMemberCard;
   function pieceFile(side, letter, setId){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
@@ -373,7 +400,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     sub.className="bw-sub-btn"; sub.type="button"; sub.textContent="Subscribe";
     if(member){
       sub.textContent="Member";
-      sub.onclick=function(){ alert("This seat is a member: unlimited online tables and extra sets."); };
+      sub.onclick=function(){ bwMemberCard(pts); };
     } else {
       sub.onclick=function(){ location.href="member.html"; };
     }
