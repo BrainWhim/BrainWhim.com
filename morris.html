@@ -16,11 +16,11 @@
 .mo-pad{width:100%;flex:none;display:flex;justify-content:center}
 .mo-fit{position:relative;flex:none;overflow:hidden}
 .mo-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
-.mo-scene{position:relative;width:668px;height:848px;perspective:3000px;perspective-origin:50% 50%}
-.mo-board{position:absolute;left:14px;top:14px;width:640px;height:820px;transform-style:preserve-3d;transform:none}   /* flat, seen from straight above, like the chess board */
+.mo-scene{position:relative;width:648px;height:828px;perspective:3000px;perspective-origin:50% 50%}
+.mo-board{position:absolute;left:4px;top:4px;width:640px;height:820px;transform-style:preserve-3d;transform:none}   /* flat, seen from straight above, like the chess board */
 .mo-board *{transform-style:preserve-3d}
 .mo-p{position:absolute;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.mo-tsh{left:-10px;top:-4px;width:660px;height:840px;transform:translateZ(-2px);border-radius:12px;background:rgba(0,0,0,.55);filter:blur(10px)}
+.mo-tsh{left:-4px;top:-2px;width:648px;height:826px;transform:translateZ(-2px);border-radius:12px;background:rgba(0,0,0,.55);filter:blur(10px)}
 /* the top is split in quarters and the front wall in halves: Chrome drops large tilted panels otherwise */
 .mo-top{width:320px;height:410px;background-image:var(--mo-top);background-size:640px 820px;background-color:var(--mo-topc,#5a3a22)}
 .mo-top.q1{left:0;top:0;background-position:0 0}.mo-top.q2{left:320px;top:0;background-position:-320px 0}
@@ -64,6 +64,14 @@
 @keyframes mo-take{0%,100%{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 0 0 3px rgba(255,120,90,.95),0 0 18px 5px rgba(255,110,80,.55)}50%{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 0 0 3px rgba(255,170,120,.6),0 0 8px 2px rgba(255,110,80,.3)}}
 body.mo-quick .mo-pt.ok::after,body.mo-quick .mo-pc.take .t{animation:none}
 @media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
+.mo-pad{flex-direction:column;align-items:center;gap:10px}
+/* phones: one slim score line above the board instead of the two score strips, so the board can be bigger */
+.mo-score{display:none;width:var(--pk-size,100%);max-width:100%;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;font-size:13px;color:#fff;
+  background:rgba(255,250,242,.18);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3)}
+.mo-score b{font-weight:700;margin-right:4px}.mo-score .mid{font-size:11px;opacity:.8}
+.mo-score i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+body.mo-slim .mo-score{display:flex}
+body.mo-slim.pk .pk-mini{display:none}
 </style>
 <script src="bw-auth.js"></script>
 </head>
@@ -123,6 +131,7 @@ var OY=90, M=86, S=(640-2*M)/6, LW=8;
 function ptXY(i){ return [M+XY[i][0]*S, OY+M+XY[i][1]*S]; }
 
 var stage=document.createElement("div"); stage.className="mo-pad";
+var scoreEl=document.createElement("div"); scoreEl.className="mo-score";
 (function(){
   var h='<div class="mo-fit" id="moFit"><div class="mo-scaler" id="moScaler"><div class="mo-scene"><div class="mo-board" id="moBoard">';
   h+='<div class="mo-p mo-tsh"></div><div class="mo-p mo-wall f f1"></div><div class="mo-p mo-wall f f2"></div><div class="mo-p mo-wall l"></div><div class="mo-p mo-wall r"></div>';
@@ -139,6 +148,7 @@ var stage=document.createElement("div"); stage.className="mo-pad";
   h+='</div></div></div></div>';
   stage.innerHTML=h;
 })();
+stage.insertBefore(scoreEl,stage.firstChild);
 var boardEl=stage.querySelector("#moBoard"), pcsEl=stage.querySelector("#moPcs");
 stage.querySelector("#moBoard").addEventListener("click",function(e){ var t=e.target.closest(".mo-hit"); if(t) tapPoint(+t.dataset.i); });
 
@@ -297,7 +307,9 @@ function paint(){
     var e=els[i]; if(e){ e.classList.toggle("mill",lit.indexOf(i)>=0&&tk.indexOf(i)<0); e.classList.toggle("can",moving&&movable.indexOf(i)>=0&&i!==sel); e.classList.toggle("sel",i===sel); e.classList.toggle("take",tk.indexOf(i)>=0); }
     boardEl.querySelector('.mo-hit[data-i="'+i+'"]').classList.toggle("tap",ok||tk.indexOf(i)>=0||(moving&&movable.indexOf(i)>=0));
   }
-  Parlor.score([cnt(st.c,1)+st.h[1],cnt(st.c,2)+st.h[2]]); Parlor.turn(over?-1:st.turn===1?0:1);
+  Parlor.score([cnt(st.c,1)+st.h[1],cnt(st.c,2)+st.h[2]]);
+  var me1=mySide===2?2:1, n1=cnt(st.c,me1)+st.h[me1], n2=cnt(st.c,3-me1)+st.h[3-me1];
+  scoreEl.innerHTML='<span><i style="background:var(--mo-'+(me1===1?'a':'b')+')"></i><b>You</b> '+n1+'</span><span class="mid">stones</span><span><i style="background:var(--mo-'+(me1===1?'b':'a')+')"></i><b>'+(online?"Opponent":"The House")+'</b> '+n2+'</span>'; Parlor.turn(over?-1:st.turn===1?0:1);
 }
 function say(a,b){ Parlor.status(a,b||""); }
 function msg(){
@@ -434,13 +446,15 @@ async function bootOnline(){
 /* ---------- fit the board to its space ---------- */
 function fit(){
   var wide=window.innerWidth>=1000, availW, availH;
-  if(wide){ var st2=document.querySelector(".pk-stage"); availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-80-65-40; }
+  /* desktop: the full height between the game switcher and the bottom of the window, like the chess board */
+  if(wide){ var st2=document.querySelector(".pk-stage"), top=st2&&document.body.classList.contains("seated")?st2.getBoundingClientRect().top+window.scrollY:185; availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22; }
   else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight;
-    availW=window.innerWidth-12; availH=shortL?window.innerHeight-56-64-34-10:window.innerHeight-56-64-34-100; }
-  var s=Math.max(.2,Math.min(availW/668,availH/848,1.2));
+    availW=window.innerWidth-12; var slim=!shortL&&window.innerWidth<700; document.body.classList.toggle("mo-slim",slim);
+    availH=shortL?window.innerHeight-56-64-34-10:slim?window.innerHeight-56-(64+30)-(36+10)-14:window.innerHeight-56-(64+30)-2*(44+10)-14; }   /* header, floating bar, score line or strips */
+  var s=Math.max(.2,Math.min(availW/648,availH/828,1.25));
   var f=document.getElementById("moFit"), sc=document.getElementById("moScaler"); if(!f) return;
-  sc.style.transform="scale("+s+")"; f.style.width=Math.round(668*s)+"px"; f.style.height=Math.round(848*s)+"px";
-  document.body.style.setProperty("--pk-size",Math.round(668*s)+"px");
+  sc.style.transform="scale("+s+")"; f.style.width=Math.round(648*s)+"px"; f.style.height=Math.round(828*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(648*s)+"px");
 }
 window.addEventListener("resize",fit);
 
