@@ -3,7 +3,7 @@
    Public API (window.BW):
      openAuth({reason, allowGuest, state})  -> Promise {ok, guest, sent}
      requireSession(reason)                 -> Promise session|null
-     startMatch({mode:"house"|"online"})    -> Promise true|false  (enforces the 3-a-day limits)
+     startMatch({mode:"house"|"online"})    -> Promise true|false  (guests: 10 free games, then a free account; signed-in players are unlimited)
      guestWin()                             -> soft sign-up prompt after a guest win
      onChange(cb), user(), profile(), member(), signOut(), client(), settled(), toast(text, {label, onClick})
 */
@@ -11,7 +11,7 @@
   "use strict";
   if (window.BW) return;
 
-  var LIMIT = 3;
+  var LIMIT = 10;   /* free games for a guest on this device, then a free account keeps them playing */
   var CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
   var HASH = location.hash || "";
   var HASH_RECOVERY = /(^|[#&])type=recovery/.test(HASH);
@@ -430,9 +430,9 @@
 
   /* ---------- match limits ---------- */
   function guestUsed() {
-    try { var g = JSON.parse(localStorage.getItem("bwGuestMatches") || "{}"); return g.d === dayStamp() ? (g.n || 0) : 0; } catch (e) { return 0; }
+    try { var g = JSON.parse(localStorage.getItem("bwGuestGames") || "{}"); return g.n || 0; } catch (e) { return 0; }
   }
-  function guestBump() { try { localStorage.setItem("bwGuestMatches", JSON.stringify({ d: dayStamp(), n: guestUsed() + 1 })); } catch (e) {} }
+  function guestBump() { try { localStorage.setItem("bwGuestGames", JSON.stringify({ n: guestUsed() + 1 })); } catch (e) {} }
   function localUserUsed(id) {
     try { var g = JSON.parse(localStorage.getItem("bwUserMatches:" + id) || "{}"); return g.d === dayStamp() ? (g.n || 0) : 0; } catch (e) { return 0; }
   }
@@ -449,12 +449,12 @@
         if (!a.ok) return false;
       } else {
         if (guestUsed() >= LIMIT) {
-          var b = await openAuth({ reason: "You've used your " + LIMIT + " guest matches today. Create a free account to keep playing and save your points." });
+          var b = await openAuth({ reason: "You've played your " + LIMIT + " free guest games. Create a free account to keep playing: unlimited games, and your points are saved." });
           if (!b.ok) return false;
         } else { guestBump(); return true; }
       }
     }
-    if (S.profile && S.profile.member) return true;
+    return true;   /* signed-in players (free or Club) play without a daily limit (decided Oct 20, 2026) */
     var r = await rpc("bw_consume_match", {});
     if (!r.error && r.data) {
       if (r.data.member || r.data.ok) return true;

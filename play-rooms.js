@@ -299,11 +299,11 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       document.head.appendChild(st);
     }
     var v=document.createElement("div"); v.className="bw-gveil";
-    v.innerHTML='<div class="bw-gcard" role="dialog" aria-label="Club membership"><p class="k">BrainWhim Club</p><h2>Your seat is a Club seat</h2>'+
-      '<ul><li><b>Unlimited games</b> every day, against The House and online players (free accounts get 3 a day).</li>'+
+    v.innerHTML='<div class="bw-gcard" role="dialog" aria-label="Club membership"><p class="k">BrainWhim Club</p><h2>Your Seat Is a Club Seat</h2>'+
+      '<ul>'+
       '<li><b>Every set unlocked</b> in every room: pieces, discs, dice, stones and tiles.</li>'+
       '<li><b>More House points:</b> up to 20 games a day earn points (free accounts: 3).</li></ul>'+
-      '<p class="pts">'+(Number(pts)||0)+' points on your account</p><button type="button">Back to the table</button></div>';
+      '<p class="pts">'+(Number(pts)||0)+' points on your account</p><button type="button">Back to the Table</button></div>';
     function close(){ if(v.parentNode) v.parentNode.removeChild(v); document.removeEventListener("keydown",esc); }
     function esc(e){ if(e.key==="Escape") close(); }
     v.addEventListener("click",function(e){ if(e.target===v||e.target.tagName==="BUTTON") close(); });
@@ -392,9 +392,9 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     apply(saved);
     var bar=document.createElement("div");
     bar.className="bw-member";
-    bar.innerHTML='<p class="acct">Account & settings</p>';
+    bar.innerHTML='<p class="acct">Account & Settings</p>';
     var btn=document.createElement("button");
-    var label=/yahtzee|shutbox/.test(file)?"Dice sets":/mancala/.test(file)?"Stone sets":/dominoes/.test(file)?"Tile sets":/othello|cribbage|morris|backgammon/.test(file)?"Table sets":"Piece sets";
+    var label=/yahtzee|shutbox/.test(file)?"Dice Sets":/mancala/.test(file)?"Stone Sets":/dominoes/.test(file)?"Tile Sets":/othello|cribbage|morris|backgammon/.test(file)?"Table Sets":"Piece Sets";
     btn.className="bw-sets-btn"; btn.type="button"; btn.textContent=label;
     var sub=document.createElement("button");
     sub.className="bw-sub-btn"; sub.type="button"; sub.textContent="Subscribe";
@@ -404,23 +404,25 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     } else {
       sub.onclick=function(){ location.href="member.html"; };
     }
-    bar.appendChild(btn); bar.appendChild(sub);
+    /* chess shows its sets list in the side panel already, so it skips the extra button */
+    if(!document.getElementById("room-ch")) bar.appendChild(btn);
+    bar.appendChild(sub);
     function openSets(){ var el=document.getElementById("bwSets"); if(el){ el.classList.toggle("on"); paint(); } }
     var sit=document.querySelector("#room-ch .sitbar") || document.querySelector(".sitbar");
     if(sit && !document.getElementById("room-ch")){
       var before=document.createElement("button");
-      before.className="sit"; before.type="button"; before.textContent="Piece sets";
+      before.className="sit"; before.type="button"; before.textContent=label;
       before.onclick=openSets;
       sit.appendChild(before);
       var after=document.createElement("button");
-      after.className="stand"; after.type="button"; after.textContent="Piece sets";
+      after.className="stand"; after.type="button"; after.textContent=label;
       after.onclick=openSets;
       sit.appendChild(after);
     } else if(!document.getElementById("room-ch")) {
       var hdr=document.querySelector("header .hdr")||document.querySelector("header");
       if(hdr){
         var headBtn=document.createElement("button");
-        headBtn.className="bw-sets-btn"; headBtn.type="button"; headBtn.textContent="Piece sets";
+        headBtn.className="bw-sets-btn"; headBtn.type="button"; headBtn.textContent=label;
         hdr.appendChild(headBtn);
         headBtn.onclick=openSets;
       }
