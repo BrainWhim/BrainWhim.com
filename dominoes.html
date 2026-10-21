@@ -11,7 +11,7 @@
    Tiles are thick 3D pieces; wood, felt and finishes are painted in code, so there are no picture files.
    Boards (the Boards card): Garden Pearl is free; Sunroom Walnut and Midnight Ebony are for Club members.
    Your hand lies face up along your side; your opponent's lies face down along the far side; the boneyard
-   waits in two face-down stacks in the top corner. Tile backs carry the gold BW monogram. */
+   waits in two face-down stacks in the corner on your side. Tile backs carry the gold BW monogram. */
 .do-pad{width:100%;flex:none;display:flex;justify-content:center}
 .do-fit{position:relative;flex:none;overflow:hidden}
 .do-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
@@ -76,6 +76,12 @@
 body.do-quick .dm.glow .bk,body.do-quick .do-ghost{animation:none}
 @media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
 .do-pad{flex-direction:column;align-items:center;gap:10px}
+/* the Draw button: only shown when nothing in your hand fits (its space is kept so the board doesn't jump) */
+.do-ctl{display:flex;justify-content:center;min-height:46px}
+.do-ctl .pk-btn{width:auto;min-width:170px;min-height:44px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(231,199,122,.55);box-shadow:0 2px 10px rgba(0,0,0,.25),0 0 16px rgba(240,190,90,.25);color:#e6c25a;font-size:15px;font-weight:700;letter-spacing:.45px}
+.do-ctl .pk-btn:hover{background:rgba(15,23,42,.85);color:#f0d27a}
+.do-ctl .pk-btn.off{visibility:hidden}
 /* phones: your hand moves out of the tray into a full-size row under it, so the tiles are easy to tap */
 .do-hand{display:none;position:relative;height:118px;border-radius:12px;transform-style:preserve-3d;background:var(--do-feltc,#16284a);background-image:var(--do-felt);background-size:256px 256px;
   box-shadow:inset 0 0 0 3px var(--do-woodc,#e6dcc6),inset 0 4px 14px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35)}
@@ -129,7 +135,8 @@ stage.innerHTML='<div class="do-fit" id="doFit"><div class="do-scaler" id="doSca
   '<div id="doTiles" style="position:absolute;left:0;top:0"></div>'+
   '<div class="do-p do-rim t do-wh"></div><div class="do-p do-rim t t2 do-wh"></div><div class="do-p do-rim b do-wh"></div><div class="do-p do-rim b b2 do-wh"></div><div class="do-p do-rim l do-wv"></div><div class="do-p do-rim r do-wv"></div>'+
   '<div class="do-gold" style="left:30px;top:30px;width:800px;height:2px"></div><div class="do-gold" style="left:30px;top:828px;width:400px;height:2px"></div><div class="do-gold" style="left:430px;top:828px;width:400px;height:2px"></div><div class="do-gold" style="left:30px;top:30px;width:2px;height:800px"></div><div class="do-gold" style="left:828px;top:30px;width:2px;height:800px"></div>'+
-  '</div></div></div></div><div class="do-hand" id="doHand"></div>';
+  '</div></div></div></div><div class="do-hand" id="doHand"></div>'+
+  '<div class="do-ctl"><button type="button" class="pk-btn" id="doDrawBtn">Draw a Tile</button></div>';
 var trayEl=stage.querySelector("#doTray"), TL=stage.querySelector("#doTiles"), HB=stage.querySelector("#doHand"), FZ=-22;
 function bigHand(){ return document.body.classList.contains("do-bighand"); }
 var texCache={}, curDesign=null;
@@ -169,7 +176,8 @@ function glide(e,to,z1,rz){
 /* ---------- where things sit ---------- */
 var NEAR_Y=781, FAR_Y=115;
 function rowXY(n,k,y){ var sp=n>1?Math.min(72,520/(n-1)):0; return [430-(n-1)*sp/2+k*sp, y]; }
-function boneXY(k){ return [744+(k%2)*48, 108, FZ+Math.floor(k/2)*8]; }
+/* the boneyard sits in the corner on your side, next to your own tiles, where you'll look for it */
+function boneXY(k){ return [752+(k%2)*46, 781, FZ+Math.floor(k/2)*8]; }
 /* the train winds: from the first tile, one end runs right, turns down and comes back along the bottom;
    the other runs left, turns up and comes back along the top, so the two ends never meet.
    If a very long train would run past the end of its lane, every train tile shrinks a little until it fits. */
@@ -256,6 +264,7 @@ function render(){
     var d=document.createElement("div"); d.className="do-ghost"; var W=g.dir==="h"?g.l:g.w,H=g.dir==="h"?g.w:g.l;
     d.style.width=W+"px"; d.style.height=H+"px"; d.style.margin=(-H/2)+"px 0 0 "+(-W/2)+"px"; d.style.transform="translate3d("+g.x+"px,"+g.y+"px,-6px)";
     d.onclick=function(){ humanPlay(pickIdx,side); }; TL.appendChild(d); }); }
+  var db=document.getElementById("doDrawBtn"); if(db) db.classList.toggle("off",!mustDraw);
   Parlor.score([S.h1.length,S.h2.length]); Parlor.turn(S.over?-1:S.turn===1?0:1);
 }
 /* where tile t would land on side (0 left, 1 right): lay out the train with it and return its spot */
@@ -277,7 +286,7 @@ function msg(){
   if(!e) say("Your turn","Play any tile to open the train");
   else if(pickIdx>=0) say("Your turn","That tile fits both ends: tap where it goes");
   else if(playable(mySide).length) say("Your turn","Match "+e[0]+" or "+e[1]+" · tap a glowing tile");
-  else if(S.bone.length) say("Nothing fits","Tap the boneyard to draw a tile");
+  else if(S.bone.length) say("Nothing fits","Tap Draw a Tile (or the glowing boneyard)");
   else say("Nothing fits","The boneyard is empty: you pass");
 }
 
@@ -448,6 +457,7 @@ function fit(){
   var wide=window.innerWidth>=1000, availW, availH;
   if(wide){ var st2=document.querySelector(".pk-stage"); availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-80-65-40; }
   else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight; availW=window.innerWidth-12; availH=shortL?window.innerHeight-56-64-34-10:window.innerHeight-56-64-34-100; }
+  availH-=56;   /* the Draw button's row */
   var big=!wide&&Math.min(availW/900,availH/900)<.62;
   if(big) availH-=128;   /* room for the hand bar */
   var s=Math.max(.2,Math.min(availW/900,availH/900,1.2));
@@ -461,6 +471,7 @@ function fit(){
 window.addEventListener("resize",fit);
 
 /* ---------- hook up the kit ---------- */
+stage.querySelector("#doDrawBtn").onclick=function(){ humanDraw(); };
 Parlor.init({
   game:"dominoes", title:"Sunroom Dominoes", bg:"dominoes-parlor.jpg", home:"tables.html", stage:stage,
   tagline:"Match the ends. Empty your hand.", invite:"Sunlight on the felt and the tiles are shuffled. Sit down and lay the first domino.",
@@ -472,7 +483,7 @@ Parlor.init({
     {id:"ebony",name:"Midnight Ebony",club:true,dots:["#6a2a18","#56161e","#1b1714"]}
   ],
   rules:{
-    play:"<ol><li>A double-six set: you and your opponent each draw seven tiles. You go first and may play any tile.</li><li>After that, each tile must match a number at one end of the train. Tap a glowing tile; if it fits both ends, tap the end where it goes.</li><li>If nothing fits, tap the boneyard to draw until something does. If the boneyard is empty, you pass.</li><li>The train turns at the edges of the felt so it always has room.</li></ol>",
+    play:"<ol><li>A double-six set: you and your opponent each draw seven tiles. You go first and may play any tile.</li><li>After that, each tile must match a number at one end of the train. Tap a glowing tile; if it fits both ends, tap the end where it goes.</li><li>If nothing fits, tap <b>Draw a Tile</b> (or the glowing boneyard by your tiles) until something does. If the boneyard is empty, you pass.</li><li>The train turns at the edges of the felt so it always has room.</li></ol>",
     score:"<ul><li>The first player to play their last tile wins.</li><li>If neither player can move (the game is blocked), the lower total of pips left in hand wins. Equal totals are a draw.</li></ul>"
   },
   onNew:function(){ mySide=1; newGame(); }
