@@ -90,9 +90,9 @@
     left.appendChild(el.acct);
 
     /* the BrainWhim "Tap for Whims" card (same as the Tables page): bottom of the left card on desktop,
-       and on phones under your score, filling the spare space on wide boards (turned on with whim:true) */
+       and on phones between the header and the opponent's score, filling the spare space on wide boards (turned on with whim:true) */
     if (C.whim) {
-      stage.appendChild(whimCard("pk-whim-m"));
+      stage.insertBefore(whimCard("pk-whim-m"), stage.firstChild);   /* phones: above the opponent's score; the board sits low, near the bar */
       document.body.classList.add("pk-has-whim");
     }
 
