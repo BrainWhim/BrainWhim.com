@@ -157,31 +157,48 @@ function msg(){
 }
 
 /* sow with a little rhythm: each stone lands one after another */
-function animate(s,i,res,done){
-  busy=true; var b=ring.slice(); b[i]=0; ring=b; last=-1; paint(); var k=0;
-  (function step(){
-    if(k<res.steps.length){
-      var p=res.steps[k++]; ring[p]++; paint(); slots[p].classList.add("flash");
-      (function(el){ setTimeout(function(){ el.classList.remove("flash"); },180); })(slots[p]);
-      setTimeout(step,reduce?0:130); return;
-    }
-    setTimeout(function(){ ring=res.b; last=res.lastPos; busy=false; paint(); done(); },res.capture?260:60);
-  })();
+/* sow by hand: stones float from the cup one at a time and click into each cup (deeper "clunk" in a store) */
+async function animate(s,i,res,done){
+  busy=true; last=-1;
+  var from=slots[i], held=ring[i], n=res.steps.length;
+  ring=ring.slice(); ring[i]=0; paint(); P_sfx("whoosh");
+  var flights=[];
+  for(var k=0;k<n;k++){
+    (function(k){
+      var p=res.steps[k];
+      flights.push(Parlor.wait(k*260).then(function(){
+        return Parlor.fly(from,slots[p],'<i class="mk-gem g'+(k%4)+'"></i>',{size:gemPx()*1.15,lift:Math.min(70,30+k*6),dur:420,sound:false});
+      }).then(function(){
+        ring[p]++; paint(); slots[p].classList.add("flash");
+        setTimeout(function(){ slots[p].classList.remove("flash"); },220);
+        Parlor.sfx(p===6||p===13?"store":"click",{pitch:0.9+Math.random()*0.25});
+      }));
+    })(k);
+  }
+  await Promise.all(flights);
+  await Parlor.wait(220);
+  if(res.capture){
+    var st=storeOf(s), pos=res.lastPos;
+    await Promise.all([Parlor.fly(slots[pos],slots[st],'<i class="mk-gem g0"></i>',{size:gemPx()*1.4,dur:560}),Parlor.fly(slots[12-pos],slots[st],'<i class="mk-gem g2"></i>',{size:gemPx()*1.4,dur:600,sound:false})]);
+    Parlor.sfx("store",{pitch:0.8});
+  }
+  ring=res.b; last=res.lastPos; busy=false; paint(); done();
 }
-var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+function P_sfx(n){ Parlor.sfx(n); }
+function gemPx(){ var g=getComputedStyle(document.body).getPropertyValue("--mk-gem"); var t=document.createElement("i"); t.style.width=g; t.style.position="absolute"; document.body.appendChild(t); var w=t.getBoundingClientRect().width; t.remove(); return w||14; }
 
 function after(s,res){
   if(res.done){ over=true; paint(); end(); push(); return; }
-  if(res.extra){ turn=s; paint(); say(s===mySide?"Extra turn":"Another turn for "+(online?"your opponent":"The House"),s===mySide?"Your last stone landed in your store":""); push(); if(!online&&turn===2) setTimeout(houseMove,650); return; }
+  if(res.extra){ turn=s; paint(); say(s===mySide?"Extra turn":"Another turn for "+(online?"your opponent":"The House"),s===mySide?"Your last stone landed in your store":""); push(); if(!online&&turn===2) setTimeout(houseMove,1100); return; }
   turn=3-s; paint();
   msg();
   if(res.capture) say(s===mySide?"Captured "+res.capture+" stones!":(online?"Opponent":"The House")+" captured "+res.capture+" stones",turn===mySide?"Your turn":"");
   push();
-  if(!online&&turn===2) setTimeout(houseMove,600);
+  if(!online&&turn===2) setTimeout(houseMove,1000);
 }
 function play(i){
   if(legal().indexOf(i)<0) return;
-  var res=move(ring,mySide,i);
+  var res=move(ring,mySide,i); lastMv={s:mySide,i:i}; seq++;
   animate(mySide,i,res,function(){ after(mySide,res); });
 }
 function end(){
@@ -210,7 +227,11 @@ function search(b,s,depth,alpha,beta){
 }
 function houseMove(){
   if(over||online||turn!==2||busy) return;
-  var pick=search(ring,2,4,-1e9,1e9);
+  /* The House plays to its level: sometimes a looser move, and it looks further ahead as the level climbs */
+  var sk=Parlor.skill(), opts=cupsOf(2).filter(function(i){ return ring[i]>0; }), pick;
+  if(!opts.length) return;
+  if(Math.random()<sk.loose) pick={i:opts[Math.floor(Math.random()*opts.length)]};
+  else pick=search(ring,2,sk.depth,-1e9,1e9);
   if(!pick||pick.i==null) return;
   var res=move(ring,2,pick.i);
   animate(2,pick.i,res,function(){ after(2,res); });
@@ -218,10 +239,11 @@ function houseMove(){
 function newGame(){ ring=fresh(); turn=1; over=false; last=-1; busy=false; reported=false; paint(); msg(); }
 
 /* ---------- online table (same page: ?code=XXXX) ---------- */
-function snapshot(){ return {game:"mancala", y:ring.slice(0,6), ys:ring[6], h:ring.slice(7,13), hs:ring[13], turn:turn, over:over}; }
+var lastMv=null, seq=0;
+function snapshot(){ return {game:"mancala", y:ring.slice(0,6), ys:ring[6], h:ring.slice(7,13), hs:ring[13], turn:turn, over:over, mv:lastMv, seq:seq}; }
 function applySnap(s){
   if(!s||!s.y) s={y:[4,4,4,4,4,4],h:[4,4,4,4,4,4],ys:0,hs:0,turn:1,over:false};
-  ring=s.y.concat([s.ys||0],s.h,[s.hs||0]); turn=s.turn||1; over=!!s.over;
+  ring=s.y.concat([s.ys||0],s.h,[s.hs||0]); turn=s.turn||1; over=!!s.over; if(s.seq!=null) seq=s.seq;
 }
 async function push(){
   if(!online||!room) return;
@@ -251,7 +273,15 @@ async function bootOnline(){
   applySnap(room.state&&room.state.y?room.state:null);
   paint(); if(over) end(); else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
-    var wasOver=over; room=p.new; applySnap(room.state); paint();
+    var st=p.new.state||{}; room=p.new;
+    /* the other player's move: replay it stone by stone from the board we already show */
+    if(st.mv && st.seq!==seq && st.mv.s!==mySide && !busy){
+      seq=st.seq; var res=move(ring,st.mv.s,st.mv.i);
+      animate(st.mv.s,st.mv.i,res,function(){ var wasOver=over; applySnap(st); paint(); if(over&&!wasOver) end(); else msg(); });
+      return;
+    }
+    if(st.seq!=null) seq=st.seq;
+    var wasOver=over; applySnap(st); paint();
     if(over&&!wasOver) end(); else msg();
   }).subscribe();
 }

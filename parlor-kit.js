@@ -83,6 +83,7 @@
     stage.insertBefore(el.miniTop, stage.firstChild);
     P.mySeat(0);
     st.appendChild(el.players);
+    el.level = mk("p", "pk-sub pk-level", ""); st.appendChild(el.level);
     left.appendChild(st);
 
     el.acct = mk("div", "pk-card pk-acct");
@@ -103,6 +104,7 @@
     g1.appendChild(el.newBtn);
     g1.appendChild(btn("How to Play", "", function () { P.help("play"); }));
     g1.appendChild(btn("Scoring Rules", "", function () { P.help("score"); }));
+    g1.appendChild(btn("Sound & Motion", "", function () { P.settings(); }));
     var g2 = group("My Seat", "pk-phone");
     if (C.sets && C.sets.length) g2.appendChild(btn(C.setsLabel || "Sets", "", function () { sheet("left", el.setsCard); }));
     g2.appendChild(btn("Account & Points", "", function () { sheet("left", el.acct); }));
@@ -126,7 +128,7 @@
     var scrim = mk("div", "pk-scrim"); scrim.onclick = function () { sheet(null); }; document.body.appendChild(scrim);
 
     /* modals */
-    el.help = modal("pkHelp"); el.seat = modal("pkSeat"); el.end = modal("pkEnd"); el.gamesM = modal("pkGames");
+    el.help = modal("pkHelp"); el.seat = modal("pkSeat"); el.end = modal("pkEnd"); el.gamesM = modal("pkGames"); el.setM = modal("pkSet");
     el.hint = mk("div", "pk-hint", "Tap Menu for rules, sets, your account and more.");
     el.hint.onclick = function () { hint(false); }; document.body.appendChild(el.hint);
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeAll(); sheet(null); } });
@@ -159,7 +161,7 @@
     var r = mk("div", "pk-row"); r.appendChild(btn("Close", "quiet", function () { el.gamesM.veil.classList.remove("on"); })); b.appendChild(r);
     el.gamesM.veil.classList.add("on");
   };
-  function closeAll() { [el.help, el.seat, el.end, el.gamesM].forEach(function (m) { if (m) m.veil.classList.remove("on"); }); }
+  function closeAll() { [el.help, el.seat, el.end, el.gamesM, el.setM].forEach(function (m) { if (m) m.veil.classList.remove("on"); }); }
   function sheet(which, focus) {
     document.body.classList.toggle("sheet-left", which === "left");
     document.body.classList.toggle("sheet-right", which === "right");
@@ -183,6 +185,8 @@
     el.miniTop.innerHTML = ""; el.mini.innerHTML = "";
     el.miniTop.appendChild(them._row2); el.mini.appendChild(me._row2);
   };
+  /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
+  P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); return (a && a.offsetParent) ? a : (b && b.offsetParent ? b : null); };
   P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { p._nm.textContent = arr[i]; p._nm2.textContent = arr[i]; } }); };
 
   /* ---------------- help ---------------- */
@@ -190,7 +194,7 @@
     sheet(null);
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
-      (score ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
+      (score ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
   };
@@ -224,12 +228,12 @@
   P.sitHouse = async function () {
     if (!(await gateAndBegin())) return;
     mode = "house"; seat();
-    el.mode.textContent = "Playing The House";
+    el.mode.textContent = "Playing The House"; showLevel();
     if (C.onNew) C.onNew("house");
   };
   /* online rooms: the daily limit was already applied on the Tables page when the match was made */
   P.seatOnline = function (info) {
-    mode = "online"; seat(); token = null; finished = false;
+    mode = "online"; seat(); token = null; finished = false; if (el.level) el.level.textContent = "";
     el.mode.textContent = (info && info.label) || "Online table";
     if (el.newBtn) el.newBtn.style.display = "none";
     var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
@@ -247,11 +251,14 @@
   /* ---------------- result ---------------- */
   P.finish = async function (kind, detail) {
     if (finished) return; finished = true;
+    P.sfx(kind === "win" ? "win" : kind === "lose" ? "lose" : "draw");
+    var lvlNote = mode === "house" ? levelAfter(kind) : "";
     var title = kind === "win" ? "Congratulations! You win!" : kind === "draw" ? "It's a Draw" : "Better Luck Next Time";
     var b = el.end.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", kind === "win" ? "Victory" : kind === "draw" ? "Even match" : "Game over"));
     b.appendChild(mk("h2", "", title));
     if (detail) b.appendChild(mk("p", "pk-pts", detail));
+    if (lvlNote) b.appendChild(mk("p", "pk-lvlnote", lvlNote));
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
     var r = mk("div", "pk-row");
     if (mode === "house") r.appendChild(btn("Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
@@ -316,6 +323,105 @@
       el.sets.appendChild(b);
     });
   }
+
+  /* ---------------- The House's level: a slow, smooth climb ----------------
+     Every game starts gentle (level 1). Each win against The House moves it up one step; two losses in a row
+     move it back down one. Games read Parlor.level() and Parlor.maxLevel to pick how carefully The House plays.
+     Even the top level keeps a little chance in it, so it can always be beaten. */
+  P.maxLevel = 10;
+  function lvlKey() { return "bwLevel:" + (C && C.game); }
+  P.level = function () { var v = parseInt(store(lvlKey()) || "1", 10); return Math.max(1, Math.min(P.maxLevel, v || 1)); };
+  function showLevel() { if (el.level) el.level.textContent = mode === "house" ? "The House: level " + P.level() + " of " + P.maxLevel : ""; }
+  function levelAfter(kind) {
+    var L = P.level(), losses = parseInt(store(lvlKey() + ":l") || "0", 10) || 0, note = "";
+    if (kind === "win") { if (L < P.maxLevel) { L++; note = "The House moves up to level " + L + "."; } else note = "You beat The House at its top level!"; losses = 0; }
+    else if (kind === "lose") { losses++; if (losses >= 2 && L > 1) { L--; losses = 0; note = "The House eases off to level " + L + "."; } }
+    store(lvlKey(), String(L)); store(lvlKey() + ":l", String(losses)); showLevel(); return note;
+  }
+  /* how carefully to play at the current level: chance of a loose move, and how far to look ahead (1 to 5) */
+  P.skill = function () { var L = P.level(); return { level: L, loose: Math.max(0.04, 0.5 - L * 0.05), depth: Math.min(5, 1 + Math.floor((L - 1) / 2)) }; };
+
+  /* ---------------- sound & motion ----------------
+     Sounds are made in the browser (no files to download). Settings are remembered on this device. */
+  var AC = null, master = null;
+  P.soundOn = function () { return store("bwSound") !== "off"; };
+  P.volume = function () { var v = parseFloat(store("bwVol")); return isNaN(v) ? 0.7 : Math.max(0, Math.min(1, v)); };
+  P.smooth = function () { var m = store("bwMotion"); if (m) return m !== "reduced"; return !(window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches); };
+  function audio() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.connect(AC.destination); } catch (e) { return null; } }
+    if (AC.state !== "running" && AC.resume) { try { AC.resume(); } catch (e) {} }
+    master.gain.value = P.volume() * 0.9;
+    return AC;
+  }
+  ["pointerdown", "touchend", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () { if (P.soundOn()) audio(); }, { passive: true }); });
+  function noise(ac, len) { var b = ac.createBuffer(1, Math.max(1, ac.sampleRate * len), ac.sampleRate), d = b.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.4); var s = ac.createBufferSource(); s.buffer = b; return s; }
+  function env(ac, g, t, peak, a, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+  function tone(ac, t, type, f0, f1, peak, a, d, filt) {
+    var o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + a + d);
+    env(ac, g, t, peak, a, d); var last = o; if (filt) { var f = ac.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; o.connect(f); last = f; }
+    last.connect(g); g.connect(master); o.start(t); o.stop(t + a + d + 0.02);
+  }
+  /* Parlor.sfx(name, {pitch}) : whoosh, land, click (marble into a cup), store (marble into a store), flip, place, win, lose, draw */
+  P.sfx = function (name, o) {
+    if (!P.soundOn()) return; var ac = audio(); if (!ac) return; o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
+    try {
+      if (name === "whoosh") { var n = noise(ac, 0.36), bp = ac.createBiquadFilter(), g = ac.createGain(); bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(1100, t); bp.frequency.exponentialRampToValueAtTime(380, t + 0.34); env(ac, g, t, 0.16, 0.05, 0.3); n.connect(bp); bp.connect(g); g.connect(master); n.start(t); n.stop(t + 0.37); }
+      else if (name === "land") { tone(ac, t, "sine", 190, 55, 0.22, 0.006, 0.15, ["lowpass", 300]); }
+      else if (name === "click" || name === "store") {
+        var big = name === "store", f = (big ? 1350 : 2300) * p;
+        tone(ac, t, "sine", f, f * 0.92, big ? 0.16 : 0.13, 0.002, big ? 0.16 : 0.09);
+        tone(ac, t + 0.01, "triangle", f * 1.52, f * 1.4, 0.05, 0.002, 0.05);
+        var k = noise(ac, 0.03), hp = ac.createBiquadFilter(), g2 = ac.createGain(); hp.type = "highpass"; hp.frequency.value = 3000; env(ac, g2, t, 0.07, 0.001, 0.025); k.connect(hp); hp.connect(g2); g2.connect(master); k.start(t); k.stop(t + 0.04);
+        if (big) tone(ac, t + 0.005, "sine", 220, 160, 0.08, 0.004, 0.12, ["lowpass", 500]);
+      }
+      else if (name === "flip") { var n2 = noise(ac, 0.07), bp2 = ac.createBiquadFilter(), g3 = ac.createGain(); bp2.type = "bandpass"; bp2.frequency.value = 1800 * p; bp2.Q.value = 1.2; env(ac, g3, t, 0.12, 0.004, 0.06); n2.connect(bp2); bp2.connect(g3); g3.connect(master); n2.start(t); n2.stop(t + 0.08); tone(ac, t + 0.03, "sine", 520 * p, 380 * p, 0.06, 0.003, 0.06); }
+      else if (name === "place") { tone(ac, t, "sine", 240, 90, 0.2, 0.005, 0.13, ["lowpass", 420]); var n3 = noise(ac, 0.04), g4 = ac.createGain(); env(ac, g4, t, 0.06, 0.002, 0.03); n3.connect(g4); g4.connect(master); n3.start(t); n3.stop(t + 0.05); }
+      else if (name === "win") { [523, 659, 784, 1047].forEach(function (f, i) { tone(ac, t + i * 0.11, "triangle", f, 0, 0.12, 0.01, 0.4); }); }
+      else if (name === "lose") { [392, 330].forEach(function (f, i) { tone(ac, t + i * 0.18, "sine", f, f * 0.97, 0.1, 0.02, 0.45); }); }
+      else if (name === "draw") { [440, 440].forEach(function (f, i) { tone(ac, t + i * 0.16, "sine", f, 0, 0.08, 0.01, 0.25); }); }
+    } catch (e) {}
+  };
+  /* Parlor.fly(fromEl, toEl, html, {dur, lift, size, sound}) : a piece floats along an arc from one spot to another.
+     Resolves when it lands. With reduced motion it resolves at once. */
+  P.fly = function (from, to, html, o) {
+    o = o || {};
+    return new Promise(function (res) {
+      if (!from || !to || !P.smooth()) { res(); return; }
+      var a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+      var size = o.size || Math.min(a.width, a.height) * 0.8;
+      var x0 = a.left + a.width / 2 + (o.dx0 || 0), y0 = a.top + a.height / 2 + (o.dy0 || 0), x1 = b.left + b.width / 2 + (o.dx1 || 0), y1 = b.top + b.height / 2 + (o.dy1 || 0);
+      var fl = mk("div", "pk-flyer"); fl.innerHTML = html; fl.style.width = size + "px"; fl.style.height = size + "px";
+      document.body.appendChild(fl);
+      var dist = Math.hypot(x1 - x0, y1 - y0), lift = o.lift != null ? o.lift : Math.min(110, 26 + dist * 0.22), dur = o.dur || Math.min(900, 420 + dist * 0.5), t0 = performance.now();
+      if (o.sound !== false) P.sfx("whoosh");
+      (function tick(now) {
+        var p = Math.min(1, (now - t0) / dur), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, up = Math.sin(Math.PI * p) * lift, sc = 1 + 0.14 * Math.sin(Math.PI * p);
+        fl.style.transform = "translate(" + (x0 + (x1 - x0) * e - size / 2) + "px," + (y0 + (y1 - y0) * e - up - size / 2) + "px) scale(" + sc + ")";
+        if (p < 1) requestAnimationFrame(tick); else { if (fl.parentNode) fl.parentNode.removeChild(fl); res(); }
+      })(t0);
+    });
+  };
+  P.wait = function (ms) { return new Promise(function (r) { setTimeout(r, P.smooth() ? ms : Math.min(ms, 60)); }); };
+  /* the Sound & Motion window */
+  P.settings = function () {
+    sheet(null);
+    var b = el.setM.box; b.innerHTML = "";
+    b.appendChild(mk("p", "pk-kick", "Sound & Motion"));
+    function row(label, ctl) { var r = mk("div", "pk-setrow"); r.appendChild(mk("span", "", label)); r.appendChild(ctl); b.appendChild(r); }
+    var sw = mk("div", "pk-seg");
+    [["On", "on"], ["Off", "off"]].forEach(function (o) { var x = btn(o[0], (P.soundOn() ? "on" : "off") === o[1] ? "sel" : "", function () { store("bwSound", o[1]); P.settings(); if (o[1] === "on") P.sfx("click"); }); sw.appendChild(x); });
+    row("Sound", sw);
+    var vol = mk("input", "pk-range"); vol.type = "range"; vol.min = 0; vol.max = 100; vol.value = Math.round(P.volume() * 100); vol.setAttribute("aria-label", "Volume");
+    vol.oninput = function () { store("bwVol", String(vol.value / 100)); }; vol.onchange = function () { P.sfx("click"); };
+    if (!P.soundOn()) vol.disabled = true;
+    row("Volume", vol);
+    var mo = mk("div", "pk-seg");
+    [["Smooth", "smooth"], ["Reduced", "reduced"]].forEach(function (o) { var x = btn(o[0], (P.smooth() ? "smooth" : "reduced") === o[1] ? "sel" : "", function () { store("bwMotion", o[1]); P.settings(); }); mo.appendChild(x); });
+    row("Animations", mo);
+    b.appendChild(mk("p", "pk-sub pk-setnote", "Reduced turns off the floating pieces and quick effects. Settings are saved on this device."));
+    var r = mk("div", "pk-row"); r.appendChild(btn("Done", "", function () { el.setM.veil.classList.remove("on"); })); b.appendChild(r);
+    el.setM.veil.classList.add("on");
+  };
 
   /* ---------------- start ---------------- */
   P.init = function (cfg) {

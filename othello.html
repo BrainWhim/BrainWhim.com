@@ -94,7 +94,7 @@ var cells=[]; (function(){
 
 /* ---------- game state ---------- */
 var D=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-var g=[], turn=1, over=false, last=null, prev=null;
+var g=[], turn=1, over=false, last=null, prev=null, busy=false;
 var mySide=1, online=false, sb=null, room=null, me=null, reported=false, CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
 var W=[[100,-20,10,5,5,10,-20,100],[-20,-50,-2,-2,-2,-2,-50,-20],[10,-2,3,1,1,3,-2,10],[5,-2,1,0,0,1,-2,5],[5,-2,1,0,0,1,-2,5],[10,-2,3,1,1,3,-2,10],[-20,-50,-2,-2,-2,-2,-50,-20],[100,-20,10,5,5,10,-20,100]];
 
@@ -115,7 +115,7 @@ function winnerSide(){ var a=count(1), b=count(2); return a===b?0:a>b?1:2; }
 
 /* ---------- drawing ---------- */
 function paint(){
-  var legal=(!over && turn===mySide && (seatedNow())) ? moves(mySide) : [];
+  var legal=(!over && !busy && turn===mySide && (seatedNow())) ? moves(mySide) : [];
   for(var r=0;r<8;r++) for(var c=0;c<8;c++){
     var cell=cells[r*8+c], v=g[r][c], was=prev?prev[r][c]:0;
     var ok=legal.some(function(m){return m[0]===r&&m[1]===c});
@@ -140,9 +140,9 @@ function afterMove(who){
   if(!m1 && !m2){ over=true; paint(); end(); push(); return; }
   var next=3-who;
   var nm=next===1?m1:m2;
-  if(!nm){ turn=who; paint(); say(who===mySide?"Opponent passes":"You pass", who===mySide?"Your turn again":"Opponent plays again"); push(); if(!online && turn===2) setTimeout(houseMove,600); return; }
+  if(!nm){ turn=who; paint(); say(who===mySide?"Opponent passes":"You pass", who===mySide?"Your turn again":"Opponent plays again"); push(); if(!online && turn===2) setTimeout(houseMove,1200); return; }
   turn=next; paint(); msg(); push();
-  if(!online && turn===2) setTimeout(houseMove,520);
+  if(!online && turn===2) setTimeout(houseMove,900);
 }
 function msg(){
   if(over) return;
@@ -157,23 +157,45 @@ function end(){
   var detail=(w===0?"Draw ":"Cobalt "+a+", Ivory "+b);
   if(online){ report(); Parlor.finish(kind, detail); } else { Parlor.finish(kind, detail); }
 }
+/* a disc floats in from the player's colour dot, lands with a soft tap, then the captured discs flip one by one */
+async function place(side,r,c,f,done){
+  busy=true; paint();
+  var cell=cells[r*8+c], w=cell.getBoundingClientRect().width*0.82;
+  await Parlor.fly(Parlor.seatDot(side-1)||cell,cell,'<span class="ot-disc p'+side+'" style="position:static;display:block;width:100%;height:100%"></span>',{size:w,dur:620});
+  g[r][c]=side; last=[r,c]; paint(); Parlor.sfx("place");
+  f.sort(function(a,b){ return (Math.abs(a[0]-r)+Math.abs(a[1]-c))-(Math.abs(b[0]-r)+Math.abs(b[1]-c)); });
+  for(var k=0;k<f.length;k++){
+    await Parlor.wait(k?120:220);
+    g[f[k][0]][f[k][1]]=side; paint(); Parlor.sfx("flip",{pitch:0.9+k*0.04});
+  }
+  await Parlor.wait(380);
+  busy=false; done();
+}
 function play(r,c){
-  if(over||turn!==mySide||!seatedNow()) return;
+  if(busy||over||turn!==mySide||!seatedNow()) return;
   if(online && (!room||!room.guest)) return;
   var f=flips(r,c,mySide); if(!f.length) return;
-  g[r][c]=mySide; f.forEach(function(x){ g[x[0]][x[1]]=mySide; }); last=[r,c];
-  afterMove(mySide);
+  place(mySide,r,c,f,function(){ afterMove(mySide); });
 }
+/* The House plays to its level: looser moves early on, then corners and edges, then it starts reading your reply */
+function boardScore(){ var s=0; for(var r=0;r<8;r++) for(var c=0;c<8;c++){ if(g[r][c]===2) s+=W[r][c]; else if(g[r][c]===1) s-=W[r][c]; } return s+(moves(2).length-moves(1).length)*3; }
+function tryMove(side,mv,fn){ var save=g.map(function(x){return x.slice();}), f=flips(mv[0],mv[1],side); g[mv[0]][mv[1]]=side; f.forEach(function(x){ g[x[0]][x[1]]=side; }); var v=fn(); g=save; return v; }
 function houseMove(){
-  if(over||online||turn!==2) return;
+  if(over||online||turn!==2||busy) return;
   var m=moves(2); if(!m.length) return;
-  var best=null,bs=-1e9;
-  m.forEach(function(mv){ var s=W[mv[0]][mv[1]]*3+flips(mv[0],mv[1],2).length+Math.random()*4; if(s>bs){bs=s;best=mv;} });
-  var f=flips(best[0],best[1],2); g[best[0]][best[1]]=2; f.forEach(function(x){ g[x[0]][x[1]]=2; }); last=best;
-  afterMove(2);
+  var sk=Parlor.skill(), best=null, bs=-1e9;
+  if(Math.random()<sk.loose) best=m[Math.floor(Math.random()*m.length)];
+  else m.forEach(function(mv){
+    var v;
+    if(sk.depth>=3) v=tryMove(2,mv,function(){ var rep=moves(1); if(!rep.length) return boardScore()+40; var worst=1e9; rep.forEach(function(rm){ worst=Math.min(worst,tryMove(1,rm,boardScore)); }); return worst; });
+    else v=W[mv[0]][mv[1]]*3+flips(mv[0],mv[1],2).length;
+    v+=Math.random()*(sk.depth>=3?2:6);
+    if(v>bs){ bs=v; best=mv; }
+  });
+  place(2,best[0],best[1],flips(best[0],best[1],2),function(){ afterMove(2); });
 }
 function newGame(){
-  g=fresh(); turn=1; over=false; last=null; prev=null; cells.forEach(function(c){ c.textContent=""; });
+  g=fresh(); turn=1; over=false; last=null; prev=null; busy=false; cells.forEach(function(c){ c.textContent=""; });
   paint(); msg();
 }
 
@@ -210,7 +232,14 @@ async function bootOnline(){
   applySnap(room.state&&room.state.board?room.state:null);
   paint(); if(over) end(); else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
-    var wasOver=over; room=p.new; applySnap(room.state); paint();
+    var st=p.new.state||{}; room=p.new;
+    /* the other player's move: float it in and flip, from the board we already show */
+    if(st.board && st.last && !busy && !(last && last[0]===st.last[0] && last[1]===st.last[1]) && st.board[st.last[0]][st.last[1]]!==mySide && !g[st.last[0]][st.last[1]]){
+      var side=st.board[st.last[0]][st.last[1]], f=flips(st.last[0],st.last[1],side);
+      place(side,st.last[0],st.last[1],f,function(){ var wasOver=over; applySnap(st); paint(); if(over&&!wasOver) end(); else msg(); });
+      return;
+    }
+    var wasOver=over; applySnap(st); paint();
     if(over&&!wasOver) end(); else msg();
   }).subscribe();
 }
