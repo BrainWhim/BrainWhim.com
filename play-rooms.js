@@ -16,7 +16,7 @@ window.BW_ROOMS={
   morris:"morris.html",
   mancala:"mancala.html",
   dominoes:"dominoes.html",
-  yahtzee:"yahtzee-room.html",
+  yahtzee:"yahtzee.html",
   cribbage:"cribbage.html",
   shutbox:"shutbox.html"
 };

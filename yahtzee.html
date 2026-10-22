@@ -2,466 +2,572 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yahtzee · BrainWhim Play</title>
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Club Yahtzee · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1021h">
 <style>
-:root{--navy:#1A2744;--whim:#7EB6D9}
-*{box-sizing:border-box}
-html,body{min-height:100%;min-height:100dvh}
-body{
-  margin:0;font-family:Montserrat,sans-serif;color:var(--navy);
-  background-color:#8a6a48;
-  background-image:url("yahtzee-parlor.jpg");
-  background-size:cover;background-position:center 36%;background-repeat:no-repeat;background-attachment:scroll
-}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
-.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
-.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
-.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
-.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:16px}
-.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:0}
-
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:var(--navy)}
-.games a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.sitbar{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;position:relative;z-index:2}
-.sitbar button,.sitbar a.stand{
-  border:0;border-radius:999px;padding:10px 18px;background:#fff;color:var(--navy);
-  font-weight:700;font-size:14px;line-height:1.2;cursor:pointer;font-family:inherit;
-  box-shadow:0 8px 20px rgba(0,0,0,.18);text-decoration:none;display:inline-flex;align-items:center
-}
-body.seated .sitbar .sit{display:none}
-body:not(.seated) .sitbar .stand{display:none}
-body:not(.seated) .live{display:none}
-body.seated .live{display:block}
-body.seated 
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.games a{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:var(--navy)}
-.games a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-body.seated .sitbar .stand{display:inline-flex}
-.live{max-width:1180px;margin:8px auto 88px;padding:8px 10px 16px;background:transparent}
-h1{text-align:center;margin:4px 0 2px;font-size:22px;color:#1A2744;background:rgba(255,252,247,.82);display:inline-block;padding:4px 14px;border-radius:999px}
-.sub{text-align:center;color:#3a2a12;font-size:13px;margin:0 0 10px}
-.titlewrap{text-align:center}
-.stage{display:grid;grid-template-columns:210px minmax(280px,420px) 210px;gap:12px;align-items:start;justify-content:center}
-@media(max-width:900px){
-header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padding:6px 10px 8px}
-.brand{font-size:18px;grid-column:1;grid-row:1}
-.brand img{width:48px;height:48px}
-.hdr{grid-column:1 / -1;grid-row:2;justify-content:center;width:100%;padding-top:4px;gap:12px}
-.hdr a{font-size:13px;margin-left:0}
-
-  body.seated .games{margin:6px auto 4px}
-  body.seated h1{font-size:16px}
-  body.seated .sub{display:none}
-  .stage{
-    grid-template-columns:1fr 1fr;
-    gap:6px;
-    align-items:stretch;
-  }
-  .stage > div:nth-child(2){grid-column:1/-1;order:-1}
-  .felt{height:210px}
-  .board{transform:none;padding:8px}
-  .die{width:40px;height:40px;padding:4px}
-  .pad{min-height:0;padding:6px 6px 8px;border-width:5px}
-  .pad h2{font-size:11px;margin:0 0 4px}
-  .row{font-size:10px;padding:2px 0;column-gap:4px;grid-template-columns:1fr 28px 36px}
-  .pad.house .row{grid-template-columns:1fr 28px}
-  .pencil{display:none}
-  .live{margin:4px auto 80px;padding:4px 6px 8px}
-}
-.boardwrap{perspective:900px;padding:8px 8px 0}
-.board{
-  transform:rotateX(16deg) scale(1.02);transform-origin:50% 60%;
-  background:
-    linear-gradient(180deg,#6b4220,#3b2412);
-  padding:16px 16px 20px;border-radius:8px;
-  box-shadow:0 0 0 3px #c9a45a,0 0 0 6px #8a6a2e,0 22px 36px rgba(0,0,0,.35)
-}
-.felt{
-  position:relative;height:320px;
-  background:
-    radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.08),transparent 50%),
-    linear-gradient(180deg,#2f6a3e,#1b3f26);
-  border:3px solid #d7b56a;border-radius:4px;
-  box-shadow:inset 0 0 28px rgba(0,0,0,.28)
-}
-.dicebox{position:absolute;inset:8px}
-.die{
-  position:absolute;width:52px;height:52px;border-radius:10px;padding:6px;border:0;cursor:pointer;
-  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;
-  background:linear-gradient(145deg,#fffdf6,#e8d7b0);box-shadow:3px 5px 0 #8a6e3e,0 8px 14px rgba(0,0,0,.25);
-  transition:left .55s cubic-bezier(.2,.7,.2,1), top .55s cubic-bezier(.2,.7,.2,1), transform .55s ease;
-  z-index:2
-}
-.die.held{outline:3px solid #C9A227;z-index:3}
-.die.tumble{animation:tumble .7s ease}
-@keyframes tumble{
-  0%{transform:rotate(0) scale(1)}
-  25%{transform:rotate(80deg) scale(1.12)}
-  50%{transform:rotate(-50deg) scale(.92)}
-  75%{transform:rotate(30deg) scale(1.06)}
-  100%{transform:rotate(0) scale(1)}
-}
-.die i{width:7px;height:7px;border-radius:50%;margin:auto;background:#1a1008;opacity:0}
-.die[data-n="1"] i:nth-child(5){opacity:1}
-.die[data-n="2"] i:nth-child(1),.die[data-n="2"] i:nth-child(9){opacity:1}
-.die[data-n="3"] i:nth-child(1),.die[data-n="3"] i:nth-child(5),.die[data-n="3"] i:nth-child(9){opacity:1}
-.die[data-n="4"] i:nth-child(1),.die[data-n="4"] i:nth-child(3),.die[data-n="4"] i:nth-child(7),.die[data-n="4"] i:nth-child(9){opacity:1}
-.die[data-n="5"] i:nth-child(1),.die[data-n="5"] i:nth-child(3),.die[data-n="5"] i:nth-child(5),.die[data-n="5"] i:nth-child(7),.die[data-n="5"] i:nth-child(9){opacity:1}
-.die[data-n="6"] i:nth-child(1),.die[data-n="6"] i:nth-child(3),.die[data-n="6"] i:nth-child(4),.die[data-n="6"] i:nth-child(6),.die[data-n="6"] i:nth-child(7),.die[data-n="6"] i:nth-child(9){opacity:1}
-
-.bgcup{position:relative;right:auto;top:auto;width:58px;height:70px;border:0;background:transparent;cursor:pointer;flex:0 0 58px}
-.bgcup-body{position:absolute;left:8px;right:8px;top:18px;bottom:4px;border-radius:8px 8px 18px 18px;
-  background:radial-gradient(ellipse at 30% 18%,rgba(255,248,220,.55),transparent 46%),linear-gradient(90deg,#c9a45a,#efe0b0 20%,#d4b56e 48%,#f3e6c0 78%,#b8893a);
-  box-shadow:0 10px 16px rgba(0,0,0,.28)}
-.bgcup-rim{position:absolute;left:4px;right:4px;top:8px;height:22px;border-radius:50%;
-  background:radial-gradient(ellipse at 50% 40%,#f7edd0 28%,#d4b56e 70%);
-  box-shadow:0 0 0 3px #f3e6c0,0 0 0 5px #b8893a}
-.bgcup-label{position:absolute;left:0;right:0;bottom:-16px;text-align:center;font-size:11px;font-weight:800;color:#3a2a12}
-.bgcup.shake .bgcup-body,.bgcup.shake .bgcup-rim{animation:cupShake .55s ease}
-@keyframes cupShake{0%{transform:rotate(-8deg)}25%{transform:rotate(14deg)}50%{transform:rotate(-12deg)}100%{transform:none}}
-.feltbar{position:absolute;left:0;right:0;top:10px;display:flex;align-items:center;justify-content:center;gap:10px;z-index:5;pointer-events:none}
-.feltbar .hint,.feltbar .bgcup{pointer-events:auto}
-.hint{position:static;margin:0;max-width:none;text-align:center;color:#1A2744;font-size:12px;line-height:1.25;background:rgba(255,252,247,.92);display:inline-block;padding:8px 16px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,.12)}
-.padwrap{position:relative}
-.pad{
-  background:#f7f1e2;border:8px solid #1A2744;border-radius:4px;
-  box-shadow:0 10px 22px rgba(0,0,0,.22), inset 0 0 0 2px #c9a45a;
-  padding:10px 10px 14px;min-height:280px
-}
-.pad.house{border-color:#3a2412}
-.pad h2{margin:0 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
-.row{display:grid;grid-template-columns:1fr 36px 42px;align-items:center;column-gap:6px;padding:3px 0;border-bottom:1px dashed #d2c4a6;font-size:12px}
-.pad.house .row{grid-template-columns:1fr 36px}
-.row button{border:0;background:#1A2744;color:#fff;border-radius:999px;padding:2px 8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:11px}
-.row button[disabled]{opacity:.35;cursor:default}
-.row .val{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
-.total{font-weight:800;padding-top:6px;border-bottom:0}
-.pencil{
-  position:absolute;right:-18px;top:40px;width:14px;height:110px;border-radius:3px 3px 2px 2px;
-  background:linear-gradient(90deg,#e8c15a,#f3e0a0 40%,#c9a227);
-  box-shadow:2px 4px 6px rgba(0,0,0,.25);transform:rotate(12deg);pointer-events:none
-}
-.pencil::before{content:"";position:absolute;top:-10px;left:0;right:0;height:12px;background:#f4d7c4;clip-path:polygon(50% 0,100% 100%,0 100%)}
-.pencil::after{content:"";position:absolute;bottom:-8px;left:2px;right:2px;height:10px;background:#c9c4bc;border-radius:0 0 2px 2px}
-
-#winveil{position:fixed;inset:0;background:rgba(12,18,32,.46);display:none;align-items:center;justify-content:center;z-index:90;backdrop-filter:blur(4px)}
-#winveil.on{display:flex}
-.wincard{position:relative;overflow:hidden;width:min(420px,90vw);text-align:center;padding:28px 22px 22px;border-radius:22px;
-  background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;
-  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35);
-  animation:winPop .45s ease}
-#winveil.win .wincard{animation:winBurst .7s cubic-bezier(.15,1.4,.3,1);box-shadow:0 0 0 3px #e8c15a,0 0 0 8px #1A2744,0 0 40px rgba(201,162,39,.55),0 28px 50px rgba(0,0,0,.35)}
-.wincard h2{margin:0 0 16px;font-size:28px;letter-spacing:.02em;line-height:1.25}
-#winveil.win .wincard h2{color:#8a6a18}
-.wincard p{display:none}
-.wincard .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.wincard button,.wincard a{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
-.wincard .go{background:#1A2744;color:#fff}
-.wincard .ghost{background:#fff;color:#1A2744;box-shadow:inset 0 0 0 1px #d7c9b0}
-#winveil.win .spark{position:absolute;width:8px;height:8px;border-radius:50%;background:#e8c15a;opacity:0;animation:spark 1.1s ease-out forwards}
-@keyframes winPop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
-@keyframes winBurst{0%{transform:scale(.4) rotate(-6deg);opacity:0}55%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:none}}
-@keyframes spark{0%{transform:translate(0,0) scale(.4);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(0);opacity:0}}
-
-
-.helpbtn{border:0;border-radius:999px;padding:8px 12px;background:#fff;color:#1A2744;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.12)}
-#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:95;backdrop-filter:blur(4px);padding:16px}
-#helpveil.on{display:flex}
-.helpcard{width:min(520px,94vw);max-height:80vh;overflow:auto;text-align:left;padding:22px 20px 18px;border-radius:20px;
-  background:linear-gradient(180deg,#fffdf8,#f3ead6);color:#1A2744;
-  box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744,0 28px 50px rgba(0,0,0,.35)}
-.helpcard h2{margin:0 0 10px;font-size:22px;text-align:center}
-.helpcard ol,.helpcard ul{margin:0 0 12px;padding-left:18px}
-.helpcard li{margin:0 0 6px;font-size:14px;line-height:1.4}
-.helpcard .row{display:flex;justify-content:center}
-.helpcard button{border:0;border-radius:999px;padding:10px 16px;background:#1A2744;color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
-
-
-body.seated .games{display:none}
-body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
-body.seated .sit{display:none}
-body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none}
-body.seated .bar button{display:none}
-
+/* ===== Yahtzee: a dice tray, a leather dice cup and a score card on a polished table, seen from straight above =====
+   Everything is painted in code (no picture files). The cup and the score card carry the gold BW monogram.
+   Boards (the Boards card): Library Walnut is free; Sunroom Mahogany and Midnight Ebony are for Club members. */
+.yz-pad{width:100%;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.yz-fit{position:relative;flex:none;overflow:hidden}
+.yz-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
+.yz-scene{position:relative;perspective:6000px;transform-style:preserve-3d}
+.yz-scene *{transform-style:preserve-3d}
+.yz-scene .abs{position:absolute}
+/* the table top */
+.yz-scene .table{left:0;top:0;border-radius:22px;background-image:var(--y-table);background-size:cover;background-color:var(--y-tablec);
+  box-shadow:0 30px 60px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,235,200,.18)}
+.yz-scene .table::before{content:"";position:absolute;inset:12px;border-radius:14px;border:2px solid var(--y-band1);box-shadow:0 0 0 3px var(--y-band2),inset 0 0 0 3px var(--y-band2)}
+.yz-scene .table::after{content:"";position:absolute;inset:0;border-radius:22px;background:radial-gradient(ellipse 60% 55% at 38% 40%,rgba(255,230,180,.16),rgba(0,0,0,0) 60%),linear-gradient(115deg,rgba(255,255,255,.06),rgba(0,0,0,0) 40%,rgba(0,0,0,.25))}
+/* the dice tray */
+.yz-scene .tray .sh{position:absolute;inset:-6px -14px -22px -6px;border-radius:12px;background:rgba(0,0,0,.55);filter:blur(14px)}
+.yz-scene .tray .frame{position:absolute;inset:0;border-radius:8px;background-image:var(--y-frame);background-size:600px 600px;background-color:var(--y-framec);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,235,200,.25),inset 0 -3px 4px rgba(0,0,0,.35)}
+.yz-scene .tray .band{position:absolute;inset:26px;border-radius:3px;background:var(--y-inlay);box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+.yz-scene .tray .lip{position:absolute;inset:36px;border-radius:2px;background-image:var(--y-frame);background-size:600px 600px;background-position:-60px -40px;background-color:var(--y-framec);box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.yz-scene .tray .felt{position:absolute;inset:44px;background-image:var(--y-felt);background-size:256px 256px;background-color:var(--y-feltc);
+  box-shadow:inset 0 10px 18px rgba(0,0,0,.6),inset 8px 0 14px rgba(0,0,0,.45),inset -6px 0 12px rgba(0,0,0,.4),inset 0 -6px 10px rgba(0,0,0,.35)}
+.yz-scene .tray .felt::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 45% 40%,rgba(255,225,170,.12),rgba(0,0,0,0) 65%)}
+.yz-scene .tray .keep{position:absolute;left:44px;right:44px;bottom:44px;height:100px;background-image:var(--y-felt);background-size:256px 256px;background-color:var(--y-feltc);
+  box-shadow:inset 0 8px 14px rgba(0,0,0,.65),inset 0 -2px 4px rgba(0,0,0,.3);filter:brightness(.78)}
+.yz-scene .tray .rail{position:absolute;left:44px;right:44px;bottom:142px;height:5px;background:linear-gradient(180deg,#f6e2a4,#b88a36 55%,#6e4f1d);box-shadow:0 2px 3px rgba(0,0,0,.5)}
+.yz-scene .tray .klab{position:absolute;left:0;right:0;bottom:152px;text-align:center;font:600 10px Montserrat,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:rgba(240,220,170,.38)}
+/* the dice cup, lying on its side */
+.yz-scene .cup{width:132px;height:104px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.yz-scene .cup .csh{position:absolute;left:4px;top:18px;width:136px;height:100px;border-radius:40px 50px 50px 40px;background:rgba(0,0,0,.55);filter:blur(9px)}
+.yz-scene .cup .body{position:absolute;left:18px;top:0;width:110px;height:104px;border-radius:6px 48px 48px 6px / 6px 52px 52px 6px;background:var(--y-cup);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+.yz-scene .cup .body::before{content:"";position:absolute;inset:0;background-image:var(--y-cuptex);background-size:128px 128px;mix-blend-mode:multiply;opacity:.55}
+.yz-scene .cup .body::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.08) 22%,rgba(0,0,0,0) 45%,rgba(0,0,0,.35) 85%,rgba(0,0,0,.55))}
+.yz-scene .cup .ring{position:absolute;top:0;bottom:0;width:7px;background:var(--y-cuprim);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.yz-scene .cup .ring.a{left:18px}.yz-scene .cup .ring.b{left:100px;width:4px;opacity:.85}
+.yz-scene .cup .ring::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(0,0,0,0) 30%,rgba(0,0,0,.45))}
+.yz-scene .cup .mouth{position:absolute;left:0;top:0;width:38px;height:104px;border-radius:50%;background:var(--y-cuprim);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.yz-scene .cup .mouth::before{content:"";position:absolute;inset:6px 5px;border-radius:50%;background:radial-gradient(ellipse 70% 70% at 62% 50%,var(--y-cupin),#000 95%)}
+.yz-scene .cup .mono{position:absolute;left:52px;top:36px;transform:rotate(90deg);font-size:24px}
+.yz-scene .cup:hover .body{filter:brightness(1.08)}
+.yz-scene .cup.ready::after{content:"";position:absolute;inset:-8px -6px;border-radius:30px 56px 56px 30px;box-shadow:0 0 0 2px rgba(231,199,122,.55),0 0 22px 4px rgba(240,190,90,.35);animation:yzpulse 1.8s ease-in-out infinite}
+.yz-scene .cup.shake{animation:yzshake .45s ease-in-out}
+@keyframes yzpulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes yzshake{0%,100%{transform:none}20%{transform:rotate(-6deg) translateX(-3px)}45%{transform:rotate(5deg) translateX(3px)}70%{transform:rotate(-4deg)}}
+.yz-scene .mono{display:flex;align-items:baseline;line-height:1.25}
+.yz-scene .mono b,.yz-scene .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.yz-scene .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.yz-scene .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+/* roll button and the three roll lamps */
+.yz-scene .roll{width:160px;height:54px;border-radius:6px;background:rgba(15,23,42,.78);border:1px solid rgba(231,199,122,.55);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 16px rgba(240,190,90,.25);
+  color:#e6c25a;font:700 18px Montserrat,sans-serif;letter-spacing:.45px;cursor:pointer}
+.yz-scene .roll:hover{color:#f0d27a;background:rgba(15,23,42,.88)}
+.yz-scene .roll:disabled{opacity:.4;cursor:default}
+.yz-scene .lamps{display:flex;gap:10px;align-items:center;font:600 11px Montserrat,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,240,210,.75)}
+.yz-scene .lamps i{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d0,#d9b25a 45%,#6e4f1d);box-shadow:0 0 8px rgba(240,190,90,.6),0 1px 2px rgba(0,0,0,.6)}
+.yz-scene .lamps i.off{background:radial-gradient(circle at 35% 30%,#555,#222);box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
+/* dice */
+.yz-scene .die{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;-webkit-tap-highlight-color:transparent}
+.yz-scene .die.tap{cursor:pointer}
+.yz-scene .die.go,.yz-scene .dsh.go{transition:transform 1.25s cubic-bezier(.12,.62,.22,1)}
+.yz-scene .die.slide,.yz-scene .dsh.slide{transition:transform .45s cubic-bezier(.3,.7,.3,1)}
+.yz-scene .die .d{position:absolute;inset:0;border-radius:12px;background:var(--y-die);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:9px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),inset -4px -6px 10px rgba(0,0,0,.18),inset 4px 5px 8px rgba(255,255,255,.35)}
+.yz-scene .die .core{position:absolute;inset:2px;background:var(--y-diecore);border-radius:7px}
+.yz-scene .die .core.c2{transform:rotateY(90deg)}.yz-scene .die .core.c3{transform:rotateX(90deg)}
+.yz-scene .die .d i{width:11px;height:11px;border-radius:50%;margin:auto;background:radial-gradient(circle at 60% 65%,var(--y-pip) 40%,var(--y-pip2) 100%);box-shadow:inset 0 2px 2px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.35);visibility:hidden}
+.yz-scene .die .d i.p{visibility:visible}
+/* at rest only the top face is drawn (Chrome draws edge-on side faces as thin lines) */
+.yz-scene .die.rest .d,.yz-scene .die.rest .core{visibility:hidden}
+.yz-scene .die.rest .d.up,.yz-scene .die.rest .d.up i.p{visibility:visible}
+.yz-scene .die.rest .d.up{box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),inset -4px -6px 10px rgba(0,0,0,.2),inset 4px 5px 8px rgba(255,255,255,.35)}
+.yz-scene .die.tap.rest .d.up{box-shadow:inset 0 0 0 2px rgba(214,164,62,.7),inset -4px -6px 10px rgba(0,0,0,.2),inset 4px 5px 8px rgba(255,255,255,.35)}
+.yz-scene .dsh{position:absolute;left:0;top:0;width:80px;height:80px;margin:-40px 0 0 -40px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.6),rgba(0,0,0,0) 68%);filter:blur(3px);pointer-events:none}
+.yz-scene .dsh.held{background:radial-gradient(circle,rgba(255,205,110,.75),rgba(255,190,80,.25) 45%,rgba(0,0,0,0) 70%)}
+body.yz-quick .yz-scene .die.go,body.yz-quick .yz-scene .dsh.go,body.yz-quick .yz-scene .die.slide,body.yz-quick .yz-scene .dsh.slide{transition-duration:.01s}
+/* the score card */
+.yz-scene .card{border-radius:10px;padding:14px;background-image:var(--y-cardtex);background-size:128px 128px;background-color:var(--y-cardc);
+  box-shadow:0 14px 26px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15)}
+.yz-scene .card .orn{position:absolute;inset:6px;border-radius:6px;border:1.5px solid var(--y-cardline);box-shadow:inset 0 0 0 4px var(--y-cardline2);pointer-events:none}
+.yz-scene .card .cn{position:absolute;width:16px;height:16px;border:1.5px solid var(--y-cardline);transform:rotate(45deg);background:var(--y-cardc)}
+.yz-scene .card .cn::after{content:"";position:absolute;inset:3px;background:var(--y-cardline)}
+.yz-scene .card .cn.a{left:-2px;top:-2px}.yz-scene .card .cn.b{right:-2px;top:-2px}.yz-scene .card .cn.c{left:-2px;bottom:-2px}.yz-scene .card .cn.d{right:-2px;bottom:-2px}
+.yz-scene .card .paper{position:relative;height:100%;border-radius:3px;background:linear-gradient(170deg,#fffaf0,#f4ead4 70%,#ecdfc2);box-shadow:inset 0 0 0 1px rgba(120,90,40,.35),inset 0 0 14px rgba(150,110,50,.18);
+  color:#2a2118;padding:8px 10px;display:flex;flex-direction:column}
+.yz-scene .card .hd{display:flex;align-items:center;justify-content:center;gap:10px;height:42px;flex:none;border-bottom:1.5px solid var(--y-ink2);margin-bottom:4px}
+.yz-scene .card .hd .mono{font-size:22px}
+.yz-scene .card .hd .mono b,.yz-scene .card .hd .mono i{background:linear-gradient(170deg,#c9a24f,#8f6a22 60%,#b8913f);-webkit-background-clip:text;background-clip:text;filter:none}
+.yz-scene .card .hd span{font:700 13px Montserrat,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--y-ink)}
+.yz-scene .card .cols{display:flex;flex-direction:column;flex:1;gap:8px}
+.yz-scene .card table{width:100%;border-collapse:collapse;font-family:"Cormorant Garamond",Georgia,serif}
+.yz-scene .card th{font:700 10px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(60,45,25,.6);height:22px;text-align:center}
+.yz-scene .card th.on{color:var(--y-ink);text-decoration:underline;text-decoration-color:#c9a24f;text-decoration-thickness:2px;text-underline-offset:4px}
+.yz-scene .card td{height:38px;border-bottom:1px solid rgba(90,70,40,.22);font-size:18px;font-weight:700;padding:0 4px}
+.yz-scene .card td.nm{font-size:17px;color:#2a2118;white-space:nowrap}
+.yz-scene .card td.nm small{font:600 9px Montserrat,sans-serif;letter-spacing:.06em;color:rgba(60,45,25,.55);margin-left:5px}
+.yz-scene .card td.v{width:62px;text-align:center;border-left:1px solid rgba(90,70,40,.22);color:var(--y-ink)}
+.yz-scene .card td.v.opp{color:#5a4a36}
+.yz-scene .card td.v.pot{color:#b07d1a;font-style:italic;cursor:pointer;background:rgba(240,200,100,.13);box-shadow:inset 0 0 0 1px rgba(200,150,50,.45)}
+.yz-scene .card td.v.pot.pz{color:rgba(176,125,26,.45);background:rgba(240,200,100,.06);box-shadow:inset 0 0 0 1px rgba(200,150,50,.2)}
+.yz-scene .card td.v.pot:hover{background:rgba(240,200,100,.32)}
+.yz-scene .card td.v.zero{color:rgba(150,110,60,.65)}
+.yz-scene .card td.v.new{animation:yzink 1.2s ease-out}
+@keyframes yzink{0%{background:rgba(240,200,100,.55)}100%{background:rgba(240,200,100,0)}}
+.yz-scene .card tr.sub td{font:600 11px Montserrat,sans-serif;letter-spacing:.05em;color:rgba(60,45,25,.75);height:30px;background:rgba(150,110,50,.07)}
+.yz-scene .card tr.sub td.v{font:700 13px Montserrat,sans-serif;color:var(--y-ink)}
+.yz-scene .card .tot{display:flex;align-items:center;height:42px;flex:none;margin-top:4px;border-top:1.5px solid var(--y-ink2);font:700 12px Montserrat,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--y-ink)}
+.yz-scene .card .tot b{flex:1;padding-left:4px}.yz-scene .card .tot em{width:62px;text-align:center;font:700 22px "Cormorant Garamond",Georgia,serif;font-style:normal;letter-spacing:0}
+.yz-scene .card .lowhd{display:none}
+/* phones: the card spreads into two halves side by side, with larger print */
+.yz-scene .card.tall .cols{flex-direction:row;gap:14px}
+.yz-scene .card.tall .cols>div{flex:1}
+.yz-scene .card.tall .lowhd{display:table-row}
+.yz-scene .card.tall td{height:37px;font-size:23px}
+.yz-scene .card.tall td.nm{font-size:20px}
+.yz-scene .card.tall td.nm small{display:none}
+.yz-scene .card.tall td.v{width:64px}
+.yz-scene .card.tall th{font-size:12px;height:26px}
+.yz-scene .card.tall tr.sub td{font-size:13px;height:32px}
+.yz-scene .card.tall tr.sub td.v{font-size:15px}
+.yz-scene .card.tall .tot{font-size:14px;height:46px}.yz-scene .card.tall .tot em{width:64px;font-size:26px}
+.yz-scene .card.tall .hd{height:44px}
+.yz-scene .card.tall .hd span{font-size:15px}
+/* a short call-out for big scores */
+.yz-toast{position:absolute;z-index:6;left:50%;transform:translate(-50%,0);padding:9px 16px;border-radius:999px;background:rgba(15,23,42,.84);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 15px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.yz-toast.on{opacity:1;transform:translate(-50%,-6px)}
+/* phones: the card shows both scores, so the two score strips and the Whim card step aside */
+body.yz-phone.pk .pk-mini{display:none}
+body.pk .pk-whim-m,body.pk.pk-has-whim .pk-whim-m{display:none!important}
+body.pk.pk-has-whim .pk-stage{justify-content:center}
+body.pk.pk-has-whim .pk-mini-top,body.pk.pk-has-whim .pk-mini-bot{margin-top:0;margin-bottom:0}
+@media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
 </style>
 <script src="bw-auth.js"></script>
-<script>
-/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
-async function bwHouseGate(fn){
-  if(!window.BW){ fn(); return; }
-  if(await BW.startMatch({mode:"house"})) fn();
-}
-</script>
 </head>
 <body>
 <header>
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
-<div class="games">
-<a href="checkers.html">Checkers</a>
-<a href="chess.html">Chess</a>
-<a href="backgammon.html">Backgammon</a>
-<a class="on" href="yahtzee.html">Yahtzee</a>
-<a href="dominoes.html">Dominoes</a>
-<a href="othello.html">Othello</a>
-<a href="mancala.html">Mancala</a>
-<a href="cribbage.html">Cribbage</a>
-<a href="shutbox.html">Shut the Box</a>
-<a href="morris.html">Morris</a>
-</div>
-<div class="sitbar">
-<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the parlor</button>
-<a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
-<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
-<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
-</div>
-<div class="live">
-  <div class="titlewrap"><h1>Club Yahtzee</h1></div>
-  <p class="sub">You shake first. The house keeps its own pad.</p>
-  <div class="stage">
-    <div class="padwrap">
-      <div class="pad house" id="housePad"></div>
-      <div class="pencil"></div>
-    </div>
-    <div>
-      <div class="boardwrap">
-        <div class="board">
-          <div class="felt">
-            <div class="feltbar">
-            <p class="hint" id="msg">Shake to start your turn</p>
-            <button class="bgcup" id="cup" type="button" onclick="roll()">
-              <span class="bgcup-rim"></span><span class="bgcup-body"></span>
-              <span class="bgcup-label">Shake</span>
-            </button>
-            </div>
-            <div class="dicebox" id="dice"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="padwrap">
-      <div class="pad" id="youPad"></div>
-      <div class="pencil"></div>
-    </div>
-  </div>
-</div>
+<main class="pk-room"></main>
 
-<div id="winveil" onclick="if(event.target.id==='winveil')hideBanner()">
-  <div class="wincard">
-    <h2 id="winTitle">Congratulations! You win!</h2>
-    <p id="winSub"></p>
-    <div class="row">
-      <button class="go" type="button" id="winAgain">Play again?</button>
-      <a class="ghost" href="tables.html">Return to Tables</a>
-    </div>
-  </div>
-</div>
-</div>
-
-
-<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()">
-  <div class="helpcard">
-    <h2 id="helpTitle">How to play</h2>
-    <div id="helpBody"></div>
-    <div class="row"><button type="button" onclick="hideHelp()">Got it</button></div>
-  </div>
-</div>
-
-<script>
-
-function hideHelp(){ document.getElementById("helpveil").className=""; }
-function showHelp(kind){
-  document.getElementById("helpTitle").textContent = kind==="score" ? "Scoring rules" : "How to play";
-  document.getElementById("helpBody").innerHTML = kind==="score"
-    ? "<ul><li>Aces–sixes: add that number only. 63+ in the upper section earns a 35 bonus.</li><li>3 / 4 of a kind: sum of all five dice if you have that many alike.</li><li>Full house: 25. Small straight: 30. Large straight: 40.</li><li>Yahtzee (five alike): 50.</li><li>Chance: sum of all five.</li><li>Highest total after 13 hands wins.</li></ul>"
-    : "<ol><li>Shake the cup for up to three rolls each turn.</li><li>Tap dice to hold them, then shake the rest.</li><li>Pick one open line on your pad. The house then takes a turn on its pad.</li><li>Each line can be used only once.</li></ol>";
-  document.getElementById("helpveil").className="on";
-}
-
-function hideBanner(){ var v=document.getElementById("winveil"); if(v) v.className=""; }
-function showBanner(title, sub, again, kind){
-  var v=document.getElementById("winveil");
-  if(!v) return;
-  var raw=((title||"")+" "+(sub||"")).toLowerCase();
-  if(!kind){
-    kind = /house wins|closed the net|ivory wins|library|better luck|black checkmate|ivory connects/.test(raw) ? "lose" : /draw|tie/.test(raw) ? "draw" : "win";
-  }
-  var headline;
-  if(kind==="lose") headline="Better luck next time!";
-  else if(kind==="draw") headline="It's a Draw!";
-  else if(/checkmate/.test(raw)) headline="Congratulations! Checkmate!";
-  else headline="Congratulations! You win!";
-  document.getElementById("winTitle").textContent=headline;
-  document.getElementById("winSub").textContent="";
-  var b=document.getElementById("winAgain");
-  b.onclick=function(){ hideBanner(); if(again) bwHouseGate(again); };
-  v.className="on "+kind;
-  v.querySelectorAll(".spark").forEach(function(n){ n.remove(); });
-  if(kind==="win"){
-    for(var i=0;i<16;i++){
-      var s=document.createElement("span"); s.className="spark";
-      s.style.left="50%"; s.style.top="38%";
-      var ang=Math.random()*Math.PI*2, dist=40+Math.random()*120;
-      s.style.setProperty("--x",(Math.cos(ang)*dist)+"px");
-      s.style.setProperty("--y",(Math.sin(ang)*dist)+"px");
-      s.style.animationDelay=(Math.random()*0.2)+"s";
-      v.querySelector(".wincard").appendChild(s);
-    }
-  }
-}
-function sitDown(){ document.body.classList.add("seated"); }
-function standUp(){ document.body.classList.remove("seated"); }
-var dice=[0,0,0,0,0], held=[0,0,0,0,0], rolls=0, whose="you", busy=false;
-var you={}, house={};
-var CATS=[
-  ["ones","Aces",function(d){return sumFace(d,1)}],
-  ["twos","Twos",function(d){return sumFace(d,2)}],
-  ["threes","Threes",function(d){return sumFace(d,3)}],
-  ["fours","Fours",function(d){return sumFace(d,4)}],
-  ["fives","Fives",function(d){return sumFace(d,5)}],
-  ["sixes","Sixes",function(d){return sumFace(d,6)}],
-  ["3k","3 of a kind",function(d){return ofKind(d,3)?sum(d):0}],
-  ["4k","4 of a kind",function(d){return ofKind(d,4)?sum(d):0}],
-  ["fh","Full house",function(d){return fullHouse(d)?25:0}],
-  ["ss","Small straight",function(d){return straight(d,4)?30:0}],
-  ["ls","Large straight",function(d){return straight(d,5)?40:0}],
-  ["yz","Yahtzee",function(d){return ofKind(d,5)?50:0}],
-  ["ch","Chance",function(d){return sum(d)}]
-];
-function sum(d){return d.reduce(function(a,b){return a+b},0)}
-function sumFace(d,n){return d.filter(function(x){return x===n}).length*n}
-function counts(d){var c=[0,0,0,0,0,0,0];d.forEach(function(n){c[n]++});return c}
-function ofKind(d,n){return counts(d).some(function(x){return x>=n})}
-function fullHouse(d){var c=counts(d).filter(function(x){return x}); return c.indexOf(3)>=0 && c.indexOf(2)>=0}
-function straight(d,len){
-  var u=[].concat(d).filter(function(v,i,a){return a.indexOf(v)===i}).sort();
-  var run=1,best=1;
-  for(var i=1;i<u.length;i++){ run = u[i]===u[i-1]+1 ? run+1 : 1; if(run>best) best=run; }
-  return best>=len;
-}
-function pips(){return "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>"}
-function linePos(i){ return {left:(6+i*18)+"%", top:"62%"}; }
-function paintDice(scatter){
-  var box=document.getElementById("dice");
-  box.innerHTML=dice.map(function(n,i){
-    var pos = (!n) ? linePos(i) : (scatter && !held[i] ? {left:(8+Math.random()*70)+"%", top:(8+Math.random()*55)+"%"} : linePos(i));
-    return '<button class="die'+(held[i]?" held":"")+(scatter&&!held[i]?" tumble":"")+'" data-n="'+((n|0)||1)+'" style="left:'+pos.left+';top:'+pos.top+'" onclick="hold('+i+')">'+pips()+'</button>';
-  }).join("");
-  if(scatter){
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){
-        var els=box.querySelectorAll(".die");
-        els.forEach(function(el,i){
-          if(held[i]) return;
-          var p=linePos(i);
-          el.style.left=p.left; el.style.top=p.top;
-        });
-      });
-    });
-    setTimeout(function(){
-      box.querySelectorAll(".tumble").forEach(function(el){ el.classList.remove("tumble"); });
-    },720);
-  }
-}
-function totalOf(book){
-  var u=0,t=0;
-  CATS.forEach(function(c,i){ if(book[c[0]]!=null){ t+=book[c[0]]; if(i<6) u+=book[c[0]]; }});
-  if(u>=63) t+=35;
-  return {upper:u, total:t};
-}
-function paintPad(id, book, canUse){
-  var tot=totalOf(book), html="<h2>"+(id==="youPad"?"You":"House")+"</h2>";
-  CATS.forEach(function(c,i){
-    if(i===6) html+='<div class="row total"><span>Upper</span><span class="val">'+tot.upper+'</span></div><div class="row"><span>Bonus</span><span class="val">'+(tot.upper>=63?35:0)+'</span></div>';
-    var used=book[c[0]]!=null;
-    var preview=(canUse && dice[0])?c[2](dice):"";
-    html+='<div class="row"><span>'+c[1]+'</span><span class="val">'+(used?book[c[0]]:(preview===""?"":preview))+'</span>';
-    if(canUse) html+='<button '+(used||!dice[0]||!rolls||whose!=="you"?"disabled":"")+' onclick="score(\''+c[0]+'\')">Use</button>';
-    html+='</div>';
-  });
-  html+='<div class="row total"><span>Total</span><span class="val">'+tot.total+'</span></div>';
-  document.getElementById(id).innerHTML=html;
-}
-function paintAll(scatter){ paintDice(scatter); paintPad("youPad",you,true); paintPad("housePad",house,false); }
-function hold(i){ if(busy||whose!=="you"||!rolls||!dice[0]) return; held[i]=held[i]?0:1; paintDice(false); }
-function roll(){
-  if(busy||whose!=="you"||rolls>=3) return;
-  busy=true;
-  document.getElementById("cup").classList.add("shake");
-  setTimeout(function(){
-    document.getElementById("cup").classList.remove("shake");
-    for(var i=0;i<5;i++) if(!held[i]) dice[i]=1+Math.floor(Math.random()*6);
-    rolls++;
-    document.getElementById("msg").textContent="Roll "+rolls+" of 3 — tap to hold, then Use a line.";
-    paintAll(true);
-    setTimeout(function(){ busy=false; },750);
-  },480);
-}
-function openLeft(book){ return CATS.filter(function(c){return book[c[0]]==null}); }
-function score(key){
-  if(busy||whose!=="you") return;
-  var cat=CATS.filter(function(c){return c[0]===key})[0];
-  if(!cat||you[key]!=null||!dice[0]) return;
-  you[key]=cat[2](dice);
-  paintAll(false);
-  if(!openLeft(you).length && !openLeft(house).length){ endGame(); return; }
-  whose="house"; rolls=0; held=[0,0,0,0,0]; dice=[0,0,0,0,0];
-  document.getElementById("msg").textContent="House is shaking…";
-  paintAll(false);
-  setTimeout(housePlay,600);
-}
-function housePlay(){
-  busy=true; rolls=0; held=[0,0,0,0,0];
-  function toss(done){
-    document.getElementById("cup").classList.add("shake");
-    setTimeout(function(){
-      document.getElementById("cup").classList.remove("shake");
-      for(var i=0;i<5;i++) if(!held[i]) dice[i]=1+Math.floor(Math.random()*6);
-      rolls++;
-      var c=counts(dice), face=1, best=0;
-      for(var f=1;f<=6;f++) if(c[f]>=best){best=c[f];face=f;}
-      held=dice.map(function(n){return n===face?1:0});
-      paintAll(true);
-      setTimeout(done,800);
-    },420);
-  }
-  toss(function(){
-    toss(function(){
-      toss(function(){
-        var left=openLeft(house), best=left[0], bestV=-1;
-        left.forEach(function(c){ var v=c[2](dice); if(v>bestV){bestV=v;best=c;} });
-        house[best[0]]=best[2](dice);
-        dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; whose="you"; busy=false;
-        var over=!openLeft(you).length && !openLeft(house).length;
-        document.getElementById("msg").textContent=over?"":"Your shake. House took "+best[1]+".";
-        paintAll(false);
-        if(over) endGame();
-      });
-    });
-  });
-}
-function endGame(){
-  var y=totalOf(you).total, h=totalOf(house).total;
-  var title = y>h ? "You win" : h>y ? "House wins" : "Tie";
-  var sub = y+" to "+h+".";
-  document.getElementById("msg").textContent = title+" "+sub;
-  showBanner(title, sub, newGame);
-}
-function newGame(){
-  dice=[0,0,0,0,0]; held=[0,0,0,0,0]; rolls=0; whose="you"; busy=false; you={}; house={};
-  document.getElementById("msg").textContent="Shake to start your turn";
-  paintAll(false);
-}
-newGame();
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
+<script src="parlor-kit.js?v=1021h"></script>
+<script>
+/* =====================================================================
+   Painted materials
+   ===================================================================== */
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;for(i=0;i<256;i++)p[i]=i;for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}for(i=0;i<512;i++)P[i]=p[i&255];for(i=0;i<256;i++)G[i]=r();function f(x){return x*x*(3-2*x);}return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;for(var y=0;y<h;y++)for(var x=0;x<w;x++){var col=fn(x,y),i=(y*w+x)*4;D[i]=col[0];D[i+1]=col[1];D[i+2]=col[2];D[i+3]=255;}g.putImageData(im,0,0);return c;}
+function cssUrl(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
+function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
+function feltFn(rgb,seed){var r=rng(seed),n=noise2(seed);return function(x,y){var k=.86+r()*.22+(fbm(n,x/22,y/22,3)-.5)*.14;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+function leatherFn(rgb,seed){var r=rng(seed),n=noise2(seed),n2=noise2(seed+3);return function(x,y){var k=.82+fbm(n,x/40,y/40,4)*.3+(fbm(n2,x/3,y/3,2)-.5)*.12+(r()-.5)*.05;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+var BRASS="linear-gradient(90deg,#8a6526,#f3d790 45%,#b8913f 70%,#8a6526)";
+var DESIGNS={
+  walnut:{table:{light:[128,86,52],dark:[60,36,20],freq:.035,turb:9,wx:240,wy:22,sharp:.7,ringAmt:.6,streakAmt:.42,pores:.02,blotch:.3,seed:27},tablec:"#5e3c22",band1:"rgba(240,210,140,.6)",band2:"rgba(30,18,8,.5)",
+    frame:{light:[118,78,46],dark:[56,34,18],freq:.05,turb:8,wx:200,wy:20,sharp:.7,ringAmt:.62,streakAmt:.4,pores:.02,blotch:.28,seed:23},framec:"#5e3c22",
+    inlay:"linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)",felt:[104,22,32],
+    cup:"linear-gradient(180deg,#8a2c2a,#5e1416 45%,#300808)",cuptex:[150,60,55],cuprim:BRASS,cupin:"#2a0808",
+    die:"linear-gradient(145deg,#fbf6ea,#e4dccb)",diecore:"#e8e0cf",pip:"#7a1218",pip2:"#3a0608",
+    cardc:"#5a1a1a",cardtex:[98,30,30],cardline:"#d9b25a",cardline2:"rgba(217,178,90,.45)",ink:"#5a1a1a",ink2:"rgba(90,26,26,.5)"},
+  mahogany:{table:{light:[120,52,30],dark:[62,22,10],freq:.02,turb:7,wx:500,wy:40,sharp:.8,ringAmt:.45,streakAmt:.5,pores:.01,blotch:.3,seed:51},tablec:"#5c2412",band1:"rgba(230,200,140,.55)",band2:"rgba(40,16,6,.55)",
+    frame:{light:[112,44,24],dark:[56,18,8],freq:.05,turb:5,wx:300,wy:24,sharp:.8,ringAmt:.5,streakAmt:.45,pores:.015,blotch:.25,seed:12},framec:"#5a2210",
+    inlay:"repeating-linear-gradient(45deg,#ecd9a8 0 5px,#3b2412 5px 7px)",felt:[26,88,48],
+    cup:"linear-gradient(180deg,#f1d58a,#c9a24f 40%,#8d6a24)",cuptex:[200,170,110],cuprim:BRASS,cupin:"#5a3d14",
+    die:"linear-gradient(145deg,#fbf3e0,#e6d6b2)",diecore:"#eadcbc",pip:"#141010",pip2:"#3a2a20",
+    cardc:"#1c2a4e",cardtex:[30,44,82],cardline:"#d9b25a",cardline2:"rgba(217,178,90,.45)",ink:"#1c2a4e",ink2:"rgba(28,42,78,.55)"},
+  ebony:{table:{light:[42,34,30],dark:[12,9,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},tablec:"#1b1714",band1:"rgba(225,232,245,.55)",band2:"rgba(0,0,0,.5)",
+    frame:{light:[46,38,32],dark:[14,11,9],freq:.06,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:9},framec:"#1b1714",
+    inlay:"linear-gradient(90deg,#c8d0dc,#ffffff 25%,#e6d8f0 45%,#d6f0ea 65%,#ffffff 80%,#b8c0cc)",felt:[20,30,64],
+    cup:"linear-gradient(180deg,#3a3a40,#16161a 45%,#050506)",cuptex:[70,70,76],cuprim:BRASS,cupin:"#111",
+    die:"linear-gradient(145deg,#2c2420,#0f0b09)",diecore:"#16110e",pip:"#f0d28a",pip2:"#9b7430",
+    cardc:"#141418",cardtex:[30,30,36],cardline:"#e4e8f0",cardline2:"rgba(228,232,240,.4)",ink:"#1e2230",ink2:"rgba(30,34,48,.55)"}
+};
+
+/* =====================================================================
+   The table: tray, cup, roll button, lamps, score card, dice
+   ===================================================================== */
+var stage=document.createElement("div"); stage.className="yz-pad";
+stage.innerHTML='<div class="yz-fit" id="yzFit"><div class="yz-scaler" id="yzScaler"><div class="yz-scene" id="yzScene">'+
+  '<div class="abs table" id="yzTable"></div>'+
+  '<div class="abs tray" id="yzTray"><div class="sh"></div><div class="frame"></div><div class="band"></div><div class="lip"></div><div class="felt"></div><div class="keep"></div><div class="rail"></div><div class="klab">Kept Dice</div></div>'+
+  '<div class="abs cup" id="yzCup" role="button" aria-label="Roll the dice"><div class="csh"></div><div class="body"></div><div class="ring a"></div><div class="ring b"></div><div class="mouth"></div><span class="mono"><b>B</b><i>W</i></span></div>'+
+  '<button class="abs roll" id="yzRoll" type="button">Roll</button><div class="abs lamps" id="yzLamps"></div>'+
+  '<div class="abs card" id="yzCard"></div><div id="yzDice" class="abs" style="left:0;top:0"></div>'+
+  '</div></div><div class="yz-toast" id="yzToast"></div></div>';
+var $=function(id){ return stage.querySelector("#"+id); };
+var sceneEl=$("yzScene"), fitEl=$("yzFit"), cupEl=$("yzCup"), rollBtn=$("yzRoll"), cardEl=$("yzCard"), toastEl=$("yzToast");
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="walnut"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]) texCache[k]={table:cssUrl(canvasOf(1200,800,woodFn(d.table))),frame:cssUrl(canvasOf(600,600,woodFn(d.frame))),felt:cssUrl(canvasOf(256,256,feltFn(d.felt,k.length*13))),
+    cup:cssUrl(canvasOf(128,128,leatherFn(d.cuptex,k.length*7))),card:cssUrl(canvasOf(128,128,leatherFn(d.cardtex,k.length*5)))};
+  var t=texCache[k], s=sceneEl.style;
+  s.setProperty("--y-table",t.table); s.setProperty("--y-tablec",d.tablec); s.setProperty("--y-band1",d.band1); s.setProperty("--y-band2",d.band2);
+  s.setProperty("--y-frame",t.frame); s.setProperty("--y-framec",d.framec); s.setProperty("--y-inlay",d.inlay);
+  s.setProperty("--y-felt",t.felt); s.setProperty("--y-feltc","rgb("+d.felt+")");
+  s.setProperty("--y-cup",d.cup); s.setProperty("--y-cuptex",t.cup); s.setProperty("--y-cuprim",d.cuprim); s.setProperty("--y-cupin",d.cupin);
+  s.setProperty("--y-die",d.die); s.setProperty("--y-diecore",d.diecore); s.setProperty("--y-pip",d.pip); s.setProperty("--y-pip2",d.pip2);
+  s.setProperty("--y-cardc",d.cardc); s.setProperty("--y-cardtex",t.card); s.setProperty("--y-cardline",d.cardline); s.setProperty("--y-cardline2",d.cardline2); s.setProperty("--y-ink",d.ink); s.setProperty("--y-ink2",d.ink2);
+}
+
+/* two arrangements: desktop/tablet (tray left, cup and Roll under it, card right) and phone (tray, then cup row, then the card in two halves) */
+var LAYOUTS={
+  wide:{W:1000,H:790,tray:[30,30,600,600],cup:[64,660],roll:[240,656],lamps:[436,673],card:[660,30,310,730],tall:false},
+  tall:{W:680,H:1138,tray:[40,24,600,520],cup:[62,556],roll:[240,553],lamps:[440,570],card:[40,672,600,446],tall:true}
+};
+var L=LAYOUTS.wide;
+function pos(el,p){ el.style.left=p[0]+"px"; el.style.top=p[1]+"px"; if(p[2]){ el.style.width=p[2]+"px"; el.style.height=p[3]+"px"; } }
+function arrange(){
+  sceneEl.style.width=L.W+"px"; sceneEl.style.height=L.H+"px"; var tb=$("yzTable"); tb.style.width=L.W+"px"; tb.style.height=L.H+"px";
+  pos($("yzTray"),L.tray); pos(cupEl,L.cup); pos(rollBtn,L.roll); pos($("yzLamps"),L.lamps); pos(cardEl,L.card); cardEl.classList.toggle("tall",L.tall);
+}
+
+/* ---------- dice ---------- */
+var PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+var FACE={1:"translateZ(32px)",6:"rotateY(180deg) translateZ(32px)",2:"rotateY(90deg) translateZ(32px)",5:"rotateY(-90deg) translateZ(32px)",3:"rotateX(90deg) translateZ(32px)",4:"rotateX(-90deg) translateZ(32px)"};
+var UP={1:[0,0],6:[0,180],2:[0,-90],5:[0,90],3:[-90,0],4:[90,0]};
+var DIE=[];
+(function(){
+  var holder=$("yzDice");
+  for(var i=0;i<5;i++){
+    var s=document.createElement("div"); s.className="dsh"; holder.appendChild(s);
+    var d=document.createElement("div"); d.className="die rest";
+    var h='<div class="core"></div><div class="core c2"></div><div class="core c3"></div>';
+    [1,2,3,4,5,6].forEach(function(v){ h+='<div class="d" data-v="'+v+'" style="transform:'+FACE[v]+'">'; for(var j=0;j<9;j++) h+='<i class="'+(PIPS[v].indexOf(j)>=0?"p":"")+'"></i>'; h+='</div>'; });
+    d.innerHTML=h; holder.appendChild(d);
+    (function(k){ d.onclick=function(){ humanHold(k); }; })(i);
+    DIE.push({el:d,sh:s,v:[5,3,6,2,4][i],x:0,y:0,rx:0,ry:0,rz:0,held:false});
+  }
+})();
+function feltBox(){ var t=L.tray; return {x0:t[0]+92,x1:t[0]+t[2]-92,y0:t[1]+92,y1:t[1]+t[3]-146-52}; }
+function slotXY(k){ var t=L.tray; return [t[0]+44+(t[2]-88)*(k+.5)/5, t[1]+t[3]-94]; }
+function cupMouth(){ return [L.cup[0]+18,L.cup[1]+52]; }
+function setDie(o,x,y,cls){
+  o.el.classList.toggle("rest",cls!=="go");
+  [].forEach.call(o.el.querySelectorAll(".d"),function(f){ f.classList.toggle("up",+f.dataset.v===o.v); });
+  o.el.classList.remove("go","slide"); o.sh.classList.remove("go","slide"); if(cls){ o.el.classList.add(cls); o.sh.classList.add(cls); }
+  o.el.style.transform="translate3d("+x+"px,"+y+"px,32px) rotateZ("+(o.held?0:o.rz)+"deg) rotateX("+o.rx+"deg) rotateY("+o.ry+"deg)";
+  o.sh.style.transform="translate3d("+(x+7)+"px,"+(y+9)+"px,1px)"; o.sh.classList.toggle("held",o.held);
+}
+function placeDice(anim){ DIE.forEach(function(o,i){ if(o.held){ var p=slotXY(i); setDie(o,p[0],p[1],anim?"slide":null); } else setDie(o,o.x,o.y,anim?"slide":null); }); }
+function faceUp(o,v){ o.v=v; var u=UP[v]; o.rx=u[0]; o.ry=u[1]; }
+function spreadAll(){ var b=feltBox(), pts=[[.15,.28],[.45,.7],[.62,.18],[.86,.6],[.28,.95]]; DIE.forEach(function(o,i){ o.x=b.x0+(b.x1-b.x0)*pts[i][0]; o.y=b.y0+(b.y1-b.y0)*pts[i][1]; o.rz=(i*37%60)-30; faceUp(o,o.v); }); }
+function spots(list){
+  var b=feltBox(), taken=[], tries=0;
+  DIE.forEach(function(o){ if(!o.held&&list.indexOf(o)<0) taken.push([o.x,o.y]); });
+  return list.map(function(){ var p; do{ p=[b.x0+Math.random()*(b.x1-b.x0),b.y0+Math.random()*(b.y1-b.y0)]; tries++; } while(tries<600&&taken.some(function(q){ return Math.hypot(q[0]-p[0],q[1]-p[1])<92; })); taken.push(p); return p; });
+}
+/* tumble the given dice out of the cup to show these values */
+function tumble(idx,vals){
+  document.body.classList.toggle("yz-quick",!Parlor.smooth());
+  cupEl.classList.remove("shake"); void cupEl.offsetWidth; cupEl.classList.add("shake");
+  Parlor.sfx("dice",{dur:Parlor.smooth()?1.2:.3});
+  var list=idx.map(function(i){ return DIE[i]; }), tg=spots(list), m=cupMouth();
+  list.forEach(function(o,j){
+    o.v=vals[j]; o.x=m[0]-4; o.y=m[1]+(j-2)*8; setDie(o,o.x,o.y,null); void o.el.offsetWidth;
+    var up=UP[o.v], dir=Math.random()<.5?-1:1;
+    o.rx=up[0]+360*(2+Math.floor(Math.random()*2))*dir; o.ry=up[1]+360*(1+Math.floor(Math.random()*2)); o.rz=(Math.random()<.5?-1:1)*(10+Math.random()*50);
+    o.x=tg[j][0]; o.y=tg[j][1]; var tok=o.tok=(o.tok||0)+1;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(o.tok===tok) setDie(o,o.x,o.y,"go"); }); });
+  });
+  return Parlor.wait(1320).then(function(){ list.forEach(function(o){ o.tok++; o.rx=((o.rx%360)+360)%360; o.ry=((o.ry%360)+360)%360; setDie(o,o.x,o.y,null); }); });
+}
+function toast(t){ toastEl.textContent=t; toastEl.style.top=Math.round((L.tray[1]+L.tray[3]*.38)*(fitEl._s||1))+"px"; toastEl.style.left=Math.round((L.tray[0]+L.tray[2]/2)*(fitEl._s||1))+"px";
+  toastEl.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ toastEl.classList.remove("on"); },1700); }
+
+/* =====================================================================
+   Rules and scoring
+   Saved online as {game:"yahtzee", p1, p2, dice, held, rolls, turn, over} (the old format) plus v, yb1, yb2, winner, seq_no, mv.
+   ===================================================================== */
+var CATS=[["ones","Aces",""],["twos","Twos",""],["threes","Threes",""],["fours","Fours",""],["fives","Fives",""],["sixes","Sixes",""],
+  ["3k","3 of a Kind","total"],["4k","4 of a Kind","total"],["fh","Full House","25"],["ss","Sm. Straight","30"],["ls","Lg. Straight","40"],["yz","Yahtzee","50"],["ch","Chance","total"]];
+var UPK=["ones","twos","threes","fours","fives","sixes"], LOWK=["3k","4k","fh","ss","ls","yz","ch"], ALLK=UPK.concat(LOWK);
+var NAME={}; CATS.forEach(function(c){ NAME[c[0]]=c[1]; });
+function counts(v){ var c=[0,0,0,0,0,0,0]; v.forEach(function(x){ c[x]++; }); return c; }
+function isYz(v){ return v[0]>0&&v.every(function(x){ return x===v[0]; }); }
+/* a second Yahtzee is a "joker" once the Yahtzee box is filled: it must go in its number's upper box if that's open;
+   otherwise it scores full value in Full House or either straight */
+function allowed(v,sheet){
+  var open=ALLK.filter(function(k){ return sheet[k]==null; });
+  if(isYz(v)&&sheet.yz!=null){ var u=UPK[v[0]-1]; if(sheet[u]==null) return [u]; var low=open.filter(function(k){ return LOWK.indexOf(k)>=0; }); return low.length?low:open; }
+  return open;
+}
+function scoreFor(cat,v,sheet){
+  var c=counts(v), sum=v.reduce(function(a,b){ return a+b; },0), mx=Math.max.apply(null,c), up=UPK.indexOf(cat), joker=isYz(v)&&sheet.yz!=null;
+  if(up>=0) return c[up+1]*(up+1);
+  function run(n){ for(var s=1;s<=7-n;s++){ var ok=true; for(var k=s;k<s+n;k++) if(!c[k]) ok=false; if(ok) return true; } return false; }
+  switch(cat){
+    case "3k": return mx>=3?sum:0; case "4k": return mx>=4?sum:0;
+    case "fh": return (c.indexOf(3)>0&&c.indexOf(2)>0)||joker?25:0;
+    case "ss": return run(4)||joker?30:0; case "ls": return run(5)||joker?40:0;
+    case "yz": return mx===5?50:0; case "ch": return sum;
+  }
+  return 0;
+}
+function upperSum(s){ return UPK.reduce(function(a,k){ return a+(s[k]||0); },0); }
+function total(s,yb){ var u=upperSum(s); return u+(u>=63?35:0)+LOWK.reduce(function(a,k){ return a+(s[k]||0); },0)+(yb||0); }
+function filled(s){ return ALLK.filter(function(k){ return s[k]!=null; }).length; }
+
+/* =====================================================================
+   Game state. Side 1 is you (or the host online); side 2 The House (or the guest).
+   ===================================================================== */
+var S, mySide=1, online=false, sb=null, room=null, me=null, reported=false, seq=0, busy=false, lastMv=null, fresh=[];
+var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+function newState(){ return {game:"yahtzee",v:2,p1:{},p2:{},yb1:0,yb2:0,dice:[0,0,0,0,0],held:[0,0,0,0,0],rolls:0,turn:1,over:false,winner:0}; }
+function book(s){ return s===1?S.p1:S.p2; }
+function yb(s){ return s===1?(S.yb1||0):(S.yb2||0); }
+function other(s){ return 3-s; }
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function live(){ return seatedNow()&&!S.over&&(!online||(room&&room.guest&&mySide)); }
+function myTurn(){ return live()&&!busy&&S.turn===mySide; }
+function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
+function oppLabel(){ return online?"Opponent":"House"; }
+function curVals(){ return DIE.map(function(o){ return o.v; }); }
+function syncDiceFromState(anim){
+  DIE.forEach(function(o,i){ o.held=!!S.held[i]; if(S.dice[i]&&o.v!==S.dice[i]) faceUp(o,S.dice[i]); });
+  placeDice(anim);
+}
+
+/* ---------- drawing ---------- */
+function renderCard(){
+  var A=mySide===2?2:1, B=other(A), mineSheet=book(A), oppSheet=book(B);
+  var v=curVals(), canScore=myTurn()&&S.rolls>0, ok=canScore?allowed(v,mineSheet):[];
+  var shownOpp=S.turn===B&&S.rolls>0&&!S.over;   /* the other player's choices aren't shown, only their card */
+  function row(c){ var k=c[0], m=mineSheet[k], o=oppSheet[k], cell;
+    if(m!=null) cell='<td class="v'+(m===0?' zero':'')+(fresh.indexOf(A+k)>=0?' new':'')+'">'+m+'</td>';
+    else if(canScore&&ok.indexOf(k)>=0){ var p=scoreFor(k,v,mineSheet); cell='<td class="v pot'+(p?'':' pz')+'" data-k="'+k+'">'+p+'</td>'; }
+    else cell='<td class="v"></td>';
+    return '<tr><td class="nm">'+c[1]+(c[2]?'<small>'+c[2]+'</small>':'')+'</td>'+cell+'<td class="v opp'+(o===0?' zero':'')+(fresh.indexOf(B+k)>=0?' new':'')+'">'+(o!=null?o:'')+'</td></tr>'; }
+  var u=upperSum(mineSheet), hu=upperSum(oppSheet);
+  var head='<tr><th></th><th class="'+(S.turn===A&&!S.over?'on':'')+'">You</th><th class="'+(S.turn===B&&!S.over?'on':'')+'">'+oppLabel()+'</th></tr>';
+  var h='<div class="orn"></div><div class="cn a"></div><div class="cn b"></div><div class="cn c"></div><div class="cn d"></div><div class="paper">';
+  h+='<div class="hd"><span class="mono"><b>B</b><i>W</i></span><span>Score Card</span></div><div class="cols"><div><table>'+head;
+  CATS.slice(0,6).forEach(function(c){ h+=row(c); });
+  h+='<tr class="sub"><td>Bonus <span style="opacity:.7">(63+ = 35)</span></td><td class="v">'+(u>=63?35:u+'/63')+'</td><td class="v">'+(hu>=63?35:hu+'/63')+'</td></tr></table></div><div><table><tr class="lowhd">'+head.slice(4);
+  CATS.slice(6).forEach(function(c){ h+=row(c); });
+  h+='<tr class="sub"><td>Yahtzee Bonus</td><td class="v">'+(yb(A)||'')+'</td><td class="v">'+(yb(B)||'')+'</td></tr></table></div></div>';
+  h+='<div class="tot"><b>Total</b><em>'+total(mineSheet,yb(A))+'</em><em style="color:#5a4a36">'+total(oppSheet,yb(B))+'</em></div></div>';
+  cardEl.innerHTML=h;
+  [].forEach.call(cardEl.querySelectorAll("td.pot"),function(td){ td.onclick=function(){ humanScore(td.dataset.k); }; });
+}
+function render(){
+  var mine=myTurn(), rolls=S.rolls;
+  rollBtn.disabled=!mine||rolls>=3; rollBtn.textContent=rolls===0||S.turn!==mySide?"Roll":"Roll Again";
+  cupEl.classList.toggle("ready",mine&&rolls<3);
+  var h='<span>Rolls</span>'; for(var i=0;i<3;i++) h+='<i class="'+(i<3-rolls?'':'off')+'"></i>'; $("yzLamps").innerHTML=h;
+  DIE.forEach(function(o){ o.el.classList.toggle("tap",mine&&rolls>0&&rolls<3); });
+  renderCard();
+  Parlor.score([total(S.p1,S.yb1),total(S.p2,S.yb2)]);
+  Parlor.turn(S.over?-1:S.turn===1?0:1);
+  var round=Math.min(13,Math.min(filled(S.p1),filled(S.p2))+1);
+  if(Parlor.info) Parlor.info(S.over?"Game over":"Round "+round+" of 13");
+}
+function say(a,b){ Parlor.status(a,b||""); }
+function msg(){
+  if(S.over) return;
+  if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  if(S.turn===mySide){
+    if(S.rolls===0) say("Your turn","Tap the cup or Roll");
+    else if(S.rolls<3) say("Roll "+S.rolls+" of 3","Tap dice to keep them, roll again, or score a box");
+    else say("Choose a box","Tap a gold number on the score card");
+  } else say(online?"Your opponent's turn":"The House is rolling…","");
+}
+
+/* ---------- your moves ---------- */
+async function humanRoll(){
+  if(!myTurn()||S.rolls>=3) return;
+  var idx=[]; for(var i=0;i<5;i++) if(!S.held[i]) idx.push(i); if(!idx.length) return;
+  busy=true; var vals=idx.map(function(){ return 1+Math.floor(Math.random()*6); });
+  idx.forEach(function(i,j){ S.dice[i]=vals[j]; }); S.rolls++;
+  seq++; lastMv={k:"roll",s:mySide,idx:idx}; push(); render();
+  await tumble(idx,vals); busy=false; afterRoll(mySide); render(); msg();
+}
+function humanHold(i){
+  if(!myTurn()||S.rolls===0||S.rolls>=3) return;
+  S.held[i]=S.held[i]?0:1; DIE[i].held=!!S.held[i]; Parlor.sfx("click",{pitch:1.4}); placeDice(true);
+  seq++; lastMv={k:"hold",s:mySide,i:i}; push(); render(); msg();
+}
+function humanScore(k){ if(!myTurn()||S.rolls===0) return; scoreBox(mySide,k); }
+function afterRoll(s){ if(isYz(S.dice)){ toast(s===mySide?"Yahtzee!":nameOf(s)+" rolled a Yahtzee!"); Parlor.sfx("mill"); } }
+/* write a score, then pass the dice */
+function scoreBox(s,k){
+  var sheet=book(s), v=S.dice.slice();
+  if(allowed(v,sheet).indexOf(k)<0) return;
+  if(isYz(v)&&sheet.yz===50){ if(s===1) S.yb1=(S.yb1||0)+100; else S.yb2=(S.yb2||0)+100; toast("Yahtzee Bonus: +100"); }
+  var pts=scoreFor(k,v,sheet); sheet[k]=pts; fresh=[s+k];
+  Parlor.sfx("place",{pitch:1.2});
+  if(s!==mySide) toast(nameOf(s)+": "+NAME[k]+" for "+pts);
+  S.held=[0,0,0,0,0]; S.rolls=0;
+  if(filled(S.p1)===13&&filled(S.p2)===13){ S.over=true; var a=total(S.p1,S.yb1), b=total(S.p2,S.yb2); S.winner=a===b?0:a>b?1:2; }
+  else S.turn=other(s);
+  seq++; lastMv={k:"score",s:s,cat:k}; push();
+  syncDiceFromState(true); render();
+  if(S.over){ end(); return; }
+  msg(); maybeHouse();
+}
+function end(){
+  render();
+  var meS=mySide||1, a=total(book(meS),yb(meS)), b=total(book(other(meS)),yb(other(meS)));
+  var kind=S.winner===0?"draw":S.winner===meS?"win":"lose";
+  var why="Final score: you "+a+", "+(online?"your opponent":"The House")+" "+b+".";
+  say(kind==="win"?"You win!":kind==="draw"?"A tie!":"Game over",why);
+  if(online) report();
+  Parlor.finish(kind,why);
+}
+
+/* ---------- The House ----------
+   For every way of keeping dice it works out the average of the best box it could fill after the re-roll
+   (counting every possible roll), and keeps the set with the best average. Boxes are weighed against what
+   they usually score, with the upper-section bonus in mind. Looser at low levels. */
+var PAR={ones:2,twos:5,threes:8.5,fours:12,fives:15,sixes:19,"3k":15,"4k":8,fh:15,ss:18,ls:12,yz:9,ch:22};
+function boxValue(k,v,sheet){
+  var sc=scoreFor(k,v,sheet), val=sc-PAR[k], up=UPK.indexOf(k);
+  if(up>=0){ var need=3*(up+1); val+=(sc-need)*.7; if(upperSum(sheet)+sc>=63&&upperSum(sheet)<63) val+=12; }
+  if(k==="yz"&&sc===0) val-=8; if(k==="ch") val-=3; if(k==="ls"&&sc===0) val-=3;
+  if(isYz(v)&&sheet.yz===50) val+=100;
+  return val;
+}
+function bestBox(v,sheet){ var best=null,bv=-1e9; allowed(v,sheet).forEach(function(k){ var x=boxValue(k,v,sheet); if(x>bv){ bv=x; best=k; } }); return {k:best,v:bv}; }
+function holdValue(v,mask,sheet){
+  var free=[]; for(var i=0;i<5;i++) if(!(mask&(1<<i))) free.push(i);
+  if(!free.length) return bestBox(v,sheet).v;
+  var n=free.length, tot=0, cnt=Math.pow(6,n), w=v.slice();
+  for(var c=0;c<cnt;c++){ var x=c; for(var j=0;j<n;j++){ w[free[j]]=1+x%6; x=Math.floor(x/6); } tot+=bestBox(w,sheet).v; }
+  return tot/cnt;
+}
+function houseHold(v,sheet){
+  var sk=Parlor.skill();
+  if(Math.random()<sk.loose*.7){ var m=0; for(var i=0;i<5;i++) if(Math.random()<.5) m|=1<<i; return m; }
+  var best=31, bv=-1e9, seen={};
+  for(var mask=0;mask<32;mask++){
+    var key=[]; for(var i2=0;i2<5;i2++) if(mask&(1<<i2)) key.push(v[i2]); key=key.sort().join("");   /* same kept faces = same value */
+    if(seen[key]!=null){ continue; } var x=holdValue(v,mask,sheet); seen[key]=x;
+    if(x>bv+1e-9){ bv=x; best=mask; }
+  }
+  return best;
+}
+function maybeHouse(){ if(!online&&!S.over&&S.turn===2&&!busy&&seatedNow()) houseTurn(); }
+async function houseTurn(){
+  if(online||S.over||S.turn!==2) return;
+  busy=true; render(); msg(); await Parlor.wait(900);
+  var sheet=S.p2, sk=Parlor.skill();
+  for(var r=0;r<3;r++){
+    var idx=[]; for(var i=0;i<5;i++) if(!S.held[i]) idx.push(i);
+    var vals=idx.map(function(){ return 1+Math.floor(Math.random()*6); }); idx.forEach(function(i3,j){ S.dice[i3]=vals[j]; }); S.rolls++;
+    render(); await tumble(idx,vals); afterRoll(2); render(); await Parlor.wait(700);
+    if(S.rolls>=3) break;
+    var mask=houseHold(S.dice.slice(),sheet);
+    if(mask===31) break;
+    var changed=false; for(var k=0;k<5;k++){ var h=(mask&(1<<k))?1:0; if(S.held[k]!==h){ S.held[k]=h; DIE[k].held=!!h; changed=true; } }
+    if(changed){ Parlor.sfx("click",{pitch:1.3}); placeDice(true); render(); await Parlor.wait(750); }
+  }
+  var pick=bestBox(S.dice,sheet).k;
+  if(Math.random()<sk.loose*.4){ var opts=allowed(S.dice,sheet).map(function(k2){ return [k2,boxValue(k2,S.dice,sheet)]; }).sort(function(a,b){ return b[1]-a[1]; }); if(opts[1]) pick=opts[1][0]; }
+  await Parlor.wait(400); busy=false; scoreBox(2,pick);
+}
+
+/* ---------- online table (same page: ?code=XXXX) ---------- */
+function snapshot(){ var o=JSON.parse(JSON.stringify(S)); o.game="yahtzee"; o.v=2; o.seq_no=seq; o.mv=lastMv; return o; }
+async function push(){
+  if(!online||!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:S.over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
+  if(S.over) report();
+}
+function report(){ if(reported||!S.over||!room||!window.bwRateGame) return; reported=true; room.state=snapshot(); bwRateGame(sb,room,me,S.winner); }
+function fromSnap(s){
+  if(!s||(s.game&&s.game!=="yahtzee")||s.dice===undefined){ S=newState(); seq=0; return; }
+  S={game:"yahtzee",v:2,p1:s.p1||{},p2:s.p2||{},yb1:s.yb1||0,yb2:s.yb2||0,dice:(s.dice||[0,0,0,0,0]).slice(),held:(s.held||[0,0,0,0,0]).map(function(x){ return x?1:0; }),
+     rolls:s.rolls||0,turn:s.turn||1,over:!!s.over,winner:s.winner!=null?s.winner:0};
+  if(S.over&&s.winner==null){ var a=total(S.p1,S.yb1),b=total(S.p2,S.yb2); S.winner=a===b?0:a>b?1:2; }
+  seq=s.seq_no||0;
+}
+var queue=Promise.resolve();
+function remote(s){
+  queue=queue.then(async function(){
+    if(!s||s.seq_no==null||s.seq_no<=seq) return;
+    var mv=s.mv, wasOver=S.over;
+    if(mv&&mv.s&&mv.s!==mySide&&mv.k==="roll"&&s.dice){
+      busy=true; DIE.forEach(function(o,i){ o.held=!!(s.held||[])[i]; }); placeDice(true);
+      try{ await tumble(mv.idx,mv.idx.map(function(i){ return s.dice[i]; })); }catch(e){}
+      busy=false; fromSnap(s); afterRoll(mv.s);
+    } else if(mv&&mv.s&&mv.s!==mySide&&mv.k==="score"){
+      fromSnap(s); fresh=[mv.s+mv.cat]; Parlor.sfx("place",{pitch:1.2});
+    } else { fromSnap(s); if(mv&&mv.k==="hold"&&mv.s!==mySide) Parlor.sfx("click",{pitch:1.3}); }
+    syncDiceFromState(true); render();
+    if(S.over&&!wasOver) end(); else msg();
+  });
+}
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ say("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ say("Sign in to join","Use Tables to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ say("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;
+  Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
+  Parlor.mySeat(mySide===2?1:0);
+  fromSnap(room.state); syncDiceFromState(false);
+  render(); if(S.over) end(); else msg();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
+    var hadGuest=room&&room.guest; room=p.new; var s=p.new.state||{};
+    if(!hadGuest&&room.guest){ render(); msg(); }
+    if(s.seq_no!=null&&s.seq_no!==seq) remote(s);
+  }).subscribe();
+}
+
+/* ---------- fit to the space ---------- */
+function fit(){
+  var wide=window.innerWidth>=1000, phone=window.innerWidth<700, availW, availH;
+  L=phone?LAYOUTS.tall:LAYOUTS.wide; arrange();
+  if(wide){ var st=document.querySelector(".pk-stage"), top=st&&seatedNow()?st.getBoundingClientRect().top+window.scrollY:185; availW=(st&&st.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22; }
+  else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight; availW=window.innerWidth-12;
+    availH=shortL?window.innerHeight-56-64-10:phone?window.innerHeight-56-(64+30)-26:window.innerHeight-56-64-34-120; }
+  var s=Math.max(.2,Math.min(availW/L.W,availH/L.H,1.2)); fitEl._s=s;
+  document.body.classList.toggle("yz-phone",phone);
+  $("yzScaler").style.transform="scale("+s+")"; fitEl.style.width=Math.round(L.W*s)+"px"; fitEl.style.height=Math.round(L.H*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
+  if(fit._L!==L){ fit._L=L; spreadAll(); } placeDice(false);
+}
+window.addEventListener("resize",fit);
+
+/* ---------- hook up the kit ---------- */
+rollBtn.onclick=humanRoll; cupEl.onclick=humanRoll;
+function newGame(){ S=newState(); seq=0; busy=false; reported=false; fresh=[]; DIE.forEach(function(o){ o.held=false; }); placeDice(true); render(); msg(); }
+Parlor.init({
+  game:"yahtzee", title:"Club Yahtzee", bg:"yahtzee-parlor.jpg", home:"tables.html", stage:stage, whim:true,
+  tagline:"Five dice. Three rolls. Thirteen boxes.", invite:"The sun's on the table and the dice are in the cup. Take a seat and roll.",
+  players:[{name:"You",color:"#e7c77a"},{name:"The House",color:"#8a2c2a"}],
+  setsLabel:"Boards",
+  sets:[
+    {id:"walnut",name:"Library Walnut",need:0,dots:["#5e3c22","#68161f","#f3e7cf"]},
+    {id:"mahogany",name:"Sunroom Mahogany",club:true,dots:["#5a2210","#1a5830","#c9a24f"]},
+    {id:"ebony",name:"Midnight Ebony",club:true,dots:["#1b1714","#141e40","#f0d28a"]}
+  ],
+  rules:{
+    play:"<ol><li>Each turn, tap the cup (or Roll) to roll all five dice. You get up to three rolls.</li><li>After a roll, tap any dice you want to keep; they move to the Kept Dice rail. Tap a kept die to put it back. Then roll again.</li><li>When you're ready (or after the third roll), tap a gold number on the score card to fill that box. Every turn must fill one box, even with a zero.</li><li>You and your opponent take turns. After 13 rounds every box is filled and the higher total wins.</li></ol>",
+    score:"<ul><li><b>Aces to Sixes:</b> the total of that number. Score 63 or more in these six boxes for a <b>35-point bonus</b>.</li><li><b>3 of a Kind / 4 of a Kind:</b> the total of all five dice.</li><li><b>Full House</b> (three of one, two of another): 25. <b>Small Straight</b> (four in a row): 30. <b>Large Straight</b> (five in a row): 40.</li><li><b>Yahtzee</b> (five alike): 50. <b>Chance:</b> the total of all five dice.</li><li><b>Extra Yahtzees:</b> if your Yahtzee box already holds 50, each extra Yahtzee earns a 100-point bonus. It must go in its number's upper box if that's open; otherwise it can score full points in Full House or a straight.</li></ul>"
+  },
+  onNew:function(){ mySide=1; newGame(); }
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"walnut"; if(k!==curDesign) applyDesign(k); fit(); render(); if(!S.over&&S.turn===2) maybeHouse(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
+S=newState();
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"walnut");
+  fit(); render();
+  if(CODE) bootOnline();
+});
+</script>
 </body>
 </html>

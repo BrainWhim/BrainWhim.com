@@ -541,7 +541,7 @@ async function push(){
   await sb.from("rooms").update({state:snapshot(), status:S.over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
   if(S.over) report();
 }
-function report(){ if(reported||!S.over||!room||!window.bwRateGame) return; reported=true; bwRateGame(sb,room,me,S.winner); }
+function report(){ if(reported||!S.over||!room||!window.bwRateGame) return; reported=true; room.state=snapshot(); bwRateGame(sb,room,me,S.winner); }
 function fromSnap(s){
   if(!s||s.v!==2){ /* an older table, or a brand-new one: start a fresh hand, keeping any scores */
     var sc=[0,(s&&s.s1)||0,(s&&s.s2)||0]; S=fresh((s&&s.dealer)||1,sc,1); seq=0; return; }
@@ -550,7 +550,7 @@ function fromSnap(s){
 var queue=Promise.resolve();
 function remote(s){
   queue=queue.then(async function(){
-    if(!s||s.seq_no==null||s.seq_no===seq) return;
+    if(!s||s.seq_no==null||s.seq_no<=seq) return;
     var mv=s.mv, wasOver=S.over, wasPhase=S.phase;
     if(mv&&mv.s&&mv.s!==mySide&&mv.k==="play"){
       var k=S.hand[mv.s].findIndex(function(c){ return sameCard(c,mv.c); });

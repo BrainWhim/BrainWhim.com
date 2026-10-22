@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yahtzee Board Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Yahtzee board preview: a dice tray, a leather dice cup and a score card on a polished table, seen from above.
+   Everything is drawn in code. Pick a design at the top; the dice really roll and the score card really scores. */
+:root{--gold:#e7c77a;--ink:#f3ead8}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:Montserrat,system-ui,sans-serif;color:var(--ink);background:#140d08;overflow-x:hidden}
+.bg{position:fixed;inset:-40px;background:url("yahtzee-parlor.jpg") center/cover;filter:blur(18px) brightness(.55) saturate(1.1);z-index:-2}
+.bg::after{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 30%,rgba(0,0,0,.55) 100%);z-index:-1}
+header{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 16px 10px}
+.label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.designs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;background:rgba(15,23,42,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px}
+.designs button{font:600 13px Montserrat,sans-serif;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:6px;padding:9px 14px;cursor:pointer}
+.designs button:hover{background:rgba(255,255,255,.08)}
+.designs button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.55);color:#fff}
+.note{font-size:12px;opacity:.8;text-align:center;max-width:640px;line-height:1.5}
+.stage{width:100%;display:flex;justify-content:center;padding:0 0 30px}
+.fit{position:relative;flex:none;overflow:hidden}
+.scaler{position:absolute;left:0;top:0;transform-origin:0 0}
+.scene{position:relative;perspective:6000px;transform-style:preserve-3d}
+.scene *{transform-style:preserve-3d}
+.abs{position:absolute}
+
+/* ---------- the table top ---------- */
+.table{left:0;top:0;border-radius:22px;background-image:var(--y-table);background-size:cover;background-color:var(--y-tablec);
+  box-shadow:0 30px 60px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,235,200,.18)}
+.table::before{content:"";position:absolute;inset:14px;border-radius:14px;border:2px solid var(--y-band1);box-shadow:0 0 0 3px var(--y-band2),inset 0 0 0 3px var(--y-band2)}
+.table::after{content:"";position:absolute;inset:0;border-radius:22px;background:radial-gradient(ellipse 60% 55% at 38% 40%,rgba(255,230,180,.16),rgba(0,0,0,0) 60%),linear-gradient(115deg,rgba(255,255,255,.06),rgba(0,0,0,0) 40%,rgba(0,0,0,.25))}
+
+/* ---------- the dice tray ---------- */
+.tray{width:600px;height:600px}
+.tray .sh{position:absolute;inset:-6px -14px -22px -6px;border-radius:12px;background:rgba(0,0,0,.55);filter:blur(14px)}
+.tray .frame{position:absolute;inset:0;border-radius:8px;background-image:var(--y-frame);background-size:600px 600px;background-color:var(--y-framec);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,235,200,.25),inset 0 -3px 4px rgba(0,0,0,.35)}
+.tray .band{position:absolute;inset:26px;border-radius:3px;background:var(--y-inlay);box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+.tray .lip{position:absolute;inset:36px;border-radius:2px;background-image:var(--y-frame);background-size:600px 600px;background-position:-60px -40px;background-color:var(--y-framec);box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.tray .felt{position:absolute;inset:44px;background-image:var(--y-felt);background-size:256px 256px;background-color:var(--y-feltc);
+  box-shadow:inset 0 10px 18px rgba(0,0,0,.6),inset 8px 0 14px rgba(0,0,0,.45),inset -6px 0 12px rgba(0,0,0,.4),inset 0 -6px 10px rgba(0,0,0,.35)}
+.tray .felt::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 45% 40%,rgba(255,225,170,.12),rgba(0,0,0,0) 65%)}
+/* the keep rail: a recessed velvet channel along your side of the tray */
+.tray .keep{position:absolute;left:44px;right:44px;bottom:44px;height:100px;background-image:var(--y-felt);background-size:256px 256px;background-color:var(--y-feltc);
+  box-shadow:inset 0 8px 14px rgba(0,0,0,.65),inset 0 -2px 4px rgba(0,0,0,.3);filter:brightness(.78)}
+.tray .rail{position:absolute;left:44px;right:44px;bottom:142px;height:5px;background:linear-gradient(180deg,#f6e2a4,#b88a36 55%,#6e4f1d);box-shadow:0 2px 3px rgba(0,0,0,.5)}
+.tray .slot{position:absolute;width:74px;height:74px;margin:-37px 0 0 -37px;border-radius:12px;border:1px dashed rgba(240,215,150,.28)}
+.tray .klab{position:absolute;left:0;right:0;bottom:152px;text-align:center;font:600 10px Montserrat,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:rgba(240,220,170,.38)}
+
+/* ---------- the dice cup, lying on its side ---------- */
+.cup{width:132px;height:104px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cup .csh{position:absolute;left:4px;top:18px;width:136px;height:100px;border-radius:40px 50px 50px 40px;background:rgba(0,0,0,.55);filter:blur(9px)}
+.cup .body{position:absolute;left:18px;top:0;width:110px;height:104px;border-radius:6px 48px 48px 6px / 6px 52px 52px 6px;background:var(--y-cup);overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+.cup .body::before{content:"";position:absolute;inset:0;background-image:var(--y-cuptex);background-size:128px 128px;mix-blend-mode:multiply;opacity:.55}
+.cup .body::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.08) 22%,rgba(0,0,0,0) 45%,rgba(0,0,0,.35) 85%,rgba(0,0,0,.55))}
+.cup .ring{position:absolute;top:0;bottom:0;width:7px;background:var(--y-cuprim);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.cup .ring.a{left:18px}.cup .ring.b{left:100px;width:4px;opacity:.85}
+.cup .ring::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(0,0,0,0) 30%,rgba(0,0,0,.45))}
+.cup .mouth{position:absolute;left:0;top:0;width:38px;height:104px;border-radius:50%;background:var(--y-cuprim);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.cup .mouth::before{content:"";position:absolute;inset:6px 5px;border-radius:50%;background:radial-gradient(ellipse 70% 70% at 62% 50%,var(--y-cupin),#000 95%)}
+.cup .mono{position:absolute;left:52px;top:36px;transform:rotate(90deg);font-size:24px}
+.cup:hover .body{filter:brightness(1.08)}
+.cup.ready::after{content:"";position:absolute;inset:-8px -6px;border-radius:30px 56px 56px 30px;box-shadow:0 0 0 2px rgba(231,199,122,.55),0 0 22px 4px rgba(240,190,90,.35);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.mono{display:flex;align-items:baseline;line-height:1.25}
+.mono b,.mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+
+/* ---------- roll button and roll lamps ---------- */
+.roll{width:150px;height:50px;border-radius:6px;background:rgba(15,23,42,.78);border:1px solid rgba(231,199,122,.55);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 16px rgba(240,190,90,.25);
+  color:#e6c25a;font:700 16px Montserrat,sans-serif;letter-spacing:.45px;cursor:pointer}
+.roll:hover{color:#f0d27a;background:rgba(15,23,42,.88)}
+.roll:disabled{opacity:.45;cursor:default}
+.lamps{display:flex;gap:10px;align-items:center;font:600 10px Montserrat,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,240,210,.7)}
+.lamps i{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d0,#d9b25a 45%,#6e4f1d);box-shadow:0 0 8px rgba(240,190,90,.6),0 1px 2px rgba(0,0,0,.6)}
+.lamps i.off{background:radial-gradient(circle at 35% 30%,#555,#222);box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
+
+/* ---------- dice ---------- */
+.die{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.die.go,.dsh.go{transition:transform 1.25s cubic-bezier(.12,.62,.22,1)}
+.die.slide,.dsh.slide{transition:transform .45s cubic-bezier(.3,.7,.3,1)}
+.die .d{position:absolute;inset:0;border-radius:12px;background:var(--y-die);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:9px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),inset -4px -6px 10px rgba(0,0,0,.18),inset 4px 5px 8px rgba(255,255,255,.35)}
+.die .core{position:absolute;inset:2px;background:var(--y-diecore);border-radius:7px}
+.die .core.c2{transform:rotateY(90deg)}.die .core.c3{transform:rotateX(90deg)}
+.die .d i{width:11px;height:11px;border-radius:50%;margin:auto;background:radial-gradient(circle at 60% 65%,var(--y-pip) 40%,var(--y-pip2) 100%);box-shadow:inset 0 2px 2px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.35);visibility:hidden}
+.die .d i.p{visibility:visible}
+/* at rest only the top face is drawn (Chrome draws edge-on side faces as thin lines) */
+.die.rest .d,.die.rest .core{visibility:hidden}
+.die.rest .d.up,.die.rest .d.up i.p{visibility:visible}
+.die.rest .d.up{box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),inset -4px -6px 10px rgba(0,0,0,.2),inset 4px 5px 8px rgba(255,255,255,.35),0 3px 0 -1px var(--y-diecore),0 4px 1px -1px rgba(0,0,0,.35)}
+.dsh{position:absolute;left:0;top:0;width:80px;height:80px;margin:-40px 0 0 -40px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.6),rgba(0,0,0,0) 68%);filter:blur(3px);pointer-events:none}
+.dsh.held{background:radial-gradient(circle,rgba(255,205,110,.75),rgba(255,190,80,.25) 45%,rgba(0,0,0,0) 70%)}
+body.quick .die.go,body.quick .dsh.go,body.quick .die.slide,body.quick .dsh.slide{transition-duration:.01s}
+
+/* ---------- the score card ---------- */
+.card{border-radius:10px;padding:14px;background-image:var(--y-cardtex);background-size:128px 128px;background-color:var(--y-cardc);
+  box-shadow:0 14px 26px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15)}
+.card .orn{position:absolute;inset:6px;border-radius:6px;border:1.5px solid var(--y-cardline);box-shadow:inset 0 0 0 3px rgba(0,0,0,0),inset 0 0 0 4px var(--y-cardline2);pointer-events:none}
+.card .cn{position:absolute;width:16px;height:16px;border:1.5px solid var(--y-cardline);transform:rotate(45deg);background:var(--y-cardc)}
+.card .cn::after{content:"";position:absolute;inset:3px;background:var(--y-cardline)}
+.card .cn.a{left:-2px;top:-2px}.card .cn.b{right:-2px;top:-2px}.card .cn.c{left:-2px;bottom:-2px}.card .cn.d{right:-2px;bottom:-2px}
+.card .paper{position:relative;height:100%;border-radius:3px;background:linear-gradient(170deg,#fffaf0,#f4ead4 70%,#ecdfc2);box-shadow:inset 0 0 0 1px rgba(120,90,40,.35),inset 0 0 14px rgba(150,110,50,.18);
+  color:#2a2118;padding:8px 10px 8px;display:flex;flex-direction:column}
+.card .hd{display:flex;align-items:center;justify-content:center;gap:10px;height:40px;border-bottom:1.5px solid var(--y-ink2);margin-bottom:4px}
+.card .hd .mono{font-size:22px}
+.card .hd .mono b,.card .hd .mono i{background:linear-gradient(170deg,#c9a24f,#8f6a22 60%,#b8913f);-webkit-background-clip:text;background-clip:text;filter:none}
+.card .hd span{font:700 13px Montserrat,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--y-ink)}
+.card .cols{display:flex;flex-direction:column;gap:2px;flex:1}
+.card table{width:100%;border-collapse:collapse;font-family:"Cormorant Garamond",Georgia,serif}
+.card th{font:700 10px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--y-ink);height:22px;text-align:center}
+.card th:first-child{text-align:left}
+.card td{height:29px;border-bottom:1px solid rgba(90,70,40,.22);font-size:17px;font-weight:700;padding:0 4px}
+.card td.nm{font-size:16px;color:#2a2118;white-space:nowrap}
+.card td.nm small{font:600 9px Montserrat,sans-serif;letter-spacing:.06em;color:rgba(60,45,25,.55);margin-left:5px}
+.card td.v{width:62px;text-align:center;border-left:1px solid rgba(90,70,40,.22);color:var(--y-ink)}
+.card td.v.opp{color:#5a4a36}
+.card td.v.pot{color:#b07d1a;font-style:italic;cursor:pointer;background:rgba(240,200,100,.13);box-shadow:inset 0 0 0 1px rgba(200,150,50,.45)}
+.card td.v.pot.pz{color:rgba(176,125,26,.45);background:rgba(240,200,100,.06);box-shadow:inset 0 0 0 1px rgba(200,150,50,.2)}
+.card td.v.pot:hover{background:rgba(240,200,100,.32)}
+.card td.v.zero{color:rgba(150,110,60,.65)}
+.card tr.sub td{font:600 11px Montserrat,sans-serif;letter-spacing:.05em;color:rgba(60,45,25,.75);height:26px;background:rgba(150,110,50,.07)}
+.card tr.sub td.v{font:700 13px Montserrat,sans-serif;color:var(--y-ink)}
+.card .tot{display:flex;align-items:center;height:38px;margin-top:4px;border-top:1.5px solid var(--y-ink2);font:700 12px Montserrat,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--y-ink)}
+.card .tot b{flex:1;padding-left:4px}.card .tot em{width:62px;text-align:center;font:700 20px "Cormorant Garamond",Georgia,serif;font-style:normal;letter-spacing:0}
+.card .lowhd{display:none}
+.card.tall .cols{flex-direction:row;gap:14px}
+.card.tall .cols>div{flex:1}
+.card.tall .lowhd{display:table-row}
+.msg{font:600 13px Montserrat,sans-serif;color:rgba(255,240,210,.85);text-align:center}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<header>
+  <div class="label">Yahtzee · Board Preview</div>
+  <div class="designs" id="designs"></div>
+  <div class="note" id="note"></div>
+</header>
+<div class="stage"><div class="fit" id="fit"><div class="scaler" id="scaler"><div class="scene" id="scene">
+  <div class="abs table" id="table"></div>
+  <div class="abs tray" id="tray"><div class="sh"></div><div class="frame"></div><div class="band"></div><div class="lip"></div><div class="felt"></div><div class="keep"></div><div class="rail"></div><div class="klab">Kept Dice</div></div>
+  <div class="abs cup" id="cup" title="Roll"><div class="csh"></div><div class="body"></div><div class="ring a"></div><div class="ring b"></div><div class="mouth"></div><span class="mono"><b>B</b><i>W</i></span></div>
+  <button class="abs roll" id="roll" type="button">Roll</button>
+  <div class="abs lamps" id="lamps"></div>
+  <div class="abs msg" id="msg"></div>
+  <div class="abs card" id="card"></div>
+  <div id="dice" class="abs" style="left:0;top:0"></div>
+</div></div></div></div>
+
+<script>
+/* ---------- painted materials ---------- */
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;for(i=0;i<256;i++)p[i]=i;for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}for(i=0;i<512;i++)P[i]=p[i&255];for(i=0;i<256;i++)G[i]=r();function f(x){return x*x*(3-2*x);}return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;for(var y=0;y<h;y++)for(var x=0;x<w;x++){var col=fn(x,y),i=(y*w+x)*4;D[i]=col[0];D[i+1]=col[1];D[i+2]=col[2];D[i+3]=255;}g.putImageData(im,0,0);return c;}
+function cssUrl(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
+function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
+function feltFn(rgb,seed){var r=rng(seed),n=noise2(seed);return function(x,y){var k=.86+r()*.22+(fbm(n,x/22,y/22,3)-.5)*.14;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+function leatherFn(rgb,seed){var r=rng(seed),n=noise2(seed),n2=noise2(seed+3);return function(x,y){var k=.82+fbm(n,x/40,y/40,4)*.3+(fbm(n2,x/3,y/3,2)-.5)*.12+(r()-.5)*.05;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+/* a fine inlaid band: a light wood strip with dark ticks (like the tray in the room photo) */
+
+var DESIGNS={
+  mahogany:{name:"Sunroom Mahogany",note:"Matches the room: a polished mahogany table, a mahogany tray with a satinwood rope inlay around green felt, ivory dice with black pips, a gold leather cup, and a navy score card trimmed in gold.",
+    table:{light:[120,52,30],dark:[62,22,10],freq:.02,turb:7,wx:500,wy:40,sharp:.8,ringAmt:.45,streakAmt:.5,pores:.01,blotch:.3,seed:51},tablec:"#5c2412",band1:"rgba(230,200,140,.55)",band2:"rgba(40,16,6,.55)",
+    frame:{light:[112,44,24],dark:[56,18,8],freq:.05,turb:5,wx:300,wy:24,sharp:.8,ringAmt:.5,streakAmt:.45,pores:.015,blotch:.25,seed:12},framec:"#5a2210",
+    inlay:"repeating-linear-gradient(45deg,#ecd9a8 0 5px,#3b2412 5px 7px)",felt:[26,88,48],
+    cup:"linear-gradient(180deg,#f1d58a,#c9a24f 40%,#8d6a24)",cuptex:[200,170,110],cuprim:"linear-gradient(90deg,#8a6526,#f3d790 45%,#b8913f 70%,#8a6526)",cupin:"#5a3d14",
+    die:"linear-gradient(145deg,#fbf3e0,#e6d6b2)",diecore:"#eadcbc",pip:"#141010",pip2:"#3a2a20",
+    cardc:"#1c2a4e",cardtex:[30,44,82],cardline:"#d9b25a",cardline2:"rgba(217,178,90,.45)",ink:"#1c2a4e",ink2:"rgba(28,42,78,.55)"},
+  walnut:{name:"Library Walnut",note:"A warm walnut table and tray with a brass inlay around claret felt, cream dice with claret pips, an oxblood leather cup with brass rings, and an oxblood score card.",
+    table:{light:[128,86,52],dark:[60,36,20],freq:.035,turb:9,wx:240,wy:22,sharp:.7,ringAmt:.6,streakAmt:.42,pores:.02,blotch:.3,seed:27},tablec:"#5e3c22",band1:"rgba(240,210,140,.6)",band2:"rgba(30,18,8,.5)",
+    frame:{light:[118,78,46],dark:[56,34,18],freq:.05,turb:8,wx:200,wy:20,sharp:.7,ringAmt:.62,streakAmt:.4,pores:.02,blotch:.28,seed:23},framec:"#5e3c22",
+    inlay:"linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)",felt:[104,22,32],
+    cup:"linear-gradient(180deg,#8a2c2a,#5e1416 45%,#300808)",cuptex:[150,60,55],cuprim:"linear-gradient(90deg,#8a6526,#f3d790 45%,#b8913f 70%,#8a6526)",cupin:"#2a0808",
+    die:"linear-gradient(145deg,#fbf6ea,#e4dccb)",diecore:"#e8e0cf",pip:"#7a1218",pip2:"#3a0608",
+    cardc:"#5a1a1a",cardtex:[98,30,30],cardline:"#d9b25a",cardline2:"rgba(217,178,90,.45)",ink:"#5a1a1a",ink2:"rgba(90,26,26,.5)"},
+  ebony:{name:"Midnight Ebony",note:"An ebony table and tray with a mother-of-pearl inlay around midnight-blue felt, black dice with gold pips, a black leather cup with gold rims, and a black score card with pearl lines.",
+    table:{light:[42,34,30],dark:[12,9,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},tablec:"#1b1714",band1:"rgba(225,232,245,.55)",band2:"rgba(0,0,0,.5)",
+    frame:{light:[46,38,32],dark:[14,11,9],freq:.06,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:9},framec:"#1b1714",
+    inlay:"linear-gradient(90deg,#c8d0dc,#ffffff 25%,#e6d8f0 45%,#d6f0ea 65%,#ffffff 80%,#b8c0cc)",felt:[20,30,64],
+    cup:"linear-gradient(180deg,#3a3a40,#16161a 45%,#050506)",cuptex:[70,70,76],cuprim:"linear-gradient(90deg,#8a6526,#f3d790 45%,#b8913f 70%,#8a6526)",cupin:"#111",
+    die:"linear-gradient(145deg,#2c2420,#0f0b09)",diecore:"#16110e",pip:"#f0d28a",pip2:"#9b7430",
+    cardc:"#141418",cardtex:[30,30,36],cardline:"#e4e8f0",cardline2:"rgba(228,232,240,.4)",ink:"#1e2230",ink2:"rgba(30,34,48,.55)"}
+};
+var tex={}, cur=null;
+function applyDesign(k){
+  var d=DESIGNS[k]; cur=k;
+  if(!tex[k]) tex[k]={table:cssUrl(canvasOf(1200,800,woodFn(d.table))),frame:cssUrl(canvasOf(600,600,woodFn(d.frame))),felt:cssUrl(canvasOf(256,256,feltFn(d.felt,k.length*13))),
+    cup:cssUrl(canvasOf(128,128,leatherFn(d.cuptex,k.length*7))),card:cssUrl(canvasOf(128,128,leatherFn(d.cardtex,k.length*5)))};
+  var t=tex[k], s=document.getElementById("scene").style;
+  s.setProperty("--y-table",t.table); s.setProperty("--y-tablec",d.tablec); s.setProperty("--y-band1",d.band1); s.setProperty("--y-band2",d.band2);
+  s.setProperty("--y-frame",t.frame); s.setProperty("--y-framec",d.framec); s.setProperty("--y-inlay",d.inlay);
+  s.setProperty("--y-felt",t.felt); s.setProperty("--y-feltc","rgb("+d.felt+")");
+  s.setProperty("--y-cup",d.cup); s.setProperty("--y-cuptex",t.cup); s.setProperty("--y-cuprim",d.cuprim); s.setProperty("--y-cupin",d.cupin);
+  s.setProperty("--y-die",d.die); s.setProperty("--y-diecore",d.diecore); s.setProperty("--y-pip",d.pip); s.setProperty("--y-pip2",d.pip2);
+  s.setProperty("--y-cardc",d.cardc); s.setProperty("--y-cardtex",t.card); s.setProperty("--y-cardline",d.cardline); s.setProperty("--y-cardline2",d.cardline2); s.setProperty("--y-ink",d.ink); s.setProperty("--y-ink2",d.ink2);
+  document.getElementById("note").textContent=d.note;
+  [].forEach.call(document.querySelectorAll(".designs button"),function(b){ b.classList.toggle("on",b.dataset.k===k); });
+}
+(function(){ var box=document.getElementById("designs"); Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k; b.onclick=function(){ applyDesign(k); }; box.appendChild(b); }); })();
+
+/* ---------- layout: side by side on wide screens, stacked on phones ---------- */
+var L, tall=false;
+var LAYOUTS={
+  wide:{W:1200,H:700,tray:[40,50],cup:[684,232],cupRot:0,roll:[675,372],lamps:[680,440],msg:[662,486,176],card:[846,50,314,600]},
+  tall:{W:680,H:1210,tray:[40,40],cup:[60,686],cupRot:0,roll:[236,676],lamps:[440,690],msg:[236,738,400],card:[40,800,600,370]}
+};
+function layout(){
+  tall=window.innerWidth<760; L=LAYOUTS[tall?"tall":"wide"];
+  var sc=document.getElementById("scene"); sc.style.width=L.W+"px"; sc.style.height=L.H+"px";
+  var tb=document.getElementById("table"); tb.style.width=L.W+"px"; tb.style.height=L.H+"px";
+  pos("tray",L.tray); pos("cup",L.cup); pos("roll",L.roll); pos("lamps",L.lamps);
+  var m=document.getElementById("msg"); pos("msg",L.msg); m.style.width=L.msg[2]+"px";
+  var c=document.getElementById("card"); pos("card",L.card); c.style.width=L.card[2]+"px"; c.style.height=L.card[3]+"px"; c.classList.toggle("tall",tall);
+  var availW=Math.min(window.innerWidth-16,1400), s=Math.min(availW/L.W,tall?1:Math.max(.5,(window.innerHeight-140)/L.H),1.1);
+  document.getElementById("scaler").style.transform="scale("+s+")";
+  var f=document.getElementById("fit"); f.style.width=Math.round(L.W*s)+"px"; f.style.height=Math.round(L.H*s)+"px";
+  placeAll(false);
+}
+function pos(id,p){ var e=document.getElementById(id); e.style.left=p[0]+"px"; e.style.top=p[1]+"px"; }
+window.addEventListener("resize",layout);
+
+/* ---------- the dice ---------- */
+var PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+var FACE={1:"translateZ(32px)",6:"rotateY(180deg) translateZ(32px)",2:"rotateY(90deg) translateZ(32px)",5:"rotateY(-90deg) translateZ(32px)",3:"rotateX(90deg) translateZ(32px)",4:"rotateX(-90deg) translateZ(32px)"};
+var UP={1:[0,0],6:[0,180],2:[0,-90],5:[0,90],3:[-90,0],4:[90,0]};
+var D=[];
+(function(){
+  var holder=document.getElementById("dice");
+  for(var i=0;i<5;i++){
+    var s=document.createElement("div"); s.className="dsh"; holder.appendChild(s);
+    var d=document.createElement("div"); d.className="die";
+    var h='<div class="core"></div><div class="core c2"></div><div class="core c3"></div>';
+    [1,2,3,4,5,6].forEach(function(v){ h+='<div class="d" data-v="'+v+'" style="transform:'+FACE[v]+'">'; for(var j=0;j<9;j++) h+='<i class="'+(PIPS[v].indexOf(j)>=0?"p":"")+'"></i>'; h+='</div>'; });
+    d.innerHTML=h; holder.appendChild(d);
+    (function(k){ d.onclick=function(){ toggleHold(k); }; })(i);
+    D.push({el:d,sh:s,v:[5,5,5,2,2][i],held:false,x:0,y:0,rx:0,ry:0,rz:0});
+  }
+})();
+/* tray spots: the rolling area is the felt above the rail; kept dice sit in five slots in the velvet channel */
+function feltBox(){ var t=L.tray; return {x0:t[0]+44+48,x1:t[0]+556-48,y0:t[1]+44+48,y1:t[1]+454-52}; }
+function slotXY(k){ var t=L.tray; return [t[0]+44+512*(k+.5)/5, t[1]+556-50]; }
+function cupMouth(){ return [L.cup[0]+18,L.cup[1]+52]; }
+function setDie(o,x,y,cls){
+  o.el.classList.toggle("rest",cls!=="go");
+  [].forEach.call(o.el.querySelectorAll(".d"),function(f){ f.classList.toggle("up",+f.dataset.v===o.v); });
+  o.el.classList.remove("go","slide"); o.sh.classList.remove("go","slide"); if(cls){ o.el.classList.add(cls); o.sh.classList.add(cls); }
+  o.el.style.transform="translate3d("+x+"px,"+y+"px,32px) rotateZ("+(o.held?0:o.rz)+"deg) rotateX("+o.rx+"deg) rotateY("+o.ry+"deg)";
+  o.sh.style.transform="translate3d("+(x+7)+"px,"+(y+9)+"px,1px)"; o.sh.classList.toggle("held",o.held);
+}
+function placeAll(anim){ D.forEach(function(o,i){ if(o.held){ var p=slotXY(i); setDie(o,p[0],p[1],anim?"slide":null); } else setDie(o,o.x,o.y,anim?"slide":null); }); }
+/* spread target spots that don't touch */
+function spots(n){
+  var b=feltBox(), out=[], tries=0;
+  D.forEach(function(o){ if(!o.held&&n.indexOf(o)<0) out.push([o.x,o.y]); });
+  return n.map(function(){ var p; do{ p=[b.x0+Math.random()*(b.x1-b.x0),b.y0+Math.random()*(b.y1-b.y0)]; tries++; } while(tries<500&&out.some(function(q){ return Math.hypot(q[0]-p[0],q[1]-p[1])<92; })); out.push(p); return p; });
+}
+function initialSpread(){ var b=feltBox(), pts=[[.18,.3],[.42,.62],[.6,.22],[.82,.55],[.3,.9]]; D.forEach(function(o,i){ o.x=b.x0+(b.x1-b.x0)*pts[i][0]; o.y=b.y0+(b.y1-b.y0)*pts[i][1]; var u=UP[o.v]; o.rx=u[0]; o.ry=u[1]; o.rz=(i*37%60)-30; }); }
+
+/* ---------- the game (one player in the preview) ---------- */
+var CATS=[["ones","Aces",""],["twos","Twos",""],["threes","Threes",""],["fours","Fours",""],["fives","Fives",""],["sixes","Sixes",""],
+  ["three","3 of a Kind","total"],["four","4 of a Kind","total"],["full","Full House","25"],["small","Sm. Straight","30"],["large","Lg. Straight","40"],["yahtzee","Yahtzee","50"],["chance","Chance","total"]];
+var me={}, house={ones:3,twos:6,fives:15,three:22,full:25,chance:21}, rolls=0, busy=false, ybonus=0;
+function counts(v){ var c=[0,0,0,0,0,0,0]; v.forEach(function(x){ c[x]++; }); return c; }
+function scoreFor(cat,v,sheet){
+  var c=counts(v), sum=v.reduce(function(a,b){ return a+b; },0), mx=Math.max.apply(null,c), up=["ones","twos","threes","fours","fives","sixes"].indexOf(cat);
+  var joker=mx===5&&sheet.yahtzee!=null&&sheet[["ones","twos","threes","fours","fives","sixes"][v[0]-1]]!=null;
+  if(up>=0) return c[up+1]*(up+1);
+  function run(n){ for(var s=1;s<=7-n;s++){ var ok=true; for(var k=s;k<s+n;k++) if(!c[k]) ok=false; if(ok) return true; } return false; }
+  switch(cat){
+    case "three": return mx>=3?sum:0; case "four": return mx>=4?sum:0;
+    case "full": return (c.indexOf(3)>0&&c.indexOf(2)>0)||joker?25:0;
+    case "small": return run(4)||joker?30:0; case "large": return run(5)||joker?40:0;
+    case "yahtzee": return mx===5?50:0; case "chance": return sum;
+  }
+}
+function upperSum(s){ return ["ones","twos","threes","fours","fives","sixes"].reduce(function(a,k){ return a+(s[k]||0); },0); }
+function total(s,yb){ var u=upperSum(s); return u+(u>=63?35:0)+["three","four","full","small","large","yahtzee","chance"].reduce(function(a,k){ return a+(s[k]||0); },0)+(yb||0); }
+function vals(){ return D.map(function(o){ return o.v; }); }
+function renderCard(){
+  var v=vals(), canScore=rolls>0&&!busy;
+  function row(c){ var k=c[0], mine=me[k], h=house[k], cell;
+    if(mine!=null) cell='<td class="v'+(mine===0?' zero':'')+'">'+mine+'</td>';
+    else if(canScore){ var p=scoreFor(k,v,me); cell='<td class="v pot'+(p?'':' pz')+'" data-k="'+k+'">'+p+'</td>'; }
+    else cell='<td class="v"></td>';
+    return '<tr><td class="nm">'+c[1]+(c[2]?'<small>'+c[2]+'</small>':'')+'</td>'+cell+'<td class="v opp">'+(h!=null?h:'')+'</td></tr>'; }
+  var u=upperSum(me), hu=upperSum(house);
+  var head='<tr><th></th><th>You</th><th>House</th></tr>';
+  var h='<div class="orn"></div><div class="cn a"></div><div class="cn b"></div><div class="cn c"></div><div class="cn d"></div><div class="paper">';
+  h+='<div class="hd"><span class="mono"><b>B</b><i>W</i></span><span>Score Card</span></div><div class="cols"><div><table>'+head;
+  CATS.slice(0,6).forEach(function(c){ h+=row(c); });
+  h+='<tr class="sub"><td>Bonus <span style="opacity:.7">(63+ = 35)</span></td><td class="v">'+(u>=63?35:u+'/63')+'</td><td class="v">'+(hu>=63?35:hu+'/63')+'</td></tr></table></div><div><table><tr class="lowhd">'+head.slice(4);
+  CATS.slice(6).forEach(function(c){ h+=row(c); });
+  h+='<tr class="sub"><td>Yahtzee Bonus</td><td class="v">'+(ybonus||'')+'</td><td class="v"></td></tr></table></div></div>';
+  h+='<div class="tot"><b>Total</b><em>'+total(me,ybonus)+'</em><em style="color:#5a4a36">'+total(house,0)+'</em></div></div>';
+  var card=document.getElementById("card"); card.innerHTML=h;
+  [].forEach.call(card.querySelectorAll("td.pot"),function(td){ td.onclick=function(){ choose(td.dataset.k); }; });
+}
+function lamps(){ var h='<span>Rolls</span>'; for(var i=0;i<3;i++) h+='<i class="'+(i<3-rolls?'':'off')+'"></i>'; document.getElementById("lamps").innerHTML=h; }
+function say(t){ document.getElementById("msg").textContent=t; }
+function ui(){
+  var done=Object.keys(me).length===13;
+  var rb=document.getElementById("roll"); rb.disabled=busy||rolls>=3||done; rb.textContent=done?"Game Over":rolls===0?"Roll":"Roll Again";
+  document.getElementById("cup").classList.toggle("ready",!busy&&rolls<3&&!done);
+  lamps(); renderCard();
+  if(done) say("Final score: "+total(me,ybonus)+". Tap the cup to play again.");
+  else if(busy) say("");
+  else if(rolls===0) say("Tap the cup or Roll");
+  else if(rolls<3) say("Tap dice to keep them, then roll again, or score a box");
+  else say("Choose a box on the score card");
+}
+function toggleHold(i){ if(busy||rolls===0||rolls>=3&&false) return; var o=D[i]; o.held=!o.held; tap(); placeAll(true); ui(); }
+function roll(){
+  if(Object.keys(me).length===13){ me={}; ybonus=0; rolls=0; D.forEach(function(o){ o.held=false; }); }
+  if(busy||rolls>=3) return;
+  var free=D.filter(function(o){ return !o.held; }); if(!free.length) return;
+  busy=true; rolls++; ui(); rattle();
+  var m=cupMouth(), tg=spots(free);
+  free.forEach(function(o,j){
+    o.v=1+Math.floor(Math.random()*6);
+    o.x=m[0]-4; o.y=m[1]+(j-2)*8; setDie(o,o.x,o.y,null); void o.el.offsetWidth;
+    var up=UP[o.v], dir=Math.random()<.5?-1:1;
+    o.rx=up[0]+360*(2+Math.floor(Math.random()*2))*dir; o.ry=up[1]+360*(1+Math.floor(Math.random()*2)); o.rz=(Math.random()<.5?-1:1)*(10+Math.random()*50);
+    o.x=tg[j][0]; o.y=tg[j][1];
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ setDie(o,o.x,o.y,"go"); }); });
+  });
+  setTimeout(function(){ D.forEach(function(o){ o.rx=((o.rx%360)+360)%360; o.ry=((o.ry%360)+360)%360; if(!o.held) setDie(o,o.x,o.y,null); }); busy=false; ui(); }, quickMode()?60:1320);
+}
+function choose(k){
+  if(busy||rolls===0||me[k]!=null) return;
+  var v=vals(), c=counts(v);
+  if(Math.max.apply(null,c)===5&&me.yahtzee===50) ybonus+=100;
+  me[k]=scoreFor(k,v,me); rolls=0; D.forEach(function(o){ o.held=false; }); tap(); placeAll(true); ui();
+}
+document.getElementById("roll").onclick=roll; document.getElementById("cup").onclick=roll;
+function quickMode(){ return window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches; }
+document.body.classList.toggle("quick",quickMode());
+
+/* ---------- sounds (made in the browser) ---------- */
+var AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(AC.state!=="running"&&AC.resume) AC.resume(); return AC; }
+function noiseBuf(a,len){ var b=a.createBuffer(1,Math.max(1,a.sampleRate*len),a.sampleRate),d=b.getChannelData(0); for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2); var s=a.createBufferSource(); s.buffer=b; return s; }
+function knock(a,t,f,peak){ var n=noiseBuf(a,.04),bp=a.createBiquadFilter(),g=a.createGain(); bp.type="bandpass"; bp.frequency.value=f; bp.Q.value=2.2; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(peak,t+.002); g.gain.exponentialRampToValueAtTime(.0001,t+.04); n.connect(bp); bp.connect(g); g.connect(a.destination); n.start(t); n.stop(t+.05); }
+function rattle(){ var a=ac(); if(!a) return; var t=a.currentTime+.01, tk=0, k=0; while(tk<.45&&k<9){ knock(a,t+tk,500+Math.random()*500,.09); tk+=.035+Math.random()*.03; k++; } tk+=.08; k=0; while(tk<1.25&&k<12){ knock(a,t+tk,800+Math.random()*900,.12*(1-tk/1.6)); tk+=.05+Math.pow(k/12,1.6)*.15+Math.random()*.03; k++; } }
+function tap(){ var a=ac(); if(!a) return; knock(a,a.currentTime+.01,1500,.1); }
+
+/* ---------- start ---------- */
+applyDesign("mahogany");
+layout(); initialSpread(); placeAll(false); ui();
+</script>
+</body>
+</html>
