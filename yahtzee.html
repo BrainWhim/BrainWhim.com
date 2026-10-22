@@ -8,13 +8,17 @@
 <link rel="stylesheet" href="parlor-kit.css?v=1021h">
 <style>
 /* ===== Yahtzee: a dice tray, a leather dice cup and a score card on a polished table, seen from straight above =====
-   Everything is painted in code (no picture files). The cup and the score card carry the gold BW monogram.
-   Boards (the Boards card): Library Walnut is free; Sunroom Mahogany and Midnight Ebony are for Club members. */
+   Everything is painted in code (no picture files). The dice cup (tap it to roll) and the score card carry the gold BW monogram.
+   Boards (the Boards card): Carved Marble is free; Sunroom Mahogany and Midnight Ebony are for Club members. */
 .yz-pad{width:100%;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
 .yz-fit{position:relative;flex:none;overflow:hidden}
 .yz-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
-.yz-scene{position:relative;perspective:6000px;transform-style:preserve-3d}
-.yz-scene *{transform-style:preserve-3d}
+.yz-scene{position:relative}
+/* only the dice live in 3D, in their own layer above the flat table (flat things never share depth with 3D ones) */
+.yz-scene .dlayer{position:absolute;left:0;top:0;perspective:6000px;pointer-events:none;z-index:3}
+.yz-scene .die,.yz-scene .die *{transform-style:preserve-3d}
+.yz-scene .hit{position:absolute;left:0;top:0;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:16px;z-index:4;cursor:pointer;-webkit-tap-highlight-color:transparent;display:none}
+.yz-scene .hit.on{display:block}
 .yz-scene .abs{position:absolute}
 /* the table top */
 .yz-scene .table{left:0;top:0;border-radius:22px;background-image:var(--y-table);background-size:cover;background-color:var(--y-tablec);
@@ -35,31 +39,31 @@
 .yz-scene .tray .rail{position:absolute;left:44px;right:44px;bottom:142px;height:5px;background:linear-gradient(180deg,#f6e2a4,#b88a36 55%,#6e4f1d);box-shadow:0 2px 3px rgba(0,0,0,.5)}
 .yz-scene .tray .klab{position:absolute;left:0;right:0;bottom:152px;text-align:center;font:600 10px Montserrat,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:rgba(240,220,170,.38)}
 /* the dice cup, lying on its side */
-.yz-scene .cup{width:132px;height:104px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.yz-scene .cup .csh{position:absolute;left:4px;top:18px;width:136px;height:100px;border-radius:40px 50px 50px 40px;background:rgba(0,0,0,.55);filter:blur(9px)}
-.yz-scene .cup .body{position:absolute;left:18px;top:0;width:110px;height:104px;border-radius:6px 48px 48px 6px / 6px 52px 52px 6px;background:var(--y-cup);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+/* the dice cup, standing upright (tap it to roll) */
+.yz-scene .cup{width:124px;height:150px;cursor:pointer;-webkit-tap-highlight-color:transparent;transform-origin:50% 90%;z-index:2;isolation:isolate}
+.yz-scene .cup .csh{position:absolute;left:4px;top:122px;width:128px;height:34px;border-radius:50%;background:rgba(0,0,0,.6);filter:blur(7px)}
+.yz-scene .cup .body{position:absolute;left:6px;top:22px;width:112px;height:120px;clip-path:polygon(0 0,100% 0,94% 100%,6% 100%);border-radius:0 0 50% 50% / 0 0 14px 14px;background:var(--y-cup);overflow:hidden}
 .yz-scene .cup .body::before{content:"";position:absolute;inset:0;background-image:var(--y-cuptex);background-size:128px 128px;mix-blend-mode:multiply;opacity:.55}
-.yz-scene .cup .body::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.08) 22%,rgba(0,0,0,0) 45%,rgba(0,0,0,.35) 85%,rgba(0,0,0,.55))}
-.yz-scene .cup .ring{position:absolute;top:0;bottom:0;width:7px;background:var(--y-cuprim);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
-.yz-scene .cup .ring.a{left:18px}.yz-scene .cup .ring.b{left:100px;width:4px;opacity:.85}
-.yz-scene .cup .ring::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(0,0,0,0) 30%,rgba(0,0,0,.45))}
-.yz-scene .cup .mouth{position:absolute;left:0;top:0;width:38px;height:104px;border-radius:50%;background:var(--y-cuprim);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
-.yz-scene .cup .mouth::before{content:"";position:absolute;inset:6px 5px;border-radius:50%;background:radial-gradient(ellipse 70% 70% at 62% 50%,var(--y-cupin),#000 95%)}
-.yz-scene .cup .mono{position:absolute;left:52px;top:36px;transform:rotate(90deg);font-size:24px}
-.yz-scene .cup:hover .body{filter:brightness(1.08)}
-.yz-scene .cup.ready::after{content:"";position:absolute;inset:-8px -6px;border-radius:30px 56px 56px 30px;box-shadow:0 0 0 2px rgba(231,199,122,.55),0 0 22px 4px rgba(240,190,90,.35);animation:yzpulse 1.8s ease-in-out infinite}
-.yz-scene .cup.shake{animation:yzshake .45s ease-in-out}
-@keyframes yzpulse{0%,100%{opacity:.55}50%{opacity:1}}
-@keyframes yzshake{0%,100%{transform:none}20%{transform:rotate(-6deg) translateX(-3px)}45%{transform:rotate(5deg) translateX(3px)}70%{transform:rotate(-4deg)}}
+.yz-scene .cup .body::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.1) 18%,rgba(255,255,255,.22) 34%,rgba(255,255,255,.05) 50%,rgba(0,0,0,.15) 72%,rgba(0,0,0,.6))}
+.yz-scene .cup .band{position:absolute;left:6px;width:112px;height:8px;background:var(--y-cuprim);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.yz-scene .cup .band::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.45),rgba(0,0,0,0) 25%,rgba(255,255,255,.35) 38%,rgba(0,0,0,0) 55%,rgba(0,0,0,.5))}
+.yz-scene .cup .band.lo{top:122px;left:12px;width:100px;height:7px;border-radius:0 0 50% 50% / 0 0 5px 5px}
+.yz-scene .cup .rim{position:absolute;left:0;top:4px;width:124px;height:38px;border-radius:50%;background:var(--y-cuprim);box-shadow:0 2px 3px rgba(0,0,0,.45)}
+.yz-scene .cup .rim::before{content:"";position:absolute;inset:5px 7px 6px;border-radius:50%;background:radial-gradient(ellipse 80% 90% at 50% 70%,var(--y-cupin),#000 92%);box-shadow:inset 0 3px 6px rgba(0,0,0,.8)}
+.yz-scene .cup .mono{position:absolute;left:0;right:0;top:66px;justify-content:center;font-size:30px}
+.yz-scene .cup .tap{position:absolute;left:-20px;right:-20px;top:158px;text-align:center;font:600 10px Montserrat,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--y-label);opacity:0;transition:opacity .3s}
+.yz-scene .cup.ready .tap{opacity:1}
+.yz-scene .cup:hover .body{filter:brightness(1.1)}
+.yz-scene .cup.ready::after{content:"";position:absolute;left:4px;right:4px;top:6px;bottom:10px;border-radius:50% 50% 46% 46% / 18% 18% 12% 12%;box-shadow:0 0 28px 10px rgba(214,158,40,.6);animation:yzpulse 1.8s ease-in-out infinite;pointer-events:none;z-index:-1}
+.yz-scene .cup.shake{animation:yzshake .5s ease-in-out}
+@keyframes yzpulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes yzshake{0%,100%{transform:none}15%{transform:rotate(-9deg) translateX(-4px)}35%{transform:rotate(8deg) translateX(4px)}55%{transform:rotate(-7deg)}75%{transform:rotate(5deg)}}
 .yz-scene .mono{display:flex;align-items:baseline;line-height:1.25}
 .yz-scene .mono b,.yz-scene .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
 .yz-scene .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.yz-scene .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
-/* roll button and the three roll lamps */
-.yz-scene .roll{width:160px;height:54px;border-radius:6px;background:rgba(15,23,42,.78);border:1px solid rgba(231,199,122,.55);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 16px rgba(240,190,90,.25);
-  color:#e6c25a;font:700 18px Montserrat,sans-serif;letter-spacing:.45px;cursor:pointer}
-.yz-scene .roll:hover{color:#f0d27a;background:rgba(15,23,42,.88)}
-.yz-scene .roll:disabled{opacity:.4;cursor:default}
-.yz-scene .lamps{display:flex;gap:10px;align-items:center;font:600 11px Montserrat,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,240,210,.75)}
+/* the three roll lamps */
+.yz-scene .lamps.col{flex-direction:column;gap:12px}
+.yz-scene .lamps{display:flex;gap:10px;align-items:center;font:600 11px Montserrat,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--y-label)}
 .yz-scene .lamps i{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d0,#d9b25a 45%,#6e4f1d);box-shadow:0 0 8px rgba(240,190,90,.6),0 1px 2px rgba(0,0,0,.6)}
 .yz-scene .lamps i.off{background:radial-gradient(circle at 35% 30%,#555,#222);box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
 /* dice */
@@ -115,21 +119,24 @@ body.yz-quick .yz-scene .die.go,body.yz-quick .yz-scene .dsh.go,body.yz-quick .y
 .yz-scene .card .tot b{flex:1;padding-left:4px}.yz-scene .card .tot em{width:62px;text-align:center;font:700 22px "Cormorant Garamond",Georgia,serif;font-style:normal;letter-spacing:0}
 .yz-scene .card .lowhd{display:none}
 /* phones: the card spreads into two halves side by side, with larger print */
-.yz-scene .card.tall .cols{flex-direction:row;gap:14px}
+.yz-scene .card.tall .cols{flex-direction:row;gap:12px}
 .yz-scene .card.tall .cols>div{flex:1}
 .yz-scene .card.tall .lowhd{display:table-row}
-.yz-scene .card.tall td{height:37px;font-size:23px}
-.yz-scene .card.tall td.nm{font-size:20px}
+.yz-scene .card.tall table{font-family:Montserrat,sans-serif}
+.yz-scene .card.tall td{height:42px;font:700 25px Montserrat,sans-serif;padding:0 3px}
+.yz-scene .card.tall td.nm{font:600 19px Montserrat,sans-serif;letter-spacing:-.01em}
 .yz-scene .card.tall td.nm small{display:none}
-.yz-scene .card.tall td.v{width:64px}
-.yz-scene .card.tall th{font-size:12px;height:26px}
-.yz-scene .card.tall tr.sub td{font-size:13px;height:32px}
-.yz-scene .card.tall tr.sub td.v{font-size:15px}
-.yz-scene .card.tall .tot{font-size:14px;height:46px}.yz-scene .card.tall .tot em{width:64px;font-size:26px}
-.yz-scene .card.tall .hd{height:44px}
-.yz-scene .card.tall .hd span{font-size:15px}
+.yz-scene .card.tall td.v{width:62px}
+.yz-scene .card.tall td.v.pot{font-style:normal}
+.yz-scene .card.tall th{font-size:14px;height:30px}
+.yz-scene .card.tall tr.sub td{font-size:15px;height:36px}
+.yz-scene .card.tall tr.sub td span{display:none}
+.yz-scene .card.tall tr.sub td.v{font-size:17px}
+.yz-scene .card.tall .tot{font-size:17px;height:50px}.yz-scene .card.tall .tot em{width:62px;font:700 28px Montserrat,sans-serif}
+.yz-scene .card.tall .hd{height:46px}
+.yz-scene .card.tall .hd span{font-size:17px}
 /* a short call-out for big scores */
-.yz-toast{position:absolute;z-index:6;left:50%;transform:translate(-50%,0);padding:9px 16px;border-radius:999px;background:rgba(15,23,42,.84);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 15px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.yz-toast{position:absolute;z-index:6;left:50%;transform:translate(-50%,0);padding:7px 13px;font-size:13px!important;border-radius:999px;background:rgba(15,23,42,.84);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 15px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
 .yz-toast.on{opacity:1;transform:translate(-50%,-6px)}
 /* phones: the card shows both scores, so the two score strips and the Whim card step aside */
 body.yz-phone.pk .pk-mini{display:none}
@@ -163,15 +170,17 @@ function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.hei
 function cssUrl(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
 function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
 function feltFn(rgb,seed){var r=rng(seed),n=noise2(seed);return function(x,y){var k=.86+r()*.22+(fbm(n,x/22,y/22,3)-.5)*.14;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+function marbleFn(o){var n=noise2(o.seed),n2=noise2(o.seed+9);return function(x,y){var w=fbm(n,x/150,y/150,5);var v=Math.abs(Math.sin((x*.004+y*.007)*o.freq+w*o.turb));v=Math.pow(1-v,o.sharp);var fine=fbm(n2,x/14,y/14,3),cloud=fbm(n2,x/260,y/260,3);var b=mix(o.base[0],o.cloud[0],cloud*.6),g=mix(o.base[1],o.cloud[1],cloud*.6),bb=mix(o.base[2],o.cloud[2],cloud*.6);return [mix(b,o.vein[0],v*o.amt)*(.97+fine*.06),mix(g,o.vein[1],v*o.amt)*(.97+fine*.06),mix(bb,o.vein[2],v*o.amt)*(.97+fine*.06)];};}
 function leatherFn(rgb,seed){var r=rng(seed),n=noise2(seed),n2=noise2(seed+3);return function(x,y){var k=.82+fbm(n,x/40,y/40,4)*.3+(fbm(n2,x/3,y/3,2)-.5)*.12+(r()-.5)*.05;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
 var BRASS="linear-gradient(90deg,#8a6526,#f3d790 45%,#b8913f 70%,#8a6526)";
 var DESIGNS={
-  walnut:{table:{light:[128,86,52],dark:[60,36,20],freq:.035,turb:9,wx:240,wy:22,sharp:.7,ringAmt:.6,streakAmt:.42,pores:.02,blotch:.3,seed:27},tablec:"#5e3c22",band1:"rgba(240,210,140,.6)",band2:"rgba(30,18,8,.5)",
-    frame:{light:[118,78,46],dark:[56,34,18],freq:.05,turb:8,wx:200,wy:20,sharp:.7,ringAmt:.62,streakAmt:.4,pores:.02,blotch:.28,seed:23},framec:"#5e3c22",
-    inlay:"linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)",felt:[104,22,32],
-    cup:"linear-gradient(180deg,#8a2c2a,#5e1416 45%,#300808)",cuptex:[150,60,55],cuprim:BRASS,cupin:"#2a0808",
-    die:"linear-gradient(145deg,#fbf6ea,#e4dccb)",diecore:"#e8e0cf",pip:"#7a1218",pip2:"#3a0608",
-    cardc:"#5a1a1a",cardtex:[98,30,30],cardline:"#d9b25a",cardline2:"rgba(217,178,90,.45)",ink:"#5a1a1a",ink2:"rgba(90,26,26,.5)"},
+  /* Carved Marble (standard): alabaster marble table, a darker carved-marble tray with a brass inlay, lapis felt, alabaster dice with lapis pips, lapis leather cup and card */
+  marble:{mat:"marble",table:{base:[240,238,234],cloud:[218,216,212],vein:[150,148,150],freq:3.2,turb:6,sharp:3.2,amt:.42,seed:31},tablec:"#e8e6e2",band1:"rgba(184,145,63,.75)",band2:"rgba(120,116,110,.35)",
+    frame:{base:[214,211,205],cloud:[188,185,180],vein:[110,108,112],freq:3.6,turb:7,sharp:2.6,amt:.5,seed:44},framec:"#cfccc6",
+    inlay:"linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)",felt:[26,46,112],
+    cup:"linear-gradient(180deg,#3a5cb4,#22408e 45%,#0f2152)",cuptex:[70,96,170],cuprim:BRASS,cupin:"#0a1430",
+    die:"linear-gradient(145deg,#ffffff,#ece8de)",diecore:"#e6e1d6",pip:"#1f3c8c",pip2:"#0d1c48",
+    label:"rgba(40,46,60,.75)",cardc:"#1f3570",cardtex:[34,56,120],cardline:"#d9b25a",cardline2:"rgba(217,178,90,.45)",ink:"#1f3570",ink2:"rgba(31,53,112,.55)"},
   mahogany:{table:{light:[120,52,30],dark:[62,22,10],freq:.02,turb:7,wx:500,wy:40,sharp:.8,ringAmt:.45,streakAmt:.5,pores:.01,blotch:.3,seed:51},tablec:"#5c2412",band1:"rgba(230,200,140,.55)",band2:"rgba(40,16,6,.55)",
     frame:{light:[112,44,24],dark:[56,18,8],freq:.05,turb:5,wx:300,wy:24,sharp:.8,ringAmt:.5,streakAmt:.45,pores:.015,blotch:.25,seed:12},framec:"#5a2210",
     inlay:"repeating-linear-gradient(45deg,#ecd9a8 0 5px,#3b2412 5px 7px)",felt:[26,88,48],
@@ -193,16 +202,16 @@ var stage=document.createElement("div"); stage.className="yz-pad";
 stage.innerHTML='<div class="yz-fit" id="yzFit"><div class="yz-scaler" id="yzScaler"><div class="yz-scene" id="yzScene">'+
   '<div class="abs table" id="yzTable"></div>'+
   '<div class="abs tray" id="yzTray"><div class="sh"></div><div class="frame"></div><div class="band"></div><div class="lip"></div><div class="felt"></div><div class="keep"></div><div class="rail"></div><div class="klab">Kept Dice</div></div>'+
-  '<div class="abs cup" id="yzCup" role="button" aria-label="Roll the dice"><div class="csh"></div><div class="body"></div><div class="ring a"></div><div class="ring b"></div><div class="mouth"></div><span class="mono"><b>B</b><i>W</i></span></div>'+
-  '<button class="abs roll" id="yzRoll" type="button">Roll</button><div class="abs lamps" id="yzLamps"></div>'+
-  '<div class="abs card" id="yzCard"></div><div id="yzDice" class="abs" style="left:0;top:0"></div>'+
+  '<div class="abs cup" id="yzCup" role="button" aria-label="Roll the dice"><div class="csh"></div><div class="body"></div><div class="band lo"></div><div class="band" style="top:36px"></div><div class="rim"></div><span class="mono"><b>B</b><i>W</i></span><div class="tap">Tap to Roll</div></div>'+
+  '<div class="abs lamps" id="yzLamps"></div>'+
+  '<div class="abs card" id="yzCard"></div><div id="yzDice" class="dlayer"></div><div id="yzHits" class="abs" style="left:0;top:0"></div>'+
   '</div></div><div class="yz-toast" id="yzToast"></div></div>';
 var $=function(id){ return stage.querySelector("#"+id); };
-var sceneEl=$("yzScene"), fitEl=$("yzFit"), cupEl=$("yzCup"), rollBtn=$("yzRoll"), cardEl=$("yzCard"), toastEl=$("yzToast");
+var sceneEl=$("yzScene"), fitEl=$("yzFit"), cupEl=$("yzCup"), cardEl=$("yzCard"), toastEl=$("yzToast");
 var texCache={}, curDesign=null;
 function applyDesign(k){
-  if(!DESIGNS[k]) k="walnut"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
-  if(!texCache[k]) texCache[k]={table:cssUrl(canvasOf(1200,800,woodFn(d.table))),frame:cssUrl(canvasOf(600,600,woodFn(d.frame))),felt:cssUrl(canvasOf(256,256,feltFn(d.felt,k.length*13))),
+  if(!DESIGNS[k]) k="marble"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]) var mf=d.mat==="marble"?marbleFn:woodFn; texCache[k]={table:cssUrl(canvasOf(1200,800,mf(d.table))),frame:cssUrl(canvasOf(600,600,mf(d.frame))),felt:cssUrl(canvasOf(256,256,feltFn(d.felt,k.length*13))),
     cup:cssUrl(canvasOf(128,128,leatherFn(d.cuptex,k.length*7))),card:cssUrl(canvasOf(128,128,leatherFn(d.cardtex,k.length*5)))};
   var t=texCache[k], s=sceneEl.style;
   s.setProperty("--y-table",t.table); s.setProperty("--y-tablec",d.tablec); s.setProperty("--y-band1",d.band1); s.setProperty("--y-band2",d.band2);
@@ -210,19 +219,20 @@ function applyDesign(k){
   s.setProperty("--y-felt",t.felt); s.setProperty("--y-feltc","rgb("+d.felt+")");
   s.setProperty("--y-cup",d.cup); s.setProperty("--y-cuptex",t.cup); s.setProperty("--y-cuprim",d.cuprim); s.setProperty("--y-cupin",d.cupin);
   s.setProperty("--y-die",d.die); s.setProperty("--y-diecore",d.diecore); s.setProperty("--y-pip",d.pip); s.setProperty("--y-pip2",d.pip2);
-  s.setProperty("--y-cardc",d.cardc); s.setProperty("--y-cardtex",t.card); s.setProperty("--y-cardline",d.cardline); s.setProperty("--y-cardline2",d.cardline2); s.setProperty("--y-ink",d.ink); s.setProperty("--y-ink2",d.ink2);
+  s.setProperty("--y-label",d.label||"rgba(255,240,210,.78)"); s.setProperty("--y-cardc",d.cardc); s.setProperty("--y-cardtex",t.card); s.setProperty("--y-cardline",d.cardline); s.setProperty("--y-cardline2",d.cardline2); s.setProperty("--y-ink",d.ink); s.setProperty("--y-ink2",d.ink2);
 }
 
 /* two arrangements: desktop/tablet (tray left, cup and Roll under it, card right) and phone (tray, then cup row, then the card in two halves) */
 var LAYOUTS={
-  wide:{W:1000,H:790,tray:[30,30,600,600],cup:[64,660],roll:[240,656],lamps:[436,673],card:[660,30,310,730],tall:false},
-  tall:{W:680,H:1138,tray:[40,24,600,520],cup:[62,556],roll:[240,553],lamps:[440,570],card:[40,672,600,446],tall:true}
+  wide:{W:1000,H:836,tray:[30,30,600,600],cup:[70,648],lamps:[226,708],lampsCol:false,card:[660,30,310,776],tall:false,minD:92},
+  tall:{W:640,H:1012,tray:[18,18,472,472],cup:[504,40],lamps:[530,262],lampsCol:true,card:[18,508,604,488],tall:true,minD:84}
 };
 var L=LAYOUTS.wide;
 function pos(el,p){ el.style.left=p[0]+"px"; el.style.top=p[1]+"px"; if(p[2]){ el.style.width=p[2]+"px"; el.style.height=p[3]+"px"; } }
 function arrange(){
   sceneEl.style.width=L.W+"px"; sceneEl.style.height=L.H+"px"; var tb=$("yzTable"); tb.style.width=L.W+"px"; tb.style.height=L.H+"px";
-  pos($("yzTray"),L.tray); pos(cupEl,L.cup); pos(rollBtn,L.roll); pos($("yzLamps"),L.lamps); pos(cardEl,L.card); cardEl.classList.toggle("tall",L.tall);
+  pos($("yzTray"),L.tray); pos(cupEl,L.cup); pos($("yzLamps"),L.lamps); $("yzLamps").classList.toggle("col",L.lampsCol); pos(cardEl,L.card); cardEl.classList.toggle("tall",L.tall);
+  var dl=$("yzDice"); dl.style.width=L.W+"px"; dl.style.height=L.H+"px";
 }
 
 /* ---------- dice ---------- */
@@ -238,19 +248,21 @@ var DIE=[];
     var h='<div class="core"></div><div class="core c2"></div><div class="core c3"></div>';
     [1,2,3,4,5,6].forEach(function(v){ h+='<div class="d" data-v="'+v+'" style="transform:'+FACE[v]+'">'; for(var j=0;j<9;j++) h+='<i class="'+(PIPS[v].indexOf(j)>=0?"p":"")+'"></i>'; h+='</div>'; });
     d.innerHTML=h; holder.appendChild(d);
-    (function(k){ d.onclick=function(){ humanHold(k); }; })(i);
-    DIE.push({el:d,sh:s,v:[5,3,6,2,4][i],x:0,y:0,rx:0,ry:0,rz:0,held:false});
+    var hit=document.createElement("div"); hit.className="hit"; $("yzHits").appendChild(hit);
+    (function(k){ hit.onclick=function(){ humanHold(k); }; })(i);
+    DIE.push({el:d,sh:s,hit:hit,v:[5,3,6,2,4][i],x:0,y:0,rx:0,ry:0,rz:0,held:false});
   }
 })();
 function feltBox(){ var t=L.tray; return {x0:t[0]+92,x1:t[0]+t[2]-92,y0:t[1]+92,y1:t[1]+t[3]-146-52}; }
 function slotXY(k){ var t=L.tray; return [t[0]+44+(t[2]-88)*(k+.5)/5, t[1]+t[3]-94]; }
-function cupMouth(){ return [L.cup[0]+18,L.cup[1]+52]; }
+function cupMouth(){ return [L.cup[0]+62,L.cup[1]+24]; }
 function setDie(o,x,y,cls){
   o.el.classList.toggle("rest",cls!=="go");
   [].forEach.call(o.el.querySelectorAll(".d"),function(f){ f.classList.toggle("up",+f.dataset.v===o.v); });
   o.el.classList.remove("go","slide"); o.sh.classList.remove("go","slide"); if(cls){ o.el.classList.add(cls); o.sh.classList.add(cls); }
   o.el.style.transform="translate3d("+x+"px,"+y+"px,32px) rotateZ("+(o.held?0:o.rz)+"deg) rotateX("+o.rx+"deg) rotateY("+o.ry+"deg)";
   o.sh.style.transform="translate3d("+(x+7)+"px,"+(y+9)+"px,1px)"; o.sh.classList.toggle("held",o.held);
+  o.hit.style.transform="translate("+x+"px,"+y+"px)";
 }
 function placeDice(anim){ DIE.forEach(function(o,i){ if(o.held){ var p=slotXY(i); setDie(o,p[0],p[1],anim?"slide":null); } else setDie(o,o.x,o.y,anim?"slide":null); }); }
 function faceUp(o,v){ o.v=v; var u=UP[v]; o.rx=u[0]; o.ry=u[1]; }
@@ -258,13 +270,16 @@ function spreadAll(){ var b=feltBox(), pts=[[.15,.28],[.45,.7],[.62,.18],[.86,.6
 function spots(list){
   var b=feltBox(), taken=[], tries=0;
   DIE.forEach(function(o){ if(!o.held&&list.indexOf(o)<0) taken.push([o.x,o.y]); });
-  return list.map(function(){ var p; do{ p=[b.x0+Math.random()*(b.x1-b.x0),b.y0+Math.random()*(b.y1-b.y0)]; tries++; } while(tries<600&&taken.some(function(q){ return Math.hypot(q[0]-p[0],q[1]-p[1])<92; })); taken.push(p); return p; });
+  return list.map(function(){ var p; do{ p=[b.x0+Math.random()*(b.x1-b.x0),b.y0+Math.random()*(b.y1-b.y0)]; tries++; } while(tries<600&&taken.some(function(q){ return Math.hypot(q[0]-p[0],q[1]-p[1])<L.minD; })); taken.push(p); return p; });
 }
 /* tumble the given dice out of the cup to show these values */
 function tumble(idx,vals){
   document.body.classList.toggle("yz-quick",!Parlor.smooth());
   cupEl.classList.remove("shake"); void cupEl.offsetWidth; cupEl.classList.add("shake");
-  Parlor.sfx("dice",{dur:Parlor.smooth()?1.2:.3});
+  Parlor.sfx("dice",{dur:Parlor.smooth()?1.4:.3});
+  return Parlor.wait(380).then(function(){ return launch(idx,vals); });
+}
+function launch(idx,vals){
   var list=idx.map(function(i){ return DIE[i]; }), tg=spots(list), m=cupMouth();
   list.forEach(function(o,j){
     o.v=vals[j]; o.x=m[0]-4; o.y=m[1]+(j-2)*8; setDie(o,o.x,o.y,null); void o.el.offsetWidth;
@@ -275,7 +290,7 @@ function tumble(idx,vals){
   });
   return Parlor.wait(1320).then(function(){ list.forEach(function(o){ o.tok++; o.rx=((o.rx%360)+360)%360; o.ry=((o.ry%360)+360)%360; setDie(o,o.x,o.y,null); }); });
 }
-function toast(t){ toastEl.textContent=t; toastEl.style.top=Math.round((L.tray[1]+L.tray[3]*.38)*(fitEl._s||1))+"px"; toastEl.style.left=Math.round((L.tray[0]+L.tray[2]/2)*(fitEl._s||1))+"px";
+function toast(t){ toastEl.textContent=t; toastEl.style.top=Math.round((L.tray[1]+60)*(fitEl._s||1))+"px"; toastEl.style.left=Math.round((L.tray[0]+L.tray[2]/2)*(fitEl._s||1))+"px";
   toastEl.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ toastEl.classList.remove("on"); },1700); }
 
 /* =====================================================================
@@ -355,10 +370,10 @@ function renderCard(){
 }
 function render(){
   var mine=myTurn(), rolls=S.rolls;
-  rollBtn.disabled=!mine||rolls>=3; rollBtn.textContent=rolls===0||S.turn!==mySide?"Roll":"Roll Again";
   cupEl.classList.toggle("ready",mine&&rolls<3);
+  
   var h='<span>Rolls</span>'; for(var i=0;i<3;i++) h+='<i class="'+(i<3-rolls?'':'off')+'"></i>'; $("yzLamps").innerHTML=h;
-  DIE.forEach(function(o){ o.el.classList.toggle("tap",mine&&rolls>0&&rolls<3); });
+  DIE.forEach(function(o){ var t=mine&&rolls>0&&rolls<3; o.el.classList.toggle("tap",t); o.hit.classList.toggle("on",t); });
   renderCard();
   Parlor.score([total(S.p1,S.yb1),total(S.p2,S.yb2)]);
   Parlor.turn(S.over?-1:S.turn===1?0:1);
@@ -370,8 +385,8 @@ function msg(){
   if(S.over) return;
   if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
   if(S.turn===mySide){
-    if(S.rolls===0) say("Your turn","Tap the cup or Roll");
-    else if(S.rolls<3) say("Roll "+S.rolls+" of 3","Tap dice to keep them, roll again, or score a box");
+    if(S.rolls===0) say("Your turn","Tap the dice cup to roll");
+    else if(S.rolls<3) say("Roll "+S.rolls+" of 3","Tap dice to keep them, tap the cup to roll again, or score a box");
     else say("Choose a box","Tap a gold number on the score card");
   } else say(online?"Your opponent's turn":"The House is rolling…","");
 }
@@ -538,12 +553,12 @@ function fit(){
   document.body.classList.toggle("yz-phone",phone);
   $("yzScaler").style.transform="scale("+s+")"; fitEl.style.width=Math.round(L.W*s)+"px"; fitEl.style.height=Math.round(L.H*s)+"px";
   document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
-  if(fit._L!==L){ fit._L=L; spreadAll(); } placeDice(false);
+  if(fit._L!==L){ fit._L=L; spreadAll(); placeDice(false); } else if(!busy) placeDice(false);
 }
 window.addEventListener("resize",fit);
 
 /* ---------- hook up the kit ---------- */
-rollBtn.onclick=humanRoll; cupEl.onclick=humanRoll;
+cupEl.onclick=humanRoll;
 function newGame(){ S=newState(); seq=0; busy=false; reported=false; fresh=[]; DIE.forEach(function(o){ o.held=false; }); placeDice(true); render(); msg(); }
 Parlor.init({
   game:"yahtzee", title:"Club Yahtzee", bg:"yahtzee-parlor.jpg", home:"tables.html", stage:stage, whim:true,
@@ -551,20 +566,22 @@ Parlor.init({
   players:[{name:"You",color:"#e7c77a"},{name:"The House",color:"#8a2c2a"}],
   setsLabel:"Boards",
   sets:[
-    {id:"walnut",name:"Library Walnut",need:0,dots:["#5e3c22","#68161f","#f3e7cf"]},
+    {id:"marble",name:"Carved Marble",need:0,dots:["#e8e6e2","#22408e","#d9b25a"]},
     {id:"mahogany",name:"Sunroom Mahogany",club:true,dots:["#5a2210","#1a5830","#c9a24f"]},
     {id:"ebony",name:"Midnight Ebony",club:true,dots:["#1b1714","#141e40","#f0d28a"]}
   ],
   rules:{
-    play:"<ol><li>Each turn, tap the cup (or Roll) to roll all five dice. You get up to three rolls.</li><li>After a roll, tap any dice you want to keep; they move to the Kept Dice rail. Tap a kept die to put it back. Then roll again.</li><li>When you're ready (or after the third roll), tap a gold number on the score card to fill that box. Every turn must fill one box, even with a zero.</li><li>You and your opponent take turns. After 13 rounds every box is filled and the higher total wins.</li></ol>",
+    play:"<ol><li>Each turn, tap the dice cup to roll all five dice. You get up to three rolls.</li><li>After a roll, tap any dice you want to keep; they move to the Kept Dice rail. Tap a kept die to put it back. Tap the cup to roll again.</li><li>When you're ready (or after the third roll), tap a gold number on the score card to fill that box. Every turn must fill one box, even with a zero.</li><li>You and your opponent take turns. After 13 rounds every box is filled and the higher total wins.</li></ol>",
     score:"<ul><li><b>Aces to Sixes:</b> the total of that number. Score 63 or more in these six boxes for a <b>35-point bonus</b>.</li><li><b>3 of a Kind / 4 of a Kind:</b> the total of all five dice.</li><li><b>Full House</b> (three of one, two of another): 25. <b>Small Straight</b> (four in a row): 30. <b>Large Straight</b> (five in a row): 40.</li><li><b>Yahtzee</b> (five alike): 50. <b>Chance:</b> the total of all five dice.</li><li><b>Extra Yahtzees:</b> if your Yahtzee box already holds 50, each extra Yahtzee earns a 100-point bonus. It must go in its number's upper box if that's open; otherwise it can score full points in Full House or a straight.</li></ul>"
   },
   onNew:function(){ mySide=1; newGame(); }
 });
-new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"walnut"; if(k!==curDesign) applyDesign(k); fit(); render(); if(!S.over&&S.turn===2) maybeHouse(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
+var wasSeated=null;
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"marble"; if(k!==curDesign) applyDesign(k);
+  var st=seatedNow(); if(st!==wasSeated){ wasSeated=st; fit(); render(); if(!S.over&&S.turn===2) maybeHouse(); } }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
 S=newState();
 document.addEventListener("DOMContentLoaded",function(){
-  applyDesign(document.body.getAttribute("data-set")||"walnut");
+  applyDesign(document.body.getAttribute("data-set")||"marble");
   fit(); render();
   if(CODE) bootOnline();
 });
