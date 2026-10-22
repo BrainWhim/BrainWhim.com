@@ -90,7 +90,7 @@
 .cr-toast{position:absolute;z-index:6;left:50%;transform:translate(-50%,0);padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.82);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 14px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
 .cr-toast.on{opacity:1;transform:translate(-50%,-6px)}
 /* phones: your hand in a bar under the table; one slim score line above it */
-.cr-hand{display:none;position:relative;height:96px;border-radius:12px;transform-style:preserve-3d;background:var(--cr-topc,#22402c);background-image:var(--cr-top);background-size:256px 256px;
+.cr-hand{display:none;position:relative;height:100px;border-radius:12px;transform-style:preserve-3d;background:var(--cr-topc,#22402c);background-image:var(--cr-top);background-size:256px 256px;
   box-shadow:inset 0 0 0 3px var(--cr-woodc,#5a2414),inset 0 4px 14px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35)}
 body.cr-big .cr-hand{display:block}
 .cr-score{display:none;width:var(--pk-size,100%);max-width:100%;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;font-size:13px;color:#fff;
@@ -98,6 +98,21 @@ body.cr-big .cr-hand{display:block}
 .cr-score b{font-weight:700;margin-right:4px}.cr-score .mid{font-size:11px;opacity:.8}
 .cr-score i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;box-shadow:0 1px 2px rgba(0,0,0,.4)}
 body.cr-big .cr-score{display:flex}
+/* phones: cards are shown small, so their corners and pips get a heavier, larger print */
+body.cr-big .cd .f{-webkit-text-stroke:.5px currentColor}
+body.cr-big .cd .ix{left:2px;top:4px;width:26px;line-height:.9}
+body.cr-big .cd .ix b{font:700 25px Montserrat,sans-serif;letter-spacing:-.09em}
+body.cr-big .cd .ix i{font-size:19px;margin-top:1px}
+body.cr-big .cd .f:has(.ix.ten) .pips{left:38px;right:38px}
+body.cr-big .cd .f:has(.ix.ten) .pips span{font-size:18px}
+body.cr-big .cd .ix.ten b{font-size:20px;letter-spacing:-.12em;margin-left:-2px}
+body.cr-big .cd .ix.br{right:2px;bottom:4px;left:auto;top:auto}
+body.cr-big .cd .pips{left:33px;right:33px;top:20px;bottom:20px}
+body.cr-big .cd .pips span{font-size:20px}
+body.cr-big .cd .pips span.ace{font-size:50px}
+body.cr-big .cd .court{left:29px;right:29px;top:22px;bottom:22px}
+body.cr-big .cd .court b{font:700 34px Montserrat,sans-serif}
+body.cr-big .cd .court i{font-size:22px}
 body.cr-big .cr-panel{font-size:11px;line-height:1.4;padding:8px 11px 7px;min-width:170px;border-radius:10px}
 body.cr-big .cr-panel h4{font-size:10px;margin-bottom:4px}
 body.cr-big .cr-act{min-width:0;min-height:38px;padding:8px 18px;font-size:13px}
@@ -195,7 +210,7 @@ function mkCard(c,o){
     if(c.r===0) mid='<div class="pips"><span class="ace" style="left:50%;top:50%">'+SU+'</span></div>';
     else if(c.r>=10) mid='<div class="court"><b>'+R+'</b><i>'+SU+'</i></div>';
     else mid='<div class="pips">'+LAYOUT[c.r+1].map(function(p){ return '<span class="'+(p[1]>50?"dn":"")+'" style="left:'+p[0]+'%;top:'+p[1]+'%">'+SU+'</span>'; }).join("")+'</div>';
-    s+='<div class="f" style="transform:translateZ(2.4px)"><div class="ix"><b>'+R+'</b><i>'+SU+'</i></div>'+mid+'<div class="ix br"><b>'+R+'</b><i>'+SU+'</i></div></div>';
+    var tn=c.r===9?" ten":""; s+='<div class="f" style="transform:translateZ(2.4px)"><div class="ix'+tn+'"><b>'+R+'</b><i>'+SU+'</i></div>'+mid+'<div class="ix br'+tn+'"><b>'+R+'</b><i>'+SU+'</i></div></div>';
     e.setAttribute("aria-label",R+" of "+SUITNAME[c.s]);
   }
   e.innerHTML=s; (o.into||CL).appendChild(e); return e;
@@ -323,11 +338,11 @@ function render(){
   fh.forEach(function(c,k){ var e=show?mkCard(c):mkCard(null,{back:true}); var x=rowX(fh.length,k,show?90:62); setAt(e,x,FAR_Y,-12+k*.5,show?0:(k-(fh.length-1)/2)*3); e.classList.add("far"); });
   /* the near hand: yours (watchers see side 1's backs) */
   var nh=show?S.keep[N]:S.hand[N], mine=mySide===N, disc=myDiscard(), playing=myPlay();
-  var bw=HB.clientWidth||360, bsp=nh.length>1?Math.min(60,(bw-70)/(nh.length-1)):0;
+  var bw=HB.clientWidth||360, bsp=nh.length>1?Math.min(68,(bw-92)/(nh.length-1)):0;
   nh.forEach(function(c,k){
     var e=mine||show?mkCard(c,{into:big?HB:CL}):mkCard(null,{back:true,into:big?HB:CL});
     var lift=sel.indexOf(k)>=0;
-    if(big) setAt(e,bw/2-(nh.length-1)*bsp/2+k*bsp,48+(lift?-8:0),0,0,.62);
+    if(big) setAt(e,bw/2-(nh.length-1)*bsp/2+k*bsp,50+(lift?-6:0),0,0,.7);
     else setAt(e,rowX(nh.length,k,nh.length>4?74:show?90:96),NEAR_Y+(lift?-26:0),-12+(lift?6:0));
     e.classList.add("near"); e.dataset.k=k;
     if(disc){ e.classList.add("tap"); e.classList.toggle("sel",lift); e.onclick=function(){ toggleSel(k); }; }
