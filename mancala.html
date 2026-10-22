@@ -7,48 +7,50 @@
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1021h">
 <style>
-/* ===== Mancala board: everything game-specific lives here =====
+/* ===== Mancala board: a carved board seen from straight above, painted in code (no picture files) =====
    The board turns on its side on portrait phones (your store at the bottom, The House's at the top),
-   so the cups stay big enough to tap. Pictures can replace the CSS wood later:
-     --mk-board-img:url("mancala-board.png");  (a picture of the whole board, drawn on top of the wood colour) */
-:root{--mk-board-img:none}
+   so the cups stay big enough to tap. Boards (the Boards card) each come with their own stones.
+   The BW monogram is stamped small on the far rail. */
 .mk-pad{width:100%;flex:none;display:flex;justify-content:center}
-.mk-board{position:relative;width:var(--mk-w);height:calc(var(--mk-w) * .4);flex:none;box-sizing:border-box;padding:calc(var(--mk-w) * .016);
-  border-radius:calc(var(--mk-w) * .07);
-  background:var(--mk-board-img) center/100% 100% no-repeat,linear-gradient(160deg,#f3d7a0,#c9a45a 30%,#7a5420 55%,#e8c98a 82%,#5a3a14);
-  box-shadow:0 2.4vmin 3.6vmin rgba(0,0,0,.5),0 .7vmin 0 #4a3012,inset 0 1px 0 rgba(255,255,255,.45)}
+.mk-board{position:relative;width:var(--mk-w);height:calc(var(--mk-w) * .4);flex:none;box-sizing:border-box;padding:calc(var(--mk-w) * .026) calc(var(--mk-w) * .018) calc(var(--mk-w) * .018);
+  border-radius:calc(var(--mk-w) * .07);background:var(--mk-tex) center/cover,var(--mk-texc);
+  box-shadow:0 2.4vmin 3.6vmin rgba(0,0,0,.5),0 calc(var(--mk-w) * .008) 0 var(--mk-edge),inset 0 2px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.3)}
+.mk-board::before{content:"";position:absolute;inset:calc(var(--mk-w) * .008);border-radius:calc(var(--mk-w) * .062);border:calc(var(--mk-w) * .0022) solid var(--mk-inlay);pointer-events:none;opacity:.9}
+.mk-mono{position:absolute;left:50%;top:calc(var(--mk-w) * .004);transform:translateX(-50%);display:flex;align-items:baseline;line-height:1.2;font-size:calc(var(--mk-w) * .017);pointer-events:none;z-index:1}
+.mk-mono b,.mk-mono i{display:inline-block;color:var(--mk-monoc);text-shadow:0 1px 0 rgba(255,255,255,.3),0 -1px 0 rgba(0,0,0,.35)}
+.mk-mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.mk-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .14em 0 .02em}
 .mk-wood{width:100%;height:100%;display:grid;grid-template-columns:1.35fr repeat(6,1fr) 1.35fr;grid-template-rows:1fr 1fr;gap:calc(var(--mk-w) * .014);
-  padding:calc(var(--mk-w) * .02);border-radius:calc(var(--mk-w) * .056);
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.16),transparent 30%),
-    repeating-linear-gradient(90deg,rgba(120,60,20,.07) 0 3px,transparent 3px 15px),
-    linear-gradient(160deg,#e9c48a,#d7a35c 35%,#b77a38 68%,#deb06a);
-  box-shadow:inset 0 0 0 2px #7a4c1c,inset 0 1vmin 2vmin rgba(70,35,10,.28)}
-body.has-board-img .mk-wood{background:none;box-shadow:none}
+  padding:calc(var(--mk-w) * .02);border-radius:calc(var(--mk-w) * .056);box-sizing:border-box;
+  background:linear-gradient(180deg,rgba(255,255,255,.12),transparent 30%),var(--mk-tex) center/cover,var(--mk-texc);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 1vmin 2vmin rgba(40,20,5,.3)}
+/* cups: carved into the board, with a soft rim of light on the near lip */
 .mk-cell{position:relative;border:0;margin:0;padding:8%;min-width:0;min-height:0;font:inherit;color:inherit;cursor:default;-webkit-tap-highlight-color:transparent;
-  grid-column:var(--hc);grid-row:var(--hr);
-  border-radius:50%;background:radial-gradient(ellipse at 38% 28%,#e7c487,#b97c38 60%,#87501c);
-  box-shadow:inset 0 .9vmin 1.4vmin rgba(60,28,6,.5),0 1px 0 rgba(255,255,255,.35);
-  display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;transition:box-shadow .2s,background .2s}
+  grid-column:var(--hc);grid-row:var(--hr);border-radius:50%;
+  background:radial-gradient(ellipse 75% 75% at 50% 58%,rgba(0,0,0,0) 30%,rgba(0,0,0,var(--mk-cupdk)) 100%),var(--mk-cuptex) center/cover,var(--mk-texc);
+  box-shadow:inset 0 calc(var(--mk-w) * .009) calc(var(--mk-w) * .014) rgba(30,14,4,.6),inset 0 -1px 2px rgba(255,255,255,.18),0 1px 0 rgba(255,255,255,.35),0 0 0 var(--mk-rimw) var(--mk-rim);
+  display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;transition:box-shadow .2s,filter .2s}
 .mk-store{border-radius:999px;padding:12% 10%}
-.mk-cell.live:not(.mk-store){background:radial-gradient(circle at 50% 50%,rgba(255,240,190,.65),rgba(255,236,180,.18) 34%,rgba(255,236,180,0) 58%),radial-gradient(ellipse at 38% 28%,#e7c487,#b97c38 60%,#87501c)}
-.mk-cell.ok{cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,236,170,.95),0 0 1.6vmin rgba(255,214,110,.55),inset 0 .9vmin 1.4vmin rgba(60,28,6,.5)}
-.mk-cell.ok:hover{background:radial-gradient(ellipse at 38% 28%,#f1d29a,#c88a44 60%,#8f581f)}
-.mk-cell.flash{background:radial-gradient(ellipse at 38% 28%,#fbe3b0,#d79a52 60%,#9a6226)}
-.mk-cell.last{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),inset 0 .9vmin 1.4vmin rgba(60,28,6,.5)}
-.mk-n{position:absolute;right:9%;bottom:6%;font-size:calc(var(--mk-gem) * 1.05);font-weight:700;color:#fff6e0;text-shadow:0 1px 2px rgba(0,0,0,.6);line-height:1}
+.mk-cell.live:not(.mk-store)::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at 50% 50%,rgba(255,240,190,.5),rgba(255,236,180,.14) 34%,rgba(255,236,180,0) 58%)}
+.mk-cell.ok{cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,236,170,.95),0 0 1.6vmin rgba(255,214,110,.6),inset 0 calc(var(--mk-w) * .009) calc(var(--mk-w) * .014) rgba(30,14,4,.6)}
+.mk-cell.ok:hover{filter:brightness(1.1)}
+.mk-cell.flash{filter:brightness(1.22)}
+.mk-cell.last{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),inset 0 calc(var(--mk-w) * .009) calc(var(--mk-w) * .014) rgba(30,14,4,.6),0 0 0 var(--mk-rimw) var(--mk-rim)}
+.mk-n{position:absolute;right:9%;bottom:6%;font-size:calc(var(--mk-gem) * 1.05);font-weight:700;color:#fff6e0;text-shadow:0 1px 2px rgba(0,0,0,.7);line-height:1;z-index:1}
 .mk-store .mk-n{right:50%;transform:translateX(50%);bottom:7%;font-size:calc(var(--mk-gem) * 1.4)}
-.mk-gem{width:var(--mk-gem);height:var(--mk-gem);border-radius:50%;flex:none;
-  box-shadow:0 1px 2px rgba(0,0,0,.35),inset 1px 1px 2px rgba(255,255,255,.75),inset -1px -1px 2px rgba(0,0,0,.25)}
+.mk-gem{position:relative;width:var(--mk-gem);height:var(--mk-gem);border-radius:50%;flex:none;
+  box-shadow:0 1px 2px rgba(0,0,0,.45),inset 1px 1px 2px rgba(255,255,255,.75),inset -1px -1px 2px rgba(0,0,0,.25)}
+.mk-gem::after{content:"";position:absolute;left:22%;top:16%;width:30%;height:24%;border-radius:50%;background:rgba(255,255,255,.75);filter:blur(.4px)}
 .mk-gem.g0{background:radial-gradient(circle at 32% 28%,var(--a0) 0 18%,var(--b0) 45%,var(--c0))}
 .mk-gem.g1{background:radial-gradient(circle at 32% 28%,var(--a1) 0 18%,var(--b1) 45%,var(--c1))}
 .mk-gem.g2{background:radial-gradient(circle at 32% 28%,var(--a2) 0 18%,var(--b2) 45%,var(--c2))}
 .mk-gem.g3{background:radial-gradient(circle at 32% 28%,var(--a3) 0 18%,var(--b3) 45%,var(--c3))}
 .mk-more{font-size:calc(var(--mk-gem) * .95);font-weight:700;color:#fff3d6;text-shadow:0 1px 2px rgba(0,0,0,.6)}
-/* stone sets (body[data-set] is chosen in the side card) */
-body,body[data-set="glass"]{--a0:#d7f3ff;--b0:#4eb3f0;--c0:#1468a8;--a1:#fff6c2;--b1:#f0b429;--c1:#c06a00;--a2:#e4ffd8;--b2:#5ad16e;--c2:#1a7a38;--a3:#ffd3e0;--b3:#ef5a86;--c3:#9b1b3a}
-body[data-set="pearl"]{--a0:#fff;--b0:#f4efe6;--c0:#b9ab94;--a1:#fff;--b1:#f7e3e6;--c1:#c39aa2;--a2:#fff;--b2:#e9eef5;--c2:#9aa7b8;--a3:#fff;--b3:#f3ead2;--c3:#bca779}
-body[data-set="ember"]{--a0:#ffe0b0;--b0:#e08a2c;--c0:#7a3a08;--a1:#ffc2b8;--b1:#b8322a;--c1:#5a0e0a;--a2:#8a8a92;--b2:#2c2c32;--c2:#050507;--a3:#fff0b8;--b3:#d9a83a;--c3:#6a4a10}
+/* board preview (mancala-preview.html opens this page with ?preview=1): a picker for all three boards */
+.mk-pick{position:fixed;z-index:60;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(231,199,122,.45);max-width:94vw}
+.mk-pick button{font:600 13px Montserrat,sans-serif;color:#f3ead8;background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 12px;cursor:pointer}
+@media (max-width:999px){.mk-pick{top:8px;flex-wrap:nowrap;gap:2px;padding:4px}.mk-pick button{font-size:11.5px;padding:7px 8px;white-space:nowrap}}
+.mk-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
 
 /* sizes: desktop gets a wide hero board; portrait phones turn it on its side */
 body.pk{--mk-w:min(calc(100vw - 2*var(--pk-side) - 90px),calc((100dvh - var(--pk-hdr) - var(--pk-sw) - 60px) * 2.5),1000px);--mk-gem:calc(var(--mk-w) * .02)}
@@ -58,7 +60,9 @@ body.pk .pk-stage{justify-content:center}
 }
 @media (max-width:999px) and (orientation:portrait){
   body.pk{--mk-h:min(calc((100vw - 16px) * 1.95),calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 170px));--mk-w:calc(var(--mk-h) / 1.95);--pk-size:var(--mk-w);--mk-gem:calc(var(--mk-w) * .05)}
-  .mk-board{height:var(--mk-h);padding:calc(var(--mk-w) * .035);border-radius:calc(var(--mk-w) * .14)}
+  .mk-board{height:var(--mk-h);padding:calc(var(--mk-w) * .06) calc(var(--mk-w) * .035) calc(var(--mk-w) * .035);border-radius:calc(var(--mk-w) * .14)}
+  .mk-board::before{inset:calc(var(--mk-w) * .016);border-radius:calc(var(--mk-w) * .125)}
+  .mk-mono{font-size:calc(var(--mk-w) * .032);top:calc(var(--mk-w) * .02)}
   .mk-wood{grid-template-columns:1fr 1fr;grid-template-rows:1.3fr repeat(6,1fr) 1.3fr;gap:calc(var(--mk-w) * .03);padding:calc(var(--mk-w) * .04);border-radius:calc(var(--mk-w) * .11)}
   .mk-cell{grid-column:var(--vc);grid-row:var(--vr)}
   body.pk .pk-mini{width:min(var(--mk-w) * 1.25,calc(100vw - 16px))}
@@ -79,12 +83,57 @@ body.pk .pk-stage{justify-content:center}
 <script src="play-rooms.js"></script>
 <script src="parlor-kit.js?v=1021h"></script>
 <script>
+/* ---------- painted materials (drawn in the browser when the page opens; no picture files) ---------- */
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;for(i=0;i<256;i++)p[i]=i;for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}for(i=0;i<512;i++)P[i]=p[i&255];for(i=0;i<256;i++)G[i]=r();function f(x){return x*x*(3-2*x);}return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;for(var y=0;y<h;y++)for(var x=0;x<w;x++){var col=fn(x,y),i=(y*w+x)*4;D[i]=col[0];D[i+1]=col[1];D[i+2]=col[2];D[i+3]=255;}g.putImageData(im,0,0);return c;}
+function cssUrl(c,png){return 'url('+c.toDataURL(png?"image/png":"image/jpeg",.9)+')';}
+function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
+function feltFn(rgb,seed){var r=rng(seed),n=noise2(seed);return function(x,y){var k=.86+r()*.22+(fbm(n,x/22,y/22,3)-.5)*.14;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+function marbleFn(o){var n=noise2(o.seed),n2=noise2(o.seed+9);return function(x,y){var w=fbm(n,x/150,y/150,5);var v=Math.abs(Math.sin((x*.004+y*.007)*o.freq+w*o.turb));v=Math.pow(1-v,o.sharp);var fine=fbm(n2,x/14,y/14,3),cloud=fbm(n2,x/260,y/260,3);var b=mix(o.base[0],o.cloud[0],cloud*.6),g=mix(o.base[1],o.cloud[1],cloud*.6),bb=mix(o.base[2],o.cloud[2],cloud*.6);return [mix(b,o.vein[0],v*o.amt)*(.97+fine*.06),mix(g,o.vein[1],v*o.amt)*(.97+fine*.06),mix(bb,o.vein[2],v*o.amt)*(.97+fine*.06)];};}
+function stoneFn(rgb,seed){var r=rng(seed),n=noise2(seed),n2=noise2(seed+5);return function(x,y){var k=.9+fbm(n,x/60,y/60,4)*.16+(fbm(n2,x/4,y/4,2)-.5)*.1+(r()<.015?-.12:0);return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+
+var DESIGNS={
+  /* Pavilion Maple: matches the room photo; pale maple board and sea-glass marbles */
+  maple:{name:"Pavilion Maple",tex:function(){ return cssUrl(canvasOf(1000,400,woodFn({light:[238,210,164],dark:[200,156,104],freq:.016,turb:4,wx:400,wy:40,sharp:.6,ringAmt:.42,streakAmt:.45,pores:.008,blotch:.14,seed:19}))); },
+    texc:"#e0be88",edge:"#9a6e3a",inlay:"rgba(120,80,36,.45)",rim:"rgba(0,0,0,0)",rimw:"0px",cupdk:".42",monoc:"#7a5226",
+    stones:{a0:"#d7f3ff",b0:"#4eb3f0",c0:"#1468a8",a1:"#fff6c2",b1:"#f0b429",c1:"#c06a00",a2:"#e4ffd8",b2:"#5ad16e",c2:"#1a7a38",a3:"#ffd3e0",b3:"#ef5a86",c3:"#9b1b3a"}},
+  /* Carved Sandstone: the pavilion's pale carved stone, a gold inlaid line, polished agate stones */
+  stone:{name:"Carved Sandstone",tex:function(){ return cssUrl(canvasOf(1000,400,stoneFn([228,208,172],23))); },
+    texc:"#e2cfa8",edge:"#8a7450",inlay:"rgba(184,145,63,.85)",rim:"rgba(184,145,63,.55)",rimw:"1.5px",cupdk:".38",monoc:"#8a6526",
+    stones:{a0:"#ffe7c8",b0:"#d9772e",c0:"#7a2e08",a1:"#e8fff2",b1:"#3f9a72",c1:"#0e4a32",a2:"#fff0f6",b2:"#c7889c",c2:"#6a2e44",a3:"#f8f4ec",b3:"#cbbfa8",c3:"#6e6250"}},
+  /* Ebony & Gold: ebony board with gold-leaf rims on every cup, onyx, gold, garnet and pearl stones */
+  ebony:{name:"Ebony & Gold",tex:function(){ return cssUrl(canvasOf(1000,400,woodFn({light:[56,44,36],dark:[16,12,10],freq:.03,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3}))); },
+    texc:"#1e1814",edge:"#000",inlay:"rgba(217,178,90,.9)",rim:"#c9a24f",rimw:"2px",cupdk:".55",monoc:"#d9b25a",
+    stones:{a0:"#9a9aa2",b0:"#2c2c32",c0:"#050507",a1:"#fff0b8",b1:"#d9a83a",c1:"#6a4a10",a2:"#ffc2c8",b2:"#a3182e",c2:"#4a0610",a3:"#ffffff",b3:"#f2ece2",c3:"#b8ab94"}}
+};
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="maple"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]) texCache[k]=d.tex();
+  var s=document.body.style;
+  s.setProperty("--mk-tex",texCache[k]); s.setProperty("--mk-cuptex",texCache[k]); s.setProperty("--mk-texc",d.texc); s.setProperty("--mk-edge",d.edge); s.setProperty("--mk-inlay",d.inlay);
+  s.setProperty("--mk-rim",d.rim); s.setProperty("--mk-rimw",d.rimw); s.setProperty("--mk-cupdk",d.cupdk); s.setProperty("--mk-monoc",d.monoc);
+  Object.keys(d.stones).forEach(function(v){ s.setProperty("--"+v,d.stones[v]); });
+}
+var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
+function previewBar(){
+  if(!PREVIEW) return;
+  var bar=document.createElement("div"); bar.className="mk-pick";
+  Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k;
+    b.onclick=function(){ previewPick=k; document.body.setAttribute("data-set",k); mark(); }; bar.appendChild(b); });
+  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||curDesign)); }); }
+  document.body.appendChild(bar); previewPick="maple"; document.body.setAttribute("data-set","maple"); mark();
+}
+
 /* ---------- the board ----------
    Internally the board is one ring of 14 slots, sown counter-clockwise:
    0-5 = side 1's cups (the host, or you against The House), 6 = side 1's store,
    7-12 = side 2's cups, 13 = side 2's store. Saved online as {y, h, ys, hs, turn, over}. */
 var stage=document.createElement("div"); stage.className="mk-pad";
-stage.innerHTML='<div class="mk-board"><div class="mk-wood" id="mkWood"></div></div>';
+stage.innerHTML='<div class="mk-board"><span class="mk-mono"><b>B</b><i>W</i></span><div class="mk-wood" id="mkWood"></div></div>';
 var slots=[];
 
 var ring=[], turn=1, over=false, last=-1, busy=false;
@@ -293,11 +342,11 @@ Parlor.init({
   game:"mancala", title:"Pavilion Mancala", bg:"mancala-pavilion.jpg", home:"tables.html", stage:stage,
   tagline:"Sow the stones. Fill your store.", invite:"The pavilion is open to the breeze. Sit down and sow the first stones.",
   players:[{name:"You",color:"#c98a3c"},{name:"The House",color:"#7a5420"}],
-  setsLabel:"Stone Sets",
+  setsLabel:"Boards",
   sets:[
-    {id:"glass",name:"Sea Glass",need:0,dots:["#4eb3f0","#f0b429","#5ad16e"]},
-    {id:"pearl",name:"Pearl",need:300,dots:["#f4efe6","#f7e3e6","#e9eef5"]},
-    {id:"ember",name:"Ember & Onyx",need:501,dots:["#e08a2c","#b8322a","#2c2c32"]}
+    {id:"maple",name:"Pavilion Maple",need:0,dots:["#e0be88","#4eb3f0","#f0b429"]},
+    {id:"stone",name:"Carved Sandstone",club:true,dots:["#e2cfa8","#d9772e","#3f9a72"]},
+    {id:"ebony",name:"Ebony & Gold",club:true,dots:["#1e1814","#d9a83a","#a3182e"]}
   ],
   rules:{
     play:"<ol><li>Your six cups are the row nearest you, and your store is on your right (at the bottom on a phone). Each cup starts with four stones.</li><li>Tap one of your cups. Its stones are sown one at a time, counter-clockwise, into the next cups and your own store. The other player's store is skipped.</li><li>If your last stone lands in your store, you take another turn.</li><li>If your last stone lands in an empty cup on your side, you capture it and every stone in the cup across from it.</li><li>When either side runs out of stones, each player moves the stones left on their side into their own store.</li></ol>",
@@ -306,7 +355,11 @@ Parlor.init({
   onNew:function(){ mySide=1; place(); newGame(); }
 });
 ring=fresh();   /* a board to look at before anyone sits */
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set");
+  if(PREVIEW&&previewPick&&k!==previewPick){ document.body.setAttribute("data-set",previewPick); return; }
+  applyDesign(k||"maple"); }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
 document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"maple"); previewBar();
   build(); paint();
   if(CODE) bootOnline();
 });
