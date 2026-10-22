@@ -17,7 +17,7 @@ window.BW_ROOMS={
   mancala:"mancala.html",
   dominoes:"dominoes.html",
   yahtzee:"yahtzee-room.html",
-  cribbage:"cribbage-room.html",
+  cribbage:"cribbage.html",
   shutbox:"shutbox.html"
 };
 function bwGuessGame(room){

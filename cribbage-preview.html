@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cribbage: Board Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--glass:rgba(15,23,42,.72);--gold:#e7c77a;--ink:#f3ead8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Montserrat,system-ui,sans-serif;color:var(--ink);background:#1a120c;overflow-x:hidden;min-height:100vh}
+.bg{position:fixed;inset:-40px;background:url("cribbage-snug.jpg") center/cover;filter:blur(18px) brightness(.5);z-index:-2}
+header{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 16px 4px}
+.label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.designs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;background:rgba(255,255,255,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:6px}
+.designs button{font:600 13px Montserrat,sans-serif;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:6px;padding:9px 14px;cursor:pointer}
+.designs button.on{background:rgba(255,255,255,.22);border-color:rgba(231,199,122,.6);color:#fff}
+.stage{display:flex;justify-content:center;overflow:hidden;margin-top:8px}
+.fit{position:relative;flex:none;overflow:hidden}
+.scaler{position:absolute;left:0;top:0;transform-origin:0 0}
+.scene{position:relative;width:868px;height:868px;perspective:3000px}
+.table{position:absolute;left:4px;top:4px;width:860px;height:860px;transform-style:preserve-3d}
+.table *{transform-style:preserve-3d}
+.table,.table *{pointer-events:none}
+.table .cd.play,.table .cd.play *{pointer-events:auto}
+.p{position:absolute;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.tsh{left:-4px;top:-2px;width:868px;height:866px;transform:translateZ(-30px);border-radius:14px;background:rgba(0,0,0,.6);filter:blur(12px)}
+.wh{background-image:var(--wood);background-size:1200px 600px;background-repeat:no-repeat;background-color:var(--woodc)}
+.wv{background-image:var(--woodv);background-size:600px 1200px;background-repeat:no-repeat;background-color:var(--woodc)}
+.top{width:394px;height:394px;transform:translateZ(-14px);background-image:var(--top);background-size:256px 256px;background-color:var(--topc)}
+.top.a{left:36px;top:36px}.top.b{left:430px;top:36px}.top.c{left:36px;top:430px}.top.d{left:430px;top:430px}
+.topsh{left:36px;top:36px;width:788px;height:788px;transform:translateZ(-13.6px);pointer-events:none;
+  background:radial-gradient(ellipse 65% 60% at 55% 50%,rgba(255,220,160,.12),rgba(0,0,0,0) 60%),linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 8%),linear-gradient(to right,rgba(0,0,0,.4),rgba(0,0,0,0) 5%,rgba(0,0,0,0) 95%,rgba(0,0,0,.35)),linear-gradient(to top,rgba(0,0,0,.3),rgba(0,0,0,0) 7%)}
+/* a fine double gold line tooled into the leather */
+.tool{position:absolute;left:52px;top:52px;width:756px;height:756px;transform:translateZ(-13.4px);pointer-events:none;border:1.5px solid var(--tool);outline:1px solid var(--tool);outline-offset:4px;border-radius:3px}
+.rim{transform:translateZ(1px)}
+.rim::after{content:"";position:absolute;inset:0}
+.rim.t{left:0;top:0;width:430px;height:36px}.rim.t2{left:430px;background-position:-430px 0}
+.rim.b{left:0;top:824px;width:430px;height:36px;background-position:-100px -300px}.rim.b2{left:430px;background-position:-530px -300px}
+.rim.t::after{background:linear-gradient(to bottom,rgba(255,235,200,.2),rgba(0,0,0,0) 40%,rgba(0,0,0,.3))}
+.rim.b::after{background:linear-gradient(to bottom,rgba(255,235,200,.28),rgba(0,0,0,0) 45%,rgba(0,0,0,.25))}
+.rim.l{left:0;top:36px;width:36px;height:788px;background-position:-40px 0}.rim.r{left:824px;top:36px;width:36px;height:788px;background-position:-300px -100px}
+.rim.l::after{background:linear-gradient(to right,rgba(255,235,200,.18),rgba(0,0,0,.3))}.rim.r::after{background:linear-gradient(to right,rgba(255,235,200,.1),rgba(0,0,0,.35))}
+.gold{position:absolute;pointer-events:none;transform:translateZ(1.6px);background:linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)}
+/* ---- the pegboard ---- */
+.board{left:58px;top:66px;width:150px;height:728px;transform:translateZ(-2px);border-radius:14px;background-image:var(--bwood);background-size:150px 728px;background-color:var(--bwoodc);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -3px 6px rgba(0,0,0,.3)}
+.boardsh{left:52px;top:62px;width:162px;height:740px;transform:translateZ(-13px);border-radius:16px;background:rgba(0,0,0,.55);filter:blur(7px)}
+.bedge{left:58px;top:66px;width:150px;height:728px;transform:translateZ(-8px);border-radius:14px;background:var(--bwoodc);filter:brightness(.6)}
+.inlay{transform:translateZ(-1.6px);background:var(--binlay);box-shadow:0 0 1px rgba(0,0,0,.6)}
+.hole{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;transform:translateZ(-1.5px);background:radial-gradient(circle at 50% 40%,#0b0705 55%,#3a2a1c 100%);box-shadow:0 0 0 1.5px var(--hring),0 1px 0 rgba(255,255,255,.25)}
+.lab{transform:translateZ(-1.4px);font:700 10px Montserrat,sans-serif;letter-spacing:.12em;color:var(--blab);text-align:center;width:150px;left:58px}
+.peg{width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;transition:transform .7s cubic-bezier(.3,.7,.3,1)}
+.peg .ps{position:absolute;inset:-2px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(2px);transform:translate3d(4px,5px,.5px)}
+.peg .pb{position:absolute;inset:2px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d0,#c9a14a 50%,#6e4f1d);transform:translateZ(8px)}
+.peg .ph{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.85),var(--pc) 40%,var(--pc2) 100%);box-shadow:0 1px 2px rgba(0,0,0,.5);transform:translateZ(14px)}
+.peg.a{--pc:var(--pegA);--pc2:var(--pegA2)}.peg.b{--pc:var(--pegB);--pc2:var(--pegB2)}
+/* ---- cards ---- */
+.cd{position:absolute;left:0;top:0;width:90px;height:126px;margin:-63px 0 0 -45px;-webkit-tap-highlight-color:transparent}
+.cd .s{position:absolute;inset:0;border-radius:8px;background:#d8d2c4}
+.cd .sh{position:absolute;inset:-4px;border-radius:12px;background:rgba(0,0,0,.45);filter:blur(5px);transform:translate3d(3px,5px,.4px)}
+.cd .f{position:absolute;inset:0;border-radius:8px;background:linear-gradient(160deg,#fffefb,#f6f1e6 60%,#ebe3d2);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),inset 0 1px 0 #fff;overflow:hidden;font-family:"Cormorant Garamond",Georgia,serif}
+.cd.red .f{color:#b3202a}.cd.blk .f{color:#17171c}
+.cd .ix{position:absolute;left:3px;top:5px;width:18px;text-align:center;line-height:.92}   /* a narrow corner index, clear of the pips */
+.cd .ix b{display:block;font-size:18px;font-weight:700;letter-spacing:-.06em}.cd .ix i{display:block;font-style:normal;font-size:13px}
+.cd .ix.br{left:auto;top:auto;right:3px;bottom:5px;transform:rotate(180deg)}
+.cd .pips{position:absolute;left:29px;right:29px;top:17px;bottom:17px}   /* the pips sit in a central panel */
+.cd .pips span{position:absolute;font-size:17px;line-height:1;transform:translate(-50%,-50%)}
+.cd .pips span.dn{transform:translate(-50%,-50%) rotate(180deg)}
+.cd .pips span.ace{font-size:46px}
+.cd .court{position:absolute;left:24px;right:24px;top:20px;bottom:20px;border:1.5px solid #c9a24f;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(201,162,79,.08),rgba(201,162,79,.2));box-shadow:inset 0 0 0 3px rgba(255,255,255,.6),inset 0 0 0 4px rgba(201,162,79,.5)}
+.cd .court b{font-size:36px;line-height:.9;font-weight:700}.cd .court i{font-style:normal;font-size:20px}
+.cd .bk{position:absolute;inset:0;border-radius:8px;background:var(--cback);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),inset 0 0 0 5px #f6f1e6,inset 0 0 0 6px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cd .bk::before{content:"";position:absolute;inset:9px;border-radius:4px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 2px,rgba(0,0,0,0) 2px 7px),repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0 2px,rgba(0,0,0,0) 2px 7px);box-shadow:inset 0 0 0 1px rgba(231,199,122,.55)}
+.cd .mono{position:relative;display:flex;align-items:baseline;line-height:1.25;font-size:24px}
+.cd .mono b,.cd .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.cd .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.cd .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+.cd.play{cursor:pointer}
+.cd.play .f{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.45)}
+.count{left:440px;top:268px;width:120px;margin-left:-60px;text-align:center;transform:translateZ(-12px);font:700 13px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,240,210,.75)}
+.count b{display:block;font:700 44px "Cormorant Garamond",serif;letter-spacing:0;color:#f6e7c2;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+.tag{font:700 11px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,240,210,.6);transform:translateZ(-12px);text-align:center;width:120px;margin-left:-60px}
+.bar2{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px auto 0;padding:10px 12px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:12px;width:min(660px,calc(100% - 32px))}
+.status{flex:1 1 220px;font-size:14px;line-height:1.35}
+.status b{color:var(--gold)}
+.btn{font:600 14px Montserrat,sans-serif;border-radius:6px;padding:11px 18px;cursor:pointer;border:1px solid rgba(231,199,122,.45);background:rgba(30,41,59,.85);color:var(--gold)}
+.note{max-width:660px;margin:12px auto 24px;padding:0 16px;text-align:center;font-size:12.5px;line-height:1.5;color:rgba(243,234,216,.75)}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<header>
+  <div class="label">Cribbage · Board Preview</div>
+  <div class="designs" id="designs">
+    <button data-d="maple" class="on">Fireside Maple</button>
+    <button data-d="walnut">Library Walnut</button>
+    <button data-d="ebony">Ebony &amp; Pearl</button>
+  </div>
+</header>
+<div class="stage"><div class="fit" id="fit"><div class="scaler" id="scaler"><div class="scene"><div class="table" id="T"></div></div></div></div></div>
+<div class="bar2"><div class="status" id="status"></div><button class="btn" id="peg">Peg +2 for You</button><button class="btn" id="deal" style="background:transparent;color:var(--ink);border-color:rgba(255,255,255,.2)">Deal Again</button></div>
+<p class="note">Preview only. Tap a glowing card to play it onto the pile (the count goes up). "Peg +2" moves your back peg forward, leapfrogging the front one, the way real pegging works. The House's hand and the crib wait face down; the starter sits face up on the deck.</p>
+<script>
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;for(i=0;i<256;i++)p[i]=i;for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}for(i=0;i<512;i++)P[i]=p[i&255];for(i=0;i<256;i++)G[i]=r();function f(x){return x*x*(3-2*x);}return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;for(var y=0;y<h;y++)for(var x=0;x<w;x++){var col=fn(x,y),i=(y*w+x)*4;D[i]=col[0];D[i+1]=col[1];D[i+2]=col[2];D[i+3]=255;}g.putImageData(im,0,0);return c;}
+function url(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
+function rot(c){var d=document.createElement("canvas");d.width=c.height;d.height=c.width;var g=d.getContext("2d");g.translate(d.width,0);g.rotate(Math.PI/2);g.drawImage(c,0,0);return d;}
+function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
+/* leather: soft mottling and a fine grain */
+function leatherFn(rgb,seed){var r=rng(seed),n=noise2(seed),n2=noise2(seed+3);return function(x,y){var k=.82+fbm(n,x/40,y/40,4)*.3+(fbm(n2,x/3,y/3,2)-.5)*.12+(r()-.5)*.05;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+var DESIGNS={
+  maple:{name:"Fireside Maple",table:{light:[110,48,30],dark:[54,20,10],freq:.035,turb:6,wx:420,wy:30,sharp:.9,ringAmt:.35,streakAmt:.5,pores:.012,blotch:.3,seed:41},tablec:"#5a2414",
+    top:[34,64,44],tool:"rgba(214,178,92,.55)",bwood:{light:[236,206,160],dark:[200,160,108],freq:.012,turb:3,wx:200,wy:40,sharp:.6,ringAmt:.4,streakAmt:.45,pores:.01,blotch:.12,seed:7},bwoodc:"#ddb98a",
+    binlay:"linear-gradient(90deg,#3a2414,#6b4426,#3a2414)",hring:"rgba(90,60,30,.55)",blab:"rgba(70,40,20,.65)",pegA:"#2a5bd0",pegA2:"#122e7a",pegB:"#c8242e",pegB2:"#6a0e14",back:"linear-gradient(150deg,#b3202a,#7a1018)",names:"maple board, green leather, red-backed cards"},
+  walnut:{name:"Library Walnut",table:{light:[120,78,46],dark:[58,34,18],freq:.04,turb:9,wx:220,wy:20,sharp:.7,ringAmt:.66,streakAmt:.42,pores:.02,blotch:.3,seed:23},tablec:"#5e3c22",
+    top:[96,30,30],tool:"rgba(214,178,92,.6)",bwood:{light:[120,80,50],dark:[60,36,20],freq:.012,turb:5,wx:160,wy:30,sharp:.7,ringAmt:.6,streakAmt:.4,pores:.02,blotch:.25,seed:23},bwoodc:"#5e3c22",
+    binlay:"linear-gradient(90deg,#8a6526,#f3d790 50%,#8a6526)",hring:"rgba(214,178,92,.6)",blab:"rgba(240,215,160,.75)",pegA:"#f2efe6",pegA2:"#a8a090",pegB:"#1c1c22",pegB2:"#000",back:"linear-gradient(150deg,#21345e,#111c38)",names:"walnut board with brass, oxblood leather, navy-backed cards"},
+  ebony:{name:"Ebony & Pearl",table:{light:[40,34,30],dark:[14,11,9],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},tablec:"#1b1714",
+    top:[38,40,46],tool:"rgba(200,200,210,.45)",bwood:{light:[46,38,32],dark:[14,11,9],freq:.012,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:9},bwoodc:"#1b1714",
+    binlay:"linear-gradient(90deg,#d8dde6,#ffffff 50%,#b8c0cc)",hring:"rgba(235,240,248,.75)",blab:"rgba(235,240,248,.7)",pegA:"#e8eef8",pegA2:"#8a96a8",pegB:"#d4af37",pegB2:"#6e4f1d",back:"linear-gradient(150deg,#26262c,#0d0d10)",names:"ebony board with pearl inlay, charcoal leather, black-backed cards"}
+};
+var T=document.getElementById("T");
+var h='<div class="p tsh"></div><div class="p top a"></div><div class="p top b"></div><div class="p top c"></div><div class="p top d"></div><div class="p topsh"></div><div class="tool"></div>';
+h+='<div class="p rim t wh"></div><div class="p rim t t2 wh"></div><div class="p rim b wh"></div><div class="p rim b b2 wh"></div><div class="p rim l wv"></div><div class="p rim r wv"></div>';
+h+='<div class="gold" style="left:30px;top:30px;width:800px;height:2px"></div><div class="gold" style="left:30px;top:828px;width:400px;height:2px"></div><div class="gold" style="left:430px;top:828px;width:400px;height:2px"></div><div class="gold" style="left:30px;top:30px;width:2px;height:800px"></div><div class="gold" style="left:828px;top:30px;width:2px;height:800px"></div>';
+/* the pegboard: two tracks (you on the left, The House on the right), each up the outer row and back down the inner row: 60 + 60 holes in fives */
+h+='<div class="p boardsh"></div><div class="p bedge"></div><div class="p board"></div>';
+var BX={A:[80,104],B:[162,186]}, Y0=742, GAP=10.2, GROUP=5.5;
+function holeY(k){ return Y0-k*GAP-Math.floor(k/5)*GROUP; }   /* k = 0..59 up the board */
+function holeXY(side,n){   /* n = 1..120 score; 0 = start; 121 = game hole */
+  var cols=BX[side];
+  if(n<=0) return [side==="A"?92:174, 774];
+  if(n>=121) return [133, 92];
+  if(n<=60) return [cols[0], holeY(n-1)];
+  return [cols[1], holeY(120-n)];
+}
+['A','B'].forEach(function(sd){ for(var n=1;n<=120;n++){ var q=holeXY(sd,n); h+='<div class="p hole" style="left:'+q[0]+'px;top:'+q[1]+'px"></div>'; }
+  var s0=holeXY(sd,0); h+='<div class="p hole" style="left:'+(s0[0]-10)+'px;top:'+s0[1]+'px"></div><div class="p hole" style="left:'+(s0[0]+10)+'px;top:'+s0[1]+'px"></div>'; });
+var g=holeXY('A',121); h+='<div class="p hole" style="left:'+g[0]+'px;top:'+g[1]+'px;width:10px;height:10px;margin:-5px 0 0 -5px"></div>';
+h+='<div class="p inlay" style="left:132px;top:118px;width:2px;height:640px"></div>';
+h+='<div class="p lab" style="top:70px">121</div><div class="p lab" style="top:782px">START</div>';
+h+='<div class="p tag" style="left:537px;top:62px">The House</div><div class="p tag" style="left:537px;top:794px">You</div>';
+h+='<div class="p count" id="count"></div><div id="cards" style="position:absolute;left:0;top:0"></div><div id="pegs" style="position:absolute;left:0;top:0"></div>';
+T.innerHTML=h;
+var CL=document.getElementById("cards"), PL=document.getElementById("pegs");
+/* ---------- cards ---------- */
+var SUITS=["♣","♦","♥","♠"], RANKS=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+/* pip positions for 2..10 (x,y in %) — the classic layouts */
+var LAYOUT={2:[[50,0],[50,100]],3:[[50,0],[50,50],[50,100]],4:[[0,0],[100,0],[0,100],[100,100]],5:[[0,0],[100,0],[50,50],[0,100],[100,100]],
+  6:[[0,0],[100,0],[0,50],[100,50],[0,100],[100,100]],7:[[0,0],[100,0],[50,25],[0,50],[100,50],[0,100],[100,100]],
+  8:[[0,0],[100,0],[50,25],[0,50],[100,50],[50,75],[0,100],[100,100]],9:[[0,0],[100,0],[0,33],[100,33],[50,50],[0,67],[100,67],[0,100],[100,100]],
+  10:[[0,0],[100,0],[50,17],[0,33],[100,33],[0,67],[100,67],[50,83],[0,100],[100,100]]};
+function card(c,o){
+  o=o||{}; var e=document.createElement("div"); e.className="cd "+(c&&(c.s===1||c.s===2)?"red":"blk");
+  var s='<div class="sh"></div><div class="s" style="transform:translateZ(1px)"></div>';
+  if(o.back||!c) s+='<div class="bk" style="transform:translateZ(2.4px)"><span class="mono"><b>B</b><i>W</i></span></div>';
+  else {
+    var R=RANKS[c.r], S=SUITS[c.s], mid="";
+    if(c.r===0) mid='<div class="pips"><span class="ace" style="left:50%;top:50%">'+S+'</span></div>';
+    else if(c.r>=10) mid='<div class="court"><b>'+R+'</b><i>'+S+'</i></div>';
+    else mid='<div class="pips">'+LAYOUT[c.r+1].map(function(p){ return '<span class="'+(p[1]>50?"dn":"")+'" style="left:'+p[0]+'%;top:'+p[1]+'%">'+S+'</span>'; }).join("")+'</div>';
+    s+='<div class="f" style="transform:translateZ(2.4px)"><div class="ix"><b>'+R+'</b><i>'+S+'</i></div>'+mid+'<div class="ix br"><b>'+R+'</b><i>'+S+'</i></div></div>';
+  }
+  e.innerHTML=s; CL.appendChild(e); return e;
+}
+function at(e,x,y,z,r){ e.style.transform="translate3d("+x+"px,"+y+"px,"+(z||-12)+"px)"+(r?" rotate("+r+"deg)":""); }
+/* ---------- a sample table ---------- */
+var hand=[],pile=[],count=0,me=[0,0];
+function val(c){ return c.r===0?1:c.r>=10?10:c.r+1; }
+function deal(){
+  CL.innerHTML=""; var d=[]; for(var s=0;s<4;s++) for(var r=0;r<13;r++) d.push({s:s,r:r});
+  var rr=rng(Date.now()%9999+3); for(var i=d.length-1;i>0;i--){ var j=Math.floor(rr()*(i+1)); var t=d[i]; d[i]=d[j]; d[j]=t; }
+  hand=d.splice(0,4); pile=d.splice(0,2); var starter=d.pop(); count=pile.reduce(function(a,c){return a+val(c);},0);
+  /* the deck and the starter, cut face up on top */
+  for(var k=0;k<6;k++){ var dk=card(null,{back:true}); at(dk,724+k*.6,436-k*.6,-12+k*1.2); }
+  var st=card(starter); at(st,742,452,-2,8);
+  /* The House's hand, face down and slightly fanned */
+  for(k=0;k<4;k++){ var hb=card(null,{back:true}); at(hb,450+k*58,150,-12+k*.5,(k-1.5)*3); }
+  /* the crib: four cards face down beside the dealer (you) */
+  for(k=0;k<4;k++){ var cb=card(null,{back:true}); at(cb,742+k*1.5,668-k*1.5,-12+k*1.2,-6); }
+  pile.forEach(function(c,k){ var pe=card(c); at(pe,380+k*40,440,-12+k*.8,(k%2?3:-2)); pe._pile=1; });
+  hand.forEach(function(c,k){ var e=card(c); at(e,350+k*96,712,-12,0); e._c=c; e._k=k; e.onclick=function(){ play(e); }; });
+  mark();
+}
+function mark(){
+  var n=0; CL.querySelectorAll(".cd").forEach(function(e){ if(!e._c) return; var ok=count+val(e._c)<=31; e.classList.toggle("play",ok); if(ok)n++; });
+  document.getElementById("count").innerHTML="Count<b>"+count+"</b>";
+  var d=DESIGNS[cur]; document.getElementById("status").innerHTML="<b>"+d.name+"</b> · "+d.names+". "+(n?n+" of your cards can play.":"Go: none of your cards fit under 31.");
+}
+function play(e){
+  if(!e.classList.contains("play")) return;
+  var k=CL.querySelectorAll(".cd").length, np=CL.querySelectorAll(".cd").length;
+  var placed=[].filter.call(CL.children,function(x){ return x._pile; }).length;
+  e.style.transition="transform .55s cubic-bezier(.3,.7,.3,1)"; at(e,380+placed*40,440,-12+placed*.8+40,(placed%2?3:-2));
+  setTimeout(function(){ at(e,380+placed*40,440,-12+placed*.8,(placed%2?3:-2)); },300);
+  e._pile=1; count+=val(e._c); e._c=null; e.classList.remove("play"); e.onclick=null; mark();
+}
+/* ---------- pegs: each player has two; the back peg jumps past the front one ---------- */
+var pegs={A:[],B:[]}, score={A:[0,0],B:[0,0]};
+function mkPeg(side){ var e=document.createElement("div"); e.className="p peg "+(side==="A"?"a":"b"); e.innerHTML='<div class="ps"></div><div class="pb"></div><div class="ph"></div>'; PL.appendChild(e); return e; }
+function setPeg(e,n,side){ var q=holeXY(side,n); e.style.transform="translate3d("+q[0]+"px,"+q[1]+"px,-1px)"; }
+function placePegs(){ ['A','B'].forEach(function(sd){ setPeg(pegs[sd][0],score[sd][0],sd); setPeg(pegs[sd][1],score[sd][1],sd); }); }
+['A','B'].forEach(function(sd){ pegs[sd]=[mkPeg(sd),mkPeg(sd)]; });
+score.A=[41,47]; score.B=[52,58]; placePegs();
+document.getElementById("peg").onclick=function(){ var s=score.A, back=s[0]<=s[1]?0:1, front=1-back; s[back]=Math.min(121,s[front]+2); placePegs();
+  document.getElementById("status").innerHTML="<b>Pegged.</b> Your back peg jumped ahead to "+s[back]+"."; };
+document.getElementById("deal").onclick=deal;
+var cache={},cur="maple";
+function apply(k){cur=k;var d=DESIGNS[k];if(!cache[k]){var w=canvasOf(1200,600,woodFn(d.table));cache[k]={w:url(w),v:url(rot(w)),top:url(canvasOf(256,256,leatherFn(d.top,k.length*17))),b:url(rot(canvasOf(728,150,woodFn(d.bwood))))};}
+  var s=T.style;s.setProperty("--wood",cache[k].w);s.setProperty("--woodv",cache[k].v);s.setProperty("--woodc",d.tablec);s.setProperty("--top",cache[k].top);s.setProperty("--topc","rgb("+d.top+")");s.setProperty("--tool",d.tool);
+  s.setProperty("--bwood",cache[k].b);s.setProperty("--bwoodc",d.bwoodc);s.setProperty("--binlay",d.binlay);s.setProperty("--hring",d.hring);s.setProperty("--blab",d.blab);
+  s.setProperty("--pegA",d.pegA);s.setProperty("--pegA2",d.pegA2);s.setProperty("--pegB",d.pegB);s.setProperty("--pegB2",d.pegB2);s.setProperty("--cback",d.back);
+  document.querySelectorAll("#designs button").forEach(function(b){b.classList.toggle("on",b.dataset.d===k);});mark();}
+document.querySelectorAll("#designs button").forEach(function(b){b.onclick=function(){apply(b.dataset.d);};});
+function fit(){var w=Math.min(innerWidth-8,1150),s=Math.min(w/868,Math.max(300,innerHeight-240)/868,1.1);document.getElementById("scaler").style.transform="scale("+s+")";var f=document.getElementById("fit");f.style.width=868*s+"px";f.style.height=868*s+"px";}
+addEventListener("resize",fit);fit();deal();apply("maple");
+</script>
+</body>
+</html>

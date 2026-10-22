@@ -2,311 +2,622 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cribbage · BrainWhim Play</title>
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fireside Cribbage · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1021h">
 <style>
-:root{--navy:#1A2744;--whim:#7EB6D9}
-*{box-sizing:border-box}
-html,body{min-height:100%}
-body{margin:0;font-family:Montserrat,sans-serif;color:#1A2744;background:#c4a878}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:#c4a878 url("cribbage-snug.jpg") center / cover no-repeat}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:6px 4% 8px;background:var(--navy);min-height:72px;position:relative;z-index:2}
-.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-size:26px}
-.brand img{width:72px;height:72px;object-fit:contain;margin-right:-8px}
-.whim{font-family:Pacifico,cursive;color:var(--whim);font-size:1em;line-height:1;font-weight:400}
-.hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:16px}
-.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:0}
-.games{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:8px auto 6px;max-width:640px;padding:6px 8px;position:relative;z-index:2;background:rgba(255,252,247,.78);border-radius:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.games a,.games button{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:5px 9px;font-weight:700;font-size:11px;text-decoration:none;color:var(--navy);font-family:inherit;cursor:pointer}
-.games a.on,.games button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-.sitbar{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:6px auto 8px;max-width:640px;padding:0 10px;position:relative;z-index:2}
-.sitbar button,.sitbar a,.helpbtn{border:0;border-radius:999px;padding:8px 12px;background:#fff;color:var(--navy);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.12)}
-body.seated .sit{display:none}body:not(.seated) .stand{display:none}
-body:not(.seated) .live{display:none}body.seated .live{display:block}
-.live{max-width:640px;margin:8px auto 36px;padding:8px 10px}
-h1{display:inline-block;margin:4px 0;font-size:22px;background:rgba(255,252,247,.9);padding:4px 14px;border-radius:999px}
-.sub{width:fit-content;margin:0 auto 10px;background:rgba(255,252,247,.82);padding:3px 12px;border-radius:999px;font-size:13px}
-.stage{perspective:1100px;padding:4px 6px 16px}
-.table{
-  transform:rotateX(12deg);transform-origin:50% 88%;
-  background:linear-gradient(160deg,#6b2a38,#3a121c);
-  padding:10px;border-radius:16px;color:#f4ead0;
-  box-shadow:0 22px 34px rgba(0,0,0,.38), 0 5px 0 #2a0c12, inset 0 1px 0 rgba(255,200,200,.25)
-}
-.table-in{
-  background:linear-gradient(180deg,#1f4a38,#163328);
-  padding:12px;border-radius:10px;
-  box-shadow:inset 0 0 0 2px #c9d7c4, inset 0 0 0 5px #0f241c
-}
-.track{display:flex;gap:4px;margin-bottom:10px}
-.peg{flex:1;background:#1a1008;border-radius:8px;padding:8px;text-align:center}
-.peg b{display:block;font-size:22px;color:#e8c15a}
-.cribboard{background:linear-gradient(180deg,#f3ead6,#d7c4a0 40%,#b08958);border-radius:10px;padding:8px 8px 10px;margin:0 0 12px;box-shadow:inset 0 0 0 2px #6e5220}
-.lane{display:flex;align-items:center;gap:6px;margin:4px 0}
-.lane em{font-style:normal;font-size:10px;width:44px;color:#3a2410;font-weight:700}
-.holes{flex:1;display:flex;gap:2px}
-.holes i{flex:1;height:8px;border-radius:50%;background:#5a3a16;box-shadow:inset 0 1px 1px rgba(0,0,0,.35)}
-.holes i.on.you{background:#1A2744;box-shadow:0 0 0 1px #7EB6D9}
-.holes i.on.hs{background:#f4ead0;box-shadow:0 0 0 1px #1A2744}
-.rowc{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:46px;margin:8px 0}
-.cardx{width:46px;height:64px;border-radius:6px;background:linear-gradient(#fffef8,#f0e2c4);color:#1A2744;border:0;box-shadow:1px 2px 0 #8a6e3e;font-weight:700;cursor:pointer;font-family:inherit}
-.cardx.red{color:#9B1B2E}.cardx.on{outline:2px solid #e8c15a}
-.cardx.back{background:linear-gradient(#1A2744,#0d1628);color:#7EB6D9}
-.meta{display:flex;justify-content:space-between;font-size:12px;font-weight:700}
-.hint{text-align:center;margin:10px 0 0}
-.hint span{background:rgba(255,252,247,.92);color:#1A2744;display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px}
-.acts{text-align:center;margin-top:8px}
-.acts button{border:0;border-radius:999px;padding:8px 14px;background:#1A2744;color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
-@media(max-width:800px){
-header{display:grid;grid-template-columns:1fr auto;height:auto;min-height:0;padding:6px 10px 8px}
-.brand{font-size:18px;grid-column:1;grid-row:1}
-.brand img{width:48px;height:48px}
-.hdr{grid-column:1 / -1;grid-row:2;justify-content:center;width:100%;padding-top:4px;gap:12px}
-.hdr a{font-size:13px;margin-left:0}
-}
-#winveil,#helpveil{position:fixed;inset:0;background:rgba(12,18,32,.5);display:none;align-items:center;justify-content:center;z-index:90;padding:16px}
-#winveil.on,#helpveil.on{display:flex}
-.box{width:min(500px,94vw);padding:22px;border-radius:20px;background:linear-gradient(180deg,#fffdf8,#f3ead6);box-shadow:0 0 0 3px #c9a45a,0 0 0 7px #1A2744}
-.box h2{margin:0 0 12px;text-align:center}
-.box li{margin:0 0 6px;font-size:14px}
-.go{background:#1A2744;color:#fff;border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
-.ghost{background:#fff;color:#1A2744;border-radius:999px;padding:10px 16px;text-decoration:none;font-weight:700;box-shadow:inset 0 0 0 1px #d7c9b0}
-.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-
-body.seated .games{display:none}
-body.seated .sitbar{position:fixed;left:0;right:0;bottom:10px;z-index:8;margin:0;padding:8px 10px;max-width:none}
-body.seated .sit{display:none}
-body:not(.seated) .sitbar .stand,body:not(.seated) .sitbar .helpbtn{display:none}
-body.seated .bar button{display:none}
-
+/* ===== Cribbage: a leather-topped card table seen from straight above, drawn in the browser =====
+   The pegboard, cards and table are painted in code (no picture files). Card backs carry the gold BW monogram.
+   Boards (the Boards card): Fireside Maple is free; Library Walnut and Ebony & Pearl are for Club members. */
+.cr-pad{width:100%;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.cr-fit{position:relative;flex:none;overflow:hidden}
+.cr-scaler{position:absolute;left:0;top:0;transform-origin:0 0}
+.cr-scene{position:relative;width:868px;height:868px;perspective:3000px}
+#crT{position:absolute;left:4px;top:4px;width:860px;height:860px;transform-style:preserve-3d}
+#crT *{transform-style:preserve-3d}
+#crT,#crT *{pointer-events:none}
+#crT .cd.tap,#crT .cd.tap *{pointer-events:auto}
+#crT .p{position:absolute;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+#crT .tsh{left:-4px;top:-2px;width:868px;height:866px;transform:translateZ(-30px);border-radius:14px;background:rgba(0,0,0,.6);filter:blur(12px)}
+#crT .wh{background-image:var(--cr-wood);background-size:1200px 600px;background-repeat:no-repeat;background-color:var(--cr-woodc)}
+#crT .wv{background-image:var(--cr-woodv);background-size:600px 1200px;background-repeat:no-repeat;background-color:var(--cr-woodc)}
+#crT .top{width:394px;height:394px;transform:translateZ(-14px);background-image:var(--cr-top);background-size:256px 256px;background-color:var(--cr-topc)}
+#crT .top.a{left:36px;top:36px}#crT .top.b{left:430px;top:36px}#crT .top.c{left:36px;top:430px}#crT .top.d{left:430px;top:430px}
+#crT .topsh{left:36px;top:36px;width:788px;height:788px;transform:translateZ(-13.6px);
+  background:radial-gradient(ellipse 65% 60% at 55% 50%,rgba(255,220,160,.12),rgba(0,0,0,0) 60%),linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 8%),linear-gradient(to right,rgba(0,0,0,.4),rgba(0,0,0,0) 5%,rgba(0,0,0,0) 95%,rgba(0,0,0,.35)),linear-gradient(to top,rgba(0,0,0,.3),rgba(0,0,0,0) 7%)}
+#crT .tool{position:absolute;left:52px;top:52px;width:756px;height:756px;transform:translateZ(-13.4px);border:1.5px solid var(--cr-tool);outline:1px solid var(--cr-tool);outline-offset:4px;border-radius:3px}
+#crT .rim{transform:translateZ(1px)}
+#crT .rim::after{content:"";position:absolute;inset:0}
+#crT .rim.t{left:0;top:0;width:430px;height:36px}#crT .rim.t2{left:430px;background-position:-430px 0}
+#crT .rim.b{left:0;top:824px;width:430px;height:36px;background-position:-100px -300px}#crT .rim.b2{left:430px;background-position:-530px -300px}
+#crT .rim.t::after{background:linear-gradient(to bottom,rgba(255,235,200,.2),rgba(0,0,0,0) 40%,rgba(0,0,0,.3))}
+#crT .rim.b::after{background:linear-gradient(to bottom,rgba(255,235,200,.28),rgba(0,0,0,0) 45%,rgba(0,0,0,.25))}
+#crT .rim.l{left:0;top:36px;width:36px;height:788px;background-position:-40px 0}#crT .rim.r{left:824px;top:36px;width:36px;height:788px;background-position:-300px -100px}
+#crT .rim.l::after{background:linear-gradient(to right,rgba(255,235,200,.18),rgba(0,0,0,.3))}#crT .rim.r::after{background:linear-gradient(to right,rgba(255,235,200,.1),rgba(0,0,0,.35))}
+#crT .gold{position:absolute;transform:translateZ(1.6px);background:linear-gradient(90deg,#8a6526,#f3d790 30%,#b8913f 60%,#f3d790 85%,#8a6526)}
+/* the pegboard */
+#crT .board{left:58px;top:66px;width:150px;height:728px;transform:translateZ(-2px);border-radius:14px;background-image:var(--cr-bwood);background-size:150px 728px;background-color:var(--cr-bwoodc);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -3px 6px rgba(0,0,0,.3)}
+#crT .boardsh{left:52px;top:62px;width:162px;height:740px;transform:translateZ(-13px);border-radius:16px;background:rgba(0,0,0,.55);filter:blur(7px)}
+#crT .inlay{transform:translateZ(-1.6px);background:var(--cr-binlay);box-shadow:0 0 1px rgba(0,0,0,.6)}
+#crT .hole{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;transform:translateZ(-1.5px);background:radial-gradient(circle at 50% 40%,#0b0705 55%,#3a2a1c 100%);box-shadow:0 0 0 1.5px var(--cr-hring),0 1px 0 rgba(255,255,255,.25)}
+#crT .lab{transform:translateZ(-1.4px);font:700 10px Montserrat,sans-serif;letter-spacing:.12em;color:var(--cr-blab);text-align:center;width:150px;left:58px}
+#crT .peg{width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;transition:transform .75s cubic-bezier(.3,.7,.3,1)}
+#crT .peg .ps{position:absolute;inset:-2px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(2px);transform:translate3d(4px,5px,.5px)}
+#crT .peg .pb{position:absolute;inset:2px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d0,#c9a14a 50%,#6e4f1d);transform:translateZ(8px)}
+#crT .peg .ph{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.85),var(--pc) 40%,var(--pc2) 100%);box-shadow:0 1px 2px rgba(0,0,0,.5);transform:translateZ(14px)}
+#crT .peg.a{--pc:var(--cr-pegA);--pc2:var(--cr-pegA2)}#crT .peg.b{--pc:var(--cr-pegB);--pc2:var(--cr-pegB2)}
+#crT .tag{font:700 11px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,240,210,.6);transform:translateZ(-12px);text-align:center;width:160px;margin-left:-80px}
+#crT .count{left:520px;top:268px;width:140px;margin-left:-70px;text-align:center;transform:translateZ(-12px);font:700 13px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,240,210,.75)}
+#crT .count b{display:block;font:700 44px "Cormorant Garamond",Georgia,serif;letter-spacing:0;color:#f6e7c2;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+/* cards (also used in the phone hand bar) */
+.cd{position:absolute;left:0;top:0;width:90px;height:126px;margin:-63px 0 0 -45px;-webkit-tap-highlight-color:transparent;transform-style:preserve-3d}
+.cd *{transform-style:preserve-3d}
+.cd .s{position:absolute;inset:0;border-radius:8px;background:#d8d2c4}
+.cd .sh{position:absolute;inset:-4px;border-radius:12px;background:rgba(0,0,0,.45);filter:blur(5px);transform:translate3d(3px,5px,.4px)}
+.cd .f{position:absolute;inset:0;border-radius:8px;background:linear-gradient(160deg,#fffefb,#f6f1e6 60%,#ebe3d2);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),inset 0 1px 0 #fff;overflow:hidden;font-family:"Cormorant Garamond",Georgia,serif}
+.cd.red .f{color:#b3202a}.cd.blk .f{color:#17171c}
+.cd .ix{position:absolute;left:3px;top:5px;width:18px;text-align:center;line-height:.92}
+.cd .ix b{display:block;font-size:18px;font-weight:700;letter-spacing:-.06em}.cd .ix i{display:block;font-style:normal;font-size:13px}
+.cd .ix.br{left:auto;top:auto;right:3px;bottom:5px;transform:rotate(180deg)}
+.cd .pips{position:absolute;left:29px;right:29px;top:17px;bottom:17px}
+.cd .pips span{position:absolute;font-size:17px;line-height:1;transform:translate(-50%,-50%)}
+.cd .pips span.dn{transform:translate(-50%,-50%) rotate(180deg)}
+.cd .pips span.ace{font-size:46px}
+.cd .court{position:absolute;left:24px;right:24px;top:20px;bottom:20px;border:1.5px solid #c9a24f;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(201,162,79,.08),rgba(201,162,79,.2));box-shadow:inset 0 0 0 3px rgba(255,255,255,.6),inset 0 0 0 4px rgba(201,162,79,.5)}
+.cd .court b{font-size:36px;line-height:.9;font-weight:700}.cd .court i{font-style:normal;font-size:20px}
+.cd .bk{position:absolute;inset:0;border-radius:8px;background:var(--cr-back);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),inset 0 0 0 5px #f6f1e6,inset 0 0 0 6px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cd .bk::before{content:"";position:absolute;inset:9px;border-radius:4px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 2px,rgba(0,0,0,0) 2px 7px),repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0 2px,rgba(0,0,0,0) 2px 7px);box-shadow:inset 0 0 0 1px rgba(231,199,122,.55)}
+.cd .mono{position:relative;display:flex;align-items:baseline;line-height:1.25;font-size:24px}
+.cd .mono b,.cd .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.cd .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.cd .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+.cd.tap{cursor:pointer}
+.cd.glow .f{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.45)}
+.cd.sel .f{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 22px 6px rgba(250,205,110,.7)}
+/* overlays on the felt: the action button, the scoring panel, the score toast */
+.cr-act{position:absolute;z-index:5;left:50%;transform:translateX(-50%);width:auto;min-width:170px;min-height:44px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(231,199,122,.55);box-shadow:0 2px 10px rgba(0,0,0,.25),0 0 16px rgba(240,190,90,.25);color:#e6c25a;font:700 15px Montserrat,sans-serif;letter-spacing:.45px;cursor:pointer}
+.cr-act:hover{background:rgba(15,23,42,.88);color:#f0d27a}
+.cr-act.off{display:none}
+.cr-panel{position:absolute;z-index:4;left:50%;transform:translateX(-50%);padding:12px 16px 10px;border-radius:12px;background:rgba(15,23,42,.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(231,199,122,.45);color:#fff;font:600 13px/1.45 Montserrat,sans-serif;min-width:230px;max-width:92%;text-align:left;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.cr-panel.off{display:none}
+.cr-panel h4{margin:0 0 6px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e6c25a}
+.cr-panel .ln{display:flex;justify-content:space-between;gap:16px;opacity:.92}
+.cr-panel .tot{display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.2);font-weight:700;color:#f6e7c2}
+.cr-toast{position:absolute;z-index:6;left:50%;transform:translate(-50%,0);padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.82);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 14px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.cr-toast.on{opacity:1;transform:translate(-50%,-6px)}
+/* phones: your hand in a bar under the table; one slim score line above it */
+.cr-hand{display:none;position:relative;height:96px;border-radius:12px;transform-style:preserve-3d;background:var(--cr-topc,#22402c);background-image:var(--cr-top);background-size:256px 256px;
+  box-shadow:inset 0 0 0 3px var(--cr-woodc,#5a2414),inset 0 4px 14px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.35)}
+body.cr-big .cr-hand{display:block}
+.cr-score{display:none;width:var(--pk-size,100%);max-width:100%;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;font-size:13px;color:#fff;
+  background:rgba(255,250,242,.18);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.3)}
+.cr-score b{font-weight:700;margin-right:4px}.cr-score .mid{font-size:11px;opacity:.8}
+.cr-score i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+body.cr-big .cr-score{display:flex}
+body.cr-big .cr-panel{font-size:11px;line-height:1.4;padding:8px 11px 7px;min-width:170px;border-radius:10px}
+body.cr-big .cr-panel h4{font-size:10px;margin-bottom:4px}
+body.cr-big .cr-act{min-width:0;min-height:38px;padding:8px 18px;font-size:13px}
+body.cr-big .cr-toast{font-size:12px;padding:6px 11px}
+body.cr-big.pk .pk-mini{display:none}
+@media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
+@media (prefers-reduced-motion:reduce){ #crT .peg{transition:none} }
 </style>
 <script src="bw-auth.js"></script>
-<script>
-/* House matches count toward the daily limit (3 for guests and free accounts, unlimited for members). */
-async function bwHouseGate(fn){
-  if(!window.BW){ fn(); return; }
-  if(await BW.startMatch({mode:"house"})) fn();
-}
-</script>
 </head>
 <body>
 <header>
 <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
-<div class="games">
-<a href="checkers.html">Checkers</a>
-<a href="chess.html">Chess</a>
-<a href="backgammon.html">Backgammon</a>
-<a href="yahtzee.html">Yahtzee</a>
-<a href="dominoes.html">Dominoes</a>
-<a href="othello.html">Othello</a>
-<a href="mancala.html">Mancala</a>
-<a class="on" href="cribbage.html">Cribbage</a>
-<a href="shutbox.html">Shut the Box</a>
-<a href="morris.html">Morris</a>
-</div>
-<div class="sitbar">
-<button class="sit" type="button" onclick="bwHouseGate(sitDown)">Sit down to play</button>
-<button class="stand" type="button" onclick="standUp()">Back to the snug</button>
-<a class="stand" href="tables.html">Return to tables</a>
-<button class="stand" type="button" onclick="bwHouseGate(newGame)">New game</button>
-<button class="helpbtn" type="button" onclick="showHelp('play')">How to play</button>
-<button class="helpbtn" type="button" onclick="showHelp('score')">Scoring rules</button>
-</div>
-<div class="live">
-  <div style="text-align:center"><h1>Club Cribbage</h1></div>
-  <p class="sub">Cards and a pegboard. First to 121 wins.</p>
-  <div class="stage"><div class="table"><div class="table-in">
-    <div class="cribboard">
-      <div class="lane"><em>You</em><div class="holes" id="youHoles"></div></div>
-      <div class="lane"><em>House</em><div class="holes" id="hsHoles"></div></div>
-    </div>
-    <div class="track">
-      <div class="peg">You<b id="ys">0</b></div>
-      <div class="peg">House<b id="hs">0</b></div>
-      <div class="peg">Count<b id="cnt">0</b></div>
-    </div>
-    <div class="meta"><span>Starter</span><span id="phaseLab">Discard 2</span></div>
-    <div class="rowc" id="starter"></div>
-    <div class="meta">House</div>
-    <div class="rowc" id="houseRow"></div>
-    <div class="meta">The play</div>
-    <div class="rowc" id="playRow"></div>
-    <div class="meta">Your hand</div>
-    <div class="rowc" id="youRow"></div>
-    <div class="acts"><button type="button" id="actBtn" onclick="act()">Toss to crib</button></div>
-  </div></div></div>
-  <div class="hint"><span id="msg">Choose two cards for the crib.</span></div>
-</div>
-<div id="winveil"><div class="box"><h2 id="winTitle">Congratulations! You win!</h2><div class="row"><button class="go" type="button" onclick="hideBanner();bwHouseGate(newGame)">Play again?</button><a class="ghost" href="tables.html">Return to Tables</a></div></div></div>
-<div id="helpveil" onclick="if(event.target.id==='helpveil')hideHelp()"><div class="box"><h2 id="helpTitle">How to play</h2><div id="helpBody"></div><div class="row"><button class="go" type="button" onclick="hideHelp()">Got it</button></div></div></div>
-<script>
-function sitDown(){document.body.classList.add("seated");paint()}
-function standUp(){document.body.classList.remove("seated")}
-function hideBanner(){document.getElementById("winveil").className=""}
-function hideHelp(){document.getElementById("helpveil").className=""}
-function showHelp(k){
-  document.getElementById("helpTitle").textContent=k==="score"?"Scoring rules":"How to play";
-  document.getElementById("helpBody").innerHTML=k==="score"
-    ?"<ul><li>Play: 15 and 31 score 2. Pairs 2 / three of a kind 6 / four 12. A run of n scores n. Last card of a sequence scores 1.</li><li>Show: every combination that makes 15 is 2. Pairs and runs as above. Four-card flush is 4, five is 5. Jack of the starter suit (nobs) is 1. His heels (jack as starter) is 2 to the dealer.</li><li>First to 121 wins.</li></ul>"
-    :"<ol><li>Six cards each. Toss two into the crib.</li><li>A starter is cut. If it is a jack, the dealer pegs 2.</li><li>Play cards that keep the running count at 31 or under. Then show the four-card hands and the crib.</li><li>You deal first this table. After each hand the deal switches.</li></ol>";
-  document.getElementById("helpveil").className="on";
-}
-var SUIT=["♣","♦","♥","♠"], RNK=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-function mkDeck(){ var d=[]; for(var s=0;s<4;s++) for(var r=0;r<13;r++) d.push({s:s,r:r,id:s+"-"+r}); return d; }
-function val(c){ return c.r===0?1:c.r>=10?10:c.r+1; }
-function face(c){ return RNK[c.r]+SUIT[c.s]; }
-function red(c){ return c.s===1||c.s===2; }
-function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t;} return a; }
-var you=[], house=[], crib=[], starter=null, deck=[], phase="discard", sel=[], pile=[], count=0, ys=0, hs=0, dealer="you", over=false, playTurn="you";
-function add(who,n){
-  if(who==="you"){ ys=Math.min(121,ys+n); if(ys>=121) end("win"); }
-  else { hs=Math.min(121,hs+n); if(hs>=121) end("lose"); }
-}
-function end(k){ over=true; document.getElementById("winTitle").textContent=k==="win"?"Congratulations! You win!":k==="draw"?"It's a Draw!":"Better luck next time!"; document.getElementById("winveil").className="on"; }
-function dealHand(){
-  deck=shuffle(mkDeck()); you=deck.splice(0,6); house=deck.splice(0,6); crib=[]; starter=null; sel=[]; pile=[]; count=0; phase="discard"; playTurn=dealer==="you"?"house":"you";
-  document.getElementById("msg").textContent="Choose two cards for the crib.";
-  document.getElementById("actBtn").textContent="Toss to crib";
-  document.getElementById("actBtn").style.display="inline-block";
-}
-function newGame(){ ys=0; hs=0; dealer="you"; over=false; hideBanner(); dealHand(); paint(); }
-function toggle(i){
-  if(phase!=="discard") return;
-  var x=sel.indexOf(i); if(x>=0) sel.splice(x,1); else if(sel.length<2) sel.push(i);
-  paint();
-}
-function act(){
-  if(over) return;
-  if(phase==="discard"){
-    if(sel.length!==2){ document.getElementById("msg").textContent="Pick two cards."; return; }
-    sel.sort(function(a,b){return b-a});
-    sel.forEach(function(i){ crib.push(you[i]); you.splice(i,1); });
-    house.sort(function(a,b){return val(a)-val(b)});
-    crib.push(house.shift()); crib.push(house.shift());
-    starter=deck.pop();
-    if(starter.r===10) add(dealer,2);
-    phase="play"; count=0; pile=[];
-    document.getElementById("actBtn").style.display="none";
-    document.getElementById("msg").textContent="Play a card. Stay at 31 or under.";
-    paint();
-    if(playTurn==="house") setTimeout(housePlay,400);
-    return;
-  }
-}
-function legal(hand){ return hand.filter(function(c){return count+val(c)<=31}); }
-function playCard(who,c){
-  count+=val(c); pile.push(c);
-  if(count===15) add(who,2);
-  if(count===31) add(who,2);
-  var n=1; for(var i=pile.length-2;i>=0 && pile[i].r===c.r;i--) n++;
-  if(n===2) add(who,2); if(n===3) add(who,6); if(n===4) add(who,12);
-  var run=0;
-  for(var len=Math.min(pile.length,7);len>=3;len--){
-    var slice=pile.slice(-len).map(function(x){return x.r}).sort(function(a,b){return a-b});
-    var ok=true; for(var i=1;i<slice.length;i++) if(slice[i]!==slice[i-1]+1) ok=false;
-    if(ok){ run=len; break; }
-  }
-  if(run) add(who,run);
-}
-function afterPlay(){
-  var yL=legal(you), hL=legal(house);
-  if(!yL.length && !hL.length){
-    if(count!==31) add(playTurn==="you"?"house":"you",1);
-    if(!you.length && !house.length){ showHands(); return; }
-    count=0; pile=[]; 
-    playTurn = you.length? "you" : "house";
-    document.getElementById("msg").textContent="New count. "+(playTurn==="you"?"Your play.":"House plays.");
-    paint();
-    if(playTurn==="house") setTimeout(housePlay,400);
-    return;
-  }
-  if(playTurn==="you" && !yL.length){ playTurn="house"; document.getElementById("msg").textContent="You cannot play. House goes."; paint(); setTimeout(housePlay,400); return; }
-  if(playTurn==="house" && !hL.length){ playTurn="you"; document.getElementById("msg").textContent="House cannot play. Your card."; paint(); return; }
-}
-function playYou(i){
-  if(over||phase!=="play"||playTurn!=="you") return;
-  var c=you[i]; if(count+val(c)>31) return;
-  you.splice(i,1); playCard("you",c); playTurn="house";
-  document.getElementById("msg").textContent="Count "+count+".";
-  paint(); afterPlay();
-  if(phase==="play" && playTurn==="house" && !over) setTimeout(housePlay,450);
-}
-function housePlay(){
-  if(over||phase!=="play") return;
-  var opts=legal(house);
-  if(!opts.length){ afterPlay(); return; }
-  opts.sort(function(a,b){ return Math.abs(15-(count+val(a)))-Math.abs(15-(count+val(b))); });
-  var c=opts[0]; house.splice(house.indexOf(c),1); playCard("house",c); playTurn="you";
-  document.getElementById("msg").textContent="House played "+face(c)+". Count "+count+".";
-  paint(); afterPlay();
-}
-function combos(arr){
-  var out=[[]];
-  arr.forEach(function(c){ var n=out.length; for(var i=0;i<n;i++) out.push(out[i].concat([c])); });
-  return out.slice(1);
-}
-function scoreHand(hand,st,isCrib){
-  var all=hand.concat([st]), pts=0;
-  combos(all).forEach(function(g){ if(g.reduce(function(s,c){return s+val(c)},0)===15) pts+=2; });
-  var byR={}; all.forEach(function(c){ byR[c.r]=(byR[c.r]||0)+1; });
-  Object.keys(byR).forEach(function(r){ var n=byR[r]; if(n===2) pts+=2; if(n===3) pts+=6; if(n===4) pts+=12; });
-  var rs=all.map(function(c){return c.r}).sort(function(a,b){return a-b});
-  /* simple run: unique ranks consecutive * multiplicity */
-  var uniq=[], seen={}; rs.forEach(function(r){ if(!seen[r]){uniq.push(r);seen[r]=1;} });
-  var runLen=1,best=1;
-  for(var i=1;i<uniq.length;i++){ if(uniq[i]===uniq[i-1]+1) runLen++; else runLen=1; if(runLen>=3) best=Math.max(best,runLen); }
-  if(best>=3){ var mul=1; uniq.slice(uniq.length-best).forEach(function(){}); 
-    var start=0; for(var i=0;i<=uniq.length-best;i++){ var ok=true; for(var k=1;k<best;k++) if(uniq[i+k]!==uniq[i]+k) ok=false; if(ok){ var m=1; for(var k=0;k<best;k++) m*=byR[uniq[i]+k]; pts+=best*m; } }
-  }
-  var suits=hand.map(function(c){return c.s});
-  if(suits.every(function(s){return s===suits[0]})){ pts+=4; if(!isCrib && st.s===suits[0]) pts+=1; if(isCrib && st.s===suits[0]) pts+=1; }
-  hand.forEach(function(c){ if(c.r===10 && c.s===st.s) pts+=1; });
-  return pts;
-}
-function showHands(){
-  phase="show";
-  var y=scoreHand(you.concat([]),starter,false);
-  var h=scoreHand(house.concat([]),starter,false);
-  var c=scoreHand(crib,starter,true);
-  add("you",y); add("house",h);
-  if(dealer==="you") add("you",c); else add("house",c);
-  document.getElementById("msg").textContent="Show — you "+y+", house "+h+", crib "+c+" to the dealer.";
-  document.getElementById("actBtn").style.display="inline-block";
-  document.getElementById("actBtn").textContent="Next hand";
-  document.getElementById("actBtn").onclick=function(){ if(over) return; dealer=dealer==="you"?"house":"you"; dealHand(); document.getElementById("actBtn").onclick=act; paint(); };
-  paint();
-}
-function el(c,cls,fn){
-  return '<button class="cardx '+(red(c)?"red ":"")+(cls||"")+'" '+(fn||"")+'>'+face(c)+'</button>';
-}
-function paint(){
-  document.getElementById("ys").textContent=ys;
-  document.getElementById("hs").textContent=hs;
-  document.getElementById("cnt").textContent=count;
-  function holes(el,score,cls){
-    var n=30, at=Math.min(n-1, Math.floor(score/4));
-    var h=""; for(var i=0;i<n;i++) h+='<i class="'+(i<=at?(cls+" on"):"")+'"></i>';
-    el.innerHTML=h;
-  }
-  holes(document.getElementById("youHoles"),ys,"you");
-  holes(document.getElementById("hsHoles"),hs,"hs");
-  document.getElementById("phaseLab").textContent=phase==="discard"?"Discard 2":phase==="play"?"The play":"The show";
-  document.getElementById("starter").innerHTML=starter?el(starter):'<button class="cardx back">BW</button>';
-  document.getElementById("houseRow").innerHTML=house.map(function(c){ return phase==="show"?el(c):'<button class="cardx back">BW</button>'; }).join("");
-  document.getElementById("playRow").innerHTML=pile.map(function(c){return el(c);}).join("");
-  document.getElementById("youRow").innerHTML=you.map(function(c,i){
-    var on=phase==="discard"&&sel.indexOf(i)>=0;
-    var fn=phase==="discard"?'onclick="toggle('+i+')"':(phase==="play"?'onclick="playYou('+i+')"':'');
-    return el(c,on?"on":"",fn);
-  }).join("");
-}
-newGame();
-</script>
+<main class="pk-room"></main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
+<script src="parlor-kit.js?v=1021h"></script>
+<script>
+/* =====================================================================
+   Painted materials
+   ===================================================================== */
+function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
+function noise2(seed){var r=rng(seed),P=new Uint16Array(512),G=new Float32Array(256),p=[],i,j,t;for(i=0;i<256;i++)p[i]=i;for(i=255;i>0;i--){j=Math.floor(r()*(i+1));t=p[i];p[i]=p[j];p[j]=t;}for(i=0;i<512;i++)P[i]=p[i&255];for(i=0;i<256;i++)G[i]=r();function f(x){return x*x*(3-2*x);}return function(x,y){var xi=Math.floor(x),yi=Math.floor(y),u=f(x-xi),v=f(y-yi),X=xi&255,Y=yi&255;var a=G[P[P[X]+Y]],b=G[P[P[X+1]+Y]],c=G[P[P[X]+Y+1]],d=G[P[P[X+1]+Y+1]];return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};}
+function fbm(n,x,y,o){var s=0,a=.5,t=0;for(var i=0;i<o;i++){s+=a*n(x,y);t+=a;x*=2.03;y*=2.03;a*=.5;}return s/t;}
+function mix(a,b,t){return a+(b-a)*t;}
+function canvasOf(w,h,fn){var c=document.createElement("canvas");c.width=w;c.height=h;var g=c.getContext("2d"),im=g.createImageData(w,h),D=im.data;for(var y=0;y<h;y++)for(var x=0;x<w;x++){var col=fn(x,y),i=(y*w+x)*4;D[i]=col[0];D[i+1]=col[1];D[i+2]=col[2];D[i+3]=255;}g.putImageData(im,0,0);return c;}
+function cssUrl(c){return 'url('+c.toDataURL("image/jpeg",.88)+')';}
+function rot(c){var d=document.createElement("canvas");d.width=c.height;d.height=c.width;var g=d.getContext("2d");g.translate(d.width,0);g.rotate(Math.PI/2);g.drawImage(c,0,0);return d;}
+function woodFn(o){var n=noise2(o.seed),n2=noise2(o.seed+77),r=rng(o.seed+5);return function(x,y){var warp=fbm(n,x/o.wx,y/o.wy,4),v=y*o.freq+warp*o.turb;v-=Math.floor(v);var ring=Math.pow(Math.abs(Math.sin(v*Math.PI)),o.sharp),st=fbm(n2,x/180,y/1.6,3);var t=Math.min(1,Math.max(0,(1-ring)*o.ringAmt+st*o.streakAmt));var k=r()<o.pores?.8:1,l=1+(fbm(n2,x/400,y/90,2)-.5)*o.blotch;return [mix(o.light[0],o.dark[0],t)*k*l,mix(o.light[1],o.dark[1],t)*k*l,mix(o.light[2],o.dark[2],t)*k*l];};}
+function leatherFn(rgb,seed){var r=rng(seed),n=noise2(seed),n2=noise2(seed+3);return function(x,y){var k=.82+fbm(n,x/40,y/40,4)*.3+(fbm(n2,x/3,y/3,2)-.5)*.12+(r()-.5)*.05;return [rgb[0]*k,rgb[1]*k,rgb[2]*k];};}
+var DESIGNS={
+  maple:{table:{light:[110,48,30],dark:[54,20,10],freq:.035,turb:6,wx:420,wy:30,sharp:.9,ringAmt:.35,streakAmt:.5,pores:.012,blotch:.3,seed:41},tablec:"#5a2414",
+    top:[34,64,44],tool:"rgba(214,178,92,.55)",bwood:{light:[236,206,160],dark:[200,160,108],freq:.012,turb:3,wx:200,wy:40,sharp:.6,ringAmt:.4,streakAmt:.45,pores:.01,blotch:.12,seed:7},bwoodc:"#ddb98a",
+    binlay:"linear-gradient(90deg,#3a2414,#6b4426,#3a2414)",hring:"rgba(90,60,30,.55)",blab:"rgba(70,40,20,.65)",pegA:"#2a5bd0",pegA2:"#122e7a",pegB:"#c8242e",pegB2:"#6a0e14",back:"linear-gradient(150deg,#b3202a,#7a1018)"},
+  walnut:{table:{light:[120,78,46],dark:[58,34,18],freq:.04,turb:9,wx:220,wy:20,sharp:.7,ringAmt:.66,streakAmt:.42,pores:.02,blotch:.3,seed:23},tablec:"#5e3c22",
+    top:[96,30,30],tool:"rgba(214,178,92,.6)",bwood:{light:[120,80,50],dark:[60,36,20],freq:.012,turb:5,wx:160,wy:30,sharp:.7,ringAmt:.6,streakAmt:.4,pores:.02,blotch:.25,seed:23},bwoodc:"#5e3c22",
+    binlay:"linear-gradient(90deg,#8a6526,#f3d790 50%,#8a6526)",hring:"rgba(214,178,92,.6)",blab:"rgba(240,215,160,.75)",pegA:"#f2efe6",pegA2:"#a8a090",pegB:"#1c1c22",pegB2:"#000",back:"linear-gradient(150deg,#21345e,#111c38)"},
+  ebony:{table:{light:[40,34,30],dark:[14,11,9],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},tablec:"#1b1714",
+    top:[38,40,46],tool:"rgba(200,200,210,.45)",bwood:{light:[46,38,32],dark:[14,11,9],freq:.012,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:9},bwoodc:"#1b1714",
+    binlay:"linear-gradient(90deg,#d8dde6,#ffffff 50%,#b8c0cc)",hring:"rgba(235,240,248,.75)",blab:"rgba(235,240,248,.7)",pegA:"#e8eef8",pegA2:"#8a96a8",pegB:"#d4af37",pegB2:"#6e4f1d",back:"linear-gradient(150deg,#26262c,#0d0d10)"}
+};
+
+/* =====================================================================
+   The table, the pegboard, the overlays
+   ===================================================================== */
+var stage=document.createElement("div"); stage.className="cr-pad";
+var BX={1:[80,104],2:[162,186]}, Y0=742, GAP=10.2, GROUP=5.5;
+function holeY(k){ return Y0-k*GAP-Math.floor(k/5)*GROUP; }
+/* hole for score n on side s's track: up the outer row (1-60), back down the inner row (61-120); 0 = start, 121 = game hole */
+function holeXY(s,n){ var c=BX[s]; if(n<=0) return [s===1?92:174,774]; if(n>=121) return [133,92]; if(n<=60) return [c[0],holeY(n-1)]; return [c[1],holeY(120-n)]; }
+(function(){
+  var h='<div class="cr-score" id="crScore"></div><div class="cr-fit" id="crFit"><div class="cr-scaler" id="crScaler"><div class="cr-scene"><div id="crT">';
+  h+='<div class="p tsh"></div><div class="p top a"></div><div class="p top b"></div><div class="p top c"></div><div class="p top d"></div><div class="p topsh"></div><div class="tool"></div>';
+  h+='<div class="p rim t wh"></div><div class="p rim t t2 wh"></div><div class="p rim b wh"></div><div class="p rim b b2 wh"></div><div class="p rim l wv"></div><div class="p rim r wv"></div>';
+  h+='<div class="gold" style="left:30px;top:30px;width:800px;height:2px"></div><div class="gold" style="left:30px;top:828px;width:400px;height:2px"></div><div class="gold" style="left:430px;top:828px;width:400px;height:2px"></div><div class="gold" style="left:30px;top:30px;width:2px;height:800px"></div><div class="gold" style="left:828px;top:30px;width:2px;height:800px"></div>';
+  h+='<div class="p boardsh"></div><div class="p board"></div>';
+  [1,2].forEach(function(s){ for(var n=1;n<=120;n++){ var q=holeXY(s,n); h+='<div class="p hole" style="left:'+q[0]+'px;top:'+q[1]+'px"></div>'; }
+    var s0=holeXY(s,0); h+='<div class="p hole" style="left:'+(s0[0]-10)+'px;top:'+s0[1]+'px"></div><div class="p hole" style="left:'+(s0[0]+10)+'px;top:'+s0[1]+'px"></div>'; });
+  var g=holeXY(1,121); h+='<div class="p hole" style="left:'+g[0]+'px;top:'+g[1]+'px;width:10px;height:10px;margin:-5px 0 0 -5px"></div>';
+  h+='<div class="p inlay" style="left:132px;top:118px;width:2px;height:640px"></div><div class="p lab" style="top:70px">121</div><div class="p lab" style="top:782px">START</div>';
+  h+='<div class="p tag" id="crTagFar" style="left:470px;top:62px"></div><div class="p tag" id="crTagNear" style="left:470px;top:794px"></div><div class="p tag" id="crTagCrib" style="left:742px;top:0"></div>';
+  h+='<div class="p count" id="crCount"></div><div id="crCards" style="position:absolute;left:0;top:0"></div><div id="crPegs" style="position:absolute;left:0;top:0"></div>';
+  h+='</div></div></div><div class="cr-panel off" id="crPanel"></div><div class="cr-toast" id="crToast"></div><button type="button" class="cr-act off" id="crAct"></button></div><div class="cr-hand" id="crHand"></div>';
+  stage.innerHTML=h;
+})();
+var T=stage.querySelector("#crT"), CL=stage.querySelector("#crCards"), PL=stage.querySelector("#crPegs"), HB=stage.querySelector("#crHand"), fitEl=stage.querySelector("#crFit");
+var actBtn=stage.querySelector("#crAct"), panel=stage.querySelector("#crPanel"), toastEl=stage.querySelector("#crToast"), scoreEl=stage.querySelector("#crScore");
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="maple"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]){ var w=canvasOf(1200,600,woodFn(d.table)); texCache[k]={w:cssUrl(w),v:cssUrl(rot(w)),top:cssUrl(canvasOf(256,256,leatherFn(d.top,k.length*17))),b:cssUrl(rot(canvasOf(728,150,woodFn(d.bwood))))}; }
+  var t=texCache[k], s=stage.style, b=document.body.style;
+  s.setProperty("--cr-wood",t.w); s.setProperty("--cr-woodv",t.v); s.setProperty("--cr-woodc",d.tablec); s.setProperty("--cr-top",t.top); s.setProperty("--cr-topc","rgb("+d.top+")"); s.setProperty("--cr-tool",d.tool);
+  s.setProperty("--cr-bwood",t.b); s.setProperty("--cr-bwoodc",d.bwoodc); s.setProperty("--cr-binlay",d.binlay); s.setProperty("--cr-hring",d.hring); s.setProperty("--cr-blab",d.blab);
+  s.setProperty("--cr-pegA",d.pegA); s.setProperty("--cr-pegA2",d.pegA2); s.setProperty("--cr-pegB",d.pegB); s.setProperty("--cr-pegB2",d.pegB2); s.setProperty("--cr-back",d.back);
+  b.setProperty("--cr-dotA",d.pegA); b.setProperty("--cr-dotB",d.pegB);
+}
+
+/* ---------- cards ---------- */
+var SUITS=["♣","♦","♥","♠"], RANKS=["A","2","3","4","5","6","7","8","9","10","J","Q","K"], SUITNAME=["clubs","diamonds","hearts","spades"];
+var LAYOUT={2:[[50,0],[50,100]],3:[[50,0],[50,50],[50,100]],4:[[0,0],[100,0],[0,100],[100,100]],5:[[0,0],[100,0],[50,50],[0,100],[100,100]],
+  6:[[0,0],[100,0],[0,50],[100,50],[0,100],[100,100]],7:[[0,0],[100,0],[50,25],[0,50],[100,50],[0,100],[100,100]],
+  8:[[0,0],[100,0],[50,25],[0,50],[100,50],[50,75],[0,100],[100,100]],9:[[0,0],[100,0],[0,33],[100,33],[50,50],[0,67],[100,67],[0,100],[100,100]],
+  10:[[0,0],[100,0],[50,17],[0,33],[100,33],[0,67],[100,67],[50,83],[0,100],[100,100]]};
+function mkCard(c,o){
+  o=o||{}; var e=document.createElement("div"); e.className="cd "+(c&&(c.s===1||c.s===2)?"red":"blk");
+  var s='<div class="sh"></div><div class="s" style="transform:translateZ(1px)"></div>';
+  if(o.back||!c) s+='<div class="bk" style="transform:translateZ(2.4px)"><span class="mono"><b>B</b><i>W</i></span></div>';
+  else {
+    var R=RANKS[c.r], SU=SUITS[c.s], mid;
+    if(c.r===0) mid='<div class="pips"><span class="ace" style="left:50%;top:50%">'+SU+'</span></div>';
+    else if(c.r>=10) mid='<div class="court"><b>'+R+'</b><i>'+SU+'</i></div>';
+    else mid='<div class="pips">'+LAYOUT[c.r+1].map(function(p){ return '<span class="'+(p[1]>50?"dn":"")+'" style="left:'+p[0]+'%;top:'+p[1]+'%">'+SU+'</span>'; }).join("")+'</div>';
+    s+='<div class="f" style="transform:translateZ(2.4px)"><div class="ix"><b>'+R+'</b><i>'+SU+'</i></div>'+mid+'<div class="ix br"><b>'+R+'</b><i>'+SU+'</i></div></div>';
+    e.setAttribute("aria-label",R+" of "+SUITNAME[c.s]);
+  }
+  e.innerHTML=s; (o.into||CL).appendChild(e); return e;
+}
+function setAt(e,x,y,z,r,sc){ e._x=x; e._y=y; e._r=r||0; e.style.transform="translate3d("+x+"px,"+y+"px,"+(z==null?-12:z)+"px)"+(r?" rotate("+r+"deg)":"")+(sc?" scale("+sc+")":""); }
+function glide(e,to,r1){
+  return new Promise(function(res){
+    if(!Parlor.smooth()){ setAt(e,to[0],to[1],-12,r1); res(); return; }
+    var x0=e._x,y0=e._y,r0=e._r||0,t0=performance.now(),d=Math.hypot(to[0]-x0,to[1]-y0),dur=Math.min(700,340+d*.45),lift=Math.min(90,30+d*.12);
+    (function step(now){ var p=Math.min(1,(now-t0)/dur),e2=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      setAt(e,x0+(to[0]-x0)*e2,y0+(to[1]-y0)*e2,-12+Math.sin(Math.PI*p)*lift,r0+((r1||0)-r0)*e2);
+      if(p<1) requestAnimationFrame(step); else res(); })(t0);
+  });
+}
+function bigHand(){ return document.body.classList.contains("cr-big"); }
+
+/* ---------- pegs: two per player; the back peg leaps past the front one ---------- */
+var pegEls={1:[],2:[]};
+[1,2].forEach(function(s){ for(var k=0;k<2;k++){ var e=document.createElement("div"); e.className="p peg "+(s===1?"a":"b"); e.innerHTML='<div class="ps"></div><div class="pb"></div><div class="ph"></div>'; PL.appendChild(e); pegEls[s].push(e); } });
+/* disp: the scores shown on the board (they catch up to the real score as points are pegged) */
+var disp={1:[0,0],2:[0,0]};   /* [back, front] for each side */
+function placePegs(){
+  [1,2].forEach(function(s){
+    var a=disp[s][0], b=disp[s][1];
+    var q0=holeXY(s,a===0&&b===0?0:a), q1=holeXY(s,b);
+    if(a===0&&b===0){ q0=[q0[0]-10,q0[1]]; q1=[q1[0]+10,q1[1]]; } else if(a===0){ q0=[holeXY(s,0)[0]-10,q0[1]]; }
+    pegEls[s][0].style.transform="translate3d("+q0[0]+"px,"+q0[1]+"px,-1px)"; pegEls[s][1].style.transform="translate3d("+q1[0]+"px,"+q1[1]+"px,-1px)";
+  });
+}
+function pegTo(s,n){ var d=disp[s]; if(n===d[1]) return; d[0]=d[1]; d[1]=Math.min(121,n); placePegs(); updScore(); Parlor.sfx("click",{pitch:.65}); }
+function toast(t){ toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ toastEl.classList.remove("on"); },1500); }
+
+/* =====================================================================
+   Rules
+   ===================================================================== */
+function val(c){ return c.r===0?1:c.r>=10?10:c.r+1; }
+function sameCard(a,b){ return a&&b&&a.r===b.r&&a.s===b.s; }
+function newDeck(){ var d=[]; for(var s=0;s<4;s++) for(var r=0;r<13;r++) d.push({s:s,r:r}); for(var i=d.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=d[i]; d[i]=d[j]; d[j]=t; } return d; }
+/* points for the card just played in the play (pile = the cards of the current count) */
+function pegPoints(pile,count){
+  var out=[], n=pile.length;
+  if(count===15) out.push(["Fifteen",2]); if(count===31) out.push(["Thirty-one",2]);
+  var k=1; while(k<n&&pile[n-1-k].r===pile[n-1].r) k++;
+  if(k===2) out.push(["Pair",2]); else if(k===3) out.push(["Three of a kind",6]); else if(k===4) out.push(["Four of a kind",12]);
+  for(var L=n;L>=3;L--){ var rs=pile.slice(n-L).map(function(c){ return c.r; }).sort(function(a,b){ return a-b; }), ok=true;
+    for(var i=1;i<L;i++) if(rs[i]!==rs[i-1]+1){ ok=false; break; }
+    if(ok){ out.push(["Run of "+L,L]); break; } }
+  return out;
+}
+/* the show: every way a hand (with the starter) scores */
+function showPoints(hand,st,isCrib){
+  var all=hand.concat([st]), parts=[], i, n=all.length;
+  var f=0; for(var m=1;m<(1<<n);m++){ var sum=0; for(i=0;i<n;i++) if(m&(1<<i)) sum+=val(all[i]); if(sum===15) f++; }
+  if(f) parts.push(["Fifteen"+(f>1?"s × "+f:""),f*2]);
+  var byR={}; all.forEach(function(c){ byR[c.r]=(byR[c.r]||0)+1; });
+  Object.keys(byR).forEach(function(r){ var k=byR[r]; if(k===2) parts.push(["Pair of "+RANKS[r]+"s",2]); else if(k===3) parts.push(["Three "+RANKS[r]+"s",6]); else if(k===4) parts.push(["Four "+RANKS[r]+"s",12]); });
+  var rs=Object.keys(byR).map(Number).sort(function(a,b){ return a-b; }), runStart=0;
+  for(i=1;i<=rs.length;i++){
+    if(i<rs.length&&rs[i]===rs[i-1]+1) continue;
+    var L=i-runStart; if(L>=3){ var mult=1; for(var k2=runStart;k2<i;k2++) mult*=byR[rs[k2]]; parts.push([(mult===1?"Run of ":mult===2?"Double run of ":mult===4?"Double double run of ":mult===3?"Triple run of ":"Runs of ")+L,L*mult]); }
+    runStart=i;
+  }
+  var suit=hand[0].s, fl=hand.every(function(c){ return c.s===suit; });
+  if(fl){ if(st.s===suit) parts.push(["Flush of five",5]); else if(!isCrib) parts.push(["Flush",4]); }
+  hand.forEach(function(c){ if(c.r===10&&c.s===st.s) parts.push(["His nobs (jack of "+SUITNAME[st.s]+")",1]); });
+  var total=parts.reduce(function(a,p){ return a+p[1]; },0);
+  return {parts:parts,total:total};
+}
+
+/* =====================================================================
+   The game. Side 1 is you (or the host online), side 2 The House (or the guest).
+   State S (also what's saved online, as {game:"cribbage", v:2, ...}):
+     deck, hand[s] (the cards held), keep[s] (the four kept for the show), crib, starter, phase (discard | play | show),
+     tossed[s], seq (cards of the current count, with who played them), spent (count of cards finished), count,
+     turn, last (who played last), score[s], dealer, showRes, preShow, handNo, over, winner
+   ===================================================================== */
+var S, mySide=1, online=false, sb=null, room=null, me=null, reported=false, seq=0, busy=false, sel=[], showIdx=-1, lastMv=null;
+var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+var WIN=121;
+function fresh(dealer,score,handNo){
+  var d=newDeck(); score=score||[0,0,0];
+  return {v:2,deck:d,hand:[null,d.splice(0,6),d.splice(0,6)],keep:[null,[],[]],crib:[],starter:null,phase:"discard",tossed:[null,false,false],
+    seq:[],spent:[],count:0,turn:3-dealer,last:0,score:score,dealer:dealer,showRes:null,preShow:null,handNo:handNo||1,over:false,winner:0};
+}
+function other(s){ return 3-s; }
+function canPlay(s){ return S.hand[s].some(function(c){ return S.count+val(c)<=31; }); }
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function live(){ return seatedNow()&&!S.over&&(!online||(room&&room.guest&&mySide)); }
+function myDiscard(){ return live()&&!busy&&S.phase==="discard"&&!S.tossed[mySide]&&(!online||S.tossed[other(S.dealer)]||mySide!==S.dealer); }
+function myPlay(){ return live()&&!busy&&S.phase==="play"&&S.turn===mySide&&canPlay(mySide); }
+function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
+function nameLower(s){ return s===mySide?"you":online?"your opponent":"The House"; }
+function addScore(s,pts,why){
+  if(!pts||S.over) return;
+  S.score[s]=Math.min(WIN,S.score[s]+pts);
+  if(S.score[s]>=WIN){ S.over=true; S.winner=s; }
+}
+
+/* ---------- drawing everything from the state ---------- */
+var NEAR_Y=712, FAR_Y=150, DECK=[724,440], STARTER=[742,452], SEQ_X=330, SEQ_Y=440;
+function near(){ return mySide===2?2:1; }
+function cribPos(){ return S.dealer===near()?[752,668]:[752,212]; }
+function rowX(n,k,sp){ return 470-(n-1)*sp/2+k*sp; }
+function render(){
+  CL.innerHTML=""; [].slice.call(HB.querySelectorAll(".cd")).forEach(function(e){ e.remove(); });
+  var N=near(), F=other(N), show=S.phase==="show", big=bigHand();
+  /* the deck, and the starter cut face up on it */
+  for(var k=0;k<6;k++){ var dk=mkCard(null,{back:true}); setAt(dk,DECK[0]+k*.6,DECK[1]-k*.6,-12+k*1.2); }
+  if(S.starter){ var st=mkCard(S.starter); setAt(st,STARTER[0],STARTER[1],-2,8); }
+  /* the crib beside the dealer (face up in the middle when it's counted) */
+  var cp=cribPos(), cribShown=show&&showIdx>=2;
+  if(!cribShown) S.crib.forEach(function(c,k){ var e=mkCard(null,{back:true}); setAt(e,cp[0]+k*1.5,cp[1]-k*1.5,-12+k*1.2,-6); });
+  stage.querySelector("#crTagCrib").textContent=S.crib.length&&!cribShown?(S.dealer===mySide?"Your crib":online?"Their crib":"House crib"):"";
+  stage.querySelector("#crTagCrib").style.top=(cp[1]+70)+"px";
+  /* the play: cards of this count in a row; finished cards in a face-down stack */
+  if(!show){
+    S.spent.forEach(function(c,k){ if(k<8){ var e=mkCard(null,{back:true}); setAt(e,292+k*.8,SEQ_Y-k*.8,-12+k*1.1,(k%2?2:-2)); } });
+    S.seq.forEach(function(p,k){ var e=mkCard(p.c); setAt(e,SEQ_X+70+k*34,SEQ_Y,-12+k*.9,(k%2?3:-2)); });
+  } else if(cribShown){
+    S.crib.forEach(function(c,k){ var e=mkCard(c); setAt(e,rowX(4,k,90),big?565:SEQ_Y,-12,0); });
+  }
+  stage.querySelector("#crCount").innerHTML=S.phase==="play"?"Count<b>"+S.count+"</b>":"";
+  /* the far hand: face down, face up at the show */
+  var fh=show?S.keep[F]:S.hand[F];
+  fh.forEach(function(c,k){ var e=show?mkCard(c):mkCard(null,{back:true}); var x=rowX(fh.length,k,show?90:62); setAt(e,x,FAR_Y,-12+k*.5,show?0:(k-(fh.length-1)/2)*3); e.classList.add("far"); });
+  /* the near hand: yours (watchers see side 1's backs) */
+  var nh=show?S.keep[N]:S.hand[N], mine=mySide===N, disc=myDiscard(), playing=myPlay();
+  var bw=HB.clientWidth||360, bsp=nh.length>1?Math.min(60,(bw-70)/(nh.length-1)):0;
+  nh.forEach(function(c,k){
+    var e=mine||show?mkCard(c,{into:big?HB:CL}):mkCard(null,{back:true,into:big?HB:CL});
+    var lift=sel.indexOf(k)>=0;
+    if(big) setAt(e,bw/2-(nh.length-1)*bsp/2+k*bsp,48+(lift?-8:0),0,0,.62);
+    else setAt(e,rowX(nh.length,k,nh.length>4?74:show?90:96),NEAR_Y+(lift?-26:0),-12+(lift?6:0));
+    e.classList.add("near"); e.dataset.k=k;
+    if(disc){ e.classList.add("tap"); e.classList.toggle("sel",lift); e.onclick=function(){ toggleSel(k); }; }
+    if(playing&&S.count+val(c)<=31){ e.classList.add("tap","glow"); e.onclick=function(){ humanPlay(k); }; }
+  });
+  stage.querySelector("#crTagFar").textContent=online?"Opponent":(mySide===2?"You":"The House");
+  stage.querySelector("#crTagNear").textContent=mySide===0?"Host":"You";
+  /* the action button */
+  var act="";
+  if(disc&&sel.length===2) act=S.dealer===mySide?"Send to Your Crib":"Send to "+(online?"Their":"The House's")+" Crib";
+  if(show&&!busy){ if(showIdx<2) act="Next"; else if(!S.over&&(!online||mySide===1)) act="Deal Next Hand"; }
+  actBtn.textContent=act; actBtn.classList.toggle("off",!act);
+  /* scores */
+  Parlor.turn(S.over||S.phase!=="play"?-1:S.turn===1?0:1);
+  if(Parlor.info) Parlor.info("Hand "+S.handNo+" · first to 121 · "+(S.dealer===mySide?"your deal":(online?"their deal":"The House deals")));
+  updScore();
+}
+function updScore(){
+  var A=near(), B=other(A);
+  Parlor.score([disp[1][1],disp[2][1]]);
+  scoreEl.innerHTML='<span><i style="background:var(--cr-dot'+(A===1?'A':'B')+')"></i><b>You</b> '+disp[A][1]+'</span><span class="mid">Hand '+S.handNo+' · to 121</span><span><i style="background:var(--cr-dot'+(B===1?'A':'B')+')"></i><b>'+(online?"Opponent":"The House")+'</b> '+disp[B][1]+'</span>';
+}
+function say(a,b){ Parlor.status(a,b||""); }
+function msg(){
+  if(S.over) return;
+  if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  if(S.phase==="discard"){
+    if(myDiscard()) say(sel.length===2?"Ready":"Your discard",(sel.length===2?"Tap Send to put them in the crib":"Choose two cards for "+(S.dealer===mySide?"your":(online?"their":"The House's"))+" crib"));
+    else say("Waiting",(online?"Your opponent is choosing":"The House is choosing")+" cards for the crib");
+  } else if(S.phase==="play"){
+    if(S.turn===mySide) say("Your play","Count "+S.count+" · tap a glowing card (stay at 31 or under)");
+    else say(online?"Your opponent's play":"The House is playing…","Count "+S.count);
+  }
+}
+
+/* ---------- the discard ---------- */
+function toggleSel(k){ if(!myDiscard()) return; var i=sel.indexOf(k); if(i>=0) sel.splice(i,1); else if(sel.length<2) sel.push(k); else { sel.shift(); sel.push(k); } Parlor.sfx("click",{pitch:1.5}); render(); msg(); }
+async function sendToCrib(){
+  if(!myDiscard()||sel.length!==2) return;
+  var picks=sel.slice().sort(function(a,b){ return b-a; }); sel=[]; busy=true;
+  await tossCards(mySide,picks);
+  busy=false; seq++; lastMv={k:"toss",s:mySide};
+  if(!online&&!S.tossed[2]){ houseDiscard(); await houseTossNow(); }
+  if(S.tossed[1]&&S.tossed[2]) await cutStarter(); else { push(); render(); msg(); }
+}
+/* move two cards from side s's hand into the crib */
+async function tossCards(s,idx){
+  var N=near(), cp=cribPos(), els=[].slice.call((bigHand()&&s===N?HB:CL).querySelectorAll(s===N?".cd.near":".cd.far"));
+  var flies=idx.map(function(i,j){ var from=els[i], c=S.hand[s][i]; var p=from?trayPoint(from):[470,s===N?NEAR_Y:FAR_Y];
+    if(from) from.style.visibility="hidden"; var f=mkCard(null,{back:true}); setAt(f,p[0],p[1],-12); return Parlor.wait(j*120).then(function(){ Parlor.sfx("whoosh"); return glide(f,[cp[0]+j*1.5,cp[1]-j*1.5],-6); }); });
+  await Promise.all(flies);
+  idx.forEach(function(i){ S.crib.push(S.hand[s][i]); S.hand[s].splice(i,1); });
+  S.tossed[s]=true; S.keep[s]=S.hand[s].slice();
+  render();
+}
+/* where an element sits, in the table's own measurements (cards in the phone hand bar are outside the table) */
+function trayPoint(el){ if(el.parentNode!==HB) return [el._x,el._y]; var tr=T.getBoundingClientRect(), r=el.getBoundingClientRect(), sc=tr.width/860; return [(r.left+r.width/2-tr.left)/sc,(r.top+r.height/2-tr.top)/sc]; }
+async function cutStarter(){
+  busy=true; await Parlor.wait(350);
+  S.starter=S.deck.pop(); Parlor.sfx("flip",{pitch:1.6});
+  S.phase="play"; S.turn=other(S.dealer); S.count=0; S.seq=[]; S.spent=[];
+  render();
+  if(S.starter.r===10){ addScore(S.dealer,2); toast("His heels: 2 for "+nameLower(S.dealer)); await Parlor.wait(500); pegTo(S.dealer,S.score[S.dealer]); }
+  busy=false; seq++; lastMv={k:"cut"}; push(); render();
+  if(S.over){ end(); return; }
+  msg(); maybeHouse();
+}
+/* The House's discard: the pair that leaves the best average hand over every possible starter, give or take its crib */
+function houseDiscard(){
+  var h=S.hand[2], sk=Parlor.skill(), best=null, bv=-1e9;
+  if(Math.random()<sk.loose*.8){ var a=Math.floor(Math.random()*6), b=(a+1+Math.floor(Math.random()*5))%6; best=[Math.max(a,b),Math.min(a,b)]; }
+  else {
+    var unknown=newDeck().filter(function(c){ return !h.some(function(x){ return sameCard(x,c); }); });
+    for(var i=0;i<6;i++) for(var j=i+1;j<6;j++){
+      var keep=h.filter(function(_,k){ return k!==i&&k!==j; }), tot=0;
+      unknown.forEach(function(st){ tot+=showPoints(keep,st,false).total; });
+      var v=tot/unknown.length, d1=h[i], d2=h[j], cr=0;
+      if(d1.r===d2.r) cr+=2; if(val(d1)+val(d2)===15) cr+=2; if(d1.r===4) cr+=1.5; if(d2.r===4) cr+=1.5; if(Math.abs(d1.r-d2.r)===1) cr+=.7; if(d1.s===d2.s) cr+=.2;
+      v+=(S.dealer===2?1:-1)*cr;
+      if(v>bv){ bv=v; best=[j,i]; }
+    }
+  }
+  /* (the House's toss happens out of sight; its two cards fly to the crib) */
+  houseToss=best;
+}
+var houseToss=null;
+async function houseTossNow(){ if(!houseToss) return; await tossCards(2,houseToss); houseToss=null; }
+
+/* ---------- the play ---------- */
+async function humanPlay(k){
+  if(!myPlay()) return;
+  var c=S.hand[mySide][k]; if(S.count+val(c)>31) return;
+  busy=true; seq++; await playCard(mySide,k); busy=false;
+  afterCard(mySide);
+}
+async function playCard(s,k){
+  var N=near(), c=S.hand[s][k], src=[].slice.call((bigHand()&&s===N?HB:CL).querySelectorAll(s===N?".cd.near":".cd.far"))[k];
+  var p=src?trayPoint(src):[470,s===N?NEAR_Y:FAR_Y], to=[SEQ_X+70+S.seq.length*34,SEQ_Y];
+  if(src) src.style.visibility="hidden";
+  var f=mkCard(c); setAt(f,p[0],p[1],-12); Parlor.sfx("whoosh"); await glide(f,to,S.seq.length%2?3:-2); Parlor.sfx("flip",{pitch:1.7});
+  S.hand[s].splice(k,1); S.seq.push({c:c,s:s}); S.count+=val(c); S.last=s;
+  var pts=pegPoints(S.seq.map(function(x){ return x.c; }),S.count), tot=0;
+  lastMv={k:"play",s:s,c:c,ev:pts};
+  pts.forEach(function(p2){ tot+=p2[1]; }); addScore(s,tot);
+  render();
+  if(tot){ toast(pts.map(function(p2){ return p2[0]+" for "+p2[1]; }).join(" · ")+(s===mySide?"":" ("+nameLower(s)+")")); await Parlor.wait(250); pegTo(s,S.score[s]); await Parlor.wait(450); }
+}
+/* after a card: whose turn is it? "Go" and the last-card point are handled here */
+async function afterCard(s){
+  if(S.over){ push(); render(); end(); return; }
+  if(S.count===31){ await endCount(false); }
+  else if(canPlay(other(s))) S.turn=other(s);
+  else if(canPlay(s)){ S.turn=s; if(S.hand[other(s)].length) toast((other(s)===mySide?"You say":nameOf(other(s))+" says")+" Go"); }
+  else { await endCount(true); }
+  if(S.over){ push(); render(); end(); return; }
+  if(!S.hand[1].length&&!S.hand[2].length){ await toShow(); return; }
+  push(); render(); msg(); maybeHouse();
+}
+/* the count is over (31, or nobody can play): one for the last card unless it made 31; then a fresh count */
+async function endCount(goPoint){
+  var L=S.last;
+  if(goPoint){ var lastCard=!S.hand[1].length&&!S.hand[2].length; addScore(L,1); toast((lastCard?"Last card":"Go")+": 1 for "+nameLower(L)); await Parlor.wait(250); pegTo(L,S.score[L]); await Parlor.wait(400); }
+  await Parlor.wait(500);
+  S.spent=S.spent.concat(S.seq.map(function(x){ return x.c; })); S.seq=[]; S.count=0;
+  S.turn=S.hand[other(L)].length?other(L):L;
+}
+function maybeHouse(){ if(!online&&!S.over&&S.phase==="play"&&S.turn===2&&!busy) houseTurn(); }
+/* The House's play: points now, minus what it might hand you next; looser at low levels */
+async function houseTurn(){
+  if(online||S.over||S.phase!=="play"||S.turn!==2) return;
+  busy=true; render(); msg(); await Parlor.wait(950);
+  var h=S.hand[2], sk=Parlor.skill(), opts=[];
+  h.forEach(function(c,k){ if(S.count+val(c)<=31) opts.push(k); });
+  if(!opts.length){ busy=false; return; }
+  var pick;
+  if(Math.random()<sk.loose) pick=opts[Math.floor(Math.random()*opts.length)];
+  else { var bv=-1e9; opts.forEach(function(k){ var c=h[k], cnt=S.count+val(c), pile=S.seq.map(function(x){ return x.c; }).concat([c]);
+      var v=pegPoints(pile,cnt).reduce(function(a,p){ return a+p[1]; },0)*2;
+      if(cnt===5||cnt===21) v-=1.6; if(cnt<15&&cnt>=5) v-=.8; if(cnt===11&&S.count===0) v-=.4;
+      if(S.count===0&&val(c)<5) v+=.6; if(c.r===4) v-=.7;   /* keep fives for fifteens */
+      v+=Math.random()*(6-sk.depth)*.3;
+      if(v>bv){ bv=v; pick=k; } }); }
+  await playCard(2,pick); busy=false;
+  afterCard(2);
+}
+
+/* ---------- the show: the non-dealer's hand, the dealer's hand, then the crib ---------- */
+async function toShow(){
+  S.phase="show"; var nd=other(S.dealer);
+  S.preShow=S.score.slice();
+  var r1=showPoints(S.keep[nd],S.starter,false), r2=showPoints(S.keep[S.dealer],S.starter,false), r3=showPoints(S.crib,S.starter,true);
+  S.showRes=[{s:nd,what:"hand",r:r1},{s:S.dealer,what:"hand",r:r2},{s:S.dealer,what:"crib",r:r3}];
+  S.showRes.forEach(function(x){ if(!S.over) addScore(x.s,x.r.total); else x.skip=true; });
+  seq++; lastMv={k:"show"}; push();
+  showIdx=-1; await showStep();
+}
+async function showStep(){
+  showIdx++; var x=S.showRes[showIdx]; if(!x){ return; }
+  busy=true; render();
+  var title=(x.s===mySide?"Your ":(online?"Opponent's ":"The House's "))+(x.what==="crib"?"crib":"hand");
+  panel.innerHTML='<h4>'+title+(x.skip?" (not counted: the game is over)":"")+'</h4>'+(x.r.parts.length?x.r.parts.map(function(p){ return '<div class="ln"><span>'+p[0]+'</span><span>'+p[1]+'</span></div>'; }).join(""):'<div class="ln"><span>Nineteen (no points)</span><span>0</span></div>')+'<div class="tot"><span>Total</span><span>'+x.r.total+'</span></div>';
+  panel.classList.remove("off"); positionOverlays();
+  say(title+": "+x.r.total,"");
+  if(x.r.total&&!x.skip){ await Parlor.wait(450); var base=disp[x.s][1]; pegTo(x.s,Math.min(WIN,base+x.r.total)); }
+  busy=false; render();
+  if(S.over&&(showIdx>=2||disp[S.winner][1]>=WIN)){ await Parlor.wait(900); end(); return; }
+}
+async function onAct(){
+  if(S.phase==="discard"){ sendToCrib(); return; }
+  if(S.phase==="show"){
+    if(showIdx<2){ await showStep(); return; }
+    if(online&&mySide!==1) return;
+    panel.classList.add("off");
+    var nd=other(S.dealer); S=fresh(nd,S.score,S.handNo+1); sel=[]; showIdx=-1; seq++; lastMv={k:"deal"};
+    Parlor.sfx("dice",{dur:.4}); syncDisp(); push(); render(); msg();
+    if(!online&&S.dealer===2){ /* you're not the dealer: The House still discards; you choose too */ }
+  }
+}
+function end(){
+  window.__ended=(window.__ended||0)+1;
+  panel.classList.add("off"); render();
+  var meS=mySide||1, kind=S.winner===meS?"win":"lose";
+  var why="Final score: you "+S.score[meS]+", "+(online?"your opponent":"The House")+" "+S.score[other(meS)]+"."+(S.score[other(S.winner)]<91?" A skunk: "+(S.winner===meS?"your opponent":"you")+" finished short of 91.":"");
+  say(kind==="win"?"You win!":"Game over",why);
+  if(online) report();
+  Parlor.finish(kind,why);
+}
+function syncDisp(){ [1,2].forEach(function(s){ if(disp[s][1]!==S.score[s]) disp[s]=[disp[s][1],S.score[s]]; }); placePegs(); updScore(); }
+function newGame(){ S=fresh(1,[0,0,0],1); sel=[]; showIdx=-1; busy=false; reported=false; disp={1:[0,0],2:[0,0]}; panel.classList.add("off"); placePegs(); render(); msg(); }
+
+/* ---------- online table (same page: ?code=XXXX) ----------
+   Discards are taken in turn (the non-dealer first) so the two players never save over each other. */
+function snapshot(){ var o=JSON.parse(JSON.stringify(S)); o.game="cribbage"; o.seq_no=seq; o.mv=lastMv; o.s1=S.score[1]; o.s2=S.score[2]; return o; }
+async function push(){
+  if(!online||!room) return;
+  await sb.from("rooms").update({state:snapshot(), status:S.over?"done":"live", updated_at:new Date().toISOString()}).eq("id",room.id);
+  if(S.over) report();
+}
+function report(){ if(reported||!S.over||!room||!window.bwRateGame) return; reported=true; bwRateGame(sb,room,me,S.winner); }
+function fromSnap(s){
+  if(!s||s.v!==2){ /* an older table, or a brand-new one: start a fresh hand, keeping any scores */
+    var sc=[0,(s&&s.s1)||0,(s&&s.s2)||0]; S=fresh((s&&s.dealer)||1,sc,1); seq=0; return; }
+  S=s; seq=s.seq_no||0;
+}
+var queue=Promise.resolve();
+function remote(s){
+  queue=queue.then(async function(){
+    if(!s||s.seq_no==null||s.seq_no===seq) return;
+    var mv=s.mv, wasOver=S.over, wasPhase=S.phase;
+    if(mv&&mv.s&&mv.s!==mySide&&mv.k==="play"){
+      var k=S.hand[mv.s].findIndex(function(c){ return sameCard(c,mv.c); });
+      if(k>=0){ busy=true; try{ await playCard(mv.s,k); }catch(e){} busy=false; }
+    }
+    if(mv&&mv.s&&mv.s!==mySide&&mv.k==="toss"){ /* their two cards slide into the crib */ Parlor.sfx("whoosh"); }
+    fromSnap(s); syncDisp(); render();
+    if(S.phase==="show"&&wasPhase!=="show"){ showIdx=-1; [1,2].forEach(function(x){ disp[x]=[S.preShow[x],S.preShow[x]]; }); placePegs(); await showStep(); return; }
+    if(S.phase==="discard"&&wasPhase==="show"){ panel.classList.add("off"); showIdx=-1; }
+    if(S.over&&!wasOver&&S.phase!=="show") end(); else msg();
+  });
+}
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ say("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ say("Sign in to join","Use Tables to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ say("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function" && bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;
+  Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
+  Parlor.mySeat(mySide===2?1:0);
+  var wasNew=!(room.state&&room.state.v===2); fromSnap(room.state);
+  if(wasNew&&mySide===1){ seq++; lastMv={k:"deal"}; push(); }
+  [1,2].forEach(function(x){ disp[x]=[S.score[x],S.score[x]]; }); placePegs();
+  render(); if(S.over) end(); else msg();
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
+    var hadGuest=room&&room.guest; room=p.new; var s=p.new.state||{};
+    if(!hadGuest&&room.guest){ render(); msg(); }
+    if(s.seq_no!=null&&s.seq_no!==seq) remote(s);
+  }).subscribe();
+}
+
+/* ---------- fit to the space (same approach as Dominoes) ---------- */
+function positionOverlays(){ var s=fitEl._s||1, cx=Math.round((4+508)*s)+"px"; actBtn.style.left=cx; panel.style.left=cx; toastEl.style.left=cx; actBtn.style.top=Math.round((4+(bigHand()?712:585))*s-22)+"px"; panel.style.top=Math.round((4+228)*s)+"px"; toastEl.style.top=Math.round((4+340)*s)+"px"; }
+function fit(){
+  var W=868, wide=window.innerWidth>=1000, availW, availH, big=false;
+  if(wide){ var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185; availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22; }
+  else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight; availW=window.innerWidth-12; big=!shortL&&window.innerWidth<700;
+    availH=shortL?window.innerHeight-56-64-34-10:big?window.innerHeight-56-(64+30)-106-24-40:window.innerHeight-56-64-34-100; }
+  var s=Math.max(.2,Math.min(availW/W,availH/W,1.25)); fitEl._s=s;
+  var was=document.body.classList.contains("cr-big"); document.body.classList.toggle("cr-big",big);
+  HB.style.width=Math.round(W*s)+"px";
+  stage.querySelector("#crScaler").style.transform="scale("+s+")"; fitEl.style.width=Math.round(W*s)+"px"; fitEl.style.height=Math.round(W*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(W*s)+"px"); positionOverlays();
+  if(was!==big&&S) setTimeout(render,0);
+}
+window.addEventListener("resize",fit);
+
+/* ---------- hook up the kit ---------- */
+actBtn.onclick=onAct;
+Parlor.init({
+  game:"cribbage", title:"Fireside Cribbage", bg:"cribbage-snug.jpg", home:"tables.html", stage:stage,
+  tagline:"Count to fifteen. Peg to 121.", invite:"The fire's lit and the board is set. Pull up a wingback and cut for the deal.",
+  players:[{name:"You",color:"var(--cr-dotA,#2a5bd0)"},{name:"The House",color:"var(--cr-dotB,#c8242e)"}],
+  setsLabel:"Boards",
+  sets:[
+    {id:"maple",name:"Fireside Maple",need:0,dots:["#ddb98a","#22402c","#b3202a"]},
+    {id:"walnut",name:"Library Walnut",club:true,dots:["#5e3c22","#601e1e","#21345e"]},
+    {id:"ebony",name:"Ebony & Pearl",club:true,dots:["#1b1714","#26282e","#e8eef8"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The deal:</b> six cards each. Choose two for the crib, which belongs to the dealer. The deal alternates every hand.</li><li><b>The cut:</b> a starter card is turned up. If it's a jack, the dealer pegs 2 (his heels).</li><li><b>The play:</b> take turns laying cards, keeping the running count at 31 or under. The glowing cards are the ones you can play. If you can't play, you say Go (automatically) and your opponent plays on.</li><li><b>The show:</b> the non-dealer counts their hand, then the dealer counts their hand and the crib, each with the starter.</li><li>Every point moves your back peg past the front one. First to <b>121</b> wins.</li></ol>",
+    score:"<ul><li><b>In the play:</b> a count of 15 or 31 scores 2; a pair 2, three of a kind 6, four 12; a run of three or more scores one per card; the last card of a count scores 1 (Go).</li><li><b>In the show:</b> each combination making 15 scores 2; pairs and runs as above; a four-card flush in hand scores 4 (5 with the starter; the crib needs all five); the jack of the starter's suit scores 1 (his nobs).</li><li>Reach 121 first to win. Finishing before your opponent reaches 91 is a skunk.</li></ul>"
+  },
+  onNew:function(){ mySide=1; newGame(); }
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"maple"; if(k!==curDesign){ applyDesign(k); } fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
+S=fresh(1,[0,0,0],1);
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"maple");
+  placePegs(); render(); fit();
+  if(CODE) bootOnline();
+});
+</script>
 </body>
 </html>
