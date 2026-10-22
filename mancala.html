@@ -34,11 +34,10 @@
 .mk-cell.ok{cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,236,170,.95),0 0 1.6vmin rgba(255,214,110,.6),inset 0 calc(var(--mk-w) * .009) calc(var(--mk-w) * .014) rgba(30,14,4,.6)}
 .mk-cell.ok:hover{filter:brightness(1.1)}
 .mk-cell.flash{filter:brightness(1.22)}
-/* the extra-turn and capture announcement: a dark glass card over the middle of the board, and a glow on the store that earned it */
-.mk-toast{position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);padding:10px 18px;border-radius:12px;background:rgba(15,23,42,.86);
-  border:1px solid rgba(231,199,122,.75);box-shadow:0 10px 30px rgba(0,0,0,.45);color:#f3d68b;font:700 16px Montserrat,sans-serif;letter-spacing:.3px;text-align:center;
-  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:86%}
-.mk-toast small{display:block;margin-top:4px;color:rgba(255,255,255,.88);font-weight:600;font-size:12.5px;letter-spacing:0}
+/* the extra-turn and capture note: one small line of light glass inside the store that earned it, gone in a moment */
+.mk-toast{position:absolute;z-index:8;transform:translate(-50%,-50%) scale(.9);padding:5px 10px;border-radius:6px;background:rgba(15,23,42,.38);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(231,199,122,.45);color:#f6dc8e;font:700 12.5px Montserrat,sans-serif;letter-spacing:.3px;
+  white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .mk-toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .mk-cell.mk-store.bonus{box-shadow:inset 0 0 0 2px rgba(255,236,170,.95),0 0 2.6vmin rgba(255,214,110,.9);filter:brightness(1.12)}
 .mk-cell.last{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75),inset 0 calc(var(--mk-w) * .009) calc(var(--mk-w) * .014) rgba(30,14,4,.6),0 0 0 var(--mk-rimw) var(--mk-rim)}
@@ -255,18 +254,20 @@ function gemPx(){ var g=getComputedStyle(document.body).getPropertyValue("--mk-g
 
 /* a short announcement over the board (extra turns and captures), so nobody waits for a move that isn't coming */
 function toast(main,sub,store){
-  var t=stage.querySelector("#mkToast"); t.innerHTML=""; t.appendChild(document.createTextNode(main)); if(sub){ var sm=document.createElement("small"); sm.textContent=sub; t.appendChild(sm); }
-  t.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove("on"); },2600);
-  if(store!=null){ slots[store].classList.add("bonus"); clearTimeout(toast._s); toast._s=setTimeout(function(){ slots[store].classList.remove("bonus"); },2600); }
+  var t=stage.querySelector("#mkToast"), bd=stage.querySelector(".mk-board"); t.textContent=main;
+  if(store!=null){ var r=slots[store].getBoundingClientRect(), br=bd.getBoundingClientRect(), sc=br.width/bd.offsetWidth||1;
+    t.style.left=((r.left+r.width/2-br.left)/sc)+"px"; t.style.top=((r.top+r.height*.72-br.top)/sc)+"px";
+    slots[store].classList.add("bonus"); clearTimeout(toast._s); toast._s=setTimeout(function(){ slots[store].classList.remove("bonus"); },1500); }
+  t.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove("on"); },1300);
 }
 function after(s,res){
   if(res.done){ over=true; paint(); end(); push(); return; }
   if(res.extra){ var who=online?"your opponent":"The House";
-    toast(s===mySide?"Extra Turn!":"Extra turn for "+who,s===mySide?"Your last stone landed in your store. Go again.":"Its last stone landed in its store.",storeOf(s)); Parlor.sfx("mill");
+    toast("Extra Turn","",storeOf(s)); Parlor.sfx("mill");
     turn=s; paint(); say(s===mySide?"Extra turn":"Another turn for "+(online?"your opponent":"The House"),s===mySide?"Your last stone landed in your store":""); push(); if(!online&&turn===2) setTimeout(houseMove,1100); return; }
   turn=3-s; paint();
   msg();
-  if(res.capture) toast(s===mySide?"Captured "+res.capture+" Stones!":(online?"Opponent":"The House")+" Captured "+res.capture,"",storeOf(s));
+  if(res.capture) toast("+"+res.capture+" Captured","",storeOf(s));
   if(res.capture) say(s===mySide?"Captured "+res.capture+" stones!":(online?"Opponent":"The House")+" captured "+res.capture+" stones",turn===mySide?"Your turn":"");
   push();
   if(!online&&turn===2) setTimeout(houseMove,1000);
