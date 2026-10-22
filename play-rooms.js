@@ -10,7 +10,7 @@ window.bwMakeEl=function(tag, cls, text){
 };
 window.BW_ROOMS={
   chess:"chess-room.html",
-  checkers:"checkers-room.html",
+  checkers:"checkers.html",
   backgammon:"backgammon-room.html",
   othello:"othello.html",
   morris:"morris.html",
@@ -273,7 +273,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 
 (function bwSets(){
   var file=(location.pathname.split("/").pop()||"").toLowerCase();
-  if(!/^(chess|chess-room|checkers|checkers-room)(\.html)?$/.test(file)) return;
+  if(!/^(chess|chess-room)(\.html)?$/.test(file)) return;   /* checkers moved onto the parlor kit (Oct 22) */
   var SETS=[
     {id:"classic", name:"Ivory · Onyx", need:0, member:false},
     {id:"cobalt", name:"Cobalt · Emerald", need:501, member:true},
