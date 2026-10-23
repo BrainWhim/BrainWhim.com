@@ -11,7 +11,7 @@ window.bwMakeEl=function(tag, cls, text){
 window.BW_ROOMS={
   chess:"chess-room.html",
   checkers:"checkers.html",
-  backgammon:"backgammon-room.html",
+  backgammon:"backgammon.html",
   othello:"othello.html",
   morris:"morris.html",
   mancala:"mancala.html",
