@@ -14,11 +14,6 @@
 .bw{position:absolute;left:0;top:0;width:1480px;height:1020px;transform-origin:0 0;border-radius:16px;box-shadow:0 30px 60px rgba(0,0,0,.55),0 8px 18px rgba(0,0,0,.4)}
 .bw canvas{position:absolute;left:0;top:0;width:1480px;height:1020px;border-radius:16px}
 .bg-layer{position:absolute;inset:0}
-.bg-acts{display:flex;gap:10px;justify-content:center;align-items:center;min-height:44px}
-.bg-acts .pk-btn{width:auto;min-width:118px;padding:11px 20px}
-.bg-acts .pk-btn.go{background:rgba(232,200,115,.18);border-color:rgba(232,200,115,.85);color:#fff3cf;animation:bg-call 1.8s ease-in-out infinite}
-.bg-acts .pk-btn[hidden]{display:none}
-@keyframes bg-call{50%{box-shadow:0 0 0 3px rgba(232,200,115,.25),0 0 18px rgba(232,200,115,.35)}}
 
 /* checkers */
 .ck{position:absolute;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;pointer-events:none}
@@ -35,8 +30,54 @@
 .ck.hide{visibility:hidden}
 .ck.fly{z-index:20}
 @keyframes bg-glow{0%,100%{opacity:.6}50%{opacity:1}}
-.ghost{position:absolute;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;border:3px dashed rgba(250,218,128,.95);background:radial-gradient(circle,rgba(255,222,140,.42),rgba(255,222,140,.1) 70%);animation:bg-glow 1.2s ease-in-out infinite;pointer-events:none}
-.pool{position:absolute;pointer-events:none;border-radius:10px;background:radial-gradient(ellipse at center,rgba(255,220,130,.42),rgba(255,220,130,0) 70%);box-shadow:inset 0 0 0 3px rgba(250,218,128,.85);animation:bg-glow 1.2s ease-in-out infinite}
+.ck.mv.dim::before{animation:none;opacity:.35}
+/* landing rings: solid gold with a dark edge inside and out, so they read on cream, pearl and marble as well as on dark points */
+.ghost{position:absolute;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;pointer-events:none;border:5px solid #f3c95a;
+  background:radial-gradient(circle,rgba(255,214,110,.62) 0,rgba(255,206,90,.32) 62%,rgba(255,206,90,.12) 100%);
+  box-shadow:0 0 0 2.5px rgba(48,26,6,.8),inset 0 0 0 2.5px rgba(48,26,6,.6),0 0 22px 6px rgba(255,196,80,.6);animation:bg-ring 1.3s ease-in-out infinite}
+@keyframes bg-ring{50%{box-shadow:0 0 0 2.5px rgba(48,26,6,.8),inset 0 0 0 2.5px rgba(48,26,6,.6),0 0 34px 12px rgba(255,196,80,.85)}}
+.pool{position:absolute;pointer-events:none;border-radius:10px;background:radial-gradient(ellipse at center,rgba(255,214,110,.5),rgba(255,214,110,.08) 75%);
+  box-shadow:inset 0 0 0 5px #f3c95a,inset 0 0 0 7.5px rgba(48,26,6,.6),0 0 0 2.5px rgba(48,26,6,.8),0 0 26px 6px rgba(255,196,80,.55);animation:bg-glow 1.3s ease-in-out infinite}
+/* the dice cup (like the Yahtzee cup): appears on your side of the board when it's time to roll */
+.cup{position:absolute;left:926px;top:428px;width:124px;height:150px;cursor:pointer;-webkit-tap-highlight-color:transparent;transform:scale(var(--cs,1));transform-origin:50% 55%;z-index:30;isolation:isolate}
+.cup[hidden]{display:none}
+.cup .csh{position:absolute;left:4px;top:122px;width:128px;height:34px;border-radius:50%;background:rgba(0,0,0,.6);filter:blur(7px)}
+.cup .body{position:absolute;left:6px;top:22px;width:112px;height:120px;clip-path:polygon(0 0,100% 0,94% 100%,6% 100%);border-radius:0 0 50% 50% / 0 0 14px 14px;background:var(--cup);overflow:hidden}
+.cup .body::before{content:"";position:absolute;inset:0;background-image:var(--cuptex);background-size:128px 128px;mix-blend-mode:multiply;opacity:.55}
+.cup .body::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.1) 18%,rgba(255,255,255,.22) 34%,rgba(255,255,255,.05) 50%,rgba(0,0,0,.15) 72%,rgba(0,0,0,.6))}
+.cup .band{position:absolute;left:6px;width:112px;height:8px;background:linear-gradient(90deg,#8a6424,#f6dc8e 40%,#c9a24f 60%,#7a5520);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.cup .band.lo{top:122px;left:12px;width:100px;height:7px;border-radius:0 0 50% 50% / 0 0 5px 5px}
+.cup .rim{position:absolute;left:0;top:4px;width:124px;height:38px;border-radius:50%;background:linear-gradient(90deg,#8a6424,#f6dc8e 40%,#c9a24f 60%,#7a5520);box-shadow:0 2px 3px rgba(0,0,0,.45)}
+.cup .rim::before{content:"";position:absolute;inset:5px 7px 6px;border-radius:50%;background:radial-gradient(ellipse 80% 90% at 50% 70%,var(--cupin),#000 92%);box-shadow:inset 0 3px 6px rgba(0,0,0,.8)}
+.cup .mono{position:absolute;left:0;right:0;top:64px;display:flex;justify-content:center;align-items:baseline;font-size:30px;line-height:1.25}
+.cup .mono b,.cup .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.cup .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.cup .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+.cup .tap{position:absolute;left:50%;top:150px;transform:translateX(-50%);white-space:nowrap;padding:5px 12px;border-radius:6px;font:700 19px Montserrat,sans-serif;letter-spacing:.06em;color:#fff3cf;
+  background:rgba(15,23,42,.72);border:1.5px solid rgba(232,200,115,.75);box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.cup:hover .body{filter:brightness(1.12)}
+.cup.ready::after{content:"";position:absolute;left:4px;right:4px;top:6px;bottom:10px;border-radius:50% 50% 46% 46% / 18% 18% 12% 12%;box-shadow:0 0 30px 12px rgba(232,180,60,.65);animation:bg-glow 1.8s ease-in-out infinite;pointer-events:none;z-index:-1}
+.cup.pop{animation:bg-pop .35s ease-out}
+.cup.shake{animation:bg-shake .5s ease-in-out}
+@keyframes bg-pop{0%{opacity:0;transform:scale(var(--cs,1)) translateY(18px) scale(.85)}100%{opacity:1;transform:scale(var(--cs,1))}}
+@keyframes bg-shake{0%,100%{transform:scale(var(--cs,1))}15%{transform:scale(var(--cs,1)) rotate(-10deg) translateX(-5px)}35%{transform:scale(var(--cs,1)) rotate(9deg) translateX(5px)}55%{transform:scale(var(--cs,1)) rotate(-7deg)}75%{transform:scale(var(--cs,1)) rotate(5deg)}}
+/* Undo, beside your dice */
+.bg-undo{position:absolute;left:862px;top:510px;transform:translate(-100%,-50%) scale(var(--cs,1));transform-origin:100% 50%;z-index:30;padding:12px 20px;border-radius:8px;cursor:pointer;
+  font:700 22px Montserrat,sans-serif;letter-spacing:.04em;color:#f3dfa4;background:rgba(15,23,42,.72);border:1.5px solid rgba(232,200,115,.6);box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.bg-undo:hover{background:rgba(30,41,59,.85)}
+.bg-undo[hidden]{display:none}
+/* short landscape phones: the board takes the full height; the bar runs down the right side */
+@media (max-width:999px) and (max-height:520px) and (orientation:landscape){
+  body.pk.seated header{display:none}
+  body.pk.seated .pk-room{min-height:100dvh}
+  body.pk.seated .pk-play{padding:8px 136px 8px 8px;min-height:100dvh}
+  body.pk.seated .pk-stage{min-height:calc(100dvh - 16px);justify-content:center}
+  body.pk.seated .pk-mini,body.pk.seated .pk-whim-m{display:none!important}
+  body.pk.seated .pk-bar{left:auto;right:calc(8px + env(safe-area-inset-right));top:8px;bottom:8px;width:118px;height:auto;flex-direction:column;justify-content:space-between}
+  body.pk.seated .pk-bar > *{width:100%;flex:1}
+  body.pk.seated .pk-bar .pk-bstat{flex:2}
+  .pk-side{bottom:8px!important;right:136px!important;max-height:calc(100dvh - 16px)!important}
+  body.pk.seated .pk-hint.on{display:none}
+}
 .lastm{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,230,160,.55),rgba(255,230,160,0) 70%)}
 .sl{position:absolute;width:110px;height:21px;margin:-10.5px 0 0 -55px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),0 2px 3px rgba(0,0,0,.45)}
 
@@ -45,8 +86,6 @@
 .die i{position:absolute;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%}
 .die.used{opacity:.38;filter:grayscale(.4)}
 
-/* tap targets */
-.tg{position:absolute;cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 /* the three boards: checker and dice finishes */
 .d-lib .ck.s0{background-image:url(bg-chk-w.png)}
@@ -83,7 +122,7 @@
 .bg-pick button{font:600 13px Montserrat,sans-serif;color:#f3ead8;background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 12px;cursor:pointer}
 .bg-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
 @media (max-width:999px){.bg-pick{top:62px;flex-wrap:nowrap;gap:2px;padding:4px}.bg-pick button{font-size:11.5px;padding:7px 8px;white-space:nowrap}}
-@media (prefers-reduced-motion:reduce){.ck.mv::before,.ghost,.pool,.bg-acts .pk-btn.go{animation:none}}
+@media (prefers-reduced-motion:reduce){.ck.mv::before,.ghost,.pool,.cup.ready::after{animation:none}}
 </style>
 <script src="bw-auth.js"></script>
 </head>
@@ -406,20 +445,24 @@ function paintBoard(d){
 /* =================== the stage: painted board, lights, checkers, dice, tap targets =================== */
 var stage=document.createElement("div");stage.style.cssText="display:flex;flex-direction:column;align-items:center;gap:10px";
 stage.innerHTML='<div class="bg-fit" id="bgFit"><div class="bw d-leath" id="bw"><canvas id="cv" width="2960" height="2040"></canvas>'+
-  '<div class="bg-layer" id="hl"></div><div class="bg-layer" id="pcs"></div><div class="bg-layer" id="diceL"></div><div class="bg-layer" id="tgs"></div></div></div>'+
-  '<div class="bg-acts"><button type="button" class="pk-btn go" id="bRoll">Roll</button><button type="button" class="pk-btn" id="bUndo" hidden>Undo</button></div>';
+  '<div class="bg-layer" id="hl"></div><div class="bg-layer" id="pcs"></div><div class="bg-layer" id="diceL"></div><div class="bg-layer" id="tgs"></div>'+
+  '<div class="cup" id="cup" role="button" aria-label="Roll the dice" hidden><div class="csh"></div><div class="body"></div><div class="band lo"></div><div class="band" style="top:36px"></div><div class="rim"></div><span class="mono"><b>B</b><i>W</i></span><div class="tap" id="cupTap">Roll</div></div>'+
+  '<button type="button" class="bg-undo" id="bUndo" hidden>Undo</button></div></div>';
 var $=function(id){return stage.querySelector("#"+id);};
-var bw=$("bw"),pcs=$("pcs"),hl=$("hl"),diceL=$("diceL"),tgs=$("tgs"),fitEl=$("bgFit"),cv=$("cv");
+var bw=$("bw"),pcs=$("pcs"),hl=$("hl"),diceL=$("diceL"),tgs=$("tgs"),fitEl=$("bgFit"),cv=$("cv"),cupEl=$("cup");
 
 /* ---------- boards (sets) ---------- */
 var BOARD_NAMES={leath:["bone","ebony"],lib:["ivory","cobalt"],mid:["pearl","garnet"]},BOARD_DOTS={leath:["#efe4cc","#2a1d16"],lib:["#f3eedc","#2555a7"],mid:["#f3efe6","#8c1328"]};
+var CUPS={leath:{body:"linear-gradient(180deg,#8e4630,#63261a 45%,#2c0f08)",tex:[120,60,40],inside:"#2a0d06"},lib:{body:"linear-gradient(180deg,#3a5cb4,#22408e 45%,#0f2152)",tex:[70,96,170],inside:"#0a1430"},mid:{body:"linear-gradient(180deg,#3a3a40,#16161a 45%,#050506)",tex:[70,70,76],inside:"#111"}},cupTex={};
 var curDesign=null,painted={},fontsReady=false;
 function applyDesign(k){
   if(!DESIGNS[k])k="leath";if(!fontsReady||k===curDesign)return;curDesign=k;
   document.body.style.setProperty("--bg-dot1",BOARD_DOTS[k][0]);document.body.style.setProperty("--bg-dot2",BOARD_DOTS[k][1]);
-  bw.className="bw d-"+k+(bw.classList.contains("rot")?" rot":"");
+  bw.className="bw d-"+k;
   if(!painted[k])painted[k]=paintBoard(DESIGNS[k]);
   var g=cv.getContext("2d");g.clearRect(0,0,cv.width,cv.height);g.drawImage(painted[k],0,0);
+  var c=CUPS[k];if(!cupTex[k])cupTex[k]="url("+tex(128,128,leatherFn({seed:7+k.length,base:c.tex})).toDataURL()+")";
+  bw.style.setProperty("--cup",c.body);bw.style.setProperty("--cuptex",cupTex[k]);bw.style.setProperty("--cupin",c.inside);
   nameSeats();render(G.st);
 }
 function colorNames(){return BOARD_NAMES[curDesign]||BOARD_NAMES.leath;}
@@ -452,14 +495,14 @@ function place(e,xy){e.style.left=xy[0]+"px";e.style.top=xy[1]+"px";}
 function render(st,hide){
   hide=hide||{};pcs.innerHTML="";hl.innerHTML="";
   var showMv=(G.phase==="move"||G.phase==="peek")&&!busy,mine=G.turn===ms&&!watcher;
-  function mark(e,s,p){if(!showMv||s!==G.turn||!G.sources[p])return;if(mine&&G.phase==="move")e.classList.add(G.sel===p?"sel":"mv");else e.classList.add("soft");}
+  function mark(e,s,p){if(!showMv||s!==G.turn||!G.sources[p])return;if(mine&&G.phase==="move"){if(G.sel===p)e.classList.add("sel");else{e.classList.add("mv");if(G.sel!=null)e.classList.add("dim");}}else e.classList.add("soft");}
   for(var i=1;i<=24;i++){var v=st.b[i];if(!v)continue;var s=v>0?0:1,n=Math.abs(v),d=dpt(i);
     for(var k=0;k<n;k++){var e=mkCk(s);place(e,slot(d,k,n));
-      if(k===n-1){if(hide.pt===i)e.classList.add("hide");mark(e,s,persp(s,i));
+      if(k===n-1){if(hide.pt===i||(drag&&drag.moved&&s===ms&&drag.src===persp(s,i)))e.classList.add("hide");mark(e,s,persp(s,i));
         if(n>5){var t=document.createElement("span");t.className="n";t.textContent=n;e.appendChild(t);}}
       pcs.appendChild(e);}}
   for(s=0;s<2;s++){var near=s===ms?0:1;
-    for(k=0;k<st.bar[s];k++){e=mkCk(s);place(e,barSlot(near,k));if(k===st.bar[s]-1){if(hide.bar===s)e.classList.add("hide");mark(e,s,25);}pcs.appendChild(e);}
+    for(k=0;k<st.bar[s];k++){e=mkCk(s);place(e,barSlot(near,k));if(k===st.bar[s]-1){if(hide.bar===s||(drag&&drag.moved&&s===ms&&drag.src===25))e.classList.add("hide");mark(e,s,25);}pcs.appendChild(e);}
     for(k=0;k<st.off[s];k++){e=document.createElement("div");e.className="sl s"+s;place(e,offSlot(near,k));if(hide.off===s&&k===st.off[s]-1)e.style.visibility="hidden";pcs.appendChild(e);}}
   /* where the chosen checker can go */
   if(G.phase==="move"&&!busy&&G.sel!=null&&G.dests){G.dests.forEach(function(o){
@@ -494,8 +537,8 @@ function fly(s,from,to){return new Promise(function(res){if(!Parlor.smooth()){re
   requestAnimationFrame(step);});}
 function posOf(st,s,p){if(p===25)return barSlot(s===ms?0:1,st.bar[s]-1);var i=idx(s,p),n=Math.abs(st.b[i]);return slot(dpt(i),n-1,n);}
 /* one step, animated; updates G.st */
-async function animMove(s,f,t){
-  var st=G.st,from=posOf(st,s,f),r=play(st,s,f,t),ns=r.st,to,hide={},hitFrom=null;
+async function animMove(s,f,t,fromXY){
+  var st=G.st,from=fromXY||posOf(st,s,f),r=play(st,s,f,t),ns=r.st,to,hide={},hitFrom=null;
   if(t===0){to=offSlot(s===ms?0:1,ns.off[s]-1);hide.off=s;}else{var i=idx(s,t);to=slot(dpt(i),Math.abs(ns.b[i])-1,Math.abs(ns.b[i]));hide.pt=i;}
   if(r.hit){hitFrom=slot(dpt(idx(s,t)),0,1);hide.bar=1-s;}
   G.st=ns;G.sel=null;G.dests=null;
@@ -508,54 +551,72 @@ async function animMove(s,f,t){
 
 /* ---------- messages and buttons ---------- */
 function say(a,b){Parlor.status(a,b||"");}
-function buttons(){var rb=$("bRoll"),ub=$("bUndo"),myRoll=(G.phase==="roll"||G.phase==="opening")&&!busy&&seatedNow()&&!watcher&&!(online&&(!room||!room.guest));
-  rb.hidden=!myRoll;rb.textContent=G.phase==="opening"?"Roll to Start":"Roll";
+function buttons(){var ub=$("bUndo"),myRoll=(G.phase==="roll"||G.phase==="opening")&&!busy&&seatedNow()&&!watcher&&!(online&&(!room||!room.guest));
+  if(myRoll&&cupEl.hidden){cupEl.hidden=false;cupEl.classList.remove("pop");void cupEl.offsetWidth;cupEl.classList.add("pop");}
+  if(!myRoll&&!cupEl.classList.contains("shake"))cupEl.hidden=true;
+  cupEl.classList.toggle("ready",myRoll);$("cupTap").textContent=G.phase==="opening"?"Roll to Start":"Roll";
   ub.hidden=!(G.phase==="move"&&G.played.length>0&&!busy);}
+/* tap the cup: it shakes, then lifts away as the dice tumble out */
+function shakeCup(){return new Promise(function(res){cupEl.classList.remove("ready","pop");cupEl.classList.add("shake");Parlor.sfx("dice",{dur:.35});
+  setTimeout(function(){cupEl.classList.remove("shake");cupEl.hidden=true;res();},Parlor.smooth()?520:60);});}
 function leftMsg(){var left=G.max-G.played.length;return left+" more move"+(left>1?"s":"")+" to play";}
 
 /* ---------- turn flow ---------- */
 function newGame(){token++;busy=false;over=false;winner=0;seq=0;
   G.st=startPos();G.turn=0;G.dice=null;G.roll=null;G.seqs=[];G.max=0;G.played=[];G.hist=[];G.sel=null;G.dests=null;G.sources={};G.last=null;
-  diceL.innerHTML="";G.phase="opening";render(G.st);say("Roll to start","Higher die goes first");buttons();fit();}
+  diceL.innerHTML="";G.phase="opening";render(G.st);say("Roll to start","Tap the dice cup · higher die goes first");buttons();fit();}
 async function rollClick(){
   if(busy||over||!seatedNow()||watcher)return;var my=token;
-  if(G.phase==="opening"){busy=true;buttons();var a,b;
+  if(G.phase==="opening"){busy=true;await shakeCup();buttons();var a,b;
     do{a=r6();b=r6();await tumble([[988,MID],[336,MID]],[a,b]);if(my!==token)return;
       if(a===b){say("Both rolled "+a,"Rolling again…");await wait(900);if(my!==token)return;}}while(a===b);
-    busy=false;
-    if(a>b){say("You start","You rolled "+a+", The House rolled "+b);await wait(1000);if(my!==token)return;G.roll=[a,b];startMyMove(diceList([a,b]));}
-    else{say("The House starts","It rolled "+b+", you rolled "+a);G.phase="house";buttons();await wait(1100);if(my!==token)return;houseTurn([b,a]);}
+    if(a>b){say("You start","You rolled "+a+", The House rolled "+b);await wait(1000);if(my!==token)return;busy=false;G.roll=[a,b];startMyMove(diceList([a,b]));}
+    else{say("The House starts","It rolled "+b+", you rolled "+a);G.phase="house";await wait(1100);if(my!==token)return;busy=false;houseTurn([b,a]);}
     return;}
   if(G.phase!=="roll"||G.turn!==ms)return;if(online&&(!room||!room.guest))return;
-  busy=true;buttons();var d=[r6(),r6()];
+  busy=true;await shakeCup();buttons();var d=[r6(),r6()];
   await tumble(diceSpots(true,2),d);if(my!==token)return;busy=false;G.roll=d;startMyMove(diceList(d));}
 function startMyMove(list){G.dice=list;var r=allSeqs(G.st,ms,list);G.seqs=r.seqs;G.max=r.max;G.played=[];G.hist=[];G.sel=null;G.dests=null;G.last=null;
   showDice(true,list,0);
   if(!r.max){G.phase="wait";G.sources={};render(G.st);buttons();say("No legal move","Nothing plays "+rollText(G.roll));var my=token;setTimeout(function(){if(my===token)endMyTurn();},1700);return;}
   G.phase="move";computeSources();autoPick();render(G.st);buttons();
-  say("Your move",r.max===1?"Only one move is possible: tap a glowing checker":"Tap a glowing checker, then a gold spot · "+r.max+" moves");}
+  say("Your move",r.max===1?"One move: tap or drag a glowing checker":"Tap or drag a glowing checker to a gold ring");}
 function rollText(d){return d?d[0]+" and "+d[1]:"";}
 function matching(){var P=G.played;return G.seqs.filter(function(o){for(var k=0;k<P.length;k++){if(o.path[k].f!==P[k].f||o.path[k].d!==P[k].d)return false;}return true;});}
 function computeSources(){var m=matching(),src={},k=G.played.length;m.forEach(function(o){if(o.path.length>k)src[o.path[k].f]=1;});G.sources=src;}
-function destsFor(f){var m=matching(),k=G.played.length,by={};m.forEach(function(o){var s=o.path[k];if(s&&s.f===f){if(!by[s.t]||s.d<by[s.t].d)by[s.t]={t:s.t,d:s.d};}});return Object.keys(by).map(function(x){return by[x];});}
+/* where the checker on point f can go: one die, or several dice in a row with the same checker (e.g. 2 then 4 = six spots).
+   For a combined move the way that doesn't hit on the way is preferred, so nothing surprising happens. */
+function destsFor(f){var m=matching(),k=G.played.length,by={};
+  m.forEach(function(o){var steps=[],cur=f;
+    for(var j=k;j<o.path.length;j++){var s=o.path[j];if(s.f!==cur)break;steps.push(s);cur=s.t;
+      var hits=steps.slice(0,-1).some(function(x){return x.hit;}),score=steps.length*10+(hits?2:0)+s.d*.01;
+      if(!by[s.t]||score<by[s.t].score)by[s.t]={t:s.t,steps:steps.slice(),score:score,combo:steps.length>1};
+      if(s.t===0)break;}});
+  return Object.keys(by).map(function(x){return by[x];});}
 function autoPick(){var keys=Object.keys(G.sources);if(keys.length===1){G.sel=+keys[0];G.dests=destsFor(G.sel);}}
+function pOf(kind,dp){return kind==="pt"?persp(ms,flip()?25-dp:dp):kind==="bar"?25:0;}
+/* a tap: on a gold spot it moves the chosen checker there; on a checker that can move it picks that one up (tapping it again keeps it);
+   anywhere else it puts the checker back down */
 async function tap(kind,dp){
   if(busy||over||!seatedNow()||watcher)return;
   if(G.phase==="roll"||G.phase==="opening"){if(G.phase==="opening"||G.turn===ms)rollClick();return;}
   if(G.phase!=="move"||G.turn!==ms)return;
-  var p=kind==="pt"?persp(ms,flip()?25-dp:dp):kind==="bar"?25:0;
-  if(G.sel!=null&&G.dests){var hit=G.dests.filter(function(o){return o.t===p;})[0];
-    if(hit){busy=true;buttons();G.hist.push({st:clone(G.st)});var f=G.sel;G.played.push({f:f,t:hit.t,d:hit.d});var my=token;await animMove(ms,f,hit.t);if(my!==token)return;busy=false;afterStep();return;}}
-  if(G.sources[p]){if(G.sel===p){G.sel=null;G.dests=null;}else{G.sel=p;G.dests=destsFor(p);}render(G.st);return;}
+  var p=pOf(kind,dp);
+  if(G.sel!=null&&G.dests){var o=G.dests.filter(function(x){return x.t===p;})[0];if(o){doMove(o);return;}}
+  if(G.sources[p]){if(G.sel!==p){G.sel=p;G.dests=destsFor(p);render(G.st);Parlor.sfx("click",{pitch:.8});}return;}
   if(G.sel!=null){G.sel=null;G.dests=null;render(G.st);}
+}
+async function doMove(o,fromXY){
+  busy=true;buttons();var my=token,f=G.sel;
+  for(var k=0;k<o.steps.length;k++){var m=o.steps[k];G.hist.push({st:clone(G.st)});G.played.push({f:m.f,t:m.t,d:m.d});
+    await animMove(ms,m.f,m.t,k===0?fromXY:null);if(my!==token)return;showDice(true,G.dice,G.played.length);if(k<o.steps.length-1)await wait(110);}
+  busy=false;afterStep();
 }
 function afterStep(){showDice(true,G.dice,G.played.length);
   if(G.st.off[ms]===15){finishTurn();return;}
   if(G.played.length>=G.max){G.phase="wait";G.sources={};render(G.st);buttons();say("Turn played","");var my=token,n=G.played.length;
     setTimeout(function(){if(my===token&&G.phase==="wait"&&G.played.length===n)endMyTurn();},850);return;}
-  computeSources();
-  var keys=Object.keys(G.sources),lastT=G.played[G.played.length-1].t;
-  if(keys.length===1){G.sel=+keys[0];G.dests=destsFor(G.sel);}else if(G.sources[lastT]&&lastT!==0){G.sel=lastT;G.dests=destsFor(lastT);}
+  computeSources();autoPick();
   render(G.st);buttons();say("Your move",leftMsg());}
 function undo(){if(busy||G.phase!=="move"&&G.phase!=="wait"||!G.played.length)return;
   G.st=G.hist.pop().st;G.played.pop();G.phase="move";G.sel=null;G.dests=null;computeSources();autoPick();render(G.st);showDice(true,G.dice,G.played.length);buttons();say("Your move",leftMsg());}
@@ -577,7 +638,7 @@ function msg(){
   if(over)return;
   if(online&&room&&!room.guest){say("Waiting for a player","Share your table code: "+(CODE||""));return;}
   if(watcher){say(G.turn===0?"Side 1 to play":"Side 2 to play","Watching");return;}
-  if(G.phase==="roll")say("Your turn","Roll the dice: tap Roll or the board");
+  if(G.phase==="roll")say("Your turn","Tap the dice cup to roll");
   else if(G.phase==="opp")say("Opponent's turn","");
 }
 async function houseTurn(openDice){var my=token;G.turn=1;G.phase="house";busy=true;buttons();render(G.st);
@@ -602,27 +663,58 @@ function end(){
   Parlor.finish(watcher?"draw":mine?"win":"lose",detail);
 }
 
-/* ---------- tap targets (by display point, so they work when the board is turned or flipped) ---------- */
-(function(){
-  function add(x,y,w,h,kind,i){var e=document.createElement("div");e.className="tg";e.style.cssText="left:"+x+"px;top:"+y+"px;width:"+w+"px;height:"+h+"px";e.addEventListener("click",function(){tap(kind,i);});tgs.appendChild(e);}
-  for(var i=1;i<=24;i++)add(px(i)-PW/2,isTop(i)?FY[0]:MID,PW,440,"pt",i);
-  add(612,FY[0],100,880,"bar",0);add(TRX[0],FY[0],130,880,"off",0);
-})();
-$("bRoll").onclick=function(){rollClick();};$("bUndo").onclick=undo;
+/* ---------- input: taps and drags on one layer over the board ---------- */
+var drag=null;
+function local(e){var rc=bw.getBoundingClientRect(),k=rc.width/W;return [(e.clientX-rc.left)/k,(e.clientY-rc.top)/k];}
+function hitTest(x,y){
+  if(y<FY[0]-24||y>FY[1]+24||x<20||x>W-20)return null;
+  if(x>=606&&x<=718)return {kind:"bar",i:0};
+  if(x>=TRX[0]-14)return {kind:"off",i:0};
+  var top=y<MID,best=0,bd=1e9;for(var i=1;i<=24;i++){if(isTop(i)!==top)continue;var d=Math.abs(px(i)-x);if(d<bd){bd=d;best=i;}}
+  return bd<=PW/2+8?{kind:"pt",i:best}:null;}
+tgs.style.touchAction="none";
+tgs.addEventListener("pointerdown",function(e){
+  if(e.button>0)return;var q=local(e),h=hitTest(q[0],q[1]);
+  drag={id:e.pointerId,sx:e.clientX,sy:e.clientY,h:h,src:null,moved:false,el:null,touch:e.pointerType==="touch"};
+  if(h&&G.phase==="move"&&!busy&&G.turn===ms&&!watcher){var p=pOf(h.kind,h.i);if(G.sources[p])drag.src=p;}
+  try{tgs.setPointerCapture(e.pointerId);}catch(x){}
+});
+tgs.addEventListener("pointermove",function(e){
+  if(!drag||drag.id!==e.pointerId||drag.src==null)return;
+  var dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+  if(!drag.moved){if(dx*dx+dy*dy<64)return;drag.moved=true;
+    if(G.sel!==drag.src){G.sel=drag.src;G.dests=destsFor(drag.src);}
+    render(G.st);drag.el=mkCk(ms);drag.el.classList.add("fly","sel");pcs.appendChild(drag.el);}
+  var q=local(e);drag.at=[q[0],q[1]-(drag.touch?46:0)];place(drag.el,drag.at);
+});
+function endDrag(e,cancel){
+  if(!drag||drag.id!==e.pointerId)return;var d=drag;drag=null;
+  if(!d.moved){if(!cancel&&d.h)tap(d.h.kind,d.h.i);else if(!cancel&&!d.h&&(G.phase==="roll"||G.phase==="opening"))rollClick();return;}
+  if(d.el)d.el.remove();
+  var q=d.at||local(e),h=hitTest(q[0],q[1]+(d.touch?46:0)),o=null;
+  if(!cancel&&h&&G.dests){var p=pOf(h.kind,h.i);o=G.dests.filter(function(x){return x.t===p;})[0];}
+  if(o){doMove(o,d.at);}else{render(G.st);}
+}
+tgs.addEventListener("pointerup",function(e){endDrag(e,false);});
+tgs.addEventListener("pointercancel",function(e){endDrag(e,true);});
+cupEl.addEventListener("click",function(e){e.stopPropagation();rollClick();});
+$("bUndo").onclick=undo;
 
-/* ---------- fitting: the board fills the space it has; portrait phones turn it on its side ---------- */
+/* ---------- fitting: desktop fills the space between the side cards; portrait phones fill the width (Whim card above,
+   the board group near the bar); short landscape phones use the full height with the bar down the right side ---------- */
+var SHORTL="(max-width:999px) and (max-height:520px) and (orientation:landscape)";
 function fit(){
   if(!seatedNow())return;
-  var wide=innerWidth>=1000,acts=stage.querySelector(".bg-acts").offsetHeight+10,availW,availH;
-  if(wide){var st=document.querySelector(".pk-stage");availW=(st&&st.clientWidth||innerWidth-600)-8;availH=innerHeight-fitEl.getBoundingClientRect().top-window.scrollY*0-acts-22;}
-  else{var mt=document.querySelector(".pk-mini-top"),mb=document.querySelector(".pk-mini-bot");
-    var top=56+8+(mt?mt.offsetHeight+10:0);availW=innerWidth-16;availH=innerHeight-top-acts-(mb?mb.offsetHeight+10:0)-64-30;}
-  availH=Math.max(200,availH);
-  var sN=Math.min(availW/W,availH/H,1.1),sR=Math.min(availW/H,availH/W,1.1),rot=!wide&&sR>sN*1.12,k=rot?sR:sN;
-  bw.classList.toggle("rot",rot);
-  if(rot){fitEl.style.width=H*k+"px";fitEl.style.height=W*k+"px";bw.style.transform="translate("+(H*k)+"px,0) rotate(90deg) scale("+k+")";}
-  else{fitEl.style.width=W*k+"px";fitEl.style.height=H*k+"px";bw.style.transform="scale("+k+")";}
-  document.body.style.setProperty("--pk-size",Math.round(rot?H*k:W*k)+"px");
+  var wide=innerWidth>=1000,shortL=matchMedia(SHORTL).matches,availW,availH;
+  if(wide){var st=document.querySelector(".pk-stage");availW=(st&&st.clientWidth||innerWidth-600)-8;availH=innerHeight-fitEl.getBoundingClientRect().top-22;}
+  else if(shortL){availW=innerWidth-150;availH=innerHeight-16;}
+  else{var mt=document.querySelector(".pk-mini-top"),mb=document.querySelector(".pk-mini-bot"),wh=document.querySelector(".pk-whim-m");
+    availW=innerWidth-16;availH=innerHeight-56-8-(mt?mt.offsetHeight+10:0)-(mb?mb.offsetHeight+10:0)-(wh&&wh.offsetParent?wh.offsetHeight+16:0)-64-34;}
+  availH=Math.max(150,availH);
+  var k=Math.min(availW/W,availH/H,1.1);
+  fitEl.style.width=W*k+"px";fitEl.style.height=H*k+"px";bw.style.transform="scale("+k+")";
+  bw.style.setProperty("--cs",Math.max(1.3,Math.min(2.2,.46/k)).toFixed(3));
+  document.body.style.setProperty("--pk-size",Math.round(W*k)+"px");
 }
 addEventListener("resize",fit);
 
@@ -693,7 +785,7 @@ async function bootOnline(){
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"backgammon",title:"Library Backgammon",bg:"library-bg.jpg",home:"tables.html",stage:stage,
+  game:"backgammon",title:"Library Backgammon",bg:"library-bg.jpg",home:"tables.html",stage:stage,whim:true,
   tagline:"Race your fifteen home. Hit what's left alone.",invite:"The fire is lit and the board is open. Take a seat and roll.",
   players:[{name:"You (bone)",color:"var(--bg-dot1,#efe4cc)"},{name:"The House (ebony)",color:"var(--bg-dot2,#2a1d16)"}],
   setsLabel:"Boards",
@@ -703,7 +795,7 @@ Parlor.init({
     {id:"mid",name:"Midnight Gilt",club:true,dots:["#1a2550","#d8b25e","#8c1328"]}
   ],
   rules:{
-    play:"<ol><li>You play the light checkers and move them around the board toward your home, the six points at your bottom right. The House plays the dark checkers the other way.</li><li>To start, each side rolls one die. The higher roll goes first and plays both numbers.</li><li>On your turn, roll two dice and move a checker the number on each die (one checker can use both). Doubles play four times. Tap a glowing checker, then a gold spot. Undo takes back a move until your turn is played.</li><li>You can land on any point that isn't held by two or more of the other side's checkers. Land on a single one (a blot) and it's hit and goes to the bar.</li><li>A checker on the bar must come back in first, into the other side's home, before anything else moves.</li><li>You must use both dice if you can. If only one can be played, play the larger one when possible.</li><li>Once all fifteen are home, bear them off: a roll takes off a checker on that point, or from the highest point if the roll is bigger than any point you still hold.</li></ol>",
+    play:"<ol><li>You play the light checkers and move them around the board toward your home, the six points at your bottom right. The House plays the dark checkers the other way.</li><li>To start, each side rolls one die. The higher roll goes first and plays both numbers.</li><li>On your turn, tap the dice cup to roll two dice, then move a checker the number on each die (one checker can use both). Doubles play four times. Tap a glowing checker, then a gold ring, or drag it there. A ring further along moves the same checker with both dice at once. Undo takes back a move until your turn is played.</li><li>You can land on any point that isn't held by two or more of the other side's checkers. Land on a single one (a blot) and it's hit and goes to the bar.</li><li>A checker on the bar must come back in first, into the other side's home, before anything else moves.</li><li>You must use both dice if you can. If only one can be played, play the larger one when possible.</li><li>Once all fifteen are home, bear them off: a roll takes off a checker on that point, or from the highest point if the roll is bigger than any point you still hold.</li></ol>",
     score:"<ul><li>The first side to bear off all fifteen checkers wins.</li><li>If the loser hasn't borne off any, it's a <b>gammon</b>; if the loser also still has a checker on the bar or in the winner's home, it's a <b>backgammon</b>. Both are noted on the result.</li><li>The numbers beside each name are pip counts: how far that side still has to travel. Lower is ahead.</li><li>No doubling cube: every game is played out.</li></ul>"
   },
   onNew:function(){ms=0;newGame();}
