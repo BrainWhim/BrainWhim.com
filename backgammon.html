@@ -60,14 +60,12 @@
 .cup.shake{animation:bg-shake .5s ease-in-out}
 @keyframes bg-pop{0%{opacity:0;transform:scale(var(--cs,1)) translateY(18px) scale(.85)}100%{opacity:1;transform:scale(var(--cs,1))}}
 @keyframes bg-shake{0%,100%{transform:scale(var(--cs,1))}15%{transform:scale(var(--cs,1)) rotate(-10deg) translateX(-5px)}35%{transform:scale(var(--cs,1)) rotate(9deg) translateX(5px)}55%{transform:scale(var(--cs,1)) rotate(-7deg)}75%{transform:scale(var(--cs,1)) rotate(5deg)}}
-/* Undo: centred on the bar, never wider than it, see-through so it doesn't pull the eye; an invisible margin makes it easy to tap */
-.bg-undo{position:absolute;left:662px;top:510px;width:96px;height:74px;margin:-37px 0 0 -48px;padding:0;z-index:30;border-radius:8px;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;
-  font:700 20px Montserrat,sans-serif;letter-spacing:.04em;color:rgba(243,223,164,.85);background:rgba(15,23,42,.36);border:1.5px solid rgba(232,200,115,.38);
-  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:background .2s,color .2s,border-color .2s}
-.bg-undo b{font:400 34px/1 system-ui,sans-serif;margin-bottom:2px}
-.bg-undo::before{content:"";position:absolute;inset:-8px -2px}
-.bg-undo:hover{background:rgba(15,23,42,.6);color:#f3dfa4;border-color:rgba(232,200,115,.6)}
+/* Undo: just to the right of your dice (its left edge follows the dice), the original size, lightly see-through */
+.bg-undo{position:absolute;left:1046px;top:510px;transform:translate(0,-50%) scale(var(--us,1));transform-origin:0 50%;z-index:30;padding:12px 20px;border-radius:8px;cursor:pointer;
+  font:700 22px Montserrat,sans-serif;letter-spacing:.04em;color:rgba(243,223,164,.92);background:rgba(15,23,42,.5);border:1.5px solid rgba(232,200,115,.5);
+  box-shadow:0 4px 10px rgba(0,0,0,.3);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:background .2s,color .2s,border-color .2s}
+.bg-undo::before{content:"";position:absolute;inset:-10px -8px}
+.bg-undo:hover{background:rgba(15,23,42,.72);color:#f3dfa4;border-color:rgba(232,200,115,.7)}
 .bg-undo[hidden]{display:none}
 /* short landscape phones: the board takes the full height; the bar runs down the right side */
 @media (max-width:999px) and (max-height:520px) and (orientation:landscape){
@@ -274,7 +272,7 @@ var W=1480,H=1020,SC=2,D=84,PW=92,FY=[70,950],MID=510,FL=[60,612],FR=[712,1264],
 function px(i){if(i<=6)return 1264-(i-.5)*PW;if(i<=12)return 612-(i-6.5)*PW;if(i<=18)return 60+(i-12.5)*PW;return 712+(i-18.5)*PW;}
 function isTop(i){return i>=13;}
 function slot(i,k,n){var sp=n<=5?D:Math.max(22,(436-D)/(n-1));return [px(i),isTop(i)?FY[0]+3+D/2+k*sp:FY[1]-3-D/2-k*sp];}
-function barSlot(s,k){return [BARX,s===0?MID+86+k*54:MID-86-k*54];}   /* clear of the Undo button in the middle of the bar */
+function barSlot(s,k){return [BARX,s===0?MID+62+k*54:MID-62-k*54];}
 function offSlot(s,k){return [1355,s===0?FY[1]-10-(k+.5)*25:FY[0]+10+(k+.5)*25];}
 
 /* =================== painting helpers =================== */
@@ -456,7 +454,7 @@ var stage=document.createElement("div");stage.style.cssText="display:flex;flex-d
 stage.innerHTML='<div class="bg-fit" id="bgFit"><div class="bw d-leath" id="bw"><canvas id="cv" width="2960" height="2040"></canvas>'+
   '<div class="bg-layer" id="hl"></div><div class="bg-layer" id="pcs"></div><div class="bg-layer" id="diceL"></div><div class="bg-layer" id="tgs"></div>'+
   '<div class="cup" id="cup" role="button" aria-label="Roll the dice" hidden><div class="csh"></div><div class="body"></div><div class="band lo"></div><div class="band" style="top:36px"></div><div class="rim"></div><span class="mono"><b>B</b><i>W</i></span><div class="tap" id="cupTap">Roll</div></div>'+
-  '<button type="button" class="bg-undo" id="bUndo" aria-label="Undo" hidden><b>&#8630;</b>Undo</button></div></div>';
+  '<button type="button" class="bg-undo" id="bUndo" aria-label="Undo" hidden>Undo</button></div></div>';
 var $=function(id){return stage.querySelector("#"+id);};
 var bw=$("bw"),pcs=$("pcs"),hl=$("hl"),diceL=$("diceL"),tgs=$("tgs"),fitEl=$("bgFit"),cv=$("cv"),cupEl=$("cup");
 
@@ -525,9 +523,10 @@ function scores(){Parlor.score([pips(G.st,0),pips(G.st,1)]);Parlor.turn(over?-1:
   var o=G.st.off;Parlor.info("Pip counts beside each name: lower is ahead"+(o[0]||o[1]?" · borne off "+o[0]+"–"+o[1]:""));}
 function pipFace(e,v){e.innerHTML="";var P={1:[[50,50]],2:[[27,27],[73,73]],3:[[25,25],[50,50],[75,75]],4:[[27,27],[73,27],[27,73],[73,73]],5:[[25,25],[75,25],[50,50],[25,75],[75,75]],6:[[27,24],[73,24],[27,50],[73,50],[27,76],[73,76]]}[v]||[];
   P.forEach(function(q){var i=document.createElement("i");i.style.left=q[0]+"%";i.style.top=q[1]+"%";e.appendChild(i);});}
-function diceSpots(near,n){var cx=near?988:336,gap=n>2?74:84,out=[];for(var k=0;k<n;k++)out.push([cx+(k-(n-1)/2)*gap,MID]);return out;}
+function diceSpots(near,n){var cx=near?(n>2?958:988):336,gap=n>2?74:84,out=[];for(var k=0;k<n;k++)out.push([cx+(k-(n-1)/2)*gap,MID]);return out;}
 function showDice(near,list,used){diceL.innerHTML="";if(!list||!list.length)return;var sp=diceSpots(near,list.length);
-  list.forEach(function(v,k){var e=document.createElement("div");e.className="die"+(k<(used||0)?" used":"");pipFace(e,v);place(e,sp[k]);e.style.transform="rotate("+((k*37+v*11)%24-12)+"deg)";diceL.appendChild(e);});}
+  list.forEach(function(v,k){var e=document.createElement("div");e.className="die"+(k<(used||0)?" used":"");pipFace(e,v);place(e,sp[k]);e.style.transform="rotate("+((k*37+v*11)%24-12)+"deg)";diceL.appendChild(e);});
+  if(near)$("bUndo").style.left=Math.round(sp[sp.length-1][0]+32+22)+"px";}   /* Undo sits just to the right of your dice */
 /* the dice tumble out from the roller's side and settle */
 function tumble(spots,vals){return new Promise(function(res){diceL.innerHTML="";Parlor.sfx("dice",{dur:.75});var els=[];
   if(!Parlor.smooth()){spots.forEach(function(sp,k){var e=document.createElement("div");e.className="die";pipFace(e,vals[k]);place(e,sp);diceL.appendChild(e);});setTimeout(res,80);return;}
@@ -722,7 +721,7 @@ function fit(){
   availH=Math.max(150,availH);
   var k=Math.min(availW/W,availH/H,1.1);
   fitEl.style.width=W*k+"px";fitEl.style.height=H*k+"px";bw.style.transform="scale("+k+")";
-  bw.style.setProperty("--cs",Math.max(1.3,Math.min(2.2,.46/k)).toFixed(3));
+  bw.style.setProperty("--cs",Math.max(1.3,Math.min(2.2,.46/k)).toFixed(3));bw.style.setProperty("--us",Math.max(1,Math.min(1.3,.32/k)).toFixed(3));
   document.body.style.setProperty("--pk-size",Math.round(W*k)+"px");
 }
 addEventListener("resize",fit);
