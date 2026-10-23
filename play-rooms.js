@@ -9,7 +9,7 @@ window.bwMakeEl=function(tag, cls, text){
   return e;
 };
 window.BW_ROOMS={
-  chess:"chess-room.html",
+  chess:"chess.html",
   checkers:"checkers.html",
   backgammon:"backgammon.html",
   othello:"othello.html",
@@ -273,7 +273,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
 
 (function bwSets(){
   var file=(location.pathname.split("/").pop()||"").toLowerCase();
-  if(!/^(chess|chess-room)(\.html)?$/.test(file)) return;   /* checkers moved onto the parlor kit (Oct 22) */
+  if(!/^(chess-room)(\.html)?$/.test(file)) return;   /* checkers (Oct 22) and chess (Oct 23) moved onto the parlor kit; chess-room.html only forwards */
   var SETS=[
     {id:"classic", name:"Ivory · Onyx", need:0, member:false},
     {id:"cobalt", name:"Cobalt · Emerald", need:501, member:true},
