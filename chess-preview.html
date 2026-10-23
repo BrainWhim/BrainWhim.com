@@ -277,7 +277,7 @@ function paintTable(d){
   var mask=mg.getImageData(0,0,N,N).data;
   var im=ctx.createImageData(N,N),D=im.data;
   var nG=noise2(d.seed),nW=noise2(d.seed+3),nS=noise2(d.seed+7),nC=noise2(d.seed+11),nL=noise2(d.seed+19),rr=rng(d.seed+23),nM=noise2(d.seed+31),nC2=noise2(d.seed+37),nWd=noise2(d.seed+41),nP=noise2(d.seed+43);
-  var half=BH*R,bw=.024*R,outer=half+bw,sq=2*half/8,RIM=.955*R;
+  var half=BH*R,bw=(d.bw||.024)*R,outer=half+bw,sq=2*half/8,RIM=.955*R;
   var L=[-.42,-.58,.7],ll=Math.hypot(L[0],L[1],L[2]);L=[L[0]/ll,L[1]/ll,L[2]/ll];
   var col=[0,0,0];
   for(var y=0;y<N;y++)for(var x=0;x<N;x++){
@@ -302,6 +302,10 @@ function paintTable(d){
       if(d.sqType==="marble"){   /* inlaid marble: long gentle veins, each square cut from a different part of the slab */
         var mo=dark?d.mD:d.mL,ww=fbm(nM,x/240+cx*3.1,y/240+cy*1.7,5),vv=Math.pow(1-Math.abs(Math.sin((x*.0042+y*.0068)*2.4+ww*3.6+(cx*7+cy*3))),mo.pw||14),cl=fbm(nC2,x/160+cx,y/160+cy,4);
         for(k=0;k<3;k++)col[k]=mix(mix(mo.base[k],mo.cloud[k],cl*.85),mo.vein[k],Math.min(1,vv*mo.amt))*(1+(spk-.5)*.02);}
+      else if(d.sqType==="stone"){   /* honed stone: slate with faint cleft layers, limestone with fine flecks; each square its own piece */
+        var so=dark?d.sD:d.sL,lay=fbm(nWd,(x+cx*97)/150,(y+cy*61)/26,4),cl2=fbm(nC2,(x+cx*53)/70,(y+cy*41)/70,3),fine=fbm(nP,x/1.8,y/1.8,2),fl=0;
+        if(!dark){var sp2=fbm(nM,x/7,y/7,2);fl=sp2>.68?(sp2-.68)*1.6:0;}
+        for(k=0;k<3;k++)col[k]=so.base[k]*(1+(lay-.5)*so.lay+(cl2-.5)*so.cloud+(fine-.5)*.07)-fl*40;}
       else if(d.sqType==="wood"){   /* marquetry: walnut and maple veneers, the grain turned on alternate squares */
         var wd=dark?d.wD:d.wL,hor=(cx+cy)%4<2,gx=hor?x:y,gy=hor?y:x,g2=fbm(nWd,gx/260+cx*5,gy/20+cy*9,4),ring=.5+.5*Math.sin(gy*.23+g2*17),t2=ring*.5+g2*.5,pore=fbm(nP,gx/3,gy/1.1,2);
         for(k=0;k<3;k++)col[k]=mix(wd.dark[k],wd.light[k],t2)*(1+(pore-.5)*.14);}
@@ -314,6 +318,12 @@ function paintTable(d){
       var f2=1+(grain-.5)*.06+(spk-.5)*.03;for(k=0;k<3;k++)col[k]=d.border[k]*f2;
       var s1=mx-half,s2=outer-mx;
       if(d.borderType==="brass"){var bt=s1/(outer-half),sh2=.5+.62*Math.pow(Math.sin(bt*Math.PI),.7)+(fbm(nS,x/40,y/3,2)-.5)*.16,hl=Math.pow(Math.max(0,1-Math.abs(bt-.38)*6),2)*.35;for(k=0;k<3;k++)col[k]=[178,134,58][k]*sh2+[255,236,180][k]*hl;if(s1<1.2||s2<1.2){for(k=0;k<3;k++)col[k]*=.55;}}
+      else if(d.borderType==="moulded"||d.borderType==="pewter"){   /* a rounded moulding lit from the top left, like the table's rim; or brushed pewter */
+        var bt2=s1/(outer-half),nrm=Math.cos(bt2*Math.PI),side=(ax>ay)?(dx<0?1:-1):(dy<0?1:-1),lit=.62+.5*Math.sin(bt2*Math.PI)+side*nrm*.22;
+        var base2=d.borderType==="pewter"?[162,166,172]:d.border;
+        for(k=0;k<3;k++)col[k]=base2[k]*lit*(1+(grain-.5)*.05);
+        if(d.borderType==="pewter"){var br2=(fbm(nS,x/90,y/1.4,2)-.5)*.14;for(k=0;k<3;k++)col[k]*=1+br2;var hl2=Math.pow(Math.max(0,1-Math.abs(bt2-.4)*5),2)*.3;for(k=0;k<3;k++)col[k]+=255*hl2;}
+        if(s1<1.2||s2<1.4){for(k=0;k<3;k++)col[k]*=.6;}}
       else if(d.borderType==="string"){var mid=(outer-half)/2;if(Math.abs(s1-mid)<1.6){for(k=0;k<3;k++)col[k]=[222,184,104][k]*(.9+(spk-.5)*.2);}else{for(k=0;k<3;k++)col[k]=[34,24,19][k]*(1+(grain-.5)*.3);}}
       if(s1<1.4||s2<1.6){for(k=0;k<3;k++)col[k]*=.62;} else if(s2<3){for(k=0;k<3;k++)col[k]=mix(col[k],255,.12);}
     } else {
@@ -347,14 +357,14 @@ function paintTable(d){
 var TABLE={top:[238,236,230],under:[196,190,178],grain:.05,stencil:[100,188,184],stencilA:.95,rim:[150,154,156],rimUnder:[212,208,200],wear:.55,dapple:.045};
 function design(o){var d={};for(var k in TABLE)d[k]=TABLE[k];for(k in o)d[k]=o[k];return d;}
 var DESIGNS={
-  /* Garden Sage: the board in the garden photo, sage and cream painted squares with a fine crackle, a grey inlay border */
-  sage:design({name:"Garden Sage",seed:41,sqL:[245,241,228],sqD:[143,184,158],border:[150,154,156],crack:1,dots:["#eeece6","#8fb89e"]}),
+  /* Garden Aqua: the table's own colours (white lacquer and the aqua of its stencil) with a fine crackle, and a moulded grey trim like the table's rim */
+  sage:design({name:"Garden Aqua",seed:41,sqL:[243,241,235],sqD:[134,204,200],border:[150,154,156],borderType:"moulded",bw:.042,crack:1,dots:["#f1efe9","#86ccc8"]}),
   /* Verde & Carrara: green and white marble squares with a brass border */
   verde:design({name:"Verde & Carrara",seed:57,sqType:"marble",sqL:[244,242,238],sqD:[52,96,78],sqWear:.15,crack:0,border:[214,170,86],borderType:"brass",
     mL:{base:[247,245,241],cloud:[229,229,231],vein:[136,140,148],amt:.5},mD:{base:[48,92,74],cloud:[34,70,56],vein:[176,206,190],amt:.55,pw:12},dots:["#f3f1ec","#2f6a52"]}),
-  /* Walnut Marquetry: walnut and maple veneers, the grain turned square by square, an ebony border with a brass line */
-  walnut:design({name:"Walnut Marquetry",seed:73,sqType:"wood",sqL:[226,198,150],sqD:[92,58,36],sqWear:.2,crack:0,border:[34,24,19],borderType:"string",
-    wL:{dark:[198,160,108],light:[236,210,164]},wD:{dark:[58,35,20],light:[116,76,46]},dots:["#e2c696","#5c3a24"]})
+  /* Slate & Limestone: honed blue-grey slate and warm cream limestone, with a brushed pewter trim */
+  walnut:design({name:"Slate & Limestone",seed:73,sqType:"stone",sqL:[226,217,198],sqD:[70,79,89],sqWear:.15,crack:0,border:[162,166,172],borderType:"pewter",
+    sD:{base:[70,79,89],lay:.2,cloud:.16},sL:{base:[228,219,200],lay:.06,cloud:.1},dots:["#e4dbc8","#464f59"]})
 };
 /* Judy's piece sets (the same files the old chess room used); heights in table units, so they scale with the table */
 var PIECESETS={
@@ -582,9 +592,9 @@ Parlor.init({
   players:[{name:"You (ivory)",color:"var(--cs-dot1,#f3ecdc)"},{name:"The House (onyx)",color:"var(--cs-dot2,#161616)"}],
   setsLabel:"Boards",
   sets:[
-    {id:"sage",name:"Garden Sage",need:0,dots:["#eeece6","#8fb89e","#f3ecdc"]},
+    {id:"sage",name:"Garden Aqua",need:0,dots:["#f1efe9","#70c2be","#969a9c"]},
     {id:"verde",name:"Verde & Carrara",club:true,dots:["#f3f1ec","#2f6a52","#d6aa56"]},
-    {id:"walnut",name:"Walnut Marquetry",club:true,dots:["#e2c696","#5c3a24","#22180f"]}
+    {id:"walnut",name:"Slate & Limestone",club:true,dots:["#e4dbc8","#464f59","#a2a6ac"]}
   ],
   rules:{
     play:"<ol><li>You play the light pieces from the near side of the table and move first.</li><li>Tap a glowing piece (or drag it), then a gold dot. A gold ring marks a capture.</li><li>Pawns move one square forward (two from their first square) and capture one square diagonally forward. A pawn that reaches the far side is promoted: you choose a queen, rook, bishop or knight.</li><li>Knights jump in an L; bishops move diagonally; rooks move straight; the queen moves both ways; the king moves one square.</li><li>Castling: move the king two squares toward a rook that hasn't moved; the rook hops over. Not out of, through or into check.</li><li>En passant: a pawn that has just moved two squares can be taken by an enemy pawn beside it, as if it had moved one.</li><li>You can never leave your own king in check.</li></ol>",
