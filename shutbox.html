@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tavern Shut the Box · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1024a">
+<link rel="stylesheet" href="parlor-kit.css?v=1024b">
 <style>
 /* ===== Shut the Box: a real wooden box, drawn in 3D in the browser =====
    The box, felt, tiles and dice are flat panels placed in 3D space. Their materials (wood grain, felt, ivory)
@@ -106,28 +106,47 @@ body[data-set="mahogany"] .sb-num{background:linear-gradient(170deg,#fff1bf 0%,#
 .sb-dsh{position:absolute;left:0;top:0;width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.6),rgba(0,0,0,0) 68%);filter:blur(3px)}
 body.sb-quick .sb-tile,body.sb-quick .sb-die.roll,body.sb-quick .sb-dsh.roll{transition-duration:.01s}
 body.sb-quick .sb-tile.play .front::after,body.sb-quick .sb-pool.on{animation:none}
-/* roll buttons under the box */
-.sb-ctl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.sb-ctl .pk-btn{width:auto;min-width:150px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);
-  box-shadow:0 2px 10px rgba(0,0,0,.25);color:#e6c25a;font-size:15px;font-weight:700;letter-spacing:.45px;text-shadow:0 1px 3px rgba(0,0,0,.45)}
-.sb-ctl .pk-btn:hover{background:rgba(15,23,42,.85);color:#f0d27a}
-.sb-ctl .pk-btn[disabled]{opacity:.45}
-.sb-ctl .pk-btn[hidden]{display:none}
+/* the dice cup (Oct 24, like backgammon's and Yahtzee's): stands on the felt at your end of the box when it's your
+   turn to roll; tap it and it shakes, then the dice tumble out. Once 7, 8 and 9 are shut, two glass buttons under it
+   choose one die or two (tapping the cup itself rolls two). Leather follows the board: oxblood, navy, black. */
+.sb-cup{position:absolute;left:var(--sb-cupx,792px);top:var(--sb-cupy,268px);width:124px;height:150px;cursor:pointer;-webkit-tap-highlight-color:transparent;transform:scale(var(--sb-cs,1));transform-origin:60% 70%;z-index:30;isolation:isolate}
+.sb-cup[hidden]{display:none}
+.sb-cup .csh{position:absolute;left:4px;top:122px;width:128px;height:34px;border-radius:50%;background:rgba(0,0,0,.6);filter:blur(7px)}
+.sb-cup .body{position:absolute;left:6px;top:22px;width:112px;height:120px;clip-path:polygon(0 0,100% 0,94% 100%,6% 100%);border-radius:0 0 50% 50% / 0 0 14px 14px;background:var(--sb-cup);overflow:hidden}
+.sb-cup .body::before{content:"";position:absolute;inset:0;background-image:var(--sb-cuptex);background-size:128px 128px;mix-blend-mode:multiply;opacity:.55}
+.sb-cup .body::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.1) 18%,rgba(255,255,255,.22) 34%,rgba(255,255,255,.05) 50%,rgba(0,0,0,.15) 72%,rgba(0,0,0,.6))}
+.sb-cup .band{position:absolute;left:6px;width:112px;height:8px;background:linear-gradient(90deg,#8a6424,#f6dc8e 40%,#c9a24f 60%,#7a5520);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.sb-cup .band.lo{top:122px;left:12px;width:100px;height:7px;border-radius:0 0 50% 50% / 0 0 5px 5px}
+.sb-cup .rim{position:absolute;left:0;top:4px;width:124px;height:38px;border-radius:50%;background:linear-gradient(90deg,#8a6424,#f6dc8e 40%,#c9a24f 60%,#7a5520);box-shadow:0 2px 3px rgba(0,0,0,.45)}
+.sb-cup .rim::before{content:"";position:absolute;inset:5px 7px 6px;border-radius:50%;background:radial-gradient(ellipse 80% 90% at 50% 70%,var(--sb-cupin),#000 92%);box-shadow:inset 0 3px 6px rgba(0,0,0,.8)}
+.sb-cup .mono{position:absolute;left:0;right:0;top:64px;display:flex;justify-content:center;align-items:baseline;font-size:30px;line-height:1.25}
+.sb-cup .mono b,.sb-cup .mono i{display:inline-block;background:linear-gradient(170deg,#fff1bf 0%,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.sb-cup .mono b{font:500 1em Montserrat,sans-serif;letter-spacing:-.02em}.sb-cup .mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.06em;padding:0 .18em 0 .02em}
+.sb-cup:hover .body{filter:brightness(1.12)}
+.sb-cup.ready::after{content:"";position:absolute;left:4px;right:4px;top:6px;bottom:10px;border-radius:50% 50% 46% 46% / 18% 18% 12% 12%;box-shadow:0 0 30px 12px rgba(232,180,60,.65);animation:sb-cupglow 1.8s ease-in-out infinite;pointer-events:none;z-index:-1}
+.sb-cup.pop{animation:sb-cuppop .35s ease-out}
+.sb-cup.shake{animation:sb-cupshake .5s ease-in-out}
+@keyframes sb-cupglow{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes sb-cuppop{0%{opacity:0;transform:scale(var(--sb-cs,1)) translateY(18px) scale(.85)}100%{opacity:1;transform:scale(var(--sb-cs,1))}}
+@keyframes sb-cupshake{0%,100%{transform:scale(var(--sb-cs,1))}15%{transform:scale(var(--sb-cs,1)) rotate(-10deg) translateX(-5px)}35%{transform:scale(var(--sb-cs,1)) rotate(9deg) translateX(5px)}55%{transform:scale(var(--sb-cs,1)) rotate(-7deg)}75%{transform:scale(var(--sb-cs,1)) rotate(5deg)}}
+/* the tag under the cup: "Roll", or "One Die" / "Two Dice" once 7, 8 and 9 are shut */
+.sb-cup .tags{position:absolute;right:-4px;top:150px;display:flex;gap:6px;transform:scale(var(--sb-tg,1));transform-origin:100% 0}
+.sb-cup .tag{white-space:nowrap;padding:6px 13px;border-radius:6px;font:700 19px Montserrat,sans-serif;letter-spacing:.06em;color:#fff3cf;cursor:pointer;
+  background:rgba(15,23,42,.72);border:1.5px solid rgba(232,200,115,.75);box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.sb-cup .tag:hover{background:rgba(15,23,42,.88)}
+@media (prefers-reduced-motion:reduce){.sb-cup.ready::after{animation:none}}
 @media (min-width:1000px){ body.pk .pk-stage{justify-content:center} }
-@media (max-width:999px){ .sb-ctl .pk-btn{min-width:130px;min-height:44px} }
-/* short landscape phones: roll buttons beside the box; the scores stay in the bar and the Table card */
+/* short landscape phones: the scores stay in the bar and the Table card */
 @media (max-width:999px) and (max-height:520px) and (orientation:landscape){
-  .sb-pad{flex-direction:row;justify-content:center;gap:14px}
-  .sb-ctl{flex-direction:column}
   body.pk .pk-mini{display:none}
   body.pk .pk-stage{min-height:0;padding-top:4px}
 }
 </style>
 <script src="bw-auth.js"></script>
 </head>
-<body>
+<body class="pk">
 <header>
-<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
 <main class="pk-room"></main>
@@ -135,7 +154,7 @@ body.sb-quick .sb-tile.play .front::after,body.sb-quick .sb-pool.on{animation:no
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
-<script src="parlor-kit.js?v=1024a"></script>
+<script src="parlor-kit.js?v=1024b"></script>
 <script>
 /* =====================================================================
    Painted materials (no picture files): wood grain, felt, ivory/ebony
@@ -180,15 +199,24 @@ var DESIGNS={
     felt:[92,20,34],tile:{light:[54,42,34],dark:[18,13,10],freq:.07,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},
     num:"",die:"linear-gradient(145deg,#2c2420,#0f0b09)",dieCore:"#16110e",pip:"#f0d28a",pip2:"#9b7430"}
 };
+var CUPS={oak:{body:"linear-gradient(180deg,#8e4630,#63261a 45%,#2c0f08)",tex:[120,60,40],inside:"#2a0d06"},
+  walnut:{body:"linear-gradient(180deg,#34508e,#1f3466 45%,#0c1736)",tex:[64,84,140],inside:"#0a1228"},
+  mahogany:{body:"linear-gradient(180deg,#3a3a40,#16161a 45%,#050506)",tex:[70,70,76],inside:"#111"}};
+function leatherTex(base,seed){
+  var w=128,c=document.createElement("canvas");c.width=c.height=w;var g=c.getContext("2d"),im=g.createImageData(w,w),D=im.data,n=noise2(seed),n2=noise2(seed+4);
+  for(var y=0;y<w;y++)for(var x=0;x<w;x++){var p=fbm(n,x/2.3,y/2.3,2),m=fbm(n2,x/70,y/70,3),f=1+(p-.5)*.2+(m-.5)*.26,i=(y*w+x)*4;D[i]=Math.min(255,base[0]*f);D[i+1]=Math.min(255,base[1]*f);D[i+2]=Math.min(255,base[2]*f);D[i+3]=255;}
+  g.putImageData(im,0,0);return 'url('+c.toDataURL()+')';
+}
 var texCache={}, curDesign=null;
 function applyDesign(k){
   if(!DESIGNS[k]) k="oak";
   if(k===curDesign) return; curDesign=k;
   var d=DESIGNS[k];
-  if(!texCache[k]){ var h=wood(1200,600,d.wood); texCache[k]={h:cssUrl(h),v:cssUrl(rot(h)),felt:'url('+feltTex(d.felt,k.length*31)+')',tile:cssUrl(wood(256,256,d.tile))}; }
+  if(!texCache[k]){ var h=wood(1200,600,d.wood); texCache[k]={h:cssUrl(h),v:cssUrl(rot(h)),felt:'url('+feltTex(d.felt,k.length*31)+')',tile:cssUrl(wood(256,256,d.tile)),cup:leatherTex(CUPS[k].tex,7+k.length)}; }
   var m=texCache[k], s=boxEl.style;
   s.setProperty("--sb-wood-h",m.h); s.setProperty("--sb-wood-v",m.v); s.setProperty("--sb-felt-tex",m.felt); s.setProperty("--sb-felt","rgb("+d.felt+")");
-  s.setProperty("--sb-tile",m.tile); s.setProperty("--sb-num",d.num||"transparent");
+  s.setProperty("--sb-tile",m.tile);
+  var cs=cupEl.style; cs.setProperty("--sb-cup",CUPS[k].body); cs.setProperty("--sb-cuptex",m.cup); cs.setProperty("--sb-cupin",CUPS[k].inside); s.setProperty("--sb-num",d.num||"transparent");
   s.setProperty("--sb-die",d.die); s.setProperty("--sb-die-core",d.dieCore); s.setProperty("--sb-pip",d.pip); s.setProperty("--sb-pip2",d.pip2);
 }
 
@@ -215,9 +243,11 @@ stage.innerHTML='<div class="sb-fit" id="sbFit"><div class="sb-scaler" id="sbSca
   '<div class="sb-p sb-inlay" style="left:30px;top:528px;width:420px;height:2px"></div><div class="sb-p sb-inlay" style="left:450px;top:528px;width:420px;height:2px"></div>'+
   '<div class="sb-p sb-inlay" style="left:30px;top:30px;width:2px;height:500px"></div><div class="sb-p sb-inlay" style="left:868px;top:30px;width:2px;height:500px"></div>'+
   '<div class="sb-p sb-cap c1 sb-brass"></div><div class="sb-p sb-cap c2 sb-brass"></div><div class="sb-p sb-cap c3 sb-brass"></div><div class="sb-p sb-cap c4 sb-brass"></div>'+
-  '</div></div></div></div>'+
-  '<div class="sb-ctl"><button type="button" class="pk-btn" id="sbRoll">Roll Dice</button><button type="button" class="pk-btn" id="sbRoll1" hidden>Roll One Die</button></div>';
-var boxEl=stage.querySelector("#sbBox"), tilesEl=[], pools=[];
+  '</div>'+
+  '<div class="sb-cup" id="sbCup" role="button" aria-label="Roll the dice" hidden><div class="csh"></div><div class="body"></div><div class="band lo"></div><div class="band" style="top:36px"></div><div class="rim"></div><span class="mono"><b>B</b><i>W</i></span>'+
+    '<div class="tags"><span class="tag" id="sbTag2">Roll</span><span class="tag" id="sbTag1" hidden>One Die</span></div></div>'+
+  '</div></div></div>';
+var boxEl=stage.querySelector("#sbBox"), cupEl=stage.querySelector("#sbCup"), tilesEl=[], pools=[];
 var R=36, GAP=7, TW=84;
 (function(){
   var shelf=stage.querySelector("#sbShelf"), holder=stage.querySelector("#sbTiles");
@@ -252,7 +282,7 @@ function placeDie(o,x,y,ax,ay,az,anim){
   o.sh.style.transform="translate3d("+(x+6)+"px,"+(y+8)+"px,-43px)";
 }
 function showDie(o,on){ o.el.style.visibility=o.sh.style.visibility=on?"visible":"hidden"; }
-function restDice(){ var a=UP[5],b=UP[3]; placeDie(dice[0],600,400,a[0],a[1],-24,false); placeDie(dice[1],690,430,b[0],b[1],31,false); dice[0].rx=a[0];dice[0].ry=a[1];dice[1].rx=b[0];dice[1].ry=b[1]; showDie(dice[0],true); showDie(dice[1],true); }
+function restDice(){ var a=UP[5],b=UP[3]; placeDie(dice[0],380,400,a[0],a[1],-24,false); placeDie(dice[1],470,430,b[0],b[1],31,false); dice[0].rx=a[0];dice[0].ry=a[1];dice[1].rx=b[0];dice[1].ry=b[1]; showDie(dice[0],true); showDie(dice[1],true); }
 /* tumble the dice to show these values; resolves when they settle */
 function rollDice(vals){
   quick();
@@ -268,6 +298,9 @@ function rollDice(vals){
   });
   return Parlor.wait(1300);
 }
+/* tap the cup: it shakes, then lifts away as the dice tumble out from where it stood */
+function shakeCup(){ return new Promise(function(res){ cupEl.classList.remove("ready","pop"); cupEl.classList.add("shake"); Parlor.sfx("dice",{dur:.35});
+  setTimeout(function(){ cupEl.classList.remove("shake"); cupEl.hidden=true; res(); }, Parlor.smooth()?520:60); }); }
 function quick(){ document.body.classList.toggle("sb-quick",!Parlor.smooth()); }
 
 /* fit the box to the space it has (re-measured when you sit, and when the window changes) */
@@ -276,17 +309,19 @@ function fit(){
   if(wide){
     /* desktop: the space between the two side cards */
     var side=window.innerWidth<=1180?215:260, gap=window.innerWidth<=1180?14:18, st=document.querySelector(".pk-stage");
-    availW=(st&&st.clientWidth)||(window.innerWidth-2*side-2*gap-32); availH=window.innerHeight-80-65-40-70;
+    availW=(st&&st.clientWidth)||(window.innerWidth-2*side-2*gap-32); availH=window.innerHeight-80-65-40-20;   /* the roll buttons are gone (the cup is on the felt) */
   } else {
     /* phones and tablets: full width; height above the floating bar (short landscape screens may scroll a little) */
     var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight;
-    if(shortL){ availW=window.innerWidth-12-170; availH=window.innerHeight-56-64-34-14; }
-    else { availW=window.innerWidth-12; availH=window.innerHeight-56-64-34-108-70-110; }   /* 110: the Whim card */
+    if(shortL){ availW=window.innerWidth-12; availH=window.innerHeight-56-64-34-14; }
+    else { availW=window.innerWidth-12; availH=window.innerHeight-56-64-34-108-20-110; }   /* 110: the Whim card */
   }
   var s=Math.max(.2,Math.min(availW/1000,availH/540,1.15));
   var f=document.getElementById("sbFit"), sc=document.getElementById("sbScaler"); if(!f) return;
   sc.style.transform="scale("+s+")"; f.style.width=Math.round(1000*s)+"px"; f.style.height=Math.round(540*s)+"px";
   document.body.style.setProperty("--pk-size",Math.round(1000*s)+"px");
+  var cs=Math.min(1.35,Math.max(1,.5/s));   /* on small screens the cup grows a little so it's easy to tap, tucked into the corner */
+  cupEl.style.setProperty("--sb-cs",cs.toFixed(3)); cupEl.style.setProperty("--sb-tg",Math.max(1,.8/(s*cs)).toFixed(3));   /* tags at least ~15px text on screen */ cupEl.style.setProperty("--sb-cupx",Math.round(796-(cs-1)*40)+"px"); cupEl.style.setProperty("--sb-cupy",Math.round(258-(cs-1)*70)+"px");
 }
 window.addEventListener("resize",fit);
 
@@ -318,8 +353,11 @@ function paint(){
     t.classList.toggle("play",mine&&isOpen&&p.indexOf(n)>=0); t.classList.toggle("tap",mine&&(p.indexOf(n)>=0||sel.indexOf(n)>=0));
     pools[n].classList.toggle("on",mine&&isOpen&&p.indexOf(n)>=0); pools[n].classList.toggle("sel",sel.indexOf(n)>=0);
   }
-  var rb=document.getElementById("sbRoll"), r1=document.getElementById("sbRoll1"), can=myTurn()&&!rolled;
-  if(rb){ rb.disabled=!can; r1.hidden=!oneDieOk(); r1.disabled=!can; rb.textContent=oneDieOk()?"Roll Two Dice":"Roll Dice"; }
+  var can=myTurn()&&!rolled;
+  if(can&&cupEl.hidden){ cupEl.hidden=false; cupEl.classList.remove("pop"); void cupEl.offsetWidth; cupEl.classList.add("pop"); }
+  if(!can&&!cupEl.classList.contains("shake")) cupEl.hidden=true;
+  cupEl.classList.toggle("ready",can);
+  var two=oneDieOk(); document.getElementById("sbTag1").hidden=!two; document.getElementById("sbTag2").textContent=two?"Two Dice":"Roll";
   var sc=function(v){ return v==null?"–":v; };
   Parlor.score([sc(score1),sc(score2)]); Parlor.turn(over?-1:turn===1?0:1);
 }
@@ -356,7 +394,7 @@ async function setOpen(next){
 async function humanRoll(count){
   if(!myTurn()||rolled) return;
   if(count===1&&!oneDieOk()) count=2;
-  busy=true; paint();
+  busy=true; await shakeCup(); paint();
   var vals=[1+Math.floor(Math.random()*6)]; if(count===2) vals.push(1+Math.floor(Math.random()*6));
   dv=[vals[0],vals[1]||0]; need=vals[0]+(vals[1]||0); rolled=true; seq++;
   say("Rolling…",""); push();
@@ -401,7 +439,7 @@ function end(){
   var kind=w===0?"draw":(w===mySide?"win":"lose");
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over","You "+mine+" · "+(online?"Opponent":"The House")+" "+theirs);
   if(online) report();
-  Parlor.finish(kind,"Your score "+mine+", "+(online?"your opponent":"The House")+" "+theirs+" (lower wins)");
+  Parlor.finish(kind,"Your score "+mine+", "+Parlor.oppName(true)+" "+theirs+" (lower wins)");
 }
 
 /* ---------- The House ----------
@@ -504,7 +542,7 @@ async function bootOnline(){
   else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
   else mySide=0;   /* watching */
   Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
-  Parlor.mySeat(mySide===2?1:0);
+  Parlor.mySeat(mySide===2?1:0); Parlor.table&&Parlor.table({sb:sb,room:room,me:me,side:mySide});
   applySnap(room.state&&room.state.open?room.state:null);
   if(rolled&&dv[0]){ var a=UP[dv[0]]; placeDie(dice[0],400,360,a[0],a[1],20,false); if(dv[1]){ var b=UP[dv[1]]; placeDie(dice[1],560,380,b[0],b[1],-30,false); } else showDie(dice[1],false); }
   paint(); if(over) end(); else msg();
@@ -517,8 +555,8 @@ async function bootOnline(){
 }
 
 /* ---------- hook up the kit ---------- */
-stage.querySelector("#sbRoll").onclick=function(){ humanRoll(2); };
-stage.querySelector("#sbRoll1").onclick=function(){ humanRoll(1); };
+cupEl.addEventListener("click",function(e){ e.stopPropagation(); humanRoll(2); });
+stage.querySelector("#sbTag1").addEventListener("click",function(e){ e.stopPropagation(); humanRoll(1); });
 Parlor.init({
   game:"shutbox", title:"Tavern Shut the Box", bg:"shutbox-tavern.jpg", home:"tables.html", stage:stage,
   tagline:"Roll the dice. Shut the box.", invite:"The lantern's lit and the dice are warm. Pull up a chair and shut the box.",
@@ -531,7 +569,7 @@ Parlor.init({
     {id:"mahogany",name:"Mahogany & Claret",club:true,dots:["#8a3420","#5c1422","#d9b25a"]}
   ],
   rules:{
-    play:"<ol><li>The box starts with tiles 1 to 9 standing.</li><li>Roll the dice, then tap standing tiles that add up to the roll. They shut as soon as they make the total. Tap a chosen tile again to put it back.</li><li>The glowing tiles are the ones that can still make the roll.</li><li>Once 7, 8 and 9 are shut, you may roll one die instead of two.</li><li>Your turn ends when no standing tiles can make the roll. Then The House (or your opponent) plays a fresh box.</li></ol>",
+    play:"<ol><li>The box starts with tiles 1 to 9 standing.</li><li>Tap the dice cup to roll, then tap standing tiles that add up to the roll. They shut as soon as they make the total. Tap a chosen tile again to put it back.</li><li>The glowing tiles are the ones that can still make the roll.</li><li>Once 7, 8 and 9 are shut, you may roll one die instead of two (the buttons under the cup).</li><li>Your turn ends when no standing tiles can make the roll. Then The House (or your opponent) plays a fresh box.</li></ol>",
     score:"<ul><li>Your score is the total of the tiles still standing when your turn ends. Lower is better.</li><li>Shut every tile and you score 0: you've shut the box.</li><li>The lower score wins. Equal scores are a draw.</li></ul>"
   },
   onNew:function(){ mySide=1; newGame(); }

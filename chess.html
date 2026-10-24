@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Garden Chess · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1024a">
+<link rel="stylesheet" href="parlor-kit.css?v=1024b">
 <style>
 /* ===== Chess: Judy's round garden table seen from straight above, with the chessboard inlaid flush in its top =====
    The table top (paint, stencilled damask, the inlaid board, moulded rim, dappled light) is painted in code once per board.
@@ -67,9 +67,9 @@ body.pk{--cs-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 </style>
 <script src="bw-auth.js"></script>
 </head>
-<body>
+<body class="pk">
 <header>
-<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
 <main class="pk-room"></main>
@@ -77,7 +77,7 @@ body.pk{--cs-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1022e"></script>
-<script src="parlor-kit.js?v=1024a"></script>
+<script src="parlor-kit.js?v=1024b"></script>
 <script id="csEngine">
 /* =================== chess rules (no drawing here) ===================
    Board: 64 squares, index = row*8 + col, row 0 = Black's back rank (rank 8). Pieces are letters: white upper case, black lower case, "" empty.
@@ -265,7 +265,8 @@ function ornaments(g){
   function ring(r,w){g.lineWidth=w;g.beginPath();g.arc(0,0,r,0,7);g.stroke();}
   ring(.936,.0085);ring(.916,.0042);ring(.834,.0048);ring(.822,.0026);
   var U=60;for(var i=0;i<U;i++){g.save();g.rotate(i*Math.PI*2/U);g.translate(0,-.876);vineUnit(g,Math.PI*2*.876/U,i);g.restore();}
-  for(var k=0;k<4;k++){g.save();g.rotate(k*Math.PI/2);g.translate(0,-.752);g.scale(1.16,1.16);medallion(g,k===1);g.restore();}
+  for(var k=0;k<4;k++){g.save();g.rotate(k*Math.PI/2);g.translate(0,k===1?-.79:-.752);   /* the right-hand medallion (with the BW) sits out at .79, centred between the board trim and the rim (Oct 24) */
+    g.scale(1.16,1.16);medallion(g,k===1);g.restore();}
 }
 
 /* ---------- the whole table top, one painted picture (1400px square, clipped round by CSS) ---------- */
@@ -342,7 +343,7 @@ function paintTable(d){
   }
   ctx.putImageData(im,0,0);
   /* the BrainWhim monogram, gilded into the right-hand medallion */
-  ctx.save();ctx.translate(R+.755*R,R);var sz=.068*R;
+  ctx.save();ctx.translate(R+.79*R,R);var sz=.068*R;
   ctx.font="500 "+sz+"px Montserrat, sans-serif";var wB=ctx.measureText("B").width;ctx.font="400 "+(sz*.76)+"px Pacifico, cursive";var wW=ctx.measureText("W").width;
   var x0=-(wB+wW+sz*.06)/2,base=sz*.36;
   function mono(fill,ox,oy){ctx.fillStyle=fill;ctx.font="500 "+sz+"px Montserrat, sans-serif";ctx.fillText("B",x0+ox,base+oy);ctx.font="400 "+(sz*.76)+"px Pacifico, cursive";ctx.fillText("W",x0+wB+sz*.06+ox,base+oy);}
@@ -419,7 +420,8 @@ function vpos(i){var v=flipped()?63-i:i;return {r:v>>3,c:v&7};}
 function layout(){for(var i=0;i<64;i++){var p=vpos(i);fx[i].style.left=(B0+p.c*SQ)+"%";fx[i].style.top=(B0+p.r*SQ)+"%";}}
 function sqCenter(i){var p=vpos(i);return {x:B0+(p.c+.5)*SQ,y:B0+(p.r+.5)*SQ};}
 /* captured pieces rest on the table between the board and the rim: yours near you, the opponent's on the far side */
-function traySpot(near,n){var row=n>=8?1:0,k=n%8;return {x:50+(k-3.5)*4.6+(row?2.3:0),y:near?(row?95.5:91.2):(row?8.6:12.6)};}
+/* (Oct 24: raised on both sides; the far rows used to stand on the board's trim, the near rows on the table's rim) */
+function traySpot(near,n){var row=n>=8?1:0,k=n%8;return {x:50+(k-3.5)*4.6+(row?2.3:0),y:near?(row?91.4:88.2):(row?6.6:9.8)};}
 
 /* ---------- game state ---------- */
 var S=chStart(),hist=[posKey(S)],over=false,result=null,last=null,took={w:[],b:[]},seq=0;
@@ -571,7 +573,8 @@ async function houseMove(){
 function end(){
   var w=result.winner,kind=!w?"draw":(w===(online?mySide:"w")?"win":"lose"),n=colorNames();
   var why={checkmate:"Checkmate",stalemate:"Stalemate: no legal move, but not in check",fifty:"Fifty moves each without a capture or pawn move",material:"Neither side can checkmate with what's left",repetition:"The same position three times"}[result.why]||"";
-  var detail=w?(cap(w==="w"?n[0]:n[1])+" wins by checkmate"):why;
+  var my=online?mySide:"w";   /* names, not colours (Oct 24) */
+  var detail=w?(w===my?"You win by checkmate":my?Parlor.oppName()+" wins by checkmate":cap(w==="w"?n[0]:n[1])+" wins by checkmate"):why;
   say(kind==="win"?"Checkmate: you win!":kind==="draw"?"Draw":"Checkmate",why);
   Parlor.info("");
   if(online)report();
@@ -633,7 +636,7 @@ async function bootOnline(){
   if(room.host===me)mySide="w";else if(room.guest===me)mySide="b";
   else if(!room.guest){var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single();if(!u.error){room=u.data;mySide="b";}}
   else mySide="";   /* watching */
-  nameSeats();Parlor.mySeat(mySide==="b"?1:0);layout();
+  nameSeats();Parlor.mySeat(mySide==="b"?1:0);Parlor.table&&Parlor.table({sb:sb,room:room,me:me,side:mySide==="w"?1:mySide==="b"?2:0});layout();
   applySnap(room.state);paint();if(over)end();else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
     var st=p.new.state||{};room=p.new;

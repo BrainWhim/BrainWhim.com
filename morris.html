@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cloister Morris · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1024a">
+<link rel="stylesheet" href="parlor-kit.css?v=1024b">
 <style>
 /* ===== Nine Men's Morris: a real board, drawn in the browser and seen from straight above (like chess) =====
    The board, inlaid lines, brass points, stone trays and stones are flat panels placed in 3D space; their
@@ -75,9 +75,9 @@ body.mo-slim.pk .pk-mini{display:none}
 </style>
 <script src="bw-auth.js"></script>
 </head>
-<body>
+<body class="pk">
 <header>
-<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
 <main class="pk-room"></main>
@@ -85,7 +85,7 @@ body.mo-slim.pk .pk-mini{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
-<script src="parlor-kit.js?v=1024a"></script>
+<script src="parlor-kit.js?v=1024b"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -360,9 +360,9 @@ function endTurn(took){
 function end(){
   var kind=winner===0?"draw":(winner===mySide?"win":"lose");
   var mine=cnt(st.c,mySide||1)+st.h[mySide||1], theirs=cnt(st.c,3-(mySide||1))+st.h[3-(mySide||1)];
-  say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over",(online?"Opponent":"The House")+": "+theirs+" stones, you: "+mine);
+  say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over",Parlor.oppName()+": "+theirs+" stones, you: "+mine);
   paint(); if(online) report();
-  var why=winner===0?"Fifty moves each without a capture.":(cnt(st.c,3-winner)+st.h[3-winner]<3?(winner===mySide?(online?"Your opponent is":"The House is"):"You're")+" down to two stones.":(winner===mySide?(online?"Your opponent has":"The House has"):"You have")+" no moves left.");
+  var why=winner===0?"Fifty moves each without a capture.":(cnt(st.c,3-winner)+st.h[3-winner]<3?(winner===mySide?Parlor.oppName()+" is":"You're")+" down to two stones.":(winner===mySide?Parlor.oppName()+" has":"You have")+" no moves left.");
   Parlor.finish(kind,why);
 }
 
@@ -433,7 +433,7 @@ async function bootOnline(){
   else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
   else mySide=0;   /* watching */
   Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
-  Parlor.mySeat(mySide===2?1:0);
+  Parlor.mySeat(mySide===2?1:0); Parlor.table&&Parlor.table({sb:sb,room:room,me:me,side:mySide});
   fromSnap(room.state&&room.state.board?room.state:null); syncStones();
   paint(); if(over) end(); else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){

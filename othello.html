@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Night Terrace Othello · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1024a">
+<link rel="stylesheet" href="parlor-kit.css?v=1024b">
 <style>
 /* ===== Othello board: a framed board seen from straight above, painted in code (no picture files) =====
    Boards (the Boards card): each board comes with its own discs. The frame is one painted picture used as a
@@ -63,9 +63,9 @@ body.pk{--ot-size:min(calc(100vw - 2*var(--pk-side) - 110px),max(340px,calc(100d
 </style>
 <script src="bw-auth.js"></script>
 </head>
-<body>
+<body class="pk">
 <header>
-<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
 <main class="pk-room"></main>
@@ -73,7 +73,7 @@ body.pk{--ot-size:min(calc(100vw - 2*var(--pk-side) - 110px),max(340px,calc(100d
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js"></script>
-<script src="parlor-kit.js?v=1024a"></script>
+<script src="parlor-kit.js?v=1024b"></script>
 <script>
 /* ---------- painted materials (drawn in the browser when the page opens; no picture files) ---------- */
 function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
@@ -170,6 +170,7 @@ function applyDesign(k){
 }
 function colorNames(){ var d=DESIGNS[curDesign]||DESIGNS.gilt; return d.names; }
 function cap(w){ return w.charAt(0).toUpperCase()+w.slice(1); }
+function who(s){ return mySide&&s===mySide?"You":mySide?Parlor.oppName():cap(colorNames()[s-1]); }
 function nameSeats(){ var n=colorNames(); if(!Parlor.names) return;
   if(online) Parlor.names(mySide===2?["Opponent ("+n[0]+")","You ("+n[1]+")"]:["You ("+n[0]+")","Opponent ("+n[1]+")"]);
   else Parlor.names(["You ("+n[0]+")","The House ("+n[1]+")"]); }
@@ -261,7 +262,7 @@ function end(){
   var w=winnerSide(), a=count(1), b=count(2);
   var kind=w===0?"draw":(w===mySide?"win":"lose");
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over", a+" – "+b);
-  var nm=colorNames(), detail=cap(nm[0])+" "+a+", "+cap(nm[1])+" "+b;
+  var detail=who(1)+" "+a+", "+who(2)+" "+b;   /* names, not colours (Oct 24) */
   if(online){ report(); Parlor.finish(kind, detail); } else { Parlor.finish(kind, detail); }
 }
 /* a disc floats in from the player's colour dot, lands with a soft tap, then the captured discs flip one by one */
@@ -335,7 +336,7 @@ async function bootOnline(){
   else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
   else mySide=0;   /* watching */
   nameSeats();
-  Parlor.mySeat(mySide===2?1:0);
+  Parlor.mySeat(mySide===2?1:0); Parlor.table&&Parlor.table({sb:sb,room:room,me:me,side:mySide});
   applySnap(room.state&&room.state.board?room.state:null);
   paint(); if(over) end(); else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){

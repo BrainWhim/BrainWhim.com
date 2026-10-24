@@ -101,7 +101,8 @@
       var sc = mk("div", "pk-card"); el.setsCard = sc; sc.appendChild(mk("h3", "", C.setsLabel || "Sets"));
       el.sets = mk("div", "pk-sets"); sc.appendChild(el.sets); left.appendChild(sc);
     }
-    left.appendChild(whimCard("pk-whim-desk"));   /* every room, desktop: last, so it settles at the bottom of the card (whim:true adds the phone card too) */
+    left.appendChild(whimCard("pk-whim-desk"));
+    if (window.MutationObserver) new MutationObserver(function () { fitSoon(); }).observe(left, { childList: true, subtree: true, characterData: true });   /* every room, desktop: last, so it settles at the bottom of the card (whim:true adds the phone card too) */
 
     /* right: actions */
     /* the menu: three groups, the same on desktop and in the phone sheet ("My Seat" shows on phones,
@@ -111,6 +112,8 @@
     var g1 = group("This Game");
     el.newBtn = btn("New Game", "", function () { P.newGame(); });
     g1.appendChild(el.newBtn);
+    el.forfeitBtn = btn("Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
+    g1.appendChild(el.forfeitBtn);
     g1.appendChild(btn("How to Play", "", function () { P.help("play"); }));
     g1.appendChild(btn("Scoring Rules", "", function () { P.help("score"); }));
     g1.appendChild(btn("Sound & Motion", "", function () { P.settings(); }));
@@ -137,7 +140,8 @@
     var scrim = mk("div", "pk-scrim"); scrim.onclick = function () { sheet(null); }; document.body.appendChild(scrim);
 
     /* modals */
-    el.help = modal("pkHelp"); el.seat = modal("pkSeat"); el.end = modal("pkEnd"); el.gamesM = modal("pkGames"); el.setM = modal("pkSet");
+    el.help = modal("pkHelp"); el.seat = modal("pkSeat"); el.end = modal("pkEnd"); el.gamesM = modal("pkGames"); el.setM = modal("pkSet"); el.tblM = modal("pkTable");
+    el.toast = mk("div", "pk-toast"); document.body.appendChild(el.toast);
     el.hint = mk("div", "pk-hint", "Tap Menu for rules, sets, your account and more.");
     el.hint.onclick = function () { hint(false); }; document.body.appendChild(el.hint);
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeAll(); sheet(null); } });
@@ -178,13 +182,25 @@
     var r = mk("div", "pk-row"); r.appendChild(btn("Close", "quiet", function () { el.gamesM.veil.classList.remove("on"); })); b.appendChild(r);
     el.gamesM.veil.classList.add("on");
   };
-  function closeAll() { [el.help, el.seat, el.end, el.gamesM, el.setM].forEach(function (m) { if (m) m.veil.classList.remove("on"); }); }
+  function closeAll() { [el.help, el.seat, el.end, el.gamesM, el.setM, el.tblM].forEach(function (m) { if (m) m.veil.classList.remove("on"); }); }
   function sheet(which, focus) {
     document.body.classList.toggle("sheet-left", which === "left");
     document.body.classList.toggle("sheet-right", which === "right");
     if (focus && focus.scrollIntoView) setTimeout(function () { focus.scrollIntoView({ block: "start", behavior: "smooth" }); }, 260);
   }
   P.sheet = sheet;
+  /* desktop: if the left card is taller than the window, tighten it a step or two (pk-tight, pk-tighter) so the
+     Whim card at its bottom stays in view; re-checked when the window changes or the card's contents change */
+  function fitLeft() {
+    var L = $(".pk-left"), b = document.body; if (!L) return;
+    b.classList.remove("pk-tight", "pk-tighter");
+    if (window.innerWidth < 1000 || !seated) return;
+    if (L.scrollHeight - L.clientHeight > 0) b.classList.add("pk-tight"); else return;
+    if (L.scrollHeight - L.clientHeight > 0) b.classList.add("pk-tighter");
+  }
+  var fitT = 0; function fitSoon() { clearTimeout(fitT); fitT = setTimeout(fitLeft, 60); }
+  P.fitLeft = fitSoon;
+  window.addEventListener("resize", fitSoon);
 
   /* ---------------- status, score, turn ---------------- */
   P.status = function (main, sub) {
@@ -205,7 +221,9 @@
   /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
   P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); return (a && a.offsetParent) ? a : (b && b.offsetParent ? b : null); };
   P.info = function (text) { if (el.info) { el.info.textContent = text || ""; el.info.style.display = text ? "" : "none"; } };
-  P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { p._nm.textContent = arr[i]; p._nm2.textContent = arr[i]; } }); };
+  /* online, "Opponent" in a seat name becomes the other player's username once the kit knows it */
+  P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { var n = String(arr[i]); if (T && T.oppName) n = n.replace(/^Opponent\b/, T.oppName); p._nm.textContent = n; p._nm2.textContent = n; } }); lastNames = arr; };
+  var lastNames = null;
 
   /* ---------------- help ---------------- */
   P.help = function (kind) {
@@ -256,7 +274,7 @@
     if (el.newBtn) el.newBtn.style.display = "none";
     var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
   };
-  function seat() { seated = true; document.body.classList.add("seated"); sheet(null); window.scrollTo(0, 0); setTimeout(function () { hint(true); }, 900); }
+  function seat() { seated = true; document.body.classList.add("seated"); sheet(null); window.scrollTo(0, 0); setTimeout(function () { hint(true); }, 900); fitSoon(); setTimeout(fitSoon, 700); }
   P.stand = function () { seated = false; document.body.classList.remove("seated"); sheet(null); };
   P.newGame = async function () {
     if (mode === "online") return;
@@ -267,11 +285,13 @@
   P.mode = function () { return mode; };
 
   /* ---------------- result ---------------- */
-  P.finish = async function (kind, detail) {
+  P.finish = async function (kind, detail, heading) {
     if (finished) return; finished = true;
+    if (el.forfeitBtn) el.forfeitBtn.style.display = "none";
+    if (el.tblM) el.tblM.veil.classList.remove("on");
     P.sfx(kind === "win" ? "win" : kind === "lose" ? "lose" : "draw");
     var lvlNote = mode === "house" ? levelAfter(kind) : "";
-    var title = kind === "win" ? "Congratulations! You win!" : kind === "draw" ? "It's a Draw" : "Better Luck Next Time";
+    var title = heading || (kind === "win" ? "Congratulations! You win!" : kind === "draw" ? "It's a Draw" : "Better Luck Next Time");
     var b = el.end.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", kind === "win" ? "Victory" : kind === "draw" ? "Even match" : "Game over"));
     b.appendChild(mk("h2", "", title));
@@ -300,6 +320,104 @@
     } catch (e) {}
     token = null;
   };
+
+  /* ---------------- online table: names, who's at the table, forfeits ----------------
+     A room calls Parlor.table({sb, room, me, side}) once it knows its seat (side 1 = host, 2 = guest, 0 = watching).
+     The kit then: looks up the other player's username (seat names and result windows use it), keeps a presence
+     line open so each side knows the other is still at the table (a window after 15 seconds away, a note when
+     they come back), and runs Forfeit Game (the forfeit is saved on the table as state.forfeit = side, sent live
+     to the other player, and reported to the server as a concession, which it accepts on its own). */
+  var T = null;
+  P.oppName = function (lower) {
+    if (mode !== "online") return "The House";
+    return (T && T.oppName) || (lower ? "your opponent" : "Your opponent");
+  };
+  P.toast = function (text) {
+    if (!el.toast) return; el.toast.textContent = text; el.toast.classList.add("on");
+    clearTimeout(el.toastT); el.toastT = setTimeout(function () { el.toast.classList.remove("on"); }, 3200);
+  };
+  function myPublicName() { var p = (window.BW && BW.profile && BW.profile()) || {}; return p.username || p.display_name || accountInfo.name || ""; }
+  function setOpp(name) { if (!T || !name) return; T.oppName = String(name).slice(0, 24); if (lastNames) P.names(lastNames); }
+  function loadOpp(id) {
+    if (!T || !id || T.oppId === id) return; T.oppId = id;
+    if (el.forfeitBtn && !finished) el.forfeitBtn.style.display = "";
+    T.sb.from("profiles").select("username,display_name").eq("id", id).maybeSingle().then(function (r) {
+      var d = r && r.data; if (d && (d.username || d.display_name)) setOpp(d.username || d.display_name);
+    }, function () {});
+  }
+  P.table = function (o) {
+    if (!o || !o.sb || !o.room) return;
+    if (T && T.ch) { try { T.sb.removeChannel(T.ch); } catch (e) {} }
+    T = { sb: o.sb, room: o.room, me: o.me, side: o.side || 0, oppName: "", oppId: null, seen: false, gone: false, timer: 0, ch: null };
+    if (!T.side) return;                                   /* watchers just watch */
+    loadOpp(T.side === 1 ? o.room.guest : o.room.host);
+    var st = o.room.state || {};
+    if (st.forfeit) { setTimeout(function () { forfeited(st.forfeit); }, 400); }
+    var ch = o.sb.channel("seat-" + o.room.code, { config: { presence: { key: o.me } } });
+    T.ch = ch;
+    ch.on("presence", { event: "sync" }, function () {
+      var all = ch.presenceState(), there = false;
+      Object.keys(all).forEach(function (k) { if (k !== T.me) { there = true; var m = (all[k] && all[k][0]) || {}; if (m.name && !T.oppName) setOpp(m.name); } });
+      present(there);
+    });
+    ch.on("broadcast", { event: "forfeit" }, function (m) { var p = (m && m.payload) || {}; if (p.side) forfeited(p.side); });
+    ch.on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: "id=eq." + o.room.id }, function (p) {
+      if (!T || !p.new) return; T.room = p.new;
+      var s2 = p.new.state || {}; if (s2.forfeit) forfeited(s2.forfeit);
+      loadOpp(T.side === 1 ? p.new.guest : p.new.host);
+    });
+    ch.subscribe(function (status) { if (status === "SUBSCRIBED") { try { ch.track({ name: myPublicName(), side: T.side }); } catch (e) {} } });
+  };
+  /* the other player came or went: a window if they've been gone 15 seconds (phones drop the line when the screen
+     sleeps or the player switches apps, so a short absence says nothing); a note when they're back */
+  function present(there) {
+    if (!T) return;
+    if (there) {
+      T.seen = true; clearTimeout(T.timer); T.timer = 0;
+      if (T.gone) { T.gone = false; el.tblM.veil.classList.remove("on"); if (!finished) P.toast(P.oppName() + " is back at the table."); }
+      return;
+    }
+    if (!T.seen || finished || T.timer || T.gone) return;
+    T.timer = setTimeout(function () { T.timer = 0; if (!T || finished) return; T.gone = true; tableWindow("left"); }, 15000);
+  }
+  function tableWindow(kind) {
+    var b = el.tblM.box; b.innerHTML = "";
+    var r = mk("div", "pk-row");
+    if (kind === "left") {
+      b.appendChild(mk("p", "pk-kick", "Table Notice"));
+      b.appendChild(mk("h2", "", P.oppName() + " Left the Table"));
+      b.appendChild(mk("p", "pk-center", "Their seat is held in case they come back. You can keep waiting, or head back to Tables."));
+      r.appendChild(btn("Keep Waiting", "", function () { el.tblM.veil.classList.remove("on"); }));
+    } else {
+      b.appendChild(mk("p", "pk-kick", "Forfeit"));
+      b.appendChild(mk("h2", "", "Forfeit This Game?"));
+      b.appendChild(mk("p", "pk-center", P.oppName() + " wins, and it counts as a loss for you."));
+      r.appendChild(btn("Forfeit", "", function () { el.tblM.veil.classList.remove("on"); doForfeit(); }));
+      r.appendChild(btn("Keep Playing", "quiet", function () { el.tblM.veil.classList.remove("on"); }));
+    }
+    if (kind === "left") { var a = mk("a", "pk-btn", "Return to Tables"); a.href = C.home || "tables.html"; r.appendChild(a); }
+    b.appendChild(r); sheet(null); el.tblM.veil.classList.add("on");
+  }
+  P.forfeit = function () { if (!T || !T.side || finished || mode !== "online") return; tableWindow("forfeit"); };
+  async function doForfeit() {
+    if (!T || finished) return;
+    var side = T.side, other = 3 - side;
+    try { T.ch.send({ type: "broadcast", event: "forfeit", payload: { side: side } }); } catch (e) {}
+    P.finish("lose", "You forfeited. " + P.oppName() + " takes the win.", "You Forfeited the Game");
+    try {
+      var st = Object.assign({}, (T.room && T.room.state) || {}, { forfeit: side });
+      T.room.state = st; T.room.__bwReported = true;
+      await T.sb.from("rooms").update({ state: st, status: "done", updated_at: new Date().toISOString() }).eq("id", T.room.id);
+      await T.sb.rpc("bw_report_result", { p_room: String(T.room.id), p_winner: other });
+    } catch (e) {}
+  }
+  function forfeited(side) {
+    if (!T || finished) return;
+    if (side === T.side) { P.finish("lose", "You forfeited this game.", "You Forfeited the Game"); return; }
+    clearTimeout(T.timer); T.timer = 0;
+    P.finish("win", P.oppName() + " forfeited the game. The win is yours.", P.oppName() + " Forfeited");
+    try { if (T.room) T.room.__bwReported = true; T.sb.rpc("bw_report_result", { p_room: String(T.room.id), p_winner: T.side }); } catch (e) {}
+  }
 
   /* ---------------- account card + sets ---------------- */
   async function loadAccount() {

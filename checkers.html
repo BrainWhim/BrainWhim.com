@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Garden Checkers · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1024a">
+<link rel="stylesheet" href="parlor-kit.css?v=1024b">
 <style>
 /* ===== Checkers: Judy's round garden table seen from straight above, with the board inlaid flush in its top =====
    The whole table top (paint, stencilled damask, inlaid squares, moulded rim, dappled garden light) is painted in code
@@ -75,9 +75,9 @@ body.pk{--ck-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 </style>
 <script src="bw-auth.js"></script>
 </head>
-<body>
+<body class="pk">
 <header>
-<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
 <nav class="hdr"><a href="tables.html">Tables</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="cards.html">Cards</a><a href="index.html">Home</a></nav>
 </header>
 <main class="pk-room"></main>
@@ -94,7 +94,7 @@ body.pk{--ck-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1022e"></script>
-<script src="parlor-kit.js?v=1024a"></script>
+<script src="parlor-kit.js?v=1024b"></script>
 <script>
 /* ---------- painted materials (drawn in the browser; no picture files) ---------- */
 function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
@@ -247,6 +247,8 @@ function applyDesign(k){
 }
 function colorNames(){ return (DESIGNS[curDesign]||DESIGNS.garden).names; }
 function cap(w){ return w.charAt(0).toUpperCase()+w.slice(1); }
+/* who a side is on the result window: You, The House, or the opponent's username (watchers see colours) */
+function who(s){ return mySide&&s===mySide?"You":mySide?Parlor.oppName():cap(colorNames()[s-1]); }
 function nameSeats(){ var n=colorNames(); if(!window.Parlor||!Parlor.names) return;
   if(online) Parlor.names(mySide===2?["Opponent ("+n[0]+")","You ("+n[1]+")"]:["You ("+n[0]+")","Opponent ("+n[1]+")"]);
   else Parlor.names(["You ("+n[0]+")","The House ("+n[1]+")"]); }
@@ -477,7 +479,7 @@ function houseMove(){
 }
 function end(){
   var kind=winner===0?"draw":(winner===mySide?"win":"lose"), n=colorNames();
-  var detail=winner===0?"Forty moves each without a jump":cap(n[0])+" "+count(B,1)+" left, "+cap(n[1])+" "+count(B,2)+" left";
+  var detail=winner===0?"Forty moves each without a jump":who(1)+": "+count(B,1)+" left, "+who(2)+": "+count(B,2)+" left";
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over",winner===0?"No jumps for forty moves each":"No pieces or no moves left");
   Parlor.info("");
   if(online) report();
@@ -524,7 +526,7 @@ async function bootOnline(){
   if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
   else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
   else mySide=0;   /* watching */
-  nameSeats(); Parlor.mySeat(mySide===2?1:0); layout();
+  nameSeats(); Parlor.mySeat(mySide===2?1:0); Parlor.table&&Parlor.table({sb:sb,room:room,me:me,side:mySide}); layout();
   applySnap(room.state); paint(); if(over) end(); else msg();
   sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){
     var st=p.new.state||{}; room=p.new;
