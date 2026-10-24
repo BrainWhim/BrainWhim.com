@@ -4,7 +4,7 @@
    floating phone bar, rules window, result window, points for signed-in accounts, board-set picker.
 
    Parlor.init({
-     game:'othello',  whim:true (optional: the Tap for Whims card), title:'…', tagline:'…', bg:'photo.jpg', home:'tables.html',
+     game:'othello',  whim:true (optional: the Tap for Whims card), title:'…', tagline:'…', bg:'photo.jpg', home:'lobby.html',
      players:[{name:'You', color:'#2d5084'}, {name:'The House', color:'#f3e6c4'}],
      rules:{play:'<ol>…</ol>', score:'<ul>…</ul>'},
      sets:[{id:'cobalt', name:'Cobalt · Ivory', need:0, dots:['#2d5084','#f3e6c4']}, …],
@@ -92,7 +92,7 @@
     el.acct = mk("div", "pk-card pk-acct");
     left.appendChild(el.acct);
 
-    /* the BrainWhim "Tap for Whims" card (same as the Tables page): bottom of the left card on desktop in every room,
+    /* the BrainWhim "Tap for Whims" card (same as the Lobby page): bottom of the left card on desktop in every room,
        and (with whim:true) on phones between the header and the opponent's score, filling the spare space on wide boards (turned on with whim:true) */
     if (C.whim) {
       stage.insertBefore(whimCard("pk-whim-m"), stage.firstChild);   /* phones: above the opponent's score; the board sits low, near the bar */
@@ -127,7 +127,7 @@
     var g3 = group("Leave");
     g3.appendChild(btn("Back to the Room", "", function () { P.stand(); }));
     g3.appendChild(btn("Switch Game", "", function () { P.games(); }));
-    var tb = mk("a", "pk-btn", "Tables"); tb.href = C.home || "tables.html"; g3.appendChild(tb);
+    var tb = mk("a", "pk-btn", "Lobby"); tb.href = C.home || "lobby.html"; g3.appendChild(tb);
     right.appendChild(ac);
     el.mode = mk("p", "pk-sub", ""); ac.appendChild(el.mode);
 
@@ -244,11 +244,11 @@
     b.appendChild(mk("p", "pk-kick", "Take your seat"));
     var s = mk("div", "pk-stack");
     s.appendChild(btn("Play vs. The House", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
-    s.appendChild(btn("Match an Online Player", "", function () { location.href = (C.home || "tables.html") + "?match=" + encodeURIComponent(C.game); }));
+    s.appendChild(btn("Match an Online Player", "", function () { location.href = (C.home || "lobby.html") + "?match=" + encodeURIComponent(C.game); }));
     var f = mk("div", "pk-field"), inv = mk("input"); inv.placeholder = "Enter friend's public name..."; inv.maxLength = 20;
     var sendB = btn("Send Invite", "", function () {
       var n = (inv.value || "").trim(); if (!n) { inv.focus(); return; }
-      location.href = (C.home || "tables.html") + "?invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game);
+      location.href = (C.home || "lobby.html") + "?invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game);
     });
     f.appendChild(inv); f.appendChild(sendB); s.appendChild(f);
     s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
@@ -270,7 +270,7 @@
     el.mode.textContent = "Playing The House"; showLevel();
     if (C.onNew) C.onNew("house");
   };
-  /* online rooms: the daily limit was already applied on the Tables page when the match was made */
+  /* online rooms: the daily limit was already applied in the Lobby when the match was made */
   P.seatOnline = function (info) {
     mode = "online"; seat(); token = null; finished = false; if (el.level) el.level.textContent = "";
     el.mode.textContent = (info && info.label) || "Online table";
@@ -306,7 +306,7 @@
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
     var r = mk("div", "pk-row");
     if (mode === "house") r.appendChild(btn("Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
-    var back2 = mk("a", "pk-btn", "Return to Tables"); back2.href = C.home || "tables.html"; r.appendChild(back2);
+    var back2 = mk("a", "pk-btn", "Return to the Lobby"); back2.href = C.home || "lobby.html"; r.appendChild(back2);
     b.appendChild(r); el.end.veil.classList.add("on");
 
     if (mode !== "house") return;                       /* online results are scored by the room itself */
@@ -392,7 +392,7 @@
     if (kind === "left") {
       b.appendChild(mk("p", "pk-kick", "Table Notice"));
       b.appendChild(mk("h2", "", P.oppName() + " Left the Table"));
-      b.appendChild(mk("p", "pk-center", "Their seat is held in case they come back. You can keep waiting, or head back to Tables."));
+      b.appendChild(mk("p", "pk-center", "Their seat is held in case they come back. You can keep waiting, or head back to the Lobby."));
       r.appendChild(btn("Keep Waiting", "", function () { el.tblM.veil.classList.remove("on"); }));
     } else {
       b.appendChild(mk("p", "pk-kick", "Forfeit"));
@@ -401,7 +401,7 @@
       r.appendChild(btn("Forfeit", "", function () { el.tblM.veil.classList.remove("on"); doForfeit(); }));
       r.appendChild(btn("Keep Playing", "quiet", function () { el.tblM.veil.classList.remove("on"); }));
     }
-    if (kind === "left") { var a = mk("a", "pk-btn", "Return to Tables"); a.href = C.home || "tables.html"; r.appendChild(a); }
+    if (kind === "left") { var a = mk("a", "pk-btn", "Return to the Lobby"); a.href = C.home || "lobby.html"; r.appendChild(a); }
     b.appendChild(r); sheet(null); el.tblM.veil.classList.add("on");
   }
   P.forfeit = function () { if (!T || !T.side || finished || mode !== "online") return; tableWindow("forfeit"); };
@@ -428,8 +428,8 @@
 
   /* ---------------- your open online tables (Oct 24) ----------------
      A signed-in player who left an online game sees one slim line under the invitation card: "Your Checkers game with
-     judy is still open" with Return and Leave Table (or "You have 3 open tables" with View Tables, which goes to the
-     Tables page). Open = status "live", both seats taken, not over or forfeited, a move in the last hour.
+     judy is still open" with Return and Leave Table (or "You have 3 open tables" with View All, which goes to the
+     Lobby). Open = status "live", both seats taken, not over or forfeited, a move in the last hour.
      Leave Table (asks first) saves state.forfeit = my side and state.left = true, status "done", and reports the other
      side as the winner; a waiting player sees "sam Left the Table · … has left the table for good. The win is yours." */
   var yoursAsked = false, TABLE_HOUR = 60 * 60 * 1000;
@@ -463,7 +463,7 @@
       el.yours.innerHTML = "";
       var line = mk("div", "pk-yourline"), t = mk("p", "pk-yourtxt"), acts = mk("div", "pk-youracts");
       if (rows.length === 1) {
-        var r = rows[0], g = GAMES.filter(function (x) { return x[0] === String(r.game).toLowerCase(); })[0] || [r.game, r.game, (C.home || "tables.html")];
+        var r = rows[0], g = GAMES.filter(function (x) { return x[0] === String(r.game).toLowerCase(); })[0] || [r.game, r.game, (C.home || "lobby.html")];
         t.appendChild(document.createTextNode("Your " + g[1] + " game with ")); t.appendChild(mk("b", "", r.opp)); t.appendChild(document.createTextNode(" is still open."));
         var go = mk("a", "pk-btn", "Return"); go.href = (typeof bwRoomHref === "function") ? bwRoomHref(g[0], r.code) : (g[2] + "?code=" + encodeURIComponent(r.code));
         var lv = btn("Leave Table", "quiet", function () {
@@ -474,7 +474,7 @@
         acts.appendChild(go); acts.appendChild(lv);
       } else {
         t.appendChild(document.createTextNode("You have " + rows.length + " open tables."));
-        var v = mk("a", "pk-btn", "View Tables"); v.href = (C.home || "tables.html") + "#yours"; acts.appendChild(v);
+        var v = mk("a", "pk-btn", "View All"); v.href = (C.home || "lobby.html") + "#yours"; acts.appendChild(v);
       }
       line.appendChild(t); line.appendChild(acts); el.yours.appendChild(line);
       el.yours.hidden = false;

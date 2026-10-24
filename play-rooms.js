@@ -43,7 +43,7 @@ function bwRoomPage(game){
 }
 function bwRoomHref(game, code, extra){
   var page=bwRoomPage(game);
-  if(!page) return "tables.html";
+  if(!page) return "lobby.html";
   var q="?code="+encodeURIComponent(code||"")+"&game="+encodeURIComponent(game);
   if(extra) q+="&"+extra.replace(/^[?&]/,"");
   return page+q;
@@ -179,7 +179,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var client=sbClient(); if(!client) return;
     var s=(await client.auth.getSession()).data.session;
     if(!s || s.user.is_anonymous){
-      if(!window.BW){ location.href="tables.html"; return; }
+      if(!window.BW){ location.href="lobby.html"; return; }
       var gate=await BW.openAuth({reason:"Sign in to join your friend's table."});
       if(!gate.ok) return;
       s=(await client.auth.getSession()).data.session;
@@ -215,7 +215,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       list.textContent="";
       var lnk=bwMakeEl("button","","Sign in"); lnk.type="button";
       lnk.style.cssText="border:0;background:none;padding:0;font:inherit;font-weight:700;color:#1A2744;text-decoration:underline;cursor:pointer";
-      lnk.onclick=function(){ if(window.BW) BW.openAuth({reason:"Sign in to see your invites."}); else location.href="tables.html"; };
+      lnk.onclick=function(){ if(window.BW) BW.openAuth({reason:"Sign in to see your invites."}); else location.href="lobby.html"; };
       list.appendChild(lnk); list.appendChild(document.createTextNode(" to see invites."));
       if(dot) dot.classList.remove("on"); return;
     }
