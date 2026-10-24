@@ -358,7 +358,7 @@
     if (!T.side) return;                                   /* watchers just watch */
     loadOpp(T.side === 1 ? o.room.guest : o.room.host);
     var st = o.room.state || {};
-    if (st.forfeit) { setTimeout(function () { forfeited(st.forfeit); }, 400); }
+    if (st.forfeit) { setTimeout(function () { forfeited(st.forfeit, st.left); }, 400); }
     var ch = o.sb.channel("seat-" + o.room.code, { config: { presence: { key: o.me } } });
     T.ch = ch;
     ch.on("presence", { event: "sync" }, function () {
@@ -366,10 +366,10 @@
       Object.keys(all).forEach(function (k) { if (k !== T.me) { there = true; var m = (all[k] && all[k][0]) || {}; if (m.name && !T.oppName) setOpp(m.name); } });
       present(there);
     });
-    ch.on("broadcast", { event: "forfeit" }, function (m) { var p = (m && m.payload) || {}; if (p.side) forfeited(p.side); });
+    ch.on("broadcast", { event: "forfeit" }, function (m) { var p = (m && m.payload) || {}; if (p.side) forfeited(p.side, p.left); });
     ch.on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: "id=eq." + o.room.id }, function (p) {
       if (!T || !p.new) return; T.room = p.new;
-      var s2 = p.new.state || {}; if (s2.forfeit) forfeited(s2.forfeit);
+      var s2 = p.new.state || {}; if (s2.forfeit) forfeited(s2.forfeit, s2.left);
       loadOpp(T.side === 1 ? p.new.guest : p.new.host);
     });
     ch.subscribe(function (status) { if (status === "SUBSCRIBED") { try { ch.track({ name: myPublicName(), side: T.side }); } catch (e) {} } });
@@ -417,47 +417,66 @@
       await T.sb.rpc("bw_report_result", { p_room: String(T.room.id), p_winner: other });
     } catch (e) {}
   }
-  function forfeited(side) {
+  function forfeited(side, left) {
     if (!T || finished) return;
-    if (side === T.side) { P.finish("lose", "You forfeited this game.", "You Forfeited the Game"); return; }
+    if (side === T.side) { P.finish("lose", left ? "You left this table." : "You forfeited this game.", left ? "You Left the Table" : "You Forfeited the Game"); return; }
     clearTimeout(T.timer); T.timer = 0;
-    P.finish("win", P.oppName() + " forfeited the game. The win is yours.", P.oppName() + " Forfeited");
+    if (left) P.finish("win", P.oppName() + " has left the table for good. The win is yours.", P.oppName() + " Left the Table");
+    else P.finish("win", P.oppName() + " forfeited the game. The win is yours.", P.oppName() + " Forfeited");
     try { if (T.room) T.room.__bwReported = true; T.sb.rpc("bw_report_result", { p_room: String(T.room.id), p_winner: T.side }); } catch (e) {}
   }
 
   /* ---------------- your open online tables (Oct 24) ----------------
-     A signed-in player who left an online game (Back to the Room, Switch Game, Tables, or closed the tab) sees it on
-     every room's invitation card with a Return to Table button. Open = status "live", both seats taken, not over,
-     not forfeited, active in the last 7 days. The current room's game is listed first; at most 3. */
-  var yoursAsked = false;
-  P.yourTables = async function () {
+     A signed-in player who left an online game sees one slim line under the invitation card: "Your Checkers game with
+     judy is still open" with Return and Leave Table (or "You have 3 open tables" with View Tables, which goes to the
+     Tables page). Open = status "live", both seats taken, not over or forfeited, a move in the last hour.
+     Leave Table (asks first) saves state.forfeit = my side and state.left = true, status "done", and reports the other
+     side as the winner; a waiting player sees "sam Left the Table · … has left the table for good. The win is yours." */
+  var yoursAsked = false, TABLE_HOUR = 60 * 60 * 1000;
+  P.openTables = async function (c, me) {
+    var since = new Date(Date.now() - TABLE_HOUR).toISOString(), cols = "id,code,game,host,guest,state,status,updated_at,created_at";
+    var a = await c.from("rooms").select(cols).eq("host", me).eq("status", "live");
+    var b2 = await c.from("rooms").select(cols).eq("guest", me).eq("status", "live");
+    var rows = [].concat((a && a.data) || [], (b2 && b2.data) || []).filter(function (r) {
+      var st = r.state || {};
+      return r.host && r.guest && r.host !== r.guest && !st.over && !st.forfeit && String(r.updated_at || r.created_at || "") >= since;
+    });
+    rows.sort(function (x, y) { return String(y.updated_at || "").localeCompare(String(x.updated_at || "")); });
+    var ids = rows.map(function (r) { return r.host === me ? r.guest : r.host; }), names = {};
+    if (ids.length) try { var pr = await c.from("profiles").select("id,username,display_name").in("id", ids); ((pr && pr.data) || []).forEach(function (p) { names[p.id] = p.username || p.display_name; }); } catch (e) {}
+    rows.forEach(function (r) { r.opp = names[r.host === me ? r.guest : r.host] || "your opponent"; });
+    return rows;
+  };
+  P.leaveTable = async function (c, r, me) {
+    var side = r.host === me ? 1 : 2;
+    var st = Object.assign({}, r.state || {}, { forfeit: side, left: true });
+    await c.from("rooms").update({ state: st, status: "done", updated_at: new Date().toISOString() }).eq("id", r.id);
+    try { await c.rpc("bw_report_result", { p_room: String(r.id), p_winner: 3 - side }); } catch (e) {}
+  };
+  P.yourTables = async function (force) {
     if (!el.yours || /[?&](code|match_id)=/.test(location.search)) return;
     var c = sb(), u = window.BW && BW.user && BW.user(); if (!c || !u) { el.yours.hidden = true; return; }
-    if (yoursAsked === u.id) return; yoursAsked = u.id;
+    if (!force && yoursAsked === u.id) return; yoursAsked = u.id;
     try {
-      var since = new Date(Date.now() - 7 * 864e5).toISOString(), cols = "id,code,game,host,guest,state,status,updated_at,created_at";
-      var a = await c.from("rooms").select(cols).eq("host", u.id).eq("status", "live");
-      var b2 = await c.from("rooms").select(cols).eq("guest", u.id).eq("status", "live");
-      var rows = [].concat((a && a.data) || [], (b2 && b2.data) || []).filter(function (r) {
-        var st = r.state || {};
-        return r.host && r.guest && r.host !== r.guest && !st.over && !st.forfeit && String(r.updated_at || r.created_at || "") >= since;
-      });
-      rows.sort(function (x, y) { return (x.game === C.game ? 0 : 1) - (y.game === C.game ? 0 : 1) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")); });
-      rows = rows.slice(0, 3);
+      var rows = await P.openTables(c, u.id);
       if (!rows.length) { el.yours.hidden = true; return; }
-      var ids = rows.map(function (r) { return r.host === u.id ? r.guest : r.host; }), names = {};
-      try { var pr = await c.from("profiles").select("id,username,display_name").in("id", ids); ((pr && pr.data) || []).forEach(function (p) { names[p.id] = p.username || p.display_name; }); } catch (e) {}
       el.yours.innerHTML = "";
-      rows.forEach(function (r) {
-        var g = GAMES.filter(function (x) { return x[0] === String(r.game).toLowerCase(); })[0] || [r.game, r.game, (C.home || "tables.html")];
-        var opp = names[r.host === u.id ? r.guest : r.host] || "your opponent";
-        var line = mk("div", "pk-yourline");
-        var t = mk("p", "pk-yourtxt"); t.appendChild(document.createTextNode("Your " + g[1] + " game with ")); t.appendChild(mk("b", "", opp)); t.appendChild(document.createTextNode(" is still open."));
-        line.appendChild(t);
-        var go = mk("a", "pk-btn", "Return to Table");
-        go.href = (typeof bwRoomHref === "function") ? bwRoomHref(g[0], r.code) : (g[2] + "?code=" + encodeURIComponent(r.code));
-        line.appendChild(go); el.yours.appendChild(line);
-      });
+      var line = mk("div", "pk-yourline"), t = mk("p", "pk-yourtxt"), acts = mk("div", "pk-youracts");
+      if (rows.length === 1) {
+        var r = rows[0], g = GAMES.filter(function (x) { return x[0] === String(r.game).toLowerCase(); })[0] || [r.game, r.game, (C.home || "tables.html")];
+        t.appendChild(document.createTextNode("Your " + g[1] + " game with ")); t.appendChild(mk("b", "", r.opp)); t.appendChild(document.createTextNode(" is still open."));
+        var go = mk("a", "pk-btn", "Return"); go.href = (typeof bwRoomHref === "function") ? bwRoomHref(g[0], r.code) : (g[2] + "?code=" + encodeURIComponent(r.code));
+        var lv = btn("Leave Table", "quiet", function () {
+          t.textContent = "Leave for good? " + r.opp + " wins, and it counts as a loss for you."; acts.innerHTML = "";
+          acts.appendChild(btn("Leave Table", "", async function () { await P.leaveTable(c, r, u.id); P.yourTables(true); }));
+          acts.appendChild(btn("Cancel", "quiet", function () { P.yourTables(true); }));
+        });
+        acts.appendChild(go); acts.appendChild(lv);
+      } else {
+        t.appendChild(document.createTextNode("You have " + rows.length + " open tables."));
+        var v = mk("a", "pk-btn", "View Tables"); v.href = (C.home || "tables.html") + "#yours"; acts.appendChild(v);
+      }
+      line.appendChild(t); line.appendChild(acts); el.yours.appendChild(line);
       el.yours.hidden = false;
     } catch (e) { el.yours.hidden = true; }
   };

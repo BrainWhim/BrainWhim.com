@@ -305,19 +305,25 @@ header {
 .player-row .who { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
 .player-row .rank { flex: none; color: rgba(255, 255, 255, 0.6); font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
 
-/* ---------- your open online tables (Oct 24): a way back to a game you left ---------- */
-.your-tables { margin: 32px 40px 0; padding: 16px 18px; border-radius: 12px; background: rgba(15, 23, 42, 0.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.55); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); color: #fff; }
+/* ---------- your open online tables (Oct 24): one slim line above the rooms; a glass window when there are several ---------- */
+.your-tables { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 24px 40px 0; padding: 8px 8px 8px 18px; border-radius: 12px; background: rgba(15, 23, 42, 0.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.55); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); color: #fff; }
 .your-tables[hidden] { display: none; }
-.your-tables h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-bright); }
-.your-table-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); }
-.your-table-row:first-child { border-top: 0; padding-top: 0; }
-.your-table-row p { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; }
-.your-table-row p b { color: var(--gold-bright); }
-.your-table-row p small { display: block; font-weight: 500; font-size: 12px; color: rgba(255, 255, 255, 0.62); }
-.your-table-row a { flex: none; padding: 8px 16px; border-radius: 6px; background: rgba(212, 175, 55, 0.16); border: 1px solid rgba(212, 175, 55, 0.7); color: #f0d27a; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-.your-table-row a:hover { background: rgba(212, 175, 55, 0.28); }
-@media (max-width: 999px) { .your-tables { margin: 16px 16px 0; } }
-@media (max-width: 560px) { .your-table-row { flex-direction: column; align-items: stretch; text-align: center; } .your-table-row a { text-align: center; padding: 10px 16px; } }
+.your-tables p, .yt-row p { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; }
+.your-tables b, .yt-row b { color: var(--gold-bright); }
+.yt-acts { display: flex; gap: 6px; flex: none; }
+.yt-btn { flex: none; padding: 8px 14px; border-radius: 6px; background: rgba(212, 175, 55, 0.16); border: 1px solid rgba(212, 175, 55, 0.7); color: #f0d27a; font: 700 13px Montserrat, system-ui, sans-serif; text-decoration: none; white-space: nowrap; cursor: pointer; text-align: center; }
+.yt-btn:hover { background: rgba(212, 175, 55, 0.28); }
+.yt-btn.quiet { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.25); color: rgba(255, 255, 255, 0.85); }
+.yt-veil { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.yt-veil[hidden] { display: none; }
+.yt-modal { width: min(460px, 100%); max-height: 84dvh; overflow: auto; padding: 22px; border-radius: 18px; background: rgba(15, 23, 42, 0.86); border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4); color: #fff; }
+.yt-kick { margin: 0 0 14px; text-align: center; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-bright); }
+.yt-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.yt-row:first-child { border-top: 0; padding-top: 0; }
+.yt-row small { display: block; font-weight: 500; font-size: 12px; color: rgba(255, 255, 255, 0.62); }
+.yt-close { display: block; width: 100%; margin-top: 14px; }
+@media (max-width: 999px) { .your-tables { margin: 14px 16px 0; } }
+@media (max-width: 560px) { .your-tables, .yt-row { flex-direction: column; align-items: stretch; text-align: center; padding: 10px 12px; } .yt-acts .yt-btn { flex: 1; padding: 9px 10px; } .yt-row { padding: 12px 0; } }
 
 /* ---------- room grid ---------- */
 .rooms {
@@ -795,10 +801,12 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </aside>
 <div class="center-lane">
-<section class="your-tables" id="yourTables" hidden>
-  <h3>Your Tables</h3>
+<section class="your-tables" id="yourTables" hidden></section>
+<div class="yt-veil" id="ytVeil" hidden><div class="yt-modal" role="dialog" aria-label="Your Tables">
+  <p class="yt-kick">Your Tables</p>
   <div id="yourTablesList"></div>
-</section>
+  <button type="button" class="yt-btn quiet yt-close" onclick="closeYourTables()">Close</button>
+</div></div>
 <div class="rooms main-tables-grid-content">
 <a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span>Garden Chess<em class="playnow">➔ Enter Room</em></span></a>
 <a class="poster" href="checkers.html"><img src="checkers-parlor.jpg" alt=""><span>Garden Checkers<em class="playnow">➔ Enter Room</em></span></a>
@@ -1137,35 +1145,77 @@ async function beat(){
   if(!sb || !sessionUser) return;
   await sb.from("profiles").update({last_seen:new Date().toISOString()}).eq("id", sessionUser.id);
 }
-/* Your Tables (Oct 24): online games you're still in (both seats taken, not over or forfeited, active in the
-   last 7 days), each with a Return to Table button, so leaving a room never strands a game */
+/* Your Tables (Oct 24): online games you're still in (both seats taken, not over or forfeited, a move in the last
+   hour). One slim line above the rooms: a single game shows Return / Leave Table; several show "You have 3 open
+   tables" with View, which opens a glass window listing them (tables.html#yours opens it too). Leave Table asks
+   first, then saves state.forfeit = my side + state.left = true, status "done", and reports the other side as the
+   winner; the waiting player's room shows "sam Left the Table · … has left the table for good. The win is yours." */
 var YT_NAMES={chess:"Garden Chess",checkers:"Garden Checkers",backgammon:"Library Backgammon",yahtzee:"Club Yahtzee",dominoes:"Sunroom Dominoes",othello:"Night Terrace Othello",mancala:"Pavilion Mancala",cribbage:"Club Cribbage",shutbox:"Tavern Shut the Box",morris:"Cloister Morris"};
+var YT_SHORT={chess:"Chess",checkers:"Checkers",backgammon:"Backgammon",yahtzee:"Yahtzee",dominoes:"Dominoes",othello:"Othello",mancala:"Mancala",cribbage:"Cribbage",shutbox:"Shut the Box",morris:"Morris"};
+var ytRows=[];
 async function loadYourTables(){
-  var box=document.getElementById("yourTables"), list=document.getElementById("yourTablesList");
+  var box=document.getElementById("yourTables");
   if(!box||!sb||!sessionUser) return;
   try{
-    var me=sessionUser.id, since=new Date(Date.now()-7*864e5).toISOString(), cols="id,code,game,host,guest,state,status,updated_at,created_at";
+    var me=sessionUser.id, since=new Date(Date.now()-60*60*1000).toISOString(), cols="id,code,game,host,guest,state,status,updated_at,created_at";
     var a=await sb.from("rooms").select(cols).eq("host",me).eq("status","live");
     var b=await sb.from("rooms").select(cols).eq("guest",me).eq("status","live");
     var rows=[].concat((a&&a.data)||[],(b&&b.data)||[]).filter(function(r){ var st=r.state||{}; return r.host&&r.guest&&r.host!==r.guest&&!st.over&&!st.forfeit&&String(r.updated_at||r.created_at||"")>=since; });
     rows.sort(function(x,y){ return String(y.updated_at||"").localeCompare(String(x.updated_at||"")); });
-    rows=rows.slice(0,5);
-    if(!rows.length){ box.hidden=true; return; }
     var ids=rows.map(function(r){ return r.host===me?r.guest:r.host; }), names={};
-    try{ var pr=await sb.from("profiles").select("id,username,display_name").in("id",ids); ((pr&&pr.data)||[]).forEach(function(p){ names[p.id]=p.username||p.display_name; }); }catch(e){}
-    list.innerHTML="";
-    rows.forEach(function(r){
-      var g=bwGuessGame(r), row=bwMakeEl("div","your-table-row"), p=document.createElement("p");
-      p.appendChild(document.createTextNode((YT_NAMES[g]||g)+" with "));
-      p.appendChild(bwMakeEl("b","",names[r.host===me?r.guest:r.host]||"your opponent"));
-      var when=new Date(r.updated_at||r.created_at), mins=Math.max(0,Math.round((Date.now()-when)/60000));
-      p.appendChild(bwMakeEl("small","","Table "+r.code+" · last move "+(mins<2?"just now":mins<60?mins+" minutes ago":mins<1440?Math.round(mins/60)+" hours ago":Math.round(mins/1440)+" days ago")));
-      var go=bwMakeEl("a","","Return to Table"); go.href=bwRoomHref(g,r.code);
-      row.appendChild(p); row.appendChild(go); list.appendChild(row);
-    });
-    box.hidden=false;
+    if(ids.length) try{ var pr=await sb.from("profiles").select("id,username,display_name").in("id",ids); ((pr&&pr.data)||[]).forEach(function(p){ names[p.id]=p.username||p.display_name; }); }catch(e){}
+    rows.forEach(function(r){ r.opp=names[r.host===me?r.guest:r.host]||"your opponent"; r.g=bwGuessGame(r); });
+    ytRows=rows; renderYourTables();
+    if(location.hash==="#yours"&&rows.length>1) openYourTables();
   }catch(e){ box.hidden=true; }
 }
+function ytButton(label,cls,fn){ var b=bwMakeEl("button","yt-btn"+(cls?" "+cls:""),label); b.type="button"; b.onclick=fn; return b; }
+function ytActions(r,acts,txt,after){
+  var go=bwMakeEl("a","yt-btn","Return"); go.href=bwRoomHref(r.g,r.code); acts.appendChild(go);
+  acts.appendChild(ytButton("Leave Table","quiet",function(){
+    txt.textContent="Leave for good? "+r.opp+" wins, and it counts as a loss for you."; acts.innerHTML="";
+    acts.appendChild(ytButton("Leave Table","",async function(){ await leaveTable(r); after(); }));
+    acts.appendChild(ytButton("Cancel","quiet",after));
+  }));
+}
+function renderYourTables(){
+  var box=document.getElementById("yourTables"), rows=ytRows; box.innerHTML="";
+  if(!rows.length){ box.hidden=true; closeYourTables(); return; }
+  var p=document.createElement("p"), acts=bwMakeEl("div","yt-acts");
+  if(rows.length===1){
+    var r=rows[0];
+    p.appendChild(document.createTextNode("Your "+(YT_SHORT[r.g]||r.g)+" game with ")); p.appendChild(bwMakeEl("b","",r.opp)); p.appendChild(document.createTextNode(" is still open."));
+    ytActions(r,acts,p,renderYourTables);
+  } else {
+    p.textContent="You have "+rows.length+" open tables.";
+    acts.appendChild(ytButton("View","",openYourTables));
+  }
+  box.appendChild(p); box.appendChild(acts); box.hidden=false;
+  if(!document.getElementById("ytVeil").hidden) fillYourTables();
+}
+function fillYourTables(){
+  var list=document.getElementById("yourTablesList"); list.innerHTML="";
+  ytRows.forEach(function(r){
+    var row=bwMakeEl("div","yt-row"), p=document.createElement("p"), acts=bwMakeEl("div","yt-acts");
+    p.appendChild(document.createTextNode((YT_NAMES[r.g]||r.g)+" with ")); p.appendChild(bwMakeEl("b","",r.opp));
+    var mins=Math.max(0,Math.round((Date.now()-new Date(r.updated_at||r.created_at))/60000));
+    p.appendChild(bwMakeEl("small","","Table "+r.code+" · last move "+(mins<2?"just now":mins+" minutes ago")));
+    ytActions(r,acts,p,function(){ renderYourTables(); });
+    row.appendChild(p); row.appendChild(acts); list.appendChild(row);
+  });
+}
+function openYourTables(){ fillYourTables(); document.getElementById("ytVeil").hidden=false; }
+function closeYourTables(){ var v=document.getElementById("ytVeil"); if(v) v.hidden=true; }
+async function leaveTable(r){
+  var me=sessionUser.id, side=r.host===me?1:2, st=Object.assign({},r.state||{},{forfeit:side,left:true});
+  try{
+    await sb.from("rooms").update({state:st,status:"done",updated_at:new Date().toISOString()}).eq("id",r.id);
+    await sb.rpc("bw_report_result",{p_room:String(r.id),p_winner:3-side});
+  }catch(e){}
+  ytRows=ytRows.filter(function(x){ return x.id!==r.id; });
+  var t=document.getElementById("toast"); if(t){ t.textContent="You left the table. "+r.opp+" has been told."; t.classList.add("on"); setTimeout(function(){ t.classList.remove("on"); },4000); }
+}
+document.addEventListener("click",function(e){ if(e.target&&e.target.id==="ytVeil") closeYourTables(); });
 async function refreshOnline(){
   var box=document.getElementById("onlineList");
   if(!sb || !sessionUser){ box.textContent="Sign in or sit as a guest to see the parlor."; return; }
