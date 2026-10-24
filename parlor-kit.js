@@ -48,7 +48,9 @@
     txt.appendChild(tag);
     card.appendChild(txt);
     card.appendChild(btn("Take a Seat", "", function () { P.openSeat(); }, "pkSit"));
-    intro.appendChild(card); room.appendChild(intro);
+    intro.appendChild(card);
+    el.yours = mk("div", "pk-yours"); el.yours.hidden = true; intro.appendChild(el.yours);   /* "Your Chess game with judy is still open" (Oct 24) */
+    room.appendChild(intro);
 
     /* playing area */
     var play = mk("div", "pk-play");
@@ -237,6 +239,7 @@
 
   /* ---------------- sitting down ---------------- */
   P.openSeat = function () {
+    if (mode === "online" && !finished) { seat(); return; }   /* stood up from an online table: Take a Seat goes straight back to it */
     var b = el.seat.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", "Take your seat"));
     var s = mk("div", "pk-stack");
@@ -275,7 +278,10 @@
     var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
   };
   function seat() { seated = true; document.body.classList.add("seated"); sheet(null); window.scrollTo(0, 0); setTimeout(function () { hint(true); }, 900); fitSoon(); setTimeout(fitSoon, 700); }
-  P.stand = function () { seated = false; document.body.classList.remove("seated"); sheet(null); };
+  P.stand = function () {
+    seated = false; document.body.classList.remove("seated"); sheet(null);
+    var sit = $("#pkSit"); if (sit) sit.textContent = (mode === "online" && !finished) ? "Return to Your Table" : "Take a Seat";
+  };
   P.newGame = async function () {
     if (mode === "online") return;
     closeAll(); sheet(null);
@@ -419,13 +425,50 @@
     try { if (T.room) T.room.__bwReported = true; T.sb.rpc("bw_report_result", { p_room: String(T.room.id), p_winner: T.side }); } catch (e) {}
   }
 
+  /* ---------------- your open online tables (Oct 24) ----------------
+     A signed-in player who left an online game (Back to the Room, Switch Game, Tables, or closed the tab) sees it on
+     every room's invitation card with a Return to Table button. Open = status "live", both seats taken, not over,
+     not forfeited, active in the last 7 days. The current room's game is listed first; at most 3. */
+  var yoursAsked = false;
+  P.yourTables = async function () {
+    if (!el.yours || /[?&](code|match_id)=/.test(location.search)) return;
+    var c = sb(), u = window.BW && BW.user && BW.user(); if (!c || !u) { el.yours.hidden = true; return; }
+    if (yoursAsked === u.id) return; yoursAsked = u.id;
+    try {
+      var since = new Date(Date.now() - 7 * 864e5).toISOString(), cols = "id,code,game,host,guest,state,status,updated_at,created_at";
+      var a = await c.from("rooms").select(cols).eq("host", u.id).eq("status", "live");
+      var b2 = await c.from("rooms").select(cols).eq("guest", u.id).eq("status", "live");
+      var rows = [].concat((a && a.data) || [], (b2 && b2.data) || []).filter(function (r) {
+        var st = r.state || {};
+        return r.host && r.guest && r.host !== r.guest && !st.over && !st.forfeit && String(r.updated_at || r.created_at || "") >= since;
+      });
+      rows.sort(function (x, y) { return (x.game === C.game ? 0 : 1) - (y.game === C.game ? 0 : 1) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")); });
+      rows = rows.slice(0, 3);
+      if (!rows.length) { el.yours.hidden = true; return; }
+      var ids = rows.map(function (r) { return r.host === u.id ? r.guest : r.host; }), names = {};
+      try { var pr = await c.from("profiles").select("id,username,display_name").in("id", ids); ((pr && pr.data) || []).forEach(function (p) { names[p.id] = p.username || p.display_name; }); } catch (e) {}
+      el.yours.innerHTML = "";
+      rows.forEach(function (r) {
+        var g = GAMES.filter(function (x) { return x[0] === String(r.game).toLowerCase(); })[0] || [r.game, r.game, (C.home || "tables.html")];
+        var opp = names[r.host === u.id ? r.guest : r.host] || "your opponent";
+        var line = mk("div", "pk-yourline");
+        var t = mk("p", "pk-yourtxt"); t.appendChild(document.createTextNode("Your " + g[1] + " game with ")); t.appendChild(mk("b", "", opp)); t.appendChild(document.createTextNode(" is still open."));
+        line.appendChild(t);
+        var go = mk("a", "pk-btn", "Return to Table");
+        go.href = (typeof bwRoomHref === "function") ? bwRoomHref(g[0], r.code) : (g[2] + "?code=" + encodeURIComponent(r.code));
+        line.appendChild(go); el.yours.appendChild(line);
+      });
+      el.yours.hidden = false;
+    } catch (e) { el.yours.hidden = true; }
+  };
+
   /* ---------------- account card + sets ---------------- */
   async function loadAccount() {
     var u = window.BW && BW.user && BW.user();
     accountInfo.user = u || null;
     var p = (window.BW && BW.profile && BW.profile()) || {};
     accountInfo.pts = Number(p.skill_points || 0); accountInfo.member = !!p.member; accountInfo.name = p.display_name || p.username || "";
-    renderAccount(); renderSets();
+    renderAccount(); renderSets(); P.yourTables();
   }
   function renderAccount() {
     var a = el.acct; if (!a) return; a.innerHTML = "<h3 style=\"margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85\">Account</h3>";

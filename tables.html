@@ -305,6 +305,20 @@ header {
 .player-row .who { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
 .player-row .rank { flex: none; color: rgba(255, 255, 255, 0.6); font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
 
+/* ---------- your open online tables (Oct 24): a way back to a game you left ---------- */
+.your-tables { margin: 32px 40px 0; padding: 16px 18px; border-radius: 12px; background: rgba(15, 23, 42, 0.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.55); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); color: #fff; }
+.your-tables[hidden] { display: none; }
+.your-tables h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-bright); }
+.your-table-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.your-table-row:first-child { border-top: 0; padding-top: 0; }
+.your-table-row p { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; }
+.your-table-row p b { color: var(--gold-bright); }
+.your-table-row p small { display: block; font-weight: 500; font-size: 12px; color: rgba(255, 255, 255, 0.62); }
+.your-table-row a { flex: none; padding: 8px 16px; border-radius: 6px; background: rgba(212, 175, 55, 0.16); border: 1px solid rgba(212, 175, 55, 0.7); color: #f0d27a; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.your-table-row a:hover { background: rgba(212, 175, 55, 0.28); }
+@media (max-width: 999px) { .your-tables { margin: 16px 16px 0; } }
+@media (max-width: 560px) { .your-table-row { flex-direction: column; align-items: stretch; text-align: center; } .your-table-row a { text-align: center; padding: 10px 16px; } }
+
 /* ---------- room grid ---------- */
 .rooms {
   display: grid;
@@ -781,6 +795,10 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </aside>
 <div class="center-lane">
+<section class="your-tables" id="yourTables" hidden>
+  <h3>Your Tables</h3>
+  <div id="yourTablesList"></div>
+</section>
 <div class="rooms main-tables-grid-content">
 <a class="poster" href="chess.html"><img src="garden-parlor.jpg" alt=""><span>Garden Chess<em class="playnow">➔ Enter Room</em></span></a>
 <a class="poster" href="checkers.html"><img src="checkers-parlor.jpg" alt=""><span>Garden Checkers<em class="playnow">➔ Enter Room</em></span></a>
@@ -1102,7 +1120,9 @@ async function paint(session){
     var title=typeof bwTitle==="function"?bwTitle(myPts):"New";
     who.textContent=(handle||"Signed in")+" · "+title+" · "+myPts+" pts"+(myMember?" · member":"");
     startPresence();
+    loadYourTables();
   } else {
+    var yt=document.getElementById("yourTables"); if(yt) yt.hidden=true;
     stopPresence();
     myName=""; myPts=0; myMember=false;
     who.textContent="Sign in to keep a seat";
@@ -1116,6 +1136,35 @@ async function paint(session){
 async function beat(){
   if(!sb || !sessionUser) return;
   await sb.from("profiles").update({last_seen:new Date().toISOString()}).eq("id", sessionUser.id);
+}
+/* Your Tables (Oct 24): online games you're still in (both seats taken, not over or forfeited, active in the
+   last 7 days), each with a Return to Table button, so leaving a room never strands a game */
+var YT_NAMES={chess:"Garden Chess",checkers:"Garden Checkers",backgammon:"Library Backgammon",yahtzee:"Club Yahtzee",dominoes:"Sunroom Dominoes",othello:"Night Terrace Othello",mancala:"Pavilion Mancala",cribbage:"Club Cribbage",shutbox:"Tavern Shut the Box",morris:"Cloister Morris"};
+async function loadYourTables(){
+  var box=document.getElementById("yourTables"), list=document.getElementById("yourTablesList");
+  if(!box||!sb||!sessionUser) return;
+  try{
+    var me=sessionUser.id, since=new Date(Date.now()-7*864e5).toISOString(), cols="id,code,game,host,guest,state,status,updated_at,created_at";
+    var a=await sb.from("rooms").select(cols).eq("host",me).eq("status","live");
+    var b=await sb.from("rooms").select(cols).eq("guest",me).eq("status","live");
+    var rows=[].concat((a&&a.data)||[],(b&&b.data)||[]).filter(function(r){ var st=r.state||{}; return r.host&&r.guest&&r.host!==r.guest&&!st.over&&!st.forfeit&&String(r.updated_at||r.created_at||"")>=since; });
+    rows.sort(function(x,y){ return String(y.updated_at||"").localeCompare(String(x.updated_at||"")); });
+    rows=rows.slice(0,5);
+    if(!rows.length){ box.hidden=true; return; }
+    var ids=rows.map(function(r){ return r.host===me?r.guest:r.host; }), names={};
+    try{ var pr=await sb.from("profiles").select("id,username,display_name").in("id",ids); ((pr&&pr.data)||[]).forEach(function(p){ names[p.id]=p.username||p.display_name; }); }catch(e){}
+    list.innerHTML="";
+    rows.forEach(function(r){
+      var g=bwGuessGame(r), row=bwMakeEl("div","your-table-row"), p=document.createElement("p");
+      p.appendChild(document.createTextNode((YT_NAMES[g]||g)+" with "));
+      p.appendChild(bwMakeEl("b","",names[r.host===me?r.guest:r.host]||"your opponent"));
+      var when=new Date(r.updated_at||r.created_at), mins=Math.max(0,Math.round((Date.now()-when)/60000));
+      p.appendChild(bwMakeEl("small","","Table "+r.code+" · last move "+(mins<2?"just now":mins<60?mins+" minutes ago":mins<1440?Math.round(mins/60)+" hours ago":Math.round(mins/1440)+" days ago")));
+      var go=bwMakeEl("a","","Return to Table"); go.href=bwRoomHref(g,r.code);
+      row.appendChild(p); row.appendChild(go); list.appendChild(row);
+    });
+    box.hidden=false;
+  }catch(e){ box.hidden=true; }
 }
 async function refreshOnline(){
   var box=document.getElementById("onlineList");
