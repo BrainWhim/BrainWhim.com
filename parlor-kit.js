@@ -90,8 +90,8 @@
     el.acct = mk("div", "pk-card pk-acct");
     left.appendChild(el.acct);
 
-    /* the BrainWhim "Tap for Whims" card (same as the Tables page): bottom of the left card on desktop,
-       and on phones between the header and the opponent's score, filling the spare space on wide boards (turned on with whim:true) */
+    /* the BrainWhim "Tap for Whims" card (same as the Tables page): bottom of the left card on desktop in every room,
+       and (with whim:true) on phones between the header and the opponent's score, filling the spare space on wide boards (turned on with whim:true) */
     if (C.whim) {
       stage.insertBefore(whimCard("pk-whim-m"), stage.firstChild);   /* phones: above the opponent's score; the board sits low, near the bar */
       document.body.classList.add("pk-has-whim");
@@ -101,7 +101,7 @@
       var sc = mk("div", "pk-card"); el.setsCard = sc; sc.appendChild(mk("h3", "", C.setsLabel || "Sets"));
       el.sets = mk("div", "pk-sets"); sc.appendChild(el.sets); left.appendChild(sc);
     }
-    if (C.whim) left.appendChild(whimCard("pk-whim-desk"));   /* last, so it settles at the bottom of the card */
+    left.appendChild(whimCard("pk-whim-desk"));   /* every room, desktop: last, so it settles at the bottom of the card (whim:true adds the phone card too) */
 
     /* right: actions */
     /* the menu: three groups, the same on desktop and in the phone sheet ("My Seat" shows on phones,
