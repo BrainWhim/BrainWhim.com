@@ -309,14 +309,23 @@
     if (el.learnBtn) el.learnBtn.style.display = "none";
     if (C.learn && C.learn.start) C.learn.start();
   };
-  var coachMin = false;
+  var coachMin = false, coachH = -1;
+  /* phones: --pk-coach-h on body = the floating coach card's height (0 when hidden); rooms that need the room re-fit on change */
+  function coachSize() {
+    requestAnimationFrame(function () {
+      var c = el.coach, h = (c && !c.hidden && window.innerWidth < 1000 && c.parentNode === document.body) ? Math.ceil(c.getBoundingClientRect().bottom) + 6 : 0;
+      document.body.style.setProperty("--pk-coach-h", h + "px");
+      if (h !== coachH) { coachH = h; if (C && C.onCoachSize) C.onCoachSize(h); }
+    });
+  }
+  P.coachHeight = function () { return Math.max(0, coachH); };
   P.coach = function (o) {
     var c = el.coach; if (!c) return;
-    if (!o) { c.hidden = true; document.body.classList.remove("pk-coaching"); return; }
+    if (!o) { c.hidden = true; document.body.classList.remove("pk-coaching"); coachSize(); return; }
     c.innerHTML = "";
     /* phones: a small button folds the card down to one line so the whole board shows; it stays folded until opened */
     var fold = mk("button", "pk-coachfold", coachMin ? "▾" : "▴"); fold.type = "button"; fold.setAttribute("aria-label", coachMin ? "Show the coach" : "Fold the coach away");
-    fold.onclick = function (e) { e.stopPropagation(); coachMin = !coachMin; c.classList.toggle("min", coachMin); fold.textContent = coachMin ? "▾" : "▴"; c.classList.remove("news"); };
+    fold.onclick = function (e) { e.stopPropagation(); coachMin = !coachMin; c.classList.toggle("min", coachMin); fold.textContent = coachMin ? "▾" : "▴"; c.classList.remove("news"); coachSize(); };
     c.appendChild(fold); c.classList.toggle("min", coachMin); if (coachMin) { c.classList.remove("news"); void c.offsetWidth; c.classList.add("news"); }
     if (o.kick) c.appendChild(mk("p", "pk-coachkick", o.kick));
     if (o.title) c.appendChild(mk("h3", "", o.title));
@@ -327,6 +336,7 @@
       c.appendChild(r);
     }
     c.hidden = false; document.body.classList.add("pk-coaching");
+    coachSize();
     var right = $(".pk-right"); if (right && window.innerWidth >= 1000 && c.parentNode !== right) right.insertBefore(c, right.firstChild);
     if (window.innerWidth < 1000 && c.parentNode !== document.body) document.body.appendChild(c);
   };
@@ -336,6 +346,9 @@
      `done` are look-and-read. The last step offers the practice game. Parlor.practiceSay(title, text) shows a practice tip
      with Hint and Back to the Lesson. */
   var LK = 0;
+  /* on every lesson and practice card: leave the lesson and start a real game against The House (Judy, Oct 25) */
+  function houseBtn() { return { label: "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
+  P.houseBtn = houseBtn;
   function lessonSteps() { var L = C.lesson; return typeof L.steps === "function" ? L.steps() : L.steps; }
   P.lessonGo = function (k) {
     var L = C.lesson, steps = lessonSteps(), st = steps[k]; LK = k; P.lessonOn = true; P.lessonWaiting = !!st.done;
@@ -344,13 +357,14 @@
     if (k === steps.length - 1) { b.push({ label: "Start Practice Game", fn: P.startPractice }); if (k) b.push({ label: "Back", quiet: true, fn: function () { P.lessonGo(k - 1); } }); }
     else if (!st.done) { b.push({ label: "Next", fn: function () { P.lessonGo(k + 1); } }); b.push({ label: "Skip to a Practice Game", quiet: true, fn: P.startPractice }); }
     else { if (k) b.push({ label: "Back", quiet: true, fn: function () { P.lessonGo(k - 1); } }); b.push({ label: "Skip to a Practice Game", quiet: true, fn: P.startPractice }); }
+    b.push(houseBtn());
     P.coach({ kick: kick, title: st.title, text: st.text, buttons: b });
     P.status(st.done ? "Your move" : "Learn to Play", st.done ? (st.sub || "Follow the glowing hint") : "");
   };
   P.lessonDone = function (extra) {
     var steps = lessonSteps(), st = steps[LK], k = LK; P.lessonWaiting = false;
     P.coach({ kick: "Learn to Play · " + (k + 1) + " of " + steps.length, title: st.title, text: (st.done || "") + (extra || ""),
-      buttons: [{ label: "Next", fn: function () { P.lessonGo(k + 1); } }, { label: "Try Again", quiet: true, fn: function () { P.lessonGo(k); } }] });
+      buttons: [{ label: "Next", fn: function () { P.lessonGo(k + 1); } }, { label: "Try Again", quiet: true, fn: function () { P.lessonGo(k); } }, houseBtn()] });
     P.status("Well done", "");
   };
   P.startPractice = function () {
@@ -361,6 +375,7 @@
     var b = [];
     if (C.lesson && C.lesson.hint) b.push({ label: "Hint", fn: function () { C.lesson.hint(); } });
     b.push({ label: "Back to the Lesson", quiet: true, fn: function () { P.lessonGo(0); } });
+    b.push(houseBtn());
     P.coach({ kick: "Practice Game", title: title, text: text, buttons: b });
   };
   P.hintSay = function (text) { P.practiceSay("Try This", text); el.coach.querySelector(".pk-coachkick").textContent = "Practice Game · Hint"; };

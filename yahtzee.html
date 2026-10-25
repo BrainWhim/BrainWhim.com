@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Club Yahtzee · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025b">
+<link rel="stylesheet" href="parlor-kit.css?v=1025c">
 <style>
 /* ===== Yahtzee: a dice tray, a leather dice cup and a score card on a polished table, seen from straight above =====
    Everything is painted in code (no picture files). The dice cup (tap it to roll) and the score card carry the gold BW monogram.
@@ -161,7 +161,7 @@ body.pk.pk-has-whim .pk-mini-top,body.pk.pk-has-whim .pk-mini-bot{margin-top:0;m
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025b"></script>
+<script src="parlor-kit.js?v=1025c"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -598,6 +598,9 @@ function fit(){
   if(wide){ var st=document.querySelector(".pk-stage"), top=st&&seatedNow()?st.getBoundingClientRect().top+window.scrollY:185; availW=(st&&st.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22; }
   else { var shortL=window.innerHeight<=520&&window.innerWidth>window.innerHeight; availW=window.innerWidth-12;
     availH=shortL?window.innerHeight-56-64-10:phone?window.innerHeight-56-(64+30)-26:window.innerHeight-56-64-34-120; }
+  /* phones: the Learn to Play card floats over the top of the screen, so the table moves down below it and shrinks to fit (Oct 25) */
+  var cOff=(!wide&&!(window.innerHeight<=520&&window.innerWidth>window.innerHeight)&&Parlor.coachHeight)?Math.max(0,Parlor.coachHeight()-56):0;
+  availH-=cOff; fitEl.style.marginTop=cOff+"px";
   var base=phone?LAYOUTS.tall:LAYOUTS.wide, s;
   if(!phone){ L=base; s=Math.max(.2,Math.min(availW/base.W,availH/base.H,1.2)); }
   else {
@@ -637,7 +640,8 @@ Parlor.init({
     score:"<ul><li><b>Aces to Sixes:</b> the total of that number. Score 63 or more in these six boxes for a <b>35-point bonus</b>.</li><li><b>3 of a Kind / 4 of a Kind:</b> the total of all five dice.</li><li><b>Full House</b> (three of one, two of another): 25. <b>Small Straight</b> (four in a row): 30. <b>Large Straight</b> (five in a row): 40.</li><li><b>Yahtzee</b> (five alike): 50. <b>Chance:</b> the total of all five dice.</li><li><b>Extra Yahtzees:</b> if your Yahtzee box already holds 50, each extra Yahtzee earns a 100-point bonus. It must go in its number's upper box if that's open; otherwise it can score full points in Full House or a straight.</li></ul>"
   },
   onNew:function(){ mySide=1; practice=false; forceRolls=[]; lessonNeedHeld=null; lessonBox=null; hintDice=[]; hintBox=null; newGame(); },
-  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint},
+  onCoachSize:function(){ fit(); }
 });
 var wasSeated=null;
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"marble"; if(k!==curDesign) applyDesign(k);

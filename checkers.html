@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Garden Checkers · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025b">
+<link rel="stylesheet" href="parlor-kit.css?v=1025c">
 <style>
 /* ===== Checkers: Judy's round garden table seen from straight above, with the board inlaid flush in its top =====
    The whole table top (paint, stencilled damask, inlaid squares, moulded rim, dappled garden light) is painted in code
@@ -96,7 +96,7 @@ body.pk{--ck-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025b"></script>
+<script src="parlor-kit.js?v=1025c"></script>
 <script>
 /* ---------- painted materials (drawn in the browser; no picture files) ---------- */
 function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
@@ -572,19 +572,20 @@ function lessonStep(k){
   if(k===L.length-1){ btns.push({label:"Start Practice Game",fn:startPractice}); if(k) btns.push({label:"Back",quiet:true,fn:function(){ lessonStep(k-1); }}); }
   else if(!st.done){ btns.push({label:"Next",fn:function(){ lessonStep(k+1); }}); btns.push({label:"Skip to a Practice Game",quiet:true,fn:startPractice}); }
   else { if(k) btns.push({label:"Back",quiet:true,fn:function(){ lessonStep(k-1); }}); btns.push({label:"Skip to a Practice Game",quiet:true,fn:startPractice}); }
+  btns.push(Parlor.houseBtn());
   Parlor.coach({kick:"Learn to Play · "+(k+1)+" of "+L.length,title:st.title,text:st.text,buttons:btns});
   say(st.done?"Your move":"Learn to Play",st.done?"Tap the glowing piece":"");
 }
 function lessonMoved(m){
   var L=LESSON(), k=learning.k, st=L[k]; learning.done=true; legal=[]; paint();
   say("Well done","");
-  Parlor.coach({kick:"Learn to Play · "+(k+1)+" of "+L.length,title:st.title,text:st.done,buttons:[{label:"Next",fn:function(){ lessonStep(k+1); }},{label:"Try Again",quiet:true,fn:function(){ lessonStep(k); }}]});
+  Parlor.coach({kick:"Learn to Play · "+(k+1)+" of "+L.length,title:st.title,text:st.done,buttons:[{label:"Next",fn:function(){ lessonStep(k+1); }},{label:"Try Again",quiet:true,fn:function(){ lessonStep(k); }},Parlor.houseBtn()]});
 }
 function startPractice(){
   learning=null; practice=true; tipN=0; firstKing=true; mySide=1; newGame();
   Parlor.coach({kick:"Practice Game",title:"Your Move",text:"<p>You move first. Tap a glowing piece, then a lit square.</p><p>Stuck? Tap <b>Hint</b>.</p>",buttons:practiceButtons()});
 }
-function practiceButtons(){ return [{label:"Hint",fn:showHint},{label:"Back to the Lesson",quiet:true,fn:function(){ lessonStep(0); }}]; }
+function practiceButtons(){ return [{label:"Hint",fn:showHint},{label:"Back to the Lesson",quiet:true,fn:function(){ lessonStep(0); }},Parlor.houseBtn()]; }
 /* the best move by a short, steady search (the gentle House doesn't play like this) */
 function bestMove(){
   var ms=gen(B,1); if(ms.length<=1) return ms[0]||null;
