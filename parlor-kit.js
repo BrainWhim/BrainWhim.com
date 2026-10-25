@@ -116,6 +116,7 @@
     g1.appendChild(el.newBtn);
     el.forfeitBtn = btn("Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
     g1.appendChild(el.forfeitBtn);
+    if (C.learn) { el.learnBtn = btn("Learn to Play", "", function () { P.sitLearn(); }); g1.appendChild(el.learnBtn); }
     g1.appendChild(btn("How to Play", "", function () { P.help("play"); }));
     g1.appendChild(btn("Scoring Rules", "", function () { P.help("score"); }));
     g1.appendChild(btn("Sound & Motion", "", function () { P.settings(); }));
@@ -128,6 +129,7 @@
     g3.appendChild(btn("Back to the Room", "", function () { P.stand(); }));
     g3.appendChild(btn("Switch Game", "", function () { P.games(); }));
     var tb = mk("a", "pk-btn", "Lobby"); tb.href = C.home || "lobby.html"; g3.appendChild(tb);
+    el.coach = mk("div", "pk-coach"); el.coach.hidden = true; document.body.appendChild(el.coach);   /* Learn to Play (Oct 24) */
     right.appendChild(ac);
     el.mode = mk("p", "pk-sub", ""); ac.appendChild(el.mode);
 
@@ -244,6 +246,7 @@
     b.appendChild(mk("p", "pk-kick", "Take your seat"));
     var s = mk("div", "pk-stack");
     s.appendChild(btn("Play vs. The House", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
+    if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
     s.appendChild(btn("Match an Online Player", "", function () { location.href = (C.home || "lobby.html") + "?match=" + encodeURIComponent(C.game); }));
     var f = mk("div", "pk-field"), inv = mk("input"); inv.placeholder = "Enter friend's public name..."; inv.maxLength = 20;
     var sendB = btn("Send Invite", "", function () {
@@ -266,6 +269,7 @@
   }
   P.sitHouse = async function () {
     if (!(await gateAndBegin())) return;
+    P.coach(null); if (el.newBtn) el.newBtn.textContent = "New Game"; if (el.learnBtn) el.learnBtn.style.display = "";
     mode = "house"; seat();
     el.mode.textContent = "Playing The House"; showLevel();
     if (C.onNew) C.onNew("house");
@@ -284,11 +288,42 @@
   };
   P.newGame = async function () {
     if (mode === "online") return;
+    if (mode === "learn") { closeAll(); sheet(null); finished = false; if (C.learn && C.learn.start) C.learn.start(); return; }
     closeAll(); sheet(null);
     if (!(await gateAndBegin())) return;
     if (C.onNew) C.onNew("house");
   };
   P.mode = function () { return mode; };
+
+  /* ---------------- Learn to Play (Oct 24) ----------------
+     A room opts in with learn:{start(), practice()} in Parlor.init. Learn mode is free for everyone: it doesn't use a
+     guest game, earns no points and never moves The House's level; Parlor.skill() is gentle and fixed.
+     The room drives the lesson with Parlor.coach({kick, title, text, buttons:[{label, fn, quiet}]}) and Parlor.coach(null).
+     The coach card sits at the top of the right side card on desktop and floats at the top of the screen on phones. */
+  P.sitLearn = function () {
+    mode = "learn"; token = null; finished = false; seat(); closeAll();
+    el.mode.textContent = "Learning to play"; showLevel();
+    if (el.newBtn) { el.newBtn.textContent = "Start the Lesson Again"; el.newBtn.style.display = ""; }
+    if (el.learnBtn) el.learnBtn.style.display = "none";
+    if (C.learn && C.learn.start) C.learn.start();
+  };
+  P.coach = function (o) {
+    var c = el.coach; if (!c) return;
+    if (!o) { c.hidden = true; document.body.classList.remove("pk-coaching"); return; }
+    c.innerHTML = "";
+    if (o.kick) c.appendChild(mk("p", "pk-coachkick", o.kick));
+    if (o.title) c.appendChild(mk("h3", "", o.title));
+    if (o.text) { var t = mk("div", "pk-coachtxt"); t.innerHTML = o.text; c.appendChild(t); }   /* the room's own lesson text */
+    if (o.buttons && o.buttons.length) {
+      var r = mk("div", "pk-coachrow");
+      o.buttons.forEach(function (b) { r.appendChild(btn(b.label, b.quiet ? "quiet" : "", b.fn)); });
+      c.appendChild(r);
+    }
+    c.hidden = false; document.body.classList.add("pk-coaching");
+    var right = $(".pk-right"); if (right && window.innerWidth >= 1000 && c.parentNode !== right) right.insertBefore(c, right.firstChild);
+    if (window.innerWidth < 1000 && c.parentNode !== document.body) document.body.appendChild(c);
+  };
+  window.addEventListener("resize", function () { if (el.coach && !el.coach.hidden) { var r = $(".pk-right"), want = window.innerWidth >= 1000 ? r : document.body; if (want && el.coach.parentNode !== want) { if (want === r) r.insertBefore(el.coach, r.firstChild); else document.body.appendChild(el.coach); } } });
 
   /* ---------------- result ---------------- */
   P.finish = async function (kind, detail, heading) {
@@ -306,6 +341,11 @@
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
     var r = mk("div", "pk-row");
     if (mode === "house") r.appendChild(btn("Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
+    if (mode === "learn") {
+      b.insertBefore(mk("p", "pk-lvlnote", "A practice game: no points, and The House's level doesn't change."), pts);
+      r.appendChild(btn("Practice Again", "", function () { el.end.veil.classList.remove("on"); finished = false; if (C.learn.practice) C.learn.practice(); else C.learn.start(); }));
+      r.appendChild(btn("Play The House", "", function () { el.end.veil.classList.remove("on"); P.coach(null); P.sitHouse(); }));
+    }
     var back2 = mk("a", "pk-btn", "Return to the Lobby"); back2.href = C.home || "lobby.html"; r.appendChild(back2);
     b.appendChild(r); el.end.veil.classList.add("on");
 
@@ -538,7 +578,9 @@
     store(lvlKey(), String(L)); store(lvlKey() + ":l", String(losses)); showLevel(); return note;
   }
   /* how carefully to play at the current level: chance of a loose move, and how far to look ahead (1 to 5) */
-  P.skill = function () { var L = P.level(); return { level: L, loose: Math.max(0.04, 0.5 - L * 0.05), depth: Math.min(5, 1 + Math.floor((L - 1) / 2)) }; };
+  P.skill = function () {
+    if (mode === "learn") return { level: 1, loose: 0.55, depth: 1, learn: true };   /* practice games: always gentle */
+    var L = P.level(); return { level: L, loose: Math.max(0.04, 0.5 - L * 0.05), depth: Math.min(5, 1 + Math.floor((L - 1) / 2)) }; };
 
   /* ---------------- sound & motion ----------------
      Sounds are made in the browser (no files to download). Settings are remembered on this device. */
