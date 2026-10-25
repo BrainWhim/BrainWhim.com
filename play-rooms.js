@@ -129,7 +129,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     if(document.getElementById("bellBtn")) return;
     if(!document.querySelector("header")) return;
     var css=document.createElement("style");
-    css.textContent='header .bw-bell,.hdr .bw-bell{display:inline-flex!important;align-items:center;justify-content:center;position:relative;border:0;background:#fff;color:#1A2744;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:8px;flex-shrink:0;z-index:9}.bw-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#c45c6a;color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;padding:0 4px}.bw-bell .dot.on{display:flex}.bw-mailpane{display:none;position:fixed;right:16px;top:76px;z-index:40;width:min(360px,92vw);background:rgba(255,250,242,.96);border:1px solid rgba(201,166,107,.55);border-radius:16px;padding:12px;box-shadow:0 16px 32px rgba(40,30,16,.22);color:#1A2744}.bw-mailpane.on{display:block}.bw-mailpane h3{margin:0 0 8px;font-size:14px}.bw-note{border-top:1px solid #eadfcb;padding:8px 0;font-size:13px}.bw-note:first-of-type{border-top:0}.bw-toast{position:fixed;right:16px;bottom:16px;z-index:40;max-width:320px;background:#1A2744;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 12px 28px rgba(0,0,0,.28);display:none}.bw-toast.on{display:block}.bw-toast .btn{border:0;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;background:#fff;color:#1A2744;margin-left:8px}';
+    css.textContent='header .bw-bell,.hdr .bw-bell{display:inline-flex!important;align-items:center;justify-content:center;position:relative;border:0;background:#fff;color:#1A2744;border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:8px;flex-shrink:0;z-index:9}.bw-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:#c45c6a;color:#fff;font-size:11px;display:none;align-items:center;justify-content:center;padding:0 4px}.bw-bell .dot.on{display:flex}.bw-mailpane{display:none;position:fixed;right:16px;top:76px;z-index:90;width:min(360px,92vw);max-height:70vh;overflow:auto;background:rgba(15,23,42,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:16px 16px 12px;box-shadow:0 24px 50px rgba(0,0,0,.45);color:#fff;font-family:Montserrat,system-ui,sans-serif;text-align:left}.bw-mailpane.on{display:block}#mailPane.bw-mailpane h3{margin:0 0 12px;text-align:center;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#e6c25a!important}#mailList{font-size:13px;line-height:1.45;color:rgba(255,255,255,.9)}#mailList>button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:#e6c25a;text-decoration:underline;cursor:pointer}.bw-note{padding:10px 12px;margin:0 0 8px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;color:#fff}.bw-note .st{margin-top:4px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55)}.bw-note .acts{display:flex;gap:6px;margin-top:8px}.bw-mbtn{flex:1;border-radius:6px;padding:8px 12px;font:700 13px Montserrat,system-ui,sans-serif;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.9)}.bw-mbtn:hover{background:rgba(255,255,255,.16)}.bw-mbtn.go{background:rgba(212,175,55,.18);border-color:rgba(212,175,55,.7);color:#f0d27a}.bw-mbtn.go:hover{background:rgba(212,175,55,.3)}.bw-toast{position:fixed;right:16px;bottom:16px;z-index:95;max-width:340px;background:rgba(15,23,42,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(212,175,55,.55);color:#fff;border-radius:12px;padding:12px 14px;font:600 13px/1.45 Montserrat,system-ui,sans-serif;box-shadow:0 12px 28px rgba(0,0,0,.35);display:none}.bw-toast.on{display:block}.bw-toast .btn{border-radius:6px;padding:7px 12px;font:700 12px Montserrat,system-ui,sans-serif;cursor:pointer;background:rgba(212,175,55,.18);border:1px solid rgba(212,175,55,.7);color:#f0d27a;margin-left:8px}';
     document.head.appendChild(css);
     var header=document.querySelector("header");
     header.style.position=header.style.position||"relative";
@@ -144,6 +144,9 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     pane.className="bw-mailpane"; pane.id="mailPane";
     pane.innerHTML='<h3>Mailbox</h3><div id="mailList">Sign in to see invites.</div>';
     document.body.appendChild(pane);
+    /* dark glass like the rest of the site (Oct 24); a tap outside or Escape closes it */
+    document.addEventListener("click",function(e){ if(pane.classList.contains("on")&&!pane.contains(e.target)&&!bell.contains(e.target)) pane.classList.remove("on"); });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape") pane.classList.remove("on"); });
     var toast=document.createElement("div");
     toast.className="bw-toast"; toast.id="bwToast";
     document.body.appendChild(toast);
@@ -214,7 +217,6 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     if(!s || s.user.is_anonymous){
       list.textContent="";
       var lnk=bwMakeEl("button","","Sign in"); lnk.type="button";
-      lnk.style.cssText="border:0;background:none;padding:0;font:inherit;font-weight:700;color:#1A2744;text-decoration:underline;cursor:pointer";
       lnk.onclick=function(){ if(window.BW) BW.openAuth({reason:"Sign in to see your invites."}); else location.href="lobby.html"; };
       list.appendChild(lnk); list.appendChild(document.createTextNode(" to see invites."));
       if(dot) dot.classList.remove("on"); return;
@@ -233,16 +235,14 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       var row=bwMakeEl("div","bw-note");
       row.appendChild(document.createTextNode((n.body||"Invite")+" "));   // plain text only
       if(n.status==="pending" && n.room_code){
-        var act=bwMakeEl("div"); act.style.marginTop="6px";
-        var join=bwMakeEl("button","","Join"); join.type="button";
-        join.style.cssText="border:0;border-radius:999px;padding:7px 12px;background:#1A2744;color:#fff;font-weight:700;margin-right:6px";
+        var act=bwMakeEl("div","acts");
+        var join=bwMakeEl("button","bw-mbtn go","Join"); join.type="button";
         join.onclick=function(){ accept(n.id, n.room_code, n.game||""); };
-        var no=bwMakeEl("button","","Not now"); no.type="button";
-        no.style.cssText="border:1px solid #d7c9b0;border-radius:999px;padding:7px 12px;background:#fff;font-weight:700";
+        var no=bwMakeEl("button","bw-mbtn","Not Now"); no.type="button";
         no.onclick=function(){ decline(n.id); };
         act.appendChild(join); act.appendChild(no); row.appendChild(act);
       } else {
-        var st=bwMakeEl("div","",n.status); st.style.cssText="opacity:.7;margin-top:4px";
+        var st=bwMakeEl("div","st",n.status);
         row.appendChild(st);
       }
       list.appendChild(row);
