@@ -316,12 +316,33 @@
       var c = el.coach, h = (c && !c.hidden && window.innerWidth < 1000 && c.parentNode === document.body) ? Math.ceil(c.getBoundingClientRect().bottom) + 6 : 0;
       document.body.style.setProperty("--pk-coach-h", h + "px");
       if (h !== coachH) { coachH = h; if (C && C.onCoachSize) C.onCoachSize(h); }
+      requestAnimationFrame(function () { requestAnimationFrame(makeRoom); });
     });
   }
+  /* phones: if the floating coach card covers the top of the playing area, move the playing area down below it and
+     scale it to fit above the bottom bar (Judy, Oct 25: it hid the far side of chess, checkers and cribbage).
+     A CSS transform on the stage, so taps, drags and floating pieces still line up. Rooms that already make room
+     themselves (Yahtzee, Mancala) end up with nothing to do. */
+  function makeRoom() {
+    var st = el.stage; if (!st) return;
+    st.style.transform = ""; st.style.transformOrigin = "";
+    var c = el.coach, phone = window.innerWidth < 1000;
+    if (!phone || !seated || !c || c.hidden || c.parentNode !== document.body || (C && C.onCoachSize)) return;   /* rooms with onCoachSize make their own room */
+    var top = 1e9, bot = -1e9;
+    [].forEach.call(st.children, function (k) { if (k.classList.contains("pk-whim")) return; if (!k.offsetParent && getComputedStyle(k).position !== "fixed") return; var r = k.getBoundingClientRect(); if (r.height < 2 || r.width < 2) return; top = Math.min(top, r.top); bot = Math.max(bot, r.bottom); });
+    if (top > 1e8) return;
+    var want = c.getBoundingClientRect().bottom + 8; if (top >= want) return;
+    var bar = $(".pk-bar"), barR = bar && getComputedStyle(bar).display !== "none" ? bar.getBoundingClientRect() : null;   /* (fixed: no offsetParent) */
+    var limit = (barR && barR.height ? barR.top : window.innerHeight) - 8;
+    var k = Math.min(1, (limit - want) / Math.max(1, bot - top)), sr = st.getBoundingClientRect();
+    st.style.transformOrigin = "50% " + Math.round(top - sr.top) + "px";
+    st.style.transform = "translateY(" + Math.round(want - top) + "px) scale(" + k.toFixed(3) + ")";
+  }
+  window.addEventListener("resize", function () { if (el.coach && !el.coach.hidden) { coachSize(); } else if (el.stage && el.stage.style.transform) { el.stage.style.transform = ""; } });
   P.coachHeight = function () { return Math.max(0, coachH); };
   P.coach = function (o) {
     var c = el.coach; if (!c) return;
-    if (!o) { c.hidden = true; document.body.classList.remove("pk-coaching"); coachSize(); return; }
+    if (!o) { c.hidden = true; document.body.classList.remove("pk-coaching"); if (el.stage) { el.stage.style.transform = ""; } coachSize(); return; }
     c.innerHTML = "";
     /* phones: a small button folds the card down to one line so the whole board shows; it stays folded until opened */
     var fold = mk("button", "pk-coachfold", coachMin ? "▾" : "▴"); fold.type = "button"; fold.setAttribute("aria-label", coachMin ? "Show the coach" : "Fold the coach away");
