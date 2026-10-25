@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Garden Chess · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Chess: Judy's round garden table seen from straight above, with the chessboard inlaid flush in its top =====
    The table top (paint, stencilled damask, the inlaid board, moulded rim, dappled light) is painted in code once per board.
@@ -16,6 +16,8 @@
   box-shadow:0 2.6em 5em rgba(0,0,0,.5),0 .8em 1.6em rgba(0,0,0,.35)}
 .cs-layer{position:absolute;inset:0;pointer-events:none}
 .cs-sq{position:absolute;width:8.375%;height:8.375%}
+.cs-sq.hint{z-index:1;background:rgba(255,214,110,.38);box-shadow:inset 0 0 0 .5em #f2c75a,inset 0 0 0 .62em rgba(60,40,0,.5),0 0 1.4em .4em rgba(250,205,95,.7);animation:cs-hint 1.3s ease-in-out infinite}
+@keyframes cs-hint{50%{background:rgba(255,214,110,.18)}}
 .cs-sq.lastf{background:rgba(255,226,150,.16);box-shadow:inset 0 0 0 .3em rgba(255,214,120,.35)}
 .cs-sq.lastt{background:rgba(255,226,150,.26);box-shadow:inset 0 0 0 .35em rgba(255,214,120,.6)}
 .cs-sq.check{background:radial-gradient(circle,rgba(230,60,50,.6),rgba(230,60,50,.12) 70%);box-shadow:inset 0 0 0 .35em rgba(200,40,30,.6)}
@@ -77,7 +79,7 @@ body.pk{--cs-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script id="csEngine">
 /* =================== chess rules (no drawing here) ===================
    Board: 64 squares, index = row*8 + col, row 0 = Black's back rank (rank 8). Pieces are letters: white upper case, black lower case, "" empty.
@@ -442,7 +444,7 @@ function paint(){
     h+=pcHTML(p,cls,c.x,c.y+SQ*.3);});
   pcL.innerHTML=h;
   var lf=last?last.f:-1,lt=last?last.t:-1,ck=(!over&&inCheck(S))?kingSq(S.b,S.turn==="w"):-1;
-  for(var i=0;i<64;i++){var cl=fx[i].classList;cl.toggle("lastf",i===lf&&sel<0);cl.toggle("lastt",i===lt&&sel<0);cl.toggle("check",i===ck);cl.toggle("selsq",i===sel&&!busy);
+  for(var i=0;i<64;i++){var cl=fx[i].classList;cl.toggle("lastf",i===lf&&sel<0);cl.toggle("lastt",i===lt&&sel<0);cl.toggle("check",i===ck);cl.toggle("selsq",i===sel&&!busy);cl.toggle("hint",i===hintAt);
     var d=ds.filter(function(m){return m.t===i;})[0];cl.toggle("dest",!!d);cl.toggle("cap",!!(d&&d.cap));}
   /* captured pieces */
   var t="",near=nearSide();
@@ -494,7 +496,8 @@ async function animate(m,side,fromXY){
 async function playMove(m,side,fromXY){
   busy=true;sel=-1;paint();
   await animate(m,side,fromXY);
-  seq++;hist.push(posKey(S));busy=false;
+  seq++;hist.push(posKey(S));busy=false;hintAt=-1;
+  if(Parlor.lessonOn){legalNow=[];paint();Parlor.lessonDone();return;}   /* Learn to Play */
   var st=status(S,hist);
   legalNow=st?[]:legal(S);
   if(st){over=true;result=st;}
@@ -502,6 +505,7 @@ async function playMove(m,side,fromXY){
   paint();if(over)end();else msg();
   if(online&&side===mySide)push(m);
   if(!online&&!over&&S.turn==="b")setTimeout(houseMove,700);
+  if(practice&&!over&&S.turn==="w")practiceTip(m);
 }
 
 /* ---------- your input: tap or drag (one layer over the table; a tap on a standing piece's head counts as that piece) ---------- */
@@ -513,7 +517,7 @@ function pieceAt(e){   /* the piece whose image is under the pointer (front piec
   for(var k=0;k<imgs.length;k++){var b=imgs[k].getBoundingClientRect(),w=b.width*.2;if(e.clientX>b.left+w&&e.clientX<b.right-w&&e.clientY>b.top+b.height*.08&&e.clientY<b.bottom){
     var q=localPct({clientX:(b.left+b.right)/2,clientY:b.bottom-2});var sq=squareAt({x:q.x,y:q.y-SQ*.3});if(sq>=0&&S.b[sq])return sq;}}
   return -1;}
-function canAct(){return !busy&&!over&&seatedNow()&&S.turn===(online?mySide:"w")&&!(online&&(!room||!room.guest))&&promoEl.hidden;}
+function canAct(){return !busy&&!over&&seatedNow()&&S.turn===(online?mySide:"w")&&!(online&&(!room||!room.guest))&&promoEl.hidden&&!(Parlor.lessonOn&&!Parlor.lessonWaiting);}
 scene.addEventListener("pointerdown",function(e){
   if(e.button>0||!canAct())return;if(e.target.closest&&e.target.closest(".cs-promo"))return;
   var q=localPct(e),sq=squareAt(q),pc=pieceAt(e),mv=movers();
@@ -571,6 +575,7 @@ async function houseMove(){
   if(!r)return;var m=legalNow.filter(function(x){return x.f===r.f&&x.t===r.t&&(x.promo||null)===(r.promo||null);})[0];if(m)playMove(m,"b");
 }
 function end(){
+  if(practice)Parlor.coach(null);
   var w=result.winner,kind=!w?"draw":(w===(online?mySide:"w")?"win":"lose"),n=colorNames();
   var why={checkmate:"Checkmate",stalemate:"Stalemate: no legal move, but not in check",fifty:"Fifty moves each without a capture or pawn move",material:"Neither side can checkmate with what's left",repetition:"The same position three times"}[result.why]||"";
   var my=online?mySide:"w";   /* names, not colours (Oct 24) */
@@ -584,6 +589,46 @@ function cap(w){return w.charAt(0).toUpperCase()+w.slice(1);}
 function newGame(){
   S=chStart();hist=[posKey(S)];over=false;result=null;last=null;took={w:[],b:[]};seq++;sel=-1;busy=false;hidden=-1;thinking=false;
   legalNow=legal(S);promoEl.hidden=true;paint();msg();
+}
+
+/* ---------- Learn to Play (Oct 24): ten steps on small positions, then a coached practice game with a Hint button ---------- */
+var practice=false,hintAt=-1,tipN=0,lessonAllow=null;
+function LESSON(){var n=colorNames();return [
+  {title:"The Board",text:"<p>You play the <b>"+n[0]+"</b> pieces from the near side and move first. Each kind of piece moves its own way, and you capture by moving onto an opponent's piece.</p><p>The goal is <b>checkmate</b>: trap The House's king.</p>"},
+  {title:"Pawns",fen:"4k3/8/8/8/8/8/4P3/4K3 w - - 0 1",only:{f:52},text:"<p><b>Pawns</b> move straight forward one square, or <b>two</b> from their starting square.</p><p>Tap your glowing pawn, then a gold dot.</p>",done:"<p>Pawns never move backward.</p>",sub:"Move the glowing pawn"},
+  {title:"Pawn Captures",fen:"4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1",only:{f:36,t:27},text:"<p>Pawns <b>capture diagonally</b>: one square forward and to the side.</p><p>Capture The House's pawn.</p>",done:"<p>Captured pieces go to your side of the table. (A rare pawn capture called <b>en passant</b> also exists: How to Play explains it.)</p>",sub:"Capture with the glowing pawn"},
+  {title:"Knights",fen:"4k3/8/8/8/8/8/8/1N2K3 w - - 0 1",only:{f:57},text:"<p><b>Knights</b> jump in an L: two squares one way, then one to the side. They're the only piece that can jump over others.</p><p>Move your knight.</p>",done:"<p>Knights are best near the middle of the board, where they reach the most squares.</p>",sub:"Move the glowing knight"},
+  {title:"Bishops, Rooks and the Queen",fen:"4k3/8/8/8/8/8/8/3QK3 w - - 0 1",only:{f:59},text:"<p><b>Bishops</b> slide diagonally; <b>rooks</b> slide along rows and columns. The <b>queen</b> does both, as far as the way is clear.</p><p>Move your queen.</p>",done:"<p>The queen is your strongest piece. Don't bring it out too early, where it can be chased around.</p>",sub:"Move the glowing queen"},
+  {title:"The King and Check",fen:"4k3/8/8/8/8/8/4r3/4K3 w - - 0 1",only:{f:60,t:52},text:"<p>The <b>king</b> moves one square in any direction. When it's attacked, it's in <b>check</b> (its square glows red), and you must get out of check at once.</p><p>Your king is in check. Capture the rook.</p>",done:"<p>Out of check. You can never make a move that leaves your own king in check.</p>",sub:"Capture with your king"},
+  {title:"Castling",fen:"4k3/8/8/8/8/8/5PPP/4K2R w K - 0 1",only:{f:60,t:62},text:"<p><b>Castling</b> tucks your king away safely: the king moves two squares toward a rook, and the rook hops over it.</p><p>Move your king two squares to the right.</p>",done:"<p>Castled. You can't castle out of, through or into check, or after the king or that rook has moved.</p>",sub:"Move the king two squares right"},
+  {title:"Promotion",fen:"4k3/1P6/8/8/8/8/8/4K3 w - - 0 1",only:{f:9},text:"<p>A pawn that reaches the far side is <b>promoted</b>: it becomes a queen, rook, bishop or knight.</p><p>Move your pawn to the far row and choose a queen.</p>",done:"<p>A new queen! Pushing a pawn all the way can win the game.</p>",sub:"Move the glowing pawn"},
+  {title:"Checkmate",fen:"6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1",only:{f:56,t:0},text:"<p><b>Checkmate</b> wins: the king is in check and has no way out.</p><p>The House's king is trapped behind its own pawns. Move your rook to the far row.</p>",done:"<p>Checkmate! That's the whole game.</p>",sub:"Move the rook to the far row"},
+  {title:"Draws",text:"<p>A game is a draw if the player to move has no legal move but isn't in check (<b>stalemate</b>), if the same position comes up three times, after fifty moves each with no capture or pawn move, or if neither side has enough left to checkmate.</p><p>Ready for a practice game? The House plays gently, and you can ask for a hint any time.</p>"}
+];}
+function lessonSetup(k,st){
+  practice=false;hintAt=-1;sel=-1;busy=false;hidden=-1;thinking=false;over=false;result=null;last=null;took={w:[],b:[]};mySide="w";promoEl.hidden=true;seq++;
+  S=st.fen?fromFEN(st.fen):chStart();hist=[posKey(S)];lessonAllow=st.only||null;
+  legalNow=st.done?legal(S).filter(function(m){return (lessonAllow.f==null||m.f===lessonAllow.f)&&(lessonAllow.t==null||m.t===lessonAllow.t);}):[];
+  paint();
+}
+function startPractice(){practice=true;tipN=0;hintAt=-1;lessonAllow=null;mySide="w";newGame();
+  Parlor.practiceSay("Your Move","<p>You move first. A good start is a centre pawn two squares forward.</p><p>Stuck? Tap <b>Hint</b>.</p>");}
+function askHint(){return new Promise(function(res){var d={s:cloneS(S),sk:{level:6,loose:0},hist:hist.slice()};
+  if(!worker){setTimeout(function(){res(think(d.s,d.sk,d.hist));},30);return;}
+  var w2=worker;w2.onmessage=function(e){res(e.data);};w2.postMessage(d);});}
+var NAMES={P:"pawn",N:"knight",B:"bishop",R:"rook",Q:"queen",K:"king"};
+function sqName(i){return "abcdefgh"[i&7]+(8-(i>>3));}
+async function showHint(){
+  if(!practice||over||busy||thinking||S.turn!=="w")return;
+  thinking=true;var my=seq,r=await askHint();thinking=false;if(my!==seq||!r)return;
+  sel=r.f;hintAt=r.t;paint();var p=S.b[r.f].toUpperCase(),c=S.b[r.t];
+  Parlor.hintSay("<p>Move your <b>"+NAMES[p]+"</b> from "+sqName(r.f)+" to the <b>gold-ringed square</b> ("+sqName(r.t)+")"+(c?", capturing a "+NAMES[c.toUpperCase()]:"")+".</p>");
+}
+var TIPS=["Control the centre with pawns and pieces.","Bring your knights and bishops out early, before moving the same piece twice.","Castle early to keep your king safe.","Before each move, check what The House is attacking.","Trade pieces when you're ahead in material."];
+function practiceTip(m){
+  if(inCheck(S))Parlor.practiceSay("You're in Check","<p>Your king is attacked. Move it, block the attack, or capture the attacker.</p>");
+  else if(m&&m.cap)Parlor.practiceSay("The House Captured","<p>It took your "+NAMES[(m.cap||"p").toUpperCase()]+". Can you capture back?</p>");
+  else Parlor.practiceSay("Your Move","<p>"+TIPS[tipN++%TIPS.length]+"</p>");
 }
 
 /* ---------- online: coming in the room step (the old chess table format is kept). ---------- */
@@ -666,7 +711,8 @@ Parlor.init({
     play:"<ol><li>You play the light pieces from the near side of the table and move first.</li><li>Tap a glowing piece (or drag it), then a gold dot. A gold ring marks a capture.</li><li>Pawns move one square forward (two from their first square) and capture one square diagonally forward. A pawn that reaches the far side is promoted: you choose a queen, rook, bishop or knight.</li><li>Knights jump in an L; bishops move diagonally; rooks move straight; the queen moves both ways; the king moves one square.</li><li>Castling: move the king two squares toward a rook that hasn't moved; the rook hops over. Not out of, through or into check.</li><li>En passant: a pawn that has just moved two squares can be taken by an enemy pawn beside it, as if it had moved one.</li><li>You can never leave your own king in check.</li></ol>",
     score:"<ul><li>Checkmate wins: the king is in check and has no way out.</li><li>Draws: stalemate (no legal move but not in check), the same position three times, fifty moves each with no capture or pawn move, or too little material left to checkmate.</li><li>The numbers beside each name add up what that side has captured (pawn 1, knight or bishop 3, rook 5, queen 9).</li></ul>"
   },
-  onNew:function(){mySide="w";newGame();}
+  onNew:function(){mySide="w";practice=false;hintAt=-1;lessonAllow=null;newGame();},
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 legalNow=legal(S);
 new MutationObserver(function(){var k=document.body.getAttribute("data-set");

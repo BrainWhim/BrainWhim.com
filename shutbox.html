@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tavern Shut the Box · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Shut the Box: a real wooden box, drawn in 3D in the browser =====
    The box, felt, tiles and dice are flat panels placed in 3D space. Their materials (wood grain, felt, ivory)
@@ -87,6 +87,8 @@
 .sb-tile .front::after{content:"";position:absolute;inset:0;border-radius:4px;transition:box-shadow .3s,background .3s}
 .sb-tile.play .front::after{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 20px 2px rgba(240,190,90,.55);animation:sb-glow 1.8s ease-in-out infinite}
 .sb-tile.sel .front::after{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 26px 6px rgba(250,205,110,.75);animation:none;background:rgba(255,215,130,.16)}
+.sb-tile.hint .front::after{box-shadow:inset 0 0 0 5px #f2c75a,inset 0 0 28px 8px rgba(250,205,95,.7)!important;animation:sb-hint 1.3s ease-in-out infinite!important;background:rgba(255,215,130,.2)}
+@keyframes sb-hint{50%{box-shadow:inset 0 0 0 5px rgba(242,199,90,.55),inset 0 0 12px 3px rgba(250,205,95,.35)}}
 @keyframes sb-glow{50%{box-shadow:inset 0 0 0 3px rgba(214,164,62,.55),inset 0 0 10px 1px rgba(240,190,90,.25)}}
 .sb-tile .back{transform:translateZ(-12px) rotateY(180deg);background:var(--sb-tile);background-size:256px 256px;background-color:#efe3c6;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),inset 0 0 18px rgba(0,0,0,.25)}
 .sb-tile .back::after{content:"";position:absolute;left:14px;right:14px;top:50%;height:2px;margin-top:-1px;background:rgba(0,0,0,.18);box-shadow:0 1px 0 rgba(255,255,255,.15)}
@@ -154,7 +156,7 @@ body.sb-quick .sb-tile.play .front::after,body.sb-quick .sb-pool.on{animation:no
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* =====================================================================
    Painted materials (no picture files): wood grain, felt, ivory/ebony
@@ -343,14 +345,14 @@ function playable(){
   var set=[]; ok.forEach(function(c){ c.forEach(function(n){ if(sel.indexOf(n)<0&&set.indexOf(n)<0) set.push(n); }); }); return set;
 }
 function seatedNow(){ return document.body.classList.contains("seated"); }
-function myTurn(){ return !over && !busy && seatedNow() && turn===mySide && (!online||(room&&room.guest&&mySide)); }
+function myTurn(){ return !over && !busy && seatedNow() && turn===mySide && (!online||(room&&room.guest&&mySide)) && !(Parlor.lessonOn&&!Parlor.lessonWaiting); }
 
 function paint(){
   var mine=myTurn()&&rolled, p=mine?playable():[];
   for(var n=1;n<=9;n++){
     var t=tilesEl[n], isOpen=open.indexOf(n)>=0;
     t.classList.toggle("shut",!isOpen); t.classList.toggle("sel",sel.indexOf(n)>=0);
-    t.classList.toggle("play",mine&&isOpen&&p.indexOf(n)>=0); t.classList.toggle("tap",mine&&(p.indexOf(n)>=0||sel.indexOf(n)>=0));
+    t.classList.toggle("play",mine&&isOpen&&p.indexOf(n)>=0); t.classList.toggle("hint",hintTiles.indexOf(n)>=0&&isOpen&&sel.indexOf(n)<0); t.classList.toggle("tap",mine&&(p.indexOf(n)>=0||sel.indexOf(n)>=0));
     pools[n].classList.toggle("on",mine&&isOpen&&p.indexOf(n)>=0); pools[n].classList.toggle("sel",sel.indexOf(n)>=0);
   }
   var can=myTurn()&&!rolled;
@@ -396,11 +398,15 @@ async function humanRoll(count){
   if(count===1&&!oneDieOk()) count=2;
   busy=true; await shakeCup(); paint();
   var vals=[1+Math.floor(Math.random()*6)]; if(count===2) vals.push(1+Math.floor(Math.random()*6));
+  if(forceRoll){ vals=forceRoll.slice(); forceRoll=null; }   /* Learn to Play: the lesson's roll */
+  hintTiles=[];
   dv=[vals[0],vals[1]||0]; need=vals[0]+(vals[1]||0); rolled=true; seq++;
   say("Rolling…",""); push();
   await rollDice(vals); busy=false;
   if(!combos(need,open).length){ say("You rolled "+need,"No tiles make "+need+"."); paint(); await Parlor.wait(1100); await endBox(); return; }
   paint(); msg();
+  if(practice) Parlor.practiceSay("You Rolled "+need,"<p>Tap standing tiles that add up to <b>"+need+"</b>. They shut as soon as they make the total.</p>");
+  if(Parlor.lessonOn) Parlor.status("You rolled "+need,"Tap tiles that add up to "+need);
 }
 async function tap(n){
   if(!myTurn()||!rolled||open.indexOf(n)<0) return;
@@ -413,10 +419,12 @@ async function tap(n){
     busy=true; paint(); await Parlor.wait(260);
     var next=open.filter(function(x){ return sel.indexOf(x)<0; });
     await setOpen(next);
-    rolled=false; need=0; seq++; busy=false;
+    rolled=false; need=0; seq++; busy=false; hintTiles=[];
+    if(Parlor.lessonOn){ paint(); Parlor.lessonDone(); return; }   /* Learn to Play */
     push();
     if(!open.length){ say("You shut the box!","A perfect score: 0"); await Parlor.wait(900); await endBox(); return; }
     paint(); msg();
+    if(practice) Parlor.practiceSay("Roll Again","<p>"+(oneDieOk()?"7, 8 and 9 are shut, so you may roll <b>one die</b> or two.":TIPS[tipN++%TIPS.length])+"</p>");
   } else say("You rolled "+need,"Chosen "+s+" of "+need);
 }
 
@@ -427,6 +435,7 @@ async function endBox(){
   rolled=false; need=0; sel=[];
   if(score1!=null&&score2!=null){ over=true; seq++; paint(); await push(); end(); return; }
   var was=turn; turn=3-turn; seq++;
+  if(practice&&turn===2) Parlor.practiceSay("The House's Box","<p>Your box is done: you scored <b>"+sc+"</b>"+(sc===0?". You shut the box!":".")+" Now The House plays a fresh box. "+(sc===0?"It can only tie you by shutting the box too.":"It needs <b>less than "+sc+"</b> to beat you.")+"</p>");
   say(who(was)+(sc===0?" shut the box!":" scored "+sc), turn===mySide?"Your box is next":(online?"Your opponent's box is next":"The House plays a fresh box"));
   paint(); await Parlor.wait(1400);
   busy=true; await setOpen([1,2,3,4,5,6,7,8,9]); busy=false;
@@ -435,6 +444,7 @@ async function endBox(){
 }
 function winnerSide(){ return score1===score2?0:score1<score2?1:2; }
 function end(){
+  if(practice) Parlor.coach(null);
   var w=winnerSide(), mine=mySide===2?score2:score1, theirs=mySide===2?score1:score2;
   var kind=w===0?"draw":(w===mySide?"win":"lose");
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over","You "+mine+" · "+(online?"Opponent":"The House")+" "+theirs);
@@ -488,6 +498,35 @@ async function houseTurn(){
 function newGame(){
   open=[1,2,3,4,5,6,7,8,9]; sel=[]; dv=[0,0]; need=0; turn=1; score1=null; score2=null; rolled=false; over=false; busy=false; reported=false;
   restDice(); paint(); msg();
+}
+
+/* ---------- Learn to Play (Oct 24): five steps (the lesson sets the dice), then a coached practice game ---------- */
+var practice=false, forceRoll=null, hintTiles=[], tipN=0;
+var TIPS=["Shut the high tiles first when you can: they're the hardest to make later.","Small tiles are flexible. Save a few to finish off odd totals.","Every tile still standing at the end counts against you."];
+function LESSON(){ return [
+  {title:"The Box", text:"<p>Tiles <b>1 to 9</b> stand on the shelf. On your turn you roll the dice and shut tiles that add up to the roll.</p><p>You keep rolling until no standing tiles can make the roll.</p>"},
+  {title:"Roll and Shut", text:"<p>Tap the <b>dice cup</b> to roll. Then tap standing tiles that add up to the dice.</p>", done:"<p>The tiles flipped down. One tile or several can make the total: a 7 can be the 7, or 3 + 4, or 1 + 2 + 4.</p>", sub:"Tap the dice cup"},
+  {title:"Several Tiles", text:"<p>You rolled <b>11</b>. There's no 11 tile, so shut <b>two or more tiles</b> that add up to 11.</p>", done:"<p>Shutting the big tiles while you can is usually the smart choice: they're the hardest to make later.</p>", sub:"Tap tiles that add up to 11"},
+  {title:"One Die", text:"<p>Once <b>7, 8 and 9</b> are shut, you may roll <b>one die</b> instead of two. Small totals are easier to make.</p><p>Tap <b>One Die</b> under the cup, then shut the tile.</p>", done:"<p>One die is often the safer roll near the end of a box.</p>", sub:"Tap One Die"},
+  {title:"Scoring", text:"<p>When no standing tiles can make your roll, your box is over. The tiles still standing add up to your <b>score</b>. Shut them all and you score 0: you've <b>shut the box</b>.</p><p>Then The House plays a fresh box. <b>Lower score wins.</b> Ready for a practice game?</p>"}
+]; }
+function lessonSetup(k){
+  practice=false; hintTiles=[]; forceRoll=null; sel=[]; turn=1; over=false; busy=false; rolled=false; need=0; score1=null; score2=null; mySide=1;
+  if(k===1){ open=[1,2,3,4,5,6,7,8,9]; forceRoll=[3,4]; restDice(); }
+  else if(k===2){ open=[2,3,5,6,8]; dv=[5,6]; need=11; rolled=true; var a=UP[5],b=UP[6]; placeDie(dice[0],400,360,a[0],a[1],20,false); placeDie(dice[1],560,380,b[0],b[1],-30,false); showDie(dice[0],true); showDie(dice[1],true); }
+  else if(k===3){ open=[1,2,4,5]; forceRoll=[2]; restDice(); }
+  else { open=[1,2,3,4,5,6,7,8,9]; restDice(); }
+  for(var n=1;n<=9;n++) tilesEl[n].classList.toggle("shut",open.indexOf(n)<0);
+  paint();
+}
+function startPractice(){ practice=true; tipN=0; hintTiles=[]; forceRoll=null; mySide=1; newGame();
+  Parlor.practiceSay("Your Box","<p>Tap the <b>dice cup</b> to roll, then shut tiles that add up to the roll.</p><p>Stuck? Tap <b>Hint</b>.</p>"); }
+function showHint(){
+  if(!practice||over||busy||turn!==1) return;
+  solve();
+  if(!rolled){ var one=oneDieOk()&&BESTN[bitsOf(open)]===1; Parlor.hintSay("<p>"+(oneDieOk()?(one?"Roll <b>one die</b>: tap One Die under the cup.":"Roll <b>two dice</b>: tap the cup."):"Tap the <b>dice cup</b> to roll.")+"</p>"); return; }
+  var pick=bestShut(need); if(!pick) return; hintTiles=pick.filter(function(n){ return sel.indexOf(n)<0; }); paint();
+  Parlor.hintSay("<p>"+(pick.length>1?"Shut the <b>gold-ringed tiles</b>: "+pick.join(" + ")+" = "+need:"Shut the <b>gold-ringed "+pick[0]+" tile</b>")+". That leaves you the best chance for the rest of the box.</p>");
 }
 
 /* ---------- online table (same page: ?code=XXXX) ---------- */
@@ -572,7 +611,8 @@ Parlor.init({
     play:"<ol><li>The box starts with tiles 1 to 9 standing.</li><li>Tap the dice cup to roll, then tap standing tiles that add up to the roll. They shut as soon as they make the total. Tap a chosen tile again to put it back.</li><li>The glowing tiles are the ones that can still make the roll.</li><li>Once 7, 8 and 9 are shut, you may roll one die instead of two (the buttons under the cup).</li><li>Your turn ends when no standing tiles can make the roll. Then The House (or your opponent) plays a fresh box.</li></ol>",
     score:"<ul><li>Your score is the total of the tiles still standing when your turn ends. Lower is better.</li><li>Shut every tile and you score 0: you've shut the box.</li><li>The lower score wins. Equal scores are a draw.</li></ul>"
   },
-  onNew:function(){ mySide=1; newGame(); }
+  onNew:function(){ mySide=1; practice=false; hintTiles=[]; forceRoll=null; newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 /* the board follows the Boards card (it sets body[data-set]) */
 new MutationObserver(function(){ applyDesign(document.body.getAttribute("data-set")||"oak"); fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});

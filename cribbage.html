@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fireside Cribbage · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Cribbage: a leather-topped card table seen from straight above, drawn in the browser =====
    The pegboard, cards and table are painted in code (no picture files). Card backs carry the gold BW monogram.
@@ -76,6 +76,8 @@
 .cd.tap{cursor:pointer}
 .cd.glow .f{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.45)}
 .cd.sel .f{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 22px 6px rgba(250,205,110,.7)}
+.cd.hint .f{box-shadow:inset 0 0 0 5px #f2c75a,inset 0 0 26px 8px rgba(250,205,95,.75)!important;animation:cd-hint 1.3s ease-in-out infinite}
+@keyframes cd-hint{50%{filter:brightness(1.15)}}
 /* overlays on the felt: the action button, the scoring panel, the score toast */
 .cr-act{position:absolute;z-index:5;left:50%;transform:translateX(-50%);width:auto;min-width:170px;min-height:44px;padding:11px 22px;border-radius:6px;background:rgba(15,23,42,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border:1px solid rgba(231,199,122,.55);box-shadow:0 2px 10px rgba(0,0,0,.25),0 0 16px rgba(240,190,90,.25);color:#e6c25a;font:700 15px Montserrat,sans-serif;letter-spacing:.45px;cursor:pointer}
@@ -133,7 +135,7 @@ body.cr-big.pk .pk-mini{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -298,7 +300,7 @@ function fresh(dealer,score,handNo){
 function other(s){ return 3-s; }
 function canPlay(s){ return S.hand[s].some(function(c){ return S.count+val(c)<=31; }); }
 function seatedNow(){ return document.body.classList.contains("seated"); }
-function live(){ return seatedNow()&&!S.over&&(!online||(room&&room.guest&&mySide)); }
+function live(){ return seatedNow()&&!S.over&&(!online||(room&&room.guest&&mySide))&&!(Parlor.lessonOn&&!Parlor.lessonWaiting); }
 function myDiscard(){ return live()&&!busy&&S.phase==="discard"&&!S.tossed[mySide]&&(!online||S.tossed[other(S.dealer)]||mySide!==S.dealer); }
 function myPlay(){ return live()&&!busy&&S.phase==="play"&&S.turn===mySide&&canPlay(mySide); }
 function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
@@ -346,7 +348,8 @@ function render(){
     else setAt(e,rowX(nh.length,k,nh.length>4?74:show?90:96),NEAR_Y+(lift?-26:0),-12+(lift?6:0));
     e.classList.add("near"); e.dataset.k=k;
     if(disc){ e.classList.add("tap"); e.classList.toggle("sel",lift); e.onclick=function(){ toggleSel(k); }; }
-    if(playing&&S.count+val(c)<=31){ e.classList.add("tap","glow"); e.onclick=function(){ humanPlay(k); }; }
+    if(playing&&S.count+val(c)<=31&&(lessonOnly==null||c.r===lessonOnly)){ e.classList.add("tap","glow"); e.onclick=function(){ humanPlay(k); }; }
+    if(k===hintIdx) e.classList.add("hint");
   });
   stage.querySelector("#crTagFar").textContent=online?"Opponent":(mySide===2?"You":"The House");
   stage.querySelector("#crTagNear").textContent=mySide===0?"Host":"You";
@@ -357,7 +360,7 @@ function render(){
   actBtn.textContent=act; actBtn.classList.toggle("off",!act);
   /* scores */
   Parlor.turn(S.over||S.phase!=="play"?-1:S.turn===1?0:1);
-  if(Parlor.info) Parlor.info("Hand "+S.handNo+" · first to 121 · "+(S.dealer===mySide?"your deal":(online?"their deal":"The House deals")));
+  if(Parlor.info) Parlor.info("Hand "+S.handNo+" · first to "+WIN+" · "+(S.dealer===mySide?"your deal":(online?"their deal":"The House deals")));
   updScore();
 }
 function updScore(){
@@ -382,8 +385,9 @@ function msg(){
 function toggleSel(k){ if(!myDiscard()) return; var i=sel.indexOf(k); if(i>=0) sel.splice(i,1); else if(sel.length<2) sel.push(k); else { sel.shift(); sel.push(k); } Parlor.sfx("click",{pitch:1.5}); render(); msg(); }
 async function sendToCrib(){
   if(!myDiscard()||sel.length!==2) return;
-  var picks=sel.slice().sort(function(a,b){ return b-a; }); sel=[]; busy=true;
+  var picks=sel.slice().sort(function(a,b){ return b-a; }); sel=[]; busy=true; hintIdx=-1;
   await tossCards(mySide,picks);
+  if(Parlor.lessonOn){ houseDiscard(); await houseTossNow(); await Parlor.wait(300); S.starter=S.deck.pop(); Parlor.sfx("flip",{pitch:1.6}); S.phase="play"; S.turn=2; busy=false; render(); Parlor.lessonDone(); return; }   /* Learn to Play */
   busy=false; seq++; lastMv={k:"toss",s:mySide};
   if(!online&&!S.tossed[2]){ houseDiscard(); await houseTossNow(); }
   if(S.tossed[1]&&S.tossed[2]) await cutStarter(); else { push(); render(); msg(); }
@@ -435,7 +439,9 @@ async function houseTossNow(){ if(!houseToss) return; await tossCards(2,houseTos
 async function humanPlay(k){
   if(!myPlay()) return;
   var c=S.hand[mySide][k]; if(S.count+val(c)>31) return;
-  busy=true; seq++; await playCard(mySide,k); busy=false;
+  if(lessonOnly!=null&&c.r!==lessonOnly) return;
+  busy=true; seq++; hintIdx=-1; await playCard(mySide,k); busy=false;
+  if(Parlor.lessonOn){ lessonOnly=null; S.turn=2; render(); Parlor.lessonDone(); return; }   /* Learn to Play */
   afterCard(mySide);
 }
 async function playCard(s,k){
@@ -460,6 +466,7 @@ async function afterCard(s){
   if(S.over){ push(); render(); end(); return; }
   if(!S.hand[1].length&&!S.hand[2].length){ await toShow(); return; }
   push(); render(); msg(); maybeHouse();
+  if(practice&&S.phase==="play"&&S.turn===1) practicePlayTip(s);
 }
 /* the count is over (31, or nobody can play): one for the last card unless it made 31; then a fresh count */
 async function endCount(goPoint){
@@ -489,6 +496,66 @@ async function houseTurn(){
   afterCard(2);
 }
 
+/* ---------- Learn to Play (Oct 24): six steps, then a coached practice game to 61 ---------- */
+var practice=false, lessonOnly=null, hintIdx=-1, tipN=0;
+function card(r,su){ return {r:r,s:su}; }
+function LESSON(){ return [
+  {title:"The Deal", text:"<p>Each player gets <b>six cards</b>. Points are scored three ways: during the <b>play</b>, in the <b>show</b> at the end of each hand, and in the dealer's <b>crib</b>.</p><p>Each score moves your pegs along the board on the left.</p>"},
+  {title:"The Crib", text:"<p>Each player puts <b>two cards</b> in the crib, a bonus hand the <b>dealer</b> scores. You're dealing, so it's your crib.</p><p>Tap two cards, then tap <b>Send to Your Crib</b>.</p>", done:"<p>Then a <b>starter</b> card is turned up on the deck. It counts as part of every hand in the show.</p>", sub:"Tap two cards, then Send"},
+  {title:"Fifteen", text:"<p>In the <b>play</b>, you take turns laying cards down and the <b>count</b> adds up. Picture cards count 10, aces 1.</p><p>The count is 10. Play your <b>5</b> to make <b>15 for 2 points</b>.</p>", done:"<p>Fifteen for 2! The pegs move as you score.</p>", sub:"Play the glowing 5"},
+  {title:"Pairs and Runs", text:"<p>Play the <b>same rank</b> as the card before for a <b>pair</b>: 2 points. Three in a row scores 6.</p><p>Play your <b>7</b> to pair The House's 7.</p>", done:"<p>A pair for 2. Cards in sequence (like 4-5-6, in any order) make a <b>run</b>: 1 point per card.</p>", sub:"Play the glowing 7"},
+  {title:"Go and 31", text:"<p>The count can never go past <b>31</b>. If you can't play, you say <b>Go</b>: the other player keeps playing, and whoever plays the last card scores <b>1</b> (or <b>2</b> for exactly 31).</p><p>Then the count starts again from zero.</p>"},
+  {title:"The Show", text:"<p>When all cards are played, each hand is counted with the starter: <b>fifteens</b> (2 each), <b>pairs</b> (2), <b>runs</b> (1 per card), a <b>flush</b> (4) and <b>his nobs</b> (the jack of the starter's suit, 1).</p><p>For example, 4 5 6 K with a 9 starter scores 9: three fifteens (4+5+6, 6+9, 5+K) and a run of three.</p>"},
+  {title:"Winning", text:"<p>The non-dealer counts first, then the dealer, then the crib. The deal then switches.</p><p>The first to <b>121</b> wins. This practice game is to <b>61</b>, once around the board. Ready?</p>"}
+]; }
+function lessonSetup(k){
+  practice=false; lessonOnly=null; hintIdx=-1; sel=[]; showIdx=-1; busy=false; mySide=1; WIN=121; panel.classList.add("off");
+  S=fresh(1,[0,0,0],1); disp={1:[0,0],2:[0,0]};
+  if(k===2||k===3){
+    var mineCards=k===2?[card(4,2),card(8,0),card(1,3),card(12,1)]:[card(6,0),card(1,2),card(12,3),card(8,1)], led=k===2?card(9,3):card(6,1);
+    S.deck=S.deck.filter(function(c){ return !mineCards.concat([led]).some(function(x){ return sameCard(x,c); }); });
+    S.hand[1]=mineCards; S.hand[2]=S.deck.splice(0,3); S.crib=S.deck.splice(0,4); S.keep[1]=mineCards.slice(); S.starter=S.deck.pop();
+    S.phase="play"; S.seq=[{c:led,s:2}]; S.count=val(led); S.turn=1; S.last=2; S.tossed=[null,true,true]; lessonOnly=k===2?4:6;
+  }
+  placePegs(); render();
+}
+function startPractice(){ practice=true; tipN=0; lessonOnly=null; hintIdx=-1; mySide=1; WIN=61; newGame(); practiceDiscardTip(); }
+function practiceDiscardTip(){
+  Parlor.practiceSay("Choose Your Discard","<p>Pick two cards for "+(S.dealer===1?"<b>your</b> crib: give it cards that score together, like a pair, a 5, or cards in sequence.":"<b>The House's</b> crib: don't give it a 5 or a pair if you can help it.")+"</p><p>Keep the four that score best together. Stuck? Tap <b>Hint</b>.</p>");
+}
+function bestDiscard(){
+  var h=S.hand[1], best=null, bv=-1e9, unknown=newDeck().filter(function(c){ return !h.some(function(x){ return sameCard(x,c); }); });
+  for(var i=0;i<6;i++) for(var j=i+1;j<6;j++){
+    var keep=h.filter(function(_,k){ return k!==i&&k!==j; }), tot=0;
+    unknown.forEach(function(st){ tot+=showPoints(keep,st,false).total; });
+    var v=tot/unknown.length, d1=h[i], d2=h[j], cr=0;
+    if(d1.r===d2.r) cr+=2; if(val(d1)+val(d2)===15) cr+=2; if(d1.r===4) cr+=1.5; if(d2.r===4) cr+=1.5; if(Math.abs(d1.r-d2.r)===1) cr+=.7; if(d1.s===d2.s) cr+=.2;
+    v+=(S.dealer===1?1:-1)*cr; if(v>bv){ bv=v; best=[i,j]; }
+  }
+  return best;
+}
+function bestPlay(){
+  var h=S.hand[1], pick=-1, bv=-1e9;
+  h.forEach(function(c,k){ if(S.count+val(c)>31) return; var cnt=S.count+val(c), pile=S.seq.map(function(x){ return x.c; }).concat([c]);
+    var v=pegPoints(pile,cnt).reduce(function(a,p){ return a+p[1]; },0)*2;
+    if(cnt===5||cnt===21) v-=1.6; if(cnt<15&&cnt>=5) v-=.8; if(S.count===0&&val(c)<5) v+=.6; if(c.r===4) v-=.7;
+    if(v>bv){ bv=v; pick=k; } });
+  return pick;
+}
+function showHint(){
+  if(!practice||S.over||busy) return;
+  if(S.phase==="discard"&&myDiscard()){ sel=bestDiscard(); render(); msg(); Parlor.hintSay("<p>The two <b>raised cards</b> are the best ones to give away. Tap <b>"+actBtn.textContent+"</b>.</p>"); return; }
+  if(S.phase==="play"&&myPlay()){ hintIdx=bestPlay(); render(); var c=S.hand[1][hintIdx], pts=pegPoints(S.seq.map(function(x){ return x.c; }).concat([c]),S.count+val(c));
+    Parlor.hintSay("<p>Play the <b>gold-ringed card</b>"+(pts.length?": "+pts.map(function(p){ return p[0].toLowerCase()+" for "+p[1]; }).join(", "):"")+".</p>"); return; }
+  if(S.phase==="show") Parlor.hintSay("<p>Tap <b>"+(actBtn.textContent||"Next")+"</b> to keep counting.</p>");
+}
+var TIPS=["Don't leave the count at 5 or 21: a ten-card makes 15 or 31 for The House.","Leading a card under 5 is safe: The House can't make 15 with one card.","Hold on to a card that can make 31 late in a count.","Pairs are tempting, but a pair can be answered with three of a kind for 6."];
+function practicePlayTip(s){
+  var h=S.hand[1], can=h.map(function(c){ if(S.count+val(c)>31) return 0; return pegPoints(S.seq.map(function(x){ return x.c; }).concat([c]),S.count+val(c)).reduce(function(a,p){ return a+p[1]; },0); }), best=Math.max.apply(null,can.concat([0]));
+  if(best>0) Parlor.practiceSay("You Can Score","<p>One of your cards scores "+best+" right now (count "+S.count+"). Tap <b>Hint</b> if you can't spot it.</p>");
+  else Parlor.practiceSay("Your Play","<p>Count "+S.count+". "+TIPS[tipN++%TIPS.length]+"</p>");
+}
+
 /* ---------- the show: the non-dealer's hand, the dealer's hand, then the crib ---------- */
 async function toShow(){
   S.phase="show"; var nd=other(S.dealer);
@@ -497,6 +564,7 @@ async function toShow(){
   S.showRes=[{s:nd,what:"hand",r:r1},{s:S.dealer,what:"hand",r:r2},{s:S.dealer,what:"crib",r:r3}];
   S.showRes.forEach(function(x){ if(!S.over) addScore(x.s,x.r.total); else x.skip=true; });
   seq++; lastMv={k:"show"}; push();
+  if(practice) Parlor.practiceSay("The Show","<p>Each hand is counted with the starter: first "+(S.dealer===1?"The House's":"yours")+", then "+(S.dealer===1?"yours":"The House's")+", then the crib. Tap <b>Next</b> to see each count.</p>");
   showIdx=-1; await showStep();
 }
 async function showStep(){
@@ -518,14 +586,16 @@ async function onAct(){
     panel.classList.add("off");
     var nd=other(S.dealer); S=fresh(nd,S.score,S.handNo+1); sel=[]; showIdx=-1; seq++; lastMv={k:"deal"};
     Parlor.sfx("dice",{dur:.4}); syncDisp(); push(); render(); msg();
+    if(practice) practiceDiscardTip();
     if(!online&&S.dealer===2){ /* you're not the dealer: The House still discards; you choose too */ }
   }
 }
 function end(){
+  if(practice) Parlor.coach(null);
   window.__ended=(window.__ended||0)+1;
   panel.classList.add("off"); render();
   var meS=mySide||1, kind=S.winner===meS?"win":"lose";
-  var why="Final score: you "+S.score[meS]+", "+Parlor.oppName(true)+" "+S.score[other(meS)]+"."+(S.score[other(S.winner)]<91?" A skunk: "+(S.winner===meS?Parlor.oppName(true):"you")+" finished short of 91.":"");
+  var why="Final score: you "+S.score[meS]+", "+Parlor.oppName(true)+" "+S.score[other(meS)]+"."+(WIN===121&&S.score[other(S.winner)]<91?" A skunk: "+(S.winner===meS?Parlor.oppName(true):"you")+" finished short of 91.":"");
   say(kind==="win"?"You win!":"Game over",why);
   if(online) report();
   Parlor.finish(kind,why);
@@ -624,7 +694,8 @@ Parlor.init({
     play:"<ol><li><b>The deal:</b> six cards each. Choose two for the crib, which belongs to the dealer. The deal alternates every hand.</li><li><b>The cut:</b> a starter card is turned up. If it's a jack, the dealer pegs 2 (his heels).</li><li><b>The play:</b> take turns laying cards, keeping the running count at 31 or under. The glowing cards are the ones you can play. If you can't play, you say Go (automatically) and your opponent plays on.</li><li><b>The show:</b> the non-dealer counts their hand, then the dealer counts their hand and the crib, each with the starter.</li><li>Every point moves your back peg past the front one. First to <b>121</b> wins.</li></ol>",
     score:"<ul><li><b>In the play:</b> a count of 15 or 31 scores 2; a pair 2, three of a kind 6, four 12; a run of three or more scores one per card; the last card of a count scores 1 (Go).</li><li><b>In the show:</b> each combination making 15 scores 2; pairs and runs as above; a four-card flush in hand scores 4 (5 with the starter; the crib needs all five); the jack of the starter's suit scores 1 (his nobs).</li><li>Reach 121 first to win. Finishing before your opponent reaches 91 is a skunk.</li></ul>"
   },
-  onNew:function(){ mySide=1; newGame(); }
+  onNew:function(){ mySide=1; practice=false; lessonOnly=null; hintIdx=-1; WIN=121; newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"maple"; if(k!==curDesign){ applyDesign(k); } fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
 S=fresh(1,[0,0,0],1);

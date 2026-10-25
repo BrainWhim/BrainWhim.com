@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Night Terrace Othello · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Othello board: a framed board seen from straight above, painted in code (no picture files) =====
    Boards (the Boards card): each board comes with its own discs. The frame is one painted picture used as a
@@ -32,6 +32,8 @@
 .ot-cell.ok::after{content:"";position:absolute;left:50%;top:50%;width:32%;height:32%;border-radius:50%;transform:translate(-50%,-50%);
   background:radial-gradient(circle,#fff0b8,#e0b13a);box-shadow:0 0 2vmin rgba(255,214,110,.9);animation:ot-pulse 1.8s ease-in-out infinite;z-index:2}
 @keyframes ot-pulse{50%{opacity:.55;transform:translate(-50%,-50%) scale(.82)}}
+.ot-cell.hint{box-shadow:inset 0 0 0 .5vmin #f2c75a,0 0 2vmin .4vmin rgba(250,205,95,.7);z-index:2;animation:ot-hint 1.3s ease-in-out infinite;border-radius:6%}
+@keyframes ot-hint{50%{box-shadow:inset 0 0 0 .5vmin rgba(242,199,90,.6),0 0 1vmin .2vmin rgba(250,205,95,.35)}}
 .ot-cell.last::before{content:"";position:absolute;inset:6%;border-radius:50%;box-shadow:0 0 0 .35vmin rgba(255,226,140,.9);pointer-events:none;z-index:3}
 /* discs: a thick lacquered disc with a metal rim, a little side showing below */
 .ot-disc{position:absolute;inset:9%;border-radius:50%;z-index:2;
@@ -73,7 +75,7 @@ body.pk{--ot-size:min(calc(100vw - 2*var(--pk-side) - 110px),max(340px,calc(100d
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* ---------- painted materials (drawn in the browser when the page opens; no picture files) ---------- */
 function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
@@ -224,10 +226,11 @@ function winnerSide(){ var a=count(1), b=count(2); return a===b?0:a>b?1:2; }
 function paint(){
   /* the gold dots show the open squares for whoever is to move, on every turn (you can only tap them on yours) */
   var legal=(!over && seatedNow()) ? moves(turn) : [];
+  if(Parlor.lessonOn) legal=Parlor.lessonWaiting?legal.filter(function(m){ return !lessonAllow||lessonAllow.some(function(a){ return a[0]===m[0]&&a[1]===m[1]; }); }):[];
   for(var r=0;r<8;r++) for(var c=0;c<8;c++){
     var cell=cells[r*8+c], v=g[r][c], was=prev?prev[r][c]:0;
     var ok=legal.some(function(m){return m[0]===r&&m[1]===c});
-    cell.classList.toggle("ok",ok);
+    cell.classList.toggle("ok",ok); cell.classList.toggle("hint",r*8+c===hintAt);
     cell.classList.toggle("last",!!(last&&last[0]===r&&last[1]===c));
     var d=cell.firstElementChild;
     if(!v){ if(d) cell.removeChild(d); continue; }
@@ -244,6 +247,8 @@ function seatedNow(){ return document.body.classList.contains("seated"); }
 function say(main,sub){ Parlor.status(main,sub||""); }
 
 function afterMove(who){
+  if(Parlor.lessonOn){ paint(); Parlor.lessonDone(); return; }   /* Learn to Play: the lesson decides what's next */
+  if(practice) setTimeout(function(){ practiceTip(who); },0);
   var m1=moves(1).length, m2=moves(2).length;
   if(!m1 && !m2){ over=true; paint(); end(); push(); return; }
   var next=3-who;
@@ -259,6 +264,7 @@ function msg(){
   else say(online?"Opponent's turn":"The House is thinking…","");
 }
 function end(){
+  if(practice) Parlor.coach(null);
   var w=winnerSide(), a=count(1), b=count(2);
   var kind=w===0?"draw":(w===mySide?"win":"lose");
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over", a+" – "+b);
@@ -281,6 +287,8 @@ async function place(side,r,c,f,done){
 }
 function play(r,c){
   if(busy||over||turn!==mySide||!seatedNow()) return;
+  if(Parlor.lessonOn){ if(!Parlor.lessonWaiting) return; if(lessonAllow&&!lessonAllow.some(function(a){ return a[0]===r&&a[1]===c; })) return; }
+  hintAt=-1;
   if(online && (!room||!room.guest)) return;
   var f=flips(r,c,mySide); if(!f.length) return;
   place(mySide,r,c,f,function(){ afterMove(mySide); });
@@ -352,6 +360,51 @@ async function bootOnline(){
   }).subscribe();
 }
 
+/* ---------- Learn to Play (Oct 24): six steps, then a coached practice game with a Hint button ---------- */
+var practice=false, lessonAllow=null, hintAt=-1, tipN=0;
+function lessonBoard(mine,theirs){ var b=[]; for(var r=0;r<8;r++) b[r]=[0,0,0,0,0,0,0,0]; mine.forEach(function(q){ b[q[0]][q[1]]=1; }); theirs.forEach(function(q){ b[q[0]][q[1]]=2; }); return b; }
+function LESSON(){ var n=colorNames(), me="<b>"+n[0]+"</b>", them="<b>"+n[1]+"</b>"; return [
+  {title:"The Board", text:"<p>Othello starts with four discs in the middle. You play "+me+" and move first; The House plays "+them+".</p><p>Every disc is "+me+" on one side and "+them+" on the other, so discs can change hands.</p>"},
+  {title:"Placing a Disc", text:"<p>Place a disc so it <b>sandwiches</b> one or more House discs in a straight line between your new disc and one of yours.</p><p>The gold dots show where you can play. Tap one.</p>", done:"<p>The sandwiched disc flipped to your colour.</p>", sub:"Tap a gold dot"},
+  {title:"Several Lines at Once", text:"<p>One disc can sandwich lines in <b>several directions</b> at once: across, up and down, and diagonally.</p><p>Play the gold dot to flip three discs.</p>", done:"<p>Three discs flipped: two across and one down.</p>", sub:"Tap the gold dot"},
+  {title:"Corners", text:"<p><b>Corners can never be flipped back.</b> Take the corner.</p>", done:"<p>That corner is yours for good. Be careful with the squares right next to an empty corner: playing there can hand the corner to your opponent.</p>", sub:"Tap the corner"},
+  {title:"Passing", text:"<p>If you have no legal move, you <b>pass</b> and The House plays again. If neither side can move, the game ends.</p>"},
+  {title:"How to Win", text:"<p>When the board is full, or neither side can move, the side with <b>more discs</b> wins.</p><p>Ready for a practice game? The House plays gently, and you can ask for a hint any time.</p>"}
+]; }
+function lessonSetup(k){
+  practice=false; hintAt=-1; lessonAllow=null; over=false; busy=false; turn=1; last=null; prev=null;
+  cells.forEach(function(c){ c.textContent=""; });
+  if(k===2){ g=lessonBoard([[3,2],[5,5]],[[3,3],[3,4],[4,5]]); lessonAllow=[[3,5]]; }
+  else if(k===3){ g=lessonBoard([[0,2],[2,2],[4,4]],[[0,1],[1,1],[3,3]]); lessonAllow=[[0,0]]; }
+  else g=fresh();
+  paint(); prev=g.map(function(row){ return row.slice(); });
+}
+function startPractice(){
+  practice=true; tipN=0; hintAt=-1; lessonAllow=null; mySide=1; newGame();
+  Parlor.practiceSay("Your Move","<p>You move first. Tap a gold dot to place a disc.</p><p>Stuck? Tap <b>Hint</b>.</p>");
+}
+function bestMove(){
+  var m=moves(1); if(!m.length) return null; var best=m[0],bs=-1e9;
+  m.forEach(function(mv){ var v=tryMove(1,mv,function(){ var rep=moves(2); if(!rep.length) return -boardScore()+40; var worst=1e9; rep.forEach(function(rm){ worst=Math.min(worst,tryMove(2,rm,function(){ return -boardScore(); })); }); return worst; }); if(v>bs){ bs=v; best=mv; } });
+  return best;
+}
+function showHint(){
+  if(!practice||over||busy||turn!==1) return;
+  var m=bestMove(); if(!m) return; hintAt=m[0]*8+m[1]; paint();
+  var corner=(m[0]===0||m[0]===7)&&(m[1]===0||m[1]===7);
+  Parlor.hintSay("<p>Try the <b>gold-ringed square</b>. It flips "+flips(m[0],m[1],1).length+" disc"+(flips(m[0],m[1],1).length>1?"s":"")+(corner?", and it's a corner":"")+".</p>");
+}
+var TIPS=["Early on, fewer discs is fine: keeping more moves open for yourself matters more.","Avoid the squares diagonally next to an empty corner.","Edges are strong, but check that The House can't sandwich you along them.","Before you play, count how many moves The House will have afterwards."];
+function practiceTip(who){
+  if(who!==2||over) return;
+  var m=moves(1), corner=m.filter(function(x){ return (x[0]===0||x[0]===7)&&(x[1]===0||x[1]===7); })[0];
+  var lastCorner=last&&(last[0]===0||last[0]===7)&&(last[1]===0||last[1]===7);
+  if(turn!==1) { Parlor.practiceSay("You Pass","<p>You have no legal move, so The House plays again.</p>"); return; }
+  if(corner) Parlor.practiceSay("A Corner Is Open","<p>You can take a corner. Corners can never be flipped back.</p>");
+  else if(lastCorner) Parlor.practiceSay("The House Took a Corner","<p>Discs along that corner's edges are now harder to hold. Look for safe moves elsewhere.</p>");
+  else { Parlor.practiceSay("Your Move","<p>"+TIPS[tipN%TIPS.length]+"</p>"); tipN++; }
+}
+
 /* ---------- hook up the kit ---------- */
 Parlor.init({
   game:"othello", title:"Night Terrace Othello", bg:"othello-terrace.jpg", home:"lobby.html", stage:stage,
@@ -367,7 +420,8 @@ Parlor.init({
     play:"<ol><li>You play the dark discs. The opponent plays the light ones.</li><li>A move must sandwich one or more enemy discs between your new disc and another of yours, in a straight line (row, column or diagonal).</li><li>All sandwiched discs flip to your color.</li><li>If you have no legal move, you pass.</li><li>The corners are the strongest squares. They can never be flipped.</li></ol>",
     score:"<ul><li>When neither player can move, count the discs.</li><li>More discs wins. Equal count is a draw.</li></ul>"
   },
-  onNew:function(){ mySide=1; newGame(); }
+  onNew:function(){ mySide=1; practice=false; hintAt=-1; newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 g=fresh(); /* a board to look at before anyone sits */
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set");

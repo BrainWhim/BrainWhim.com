@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Library Backgammon · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Backgammon: a hinged backgammon box seen from straight above (Fireside Leather standard; Library Marble and Midnight Gilt for Club members).
    The board is painted in code once per design (canvas, 1480 x 1020 board units, drawn at 2x) and scaled to fit;
@@ -138,7 +138,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* =================== backgammon rules (no drawing here) ===================
    b[1..24]: >0 = side 1's checkers (light), <0 = side 2's (dark). Side 1 moves 24 → 1 and bears off past 1.
@@ -588,16 +588,18 @@ async function rollClick(){
     else{say("The House starts","It rolled "+b+", you rolled "+a);G.phase="house";await wait(1100);if(my!==token)return;busy=false;houseTurn([b,a]);}
     return;}
   if(G.phase!=="roll"||G.turn!==ms)return;if(online&&(!room||!room.guest))return;
-  busy=true;await shakeCup();buttons();var d=[r6(),r6()];
+  busy=true;await shakeCup();buttons();var d=[r6(),r6()];if(forceDice){d=forceDice;forceDice=null;}   /* Learn to Play: the lesson's dice */
   await tumble(diceSpots(true,2),d);if(my!==token)return;busy=false;G.roll=d;startMyMove(diceList(d));}
 function startMyMove(list){G.dice=list;var r=allSeqs(G.st,ms,list);G.seqs=r.seqs;G.max=r.max;G.played=[];G.hist=[];G.sel=null;G.dests=null;G.last=null;
   showDice(true,list,0);
   if(!r.max){G.phase="wait";G.sources={};render(G.st);buttons();say("No legal move","Nothing plays "+rollText(G.roll));var my=token;setTimeout(function(){if(my===token)endMyTurn();},1700);return;}
   G.phase="move";computeSources();autoPick();render(G.st);buttons();
-  say("Your move",r.max===1?"One move: tap or drag a glowing checker":"Tap or drag a glowing checker to a gold ring");}
+  say("Your move",r.max===1?"One move: tap or drag a glowing checker":"Tap or drag a glowing checker to a gold ring");
+  if(practice)practiceTip();}
 function rollText(d){return d?d[0]+" and "+d[1]:"";}
 function matching(){var P=G.played;return G.seqs.filter(function(o){for(var k=0;k<P.length;k++){if(o.path[k].f!==P[k].f||o.path[k].d!==P[k].d)return false;}return true;});}
-function computeSources(){var m=matching(),src={},k=G.played.length;m.forEach(function(o){if(o.path.length>k)src[o.path[k].f]=1;});G.sources=src;}
+function computeSources(){var m=matching(),src={},k=G.played.length;m.forEach(function(o){if(o.path.length>k)src[o.path[k].f]=1;});
+  if(Parlor.lessonOn&&lessonSrc!=null){var only={};if(src[lessonSrc])only[lessonSrc]=1;src=only;}G.sources=src;}
 /* where the checker on point f can go: one die, or several dice in a row with the same checker (e.g. 2 then 4 = six spots).
    For a combined move the way that doesn't hit on the way is preferred, so nothing surprising happens. */
 function destsFor(f){var m=matching(),k=G.played.length,by={};
@@ -637,6 +639,7 @@ function undo(){if(busy||G.phase!=="move"&&G.phase!=="wait"||!G.played.length)re
 function endMyTurn(){finishTurn();}
 /* the mover's turn is done: record it, check for a win, pass the dice */
 function finishTurn(){
+  if(Parlor.lessonOn){G.phase="look";G.sources={};G.sel=null;G.dests=null;render(G.st);buttons();Parlor.lessonDone();return;}   /* Learn to Play */
   var s=G.turn,path=G.played.map(function(m){return {f:m.f,t:m.t};});
   G.last=path.map(function(m){return {s:s,f:m.f,t:m.t};});seq++;
   if(G.st.off[s]===15){over=true;winner=s+1;}
@@ -645,7 +648,7 @@ function finishTurn(){
   if(over){G.phase="over";render(G.st);buttons();end();return;}
   if(online){G.phase=G.turn===ms?"roll":"opp";diceDim();render(G.st);buttons();msg();return;}
   if(G.turn===1){G.phase="house";render(G.st);buttons();houseTurn();}
-  else{G.phase="roll";diceDim();render(G.st);buttons();msg();}
+  else{G.phase="roll";diceDim();render(G.st);buttons();msg();if(practice)Parlor.practiceSay("Your Turn","<p>Tap the <b>dice cup</b> to roll.</p>");}
 }
 function diceDim(){diceL.querySelectorAll(".die").forEach(function(e){e.classList.add("used");});}
 function msg(){
@@ -668,6 +671,7 @@ async function houseTurn(openDice){var my=token;G.turn=1;G.phase="house";busy=tr
   if(ch){G.played=[];for(var k=0;k<ch.path.length;k++){var m=ch.path[k];G.played.push(m);await animMove(1,m.f,m.t);if(my!==token)return;showDice(false,list,ch.path.slice(0,k+1));await wait(330);if(my!==token)return;}}
   busy=false;finishTurn();}
 function end(){
+  if(practice)Parlor.coach(null);
   var mine=winner===ms+1,l=winner===1?1:0,kind="",n=colorNames();
   if(G.st.off[l]===0){var deep=G.st.bar[l]>0;for(var p=19;p<=24;p++)if(own(G.st,l,p))deep=true;kind=deep?"backgammon":"gammon";}
   var who=watcher?(winner===1?n[0]:n[1]):mine?"you":Parlor.oppName();   /* names, not colours (Oct 24) */
@@ -675,6 +679,53 @@ function end(){
   say(mine?"You win!":watcher?"Game over":"Game over",kind?(kind==="gammon"?"A gammon":"A backgammon"):"All fifteen borne off");
   if(online)report();
   Parlor.finish(watcher?"draw":mine?"win":"lose",detail);
+}
+
+/* ---------- Learn to Play (Oct 24): six steps (the lesson sets the dice), then a coached practice game ---------- */
+var practice=false,forceDice=null,lessonSrc=null,tipN=0;
+/* a lesson position: mine and theirs as {point: count}, each side counting its own points (25 = bar) */
+function lessonPos(mine,theirs){var b=new Array(25).fill(0),bar=[0,0];
+  Object.keys(mine).forEach(function(p){if(+p===25)bar[0]=mine[p];else b[+p]+=mine[p];});
+  Object.keys(theirs).forEach(function(p){if(+p===25)bar[1]=theirs[p];else b[25-p]-=theirs[p];});
+  return {b:b,bar:bar,off:[0,0]};}
+function LESSON(){var n=colorNames();return [
+  {title:"The Board",text:"<p>You move your fifteen <b>"+n[0]+"</b> checkers around the board, from The House's side toward <b>your home</b>: the six points at your bottom right.</p><p>When all fifteen are home, you <b>bear them off</b>. The House moves its <b>"+n[1]+"</b> checkers the other way. First to bear off all fifteen wins.</p>"},
+  {title:"Moving",text:"<p>Tap the <b>dice cup</b> to roll. Then move a checker the number on <b>each die</b>: one checker for each die, or one checker for both.</p><p>Tip: with 3 and 1, move one checker from the 8-point and one from the 6-point to the 5-point.</p>",done:"<p>Two or more of your checkers on a point <b>make the point</b>: The House can't land there. Landing on a point The House holds is not allowed either.</p>",sub:"Tap the dice cup"},
+  {title:"Hitting",text:"<p>A single checker on a point is a <b>blot</b>. Land on a House blot to <b>hit</b> it: it goes to the bar in the middle.</p><p>You rolled a 3. Move your glowing checker 3 points to hit.</p>",done:"<p>Hit! The House must bring that checker back in before it can move anything else.</p>",sub:"Move the glowing checker to the gold ring"},
+  {title:"The Bar",text:"<p>When your checker is hit, it sits on the <b>bar</b> and must <b>re-enter</b> in The House's home before you move anything else.</p><p>You rolled a 4. Enter your checker from the bar.</p>",done:"<p>Back in the game. You can't enter on a point The House holds, so a strong House home can keep you on the bar.</p>",sub:"Move the glowing checker on the bar"},
+  {title:"Bearing Off",text:"<p>Once all fifteen of your checkers are home, you <b>bear them off</b>: a 6 takes a checker off the 6-point.</p><p>You rolled a 6. Bear off a checker: move it to the tray.</p>",done:"<p>One off, fourteen to go. A higher roll than your highest checker takes that highest checker off.</p>",sub:"Move the glowing checker to the tray"},
+  {title:"How to Win",text:"<p>The first to bear off all fifteen wins. If the loser hasn't borne off any, it's a <b>gammon</b>; if they also still have a checker on the bar or in the winner's home, a <b>backgammon</b>.</p><p>Ready for a practice game? The House plays gently, and you can ask for a hint any time.</p>"}
+];}
+function lessonSetup(k){
+  token++;practice=false;forceDice=null;lessonSrc=null;busy=false;over=false;winner=0;ms=0;
+  G.turn=0;G.dice=null;G.roll=null;G.seqs=[];G.max=0;G.played=[];G.hist=[];G.sel=null;G.dests=null;G.sources={};G.last=null;diceL.innerHTML="";
+  var H={20:1,6:5,8:3,13:4,24:2};
+  if(k===1){G.st=startPos();forceDice=[3,1];G.phase="roll";}
+  else if(k===2){G.st=lessonPos({8:1,6:4,13:5,24:2,3:3},H);lessonSrc=8;G.roll=[3,3];startMyMove([3]);return;}
+  else if(k===3){G.st=lessonPos({25:1,6:5,8:3,13:4,24:1,3:1},{6:5,8:3,13:5,24:2});lessonSrc=25;G.roll=[4,4];startMyMove([4]);return;}
+  else if(k===4){G.st=lessonPos({6:2,5:2,4:3,3:3,2:3,1:2},{6:5,8:5,13:5});lessonSrc=6;G.roll=[6,6];startMyMove([6]);return;}
+  else {G.st=startPos();G.phase="look";}
+  render(G.st);buttons();fit();
+}
+function startPractice(){practice=true;tipN=0;forceDice=null;lessonSrc=null;ms=0;newGame();
+  Parlor.practiceSay("Practice Game","<p>Tap the <b>dice cup</b> to roll for who starts: the higher die goes first.</p><p>Stuck? Tap <b>Hint</b>.</p>");}
+function ptName(p){return p===25?"the bar":p===0?"the tray":"your "+p+"-point";}
+function showHint(){
+  if(!practice||over||busy)return;
+  if(G.phase==="roll"||G.phase==="opening"){Parlor.hintSay("<p>Tap the <b>dice cup</b> to roll.</p>");return;}
+  if(G.phase!=="move"||G.turn!==ms)return;
+  var rem=G.dice.slice();G.played.forEach(function(m){var i=rem.indexOf(m.d);if(i>=0)rem.splice(i,1);});
+  var ch=houseChoose(G.st,rem,ms,{level:7,loose:0});if(!ch||!ch.path.length)return;
+  var f=ch.path[0].f,t=ch.path[0].t;G.sel=f;G.dests=destsFor(f);render(G.st);
+  Parlor.hintSay("<p>Move the <b>selected checker</b> from "+ptName(f)+" to "+ptName(t)+(ch.path[0].hit?", hitting a House blot":"")+".</p>"+(ch.path.length>1?"<p>Then tap Hint again for your next move.</p>":""));
+}
+var TIPS=["Make points: two or more checkers together are safe, and block The House.","Your 5-point and your bar point (7) are the most valuable points to make early.","Leaving a blot within six points of a House checker is risky.","Running your back checkers out early keeps them from getting trapped."];
+function practiceTip(){
+  var canHit=G.seqs.some(function(o){return o.path.some(function(m){return m.hit;});});
+  if(G.st.bar[ms])Parlor.practiceSay("On the Bar","<p>Your checker on the bar must re-enter in The House's home before anything else moves.</p>");
+  else if(allHome(G.st,ms))Parlor.practiceSay("Bearing Off","<p>All your checkers are home: move them into the tray to bear off.</p>");
+  else if(canHit)Parlor.practiceSay("A Hit Is Open","<p>You can hit a House blot this turn. It costs The House time, but check whether your checker will be left alone.</p>");
+  else Parlor.practiceSay("Your Move","<p>"+TIPS[tipN++%TIPS.length]+"</p>");
 }
 
 /* ---------- input: taps and drags on one layer over the board ---------- */
@@ -812,7 +863,8 @@ Parlor.init({
     play:"<ol><li>You play the light checkers and move them around the board toward your home, the six points at your bottom right. The House plays the dark checkers the other way.</li><li>To start, each side rolls one die. The higher roll goes first and plays both numbers.</li><li>On your turn, tap the dice cup to roll two dice, then move a checker the number on each die (one checker can use both). Doubles play four times. Tap a glowing checker, then a gold ring, or drag it there. A ring further along moves the same checker with both dice at once. Undo takes back a move until your turn is played.</li><li>You can land on any point that isn't held by two or more of the other side's checkers. Land on a single one (a blot) and it's hit and goes to the bar.</li><li>A checker on the bar must come back in first, into the other side's home, before anything else moves.</li><li>You must use both dice if you can. If only one can be played, play the larger one when possible.</li><li>Once all fifteen are home, bear them off: a roll takes off a checker on that point, or from the highest point if the roll is bigger than any point you still hold.</li></ol>",
     score:"<ul><li>The first side to bear off all fifteen checkers wins.</li><li>If the loser hasn't borne off any, it's a <b>gammon</b>; if the loser also still has a checker on the bar or in the winner's home, it's a <b>backgammon</b>. Both are noted on the result.</li><li>The numbers beside each name are pip counts: how far that side still has to travel. Lower is ahead.</li><li>No doubling cube: every game is played out.</li></ul>"
   },
-  onNew:function(){ms=0;newGame();}
+  onNew:function(){ms=0;practice=false;forceDice=null;lessonSrc=null;newGame();},
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 new MutationObserver(function(){var k=document.body.getAttribute("data-set");
   if(PREVIEW&&previewPick&&k!==previewPick){document.body.setAttribute("data-set",previewPick);return;}

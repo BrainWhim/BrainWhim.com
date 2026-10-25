@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cloister Morris · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Nine Men's Morris: a real board, drawn in the browser and seen from straight above (like chess) =====
    The board, inlaid lines, brass points, stone trays and stones are flat panels placed in 3D space; their
@@ -45,6 +45,8 @@
 .mo-pt{width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;transform:translateZ(1.2px);background:var(--mo-pt);box-shadow:var(--mo-ptsh)}
 .mo-pt.ok::after{content:"";position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,rgba(255,226,140,.95) 0 22%,rgba(255,206,110,.4) 45%,rgba(255,206,110,0) 70%);animation:mo-pulse 1.8s ease-in-out infinite}
 @keyframes mo-pulse{50%{opacity:.5;transform:scale(.85)}}
+.mo-pt.hint::before{content:"";position:absolute;inset:-14px;border-radius:50%;box-shadow:0 0 0 5px #f2c75a,0 0 22px 6px rgba(250,205,95,.75);animation:mo-hint 1.3s ease-in-out infinite}
+@keyframes mo-hint{50%{box-shadow:0 0 0 5px rgba(242,199,90,.55),0 0 10px 2px rgba(250,205,95,.35)}}
 .mo-hit{width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;transform:translateZ(30px);cursor:default;-webkit-tap-highlight-color:transparent}
 .mo-hit.tap{cursor:pointer}
 .mo-mg{transform:translateZ(1px);border-radius:8px;background:rgba(255,214,120,.5);box-shadow:0 0 18px 6px rgba(255,206,110,.5);opacity:0;transition:opacity .4s;pointer-events:none}
@@ -85,7 +87,7 @@ body.mo-slim.pk .pk-mini{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -297,12 +299,15 @@ function designNames(){ return DESIGNS[curDesign||"walnut"].names; }
 function paint(){
   document.body.classList.toggle("mo-quick",!Parlor.smooth());
   var mine=myTurn(), s=mySide, placing=mine&&!removing&&st.h[s]>0, moving=mine&&!removing&&st.h[s]===0;
+  if(Parlor.lessonOn&&!Parlor.lessonWaiting){ placing=false; moving=false; }
   var dests=[]; if(moving&&sel>=0) dests=steps(st,s).filter(function(m){ return m.from===sel; }).map(function(m){ return m.to; });
   var movable=[]; if(moving) steps(st,s).forEach(function(m){ if(movable.indexOf(m.from)<0) movable.push(m.from); });
+  if(Parlor.lessonOn&&lessonAllow){ movable=movable.filter(function(i){ return i===lessonAllow.from; }); dests=dests.filter(function(i){ return i===lessonAllow.to; }); }
   var tk=mine&&removing?takeable(st.c,opp()):[];
   var lit=[]; MILLS.forEach(function(m,k){ var on=st.c[m[0]]&&st.c[m[0]]===st.c[m[1]]&&st.c[m[1]]===st.c[m[2]]; document.getElementById("moMg"+k).classList.toggle("on",!!on); if(on) lit=lit.concat(m); });
   for(var i=0;i<24;i++){
-    var ok=(placing&&!st.c[i])||dests.indexOf(i)>=0;
+    var ok=(placing&&!st.c[i]&&!(Parlor.lessonOn&&lessonAllow&&lessonAllow.to!==i))||dests.indexOf(i)>=0;
+    document.getElementById("moPt"+i).classList.toggle("hint",i===hintAt);
     document.getElementById("moPt"+i).classList.toggle("ok",ok);
     var e=els[i]; if(e){ e.classList.toggle("mill",lit.indexOf(i)>=0&&tk.indexOf(i)<0); e.classList.toggle("can",moving&&movable.indexOf(i)>=0&&i!==sel); e.classList.toggle("sel",i===sel); e.classList.toggle("take",tk.indexOf(i)>=0); }
     boardEl.querySelector('.mo-hit[data-i="'+i+'"]').classList.toggle("tap",ok||tk.indexOf(i)>=0||(moving&&movable.indexOf(i)>=0));
@@ -327,7 +332,10 @@ function msg(){
 /* ---------- your moves ---------- */
 async function tapPoint(i){
   if(!myTurn()) return;
+  if(Parlor.lessonOn&&!Parlor.lessonWaiting) return;
   var s=mySide;
+  if(Parlor.lessonOn&&lessonAllow&&!removing){ if(st.h[s]>0&&i!==lessonAllow.to) return; if(st.h[s]===0&&st.c[i]===s&&i!==lessonAllow.from) return; }
+  hintAt=-1;
   if(removing){
     if(takeable(st.c,opp()).indexOf(i)<0) return;
     busy=true; paint(); await showTake(s,i); st.c[i]=0; removing=false; busy=false;
@@ -346,18 +354,24 @@ async function tapPoint(i){
 }
 function afterLanding(s,from,to){
   seq++; lastMv={s:s,from:from,to:to};
-  if(millAt(st.c,to,s)&&takeable(st.c,3-s).length){ Parlor.sfx("mill"); removing=true; push(); paint(); msg(); return; }
+  if(millAt(st.c,to,s)&&takeable(st.c,3-s).length){ Parlor.sfx("mill"); removing=true; push(); paint(); msg();
+    if(practice) Parlor.practiceSay("Mill!","<p>Three in a row. Take one of The House's <b>glowing stones</b>. Stones already in a mill are safe unless every House stone is in one.</p>");
+    if(Parlor.lessonOn) Parlor.status("Mill!","Take a glowing House stone");
+    return; }
   endTurn(false);
 }
 function endTurn(took){
+  if(Parlor.lessonOn){ sel=-1; removing=false; paint(); Parlor.lessonDone(); return; }   /* Learn to Play */
   var s=st.turn;
   st.quiet=took?0:(st.h[1]===0&&st.h[2]===0?st.quiet+1:0);
   st.turn=3-s; sel=-1; removing=false;
   var r=result(st); if(r.over){ over=true; winner=r.winner; paint(); push(); end(); return; }
   push(); paint(); msg();
   if(!online&&st.turn===2) houseTurn();
+  if(practice&&st.turn===1) practiceTip(s,took);
 }
 function end(){
+  if(practice) Parlor.coach(null);
   var kind=winner===0?"draw":(winner===mySide?"win":"lose");
   var mine=cnt(st.c,mySide||1)+st.h[mySide||1], theirs=cnt(st.c,3-(mySide||1))+st.h[3-(mySide||1)];
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over",Parlor.oppName()+": "+theirs+" stones, you: "+mine);
@@ -384,6 +398,46 @@ async function houseTurn(){
   busy=false; endTurn(m.take>=0);
 }
 function newGame(){ st=fresh(); sel=-1; removing=false; over=false; winner=0; busy=false; reported=false; syncStones(); paint(); msg(); }
+
+/* ---------- Learn to Play (Oct 24): six steps, then a coached practice game with a Hint button ---------- */
+var practice=false, lessonAllow=null, hintAt=-1, tipN=0;
+function LESSON(){ return [
+  {title:"The Board", text:"<p>The board has <b>24 points</b> on three squares joined by lines. You and The House each have <b>nine stones</b>, waiting in your trays.</p><p>Three of your stones in a row along one line is a <b>mill</b>.</p>"},
+  {title:"Placing", text:"<p>The game starts with each side taking turns to <b>place</b> a stone on any empty point.</p><p>Place a stone on a glowing point.</p>", done:"<p>Placed. When all eighteen stones are on the board, you start sliding them.</p>", sub:"Tap a glowing point"},
+  {title:"Making a Mill", text:"<p>Make a <b>mill</b>: put your third stone on the glowing point, in line with your other two.</p><p>Then take one of The House's stones.</p>", done:"<p>A mill! Each mill takes one House stone. Stones that are part of a mill are safe, unless every stone is in one.</p>", sub:"Tap the glowing point"},
+  {title:"Sliding", text:"<p>Once every stone is placed, you <b>slide</b> one stone along a line to the next empty point.</p><p>Tap your glowing stone, then slide it up to close a mill.</p>", done:"<p>A mill by sliding. Sliding a stone out of a mill and back in makes a new mill each time.</p>", sub:"Tap your glowing stone, then the gold point"},
+  {title:"Flying", text:"<p>When you're down to <b>three stones</b>, yours can <b>fly</b> to any empty point, not just the next one.</p><p>Fly your glowing stone to complete the mill.</p>", done:"<p>Three stones can still fight back by flying.</p>", sub:"Tap your glowing stone, then the gold point"},
+  {title:"How to Win", text:"<p>Win by bringing The House down to <b>two stones</b>, or by leaving it with <b>no legal move</b>.</p><p>Ready for a practice game? The House plays gently, and you can ask for a hint any time.</p>"}
+]; }
+function lessonState(mine,theirs,h1,h2){ var c=Array(24).fill(0); mine.forEach(function(i){ c[i]=1; }); theirs.forEach(function(i){ c[i]=2; }); return {c:c,h:[0,h1,h2],turn:1,quiet:0}; }
+function lessonSetup(k){
+  practice=false; hintAt=-1; lessonAllow=null; sel=-1; removing=false; over=false; winner=0; busy=false; mySide=1;
+  if(k===1) st=fresh();
+  else if(k===2){ st=lessonState([0,1],[4,21,13],7,6); lessonAllow={to:2}; }
+  else if(k===3){ st=lessonState([3,4,13,0],[21,22,16,18],0,0); lessonAllow={from:13,to:5}; }
+  else if(k===4){ st=lessonState([0,1,20],[9,12,16,22],0,0); lessonAllow={from:20,to:2}; }
+  else st=fresh();
+  syncStones(); paint();
+}
+function startPractice(){ practice=true; tipN=0; hintAt=-1; lessonAllow=null; mySide=1; newGame();
+  Parlor.practiceSay("Your Move","<p>You move first. Place a stone on any glowing point.</p><p>Stuck? Tap <b>Hint</b>.</p>"); }
+function showHint(){
+  if(!practice||over||busy||st.turn!==1) return;
+  if(removing){ var tk=takeable(st.c,2), best=tk[0], bv=-1e9; tk.forEach(function(t){ var c=st.c.slice(); c[t]=0; var v=evaluate({c:c,h:st.h,turn:1},1); if(v>bv){ bv=v; best=t; } }); hintAt=best; paint(); Parlor.hintSay("<p>Take the House stone on the <b>gold-ringed point</b>.</p>"); return; }
+  var m=think(st,3); if(!m) return;
+  if(m.from>=0){ sel=m.from; } hintAt=m.to; paint();
+  Parlor.hintSay("<p>"+(m.from>=0?"Slide your <b>selected stone</b> to the <b>gold-ringed point</b>":"Place a stone on the <b>gold-ringed point</b>")+(m.take>=0?": it makes a mill":"")+".</p>");
+}
+function threat(c,s){ for(var k=0;k<MILLS.length;k++){ var m=MILLS[k],a=0,e=-1; for(var q=0;q<3;q++){ if(c[m[q]]===s) a++; else if(!c[m[q]]) e=m[q]; } if(a===2&&e>=0) return e; } return -1; }
+var TIPS=["Points where lines cross give a stone more ways to move.","Spread your stones out early so they don't get boxed in.","Set up two possible mills at once: The House can only block one.","A mill you can open and close again is very strong."];
+function practiceTip(s,took){
+  if(over||st.turn!==1) return;
+  var mine=fullMoves(st).filter(function(m){ return m.take>=0; }).length, th=threat(st.c,2);
+  if(s===2&&took) Parlor.practiceSay("The House Made a Mill","<p>It took one of your stones. Watch for two House stones in a line with an empty third point.</p>");
+  else if(mine) Parlor.practiceSay("A Mill Is Open","<p>You can make a mill this turn. Tap <b>Hint</b> if you can't spot it.</p>");
+  else if(th>=0) Parlor.practiceSay("Block The House","<p>The House has two in a row. Put a stone on the open third point before it gets there.</p>");
+  else { Parlor.practiceSay("Your Move","<p>"+TIPS[tipN%TIPS.length]+"</p>"); tipN++; }
+}
 
 /* ---------- online table (same page: ?code=XXXX) ----------
    Saved as {game:"morris", board, placed:{1,2}, turn, phase, remove, over, winner, quiet, seq, mv}; same as the old room page. */
@@ -473,7 +527,8 @@ Parlor.init({
     play:"<ol><li>Each player has nine stones. You go first.</li><li><b>Placing:</b> take turns setting a stone on any open point (they glow).</li><li><b>Moving:</b> once all stones are placed, slide one of your stones along a line to the next open point. Tap a stone, then a glowing point.</li><li><b>Mills:</b> three of your stones in a straight line make a mill. Each time you make one, take one of your opponent's stones. Stones in a mill are safe unless every stone they have is in a mill.</li><li><b>Flying:</b> when you're down to three stones, yours may jump to any open point.</li></ol>",
     score:"<ul><li>You win when your opponent has only two stones left, or can't move.</li><li>Fifty moves each with no stone taken is a draw.</li></ul>"
   },
-  onNew:function(){ mySide=1; newGame(); }
+  onNew:function(){ mySide=1; practice=false; hintAt=-1; lessonAllow=null; newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 new MutationObserver(function(){ applyDesign(document.body.getAttribute("data-set")||"walnut"); fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
 st=fresh();

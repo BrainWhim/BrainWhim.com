@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sunroom Dominoes · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Dominoes: a felt tray seen from straight above (like the chess board), drawn in the browser =====
    Tiles are thick 3D pieces; wood, felt and finishes are painted in code, so there are no picture files.
@@ -66,6 +66,8 @@
 .dm.play .f{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.5)}
 .dm.pick .f{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 22px 6px rgba(250,205,110,.7)}
 .dm.glow{cursor:pointer}
+.dm.hint .f{box-shadow:inset 0 0 0 5px #f2c75a,inset 0 0 26px 8px rgba(250,205,95,.75)!important;animation:dm-hint 1.3s ease-in-out infinite}
+@keyframes dm-hint{50%{filter:brightness(1.18)}}
 .dm.glow .bk{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 18px 2px rgba(240,190,90,.5);animation:do-glow 1.6s ease-in-out infinite}
 @keyframes do-glow{50%{box-shadow:inset 0 0 0 2px rgba(214,164,62,.5),inset 0 0 8px 1px rgba(240,190,90,.25)}}
 .do-ghost{position:absolute;left:0;top:0;border-radius:8px;border:3px dashed rgba(241,207,122,.95);background:rgba(255,214,120,.18);box-shadow:0 0 18px 4px rgba(255,206,110,.35);cursor:pointer;animation:do-ghost 1.4s ease-in-out infinite}
@@ -112,7 +114,7 @@ body.do-bighand.pk .pk-mini{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -248,7 +250,7 @@ function attach(t,side){
   else { var R=e[1]; S.chain.push(t[0]===R?[t[0],t[1]]:[t[1],t[0]]); }
 }
 function seatedNow(){ return document.body.classList.contains("seated"); }
-function myTurn(){ return !S.over && !S.handOver && !busy && seatedNow() && mySide && S.turn===mySide && (!online||(room&&room.guest)); }
+function myTurn(){ return !S.over && !S.handOver && !busy && seatedNow() && mySide && S.turn===mySide && (!online||(room&&room.guest)) && !(Parlor.lessonOn&&!Parlor.lessonWaiting); }
 function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
 
 /* ---------- drawing everything from the state ---------- */
@@ -275,7 +277,7 @@ function render(){
     if(big){ var bw2=(HB.clientWidth||360)-drawRoom; setAt(e,bw2/2-(nh.length-1)*HB._sp/2+k*HB._sp,48,0); }
     else { var q=rowXY(nh.length,k,NEAR_Y); setAt(e,q[0],q[1],FZ); }
     e.dataset.k=k; e.classList.add("near");
-    if(show&&canPlay.indexOf(k)>=0){ e.classList.add("play"); if(k===pickIdx) e.classList.add("pick"); e.onclick=function(){ humanPick(k); }; } });
+    if(show&&canPlay.indexOf(k)>=0){ e.classList.add("play"); if(k===pickIdx) e.classList.add("pick"); if(k===hintIdx) e.classList.add("hint"); e.onclick=function(){ humanPick(k); }; } });
   /* if a tile fits both ends, show where it can go */
   if(mine&&pickIdx>=0){ [0,1].forEach(function(side){ var g=ghostAt(handOf(mySide)[pickIdx],side); if(!g) return;
     var d=document.createElement("div"); d.className="do-ghost"; var W=g.dir==="h"?g.l:g.w,H=g.dir==="h"?g.w:g.l;
@@ -360,6 +362,7 @@ function settle(s,played){
 }
 function afterHand(){ if(S.over) end(); else handEnd(); }
 function handEnd(){
+  if(practice){ var L0=S.lastHand||{w:0,pts:0}; Parlor.practiceSay("Hand Over","<p>"+(L0.w===1?"You won the hand and score "+L0.pts+" points: the pips left in The House's tiles.":L0.w?"The House won the hand and scores "+L0.pts+" points: the pips left in your tiles.":"The hand is a draw.")+(L0.blocked?" Nobody could move, so the lower pip total won.":"")+"</p><p>Tap <b>Deal Next Hand</b>. First to "+TARGET+" wins.</p>"); }
   var L=S.lastHand||{w:0,pts:0}, me1=mySide||1, who=L.w===me1?"You win the hand":L.w?(online?"Your opponent wins the hand":"The House wins the hand"):"The hand is a draw";
   var how=L.blocked?"Blocked: lower pips wins. ":"";
   say(who,how+(L.w?"+"+L.pts+" points. ":"No points. ")+"You "+S.score[me1]+" · "+(online?"Opponent":"The House")+" "+S.score[3-me1]);
@@ -397,11 +400,14 @@ async function humanDraw(){
   next(mySide,"draw");
 }
 function next(s,what){
+  hintIdx=-1;
+  if(Parlor.lessonOn){ render(); if(what==="play") Parlor.lessonDone(); else { msg(); if(playable(mySide).length) say("It fits!","Now play the tile you drew"); } return; }   /* Learn to Play */
   var e=ends(); if(what==="draw"&&e){ [e[0],e[1]].forEach(function(n){ if(lacks[s].indexOf(n)<0) lacks[s].push(n); }); }
   if(settle(s,what)){ push(); render(); afterHand(); return; }
   push(); render(); msg();
   if(S.turn===mySide&&!playable(mySide).length&&!S.bone.length&&!S.over){ autoPass(); return; }
   if(!online&&S.turn===2) houseTurn();
+  if(practice&&S.turn===mySide) practiceTip(s,what);
 }
 async function autoPass(){
   busy=true; say("Nothing fits","The boneyard is empty: you pass"); await Parlor.wait(1300); busy=false;
@@ -409,6 +415,7 @@ async function autoPass(){
   push(); render(); msg(); if(!online&&S.turn===2) houseTurn();
 }
 function end(){
+  if(practice) Parlor.coach(null);
   var kind=S.winner===0?"draw":(S.winner===mySide?"win":"lose"), meS=mySide||1;
   var why="Final score: you "+S.score[meS]+", "+Parlor.oppName(true)+" "+S.score[3-meS]+" (first to "+TARGET+").";
   say(kind==="win"?"You win the match!":kind==="draw"?"Draw":"Match over",why); render();
@@ -440,6 +447,50 @@ async function houseTurn(){
   next(2,"play");
 }
 function newGame(){ S=deal([0,0,0],1,1); lacks={1:[],2:[]}; pickIdx=-1; busy=false; reported=false; render(); msg(); }
+
+/* ---------- Learn to Play (Oct 24): six steps, then a coached practice match to 50 ---------- */
+var practice=false, hintIdx=-1, tipN=0;
+var TIPS=["Play heavy tiles (lots of pips) early: if a hand gets blocked, they count against you.","Keep a spread of numbers in your hand so you can match more ends.","Doubles only fit one number; play them while you can.","Watch which numbers The House couldn't match, and leave those at the ends."];
+function LESSON(){ return [
+  {title:"The Tiles", text:"<p>Each domino has two ends with <b>0 to 6</b> pips. You and The House each get <b>seven tiles</b>; the rest lie face down in the <b>boneyard</b> in the corner.</p><p>Your tiles are face up along your side; The House's are face down across from you.</p>"},
+  {title:"Starting the Train", text:"<p>The first tile played starts the <b>train</b>. Tap any of your glowing tiles.</p>", done:"<p>The train has begun. From now on, every tile must match an end.</p>", sub:"Tap a glowing tile"},
+  {title:"Matching", text:"<p>Play a tile with a number that <b>matches one end</b> of the train. Matching halves always face each other.</p><p>Tap a glowing tile.</p>", done:"<p>A match. Only tiles that fit an end can be played.</p>", sub:"Tap a glowing tile"},
+  {title:"Both Ends", text:"<p>This tile fits <b>both ends</b>. Tap it, then tap the dashed outline where you want it to go.</p>", done:"<p>When a tile fits both ends, you choose which end to play it on.</p>", sub:"Tap the tile, then an outline"},
+  {title:"Drawing", text:"<p>Nothing in your hand matches the ends, so you must <b>draw</b> from the boneyard until something fits.</p><p>Tap <b>Draw a Tile</b> (or the glowing boneyard), then play the tile you drew.</p>", done:"<p>When the boneyard is empty and nothing fits, you pass instead.</p>", sub:"Tap Draw a Tile"},
+  {title:"Scoring", text:"<p>A hand ends when someone plays their <b>last tile</b>: they score the pips left in the other hand. If nobody can move, the <b>lower pip total</b> wins and scores the other hand.</p><p>Play hands until someone reaches the target score. Ready for a practice match to 50?</p>"}
+]; }
+function lessonSetup(k){
+  practice=false; hintIdx=-1; pickIdx=-1; busy=false; mySide=1; TARGET=100;
+  S=deal([0,0,0],1,1); lacks={1:[],2:[]};
+  if(k===2){ S.chain=[[3,5]]; S.h1=[[5,2],[1,1],[6,4],[3,0]]; }
+  else if(k===3){ S.chain=[[2,4]]; S.h1=[[4,2],[6,6],[1,5]]; }
+  else if(k===4){ S.chain=[[1,6]]; S.h1=[[2,3],[4,5]]; S.bone=S.bone.filter(function(t){ return !(t[0]===6&&t[1]===2)&&!(t[0]===2&&t[1]===6)&&t[0]!==1&&t[1]!==1&&t[0]!==6&&t[1]!==6; }).slice(0,6).concat([[6,2]]); }
+  render();
+}
+function startPractice(){ practice=true; tipN=0; hintIdx=-1; mySide=1; TARGET=50; newGame();
+  Parlor.practiceSay("Your Turn","<p>You lead. Tap any glowing tile to start the train. This practice match is to <b>50 points</b>.</p><p>Stuck? Tap <b>Hint</b>.</p>"); }
+function myScore(t,side){
+  var keep=S, c={chain:S.chain.map(function(x){ return x.slice(); }),startAt:S.startAt}; S=c; attach(t,side); var e=ends(); S=keep;
+  var rest=S.h1.filter(function(x){ return x!==t; }), v=(t[0]+t[1])*1.2+(t[0]===t[1]?5:0);
+  [e[0],e[1]].forEach(function(n){ var mineN=rest.filter(function(x){ return x[0]===n||x[1]===n; }).length; v+=mineN*3.5; if(!mineN) v-=3; if(lacks[2].indexOf(n)>=0) v+=7; });
+  return v;
+}
+function showHint(){
+  if(!practice||S.over||S.handOver||busy||S.turn!==1) return;
+  var pl=playable(1);
+  if(!pl.length){ Parlor.hintSay(S.bone.length?"<p>Nothing fits: tap <b>Draw a Tile</b> or the glowing boneyard.</p>":"<p>Nothing fits and the boneyard is empty, so you pass.</p>"); return; }
+  var best=null,bv=-1e9; pl.forEach(function(i){ fits(S.h1[i]).forEach(function(side){ var v=myScore(S.h1[i],side); if(v>bv){ bv=v; best={i:i,side:side}; } }); });
+  hintIdx=best.i; render(); var t=S.h1[best.i], e=ends();
+  Parlor.hintSay("<p>Play the <b>gold-ringed tile</b> ("+t[0]+"|"+t[1]+")"+(e&&fits(t).length>1?" on the <b>"+(best.side===0?"left":"right")+" end</b>":"")+".</p>");
+}
+function practiceTip(s,what){
+  if(S.over||S.handOver) return;
+  var pl=playable(1), dbl=pl.filter(function(i){ return S.h1[i][0]===S.h1[i][1]; }).length;
+  if(!pl.length&&S.bone.length) Parlor.practiceSay("Nothing Fits","<p>Draw from the boneyard until a tile matches an end.</p>");
+  else if(s===2&&what==="pass") Parlor.practiceSay("The House Passed","<p>It couldn't match "+ends().join(" or ")+". Keep those numbers at the ends if you can.</p>");
+  else if(dbl) Parlor.practiceSay("Your Turn","<p>You can play a double. Doubles only fit one number, so play them while you can.</p>");
+  else { Parlor.practiceSay("Your Turn","<p>"+TIPS[tipN++%TIPS.length]+"</p>"); }
+}
 
 /* ---------- online table (same page: ?code=XXXX) ---------- */
 var lastMv=null;
@@ -549,7 +600,8 @@ Parlor.init({
     play:"<ol><li>A double-six set: you and your opponent each draw seven tiles. You lead the first hand and may play any tile.</li><li>After that, each tile must match a number at one end of the train. Tap a glowing tile; if it fits both ends, tap the end where it goes.</li><li>If nothing fits, tap <b>Draw a Tile</b> (or the glowing boneyard by your tiles) until something does. If the boneyard is empty, you pass.</li><li>The train turns at the edges of the felt so it always has room.</li><li>A match is several hands. The winner of each hand leads the next one.</li></ol>",
     score:"<ul><li>A hand ends when someone plays their last tile. They score the pips left in their opponent's hand.</li><li>If neither player can move (the hand is blocked), the lower total of pips in hand wins the hand and scores the other hand's pips. Equal totals score nothing.</li><li>The first to <b>100 points</b> wins the match.</li></ul>"
   },
-  onNew:function(){ mySide=1; newGame(); }
+  onNew:function(){ mySide=1; practice=false; hintIdx=-1; TARGET=100; newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"pearl"; if(k!==curDesign){ applyDesign(k); if(S) render(); } fit(); }).observe(document.body,{attributes:true,attributeFilter:["data-set","class"]});
 S=deal(); S.h1=S.h1;

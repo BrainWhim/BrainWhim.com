@@ -269,6 +269,7 @@
   }
   P.sitHouse = async function () {
     if (!(await gateAndBegin())) return;
+    P.lessonOn = false; P.lessonWaiting = false;   /* leaving a lesson for a real game */
     P.coach(null); if (el.newBtn) el.newBtn.textContent = "New Game"; if (el.learnBtn) el.learnBtn.style.display = "";
     mode = "house"; seat();
     el.mode.textContent = "Playing The House"; showLevel();
@@ -276,6 +277,7 @@
   };
   /* online rooms: the daily limit was already applied in the Lobby when the match was made */
   P.seatOnline = function (info) {
+    P.lessonOn = false; P.lessonWaiting = false; if (el.coach) P.coach(null);
     mode = "online"; seat(); token = null; finished = false; if (el.level) el.level.textContent = "";
     el.mode.textContent = (info && info.label) || "Online table";
     if (el.newBtn) el.newBtn.style.display = "none";
@@ -307,10 +309,15 @@
     if (el.learnBtn) el.learnBtn.style.display = "none";
     if (C.learn && C.learn.start) C.learn.start();
   };
+  var coachMin = false;
   P.coach = function (o) {
     var c = el.coach; if (!c) return;
     if (!o) { c.hidden = true; document.body.classList.remove("pk-coaching"); return; }
     c.innerHTML = "";
+    /* phones: a small button folds the card down to one line so the whole board shows; it stays folded until opened */
+    var fold = mk("button", "pk-coachfold", coachMin ? "▾" : "▴"); fold.type = "button"; fold.setAttribute("aria-label", coachMin ? "Show the coach" : "Fold the coach away");
+    fold.onclick = function (e) { e.stopPropagation(); coachMin = !coachMin; c.classList.toggle("min", coachMin); fold.textContent = coachMin ? "▾" : "▴"; c.classList.remove("news"); };
+    c.appendChild(fold); c.classList.toggle("min", coachMin); if (coachMin) { c.classList.remove("news"); void c.offsetWidth; c.classList.add("news"); }
     if (o.kick) c.appendChild(mk("p", "pk-coachkick", o.kick));
     if (o.title) c.appendChild(mk("h3", "", o.title));
     if (o.text) { var t = mk("div", "pk-coachtxt"); t.innerHTML = o.text; c.appendChild(t); }   /* the room's own lesson text */
@@ -323,6 +330,40 @@
     var right = $(".pk-right"); if (right && window.innerWidth >= 1000 && c.parentNode !== right) right.insertBefore(c, right.firstChild);
     if (window.innerWidth < 1000 && c.parentNode !== document.body) document.body.appendChild(c);
   };
+  /* the lesson flow, shared by every room (Oct 24). A room passes lesson:{steps, setup(k, step), practice(), hint()} to
+     Parlor.init. steps (or a function returning them): [{title, text, done?}]; a step with `done` waits for the player's
+     move: the room sets up that position in setup() and calls Parlor.lessonDone() when the move is made. Steps without
+     `done` are look-and-read. The last step offers the practice game. Parlor.practiceSay(title, text) shows a practice tip
+     with Hint and Back to the Lesson. */
+  var LK = 0;
+  function lessonSteps() { var L = C.lesson; return typeof L.steps === "function" ? L.steps() : L.steps; }
+  P.lessonGo = function (k) {
+    var L = C.lesson, steps = lessonSteps(), st = steps[k]; LK = k; P.lessonOn = true; P.lessonWaiting = !!st.done;
+    if (L.setup) L.setup(k, st);
+    var b = [], kick = "Learn to Play · " + (k + 1) + " of " + steps.length;
+    if (k === steps.length - 1) { b.push({ label: "Start Practice Game", fn: P.startPractice }); if (k) b.push({ label: "Back", quiet: true, fn: function () { P.lessonGo(k - 1); } }); }
+    else if (!st.done) { b.push({ label: "Next", fn: function () { P.lessonGo(k + 1); } }); b.push({ label: "Skip to a Practice Game", quiet: true, fn: P.startPractice }); }
+    else { if (k) b.push({ label: "Back", quiet: true, fn: function () { P.lessonGo(k - 1); } }); b.push({ label: "Skip to a Practice Game", quiet: true, fn: P.startPractice }); }
+    P.coach({ kick: kick, title: st.title, text: st.text, buttons: b });
+    P.status(st.done ? "Your move" : "Learn to Play", st.done ? (st.sub || "Follow the glowing hint") : "");
+  };
+  P.lessonDone = function (extra) {
+    var steps = lessonSteps(), st = steps[LK], k = LK; P.lessonWaiting = false;
+    P.coach({ kick: "Learn to Play · " + (k + 1) + " of " + steps.length, title: st.title, text: (st.done || "") + (extra || ""),
+      buttons: [{ label: "Next", fn: function () { P.lessonGo(k + 1); } }, { label: "Try Again", quiet: true, fn: function () { P.lessonGo(k); } }] });
+    P.status("Well done", "");
+  };
+  P.startPractice = function () {
+    P.lessonOn = false; P.lessonWaiting = false; finished = false; closeAll();
+    if (C.lesson && C.lesson.practice) C.lesson.practice();
+  };
+  P.practiceSay = function (title, text) {
+    var b = [];
+    if (C.lesson && C.lesson.hint) b.push({ label: "Hint", fn: function () { C.lesson.hint(); } });
+    b.push({ label: "Back to the Lesson", quiet: true, fn: function () { P.lessonGo(0); } });
+    P.coach({ kick: "Practice Game", title: title, text: text, buttons: b });
+  };
+  P.hintSay = function (text) { P.practiceSay("Try This", text); el.coach.querySelector(".pk-coachkick").textContent = "Practice Game · Hint"; };
   window.addEventListener("resize", function () { if (el.coach && !el.coach.hidden) { var r = $(".pk-right"), want = window.innerWidth >= 1000 ? r : document.body; if (want && el.coach.parentNode !== want) { if (want === r) r.insertBefore(el.coach, r.firstChild); else document.body.appendChild(el.coach); } } });
 
   /* ---------------- result ---------------- */
@@ -686,6 +727,7 @@
 
   /* ---------------- start ---------------- */
   P.init = function (cfg) {
+    if (cfg.lesson && !cfg.learn) cfg.learn = { start: function () { P.lessonGo(0); }, practice: function () { P.startPractice(); } };
     C = cfg;
     function go() {
       build();

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Club Yahtzee · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Yahtzee: a dice tray, a leather dice cup and a score card on a polished table, seen from straight above =====
    Everything is painted in code (no picture files). The dice cup (tap it to roll) and the score card carry the gold BW monogram.
@@ -129,6 +129,9 @@ body.yz-quick .yz-scene .die.go,body.yz-quick .yz-scene .dsh.go,body.yz-quick .y
 .yz-scene .card.tall td.nm small{display:none}
 .yz-scene .card.tall td.v{width:62px}
 .yz-scene .card.tall td.v.pot{font-style:normal}
+.yz-scene .card td.v.pot.hint{background:rgba(242,199,90,.55);box-shadow:inset 0 0 0 3px #d9a52e;animation:yz-hintc 1.3s ease-in-out infinite;color:#4a2f00;font-weight:800}
+@keyframes yz-hintc{50%{background:rgba(242,199,90,.25)}}
+.yz-scene .die.hint .d{box-shadow:0 0 0 4px #f2c75a,0 0 22px 6px rgba(250,205,95,.75)!important}
 .yz-scene .card.tall th{font-size:14px;height:30px}
 .yz-scene .card.tall tr.sub td{font-size:15px;height:36px}
 .yz-scene .card.tall tr.sub td span{display:none}
@@ -158,7 +161,7 @@ body.pk.pk-has-whim .pk-mini-top,body.pk.pk-has-whim .pk-mini-bot{margin-top:0;m
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -338,7 +341,7 @@ function yb(s){ return s===1?(S.yb1||0):(S.yb2||0); }
 function other(s){ return 3-s; }
 function seatedNow(){ return document.body.classList.contains("seated"); }
 function live(){ return seatedNow()&&!S.over&&(!online||(room&&room.guest&&mySide)); }
-function myTurn(){ return live()&&!busy&&S.turn===mySide; }
+function myTurn(){ return live()&&!busy&&S.turn===mySide&&!(Parlor.lessonOn&&!Parlor.lessonWaiting); }
 function nameOf(s){ return s===mySide?"You":online?"Your opponent":"The House"; }
 function oppLabel(){ return online?"Opponent":"House"; }
 function curVals(){ return DIE.map(function(o){ return o.v; }); }
@@ -350,11 +353,12 @@ function syncDiceFromState(anim){
 /* ---------- drawing ---------- */
 function renderCard(){
   var A=mySide===2?2:1, B=other(A), mineSheet=book(A), oppSheet=book(B);
-  var v=curVals(), canScore=myTurn()&&S.rolls>0, ok=canScore?allowed(v,mineSheet):[];
+  var v=curVals(), canScore=myTurn()&&S.rolls>0&&!(Parlor.lessonOn&&!lessonBox), ok=canScore?allowed(v,mineSheet):[];
+  if(Parlor.lessonOn&&lessonBox) ok=ok.filter(function(k){ return k===lessonBox; });
   var shownOpp=S.turn===B&&S.rolls>0&&!S.over;   /* the other player's choices aren't shown, only their card */
   function row(c){ var k=c[0], m=mineSheet[k], o=oppSheet[k], cell;
     if(m!=null) cell='<td class="v'+(m===0?' zero':'')+(fresh.indexOf(A+k)>=0?' new':'')+'">'+m+'</td>';
-    else if(canScore&&ok.indexOf(k)>=0){ var p=scoreFor(k,v,mineSheet); cell='<td class="v pot'+(p?'':' pz')+'" data-k="'+k+'">'+p+'</td>'; }
+    else if(canScore&&ok.indexOf(k)>=0){ var p=scoreFor(k,v,mineSheet); cell='<td class="v pot'+(p?'':' pz')+(k===hintBox?' hint':'')+'" data-k="'+k+'">'+p+'</td>'; }
     else cell='<td class="v"></td>';
     return '<tr><td class="nm">'+c[1]+(c[2]?'<small>'+c[2]+'</small>':'')+'</td>'+cell+'<td class="v opp'+(o===0?' zero':'')+(fresh.indexOf(B+k)>=0?' new':'')+'">'+(o!=null?o:'')+'</td></tr>'; }
   var u=upperSum(mineSheet), hu=upperSum(oppSheet);
@@ -374,7 +378,7 @@ function render(){
   cupEl.classList.toggle("ready",mine&&rolls<3);
   
   var h='<span>Rolls</span>'; for(var i=0;i<3;i++) h+='<i class="'+(i<3-rolls?'':'off')+'"></i>'; $("yzLamps").innerHTML=h;
-  DIE.forEach(function(o){ var t=mine&&rolls>0&&rolls<3; o.el.classList.toggle("tap",t); o.hit.classList.toggle("on",t); });
+  DIE.forEach(function(o,i){ var t=mine&&rolls>0&&rolls<3; o.el.classList.toggle("tap",t); o.hit.classList.toggle("on",t); o.el.classList.toggle("hint",hintDice.indexOf(i)>=0); });
   renderCard();
   Parlor.score([total(S.p1,S.yb1),total(S.p2,S.yb2)]);
   Parlor.turn(S.over?-1:S.turn===1?0:1);
@@ -396,13 +400,20 @@ function msg(){
 async function humanRoll(){
   if(!myTurn()||S.rolls>=3) return;
   var idx=[]; for(var i=0;i<5;i++) if(!S.held[i]) idx.push(i); if(!idx.length) return;
+  if(Parlor.lessonOn&&lessonNeedHeld&&!lessonNeedHeld.every(function(i){ return S.held[i]; })){ say("Keep the 3s first","Tap both 3s, then the cup"); return; }
   busy=true; var vals=idx.map(function(){ return 1+Math.floor(Math.random()*6); });
+  if(forceRolls.length){ var fv=forceRolls.shift(); vals=idx.map(function(i,j){ return fv[i]!=null?fv[i]:vals[j]; }); }   /* Learn to Play: the lesson's dice */
+  hintDice=[]; hintBox=null;
   idx.forEach(function(i,j){ S.dice[i]=vals[j]; }); S.rolls++;
   seq++; lastMv={k:"roll",s:mySide,idx:idx}; push(); render();
   await tumble(idx,vals); busy=false; afterRoll(mySide); render(); msg();
+  if(Parlor.lessonOn){ lessonNeedHeld=null; Parlor.lessonDone(); return; }
+  if(practice) Parlor.practiceSay(S.rolls<3?"Roll "+S.rolls+" of 3":"Last Roll",S.rolls<3?"<p>Tap dice to <b>keep</b> them, then tap the cup to roll the rest. Or score a box now: tap a gold number on the card.</p>":"<p>Choose a box: tap a <b>gold number</b> on your score card.</p>");
 }
 function humanHold(i){
   if(!myTurn()||S.rolls===0||S.rolls>=3) return;
+  if(Parlor.lessonOn&&!lessonNeedHeld) return;
+  hintDice=[];
   S.held[i]=S.held[i]?0:1; DIE[i].held=!!S.held[i]; Parlor.sfx("click",{pitch:1.4}); placeDice(true);
   seq++; lastMv={k:"hold",s:mySide,i:i}; push(); render(); msg();
 }
@@ -412,6 +423,8 @@ function afterRoll(s){ if(isYz(S.dice)){ toast(s===mySide?"Yahtzee!":nameOf(s)+"
 function scoreBox(s,k){
   var sheet=book(s), v=S.dice.slice();
   if(allowed(v,sheet).indexOf(k)<0) return;
+  hintBox=null; hintDice=[];
+  if(Parlor.lessonOn){ sheet[k]=scoreFor(k,v,sheet); fresh=[s+k]; Parlor.sfx("place",{pitch:1.2}); lessonBox=null; render(); Parlor.lessonDone(); return; }
   if(isYz(v)&&sheet.yz===50){ if(s===1) S.yb1=(S.yb1||0)+100; else S.yb2=(S.yb2||0)+100; toast("Yahtzee Bonus: +100"); }
   var pts=scoreFor(k,v,sheet); sheet[k]=pts; fresh=[s+k];
   Parlor.sfx("place",{pitch:1.2});
@@ -423,8 +436,10 @@ function scoreBox(s,k){
   syncDiceFromState(true); render();
   if(S.over){ end(); return; }
   msg(); maybeHouse();
+  if(practice){ if(S.turn===2) Parlor.practiceSay("The House's Turn","<p>You scored <b>"+pts+"</b> in "+NAME[k]+". The House rolls next.</p>"); else Parlor.practiceSay("Your Turn","<p>"+TIPS[tipN++%TIPS.length]+"</p><p>Tap the cup to roll.</p>"); }
 }
 function end(){
+  if(practice) Parlor.coach(null);
   render();
   var meS=mySide||1, a=total(book(meS),yb(meS)), b=total(book(other(meS)),yb(other(meS)));
   var kind=S.winner===0?"draw":S.winner===meS?"win":"lose";
@@ -483,6 +498,40 @@ async function houseTurn(){
   var pick=bestBox(S.dice,sheet).k;
   if(Math.random()<sk.loose*.4){ var opts=allowed(S.dice,sheet).map(function(k2){ return [k2,boxValue(k2,S.dice,sheet)]; }).sort(function(a,b){ return b[1]-a[1]; }); if(opts[1]) pick=opts[1][0]; }
   await Parlor.wait(400); busy=false; scoreBox(2,pick);
+}
+
+/* ---------- Learn to Play (Oct 24): six steps (the lesson sets the dice), then a coached practice game ---------- */
+var practice=false, forceRolls=[], lessonNeedHeld=null, lessonBox=null, hintDice=[], hintBox=null, tipN=0;
+var TIPS=["Aim for three of each number in the top section: 63 points there earns a 35-point bonus.","Save Chance for a roll that fits nowhere else.","A small straight needs four in a row (like 2-3-4-5); a large straight needs all five.","Late in the game, a zero in Aces or Yahtzee can be the least costly choice.","Three of a Kind and Four of a Kind score the total of all five dice."];
+function LESSON(){ return [
+  {title:"The Game", text:"<p>Each turn you get up to <b>three rolls</b> of five dice. Then you must score <b>one box</b> on your card.</p><p>After 13 rounds every box is filled, and the higher total wins.</p>"},
+  {title:"Rolling", text:"<p>Tap the <b>dice cup</b> to roll all five dice.</p>", done:"<p>Two 3s. Not bad: let's build on them.</p>", sub:"Tap the dice cup"},
+  {title:"Keeping Dice", text:"<p>Tap a die to <b>keep</b> it: it moves to the velvet strip and won't be rolled.</p><p>Keep both <b>3s</b>, then tap the cup to roll the other three.</p>", done:"<p>A third 3! You can roll up to three times in a turn, keeping whatever you like each time.</p>", sub:"Keep both 3s, then tap the cup"},
+  {title:"Scoring a Box", text:"<p>Three 3s and two 2s make a <b>Full House</b>: 25 points.</p><p>Tap the gold <b>25</b> beside Full House on your score card.</p>", done:"<p>Scored! Each box can be filled only once, so choosing well matters.</p>", sub:"Tap the gold 25"},
+  {title:"The Top Section", text:"<p><b>Aces to Sixes</b> score the total of that number only: three 5s in Fives is 15.</p><p>Reach <b>63</b> in the top section (about three of each) for a <b>35-point bonus</b>.</p>"},
+  {title:"Yahtzee and Chance", text:"<p>Five of a kind is a <b>Yahtzee</b>: 50 points, and every extra Yahtzee adds 100. <b>Chance</b> takes any roll and scores the total.</p><p>If nothing fits, you must still fill a box, sometimes with a zero. Ready for a practice game?</p>"}
+]; }
+function lessonSetup(k){
+  practice=false; forceRolls=[]; lessonNeedHeld=null; lessonBox=null; hintDice=[]; hintBox=null; busy=false; mySide=1; fresh=[];
+  S=newState(); DIE.forEach(function(o){ o.held=false; });
+  if(k===1){ forceRolls=[[3,3,5,1,6]]; }
+  else if(k===2){ S.dice=[3,3,5,1,6]; S.rolls=1; lessonNeedHeld=[0,1]; forceRolls=[[null,null,3,2,4]]; }
+  else if(k===3){ S.dice=[3,3,3,2,2]; S.rolls=2; lessonBox="fh"; }
+  if(S.dice[0]){ DIE.forEach(function(o,i){ faceUp(o,S.dice[i]); }); spreadAll(); }
+  syncDiceFromState(false); render();
+}
+function startPractice(){ practice=true; tipN=0; forceRolls=[]; lessonNeedHeld=null; lessonBox=null; hintDice=[]; hintBox=null; mySide=1; newGame();
+  Parlor.practiceSay("Your Turn","<p>Tap the <b>dice cup</b> to roll.</p><p>Stuck? Tap <b>Hint</b>.</p>"); }
+function showHint(){
+  if(!practice||S.over||busy||S.turn!==1) return;
+  if(S.rolls===0){ Parlor.hintSay("<p>Tap the <b>dice cup</b> to roll.</p>"); return; }
+  var v=S.dice.slice(), sheet=S.p1, mask=S.rolls<3?houseHold(v,sheet):31;
+  if(mask===31){ var b=bestBox(v,sheet).k; hintBox=b; hintDice=[]; render(); var sc=scoreFor(b,v,sheet), weak=sc<PAR[b];
+    Parlor.hintSay("<p>Score this roll in <b>"+NAME[b]+"</b> for "+sc+": tap the gold-ringed number on your card.</p>"+(weak?"<p>This roll is weak, so it goes where it costs you least, saving Chance and the bigger boxes for better rolls.</p>":"")); return; }
+  hintDice=[]; for(var i=0;i<5;i++) if(mask&(1<<i)) hintDice.push(i);
+  hintBox=null; render();
+  var change=hintDice.some(function(i){ return !S.held[i]; })||S.held.some(function(h,i){ return h&&hintDice.indexOf(i)<0; });
+  Parlor.hintSay("<p>"+(hintDice.length?"Keep the <b>gold-ringed dice</b>"+(change?" (tap to keep or release)":"")+", then roll the rest.":"Roll all five again.")+"</p>");
 }
 
 /* ---------- online table (same page: ?code=XXXX) ---------- */
@@ -587,7 +636,8 @@ Parlor.init({
     play:"<ol><li>Each turn, tap the dice cup to roll all five dice. You get up to three rolls.</li><li>After a roll, tap any dice you want to keep; they move to the Kept Dice rail. Tap a kept die to put it back. Tap the cup to roll again.</li><li>When you're ready (or after the third roll), tap a gold number on the score card to fill that box. Every turn must fill one box, even with a zero.</li><li>You and your opponent take turns. After 13 rounds every box is filled and the higher total wins.</li></ol>",
     score:"<ul><li><b>Aces to Sixes:</b> the total of that number. Score 63 or more in these six boxes for a <b>35-point bonus</b>.</li><li><b>3 of a Kind / 4 of a Kind:</b> the total of all five dice.</li><li><b>Full House</b> (three of one, two of another): 25. <b>Small Straight</b> (four in a row): 30. <b>Large Straight</b> (five in a row): 40.</li><li><b>Yahtzee</b> (five alike): 50. <b>Chance:</b> the total of all five dice.</li><li><b>Extra Yahtzees:</b> if your Yahtzee box already holds 50, each extra Yahtzee earns a 100-point bonus. It must go in its number's upper box if that's open; otherwise it can score full points in Full House or a straight.</li></ul>"
   },
-  onNew:function(){ mySide=1; newGame(); }
+  onNew:function(){ mySide=1; practice=false; forceRolls=[]; lessonNeedHeld=null; lessonBox=null; hintDice=[]; hintBox=null; newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 var wasSeated=null;
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set")||"marble"; if(k!==curDesign) applyDesign(k);

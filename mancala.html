@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pavilion Mancala · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1025a">
+<link rel="stylesheet" href="parlor-kit.css?v=1025b">
 <style>
 /* ===== Mancala board: a carved board seen from straight above, painted in code (no picture files) =====
    The board turns on its side on portrait phones (your store at the bottom, The House's at the top),
@@ -33,6 +33,8 @@
 .mk-cell.live:not(.mk-store)::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at 50% 50%,rgba(255,240,190,.5),rgba(255,236,180,.14) 34%,rgba(255,236,180,0) 58%)}
 .mk-cell.ok{cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,236,170,.95),0 0 1.6vmin rgba(255,214,110,.6),inset 0 calc(var(--mk-w) * .009) calc(var(--mk-w) * .014) rgba(30,14,4,.6)}
 .mk-cell.ok:hover{filter:brightness(1.1)}
+.mk-cell.hint{z-index:2;box-shadow:inset 0 0 0 4px #f2c75a,0 0 2.4vmin .5vmin rgba(250,205,95,.8);animation:mk-hint 1.3s ease-in-out infinite}
+@keyframes mk-hint{50%{box-shadow:inset 0 0 0 4px rgba(242,199,90,.6),0 0 1.2vmin .2vmin rgba(250,205,95,.4)}}
 .mk-cell.flash{filter:brightness(1.22)}
 /* the extra-turn and capture note: one small line of light glass inside the store that earned it, gone in a moment */
 .mk-toast{position:absolute;z-index:8;transform:translate(-50%,-50%) scale(.9);padding:5px 10px;border-radius:6px;background:rgba(15,23,42,.38);
@@ -95,7 +97,7 @@ body.pk .pk-stage{justify-content:center}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
-<script src="parlor-kit.js?v=1025a"></script>
+<script src="parlor-kit.js?v=1025b"></script>
 <script>
 /* ---------- painted materials (drawn in the browser when the page opens; no picture files) ---------- */
 function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
@@ -201,12 +203,15 @@ function gems(n,isStore){
   if(n>max) h+='<span class="mk-more">+'+(n-max)+'</span>';
   return h+'<span class="mk-n">'+n+'</span>';
 }
-function legal(){ return (!over && !busy && turn===mySide && seatedNow() && (!online||(room&&room.guest))) ? cupsOf(mySide).filter(function(i){ return ring[i]>0; }) : []; }
+function legal(){
+  if(Parlor.lessonOn&&(!Parlor.lessonWaiting||busy)) return [];
+  var l=(!over && !busy && turn===mySide && seatedNow() && (!online||(room&&room.guest))) ? cupsOf(mySide).filter(function(i){ return ring[i]>0; }) : [];
+  return (Parlor.lessonOn&&lessonAllow)?l.filter(function(i){ return lessonAllow.indexOf(i)>=0; }):l; }
 function paint(){
   var ok=legal();
   for(var i=0;i<14;i++){
     var c=slots[i]; c.innerHTML=gems(ring[i],i===6||i===13);
-    c.classList.toggle("ok",ok.indexOf(i)>=0); c.classList.toggle("last",i===last);
+    c.classList.toggle("ok",ok.indexOf(i)>=0); c.classList.toggle("last",i===last); c.classList.toggle("hint",i===hintAt);
     c.classList.toggle("live",!over&&i!==6&&i!==13&&ring[i]>0);   /* every cup that can still be played glows softly, on both sides */
     c.setAttribute("aria-label",c.dataset.label+": "+ring[i]+" stones"); c.disabled=ok.indexOf(i)<0;
   }
@@ -261,6 +266,8 @@ function toast(main,sub,store){
   t.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove("on"); },1300);
 }
 function after(s,res){
+  if(Parlor.lessonOn){ paint(); Parlor.lessonDone(); return; }   /* Learn to Play */
+  if(practice&&!res.done) setTimeout(function(){ practiceTip(s,res); },0);
   if(res.done){ over=true; paint(); end(); push(); return; }
   if(res.extra){ var who=online?"your opponent":"The House";
     toast("Extra Turn","",storeOf(s)); Parlor.sfx("mill");
@@ -274,16 +281,57 @@ function after(s,res){
 }
 function play(i){
   if(legal().indexOf(i)<0) return;
+  hintAt=-1;
   var res=move(ring,mySide,i); lastMv={s:mySide,i:i}; seq++;
   animate(mySide,i,res,function(){ after(mySide,res); });
 }
 function end(){
+  if(practice) Parlor.coach(null);
   var w=winnerSide(), a=ring[6], b=ring[13];
   var mine=mySide===2?b:a, theirs=mySide===2?a:b;
   var kind=w===0?"draw":(w===mySide?"win":"lose");
   say(kind==="win"?"You win!":kind==="draw"?"Draw":"Game over", mine+" – "+theirs);
   if(online) report();
   Parlor.finish(kind, "Your store "+mine+", "+Parlor.oppName(true)+" "+theirs);
+}
+
+/* ---------- Learn to Play (Oct 24): five steps, then a coached practice game with a Hint button ---------- */
+var practice=false, lessonAllow=null, hintAt=-1, tipN=0;
+function LESSON(){ return [
+  {title:"The Board", text:"<p>You have the <b>six cups</b> along the near side; The House has the six across from you. Your <b>store</b> is the big cup on your right; The House's is on the left.</p><p>Each cup starts with four stones. The stones in your store are your score.</p>"},
+  {title:"Sowing", text:"<p>On your turn, pick up <b>all the stones</b> in one of your cups and drop them <b>one by one</b> into the next cups, moving toward your store and around the board.</p><p>Tap the glowing cup.</p>", done:"<p>One stone into each cup along the way. You skip The House's store, but drop into your own.</p>", sub:"Tap the glowing cup"},
+  {title:"Extra Turns", text:"<p>If your <b>last stone lands in your store</b>, you play again.</p><p>This cup has exactly enough stones to reach your store. Tap it.</p>", done:"<p>Your last stone landed in your store: <b>another turn</b> for you. Count stones before you move to find these.</p>", sub:"Tap the glowing cup"},
+  {title:"Captures", text:"<p>If your last stone lands in an <b>empty cup on your side</b>, you capture it along with <b>every stone in the cup opposite</b>.</p><p>Tap the glowing cup: its last stone lands in the empty cup across from five House stones.</p>", done:"<p>Captured six stones into your store.</p>", sub:"Tap the glowing cup"},
+  {title:"How to Win", text:"<p>When all the cups on one side are empty, the game ends. Each player adds the stones left on their side to their own store.</p><p>The most stones in your store wins. Ready for a practice game? The House plays gently, and you can ask for a hint any time.</p>"}
+]; }
+function lessonSetup(k){
+  practice=false; hintAt=-1; lessonAllow=null; over=false; busy=false; turn=1; last=-1; place();
+  if(k===1){ ring=fresh(); lessonAllow=[0]; }
+  else if(k===2){ ring=fresh(); lessonAllow=[2]; }
+  else if(k===3){ ring=[1,2,0,0,3,1,4, 2,3,5,4,1,2,3]; lessonAllow=[1]; }
+  else ring=fresh();
+  paint();
+}
+function startPractice(){ practice=true; tipN=0; hintAt=-1; lessonAllow=null; mySide=1; place(); newGame();
+  Parlor.practiceSay("Your Move","<p>You move first. Tap a glowing cup to sow its stones.</p><p>Stuck? Tap <b>Hint</b>.</p>"); }
+function bestCup(){ var opts=cupsOf(1).filter(function(i){ return ring[i]>0; }); if(!opts.length) return null; var r=search(ring,1,4,-1e9,1e9); return r&&r.i!=null?r.i:opts[0]; }
+function showHint(){
+  if(!practice||over||busy||turn!==1) return;
+  var i=bestCup(); if(i==null) return; hintAt=i; paint();
+  var r=move(ring,1,i);
+  Parlor.hintSay("<p>Try the <b>gold-ringed cup</b>"+(r.extra?": its last stone lands in your store, so you'll go again":r.capture?": it captures "+r.capture+" stones":"")+".</p>");
+}
+var TIPS=["A cup with exactly enough stones to reach your store gives you an extra turn.","Keep an eye on your empty cups: a stone landing there can capture.","Watch The House's empty cups too: don't leave a big pile across from one.","Stones piled up on your side all count for you if The House runs out of moves."];
+function practiceTip(s,res){
+  if(over) return;
+  if(turn!==1) return;
+  var mine=cupsOf(1).filter(function(i){ return ring[i]>0; });
+  var extra=mine.filter(function(i){ return move(ring,1,i).extra; })[0], cap=mine.map(function(i){ return [i,move(ring,1,i).capture||0]; }).sort(function(a,b){ return b[1]-a[1]; })[0];
+  if(s===1&&res.extra) Parlor.practiceSay("Extra Turn!","<p>Your last stone landed in your store. Play again.</p>");
+  else if(s===2&&res.capture) Parlor.practiceSay("The House Captured","<p>It took "+res.capture+" stones from an empty cup on its side. Watch for piles sitting across from The House's empty cups.</p>");
+  else if(extra!=null) Parlor.practiceSay("An Extra Turn Is Open","<p>Cup "+(extra+1)+" (counting from your left) has exactly enough stones to reach your store.</p>");
+  else if(cap&&cap[1]>0) Parlor.practiceSay("A Capture Is Open","<p>One of your cups can land in an empty cup and capture "+cap[1]+" stones. Tap <b>Hint</b> if you can't spot it.</p>");
+  else { Parlor.practiceSay("Your Move","<p>"+TIPS[tipN%TIPS.length]+"</p>"); tipN++; }
 }
 
 /* ---------- The House: looks a few moves ahead (extra turns included) ---------- */
@@ -377,7 +425,8 @@ Parlor.init({
     play:"<ol><li>Your six cups are the row nearest you, and your store is on your right (at the bottom on a phone). Each cup starts with four stones.</li><li>Tap one of your cups. Its stones are sown one at a time, counter-clockwise, into the next cups and your own store. The other player's store is skipped.</li><li>If your last stone lands in your store, you take another turn.</li><li>If your last stone lands in an empty cup on your side, you capture it and every stone in the cup across from it.</li><li>When either side runs out of stones, each player moves the stones left on their side into their own store.</li></ol>",
     score:"<ul><li>The player with more stones in their store wins.</li><li>Equal stores are a draw.</li></ul>"
   },
-  onNew:function(){ mySide=1; place(); newGame(); }
+  onNew:function(){ mySide=1; practice=false; hintAt=-1; place(); newGame(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
 });
 ring=fresh();   /* a board to look at before anyone sits */
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set");
