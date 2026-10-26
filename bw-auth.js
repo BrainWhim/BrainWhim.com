@@ -119,7 +119,10 @@
   }
   function loadProfile(u) {
     S.loadedFor = u.id;
-    return S.sb.from("profiles").select("username,display_name,skill_points,member,online_day,online_count").eq("id", u.id).maybeSingle()
+    var base = "username,display_name,skill_points,member,online_day,online_count";
+    var q = function (cols) { return S.sb.from("profiles").select(cols).eq("id", u.id).maybeSingle(); };
+    /* avatars (Oct 26): ask for the avatar columns too, and fall back if the database update hasn't been run yet */
+    return Promise.resolve(q("avatar,avatar_charm,charms," + base)).then(function (r) { return (r && r.error) ? q(base) : r; })
       .then(function (r) { S.profile = (r && r.data) || {}; return S.profile; }, function () { S.profile = {}; });
   }
   function snapshot(event) {

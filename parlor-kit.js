@@ -70,16 +70,16 @@
     el.players = mk("div", "pk-players");
     (C.players || []).forEach(function (p, i) {
       var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
-      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0");
-      r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.players.appendChild(r);
-      p._row = r; p._nm = nm; p._sc = sc;
+      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0"), av = mk("span", "av bwa-av");   /* avatar (Oct 26) */
+      r.appendChild(av); r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.players.appendChild(r);
+      p._row = r; p._nm = nm; p._sc = sc; p._av = av;
     });
     /* phones: the opponent's score sits above the board and yours below it */
     el.miniTop = mk("div", "pk-mini pk-mini-top"); el.mini = mk("div", "pk-mini pk-mini-bot");
     (C.players || []).forEach(function (p) {
       var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
-      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0");
-      r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); p._row2 = r; p._nm2 = nm; p._sc2 = sc;
+      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0"), av = mk("span", "av bwa-av");
+      r.appendChild(av); r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); p._row2 = r; p._nm2 = nm; p._sc2 = sc; p._av2 = av;
     });
     stage.replaceChild(el.mini, stage.lastChild);
     stage.insertBefore(el.miniTop, stage.firstChild);
@@ -122,6 +122,7 @@
     g1.appendChild(btn("Sound & Motion", "", function () { P.settings(); }));
     var g2 = group("My Seat", "pk-phone");
     if (C.sets && C.sets.length) g2.appendChild(btn(C.setsLabel || "Sets", "", function () { sheet("left", el.setsCard); }));
+    g2.appendChild(btn("Avatar", "", function () { sheet(null); if (window.BWAvatar) BWAvatar.studio(); }));
     g2.appendChild(btn("Account & Points", "", function () { sheet("left", el.acct); }));
     el.clubBtn = btn("Join the Club", "", function () { if (accountInfo.member && window.bwMemberCard) { sheet(null); bwMemberCard(accountInfo.pts); } else location.href = "member.html"; });
     g2.appendChild(el.clubBtn);
@@ -218,10 +219,45 @@
   /* which player row is "me" (0 or 1): mine goes under the board on phones */
   P.mySeat = function (i) {
     var pl = C.players || []; if (pl.length < 2 || !el.mini) return;
-    var me = pl[i ? 1 : 0], them = pl[i ? 0 : 1];
+    var me = pl[i ? 1 : 0], them = pl[i ? 0 : 1]; mine = i ? 1 : 0;
     el.miniTop.innerHTML = ""; el.mini.innerHTML = "";
     el.miniTop.appendChild(them._row2); el.mini.appendChild(me._row2);
+    paintAv();
   };
+  /* ---------------- avatars (Oct 26) ----------------
+     Each seat row shows a small avatar: yours, and The House's BW medallion or your online opponent's.
+     Watchers see plain guest medallions. Drawn by bw-avatars.js; nothing shows if that file isn't loaded. */
+  var mine = 0;
+  function meProf() { var u = accountInfo.user; if (!u || u.is_anonymous) return null; return (window.BW && BW.profile && BW.profile()) || {}; }
+  function oppProf() {
+    if (mode !== "online") return "house";
+    return (T && T.side && T.oppProf) || null;
+  }
+  function avFor(i) { if (mode === "online" && T && !T.side) return null; return i === mine ? meProf() : oppProf(); }
+  function paintAv() {
+    if (!window.BWAvatar || !C) return;
+    (C.players || []).forEach(function (p, i) {
+      if (i > 1) return; var who = avFor(i), nm = i === mine ? "You" : P.oppName();
+      if (p._av) p._av.innerHTML = BWAvatar.html(who, { size: 28, ring: false, charm: false, title: nm });
+      if (p._av2) p._av2.innerHTML = BWAvatar.html(who, { size: 24, ring: false, charm: false, title: nm });
+    });
+  }
+  P.paintAvatars = paintAv;
+  /* the result window: both players' avatars with their rank rings */
+  function duo() {
+    if (!window.BWAvatar || (mode === "online" && T && !T.side)) return null;
+    var d = mk("div", "pk-duo");
+    function one(prof, name, sub) {
+      var x = mk("div", "p"), a = mk("span", "bwa-av"); a.innerHTML = BWAvatar.html(prof, { size: 96, title: name, even: true }); x.appendChild(a);
+      x.appendChild(mk("b", "", name)); if (sub) x.appendChild(mk("i", "", sub)); return x;
+    }
+    var m = meProf(), o = oppProf();
+    d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Guest"));
+    d.appendChild(mk("span", "vs", "vs"));
+    d.appendChild(one(o, P.oppName(), o && o !== "house" ? BWAvatar.rank(o.skill_points).name : (o === "house" ? "Level " + P.level() + " of " + P.maxLevel : "")));
+    return d;
+  }
+  window.addEventListener("bw-avatar", function () { renderAccount(); paintAv(); });
   /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
   P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); return (a && a.offsetParent) ? a : (b && b.offsetParent ? b : null); };
   P.info = function (text) { if (el.info) { el.info.textContent = text || ""; el.info.style.display = text ? "" : "none"; } };
@@ -271,14 +307,14 @@
     if (!(await gateAndBegin())) return;
     P.lessonOn = false; P.lessonWaiting = false;   /* leaving a lesson for a real game */
     P.coach(null); if (el.newBtn) el.newBtn.textContent = "New Game"; if (el.learnBtn) el.learnBtn.style.display = "";
-    mode = "house"; seat();
+    mode = "house"; seat(); paintAv();
     el.mode.textContent = "Playing The House"; showLevel();
     if (C.onNew) C.onNew("house");
   };
   /* online rooms: the daily limit was already applied in the Lobby when the match was made */
   P.seatOnline = function (info) {
     P.lessonOn = false; P.lessonWaiting = false; if (el.coach) P.coach(null);
-    mode = "online"; seat(); token = null; finished = false; if (el.level) el.level.textContent = "";
+    mode = "online"; seat(); token = null; finished = false; if (el.level) el.level.textContent = ""; paintAv();
     el.mode.textContent = (info && info.label) || "Online table";
     if (el.newBtn) el.newBtn.style.display = "none";
     var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
@@ -303,7 +339,7 @@
      The room drives the lesson with Parlor.coach({kick, title, text, buttons:[{label, fn, quiet}]}) and Parlor.coach(null).
      The coach card sits at the top of the right side card on desktop and floats at the top of the screen on phones. */
   P.sitLearn = function () {
-    mode = "learn"; token = null; finished = false; seat(); closeAll();
+    mode = "learn"; token = null; finished = false; seat(); closeAll(); paintAv();
     el.mode.textContent = "Learning to play"; showLevel();
     if (el.newBtn) { el.newBtn.textContent = "Start the Lesson Again"; el.newBtn.style.display = ""; }
     if (el.learnBtn) el.learnBtn.style.display = "none";
@@ -413,6 +449,7 @@
     var b = el.end.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", kind === "win" ? "Victory" : kind === "draw" ? "Even match" : "Game over"));
     b.appendChild(mk("h2", "", title));
+    var dd = duo(); if (dd) b.appendChild(dd);
     if (detail) b.appendChild(mk("p", "pk-pts", detail));
     if (lvlNote) b.appendChild(mk("p", "pk-lvlnote", lvlNote));
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
@@ -464,14 +501,15 @@
   function loadOpp(id) {
     if (!T || !id || T.oppId === id) return; T.oppId = id;
     if (el.forfeitBtn && !finished) el.forfeitBtn.style.display = "";
-    T.sb.from("profiles").select("username,display_name").eq("id", id).maybeSingle().then(function (r) {
-      var d = r && r.data; if (d && (d.username || d.display_name)) setOpp(d.username || d.display_name);
-    }, function () {});
+    var got = function (d) { if (!T || T.oppId !== id) return; if (d) { T.oppProf = d; if (d.username || d.display_name) setOpp(d.username || d.display_name); } paintAv(); };
+    if (window.BWAvatar) { BWAvatar.fetch(T.sb, [id]).then(function (rows) { got(rows[0]); }); return; }
+    T.sb.from("profiles").select("username,display_name").eq("id", id).maybeSingle().then(function (r) { got(r && r.data); }, function () {});
   }
   P.table = function (o) {
     if (!o || !o.sb || !o.room) return;
     if (T && T.ch) { try { T.sb.removeChannel(T.ch); } catch (e) {} }
-    T = { sb: o.sb, room: o.room, me: o.me, side: o.side || 0, oppName: "", oppId: null, seen: false, gone: false, timer: 0, ch: null };
+    T = { sb: o.sb, room: o.room, me: o.me, side: o.side || 0, oppName: "", oppId: null, oppProf: null, seen: false, gone: false, timer: 0, ch: null };
+    paintAv();
     if (!T.side) return;                                   /* watchers just watch */
     loadOpp(T.side === 1 ? o.room.guest : o.room.host);
     var st = o.room.state || {};
@@ -604,12 +642,21 @@
     accountInfo.user = u || null;
     var p = (window.BW && BW.profile && BW.profile()) || {};
     accountInfo.pts = Number(p.skill_points || 0); accountInfo.member = !!p.member; accountInfo.name = p.display_name || p.username || "";
-    renderAccount(); renderSets(); P.yourTables();
+    renderAccount(); renderSets(); paintAv(); P.yourTables();
   }
   function renderAccount() {
     var a = el.acct; if (!a) return; a.innerHTML = "<h3 style=\"margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85\">Account</h3>";
     var t = mk("div"); a.appendChild(t);
-    if (accountInfo.user) {
+    if (accountInfo.user && window.BWAvatar) {   /* your avatar with its rank ring; tap it (or Avatar) to change it (Oct 26) */
+      var prof = meProf() || {}, rk = BWAvatar.rank(accountInfo.pts);
+      t.className = "pk-me";
+      var av = mk("button", "av bwa-av"); av.type = "button"; av.title = "Change your avatar"; av.innerHTML = BWAvatar.html(prof, { size: 72 }); av.onclick = function () { BWAvatar.studio(); };
+      var tx = mk("div"); tx.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><small>" + esc(rk.name) + "</small>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club member" : "");
+      t.appendChild(av); t.appendChild(tx);
+      if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Club Details" : "Join the Club";
+      a.appendChild(btn("Avatar", "", function () { BWAvatar.studio(); }));
+      if (!accountInfo.member) a.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
+    } else if (accountInfo.user) {
       t.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><br>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club member" : "");
       if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Club Details" : "Join the Club";
       if (!accountInfo.member) a.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
@@ -650,7 +697,15 @@
   function showLevel() { if (el.level) el.level.textContent = mode === "house" ? "The House: level " + P.level() + " of " + P.maxLevel : ""; }
   function levelAfter(kind) {
     var L = P.level(), losses = parseInt(store(lvlKey() + ":l") || "0", 10) || 0, note = "";
-    if (kind === "win") { if (L < P.maxLevel) { L++; note = "The House moves up to level " + L + "."; } else note = "You beat The House at its top level!"; losses = 0; }
+    if (kind === "win") {
+      if (L < P.maxLevel) { L++; note = "The House moves up to level " + L + "."; }
+      else {
+        note = "You beat The House at its top level!";
+        var ch = window.BWAvatar && BWAvatar.earn(C.game);   /* each room's charm (Oct 26) */
+        if (ch) note += " You earned the " + ch.name + " charm. Wear it from Avatar in the menu.";
+      }
+      losses = 0;
+    }
     else if (kind === "lose") { losses++; if (losses >= 2 && L > 1) { L--; losses = 0; note = "The House eases off to level " + L + "."; } }
     store(lvlKey(), String(L)); store(lvlKey() + ":l", String(losses)); showLevel(); return note;
   }

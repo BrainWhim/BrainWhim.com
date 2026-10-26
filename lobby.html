@@ -304,6 +304,14 @@ header {
   border-radius: 8px;
 }
 .player-row .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; }
+.player-row .pav { position: relative; flex: none; width: 28px; height: 28px; margin: -5px 0 -5px -4px; line-height: 0; }
+.player-row .pav svg { width: 100%; height: 100%; }
+.player-row .pav .dot { position: absolute; right: -1px; bottom: 0; width: 8px; height: 8px; border: 1.5px solid #0f172a; }
+/* your avatar on the seat card (Oct 26) */
+.seat-av { align-self: center; width: 96px; height: 96px; margin: -6px 0 -4px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; line-height: 0; }
+.seat-av[hidden] { display: none; }
+.seat-av svg { width: 100%; height: 100%; }
+.seat-av:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
 .player-row .who { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
 .player-row .rank { flex: none; color: rgba(255, 255, 255, 0.6); font-size: 11px; font-weight: 500; letter-spacing: 0.04em; }
 
@@ -677,8 +685,7 @@ function openTargetMobileDrawer(targetZone) {
     document.getElementById('tab-mail').classList.add('active');
   }
   else if (targetZone === 'avatar') {
-    openHouseModal('Identity','Your portrait studio is being furnished. It will live here when the club is ready.');
-    document.getElementById('tab-avatar').classList.add('active');
+    if (window.BWAvatar) BWAvatar.studio();   /* the Identity studio: choose your avatar and charm (Oct 26) */
   }
 }
 
@@ -755,7 +762,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-<script src="bw-auth.js"></script>
+<script src="bw-auth.js?v=1026a"></script>
+<script src="bw-avatars.js?v=1026a"></script>
 </head>
 <body>
 <div class="veil"></div>
@@ -776,6 +784,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="sidebar-glass-container">
 <section class="auth slim" id="authBox">
   <h2>Your seat</h2>
+  <button class="seat-av" id="seatAv" type="button" onclick="window.BWAvatar&&BWAvatar.studio()" aria-label="Choose your avatar" title="Choose your avatar" hidden></button>
   <p class="who" id="who">Checking…</p>
   <p class="hint" id="seatHint">Sign in or create a free account. No page change.</p>
   <p class="err" id="authErr"></p>
@@ -787,6 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <input id="unameLater" maxlength="20" placeholder="choose a username">
       <button class="btn go" type="button" onclick="saveUsername()">Save name</button>
     </div>
+    <button class="btn ghost" type="button" id="avatarBtn" onclick="window.BWAvatar&&BWAvatar.studio()">Avatar</button>
     <button class="btn ghost" type="button" id="seatAction" onclick="seatAction()">Sign out</button>
   </div>
 </section>
@@ -838,10 +848,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 <div class="sidebar-glass-container titles-ranking-box">
   <h4>Celestial Standing</h4>
-  <p id="tier0">Novice Seeker (0–100)</p>
-  <p id="tier1">Grand Strategist (101–500)</p>
-  <p id="tier2">Parlor Master (501–1000)</p>
-  <p id="tier3">Cosmic Vanguard (1001+)</p>
+  <p id="tier0">Baby Pawn Star (0–24)</p>
+  <p id="tier1">Whimsical Star (25–74)</p>
+  <p id="tier2">Wandering Comet (75–149)</p>
+  <p id="tier3">Rising Moon (150–299)</p>
+  <p id="tier4">Event Horizon (300–599)</p>
+  <p id="tier5">Quantum Brainwave (600–999)</p>
+  <p id="tier6">Keeper of the Cosmos (1000+)</p>
 </div>
 </aside>
 
@@ -1089,10 +1102,24 @@ function listenNotices(){
   loadMail();
 }
 async function loadProfile(user){
-  var p=await sb.from("profiles").select("username,display_name,skill_points,member,online_day,online_count").eq("id", user.id).maybeSingle();
+  var base="username,display_name,skill_points,member,online_day,online_count,is_guest";
+  var p=await sb.from("profiles").select("avatar,avatar_charm,charms,"+base).eq("id", user.id).maybeSingle();
+  if(p.error) p=await sb.from("profiles").select(base).eq("id", user.id).maybeSingle();   /* before supabase-avatars.sql is run */
+  myProf=p.data||{};
   myName=(p.data && (p.data.username||p.data.display_name)) || (user.email||"").split("@")[0];
   return p.data;
 }
+/* your avatar on the seat card (Oct 26): tap it, or Avatar, to open the Identity studio */
+var myProf=null, myGuest=true;
+function paintSeatAv(){
+  var b=document.getElementById("seatAv"), ab=document.getElementById("avatarBtn"); if(!b||!window.BWAvatar) return;
+  b.innerHTML=BWAvatar.html(myGuest?null:(myProf||{}),{size:92,title:"Your avatar"}); b.hidden=false;
+  if(ab) ab.hidden=myGuest;
+}
+window.addEventListener("bw-avatar",function(e){
+  if(myProf&&e.detail){ myProf.avatar=e.detail.avatar; myProf.avatar_charm=e.detail.avatar_charm; }
+  paintSeatAv(); if(typeof refreshOnline==="function") refreshOnline();
+});
 function ready(){
   var who=document.getElementById("who");
   sb=BW.client();
@@ -1124,17 +1151,20 @@ async function paint(session){
     document.getElementById("needName").style.display=(prof && prof.username)?"none":"flex";
     listenNotices();
     myPts=Number((prof && prof.skill_points)||0);
-    var tier = myPts>=1001?3:myPts>=501?2:myPts>=101?1:0;
-    for(var i=0;i<4;i++){ var el=document.getElementById("tier"+i); if(el) el.classList.toggle("here", i===tier); }
+    var tier = window.BWAvatar ? BWAvatar.rank(myPts).i : 0;
+    for(var i=0;i<7;i++){ var el=document.getElementById("tier"+i); if(el) el.classList.toggle("here", i===tier); }
     myMember=!!(prof && prof.member);
-    var title=typeof bwTitle==="function"?bwTitle(myPts):"New";
+    myGuest = handle==="Guest";
+    paintSeatAv();
+    var title=window.BWAvatar ? BWAvatar.rank(myPts).name : (typeof bwTitle==="function"?bwTitle(myPts):"New");
     who.textContent=(handle||"Signed in")+" · "+title+" · "+myPts+" pts"+(myMember?" · member":"");
     startPresence();
     loadYourTables();
   } else {
     var yt=document.getElementById("yourTables"); if(yt) yt.hidden=true;
     stopPresence();
-    myName=""; myPts=0; myMember=false;
+    myName=""; myPts=0; myMember=false; myProf=null; myGuest=true; paintSeatAv();
+    for(var k=0;k<7;k++){ var tk=document.getElementById("tier"+k); if(tk) tk.classList.remove("here"); }
     who.textContent="Sign in to keep a seat";
     document.getElementById("seatHint").textContent="Sign in with your email, phone, or username. Guests can play The House (10 free games).";
     form.classList.remove("closed"); out.classList.add("closed");
@@ -1222,7 +1252,9 @@ async function refreshOnline(){
   var box=document.getElementById("onlineList");
   if(!sb || !sessionUser){ box.textContent="Sign in or sit as a guest to see the parlor."; return; }
   var since=new Date(Date.now()-120000).toISOString();
-  var q=await sb.from("profiles").select("username,display_name,skill_points,is_guest,last_seen").gte("last_seen", since).order("last_seen",{ascending:false}).limit(24);
+  var cols="username,display_name,skill_points,is_guest,last_seen";
+  var q=await sb.from("profiles").select("avatar,avatar_charm,member,"+cols).gte("last_seen", since).order("last_seen",{ascending:false}).limit(24);
+  if(q.error) q=await sb.from("profiles").select(cols).gte("last_seen", since).order("last_seen",{ascending:false}).limit(24);
   if(q.error){ box.textContent="Players online needs supabase-ladder.sql run once."; return; }
   var rows=q.data||[];
   if(!rows.length){ box.textContent="Just you in the parlor right now."; return; }
@@ -1230,10 +1262,12 @@ async function refreshOnline(){
   rows.forEach(function(p){
     var raw=p.username||"";
     var label=(p.is_guest || raw.indexOf("guest")===0) ? "Guest" : (p.display_name||raw||"Guest");
-    var title=typeof bwTitle==="function"?bwTitle(p.skill_points):"New";
+    var guest=(p.is_guest || raw.indexOf("guest")===0);
+    var title=window.BWAvatar ? (guest?"Guest":BWAvatar.rank(p.skill_points).name) : (typeof bwTitle==="function"?bwTitle(p.skill_points):"New");
     var mine=cleanName(p.username)===myName;
     var row=bwMakeEl("div","player-row");
-    row.appendChild(bwMakeEl("span","dot"));
+    if(window.BWAvatar){ var pav=bwMakeEl("span","pav"); pav.innerHTML=BWAvatar.html(guest?null:p,{size:28,ring:false,charm:false,title:label}); pav.appendChild(bwMakeEl("span","dot")); row.appendChild(pav); }
+    else row.appendChild(bwMakeEl("span","dot"));
     row.appendChild(bwMakeEl("span","who",mine?"You":label));   // plain text only
     row.appendChild(bwMakeEl("span","rank",title));
     box.appendChild(row);
