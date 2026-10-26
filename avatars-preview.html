@@ -11,7 +11,7 @@
 *{box-sizing:border-box}
 html{background:#070a18}
 body{margin:0;min-height:100vh;color:var(--text);font-family:Montserrat,system-ui,sans-serif;background:#070a18}
-.bgimg{position:fixed;inset:0;background:url(galaxy-home.jpg) center/cover no-repeat;filter:blur(6px) brightness(.55);transform:scale(1.05);z-index:0}
+.bgimg{position:fixed;inset:0;background:#0a1630 url(galaxy-home.jpg) center/cover no-repeat;z-index:0}
 .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:28px 16px 60px}
 h1{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:44px;margin:0 0 4px;letter-spacing:.3px}
 .lead{color:var(--soft);font-size:14px;line-height:1.6;max-width:760px;margin:0 0 18px}
@@ -78,13 +78,13 @@ h2{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:28px;margin:
 <div class="wrap">
   <div class="lbl">BrainWhim Play · Preview</div>
   <h1>Avatars</h1>
-  <p class="lead">Everything here is drawn in code: sharp at any size, no image files. Tap any avatar to make it "yours"; the rank ladder, charms and table examples below change to match. Ranks and charms are earned by everyone, free or Club, and they decorate your avatar rather than replacing it.</p>
+  <p class="lead">Drawn in code on your galaxy, so they stay sharp at any size. Tap any avatar to make it "yours"; the rank ladder, charms and table examples below change to match. Ranks and charms are earned by everyone, free or Club, and they decorate your avatar rather than replacing it.</p>
   <div class="bar"><button class="btn" id="anim">Animations: On</button></div>
 
   <div class="card">
     <div class="lbl">Choose Your Face</div>
     <h2>The Families</h2>
-    <p class="note">Three free families and two Club families. Colours are a first pass; the Brain Orbs can be matched exactly to the logo.</p>
+    <p class="note">Three free families and two Club families. Every avatar sits on its own patch of the Lobby's galaxy.</p>
     <div id="fams"></div>
   </div>
 
@@ -164,18 +164,17 @@ function spin(dur,dir){return '<animateTransform attributeName="transform" type=
 function polar(r,deg){var t=deg*Math.PI/180;return [f(50+r*Math.cos(t)),f(50+r*Math.sin(t))]}
 
 /* ---------- backgrounds and settings ---------- */
-function bgFree(p,seed){
-  var d='<radialGradient id="'+p+'bg" cx="40%" cy="34%" r="75%"><stop offset="0" stop-color="#2a3d76"/><stop offset=".6" stop-color="#121c3d"/><stop offset="1" stop-color="#090f24"/></radialGradient>';
-  var g='<circle cx="50" cy="50" r="47" fill="url(#'+p+'bg)"/>'+dots(seed,14,.6);
+function galaxy(p,seed,club){
+  var r=rng(seed*7+3),z=1.55+r()*1.25,W=100*z,H=W*784/1168,rx=(W-96)/2,ry=(H-96)/2;
+  var x=50-W/2+(r()*2-1)*rx,y=50-H/2+(r()*2-1)*ry;
+  var d='<radialGradient id="'+p+'vg" cx="50%" cy="46%" r="52%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#020617" stop-opacity="'+(club?.62:.5)+'"/></radialGradient>';
+  var g='<circle cx="50" cy="50" r="47" fill="#0a1630"/><g clip-path="url(#'+p+'c)"><image href="galaxy-home.jpg" x="'+f(x)+'" y="'+f(y)+'" width="'+f(W)+'" height="'+f(H)+'" preserveAspectRatio="none"/>'+
+        (club?'<rect x="0" y="0" width="100" height="100" fill="#0b0a2a" opacity=".18"/>':'')+
+        '<circle cx="50" cy="50" r="47" fill="url(#'+p+'vg)"/></g>'+dots(seed,club?10:6,.7);
   return {d:d,g:g};
 }
-function bgClub(p,seed){
-  var d='<radialGradient id="'+p+'bg" cx="45%" cy="40%" r="75%"><stop offset="0" stop-color="#1d2152"/><stop offset=".65" stop-color="#0c0f2b"/><stop offset="1" stop-color="#05071a"/></radialGradient>'+
-        '<filter id="'+p+'mw" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>';
-  var g='<circle cx="50" cy="50" r="47" fill="url(#'+p+'bg)"/>'+
-        '<g clip-path="url(#'+p+'c)"><ellipse cx="50" cy="50" rx="60" ry="10" fill="#6d5bd0" opacity=".28" transform="rotate(-32 50 50)" filter="url(#'+p+'mw)"/></g>'+dots(seed,22,.75);
-  return {d:d,g:g};
-}
+function bgFree(p,seed){return galaxy(p,seed,false)}
+function bgClub(p,seed){return galaxy(p,seed,true)}
 function dots(seed,n,op){var r=rng(seed),s="";for(var i=0;i<n;i++){var a=r()*Math.PI*2,d=Math.sqrt(r())*44,x=50+d*Math.cos(a),y=50+d*Math.sin(a),rad=.35+r()*.75;s+='<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(rad)+'" fill="#fff" opacity="'+f(op*(.35+r()*.65))+'"/>'}return s}
 function rimFree(p){
   return {d:'<linearGradient id="'+p+'rm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset=".45" stop-color="#9aa3b2"/><stop offset=".7" stop-color="#6c7484"/><stop offset="1" stop-color="#d7dde6"/></linearGradient>',
@@ -264,16 +263,16 @@ function drawPlanet(p,a){
 var BRAIN='M30 55C26 40 38 30 48 33C50 28 62 28 66 34C76 32 80 46 74 52C78 60 70 70 62 66C58 72 44 72 40 66C30 68 26 60 30 55Z';
 var GYRI='M50.5 33C48 45 53 55 50 69M38 45C42 42 44 47 40 50M61 39C65 41 63 46 67 48M41 58C45 55 47 60 45 63M58 58C62 55 64 61 60 63M54 36C56 40 54 43 58 46M44 37C42 40 46 43 43 46M33 54C36 52 37 56 35 59M68 54C66 52 65 56 67 59';
 function drawBrain(p,a){
-  var c=a.col;
-  var d='<radialGradient id="'+p+'or" cx="40%" cy="36%" r="70%"><stop offset="0" stop-color="'+c[0]+'"/><stop offset=".55" stop-color="'+c[1]+'"/><stop offset="1" stop-color="'+c[2]+'"/></radialGradient>'+
-        '<filter id="'+p+'gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>';
-  var g='<circle cx="50" cy="51" r="28" fill="'+c[1]+'" opacity=".5" filter="url(#'+p+'gl)"/>'+
-        '<circle cx="50" cy="51" r="27" fill="url(#'+p+'or)"/>'+
-        '<g transform="translate(50 51.5) scale(.8) translate(-51.5 -50)"><path d="'+BRAIN+'" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".92" stroke-width="2.2" stroke-linejoin="round"/>'+
-        '<path d="'+GYRI+'" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.8" stroke-linecap="round"/></g>'+
-        '<ellipse cx="40" cy="36" rx="9" ry="4.6" fill="#fff" opacity=".32" transform="rotate(-32 40 36)"/>'+
-        '<circle cx="50" cy="51" r="27" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width=".8"/>'+
-        '<g>'+sparkle(78,24,3,"#fff",.9)+twinkle(2.4)+'</g>';
+  var c=a.col,hue=a.hue||0;
+  var d='<radialGradient id="'+p+'or" cx="40%" cy="36%" r="70%"><stop offset="0" stop-color="'+c[0]+'" stop-opacity=".55"/><stop offset=".6" stop-color="'+c[1]+'" stop-opacity=".32"/><stop offset="1" stop-color="'+c[2]+'" stop-opacity=".6"/></radialGradient>'+
+        '<filter id="'+p+'gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>'+
+        (hue?'<filter id="'+p+'hu" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="'+hue+'"/>'+(a.sat?'<feColorMatrix type="saturate" values="'+a.sat+'"/>':'')+'</filter>':'');
+  var g='<circle cx="50" cy="51" r="31" fill="'+c[1]+'" opacity=".45" filter="url(#'+p+'gl)"/>'+
+        '<circle cx="50" cy="51" r="29" fill="url(#'+p+'or)"/>'+
+        '<image href="avatar-brain.png" x="27" y="28" width="46" height="46"'+(hue?' filter="url(#'+p+'hu)"':'')+'/>'+
+        '<ellipse cx="38" cy="35" rx="10" ry="4.4" fill="#fff" opacity=".28" transform="rotate(-34 38 35)"/>'+
+        '<circle cx="50" cy="51" r="29" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width=".9"/>'+
+        '<g>'+sparkle(79,24,3,"#fff",.9)+twinkle(2.4)+'</g>';
   return {d:d,g:g};
 }
 var CONST={
@@ -403,11 +402,11 @@ var FAMS=[
     {id:"moon",name:"Moonbeam",kind:"moon"},
     {id:"marble",name:"Blue Marble",kind:"marble"},
     {id:"coral",name:"Coral World",kind:"coral"}]},
-  {key:"brain",title:"Brain Orbs",tier:"free",blurb:"The BrainWhim brain in glass, in four colours.",items:[
-    {id:"cobalt",name:"Cobalt Mind",col:["#d8e6ff","#4f7dff","#1b2f9e"]},
-    {id:"magenta",name:"Magenta Mind",col:["#ffdcf4","#e04fb5","#7a1866"]},
-    {id:"teal",name:"Teal Mind",col:["#d8fff8","#30c8b4","#0b6b66"]},
-    {id:"goldm",name:"Golden Mind",col:["#fff3cc","#f0b53a","#8a5a10"]}]},
+  {key:"brain",title:"Brain Orbs",tier:"free",blurb:"Your logo brain in a glass orb, in four colours.",items:[
+    {id:"cobalt",name:"Cobalt Mind",col:["#d8e6ff","#4f7dff","#1b2f9e"],hue:0},
+    {id:"magenta",name:"Magenta Mind",col:["#ffdcf4","#e04fb5","#7a1866"],hue:95},
+    {id:"teal",name:"Teal Mind",col:["#d8fff8","#30c8b4","#0b6b66"],hue:-50},
+    {id:"goldm",name:"Golden Mind",col:["#fff3cc","#f0b53a","#8a5a10"],hue:190,sat:1.3}]},
   {key:"const",title:"Constellations",tier:"club",blurb:"The cosmic court, drawn in gold stars on midnight enamel.",items:[
     {id:"queen",name:"The Queen",fig:"queen"},
     {id:"archer",name:"The Archer",fig:"archer"},
