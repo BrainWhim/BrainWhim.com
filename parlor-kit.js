@@ -29,6 +29,7 @@
   /* ---------------- building the page ---------------- */
   function build() {
     document.body.classList.add("pk");
+    if (window.BWAvatar) document.body.classList.add("pk-avatars");
     if (C.bg) document.body.style.setProperty("--pk-bg", 'url("' + C.bg + '")');
 
     var room = $(".pk-room");
@@ -70,7 +71,7 @@
     el.players = mk("div", "pk-players");
     (C.players || []).forEach(function (p, i) {
       var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
-      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0"), av = mk("span", "av bwa-av");   /* avatar (Oct 26) */
+      var nm = mk("span", "nm", seatName(p.name)), sc = mk("span", "sc", "0"), av = mk("span", "av bwa-av");   /* avatar (Oct 26) */
       r.appendChild(av); r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); el.players.appendChild(r);
       p._row = r; p._nm = nm; p._sc = sc; p._av = av;
     });
@@ -78,7 +79,7 @@
     el.miniTop = mk("div", "pk-mini pk-mini-top"); el.mini = mk("div", "pk-mini pk-mini-bot");
     (C.players || []).forEach(function (p) {
       var r = mk("div", "pk-pl"); var sw = mk("span", "sw"); sw.style.background = p.color || "#999";
-      var nm = mk("span", "nm", p.name), sc = mk("span", "sc", "0"), av = mk("span", "av bwa-av");
+      var nm = mk("span", "nm", seatName(p.name)), sc = mk("span", "sc", "0"), av = mk("span", "av bwa-av");
       r.appendChild(av); r.appendChild(sw); r.appendChild(nm); r.appendChild(sc); p._row2 = r; p._nm2 = nm; p._sc2 = sc; p._av2 = av;
     });
     stage.replaceChild(el.mini, stage.lastChild);
@@ -237,11 +238,23 @@
   function paintAv() {
     if (!window.BWAvatar || !C) return;
     (C.players || []).forEach(function (p, i) {
-      if (i > 1) return; var who = avFor(i), nm = i === mine ? "You" : P.oppName();
-      if (p._av) p._av.innerHTML = BWAvatar.html(who, { size: 28, ring: false, charm: false, title: nm });
-      if (p._av2) p._av2.innerHTML = BWAvatar.html(who, { size: 24, ring: false, charm: false, title: nm });
+      if (i > 1) return; var who = avFor(i), nm = i === mine ? "You" : P.oppName(), pip = C.pip ? pipHtml(p.color) : "";
+      if (p._av) p._av.innerHTML = BWAvatar.html(who, { size: 28, ring: false, charm: false, title: nm }) + pip;
+      if (p._av2) p._av2.innerHTML = BWAvatar.html(who, { size: 24, ring: false, charm: false, title: nm }) + pip;
     });
+    P.paintChips();
   }
+  function pipHtml(c) { return c ? '<span class="pip" style="background:' + esc(c) + '"></span>' : ""; }
+  /* a room's own slim score line (phones: Cribbage, Morris, Dominoes) puts Parlor.chip("me"|"opp", colour) where the
+     avatar goes, then calls Parlor.paintChips() after filling the line */
+  P.chip = function (who, colour) { return '<span class="pk-chip bwa-av" data-who="' + (who === "me" ? "me" : "opp") + '"' + (colour && C && C.pip ? ' data-pip="' + esc(colour) + '"' : "") + '></span>'; };
+  P.paintChips = function () {
+    if (!window.BWAvatar) return;
+    [].forEach.call(document.querySelectorAll(".pk-chip"), function (c) {
+      var me = c.getAttribute("data-who") === "me", who = avFor(me ? mine : 1 - mine);
+      c.innerHTML = BWAvatar.html(who, { size: 22, ring: false, charm: false, title: me ? "You" : P.oppName() }) + pipHtml(c.getAttribute("data-pip"));
+    });
+  };
   P.paintAvatars = paintAv;
   /* the result window: both players' avatars with their rank rings */
   function duo() {
@@ -259,10 +272,14 @@
   }
   window.addEventListener("bw-avatar", function () { renderAccount(); paintAv(); });
   /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
-  P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); return (a && a.offsetParent) ? a : (b && b.offsetParent ? b : null); };
+  P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); if (a && a.offsetParent) return a; if (b && b.offsetParent) return b;
+    var c = p._av2, d = p._av; return (c && c.offsetParent) ? c : (d && d.offsetParent ? d : null); };   /* with avatars the dot is hidden: pieces fly from the avatar (Oct 26) */
   P.info = function (text) { if (el.info) { el.info.textContent = text || ""; el.info.style.display = text ? "" : "none"; } };
   /* online, "Opponent" in a seat name becomes the other player's username once the kit knows it */
-  P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { var n = String(arr[i]); if (T && T.oppName) n = n.replace(/^Opponent\b/, T.oppName); p._nm.textContent = n; p._nm2.textContent = n; } }); lastNames = arr; };
+  P.names = function (arr) { (C.players || []).forEach(function (p, i) { if (arr && arr[i] && p._nm) { var n = seatName(String(arr[i])); if (T && T.oppName) n = n.replace(/^Opponent\b/, T.oppName); p._nm.textContent = n; p._nm2.textContent = n; } }); lastNames = arr; };
+  /* with avatars, a seat is just avatar · name · score: "You (cobalt)" becomes "You"; games where both sides' pieces share
+     the board (pip:true in Parlor.init) show the colour as a small pip on the avatar instead (Judy, Oct 26) */
+  function seatName(n) { return window.BWAvatar ? n.replace(/\s*\([^)]*\)\s*$/, "") : n; }
   var lastNames = null;
 
   /* ---------------- help ---------------- */
