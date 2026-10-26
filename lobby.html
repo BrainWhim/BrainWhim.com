@@ -527,6 +527,8 @@ header {
   .mobile-nav-action-tab.active { color: #daa520; }
   .mobile-nav-action-tab-icon { display: flex; margin-bottom: 4px; }
   .mobile-nav-action-tab svg { width: 19px; height: 19px; stroke: currentColor; }
+  .mobile-nav-action-tab-icon.is-av { margin: -4px 0 0; }
+  .mobile-nav-action-tab-icon.is-av svg { width: 26px; height: 26px; stroke: none; }
   #tab-join, #tab-mail { display: none; }     /* reachable from the menu and the mail icon */
 
   .toast { right: 12px; left: 12px; max-width: none; bottom: calc(var(--bar-h) + var(--bar-gap) + var(--bar-safe) + 12px); }
@@ -607,8 +609,8 @@ header {
     <span>Mail</span>
   </div>
   <div class="mobile-nav-action-tab" id="tab-avatar" class="needs-auth" onclick="openTargetMobileDrawer('avatar')">
-    <span class="mobile-nav-action-tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-    <span>Identity</span>
+    <span class="mobile-nav-action-tab-icon" id="tabAvatarIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    <span>Avatar</span>
   </div>
 </div>
 
@@ -764,6 +766,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script src="bw-auth.js?v=1026a"></script>
 <script src="bw-avatars.js?v=1026a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
 </head>
 <body>
 <div class="veil"></div>
@@ -1114,6 +1117,8 @@ var myProf=null, myGuest=true;
 function paintSeatAv(){
   var b=document.getElementById("seatAv"), ab=document.getElementById("avatarBtn"); if(!b||!window.BWAvatar) return;
   b.innerHTML=BWAvatar.html(myGuest?null:(myProf||{}),{size:92,title:"Your avatar"}); b.hidden=false;
+  /* the phone tab bar's Avatar tab shows your own avatar as its icon (guests: the plain silhouette) */
+  var ti=document.getElementById("tabAvatarIcon"); if(ti){ ti.innerHTML=BWAvatar.html(myGuest?null:(myProf||{}),{size:26,ring:false,charm:false,title:"Your avatar"}); ti.classList.add("is-av"); }
   if(ab) ab.hidden=myGuest;
 }
 window.addEventListener("bw-avatar",function(e){
