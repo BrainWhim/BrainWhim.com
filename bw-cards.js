@@ -9,8 +9,9 @@
    BWCards.name(c)              "queen of hearts"
    BWCards.make(c, {up})        a card element (.bwc); BWCards.turn(el, c, up) turns it face up or down
    BWCards.slot(label)          an empty place on the table (.bwc-slot), e.g. "A" or "K" or "↻"
+   BWCards.place(el, x, y, sc, rot)  puts a card at (x, y), optionally at a size (sc) and turned (rot degrees)
    BWCards.glide(el, x, y, o)   floats a card to (x, y) in table units along a small arc; resolves when it lands
-                                (o: dur, lift (peak scale), spin (peak tilt in degrees), soar (a deeper shadow), flip:{c, up})
+                                (o: dur, lift (peak scale), spin (peak tilt in degrees), soar (a deeper shadow), sc, rot, flip:{c, up})
    BWCards.paint.*              wood, leather and felt textures for tables (canvasOf, woodFn, leatherFn, feltFn, cssUrl, rot) */
 (function () {
   "use strict";
@@ -58,24 +59,29 @@
   };
   K.slot = function (label, cls) { var e = document.createElement("div"); e.className = "bwc-slot" + (cls ? " " + cls : ""); if (label) { var s = document.createElement("span"); s.textContent = label; e.appendChild(s); } return e; };
 
-  /* move a card element to (x, y) table units (its top-left corner). o: {dur, lift, z, flip:{c, up}} */
-  K.place = function (e, x, y) { e._x = x; e._y = y; e.style.transform = "translate(" + x + "px," + y + "px)"; };
+  /* move a card element to (x, y) table units (the top-left corner of its 100 x 140 box). Optional size and turn:
+     sc (1 = normal; it grows from the card's centre) and rot (degrees); both are remembered for later moves. */
+  function tf(x, y, sx, sy, r) { return "translate(" + x + "px," + y + "px)" + (r ? " rotate(" + (+r).toFixed(2) + "deg)" : "") + (sx !== 1 || sy !== 1 ? " scale(" + Math.max(0.04, sx).toFixed(3) + "," + sy.toFixed(3) + ")" : ""); }
+  K.place = function (e, x, y, sc, rot) { e._x = x; e._y = y; if (sc != null) e._sc = sc; if (rot != null) e._rot = rot; var k = e._sc || 1; e.style.transform = tf(x, y, k, k, e._rot || 0); };
+  /* float a card to (x, y) along a small arc; resolves when it lands. o: {dur, lift (peak extra size), spin (peak tilt),
+     soar (a deeper shadow), sc and rot (its size and turn when it lands), flip:{c, up} (turns over half way)} */
   K.glide = function (e, x, y, o) {
     o = o || {};
     var smooth = !window.Parlor || !Parlor.smooth || Parlor.smooth();
+    var s0 = e._sc || 1, s1 = o.sc == null ? s0 : o.sc, r0 = e._rot || 0, r1 = o.rot == null ? r0 : o.rot;
     return new Promise(function (res) {
       var x0 = e._x == null ? x : e._x, y0 = e._y == null ? y : e._y, d = Math.hypot(x - x0, y - y0);
-      if (!smooth || d < 1) { if (o.flip) K.turn(e, o.flip.c, o.flip.up); K.place(e, x, y); e.classList.remove("lift"); res(); return; }
+      if (!smooth || (d < 1 && Math.abs(s1 - s0) < .01 && Math.abs(r1 - r0) < .5)) { if (o.flip) K.turn(e, o.flip.c, o.flip.up); K.place(e, x, y, s1, r1); e.classList.remove("lift"); res(); return; }
       var dur = o.dur || Math.min(520, 220 + d * 0.32), lift = o.lift == null ? Math.min(1.08, 1.02 + d / 9000) : o.lift, t0 = performance.now(), flipped = false;
       e.classList.add("flying"); if (o.soar) e.classList.add("soar");
       (function step(now) {
-        var p = Math.min(1, (now - t0) / dur), k = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, sc = 1 + (lift - 1) * Math.sin(Math.PI * p);
+        var p = Math.min(1, (now - t0) / dur), k = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, up = 1 + (lift - 1) * Math.sin(Math.PI * p), base = s0 + (s1 - s0) * k;
         if (o.flip && !flipped && p >= 0.5) { flipped = true; K.turn(e, o.flip.c, o.flip.up); }
-        var sx = o.flip ? Math.abs(Math.cos(Math.PI * p)) * sc : sc;   /* a flip turns the card over half way */
+        var sy = base * up, sx = o.flip ? Math.abs(Math.cos(Math.PI * p)) * sy : sy;   /* a flip turns the card over half way */
         e._x = x0 + (x - x0) * k; e._y = y0 + (y - y0) * k;
-        var rz = o.spin ? " rotate(" + (o.spin * Math.sin(Math.PI * p)).toFixed(2) + "deg)" : "";   /* o.spin: a tilt that peaks mid-flight */
-        e.style.transform = "translate(" + e._x + "px," + e._y + "px)" + rz + " scale(" + Math.max(0.04, sx).toFixed(3) + "," + sc.toFixed(3) + ")";
-        if (p < 1) requestAnimationFrame(step); else { e.classList.remove("flying", "soar"); K.place(e, x, y); res(); }
+        var rz = r0 + (r1 - r0) * k + (o.spin ? o.spin * Math.sin(Math.PI * p) : 0);   /* o.spin: a tilt that peaks mid-flight */
+        e.style.transform = tf(e._x, e._y, sx, sy, rz);
+        if (p < 1) requestAnimationFrame(step); else { e.classList.remove("flying", "soar"); K.place(e, x, y, s1, r1); res(); }
       })(t0);
     });
   };
@@ -84,11 +90,11 @@
     var smooth = !window.Parlor || !Parlor.smooth || Parlor.smooth();
     return new Promise(function (res) {
       if (!smooth) { K.turn(e, c, up); res(); return; }
-      var t0 = performance.now(), dur = 260, done = false;
+      var t0 = performance.now(), dur = 260, done = false, k = e._sc || 1;
       (function step(now) {
         var p = Math.min(1, (now - t0) / dur);
         if (!done && p >= 0.5) { done = true; K.turn(e, c, up); }
-        e.style.transform = "translate(" + e._x + "px," + e._y + "px) scale(" + Math.max(0.04, Math.abs(Math.cos(Math.PI * p))).toFixed(3) + ",1.03)";
+        e.style.transform = tf(e._x, e._y, Math.abs(Math.cos(Math.PI * p)) * k * 1.03, k * 1.03, e._rot || 0);
         if (p < 1) requestAnimationFrame(step); else { K.place(e, e._x, e._y); res(); }
       })(t0);
     });

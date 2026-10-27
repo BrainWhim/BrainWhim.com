@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sunroom Crazy Eights · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1026f">
+<link rel="stylesheet" href="bw-cards.css?v=1026c">
+<style>
+/* ===== Sunroom Crazy Eights: the sunroom's round card table seen from straight above, drawn in the browser =====
+   A wooden (or wicker) rim with brass cups around a felt top in dappled sunlight. Your hand fans along your side
+   (on portrait phones it sits below the table, larger); the other hand fans face down across the table; the stock
+   and the turned-up pile sit in the middle. Cards from the shared card kit (bw-cards.js / .css).
+   Tables (the Tables card): one free, two for Club members. ?preview=1 shows a picker for all three. */
+.ce-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ce-fit{position:relative;flex:none}
+.ce-table{position:absolute;left:0;top:0;transform-origin:0 0}
+.ce-round{position:absolute;left:0;top:0;width:1000px;height:1000px;border-radius:50%;background:var(--ce-rimc);background-image:var(--ce-rim);background-size:cover;
+  box-shadow:0 26px 50px rgba(0,0,0,.55),0 6px 12px rgba(0,0,0,.35),inset 0 0 0 2px rgba(0,0,0,.35)}
+.ce-round::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 26%,rgba(255,236,200,.3),rgba(255,236,200,0) 46%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 62%,rgba(0,0,0,.4) 100%)}
+.ce-bead{position:absolute;inset:34px;border-radius:50%;border:2px solid var(--ce-bead);box-shadow:0 1px 0 rgba(255,240,210,.25),inset 0 1px 0 rgba(0,0,0,.4)}
+.ce-felt{position:absolute;inset:44px;border-radius:50%;background-color:var(--ce-feltc);
+  background-image:radial-gradient(ellipse 18% 11% at 62% 28%,rgba(255,250,215,.17),rgba(255,250,215,0)),radial-gradient(ellipse 14% 9% at 74% 44%,rgba(255,250,215,.14),rgba(255,250,215,0)),radial-gradient(ellipse 20% 12% at 40% 70%,rgba(255,250,215,.1),rgba(255,250,215,0)),radial-gradient(ellipse 12% 8% at 26% 40%,rgba(255,250,215,.09),rgba(255,250,215,0)),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 58%,rgba(0,0,0,.36)),var(--ce-felt);background-size:auto,auto,auto,auto,auto,512px 512px;
+  box-shadow:inset 0 6px 14px rgba(0,0,0,.6),inset 0 0 0 2px rgba(0,0,0,.45)}
+.ce-cup{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#1a1208 0 34%,rgba(0,0,0,0) 36%),radial-gradient(circle at 35% 30%,#fff1c2,#d9b25a 45%,#7a5518 85%);
+  box-shadow:0 2px 3px rgba(0,0,0,.5),inset 0 -1px 2px rgba(0,0,0,.4)}
+.ce-mono{position:absolute;left:50%;top:960px;transform:translate(-50%,-50%);display:flex;align-items:baseline;font-size:24px;line-height:1;pointer-events:none}
+.ce-mono b,.ce-mono i{display:inline-block;color:transparent;background:linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 0 rgba(0,0,0,.5))}
+.ce-mono b{font:500 1em Montserrat,sans-serif}.ce-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.ce-shelf{position:absolute;left:10px;right:10px;border-radius:26px;background:rgba(15,23,42,.42);border:1.5px solid rgba(255,255,255,.14);display:none}
+.ce-table.narrow .ce-shelf{display:block}
+#ceCards{position:absolute;left:0;top:0}
+.ce-table .bwc.can{cursor:pointer}
+.ce-table .bwc.play .fc{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 16px 2px rgba(240,190,90,.45)}
+.ce-stock{position:absolute;width:150px;height:190px;margin:-95px 0 0 -75px;border-radius:14px;cursor:pointer}
+.ce-stock.glow{box-shadow:0 0 0 3px rgba(242,199,90,.85),0 0 24px 6px rgba(242,199,90,.45);animation:bwc-hint 1.2s ease-in-out infinite}
+.ce-lab{position:absolute;transform:translate(-50%,-50%);font:700 18px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,250,232,.82);text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none}
+/* the suit asked for after an eight: a gold-rimmed disc beside the pile */
+.ce-suit{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 40% 32%,#fffdf6,#efe6d2);box-shadow:0 0 0 4px #c9a24f,0 0 0 6px rgba(0,0,0,.35),0 10px 22px rgba(0,0,0,.45);opacity:0;transform:scale(.6);transition:opacity .3s,transform .3s;pointer-events:none}
+.ce-suit.on{opacity:1;transform:scale(1)}
+.ce-suit b{font:700 62px "Cormorant Garamond",Georgia,serif;line-height:.9}
+.ce-suit small{font:700 13px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5a4320}
+.ce-suit.red b{color:#ad1f2a}.ce-suit.blk b{color:#17171c}
+/* glass windows on the table: choose a suit, the end of a hand */
+.ce-panel{position:absolute;z-index:700;left:50%;top:50%;transform:translate(-50%,-50%);width:560px;padding:26px 28px 24px;border-radius:22px;background:rgba(15,23,42,.84);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1.5px solid rgba(231,199,122,.5);box-shadow:0 24px 50px rgba(0,0,0,.5);color:#fff;text-align:center;display:none}
+.ce-panel.on{display:block}
+.ce-panel .k{margin:0 0 6px;font:700 15px Montserrat,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#e6c25a}
+.ce-panel h3{margin:0 0 10px;font:700 34px Montserrat,sans-serif}
+.ce-panel p{margin:0 0 16px;font:500 21px/1.45 Montserrat,sans-serif;color:rgba(255,255,255,.86)}
+.ce-panel p b{color:#f0d27a}
+.ce-suits{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ce-suits button{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 10px;border-radius:12px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,250,240,.94);cursor:pointer;font:700 22px Montserrat,sans-serif;color:#17171c}
+.ce-suits button b{font:700 46px "Cormorant Garamond",Georgia,serif;line-height:.8}
+.ce-suits button.red{color:#ad1f2a}
+.ce-suits button.best{box-shadow:0 0 0 3px #e9b949}
+.ce-panel .pk-btn{display:inline-block;width:auto;min-width:240px;padding:14px 26px;font-size:21px;margin:4px 6px 0}
+.ce-toast{position:absolute;z-index:650;left:50%;top:620px;transform:translate(-50%,-50%);padding:12px 22px;border-radius:14px;background:rgba(15,23,42,.84);border:1.5px solid rgba(231,199,122,.6);color:#f3d68b;font:700 20px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none}
+.ce-toast.on{opacity:1}
+/* portrait phones: the table is drawn small, so its windows and labels are drawn bigger */
+.ce-table.narrow .ce-panel{transform:translate(-50%,-50%) scale(1.7)}
+.ce-table.narrow .ce-toast{transform:translate(-50%,-50%) scale(1.7)}
+.ce-table.narrow .ce-lab{font-size:30px}
+.ce-table.narrow .ce-suit{width:150px;height:150px;margin:-75px 0 0 -75px}
+.ce-table.narrow .ce-suit b{font-size:78px}.ce-table.narrow .ce-suit small{font-size:17px}
+/* the toolbar under the table */
+.ce-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.ce-tools .pk-btn{width:auto;margin:0;padding:8px 16px;min-height:0}
+.ce-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.ce-pick{position:fixed;z-index:60;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(231,199,122,.45);max-width:94vw}
+.ce-pick button{font:600 13px Montserrat,sans-serif;color:#f3ead8;background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 12px;cursor:pointer}
+.ce-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
+@media (max-width:999px){
+  .ce-pick{top:8px;flex-wrap:nowrap;gap:2px;padding:4px}.ce-pick button{font-size:11px;padding:7px 7px;white-space:nowrap}
+  .ce-tools{gap:6px;padding:5px;max-width:calc(100vw - 16px)}
+  .ce-tools .pk-btn{padding:8px 12px;font-size:13px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+}
+@media (prefers-reduced-motion:reduce){.ce-suit{transition:none}.ce-stock.glow{animation:none}}
+</style>
+<script src="bw-auth.js?v=1026a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html?cat=cards">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1026a"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+<script src="parlor-kit.js?v=1026f"></script>
+<script src="bw-cards.js?v=1026c"></script>
+<script>
+var K=BWCards, PT=K.paint;
+/* ---------- the three tables ---------- */
+function wickerFn(rgb,seed){ var r=K.rng(seed), n=PT.noise2(seed); return function(x,y){
+  var cs=18, cx=Math.floor(x/cs), cy=Math.floor(y/cs), fx=(x%cs)/cs, fy=(y%cs)/cs, horiz=(cx+cy)%2===0;
+  var a=horiz?fy:fx, strand=Math.sin(a*Math.PI*2*2), shade=.72+.28*Math.abs(strand), edge=(horiz?Math.sin(fx*Math.PI):Math.sin(fy*Math.PI));
+  var k=shade*(.82+.18*edge)+(PT.fbm(n,x/40,y/40,2)-.5)*.12+(r()-.5)*.05; return [rgb[0]*k,rgb[1]*k,rgb[2]*k]; }; }
+var DESIGNS={
+  /* Mahogany & Baize: the room photo's table; green baize, brass cups, claret card backs */
+  mahogany:{name:"Mahogany & Baize",rim:function(){ return PT.woodFn({light:[126,52,30],dark:[58,20,10],freq:.03,turb:7,wx:400,wy:40,sharp:.85,ringAmt:.4,streakAmt:.5,pores:.012,blotch:.3,seed:44}); },rimc:"#5a2414",
+    felt:[34,98,62],bead:"rgba(214,178,92,.55)",back:"linear-gradient(150deg,#a3242b,#5c0e14)",dots:["#5a2414","#22623e","#a3242b"]},
+  /* Wicker & Rose: a honey wicker rim like the sunroom chairs, dusty-rose felt, sage-green backs */
+  wicker:{name:"Wicker & Rose",rim:function(){ return wickerFn([214,174,112],5); },rimc:"#c9a46a",
+    felt:[170,102,108],bead:"rgba(255,244,220,.55)",back:"linear-gradient(150deg,#728f6a,#38533a)",dots:["#c9a46a","#aa666c","#5c7a58"]},
+  /* Teak & Morning Sky: golden teak and a sky-blue felt, navy backs */
+  teak:{name:"Teak & Morning Sky",rim:function(){ return PT.woodFn({light:[184,126,70],dark:[122,76,36],freq:.028,turb:6,wx:360,wy:30,sharp:.7,ringAmt:.45,streakAmt:.5,pores:.01,blotch:.22,seed:71}); },rimc:"#a86e38",
+    felt:[86,132,170],bead:"rgba(255,240,210,.5)",back:"linear-gradient(150deg,#26407a,#0d1834)",dots:["#a86e38","#5684aa","#26407a"]}
+};
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="mahogany"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]) texCache[k]={r:PT.cssUrl(PT.canvasOf(1000,1000,d.rim())),f:PT.cssUrl(PT.seamless(PT.canvasOf(512,512,PT.feltFn(d.felt,k.length*13+5))))};
+  var t=texCache[k], s=stage.style;
+  s.setProperty("--ce-rim",t.r); s.setProperty("--ce-rimc",d.rimc); s.setProperty("--ce-felt",t.f); s.setProperty("--ce-feltc","rgb("+d.felt+")"); s.setProperty("--ce-bead",d.bead); s.setProperty("--bwc-back",d.back);
+}
+var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
+function previewBar(){
+  if(!PREVIEW) return;
+  var bar=document.createElement("div"); bar.className="ce-pick";
+  Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k;
+    b.onclick=function(){ previewPick=k; document.body.setAttribute("data-set",k); mark(); }; bar.appendChild(b); });
+  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||curDesign)); }); }
+  document.body.appendChild(bar); previewPick="mahogany"; document.body.setAttribute("data-set","mahogany"); mark();
+}
+
+/* ---------- the table ---------- */
+var stage=document.createElement("div"); stage.className="ce-pad";
+(function(){
+  var h='<div class="ce-fit" id="ceFit"><div class="ce-table" id="ceT"><div class="ce-round"><div class="ce-bead"></div><div class="ce-felt"></div>';
+  for(var i=0;i<8;i++){ var a=(22.5+i*45)*Math.PI/180; h+='<span class="ce-cup" style="left:'+(500+Math.cos(a)*478).toFixed(1)+'px;top:'+(500+Math.sin(a)*478).toFixed(1)+'px"></span>'; }
+  h+='<span class="ce-mono"><b>B</b><i>W</i></span></div><div class="ce-shelf" id="ceShelf"></div>';
+  h+='<div class="ce-stock" id="ceStock" role="button" aria-label="Draw a card"></div><span class="ce-lab" id="ceOppLab"></span><span class="ce-lab" id="ceStockLab"></span><div class="ce-suit" id="ceSuit"><b></b><small></small></div>';
+  h+='<div id="ceCards"></div><div class="ce-panel" id="cePanel"></div><div class="ce-toast" id="ceToast" role="status"></div></div></div><div class="ce-tools" id="ceTools"></div>';
+  stage.innerHTML=h;
+})();
+var T=stage.querySelector("#ceT"), FIT=stage.querySelector("#ceFit"), CL=stage.querySelector("#ceCards"), TOOLS=stage.querySelector("#ceTools"), PANEL=stage.querySelector("#cePanel"), toastEl=stage.querySelector("#ceToast");
+var STOCK=stage.querySelector("#ceStock"), SUITEL=stage.querySelector("#ceSuit"), OPPLAB=stage.querySelector("#ceOppLab"), STOCKLAB=stage.querySelector("#ceStockLab"), SHELF=stage.querySelector("#ceShelf");
+
+/* layout in table units (the round table is 1000 across). Narrow (portrait phones): your hand sits below the table, larger. */
+var G={};
+function layoutFor(narrow){
+  if(narrow) return {narrow:true,W:1000,H:1360,opp:{y:178,sc:.82,w:600},stock:[392,505],pile:[600,505],ps:1.3,suit:[812,505],me:{y:1168,sc:1.62,w:980,lift:40},shelf:[1028,1320]};
+  return {narrow:false,W:1000,H:1000,opp:{y:172,sc:.8,w:560},stock:[400,470],pile:[590,470],ps:1.12,suit:[770,470],me:{y:760,sc:1.08,w:700,lift:30}};
+}
+G=layoutFor(false);
+
+/* ---------- the game ----------
+   Saved (and sent online) as plain ids "s-r": deck (the stock, top = last), h[1], h[2] (the hands), pile (top = last),
+   suit (the suit named after an eight, or null), turn, dealer, score[1], score[2], hand (number), phase
+   (play | handover | over), passes, res (how the hand ended), seq, mv (the last thing done: {side, kind, card, suit}). */
+var BYID={}; K.deck().forEach(function(c){ BYID[c.id]=c; });
+var TARGET=100, mySide=1, S=null, busy=false, cardEl={}, online=false, sb=null, room=null, me=null, reported=false, seq=0;
+var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+var inLesson=false, practice=false, lessonOnly=null, GID=0, oppVoid=[0,0,0,0];
+function other(s){ return 3-s; }
+function topId(){ return S.pile[S.pile.length-1]; }
+function C(id){ return BYID[id]; }
+function pts(id){ var c=C(id); return c.r===7?50:c.r>=10?10:c.r===0?1:c.r+1; }
+function handPts(side){ return S.h[side].reduce(function(n,id){ return n+pts(id); },0); }
+function canPlay(id){ var c=C(id), t=C(topId()); if(c.r===7) return true; if(S.suit!=null) return c.s===S.suit; return c.s===t.s||c.r===t.r; }
+function playable(side){ return S.h[side].filter(canPlay); }
+function shuffleIds(a){ return K.shuffle(a); }
+function newMatch(){ GID++; S={v:1,game:"crazyeights",deck:[],h:[null,[],[]],pile:[],suit:null,turn:1,dealer:2,score:[null,0,0],hand:0,phase:"play",passes:0,res:null,seq:0,mv:null}; dealHand(); }
+function dealHand(){
+  var d=shuffleIds(K.deck().map(function(c){ return c.id; }));
+  S.hand++; S.h=[null,[],[]]; S.suit=null; S.passes=0; S.res=null; S.phase="play";
+  var lead=other(S.dealer);
+  for(var i=0;i<7;i++){ S.h[lead].push(d.pop()); S.h[S.dealer].push(d.pop()); }
+  var st=d.pop(); while(C(st).r===7){ d.splice(Math.floor(d.length/2),0,st); st=d.pop(); }   /* an eight turned up goes back into the middle of the stock */
+  S.deck=d; S.pile=[st]; S.turn=lead; S.mv={side:0,kind:"deal"};
+  oppVoid=[0,0,0,0];
+}
+/* draw one card; when the stock is empty the pile (all but its top card) is shuffled into a new stock */
+function canDraw(){ return S.deck.length>0||S.pile.length>1; }
+function drawOne(side){
+  var re=false;
+  if(!S.deck.length){ if(S.pile.length<=1) return null; var top=S.pile.pop(); S.deck=shuffleIds(S.pile); S.pile=[top]; re=true; }
+  var id=S.deck.pop(); S.h[side].push(id); S.passes=0; S.mv={side:side,kind:"draw",re:re}; return id;
+}
+function doPlay(side,id,suit){
+  var i=S.h[side].indexOf(id); if(i<0) return false;
+  S.h[side].splice(i,1); S.pile.push(id); S.suit=C(id).r===7?suit:null; S.passes=0; S.mv={side:side,kind:"play",card:id,suit:S.suit};
+  if(!S.h[side].length) endHand(side,false); else S.turn=other(side);
+  return true;
+}
+function doPass(side){ S.passes++; S.mv={side:side,kind:"pass"}; if(S.passes>=2) endHand(0,true); else S.turn=other(side); }
+function endHand(side,blocked){
+  var w=side, p;
+  if(blocked){ var a=handPts(1), b=handPts(2); w=a<b?1:b<a?2:0; p=w?handPts(other(w)):0; }
+  else p=handPts(other(side));
+  if(w) S.score[w]+=p;
+  S.res={w:w,pts:p,blocked:!!blocked,left:[null,handPts(1),handPts(2)]};
+  S.phase=(w&&S.score[w]>=TARGET)?"over":"handover";
+}
+function nextHand(){ S.dealer=other(S.dealer); dealHand(); }
+
+/* ---------- where every card sits ---------- */
+var SUITS=["♣","♦","♥","♠"], SUITNAME=["Clubs","Diamonds","Hearts","Spades"];
+function sortHand(ids){ var order=[3,2,0,1]; return ids.slice().sort(function(a,b){ var x=C(a),y=C(b); if((x.r===7)!==(y.r===7)) return x.r===7?1:-1; if(x.s!==y.s) return order.indexOf(x.s)-order.indexOf(y.s); return x.r-y.r; }); }
+function fan(ids,o,mine,show){
+  var P={}, n=ids.length, w=100*o.sc, step=n>1?Math.min(w*(mine?.62:.42),(o.w-w)/(n-1)):0, total=step*(n-1)+w, left=500-total/2;
+  ids.forEach(function(id,k){
+    var off=k-(n-1)/2, rot=Math.max(-16,Math.min(16,off*(mine?2.2:-1.8))), dy=Math.abs(off)*Math.abs(off)*(mine?1.2:.9)*(mine?1:-1);
+    var cx=left+k*step+w/2, cy=o.y+dy;
+    var lift=mine&&myTurnNow()&&canPlay(id)&&S.phase==="play"?-o.lift:0;
+    P[id]={x:cx-50,y:cy-70+lift,sc:o.sc,rot:rot,up:mine||show,z:(mine?600:200)+k};
+  });
+  return P;
+}
+function positions(){
+  var P={}, i;
+  var myIds=sortHand(S.h[mySide||1]), oppIds=S.h[other(mySide||1)], show=S.phase!=="play";
+  Object.assign(P,fan(myIds,G.me,true,true));
+  Object.assign(P,fan(show?sortHand(oppIds):oppIds,G.opp,false,show));
+  S.deck.forEach(function(id,k){ var o=Math.min(8,Math.floor(k/6))*.9; P[id]={x:G.stock[0]-50-o,y:G.stock[1]-70-o,sc:G.ps,rot:0,up:false,z:100+k}; });
+  var n=S.pile.length;
+  S.pile.forEach(function(id,k){ var r=K.rng(id.charCodeAt(0)*31+parseInt(id.split("-")[1],10)*7+3), deep=n-1-k;
+    P[id]={x:G.pile[0]-50+(deep<5?(r()-.5)*16:0),y:G.pile[1]-70+(deep<5?(r()-.5)*14:0),sc:G.ps,rot:deep===0?(r()-.5)*6:(r()-.5)*24,up:true,z:300+k}; });
+  return P;
+}
+function elFor(id){
+  var e=cardEl[id]; if(e) return e;
+  e=K.make(C(id),{up:false}); e._id=id; CL.appendChild(e); cardEl[id]=e;
+  e.addEventListener("pointerdown",function(ev){ ev.preventDefault(); tapCard(id); });
+  return e;
+}
+function render(anim,o){
+  o=o||{}; var P=positions(), jobs=[], k=0;
+  Object.keys(P).forEach(function(id){
+    var p=P[id], e=elFor(id), moved=e._x==null||Math.abs(e._x-p.x)>.5||Math.abs(e._y-p.y)>.5||Math.abs((e._sc||1)-p.sc)>.01||Math.abs((e._rot||0)-p.rot)>.5;
+    e.classList.remove("hint");
+    e.classList.toggle("can",p.up&&S.h[mySide||1].indexOf(id)>=0&&myTurnNow()&&canPlay(id));
+    e.classList.toggle("play",p.up&&S.h[mySide||1].indexOf(id)>=0&&myTurnNow()&&canPlay(id)&&S.phase==="play");
+    if(anim&&moved&&e._x!=null){
+      var flip=e._up!==p.up?{c:C(id),up:p.up}:null, delay=o.stagger?k++*o.stagger:0;
+      jobs.push(Parlor.wait(delay).then(function(){ e.style.zIndex=p.z; return K.glide(e,p.x,p.y,{sc:p.sc,rot:p.rot,flip:flip,dur:o.dur}); }));
+    } else { if(e._up!==p.up) K.turn(e,C(id),p.up); K.place(e,p.x,p.y,p.sc,p.rot); e.style.zIndex=p.z; }
+  });
+  paintTable();
+  return Promise.all(jobs);
+}
+function paintTable(){
+  STOCK.style.left=G.stock[0]+"px"; STOCK.style.top=G.stock[1]+"px"; STOCK.style.transform="scale("+G.ps+")";
+  var mine=myTurnNow()&&S.phase==="play"&&canDraw()&&!busy, need=mine&&!playable(mySide).length;
+  STOCK.classList.toggle("glow",need);
+  STOCKLAB.style.left=G.stock[0]+"px"; STOCKLAB.style.top=(G.stock[1]+70*G.ps+30)+"px"; STOCKLAB.textContent=S.deck.length?S.deck.length+" in the stock":"Stock empty";
+  OPPLAB.style.left="500px"; OPPLAB.style.top=(G.opp.y-70*G.opp.sc-30)+"px"; OPPLAB.textContent=P_opp()+" · "+S.h[other(mySide||1)].length+" card"+(S.h[other(mySide||1)].length===1?"":"s");
+  SUITEL.style.left=G.suit[0]+"px"; SUITEL.style.top=G.suit[1]+"px";
+  if(S.suit!=null){ SUITEL.className="ce-suit on "+(S.suit===1||S.suit===2?"red":"blk"); SUITEL.firstChild.textContent=SUITS[S.suit]; SUITEL.lastChild.textContent=SUITNAME[S.suit]; } else SUITEL.className="ce-suit";
+  if(G.narrow){ SHELF.style.top=G.shelf[0]+"px"; SHELF.style.height=(G.shelf[1]-G.shelf[0])+"px"; }
+}
+function P_opp(){ return online?Parlor.oppName():"The House"; }
+
+/* ---------- your turn ---------- */
+function myTurnNow(){ return !!S&&S.phase==="play"&&S.turn===mySide&&seatedNow()&&(!online||(room&&room.guest))&&!(inLesson&&!Parlor.lessonWaiting&&!(lessonOnly&&(lessonOnly.free||lessonOnly.after))); }
+async function tapCard(id){
+  if(busy||!myTurnNow()) return;
+  if(S.h[mySide].indexOf(id)<0){ if(S.deck.indexOf(id)>=0) tapStock(); return; }
+  if(!canPlay(id)){ var e=cardEl[id]; e.classList.remove("nope"); void e.offsetWidth; e.classList.add("nope"); toast(S.suit!=null?SUITNAME[S.suit]+" or an eight":"Match the "+(SUITNAME[C(topId()).s].toLowerCase().replace(/s$/,""))+" or the "+K.RANKS[C(topId()).r]); return; }
+  if(!allowLesson({play:id})) return;
+  var suit=null;
+  if(C(id).r===7){ suit=await chooseSuit(id); if(suit==null) return; }
+  await act(function(){ doPlay(mySide,id,suit); });
+}
+async function tapStock(){
+  if(busy||!myTurnNow()||!canDraw()) return;
+  if(!allowLesson({draw:true})) return;
+  await act(function(){ var id=drawOne(mySide); if(S.mv.re) toast("The pile is shuffled into a new stock"); return id; });
+}
+async function tapPass(){
+  if(busy||!myTurnNow()||canDraw()||playable(mySide).length) return;
+  await act(function(){ doPass(mySide); });
+}
+STOCK.addEventListener("pointerdown",function(e){ e.preventDefault(); tapStock(); });
+/* one move by anyone: change the state, float the cards, send it online, then see what's next */
+async function act(fn){
+  busy=true; clearHint(); var g=GID;
+  fn(); seq++; S.seq=seq;
+  var mv=S.mv; Parlor.sfx(mv.kind==="play"?"card":mv.kind==="draw"?"flip":"click",{pitch:mv.kind==="play"?1:1.3});
+  push();
+  await render(true);
+  if(g!==GID) return;
+  busy=false; after();
+}
+/* the suit window after an eight; the suit you hold most is marked */
+function chooseSuit(id){
+  return new Promise(function(res){
+    var left=S.h[mySide].filter(function(x){ return x!==id&&C(x).r!==7; }), cnt=[0,0,0,0]; left.forEach(function(x){ cnt[C(x).s]++; });
+    var best=cnt.indexOf(Math.max.apply(null,cnt));
+    PANEL.innerHTML='<p class="k">Crazy Eight</p><h3>Choose a Suit</h3><div class="ce-suits"></div><div style="margin-top:14px"><button type="button" class="pk-btn quiet">Cancel</button></div>';
+    var box=PANEL.querySelector(".ce-suits");
+    [3,2,0,1].forEach(function(s){ var b=document.createElement("button"); b.type="button"; b.className=(s===1||s===2?"red":"")+(s===best?" best":""); b.innerHTML="<b>"+SUITS[s]+"</b>"+SUITNAME[s]; b.onclick=function(){ PANEL.classList.remove("on"); res(s); }; box.appendChild(b); });
+    PANEL.querySelector(".pk-btn").onclick=function(){ PANEL.classList.remove("on"); res(null); };
+    PANEL.classList.add("on");
+  });
+}
+
+/* ---------- after every move ---------- */
+function after(){
+  showStats(); tools();
+  if(inLesson&&Parlor.lessonWaiting&&lessonOnly&&lessonOnly.check&&lessonOnly.check(S.mv)){ Parlor.lessonDone(); paintTable(); return; }
+  if(inLesson&&S.phase!=="play"){ lessonHandOver(); return; }
+  if(S.phase!=="play"){ handOver(); return; }
+  msg();
+  if(practice&&S.turn===mySide) practiceTip();
+  if(!online&&!inLesson&&S.turn===2) setTimeout(houseTurn,900);
+}
+function msg(){
+  if(!S) return;
+  if(S.phase!=="play") return;
+  if(online&&room&&!room.guest){ Parlor.status("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  var t=C(topId()), want=S.suit!=null?SUITNAME[S.suit]:(SUITNAME[t.s]+" or a "+K.RANKS[t.r]);
+  if(S.turn===mySide){
+    var p=playable(mySide).length;
+    Parlor.status("Your turn",p?"Play "+want+" (or an eight)":canDraw()?"Nothing fits: tap the stock to draw":"Nothing fits and the stock is empty: Pass");
+  } else Parlor.status(online?P_opp()+"'s turn":"The House is thinking…","To play: "+want);
+  Parlor.turn(S.turn-1);
+}
+function showStats(){
+  if(!S) return;
+  Parlor.score([S.score[1],S.score[2]]);
+  Parlor.info("Hand "+S.hand+" · first to "+TARGET+" points");
+}
+function tools(){
+  TOOLS.innerHTML="";
+  function b(label,cls,fn,dis){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; x.disabled=!!dis; TOOLS.appendChild(x); return x; }
+  var mine=S&&myTurnNow()&&!busy;
+  b("Hint","",showHint,!mine);
+  if(S&&mine&&!canDraw()&&!playable(mySide).length) b("Pass","gold",tapPass);
+  else b("Draw a Card",S&&mine&&!playable(mySide).length?"gold":"",tapStock,!(mine&&canDraw()));
+}
+function toast(t){ toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove("on"); },1900); }
+/* the end of a hand: both hands face up, the points, and Deal Next Hand */
+function handOver(){
+  var r=S.res, you=mySide||1, opp=P_opp(), html;
+  Parlor.turn(-1);
+  var head=r.blocked?"Blocked Hand":r.w===you?"You Went Out!":r.w?opp+" Went Out":"A Tie";
+  var line=r.blocked?(r.w?(r.w===you?"Your hand counts less: you score <b>"+r.pts+"</b>.":opp+"'s hand counts less: "+opp+" scores <b>"+r.pts+"</b>."):"Both hands count the same: no score."):
+    (r.w===you?opp+"'s cards count <b>"+r.pts+"</b> points for you.":"Your cards count <b>"+r.pts+"</b> points for "+opp+".");
+  var tally="You "+S.score[you]+" · "+opp+" "+S.score[other(you)]+" · first to "+TARGET;
+  Parlor.sfx(r.w===you?"mill":"place");
+  if(S.phase==="over"){ Parlor.status(r.w===you?"You win the match":opp+" wins the match",tally); setTimeout(matchOver,1400); return; }
+  html='<p class="k">Hand '+S.hand+'</p><h3>'+head+'</h3><p>'+line+'<br>'+tally+'</p>';
+  var canDeal=!online||mySide===1;
+  html+=canDeal?'<button type="button" class="pk-btn" id="ceNext">Deal Next Hand</button>':'<p style="margin:0">Waiting for '+opp+' to deal…</p>';
+  PANEL.innerHTML=html; PANEL.classList.add("on");
+  var nb=PANEL.querySelector("#ceNext"); if(nb) nb.onclick=function(){ PANEL.classList.remove("on"); dealNow(); };
+  Parlor.status(head,tally);
+}
+/* in a lesson, the end of a hand just shows the count */
+function lessonHandOver(){
+  var r=S.res; Parlor.turn(-1); Parlor.sfx("mill");
+  PANEL.innerHTML='<p class="k">Going Out</p><h3>'+(r.w===mySide?"You Went Out!":"The House Went Out")+'</h3><p>The House\'s cards: an eight (50), a king (10), a 5 and an ace: <b>'+r.pts+'</b> points for you.</p>';
+  PANEL.classList.add("on"); Parlor.status("You went out",r.pts+" points");
+}
+async function dealNow(){
+  if(busy) return; busy=true; GID++; var g=GID;
+  nextHand(); seq++; S.seq=seq; push();
+  await dealAnim(); if(g!==GID) return; busy=false; after();
+}
+/* every card gathers on the stock, then the hands are dealt one card at a time */
+async function dealAnim(){
+  PANEL.classList.remove("on");
+  var P=positions();
+  K.deck().forEach(function(c){ var e=elFor(c.id); K.turn(e,c,false); K.place(e,G.stock[0]-50,G.stock[1]-70,G.ps,0); e.style.zIndex=150; });
+  paintTable();
+  if(!Parlor.smooth()){ render(false); return; }
+  Parlor.sfx("deal",{n:15,gap:.07});
+  var lead=other(S.dealer), order=[];
+  for(var i=0;i<7;i++){ order.push(S.h[lead][i]); order.push(S.h[S.dealer][i]); }
+  await Promise.all(order.map(function(id,k){ var e=cardEl[id], p=P[id]; return Parlor.wait(k*70).then(function(){ e.style.zIndex=p.z; return K.glide(e,p.x,p.y,{sc:p.sc,rot:p.rot,dur:320,flip:p.up?{c:C(id),up:true}:null}); }); }));
+  await Parlor.wait(150);
+  var top=topId(), te=cardEl[top], tp=P[top]; te.style.zIndex=tp.z; Parlor.sfx("flip",{pitch:1.4});
+  await K.glide(te,tp.x,tp.y,{sc:tp.sc,rot:tp.rot,flip:{c:C(top),up:true},dur:300});
+  await render(true);
+}
+function matchOver(){
+  var you=mySide||1, w=S.score[1]>=TARGET?1:2, opp=P_opp();
+  var detail="Final score: You "+S.score[you]+", "+opp+" "+S.score[other(you)]+" after "+S.hand+" hand"+(S.hand>1?"s":"")+".";
+  if(online){ report(w); Parlor.finish(w===you?"win":"lose",detail,w===you?"You Win the Match":opp+" Wins the Match"); return; }
+  Parlor.finish(w===you?"win":"lose",detail,w===you?"You Win the Match":"The House Wins the Match");
+}
+
+/* ---------- The House ----------
+   It plays a card that keeps it in its strongest suit, sheds big cards, saves its eights for when it has nothing else,
+   and (from level 4) remembers the suits you couldn't follow. At low levels it often just plays whatever fits. */
+function choose(side,full){
+  var hand=S.h[side], ok=playable(side); if(!ok.length) return null;
+  var sk=full?{loose:0,level:10}:Parlor.skill(), oppN=S.h[other(side)].length;
+  var non=ok.filter(function(id){ return C(id).r!==7; }), eights=ok.filter(function(id){ return C(id).r===7; });
+  function suitFor(excl){ var cnt=[0,0,0,0]; hand.forEach(function(x){ if(x!==excl&&C(x).r!==7) cnt[C(x).s]+=1+pts(x)/40; });
+    if(sk.level>=4&&side===2) for(var s=0;s<4;s++) if(oppVoid[s]) cnt[s]+=1.2;
+    return cnt.indexOf(Math.max.apply(null,cnt)); }
+  if(!full&&Math.random()<sk.loose){ var any=ok[Math.floor(Math.random()*ok.length)]; return {id:any,suit:C(any).r===7?Math.floor(Math.random()*4):null}; }
+  if(non.length){
+    var best=null,bs=-1e9;
+    non.forEach(function(id){ var c=C(id), same=hand.filter(function(x){ return x!==id&&C(x).s===c.s&&C(x).r!==7; }).length;
+      var sc=same*2+pts(id)*.12+(oppVoid[c.s]&&sk.level>=4&&side===2?2.5:0);
+      if(oppN<=2&&sk.level>=6) sc+=c.r===C(topId()).r&&c.s!==C(topId()).s?1:0;   /* change the suit when the other player is nearly out */
+      if(sc>bs){ bs=sc; best=id; } });
+    /* near the end, an eight can be the stronger play: change to a suit the other player can't follow */
+    if(eights.length&&oppN===1&&sk.level>=7&&!hand.some(function(x){ return x!==best&&C(x).s===C(best).s; })) return {id:eights[0],suit:suitFor(eights[0])};
+    return {id:best,suit:null};
+  }
+  return {id:eights[0],suit:suitFor(eights[0])};
+}
+async function houseTurn(){
+  if(online||!S||S.phase!=="play"||S.turn!==2||busy||inLesson) return;
+  var g=GID, c=choose(2);
+  if(c){ await act(function(){ doPlay(2,c.id,c.suit); }); return; }
+  if(canDraw()){ busy=true; var t=C(topId()); oppVoid[S.suit!=null?S.suit:t.s]=1;   /* it couldn't follow that suit */
+    drawOne(2); seq++; S.seq=seq; Parlor.sfx("flip",{pitch:1.3}); await render(true); busy=false; if(g!==GID) return;
+    showStats(); tools(); paintTable(); setTimeout(houseTurn,520); return; }
+  await act(function(){ doPass(2); });
+}
+
+/* ---------- hints ---------- */
+function clearHint(){ [].forEach.call(stage.querySelectorAll(".hint"),function(e){ e.classList.remove("hint"); }); STOCK.classList.remove("hint"); }
+function showHint(){
+  if(!S||!myTurnNow()||busy) return; clearHint();
+  var c=choose(mySide,true), say;
+  if(c){ cardEl[c.id].classList.add("hint"); var nm=K.name(C(c.id));
+    say=C(c.id).r===7?"Play the "+nm+" and call "+SUITNAME[c.suit].toLowerCase()+", the suit you hold most.":"Play the "+nm+(S.h[mySide].filter(function(x){ return C(x).s===C(c.id).s; }).length>1?": you have more "+SUITNAME[C(c.id).s].toLowerCase()+" to follow it.":".");
+  } else if(canDraw()){ STOCK.classList.add("glow"); say="Nothing fits: tap the stock to draw a card."; }
+  else say="Nothing fits and the stock is empty: Pass.";
+  Parlor.status("Hint",say);
+  if(practice) Parlor.hintSay("<p>"+say+"</p>");
+}
+
+/* ---------- Learn to Play (6 steps) ---------- */
+function ids(arr){ return arr.map(function(x){ return x[1]+"-"+x[0]; }); }   /* [[rank, suit]]: rank 0-12 (A..K; 7 = the eight), suit 0 clubs 1 diamonds 2 hearts 3 spades */
+function setPos(o){
+  GID++; var used={};
+  var h1=ids(o.me||[]), h2=ids(o.opp||[]), pile=ids(o.pile||[]), top=ids(o.stockTop||[]);
+  h1.concat(h2,pile,top).forEach(function(id){ used[id]=1; });
+  var rest=shuffleIds(K.deck().map(function(c){ return c.id; }).filter(function(id){ return !used[id]; }));
+  while(h2.length<(o.oppN||0)) h2.push(rest.pop());
+  S={v:1,game:"crazyeights",deck:rest.concat(top.reverse()),h:[null,h1,h2],pile:pile,suit:o.suit==null?null:o.suit,turn:1,dealer:2,score:[null,o.s1||0,o.s2||0],hand:1,phase:"play",passes:0,res:null,seq:0,mv:null};
+  PANEL.classList.remove("on"); render(false); showStats(); tools();
+}
+var LESSON=[
+  {title:"The Deal", text:"<p>Each player gets <b>seven cards</b>. The rest make the <b>stock</b>, and its top card is turned up to start the <b>pile</b>.</p><p>Take turns playing a card onto the pile. The first to play every card <b>goes out</b> and wins the hand.</p>"},
+  {title:"Match the Suit or the Number", text:"<p>Play a card of the same <b>suit</b> as the top of the pile, or the same <b>number</b> (or picture).</p><p>The pile shows the 9 of hearts: play a <b>heart</b> or a <b>9</b>. The cards you can play stand up and glow.</p>", sub:"Play a heart or a 9",
+    done:"<p>That's the whole game in one move. Matching the number is a handy way to change the suit.</p>"},
+  {title:"Eights Are Wild", text:"<p>An <b>eight</b> can be played on anything. Then you <b>name the suit</b> the next player must follow.</p><p>Nothing else fits the 4 of spades here: play your <b>8 of diamonds</b> and choose a suit you hold.</p>", sub:"Play the 8 and choose a suit",
+    done:"<p>The suit you named shows beside the pile until someone plays on it. Save your eights: they get you out of trouble.</p>"},
+  {title:"Can't Play? Draw", text:"<p>When nothing fits, <b>tap the stock</b> to draw a card. Keep drawing until you can play (you may also draw when you could play, if you'd rather keep your cards).</p><p>Nothing fits the queen of clubs: tap the stock.</p>", sub:"Tap the stock to draw",
+    done:"<p>The 3 of clubs fits: tap it to play it now, or just tap Next. If the stock runs out, the pile is shuffled to make a new one.</p>"},
+  {title:"Going Out and Scoring", text:"<p>When you play your last card, you score the cards left in the other hand: <b>50</b> for an eight, <b>10</b> for a king, queen or jack, <b>1</b> for an ace, and the number for the rest.</p><p>The first to <b>100 points</b> over several hands wins the match. Try it: play your last card, the <b>3 of diamonds</b>.</p>"},
+  {title:"Watch Their Hand", text:"<p>The number of cards across the table tells you when they're close to going out. When they draw, they couldn't follow the suit: remember it, and change to that suit when you can.</p><p>Ready? Try a practice game against a gentle House.</p>"}
+];
+function lessonSetup(k){
+  inLesson=true; practice=false; lessonOnly=null; busy=false; PANEL.classList.remove("on");
+  if(k===0){ GID++; S=null; newMatch(); render(false); showStats(); tools(); return; }
+  if(k===1){ setPos({me:[[3,2],[8,0],[12,3],[1,1],[10,0],[5,3]],pile:[[8,2]],oppN:7}); lessonOnly={play:true,check:function(m){ return m&&m.kind==="play"; }}; glowNeed(); return; }
+  if(k===2){ setPos({me:[[7,1],[2,2],[9,2],[12,1],[5,1]],pile:[[8,2],[3,3]],oppN:6}); lessonOnly={play:true,check:function(m){ return m&&m.kind==="play"&&C(m.card).r===7; }}; glowNeed(); return; }
+  if(k===3){ setPos({me:[[4,1],[9,2],[12,2],[1,3]],pile:[[11,0]],oppN:5,stockTop:[[2,0]]}); lessonOnly={draw:true,after:true,check:function(m){ return m&&m.kind==="draw"; }}; STOCK.classList.add("glow"); return; }
+  if(k===4){ setPos({me:[[2,1]],pile:[[6,1]],opp:[[7,3],[12,2],[4,0],[0,1]],s1:42,s2:57}); lessonOnly={free:true}; return; }
+  if(k===5){ setPos({me:[[5,2],[10,2],[3,3],[7,0]],pile:[[9,2]],oppN:2}); return; }
+}
+function glowNeed(){ if(!S) return; playable(mySide).forEach(function(id){ cardEl[id].classList.add("play"); }); }
+function allowLesson(m){
+  if(!inLesson) return true;
+  if(lessonOnly&&lessonOnly.free) return true;
+  if(!Parlor.lessonWaiting||!lessonOnly){ if(lessonOnly&&lessonOnly.after) return true; toast("Tap Next to keep going"); return false; }
+  if(lessonOnly.draw&&!m.draw){ toast("Tap the stock"); return false; }
+  if(lessonOnly.play&&!m.play){ toast("Play a glowing card"); return false; }
+  return true;
+}
+/* practice: a short match to 50 against a gentle House, with a coach */
+var tipN=0, TIPS=["Play the suit you hold most: you'll have more turns to follow it.","Save your eights: they're your way out when nothing fits.","Matching the number changes the suit: use it to leave a suit you're short of.","Shed your picture cards early: they cost 10 points if you're caught with them.","When the other player draws, they couldn't follow: try that suit again."];
+function startPractice(){
+  inLesson=false; practice=true; lessonOnly=null; tipN=0; TARGET=50; mySide=1;
+  GID++; newMatch(); busy=true;
+  dealAnim().then(function(){ busy=false; after(); });
+  Parlor.practiceSay("Practice Game","<p>A short match to <b>50</b> against a gentle House. The cards you can play stand up and glow: tap one to play it.</p><p>Tap <b>Hint</b> any time for a suggestion.</p>");
+}
+function practiceTip(){
+  var m=S.mv, oppN=S.h[2].length;
+  if(oppN===1){ Parlor.practiceSay("One Card Left!","<p>The House is about to go out. If you can, change the suit, or play an eight and name a suit it's been drawing on.</p>"); return; }
+  if(m&&m.side===2&&m.kind==="play"&&C(m.card).r===7){ Parlor.practiceSay("The House Played an Eight","<p>It named <b>"+SUITNAME[S.suit].toLowerCase()+"</b>: follow that suit, or play an eight of your own.</p>"); return; }
+  if(!playable(1).length){ Parlor.practiceSay("Nothing Fits","<p>Tap the <b>stock</b> to draw until a card fits.</p>"); return; }
+  if(++tipN%3===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/3)%TIPS.length]+"</p>");
+}
+
+/* ---------- online table (same page: ?code=XXXX). Side 1 is the host, side 2 the guest; the host deals. ---------- */
+async function push(){
+  if(!online||!room) return;
+  var st=JSON.parse(JSON.stringify(S));
+  await sb.from("rooms").update({state:st,status:S.phase==="over"?"done":"live",updated_at:new Date().toISOString()}).eq("id",room.id);
+}
+function winnerSide(){ return S.score[1]>=TARGET?1:S.score[2]>=TARGET?2:0; }
+function report(w){ if(reported||!room||!window.bwRateGame) return; reported=true; room.state=JSON.parse(JSON.stringify(S)); bwRateGame(sb,room,me,w); }
+function validState(st){ return st&&st.v===1&&st.game==="crazyeights"&&Array.isArray(st.deck)&&st.h&&Array.isArray(st.h[1])&&Array.isArray(st.h[2])&&Array.isArray(st.pile)&&
+  st.deck.concat(st.h[1],st.h[2],st.pile).every(function(id){ return !!BYID[id]; })&&st.deck.length+st.h[1].length+st.h[2].length+st.pile.length===52; }
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ Parlor.status("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ Parlor.status("Sign in to join","Use the Lobby to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ Parlor.status("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function"&&bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;   /* watching */
+  Parlor.names(mySide===2?["Opponent","You"]:["You","Opponent"]);
+  Parlor.mySeat(mySide===2?1:0); if(Parlor.table) Parlor.table({sb:sb,room:room,me:me,side:mySide});
+  if(validState(room.state)){ S=room.state; seq=S.seq||0; fit(true); render(false); after(); }
+  else if(mySide===1){ newMatch(); seq=1; S.seq=seq; fit(true); await push(); busy=true; await dealAnim(); busy=false; after(); }
+  else { S=null; Parlor.status("Dealing…","The host is shuffling the cards"); }
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},async function(p){
+    var hadGuest=room&&room.guest; room=p.new; var st=p.new.state||{};
+    if(!validState(st)){
+      /* a fresh table from the Lobby (when the second player joins): the host deals */
+      if(mySide===1&&(!S||S.phase!=="play"||!hadGuest)){ GID++; newMatch(); seq=(seq||0)+1; S.seq=seq; await push(); busy=true; await dealAnim(); busy=false; after(); }
+      return;
+    }
+    if(!hadGuest&&room.guest&&S) { after(); }
+    if((st.seq||0)<=seq&&S) return;   /* our own move coming back */
+    var dealt=st.mv&&st.mv.kind==="deal", was=S; seq=st.seq||0; S=st; GID++;
+    if(st.mv&&st.mv.side&&st.mv.side!==mySide&&st.mv.kind==="draw"){ var t0=was&&C(was.pile[was.pile.length-1]); if(t0) oppVoid[was.suit!=null?was.suit:t0.s]=1; }
+    busy=true; if(dealt||!was) await dealAnim(); else { Parlor.sfx(st.mv&&st.mv.kind==="play"?"card":"flip"); await render(true); } busy=false;
+    PANEL.classList.remove("on"); after();
+  }).subscribe();
+}
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(noRender){
+  var wide=window.innerWidth>=1000, narrow=!wide&&window.innerWidth<700&&window.innerHeight>window.innerWidth;
+  var L=layoutFor(narrow), toolsH=(TOOLS.offsetHeight||46)+10, availW, availH;
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var mini=document.querySelector(".pk-mini-top"), miniH=0; if(!wide){ [].forEach.call(document.querySelectorAll(".pk-mini"),function(m){ miniH+=(m.offsetHeight||0)+10; }); }
+  if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
+  else { availW=window.innerWidth-12; availH=window.innerHeight-(seatedNow()?top:56)-88-toolsH-6-miniH; }
+  var s=Math.max(.2,Math.min(availW/L.W,availH/L.H,1.2));
+  G=L; FIT._s=s;
+  T.style.width=L.W+"px"; T.style.height=L.H+"px"; T.style.transform="scale("+s+")"; T.classList.toggle("narrow",narrow);
+  FIT.style.width=Math.round(L.W*s)+"px"; FIT.style.height=Math.round(L.H*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
+  if(!noRender&&S&&!busy) render(false);
+}
+window.addEventListener("resize",function(){ fit(); });
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"crazyeights", cat:"cards", title:"Sunroom Crazy Eights", bg:"cards-crazy-eights.jpg", home:"lobby.html?cat=cards", stage:stage,
+  tagline:"Match the suit or the number. Eights are wild.", invite:"Sunlight through the ferns and a fresh deck on the baize. Sit down and deal a hand.",
+  players:[{name:"You",color:"#c9a24f"},{name:"The House",color:"#7a1a20"}],
+  setsLabel:"Tables",
+  sets:[
+    {id:"mahogany",name:DESIGNS.mahogany.name,need:0,dots:DESIGNS.mahogany.dots},
+    {id:"wicker",name:DESIGNS.wicker.name,club:true,dots:DESIGNS.wicker.dots},
+    {id:"teak",name:DESIGNS.teak.name,club:true,dots:DESIGNS.teak.dots}
+  ],
+  rules:{
+    play:"<ol><li><b>The deal:</b> seven cards each. The rest are the stock; its top card is turned up to start the pile. An eight turned up goes back into the stock.</li><li><b>Your turn:</b> play a card that matches the top of the pile in <b>suit</b> or <b>number</b> (or picture). The cards you can play stand up and glow; tap one to play it.</li><li><b>Eights are wild:</b> play one on anything and name the suit to follow. The named suit shows beside the pile.</li><li><b>Drawing:</b> tap the stock (or Draw a Card) to draw one card at a time. You may draw even when you could play. When the stock runs out, the pile under its top card is shuffled into a new stock; if there's nothing left to draw and nothing fits, you pass.</li><li><b>Going out:</b> the first to play their last card wins the hand. If both players pass, the hand is blocked and the lower hand wins it.</li></ol>",
+    score:"<ul><li>The winner of a hand scores the cards left in the other hand: <b>50</b> for each eight, <b>10</b> for each king, queen or jack, <b>1</b> for each ace, and the number for the rest.</li><li>In a blocked hand, the lower hand scores the other hand's points (equal hands: no score).</li><li>The first to <b>100 points</b> wins the match (practice games play to 50). The deal passes back and forth each hand.</li></ul>"
+  },
+  onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=100; mySide=1; Parlor.coach(null); PANEL.classList.remove("on"); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set");
+  if(PREVIEW&&previewPick&&k!==previewPick){ document.body.setAttribute("data-set",previewPick); return; }
+  applyDesign(k||"mahogany"); }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
+var wasSeated=false;
+new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(function(){ fit(); },30); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"mahogany"); previewBar();
+  fit(true); newMatch(); render(false); showStats(); tools(); paintTable();
+  if(CODE) bootOnline();
+});
+</script>
+</body>
+</html>

@@ -18,7 +18,8 @@ window.BW_ROOMS={
   dominoes:"dominoes.html",
   yahtzee:"yahtzee.html",
   cribbage:"cribbage.html",
-  shutbox:"shutbox.html"
+  shutbox:"shutbox.html",
+  crazyeights:"crazyeights.html"
 };
 function bwGuessGame(room){
   if(!room) return "";
@@ -26,6 +27,7 @@ function bwGuessGame(room){
   if(window.BW_ROOMS[g]) return g;
   var st=room.state||{};
   if(st.pts) return "backgammon";
+  if(st.game==="crazyeights") return "crazyeights";
   if(st.game==="shutbox" || (Array.isArray(st.open) && "score1" in st)) return "shutbox";
   if(st.y && st.h) return "mancala";
   if(st.game==="cribbage" || st.tossed) return "cribbage";
