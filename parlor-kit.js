@@ -153,6 +153,8 @@
     bar.appendChild(btn("New Game", "primary", function () { P.newGame(); }));
     document.body.appendChild(bar);
     var scrim = mk("div", "pk-scrim"); scrim.onclick = function () { sheet(null); }; document.body.appendChild(scrim);
+    scrim.addEventListener("touchmove", function (e) { if (e.cancelable) e.preventDefault(); }, { passive: false });   /* the page behind stays put */
+    swipeSheets([left, right]);
 
     /* modals */
     el.help = modal("pkHelp"); el.seat = modal("pkSeat"); el.end = modal("pkEnd"); el.gamesM = modal("pkGames"); el.setM = modal("pkSet"); el.tblM = modal("pkTable");
@@ -197,6 +199,34 @@
     var r = mk("div", "pk-row"); r.appendChild(btn("Close", "quiet", function () { el.gamesM.veil.classList.remove("on"); })); b.appendChild(r);
     el.gamesM.veil.classList.add("on");
   };
+  /* phones: the menu and table cards slide up from the bottom. Like the Lobby's drawers (Judy, Oct 26), pull one down
+     (by its handle, near its top, or anywhere once it's scrolled to the top) or flick it to close it; the page behind
+     doesn't move. A tap is still a tap: nothing moves until the finger has travelled a few pixels. */
+  function swipeSheets(list) {
+    list.forEach(function (dr) {
+      var h = mk("div", "pk-handle"); h.setAttribute("aria-hidden", "true"); h.appendChild(mk("span")); dr.insertBefore(h, dr.firstChild);
+      var y0 = 0, y1 = 0, t0 = 0, drag = false, moved = false;
+      dr.addEventListener("touchstart", function (e) {
+        if (window.innerWidth >= 1000 || !e.touches || e.touches.length !== 1) { drag = false; return; }
+        var top = dr.getBoundingClientRect().top, y = e.touches[0].clientY;
+        y0 = y1 = y; t0 = Date.now(); moved = false;
+        drag = y - top < 64 || !!(e.target.closest && e.target.closest(".pk-handle")) || dr.scrollTop <= 0;
+      }, { passive: true });
+      dr.addEventListener("touchmove", function (e) {
+        if (!drag) return;
+        y1 = e.touches[0].clientY; var dy = y1 - y0;
+        if (dy < 0 && !moved) { drag = false; return; }          /* moving up: an ordinary scroll of the card */
+        if (dy > 6 || moved) { moved = true; if (e.cancelable) e.preventDefault(); dr.style.transition = "none"; dr.style.transform = "translateY(" + Math.max(0, dy) + "px)"; }
+      }, { passive: false });
+      function end() {
+        if (!drag) return; drag = false;
+        var dy = y1 - y0, dt = Math.max(1, Date.now() - t0);
+        dr.style.transition = ""; dr.style.transform = "";
+        if (moved && (dy > 56 || (dy > 28 && dy / dt > 0.45))) sheet(null);
+      }
+      dr.addEventListener("touchend", end); dr.addEventListener("touchcancel", end);
+    });
+  }
   function closeAll() { [el.help, el.seat, el.end, el.gamesM, el.setM, el.tblM].forEach(function (m) { if (m) m.veil.classList.remove("on"); }); }
   function sheet(which, focus) {
     document.body.classList.toggle("sheet-left", which === "left");
