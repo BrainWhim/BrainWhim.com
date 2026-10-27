@@ -497,7 +497,9 @@ function practiceTip(){
 async function push(){
   if(!online||!room) return;
   var st=JSON.parse(JSON.stringify(S));
-  await sb.from("rooms").update({state:st,status:S.phase==="over"?"done":"live",updated_at:new Date().toISOString()}).eq("id",room.id);
+  /* a table still waiting for its second player stays "lobby", so Match an Online Player can find it (Judy, Oct 26) */
+  var status=S.phase==="over"?"done":(room.guest?"live":(room.status||"lobby"));
+  await sb.from("rooms").update({state:st,status:status,updated_at:new Date().toISOString()}).eq("id",room.id);
 }
 function winnerSide(){ return S.score[1]>=TARGET?1:S.score[2]>=TARGET?2:0; }
 function report(w){ if(reported||!room||!window.bwRateGame) return; reported=true; room.state=JSON.parse(JSON.stringify(S)); bwRateGame(sb,room,me,w); }
