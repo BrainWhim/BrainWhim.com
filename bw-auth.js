@@ -177,6 +177,7 @@
       ".bwa-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);min-height:34px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:#C9A66B;font:inherit;font-size:12px;font-weight:700;cursor:pointer}",
       ".bwa-err{min-height:18px;margin:2px 0 8px;font-size:12.5px;color:#f6c37a}",
       ".bwa-go{width:100%;min-height:48px;border:0;border-radius:12px;background:linear-gradient(135deg,#C9A66B,#e3c98f);color:#1A2744;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px -5px rgba(201,166,107,.45);transition:transform .15s,filter .2s,opacity .2s}",
+      ".bwa-fine{margin:12px 2px 0;font-size:11.5px;line-height:1.45;color:rgba(255,255,255,.68);text-align:left}.bwa-fine a{color:#e3c98f;text-decoration:underline}",
       ".bwa-go:hover{filter:brightness(1.06)}.bwa-go:active{transform:scale(.98)}.bwa-go[disabled]{opacity:.6;cursor:wait}",
       ".bwa-links{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px}",
       ".bwa-link{border:0;background:none;color:rgba(255,255,255,.82);font-family:inherit;font-size:13px;text-decoration:underline;cursor:pointer;min-height:36px;padding:0 8px}",
@@ -211,6 +212,8 @@
       rv("bwa-rcw", pwField("bwa-recpass", "New password", "new-password")) +
       '<p class="bwa-err" id="bwa-err" role="alert" aria-live="polite"></p>' +
       '<button class="bwa-go" id="bwa-go" type="submit">Continue</button>' +
+      /* SMS consent at the point the number is collected (A2P 10DLC / CTIA) */
+      '<p class="bwa-fine" id="bwa-fine">By entering a mobile phone number and tapping Continue, you agree to receive one-time sign-in codes by text message from BrainWhim. Message frequency varies: one text per code you request. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. We never share your number for marketing. <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a> · <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a></p>' +
       "</form>" +
       '<div class="bwa-links">' +
       '<button type="button" class="bwa-link" id="bwa-forgot" hidden>Forgot password?</button>' +
