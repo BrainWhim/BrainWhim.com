@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Writing Desk Solitaire · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1026d">
-<link rel="stylesheet" href="bw-cards.css?v=1026b">
+<link rel="stylesheet" href="parlor-kit.css?v=1026e">
+<link rel="stylesheet" href="bw-cards.css?v=1026c">
 <style>
 /* ===== Writing Desk Solitaire (Klondike): a writing desk seen from straight above, drawn in the browser =====
    A wooden frame around a tooled leather writing surface with gold (or silver) tooling, warm lamp light from the top
@@ -82,7 +82,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1024b"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1026d"></script>
+<script src="parlor-kit.js?v=1026e"></script>
 <script src="bw-cards.js?v=1026b"></script>
 <script>
 var K=BWCards, PT=K.paint;
@@ -205,6 +205,7 @@ function render(anim){
   });
   Object.keys(cardEl).forEach(function(id){ if(!seen[id]) cardEl[id].style.display="none"; });
   markCan(); clearHint();
+  if(inLesson&&Parlor.lessonWaiting) glowNeed();   /* keep the lesson's card glowing after a wrong tap */
   return Promise.all(jobs);
 }
 var BYID={}; K.deck().forEach(function(c){ BYID[c.id]=c; });
@@ -590,7 +591,7 @@ function lessonSetup(k){
 }
 function glowNeed(){
   if(!lessonOnly||!lessonOnly.pick) return;
-  var p=lessonOnly.pick, col=S.tab[p.i], j=firstUp(col);
+  var p=lessonOnly.pick, col=S.tab[p.i], j=firstUp(col); if(j<0) return;
   for(var x=j;x<col.length;x++) cardEl[col[x].c.id].classList.add("hint");
 }
 function slotGlow(){ var top=topOf(S.stock); if(top) cardEl[top.id].classList.add("hint"); }

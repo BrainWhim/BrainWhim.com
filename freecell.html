@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Observatory FreeCell · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1026e">
+<link rel="stylesheet" href="bw-cards.css?v=1026c">
+<style>
+/* ===== Observatory FreeCell: a card table under the dome, seen from straight above, drawn in the browser =====
+   A frame around a leather (or velvet) top tooled with the night sky: a star chart, a field of stars, or an orrery.
+   Same desk machinery as Writing Desk Solitaire; cards from the shared card kit (bw-cards.js / .css).
+   Tables (the Tables card): one free, two for Club members. ?preview=1 shows a picker for all three. */
+.so-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.so-fit{position:relative;flex:none}
+.so-table{position:absolute;left:0;top:0;transform-origin:0 0}
+.so-desk{position:absolute;inset:0;border-radius:12px;background:var(--so-woodc);box-shadow:0 22px 44px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.35)}
+.so-rim{position:absolute;background-color:var(--so-woodc);background-repeat:repeat}
+.so-rim.t,.so-rim.b{left:0;right:0;height:var(--so-r);background-image:var(--so-wood)}
+.so-rim.t{top:0;border-radius:12px 12px 0 0;clip-path:polygon(0 0,100% 0,calc(100% - var(--so-r)) 100%,var(--so-r) 100%)}
+.so-rim.b{bottom:0;border-radius:0 0 12px 12px;clip-path:polygon(var(--so-r) 0,calc(100% - var(--so-r)) 0,100% 100%,0 100%);background-position:-300px -90px}
+.so-rim.l,.so-rim.r{top:0;bottom:0;width:var(--so-r);background-image:var(--so-woodv)}
+.so-rim.l{left:0;border-radius:12px 0 0 12px;clip-path:polygon(0 0,100% var(--so-r),100% calc(100% - var(--so-r)),0 100%)}
+.so-rim.r{right:0;border-radius:0 12px 12px 0;clip-path:polygon(0 var(--so-r),100% 0,100% 100%,0 calc(100% - var(--so-r)));background-position:-90px -400px}
+.so-rim::after{content:"";position:absolute;inset:0}
+.so-rim.t::after{background:linear-gradient(to bottom,rgba(255,232,200,.26),rgba(0,0,0,0) 35%,rgba(0,0,0,.28))}
+.so-rim.b::after{background:linear-gradient(to bottom,rgba(255,232,200,.12),rgba(0,0,0,0) 40%,rgba(0,0,0,.4))}
+.so-rim.l::after{background:linear-gradient(to right,rgba(255,232,200,.22),rgba(0,0,0,0) 40%,rgba(0,0,0,.25))}
+.so-rim.r::after{background:linear-gradient(to right,rgba(255,232,200,.08),rgba(0,0,0,0) 40%,rgba(0,0,0,.42))}
+/* polished brass: bright bevels and a dark inner edge */
+.so-desk.metal .so-rim.t::after{background:linear-gradient(to bottom,rgba(255,250,215,.7),rgba(255,236,170,.18) 26%,rgba(0,0,0,0) 55%,rgba(70,44,0,.5))}
+.so-desk.metal .so-rim.b::after{background:linear-gradient(to bottom,rgba(255,244,200,.45),rgba(0,0,0,0) 40%,rgba(60,38,0,.6))}
+.so-desk.metal .so-rim.l::after{background:linear-gradient(to right,rgba(255,250,215,.6),rgba(255,236,170,.12) 30%,rgba(0,0,0,0) 55%,rgba(70,44,0,.45))}
+.so-desk.metal .so-rim.r::after{background:linear-gradient(to right,rgba(255,244,200,.3),rgba(0,0,0,0) 40%,rgba(60,38,0,.62))}
+.so-desk.metal{box-shadow:0 22px 44px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,240,190,.5)}
+.so-leather{position:absolute;inset:var(--so-r);border-radius:3px;overflow:hidden;background-image:radial-gradient(ellipse 70% 55% at 84% 8%,rgba(255,214,150,.14),rgba(255,214,150,0) 70%),radial-gradient(ellipse 120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.38)),var(--so-leath);
+  background-size:auto,auto,1024px 1024px;background-color:var(--so-leathc);box-shadow:inset 0 3px 7px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.5)}
+.so-deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.so-tool{position:absolute;inset:var(--so-t1);border:2px solid var(--so-tool);border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(0,0,0,.35);pointer-events:none}
+.so-tool.i{inset:var(--so-t2);border-width:1px;opacity:.8}
+.so-fl{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;transform:rotate(45deg);border:1.5px solid var(--so-tool);background:rgba(0,0,0,.1);pointer-events:none}
+.so-mono{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:baseline;line-height:1;font-size:22px;pointer-events:none;opacity:.75}
+.so-mono b,.so-mono i{display:inline-block;color:transparent;background:var(--so-toolg);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.so-mono b{font:500 1em Montserrat,sans-serif}.so-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+#soSlots,#soCards{position:absolute;left:0;top:0}
+.so-table{--bwc-slot:var(--so-slot)}
+.so-table .bwc.can{cursor:grab}
+.so-table .bwc.nope{animation:so-nope .32s ease}
+@keyframes so-nope{25%{margin-left:-5px}75%{margin-left:5px}}
+.bwc-slot.cell span{font-size:15px;font-family:Montserrat,sans-serif;font-weight:600;letter-spacing:.12em;text-transform:uppercase;text-align:center;line-height:1.3}
+/* the toolbar under the table: Undo · Hint · Restart Deal · time on phones */
+.so-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.so-tools .pk-btn{width:auto;margin:0;padding:8px 16px;min-height:0}
+.so-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.so-stat{font:600 13px Montserrat,sans-serif;color:#fff;padding:0 8px;white-space:nowrap;display:none}
+.so-stat b{color:#f0d27a;font-weight:700}
+.so-toast{position:absolute;z-index:600;left:50%;top:44%;transform:translate(-50%,-50%);padding:9px 16px;border-radius:12px;background:rgba(15,23,42,.84);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 14px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none}
+.so-toast.on{opacity:1}
+.so-pick{position:fixed;z-index:60;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(231,199,122,.45);max-width:94vw}
+.so-pick button{font:600 13px Montserrat,sans-serif;color:#f3ead8;background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 12px;cursor:pointer}
+.so-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
+@media (max-width:999px){
+  .so-pick{top:8px;flex-wrap:nowrap;gap:2px;padding:4px}.so-pick button{font-size:11px;padding:7px 7px;white-space:nowrap}
+  .so-stat{display:block}
+  .so-tools{gap:6px;padding:5px;width:100%;max-width:calc(100vw - 16px);flex-wrap:nowrap}
+  .so-tools .pk-btn{padding:8px 11px;font-size:13px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+}
+@media (max-width:420px){ .so-tools .pk-btn{padding:8px 9px} }
+</style>
+<script src="bw-auth.js?v=1026a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html?cat=cards">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1024b"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+<script src="parlor-kit.js?v=1026e"></script>
+<script src="bw-cards.js?v=1026b"></script>
+<script>
+var K=BWCards, PT=K.paint;
+/* ---------- the three tables ---------- */
+var STARBACK="radial-gradient(circle at 30% 30%,rgba(255,240,205,.55) 0 .9px,rgba(0,0,0,0) 1.4px) 0 0/11px 11px,radial-gradient(circle at 70% 70%,rgba(255,240,205,.35) 0 .7px,rgba(0,0,0,0) 1.1px) 0 0/7px 7px";
+function brushedFn(o){ var n=PT.noise2(o.seed), n2=PT.noise2(o.seed+9), r=K.rng(o.seed+3); return function(x,y){ var st=PT.fbm(n,x/700,y/.9,3), cl=PT.fbm(n2,x/260,y/60,2), k=.74+st*.36+(cl-.5)*.22+(r()-.5)*.07; return [Math.min(255,o.c[0]*k),Math.min(255,o.c[1]*k),Math.min(255,o.c[2]*k)]; }; }
+var DESIGNS={
+  /* Rosewood & Star Chart: the room photo's dark rosewood table; midnight leather tooled with constellations and a celestial ring */
+  rosewood:{name:"Rosewood & Star Chart",wood:function(){ return PT.woodFn({light:[100,40,32],dark:[30,12,10],freq:.045,turb:7,wx:260,wy:22,sharp:.8,ringAmt:.5,streakAmt:.62,pores:.01,blotch:.28,seed:61}); },woodc:"#3e1712",
+    leath:[24,32,60],leather:true,tool:"rgba(222,186,98,.7)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.38)",deco:"chart",
+    back:"linear-gradient(150deg,#22305e,#0b1230)",gold:"rgba(231,199,122,.8)",pat:STARBACK,dots:["#3e1712","#18203c","#d9b25a"]},
+  /* Brass & Night Sky: a brushed brass frame (like the telescope) around midnight velvet scattered with stars */
+  brass:{name:"Brass & Night Sky",metal:true,wood:function(){ return brushedFn({c:[206,160,74],seed:13}); },woodc:"#a9832f",
+    leath:[14,20,42],leather:false,tool:"rgba(226,192,110,.62)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.34)",deco:"sky",
+    back:"linear-gradient(150deg,#1b1d28,#05060a)",gold:"rgba(231,199,122,.85)",pat:STARBACK,dots:["#b8913f","#0e142a","#f3e6c4"]},
+  /* Ebony & Orrery: an ebonised frame, slate leather and the brass rings of an orrery */
+  ebony:{name:"Ebony & Orrery",wood:function(){ return PT.woodFn({light:[44,36,32],dark:[12,10,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3}); },woodc:"#1b1714",
+    leath:[48,54,62],leather:true,tool:"rgba(214,180,100,.6)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(226,196,120,.34)",deco:"orrery",
+    back:"linear-gradient(150deg,#3b414c,#14171c)",gold:"rgba(231,199,122,.8)",pat:STARBACK,dots:["#1b1714","#30363e","#c9a24f"]}
+};
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="rosewood"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]){ var w=PT.canvasOf(1400,260,d.wood()), top=d.leather?PT.leatherFn(d.leath,k.length*31+7):PT.feltFn(d.leath,k.length*17+3);
+    texCache[k]={w:PT.cssUrl(w),v:PT.cssUrl(PT.rot(w)),l:PT.cssUrl(PT.seamless(PT.canvasOf(512,512,top)))}; }
+  var t=texCache[k], s=stage.style;
+  s.setProperty("--so-wood",t.w); s.setProperty("--so-woodv",t.v); s.setProperty("--so-woodc",d.woodc); s.setProperty("--so-leath",t.l); s.setProperty("--so-leathc","rgb("+d.leath+")");
+  s.setProperty("--so-tool",d.tool); s.setProperty("--so-toolg",d.toolg); s.setProperty("--so-slot",d.slot); s.setProperty("--bwc-back",d.back); s.setProperty("--bwc-gold",d.gold); s.setProperty("--bwc-pat",d.pat||"none"); stage.querySelector(".so-desk").classList.toggle("metal",!!d.metal);
+  drawDeco();
+}
+var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
+function previewBar(){
+  if(!PREVIEW) return;
+  var bar=document.createElement("div"); bar.className="so-pick";
+  Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k;
+    b.onclick=function(){ previewPick=k; document.body.setAttribute("data-set",k); mark(); }; bar.appendChild(b); });
+  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||curDesign)); }); }
+  document.body.appendChild(bar); previewPick="rosewood"; document.body.setAttribute("data-set","rosewood"); mark();
+}
+/* the sky worked into the table top (SVG, redrawn when the table changes size) */
+function drawDeco(){
+  var svg=stage.querySelector(".so-deco"); if(!svg||!curDesign) return;
+  var d=DESIGNS[curDesign], w=G.W-2*G.R, h=(G.H||760)-2*G.R, r=K.rng(97), o="", ink=d.tool;
+  var cx=w/2, cy=h*.64, R=Math.min(w*.44,h*.46);   /* large and low, so the rings show around the columns */
+  if(d.deco==="chart"){
+    o+='<g fill="none" stroke="'+ink+'" opacity=".42"><circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" stroke-width="1.6"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(R-12)+'" stroke-width=".8"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(R*.62)+'" stroke-width=".7" stroke-dasharray="3 6"/>';
+    for(var a=0;a<360;a+=5){ var L=a%30===0?10:a%10===0?6:3, ra=a*Math.PI/180; o+='<line x1="'+(cx+Math.cos(ra)*R)+'" y1="'+(cy+Math.sin(ra)*R)+'" x2="'+(cx+Math.cos(ra)*(R-L))+'" y2="'+(cy+Math.sin(ra)*(R-L))+'" stroke-width=".8"/>'; }
+    o+='<line x1="'+(cx-R)+'" y1="'+cy+'" x2="'+(cx+R)+'" y2="'+cy+'" stroke-width=".6"/><line x1="'+cx+'" y1="'+(cy-R)+'" x2="'+cx+'" y2="'+(cy+R)+'" stroke-width=".6"/>';
+    o+='<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+R+'" ry="'+(R*.36)+'" stroke-width=".7" transform="rotate(-23 '+cx+' '+cy+')"/></g>';
+    /* constellations: little groups of stars joined by fine lines */
+    for(var g=0;g<7;g++){ var gx=r()*w, gy=r()*h, pts=[]; for(var p=0;p<4+Math.floor(r()*3);p++){ gx+=(r()-.5)*90; gy+=(r()-.5)*70; pts.push([gx,gy]); }
+      o+='<polyline points="'+pts.map(function(q){ return q[0].toFixed(1)+","+q[1].toFixed(1); }).join(" ")+'" fill="none" stroke="'+ink+'" stroke-width=".7" opacity=".32"/>';
+      pts.forEach(function(q){ o+=star(q[0],q[1],2+r()*2.2,ink,.6); }); }
+    for(var s=0;s<70;s++) o+='<circle cx="'+(r()*w).toFixed(1)+'" cy="'+(r()*h).toFixed(1)+'" r="'+(.6+r()*1.1).toFixed(2)+'" fill="'+ink+'" opacity="'+(.2+r()*.35).toFixed(2)+'"/>';
+  } else if(d.deco==="sky"){
+    o+='<defs><radialGradient id="mw" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#dfe6ff" stop-opacity=".16"/><stop offset="1" stop-color="#dfe6ff" stop-opacity="0"/></radialGradient></defs>';
+    o+='<ellipse cx="'+(w*.52)+'" cy="'+(h*.55)+'" rx="'+(w*.75)+'" ry="'+(h*.12)+'" fill="url(#mw)" transform="rotate(-28 '+(w*.52)+' '+(h*.55)+')"/>';
+    for(var s2=0;s2<260;s2++){ var x=r()*w, y=r()*h, b=r(); o+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(.4+b*b*1.3).toFixed(2)+'" fill="#fff6e0" opacity="'+(.18+b*.55).toFixed(2)+'"/>'; }
+    for(var s3=0;s3<9;s3++) o+=star(r()*w,r()*h,5+r()*5,"#fff3d6",.75);
+  } else {
+    /* an orrery: the sun, its rings and their planets */
+    o+='<g fill="none" stroke="'+ink+'" opacity=".62">';
+    [.22,.38,.55,.74,.94,1.1].forEach(function(k2,i){ o+='<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(R*k2)+'" ry="'+(R*k2*.5)+'" stroke-width="'+(i%2?1:1.6)+'"/>'; });
+    o+='</g><circle cx="'+cx+'" cy="'+cy+'" r="'+(R*.07)+'" fill="'+ink+'" opacity=".65"/>';
+    for(var ry=0;ry<16;ry++){ var ra2=ry*Math.PI/8; o+='<line x1="'+(cx+Math.cos(ra2)*R*.09)+'" y1="'+(cy+Math.sin(ra2)*R*.09)+'" x2="'+(cx+Math.cos(ra2)*R*.13)+'" y2="'+(cy+Math.sin(ra2)*R*.13)+'" stroke="'+ink+'" stroke-width="1.2" opacity=".55"/>'; }
+    [.22,.38,.55,.74,.94,1.1].forEach(function(k2,i){ var t=1.1+i*.9, px=cx+Math.cos(t)*R*k2, py=cy+Math.sin(t)*R*k2*.5; o+='<circle cx="'+px+'" cy="'+py+'" r="'+(4+i%3*2)+'" fill="'+ink+'" opacity=".6"/>'; if(i===3) o+='<ellipse cx="'+px+'" cy="'+py+'" rx="13" ry="4" fill="none" stroke="'+ink+'" opacity=".6"/>'; });
+    for(var s4=0;s4<40;s4++) o+='<circle cx="'+(r()*w).toFixed(1)+'" cy="'+(r()*h).toFixed(1)+'" r="'+(.6+r()).toFixed(2)+'" fill="'+ink+'" opacity="'+(.15+r()*.3).toFixed(2)+'"/>';
+  }
+  svg.setAttribute("viewBox","0 0 "+w+" "+h); svg.innerHTML=o;
+}
+function star(x,y,s,c,op){ return '<path d="M'+x+' '+(y-s)+'L'+(x+s*.22)+' '+(y-s*.22)+'L'+(x+s)+' '+y+'L'+(x+s*.22)+' '+(y+s*.22)+'L'+x+' '+(y+s)+'L'+(x-s*.22)+' '+(y+s*.22)+'L'+(x-s)+' '+y+'L'+(x-s*.22)+' '+(y-s*.22)+'Z" fill="'+c+'" opacity="'+op+'"/>'; }
+
+/* ---------- the table ---------- */
+var stage=document.createElement("div"); stage.className="so-pad";
+stage.innerHTML='<div class="so-fit" id="soFit"><div class="so-table" id="soT"><div class="so-desk"><div class="so-rim t"></div><div class="so-rim b"></div><div class="so-rim l"></div><div class="so-rim r"></div>'+
+  '<div class="so-leather"><svg class="so-deco" preserveAspectRatio="none"></svg><div class="so-tool"></div><div class="so-tool i"></div><span class="so-fl"></span><span class="so-fl"></span><span class="so-fl"></span><span class="so-fl"></span><span class="so-mono"><b>B</b><i>W</i></span></div></div>'+
+  '<div id="soSlots"></div><div id="soCards"></div><div class="so-toast" id="soToast" role="status"></div></div></div>'+
+  '<div class="so-tools" id="soTools"></div>';
+var T=stage.querySelector("#soT"), FIT=stage.querySelector("#soFit"), SL=stage.querySelector("#soSlots"), CL=stage.querySelector("#soCards"), TOOLS=stage.querySelector("#soTools"), toastEl=stage.querySelector("#soToast");
+
+/* layout in table units: eight columns. Wide (desktop, tablets, landscape) and narrow (portrait phones: cards nearly
+   edge to edge, big corner indices, a slim frame). Foundations top left and free cells top right, as in Solitaire. */
+var G={};
+function layoutFor(narrow){
+  if(narrow) return {narrow:true,W:856,R:10,PX:104,X0:14,TY:28,GAP:24,UP:44,UPMIN:22,Hmin:980,Hmax:1640,T1:5,T2:8};
+  return {narrow:false,W:1000,R:28,PX:112,X0:58,TY:50,GAP:32,UP:34,UPMIN:17,Hmin:680,Hmax:960,T1:11,T2:17};
+}
+G=layoutFor(false); G.H=760;
+function colX(i){ return G.X0+i*G.PX; }
+function tabY(){ return G.TY+K.H+G.GAP; }
+function tabYc(){ return tabY()-G.R; }
+
+/* ---------- the game ----------
+   tab[8] (columns, every card face up), cells[4] (one card or null), found[4] (built up by suit from the ace). */
+var GID=0, S=null, hist=[], busy=false, tickT=0, cardEl={}, slotEl={}, lessonOnly=null, inLesson=false, practice=false, stuckShown=false;
+var BYID={}; K.deck().forEach(function(c){ BYID[c.id]=c; });
+function cd(r,s){ return BYID[s+"-"+r]; }
+/* Microsoft's numbered deals: the same deal number gives the same layout as Windows FreeCell (1 to 32000) */
+function msDeal(n){
+  var seed=n, deck=[], cols=[[],[],[],[],[],[],[],[]], i;
+  for(i=0;i<52;i++) deck.push(i);   /* card i: rank i/4, suit i%4 (clubs, diamonds, hearts, spades) */
+  for(var left=52,k=0;left>0;left--,k++){ seed=(seed*214013+2531011)%2147483648; var j=(Math.floor(seed/65536)&32767)%left, c=deck[j]; deck[j]=deck[left-1]; cols[k%8].push(cd(Math.floor(c/4),c%4)); }
+  return cols;
+}
+function randomDeal(){ var n; do { n=1+Math.floor(Math.random()*32000); } while(n===11982); return n; }   /* 11982 is the one deal no one can win */
+function fresh(n){ GID++; return {deal:n,tab:msDeal(n),cells:[null,null,null,null],found:[[],[],[],[]],moves:0,started:false}; }
+function snap(){ return JSON.stringify(S); }
+function topOf(a){ return a.length?a[a.length-1]:null; }
+function stacks(c,on){ return K.red(c)!==K.red(on)&&on.r===c.r+1; }
+function canFound(c,f){ var t=topOf(S.found[f]); return t?(t.s===c.s&&c.r===t.r+1):c.r===0; }
+function foundFor(c){ for(var f=0;f<4;f++) if(canFound(c,f)) return f; return -1; }
+function homeCount(){ return S.found.reduce(function(n,f){ return n+f.length; },0); }
+function freeCells(){ return S.cells.filter(function(c){ return !c; }).length; }
+function emptyCols(){ return S.tab.filter(function(c){ return !c.length; }).length; }
+/* how many cards can move together: (free cells + 1) doubled for each empty column (not counting the one moved into) */
+function maxRun(toEmpty){ return (freeCells()+1)*Math.pow(2,Math.max(0,emptyCols()-(toEmpty?1:0))); }
+function isRun(col,j){ for(var k=j+1;k<col.length;k++) if(!stacks(col[k],col[k-1])) return false; return true; }
+function heightOf(s){ for(var f=0;f<4;f++){ var p=S.found[f]; if(p.length&&p[0].s===s) return p.length; } return 0; }
+/* a card is safe to send home when nothing still on the table could need it: aces and twos always; otherwise once
+   both foundations of the other colour have reached one below it */
+function safeHome(c){ if(foundFor(c)<0) return false; if(c.r<=1) return true; var o=K.red(c)?[0,3]:[1,2]; return heightOf(o[0])>=c.r&&heightOf(o[1])>=c.r; }
+
+function positions(){
+  var P={};
+  S.found.forEach(function(p,f){ p.forEach(function(c,k){ P[c.id]=[colX(f),G.TY,300+k]; }); });
+  S.cells.forEach(function(c,i){ if(c) P[c.id]=[colX(4+i),G.TY,250]; });
+  var bottom=G.H-G.R-12;
+  S.tab.forEach(function(col,ci){
+    var up=G.UP, room=bottom-tabY();
+    if(col.length>1&&(col.length-1)*up+K.H>room) up=Math.max(G.UPMIN,(room-K.H)/(col.length-1));
+    col.forEach(function(c,k){ P[c.id]=[colX(ci),tabY()+k*up,400+k]; });
+  });
+  return P;
+}
+function elFor(c){
+  var e=cardEl[c.id]; if(e) return e;
+  e=K.make(c,{up:true}); e._card=c; CL.appendChild(e); cardEl[c.id]=e;
+  e.addEventListener("pointerdown",onDown);
+  return e;
+}
+function buildSlots(){
+  SL.innerHTML=""; slotEl={};
+  function add(key,label,x,y,cls){ var s=K.slot(label,cls); K.place(s,x,y); SL.appendChild(s); slotEl[key]=s; return s; }
+  for(var f=0;f<4;f++) add("f"+f,"A",colX(f),G.TY);
+  for(var i=0;i<4;i++) add("c"+i,"Free\nCell",colX(4+i),G.TY,"cell");
+  for(var t=0;t<8;t++) add("t"+t,"",colX(t),tabY());
+  [].forEach.call(SL.querySelectorAll(".cell span"),function(s){ s.innerHTML="Free<br>Cell"; });
+}
+function render(anim){
+  var P=positions(), seen={}, jobs=[];
+  Object.keys(P).forEach(function(id){
+    var p=P[id], c=BYID[id], e=elFor(c); seen[id]=1; e.style.display="";
+    var moved=e._x!=null&&(Math.abs(e._x-p[0])>.5||Math.abs(e._y-p[1])>.5);
+    e.classList.remove("hint","drop","sel");
+    if(anim&&moved){ e.style.zIndex=p[2]; jobs.push(K.glide(e,p[0],p[1],{})); }
+    else { K.place(e,p[0],p[1]); e.style.zIndex=p[2]; }
+  });
+  Object.keys(cardEl).forEach(function(id){ if(!seen[id]) cardEl[id].style.display="none"; });
+  markCan(); clearHint();
+  if(inLesson&&Parlor.lessonWaiting) glowNeed();   /* keep the lesson's card glowing after a wrong tap */
+  return Promise.all(jobs);
+}
+function markCan(){
+  Object.keys(cardEl).forEach(function(id){ cardEl[id].classList.remove("can"); });
+  if(!S) return;
+  S.cells.forEach(function(c){ if(c) cardEl[c.id].classList.add("can"); });
+  S.tab.forEach(function(col){ for(var j=col.length-1;j>=0;j--){ cardEl[col[j].id].classList.add("can"); if(j&&!stacks(col[j],col[j-1])) break; } });
+}
+
+/* ---------- moves ----------
+   a pick: {t:"tab", i, j} (the run from card j to the top) | {t:"cell", i} | {t:"found", i}. A place: {t:"tab"|"cell"|"found", i} */
+function runOf(pk){
+  if(pk.t==="cell") return [S.cells[pk.i]];
+  if(pk.t==="found") return [topOf(S.found[pk.i])];
+  return S.tab[pk.i].slice(pk.j);
+}
+function legal(pk,to){
+  var run=runOf(pk), c=run[0]; if(!c) return false;
+  if(pk.t==="tab"&&!isRun(S.tab[pk.i],pk.j)) return false;
+  if(to.t==="found") return run.length===1&&pk.t!=="found"&&canFound(c,to.i);
+  if(to.t==="cell") return run.length===1&&pk.t==="tab"&&!S.cells[to.i];
+  if(pk.t==="tab"&&pk.i===to.i) return false;
+  var dest=S.tab[to.i], t=topOf(dest);
+  if(t&&!stacks(c,t)) return false;
+  return run.length<=maxRun(!t);
+}
+function targets(pk){ var out=[],i; for(i=0;i<4;i++) if(legal(pk,{t:"found",i:i})) out.push({t:"found",i:i}); for(i=0;i<8;i++) if(legal(pk,{t:"tab",i:i})) out.push({t:"tab",i:i}); for(i=0;i<4;i++) if(legal(pk,{t:"cell",i:i})) out.push({t:"cell",i:i}); return out; }
+function pushHist(){ hist.push(snap()); if(hist.length>300) hist.shift(); }
+function startClock(){ if(!S.started){ S.started=true; S.t0=Date.now(); countPlayed(); } }
+function take(pk){ if(pk.t==="cell"){ var c=S.cells[pk.i]; S.cells[pk.i]=null; return [c]; } if(pk.t==="found") return [S.found[pk.i].pop()]; return S.tab[pk.i].splice(pk.j); }
+function put(run,to){ if(to.t==="found") S.found[to.i].push(run[0]); else if(to.t==="cell") S.cells[to.i]=run[0]; else Array.prototype.push.apply(S.tab[to.i],run); }
+async function doMove(pk,to,o){
+  o=o||{}; if(busy) return false;
+  if(!legal(pk,to)) return false;
+  if(!allowLesson({pick:pk,to:to})) return false;
+  pushHist(); startClock(); busy=true;
+  put(take(pk),to); S.moves++;
+  Parlor.sfx("card",{pitch:to.t==="found"?1.15:to.t==="cell"?1.3:1});
+  var g=GID; await render(!o.noAnim);
+  if(g!==GID){ busy=false; return true; }
+  if(!o.noAuto) await autoHome(o.noAnim);
+  if(g!==GID){ busy=false; return true; }
+  busy=false; after({pick:pk,to:to});
+  return true;
+}
+function undo(){
+  if(busy||!hist.length||inLesson&&Parlor.lessonWaiting) return;
+  S=JSON.parse(hist.pop()); relink(); Parlor.sfx("whoosh"); render(true); stuckShown=false; after({undo:true});
+}
+/* JSON copies make new card objects: point them back at the shared ones */
+function relink(){ S.tab=S.tab.map(function(col){ return col.map(function(c){ return BYID[c.id]; }); }); S.cells=S.cells.map(function(c){ return c?BYID[c.id]:null; }); S.found=S.found.map(function(p){ return p.map(function(c){ return BYID[c.id]; }); }); }
+async function restart(){
+  if(busy||!S||inLesson) return;
+  if(!S.moves){ toast("Nothing to restart yet"); return; }
+  var was=S; S=fresh(was.deal); S.started=was.started; S.t0=was.t0; hist=[]; stuckShown=false; busy=true;   /* the same game: the clock keeps running */ Parlor.sfx("deal",{n:8,gap:.03});
+  var g=GID; await render(true); if(g!==GID) return; await autoHome(); if(g!==GID) return;
+  busy=false; tools(); msg(); showStats();
+}
+/* cards that are safe float home on their own: quick flights, one after another */
+async function autoHome(instant){
+  var g=GID, jobs=[], k=0, moved=true;
+  while(moved){
+    moved=false;
+    for(var i=0;i<8;i++){ var c=topOf(S.tab[i]); if(c&&safeHome(c)){ send({t:"tab",i:i,j:S.tab[i].length-1}); moved=true; } }
+    for(var j=0;j<4;j++){ var c2=S.cells[j]; if(c2&&safeHome(c2)){ send({t:"cell",i:j}); moved=true; } }
+  }
+  function send(pk){
+    var c=runOf(pk)[0], f=foundFor(c); take(pk); S.found[f].push(c);
+    var e=cardEl[c.id], z=300+S.found[f].length-1, n=k++;
+    if(instant||!Parlor.smooth()){ e.style.zIndex=z; K.place(e,colX(f),G.TY); return; }
+    jobs.push(Parlor.wait(n*90).then(function(){ if(g!==GID) return; e.style.zIndex=z; Parlor.sfx("card",{pitch:1.15+Math.min(n,20)*.02}); return K.glide(e,colX(f),G.TY,{dur:300,lift:1.18,spin:(n%2?-1:1)*6,soar:true}); }));
+  }
+  await Promise.all(jobs);
+  if(g===GID&&k) markCan();
+}
+
+/* ---------- taps and drags (the same as Solitaire) ---------- */
+var drag=null;
+function pickFor(e){
+  var c=e._card, i, j;
+  for(i=0;i<4;i++) if(S.cells[i]&&S.cells[i].id===c.id) return {t:"cell",i:i};
+  for(i=0;i<4;i++){ var f=topOf(S.found[i]); if(f&&f.id===c.id) return {t:"found",i:i}; }
+  for(i=0;i<8;i++) for(j=0;j<S.tab[i].length;j++) if(S.tab[i][j].id===c.id) return isRun(S.tab[i],j)?{t:"tab",i:i,j:j}:null;
+  return null;
+}
+function scaleNow(){ return FIT._s||1; }
+function toTable(ev){ var r=T.getBoundingClientRect(), s=scaleNow(); return [(ev.clientX-r.left)/s,(ev.clientY-r.top)/s]; }
+function onDown(ev){
+  if(busy||!seatedNow()) return;
+  var pk=pickFor(ev.currentTarget); if(!pk){ var e0=ev.currentTarget; e0.classList.remove("nope"); void e0.offsetWidth; e0.classList.add("nope"); return; }
+  ev.preventDefault();
+  var run=runOf(pk), els=run.map(function(c){ return cardEl[c.id]; }), p=toTable(ev);
+  drag={pk:pk,els:els,x0:p[0],y0:p[1],start:els.map(function(e){ return [e._x,e._y]; }),moved:false,id:ev.pointerId,tg:null};
+  try{ ev.currentTarget.setPointerCapture(ev.pointerId); }catch(e){}
+  ev.currentTarget.addEventListener("pointermove",onMove);
+  ev.currentTarget.addEventListener("pointerup",onUp);
+  ev.currentTarget.addEventListener("pointercancel",onUp);
+}
+function onMove(ev){
+  if(!drag||ev.pointerId!==drag.id) return;
+  var p=toTable(ev), dx=p[0]-drag.x0, dy=p[1]-drag.y0;
+  if(!drag.moved&&Math.hypot(dx,dy)<7) return;
+  if(!drag.moved){ drag.moved=true; drag.tg=targets(drag.pk); drag.els.forEach(function(e,k){ e.classList.add("drag"); e.style.zIndex=600+k; }); showDrops(drag.tg,true); clearHint(); }
+  drag.els.forEach(function(e,k){ K.place(e,drag.start[k][0]+dx,drag.start[k][1]+dy); });
+}
+async function onUp(ev){
+  if(!drag||ev.pointerId!==drag.id) return;
+  var d=drag; drag=null;
+  ev.currentTarget.removeEventListener("pointermove",onMove); ev.currentTarget.removeEventListener("pointerup",onUp); ev.currentTarget.removeEventListener("pointercancel",onUp);
+  if(!d.moved){ smartMove(d.pk,d.els[0]); return; }
+  showDrops(d.tg,false);
+  d.els.forEach(function(e){ e.classList.remove("drag"); });
+  var lead=d.els[0], cx=lead._x+K.W/2, cy=lead._y+K.H/2, best=null, bd=1e9;
+  d.tg.forEach(function(to){ var a=placeRect(to), inside=cx>=a[0]-14&&cx<=a[2]+14&&cy>=a[1]-30&&cy<=a[3]+60, dist=Math.hypot(cx-(a[0]+a[2])/2,cy-Math.min(Math.max(cy,a[1]),a[3]));
+    if(inside) dist-=1000; if(dist<bd){ bd=dist; best=to; } });
+  if(best&&bd<130){ if(await doMove(d.pk,best,{})) return; }
+  if(d.tg.length===0&&d.els.length>1&&d.pk.t==="tab") toast("Only "+maxRun(false)+" cards can move together now");
+  render(true);
+}
+function placeRect(to){
+  if(to.t==="found") return [colX(to.i),G.TY,colX(to.i)+K.W,G.TY+K.H];
+  if(to.t==="cell") return [colX(4+to.i),G.TY,colX(4+to.i)+K.W,G.TY+K.H];
+  var P=positions(), t=topOf(S.tab[to.i]), y1=t?P[t.id][1]+K.H:tabY()+K.H;
+  return [colX(to.i),tabY(),colX(to.i)+K.W,y1];
+}
+function destEl(to){
+  if(to.t==="found"){ var f=topOf(S.found[to.i]); return f?cardEl[f.id]:slotEl["f"+to.i]; }
+  if(to.t==="cell") return slotEl["c"+to.i];
+  var t=topOf(S.tab[to.i]); return t?cardEl[t.id]:slotEl["t"+to.i];
+}
+function showDrops(tg,on){ tg.forEach(function(to){ var e=destEl(to); if(e) e.classList.toggle("drop",on); }); }
+/* a tap sends a card to its best place: home, onto a column, into an empty column, then a free cell */
+function bestTarget(pk){
+  var tg=targets(pk); if(!tg.length) return null;
+  var run=runOf(pk), f=tg.filter(function(t){ return t.t==="found"; })[0];
+  if(f&&run.length===1) return f;
+  var tabs=tg.filter(function(t){ return t.t==="tab"; }), filled=tabs.filter(function(t){ return S.tab[t.i].length; });
+  if(filled.length) return filled[0];
+  if(tabs.length&&!(pk.t==="tab"&&pk.j===0)) return tabs[0];
+  var cell=tg.filter(function(t){ return t.t==="cell"; })[0];
+  return cell||null;
+}
+async function smartMove(pk,el){
+  var to=bestTarget(pk);
+  /* a run too long to move: tapping its top card moves just that card */
+  if(!to&&pk.t==="tab"&&pk.j<S.tab[pk.i].length-1){ var one={t:"tab",i:pk.i,j:S.tab[pk.i].length-1}; to=bestTarget(one); if(to) pk=one; }
+  if(to&&await doMove(pk,to,{})) return;
+  el.classList.remove("nope"); void el.offsetWidth; el.classList.add("nope");
+  render(false);
+}
+
+/* ---------- after every move ---------- */
+function elapsed(){ return S&&S.started?Math.floor((Date.now()-S.t0)/1000):0; }
+function clock(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+(s<10?"0":"")+s; }
+function showStats(){
+  if(!S) return;
+  var sec=elapsed();
+  Parlor.score([homeCount()]); Parlor.info((S.deal?"Deal "+S.deal+" · ":"")+clock(sec)+" · "+S.moves+" moves");
+  var st=document.getElementById("soStat"); if(st) st.innerHTML=(S.deal?"<b>#"+S.deal+"</b> · ":"")+clock(sec);
+}
+function sorted(){ return S.tab.every(function(col){ for(var k=1;k<col.length;k++) if(col[k].r>=col[k-1].r) return false; return true; }); }
+function anyMove(){
+  var i;
+  for(i=0;i<4;i++) if(S.cells[i]&&targets({t:"cell",i:i}).length) return true;
+  for(i=0;i<8;i++){ var col=S.tab[i]; if(!col.length) continue; for(var j=col.length-1;j>=0;j--){ if(!isRun(col,j)) break; if(targets({t:"tab",i:i,j:j}).length) return true; } }
+  return false;
+}
+function after(m){
+  showStats(); clearHint();
+  if(homeCount()===52){ won(); return; }
+  tools();
+  if(inLesson&&Parlor.lessonWaiting&&lessonOnly&&lessonOnly.check&&lessonOnly.check(m)){ Parlor.lessonDone(); return; }
+  if(!inLesson){
+    var any=anyMove();
+    if(!any&&!stuckShown){ stuckShown=true; Parlor.status("No more moves","Undo a few moves, or Give Up to end this game."); tools(); }
+    else if(any){ stuckShown=false; msg(); }
+    if(practice) practiceTip(m);
+  }
+}
+function msg(){
+  if(!S) return;
+  if(sorted()&&homeCount()<52) Parlor.status("Every column is in order","Tap Finish to send the cards home");
+  else Parlor.status(homeCount()?homeCount()+" of 52 cards home":"Your move","Tap a card to move it, or drag it");
+}
+/* this device's record: games played and won, the current streak, the fastest win */
+function stats(){ try{ return JSON.parse(localStorage.getItem("bwFcStats")||"{}"); }catch(e){ return {}; } }
+function saveStats(o){ try{ localStorage.setItem("bwFcStats",JSON.stringify(o)); }catch(e){} }
+function countPlayed(){ if(inLesson||practice) return; var o=stats(); o.played=(o.played||0)+1; o.streak=o.streak||0; o.pending=1; saveStats(o); }
+async function won(){
+  var g=GID, lesson=inLesson; stopClock(); tools();
+  Parlor.sfx("win"); await cascade();
+  if(g!==GID) return;
+  if(lesson){ toast("Every card is home!"); return; }
+  var sec=Math.max(1,elapsed()), o=stats(), line="";
+  if(!practice){ o.won=(o.won||0)+1; o.streak=(o.streak||0)+1; o.pending=0; var fast=!o.best||sec<o.best; if(fast) o.best=sec; saveStats(o);
+    line=" You've won "+o.won+" of "+o.played+(o.streak>1?" · "+o.streak+" in a row":"")+(fast&&o.won>1?" · your fastest yet!":o.best?" · fastest "+clock(o.best):"")+"."; }
+  Parlor.finish("win",(S.deal?"Deal "+S.deal+" solved in ":"Solved in ")+clock(sec)+" · "+S.moves+" moves."+line,"Every Card Is Home");
+}
+async function cascade(){
+  if(!Parlor.smooth()) return;
+  for(var f=0;f<4;f++){ var t=topOf(S.found[f]); if(!t) continue; var e=cardEl[t.id]; e.style.transition="transform .25s"; K.place(e,e._x,e._y-14); await Parlor.wait(120); K.place(e,e._x,e._y+14); }
+  await Parlor.wait(260); Object.keys(cardEl).forEach(function(id){ cardEl[id].style.transition=""; });
+}
+/* Finish: every card flies home, lowest first, each leaving before the last lands (as in Solitaire) */
+function lowestFirst(){ var best=null, i; for(i=0;i<8;i++){ var t=topOf(S.tab[i]); if(t&&foundFor(t)>=0&&(!best||t.r<best.c.r)) best={pk:{t:"tab",i:i,j:S.tab[i].length-1},c:t}; }
+  for(i=0;i<4;i++){ var c=S.cells[i]; if(c&&foundFor(c)>=0&&(!best||c.r<best.c.r)) best={pk:{t:"cell",i:i},c:c}; } return best; }
+async function autoFinish(){
+  if(busy||!sorted()) return;
+  busy=true; pushHist(); var g=GID, jobs=[], k=0, l;
+  while((l=lowestFirst())){
+    var c=l.c, f=foundFor(c); take(l.pk); S.found[f].push(c); S.moves++;
+    (function(c,f,k,z){ var e=cardEl[c.id];
+      jobs.push(Parlor.wait(k*70).then(function(){ if(g!==GID) return; e.style.zIndex=z; Parlor.sfx("card",{pitch:1+Math.min(k,30)*.02});
+        return K.glide(e,colX(f),G.TY,{dur:300,lift:1.24,spin:(k%2?-1:1)*9,soar:true}); })); })(c,f,k,300+S.found[f].length-1);
+    k++;
+  }
+  await Promise.all(jobs);
+  if(g!==GID) return;
+  busy=false; render(false); after({finish:true});
+}
+function giveUp(){
+  if(!S||busy) return; stopClock();
+  if(!practice){ var o=stats(); o.streak=0; o.pending=0; saveStats(o); }
+  Parlor.finish("lose",homeCount()+" of 52 cards made it home"+(S.deal?" on deal "+S.deal:"")+". Every deal but one can be won: try it again with Restart Deal.","No More Moves");
+}
+function stopClock(){ clearInterval(tickT); tickT=0; }
+function startTicking(){ clearInterval(tickT); tickT=setInterval(showStats,1000); }
+
+/* ---------- hints: a solver works out a way to win from here (in the background) and suggests its first move ---------- */
+function FCSOLVER(){
+  /* cards are numbers s*13+r; a position is {c:[8 columns], k:[4 cells, -1 = empty], f:[4 heights by suit]} */
+  function su(n){ return (n/13)|0; } function rk(n){ return n%13; } function red(n){ var s=su(n); return s===1||s===2; }
+  function on(a,b){ return red(a)!==red(b)&&rk(b)===rk(a)+1; }
+  function safe(st,n){ var s=su(n),r=rk(n); if(st.f[s]!==r) return false; if(r<=1) return true; var o=red(n)?[0,3]:[1,2]; return st.f[o[0]]>=r&&st.f[o[1]]>=r; }
+  function copy(st){ return {c:st.c.map(function(a){ return a.slice(); }),k:st.k.slice(),f:st.f.slice()}; }
+  function autos(st){ var m=true; while(m){ m=false; for(var i=0;i<8;i++){ var c=st.c[i]; if(c.length&&safe(st,c[c.length-1])){ st.f[su(c.pop())]++; m=true; } } for(var j=0;j<4;j++){ var n=st.k[j]; if(n>=0&&safe(st,n)){ st.k[j]=-1; st.f[su(n)]++; m=true; } } } }
+  function key(st){ return st.f.join(",")+"/"+st.k.filter(function(x){ return x>=0; }).sort(function(a,b){ return a-b; }).join(",")+"/"+st.c.map(function(a){ return a.join(","); }).sort().join("|"); }
+  var PEN=4, GW=.5;   /* the cost of each used free cell, and of each move: a careful search keeps cells open */
+  function h(st){
+    var home=st.f[0]+st.f[1]+st.f[2]+st.f[3], v=(52-home)*2, i, j;
+    for(i=0;i<8;i++){ var c=st.c[i], mn=99; for(j=0;j<c.length;j++){ var n=c[j], r=rk(n); if(r>mn) v+=1; else mn=r; if(st.f[su(n)]===r) v+=(c.length-1-j)*1.5; } if(!c.length) v-=1.5; }
+    for(j=0;j<4;j++) if(st.k[j]>=0) v+=PEN;
+    return v;
+  }
+  function moves(st){
+    var out=[], i, d, ec=-1, ek=-1;
+    for(i=0;i<8;i++) if(!st.c[i].length){ ec=i; break; }
+    for(i=0;i<4;i++) if(st.k[i]<0){ ek=i; break; }
+    function from(src,n,len){
+      if(st.f[su(n)]===rk(n)) out.push([src,["f",su(n)]]);
+      for(d=0;d<8;d++){ if(src[0]==="c"&&src[1]===d) continue; var col=st.c[d]; if(col.length&&on(n,col[col.length-1])) out.push([src,["c",d]]); }
+      if(ec>=0&&(src[0]==="k"||len>1)) out.push([src,["c",ec]]);
+      if(ek>=0&&src[0]==="c") out.push([src,["k",ek]]);
+    }
+    for(i=0;i<8;i++){ var c=st.c[i]; if(c.length) from(["c",i],c[c.length-1],c.length); }
+    for(i=0;i<4;i++) if(st.k[i]>=0) from(["k",i],st.k[i],1);
+    return out;
+  }
+  function apply(st,m){ var n; if(m[0][0]==="c") n=st.c[m[0][1]].pop(); else { n=st.k[m[0][1]]; st.k[m[0][1]]=-1; }
+    if(m[1][0]==="f") st.f[su(n)]++; else if(m[1][0]==="c") st.c[m[1][1]].push(n); else st.k[m[1][1]]=n; }
+  function solve(st0,budget,ms,pen,gw){
+    PEN=pen==null?4:pen; GW=gw==null?.5:gw;
+    var t0=Date.now(), root={st:copy(st0),p:null,m:null,g:0}; autos(root.st);
+    var seen={}, heap=[], n=0;
+    function push(node,pri){ heap.push([pri,node]); var i=heap.length-1; while(i>0){ var p=(i-1)>>1; if(heap[p][0]<=heap[i][0]) break; var t=heap[p]; heap[p]=heap[i]; heap[i]=t; i=p; } }
+    function pop(){ var top=heap[0], last=heap.pop(); if(heap.length){ heap[0]=last; var i=0; for(;;){ var l=2*i+1, r=l+1, s=i; if(l<heap.length&&heap[l][0]<heap[s][0]) s=l; if(r<heap.length&&heap[r][0]<heap[s][0]) s=r; if(s===i) break; var t=heap[s]; heap[s]=heap[i]; heap[i]=t; i=s; } } return top[1]; }
+    seen[key(root.st)]=1; push(root,h(root.st));
+    while(heap.length){
+      if(++n>budget||(n%2000===0&&Date.now()-t0>ms)) return {fail:"budget"};
+      var node=pop(), st=node.st;
+      if(st.f[0]+st.f[1]+st.f[2]+st.f[3]===52){ var path=[]; while(node.p){ path.push(node.m); node=node.p; } return {path:path.reverse(),nodes:n}; }
+      var ms2=moves(st);
+      for(var i=0;i<ms2.length;i++){ var s2=copy(st); apply(s2,ms2[i]); autos(s2); var k2=key(s2); if(seen[k2]) continue; seen[k2]=1; var c={st:s2,p:node,m:ms2[i],g:node.g+1}; push(c,h(s2)+c.g*GW); }
+    }
+    return {fail:"none"};
+  }
+  if(typeof self!=="undefined"&&typeof window==="undefined") self.onmessage=function(e){ var d=e.data, r=solve(d.st,d.budget||250000,d.ms||4000,d.pen,d.gw); r.id=d.id; postMessage(r); };
+  return solve;
+}
+var solverW=null, solverSync=null, askId=0, asks={};
+try{ solverW=new Worker(URL.createObjectURL(new Blob(["("+FCSOLVER.toString()+")()"],{type:"text/javascript"}))); solverW.onmessage=function(e){ var f=asks[e.data.id]; if(f){ delete asks[e.data.id]; f(e.data); } }; }catch(e){ solverW=null; }
+function position(){
+  var f=[0,0,0,0]; S.found.forEach(function(p){ if(p.length) f[p[0].s]=p.length; });
+  return {c:S.tab.map(function(col){ return col.map(function(c){ return c.s*13+c.r; }); }),k:S.cells.map(function(c){ return c?c.s*13+c.r:-1; }),f:f};
+}
+function solveOnce(o){
+  var st=position();
+  if(solverW) return new Promise(function(res){ var id=++askId; asks[id]=res; solverW.postMessage({id:id,st:st,budget:o.budget,ms:o.ms,pen:o.pen,gw:o.gw}); setTimeout(function(){ if(asks[id]){ delete asks[id]; res({fail:"time"}); } },(o.ms||4000)+1500); });
+  if(!solverSync) solverSync=FCSOLVER();
+  return Promise.resolve(solverSync(st,Math.min(o.budget||60000,60000),Math.min(o.ms||1500,1500),o.pen,o.gw));
+}
+/* a careful search first (it keeps free cells open, the way a good player would); if that takes too long, a quick one */
+async function solveNow(){
+  var r=await solveOnce({pen:4,gw:.5,ms:1500,budget:120000});
+  if(r.path) return r;
+  var r2=await solveOnce({pen:.7,gw:.15,ms:4000,budget:250000});
+  return r2.path?r2:(r.fail==="none"?r:r2);
+}
+/* the solver's move, turned into the game's own pick and place */
+function fromSolver(m){
+  var pk=m[0][0]==="c"?{t:"tab",i:m[0][1],j:S.tab[m[0][1]].length-1}:{t:"cell",i:m[0][1]}, to;
+  if(m[1][0]==="f"){ var c=runOf(pk)[0]; to={t:"found",i:foundFor(c)}; }
+  else if(m[1][0]==="c") to={t:"tab",i:m[1][1]};
+  else to={t:"cell",i:S.cells.indexOf(null)};
+  return {pick:pk,to:to};
+}
+function clearHint(){ [].forEach.call(stage.querySelectorAll(".hint"),function(e){ e.classList.remove("hint"); }); }
+var hinting=false;
+async function showHint(){
+  if(!S||busy||hinting) return; clearHint();
+  if(homeCount()===52) return;
+  if(sorted()){ Parlor.status("Hint","Everything is in order: tap Finish."); return; }
+  hinting=true; var g=GID, slow=setTimeout(function(){ Parlor.status("Hint","Thinking…"); },250);
+  var r=await solveNow(); clearTimeout(slow); hinting=false;
+  if(g!==GID||busy) return;
+  var h=null, say;
+  if(r.path&&r.path.length) h=fromSolver(r.path[0]);
+  if(h&&!legal(h.pick,h.to)) h=null;
+  if(!h){
+    say=r.fail==="none"?"This deal can't be won from here: Undo a few moves, or Restart Deal.":"No sure way forward from here: try Undo, or free up a column.";
+    Parlor.status("Hint",say); if(practice) Parlor.hintSay("<p>"+say+"</p>"); return;
+  }
+  runOf(h.pick).forEach(function(c){ cardEl[c.id].classList.add("hint"); });
+  var dest=destEl(h.to); if(dest) dest.classList.add("hint");
+  var c=runOf(h.pick)[0], dc=h.to.t==="tab"?topOf(S.tab[h.to.i]):null;
+  say=h.to.t==="found"?"Send the "+K.name(c)+" home.":h.to.t==="cell"?"Put the "+K.name(c)+" in a free cell.":dc?"Move the "+K.name(c)+" onto the "+K.name(dc)+".":"Move the "+K.name(c)+" into the empty column.";
+  Parlor.status("Hint",say);
+  if(practice) Parlor.hintSay("<p>"+say+"</p><p>Tap the glowing card, or drag it to the glowing place.</p>");
+}
+
+/* ---------- the toolbar ---------- */
+function tools(){
+  TOOLS.innerHTML="";
+  function b(label,cls,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; TOOLS.appendChild(x); return x; }
+  var u=b("Undo","",undo); u.disabled=!hist.length;
+  b("Hint","",function(){ showHint(); });
+  if(S&&sorted()&&homeCount()<52) b("Finish","gold",autoFinish);
+  else if(S&&stuckShown&&!inLesson) b("Give Up","gold",giveUp);
+  else if(!inLesson) b("Restart Deal","",restart);
+  var st=document.createElement("span"); st.className="so-stat"; st.id="soStat"; TOOLS.appendChild(st);
+  showStats();
+}
+function toast(t){ toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove("on"); },1900); }
+
+/* ---------- dealing: the eight columns fly out from the middle of the table, row by row ---------- */
+async function deal(n,o){
+  o=o||{}; busy=true; stopClock();
+  /* a deal left unfinished counts as a loss for the streak */
+  if(!inLesson&&!practice){ var st0=stats(); if(st0.pending){ st0.streak=0; st0.pending=0; saveStats(st0); } }
+  S=fresh(n||randomDeal()); hist=[]; stuckShown=false;
+  fit(true);
+  var P=positions(), mx=G.W/2-K.W/2, my=G.TY;
+  Object.keys(cardEl).forEach(function(id){ cardEl[id].style.display="none"; });
+  var order=[]; for(var r=0;r<7;r++) for(var c=0;c<8;c++) if(S.tab[c][r]) order.push(S.tab[c][r]);
+  order.forEach(function(x){ var e=elFor(x); e.style.display=""; e.classList.remove("hint","drop","can"); K.turn(e,x,false); K.place(e,mx,my); e.style.zIndex=150; });
+  tools(); msg(); showStats();
+  if(Parlor.smooth()&&!o.instant){
+    Parlor.sfx("deal",{n:30,gap:.034});
+    await Promise.all(order.map(function(x,k){ var e=cardEl[x.id], p=P[x.id]; return Parlor.wait(k*30).then(function(){ e.style.zIndex=p[2]; return K.glide(e,p[0],p[1],{dur:300,flip:{c:x,up:true}}); }); }));
+  } else order.forEach(function(x){ K.turn(cardEl[x.id],x,true); });
+  await render(false);
+  var g=GID; await autoHome(o.instant);   /* an ace dealt on top of a column goes straight home */
+  if(g!==GID) return;
+  busy=false; tools(); msg(); showStats(); startTicking();
+}
+
+/* ---------- Learn to Play (7 steps) ---------- */
+function setPos(cols,o){
+  o=o||{}; GID++;
+  S={deal:0,tab:cols.map(function(c){ return c.slice(); }),cells:(o.cells||[null,null,null,null]).slice(),found:(o.found||[[],[],[],[]]).map(function(p){ return p.slice(); }),moves:0,started:false};
+  Object.keys(cardEl).forEach(function(id){ K.turn(cardEl[id],BYID[id],true); });
+  hist=[]; stuckShown=false; clearHint(); render(false); tools(); showStats();
+}
+function run(arr){ return arr.map(function(x){ return cd(x[0],x[1]); }); }   /* [[rank, suit], …]: rank 0-12 (A..K), suit 0 clubs 1 diamonds 2 hearts 3 spades */
+var LESSON=[
+  {title:"The Layout", text:"<p>All 52 cards are dealt face up into <b>eight columns</b>, so nothing is hidden: every deal is a puzzle you can see.</p><p>Top left are four <b>foundations</b>, to be built from ace to king in each suit. Top right are four <b>free cells</b>, parking places for one card each.</p>"},
+  {title:"Build Down, Alternating Colours", text:"<p>As in Solitaire, a card goes on one rank higher in the <b>other colour</b>.</p><p>Tap the glowing <b>7 of hearts</b>, or drag it onto the 8 of spades.</p>", sub:"Move the 7 of hearts onto the 8 of spades",
+    done:"<p>Good. Unlike Solitaire, there's no stock: everything you need is already on the table.</p>"},
+  {title:"Free Cells", text:"<p>Any single card can wait in a <b>free cell</b> while you dig underneath it. There are only four, so use them wisely.</p><p>Tap the glowing <b>king of spades</b>: with nowhere else to go, it moves to a free cell.</p>", sub:"Put the king of spades in a free cell",
+    done:"<p>The king is parked, and the 5 of spades is free to play. A card in a free cell can come back down onto a column at any time.</p>"},
+  {title:"Cards Fly Home by Themselves", text:"<p><b>Aces</b> start the foundations. Aces and twos, and any card no longer needed on the table, fly home <b>on their own</b>.</p><p>Move the <b>3 of spades</b> onto the 4 of diamonds and watch the ace underneath.</p>", sub:"Move the 3 of spades onto the 4 of diamonds",
+    done:"<p>The ace of spades went home by itself. You can always send a card home yourself, too: just tap it.</p>"},
+  {title:"Moving a Run", text:"<p>You can move a whole <b>run</b> of cards in order, as many as your <b>free cells plus one</b> (and twice that for each empty column).</p><p>Two free cells are open, so three cards can move. Tap the <b>9 of clubs</b> to move all three onto the 10 of diamonds.</p>", sub:"Move the 9, 8 and 7 onto the 10 of diamonds",
+    done:"<p>Three cards moved in one go. Full free cells make runs shorter, so keep them open when you can.</p>"},
+  {title:"Empty Columns", text:"<p>An <b>empty column</b> takes <b>any card</b> (not just a king) and is worth more than a free cell, because it can hold a whole run.</p><p>Tap the <b>king of spades</b> in its free cell to bring it down into the empty column.</p>", sub:"Move the king of spades into the empty column",
+    done:"<p>The free cell is open again. Emptying a column is often the key to a hard deal.</p>"},
+  {title:"How to Win", text:"<p>Get all <b>52 cards</b> home. Once every column is in order, tap <b>Finish</b> and they fly home.</p><p>Every deal has a number, and all but one of the 32,000 can be won. <b>Hint</b> works out a winning line from where you are; <b>Undo</b> and <b>Restart Deal</b> let you try again.</p>"}
+];
+function lessonSetup(k){
+  inLesson=true; practice=false; lessonOnly=null; busy=false; stopClock();
+  var base=[run([[12,1],[3,0],[7,3]]),run([[11,0],[8,1],[6,2]]),run([[10,2],[2,3]]),run([[9,0],[5,1]]),run([[4,3],[12,3]]),run([[1,2],[11,1]]),run([[8,0],[10,3]]),run([[7,1],[9,2]])];
+  if(k===0){ S=fresh(1); hist=[]; render(false); tools(); showStats(); return; }
+  if(k===1){ setPos(base); need({t:"tab",i:1},{t:"tab",i:0}); return; }
+  if(k===2){ var c2=base.map(function(c){ return c.slice(); }); c2[0].push(c2[1].pop()); setPos(c2); need({t:"tab",i:4},{t:"cell"}); return; }
+  if(k===3){
+    var c3=[run([[12,1],[3,0],[7,3],[6,2]]),run([[11,0],[8,1]]),run([[10,2],[0,3],[2,3]]),run([[9,0],[3,1]]),run([[4,3]]),run([[1,2],[11,1]]),run([[8,0],[10,3]]),run([[7,1],[9,2]])];
+    setPos(c3,{cells:[cd(12,3),null,null,null]}); need({t:"tab",i:2},{t:"tab",i:3}); return;
+  }
+  if(k===4){
+    var c4=[run([[12,1],[3,0],[7,3],[6,2]]),run([[11,0],[8,1]]),run([[10,2]]),run([[1,1],[3,1],[2,3]]),run([[4,3]]),run([[1,2],[11,1]]),run([[5,3],[8,0],[7,2],[6,0]]),run([[10,3],[9,1]])];
+    setPos(c4,{cells:[cd(12,3),cd(4,1),null,null],found:[[cd(0,3)],[],[],[]]}); need({t:"tab",i:6,j:1},{t:"tab",i:7}); return;
+  }
+  if(k===5){
+    var c5=[run([[12,1],[3,0],[7,3],[6,2]]),run([[11,0],[8,1]]),run([[10,2]]),run([[1,1],[3,1],[2,3]]),[],run([[1,2],[11,1]]),run([[5,3]]),run([[10,3],[9,1],[8,0],[7,2],[6,0]])];
+    setPos(c5,{cells:[cd(12,3),cd(4,1),cd(4,3),null],found:[[cd(0,3)],[],[],[]]}); need({t:"cell",i:0},{t:"tab",i:4}); return;
+  }
+  if(k===6){
+    var found=[0,1,2,3].map(function(s){ var a=[]; for(var r=0;r<=9;r++) a.push(cd(r,s)); return a; });
+    setPos([run([[12,0],[11,1],[10,0]]),run([[12,1],[11,0],[10,1]]),run([[12,2],[11,3]]),run([[12,3],[11,2],[10,3]]),[],[],[],[]],{found:found,cells:[cd(10,2),null,null,null]});
+    lessonOnly={free:true}; return;
+  }
+}
+function need(pick,to){
+  lessonOnly={pick:pick,to:to,check:function(m){ return m.to&&m.to.t===to.t&&(to.i==null||m.to.i===to.i); }}; glowNeed();
+}
+function glowNeed(){
+  if(!lessonOnly||!lessonOnly.pick) return;
+  var p=lessonOnly.pick;
+  if(p.t==="cell"){ var c=S.cells[p.i]; if(c) cardEl[c.id].classList.add("hint"); return; }
+  var col=S.tab[p.i], j=p.j==null?col.length-1:p.j;
+  for(var x=j;x<col.length;x++) cardEl[col[x].id].classList.add("hint");
+}
+function allowLesson(m){
+  if(!inLesson) return true;
+  if(lessonOnly&&lessonOnly.free) return true;
+  if(!Parlor.lessonWaiting||!lessonOnly){ toast("Tap Next to keep going"); return false; }
+  var L=lessonOnly, ok=m.pick.t===L.pick.t&&m.pick.i===L.pick.i&&(L.pick.j==null||m.pick.j===L.pick.j)&&m.to.t===L.to.t&&(L.to.i==null||m.to.i===L.to.i);
+  if(!ok){ toast("Try the glowing card"); glowNeed(); }
+  return ok;
+}
+/* practice: a friendly deal with a coach */
+var tipN=0, TIPS=["Free the aces and twos first: they're the cards everything else waits for.","Keep at least one free cell open when you can.","An empty column is worth two free cells: it can hold a whole run.","Before you fill a free cell, see what it will set free.","Tap Hint any time: it works out a way to win from where you are."];
+var EASY=[1,3,11,13,26,31,3044];
+function startPractice(){
+  inLesson=false; practice=true; lessonOnly=null; tipN=0;
+  deal(EASY[Math.floor(Math.random()*EASY.length)]);
+  Parlor.practiceSay("Practice Game","<p>A friendly deal. Tap a card to send it to its best place, or drag it where you like.</p><p>Start by looking for the <b>aces</b>: what's sitting on top of them?</p>");
+}
+function practiceTip(m){
+  if(!practice||!S) return;
+  var full=freeCells()===0, empty=emptyCols()>0;
+  if(full){ Parlor.practiceSay("The Free Cells Are Full","<p>With no free cell open, only one card can move at a time. Look for a card in a cell that can come back down onto a column.</p>"); return; }
+  if(empty&&m&&m.pick&&m.pick.t==="tab"&&!S.tab[m.pick.i].length){ Parlor.practiceSay("An Empty Column!","<p>Any card can go here, and it lets you move longer runs. Use it to dig out a low card.</p>"); return; }
+  if(++tipN%3===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/3)%TIPS.length]+"</p>");
+}
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(noRender){
+  var wide=window.innerWidth>=1000, narrow=!wide&&window.innerWidth<700&&window.innerHeight>window.innerWidth;
+  var L=layoutFor(narrow), availW, availH, toolsH=(TOOLS.offsetHeight||46)+10;
+  if(!wide&&!narrow&&window.innerHeight<=520){ L.Hmin=430; L.Hmax=560; L.UPMIN=15; L.UP=26; L.TY=32; L.GAP=18; }   /* phones held sideways */
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
+  else { availW=window.innerWidth-12; availH=window.innerHeight-(seatedNow()?top:56)-88-toolsH-6; }
+  var s=availW/L.W, H=Math.min(L.Hmax,Math.max(L.Hmin,availH/s));
+  if(H*s>availH) s=availH/H;
+  s=Math.max(.2,Math.min(s,1.3));
+  var changed=G.narrow!==L.narrow||Math.abs((G.H||0)-H)>1||G.TY!==L.TY;
+  L.H=H; G=L; FIT._s=s;
+  T.style.width=L.W+"px"; T.style.height=H+"px"; T.style.transform="scale("+s+")";
+  FIT.style.width=Math.round(L.W*s)+"px"; FIT.style.height=Math.round(H*s)+"px";
+  T.classList.toggle("bwc-big",narrow);
+  stage.style.setProperty("--so-r",L.R+"px"); stage.style.setProperty("--so-t1",L.T1+"px"); stage.style.setProperty("--so-t2",L.T2+"px");
+  var fl=stage.querySelectorAll(".so-fl"), ins=L.T1+1, lw=L.W-2*L.R, lh=H-2*L.R;
+  [[ins,ins],[lw-ins,ins],[ins,lh-ins],[lw-ins,lh-ins]].forEach(function(p,i){ fl[i].style.left=p[0]+"px"; fl[i].style.top=p[1]+"px"; });
+  var mono=stage.querySelector(".so-mono"); mono.style.bottom=(L.T2+8)+"px"; mono.style.fontSize=(narrow?18:22)+"px";
+  toastEl.style.fontSize=(narrow?26:16)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
+  if(changed){ buildSlots(); drawDeco(); }
+  if(!noRender&&S&&!busy) render(false);
+}
+window.addEventListener("resize",function(){ fit(); });
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"freecell", cat:"cards", solo:true, title:"Observatory FreeCell", bg:"cards-freecell.jpg", home:"lobby.html?cat=cards", stage:stage,
+  soloLabel:"FreeCell", dealLabel:"Deal a Game",
+  tagline:"Every card face up. Four free cells. Nearly every deal can be won.", invite:"The dome is open to the stars. Every card is face up on the table: deal a game and find the way home.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Tables",
+  sets:[
+    {id:"rosewood",name:DESIGNS.rosewood.name,need:0,dots:DESIGNS.rosewood.dots},
+    {id:"brass",name:DESIGNS.brass.name,club:true,dots:DESIGNS.brass.dots},
+    {id:"ebony",name:DESIGNS.ebony.name,club:true,dots:DESIGNS.ebony.dots}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> move all 52 cards to the four foundations at the top left, each built up in one suit from ace to king.</li><li><b>The columns:</b> every card is dealt face up into eight columns. Build down in alternating colours (a red 6 on a black 7).</li><li><b>Free cells:</b> the four places at the top right each hold one card while you work underneath it.</li><li><b>Empty columns</b> take any card.</li><li><b>Runs:</b> a run of cards in order moves together when there's room: up to one more than your open free cells, doubled for each empty column.</li><li>Cards that are no longer needed on the table (aces, twos, and cards whose lower partners are home) fly home by themselves.</li><li><b>Moving cards:</b> tap a card to send it to its best place, or drag it where you want it. <b>Hint</b> works out a winning line from where you are; <b>Undo</b> takes back a move; <b>Restart Deal</b> starts the same deal again.</li><li>When every column is in order, tap <b>Finish</b> and the cards fly home.</li></ol>",
+    score:"<ul><li>FreeCell has no points on the table: the goal is to solve the deal. Your time and moves are shown, and this device keeps your games won, your winning streak and your fastest win.</li><li>Each deal has a number (1 to 32,000, the same deals as Windows FreeCell). All of them can be won except deal 11982, which you'll never be dealt here.</li></ul>"
+  },
+  onNew:function(){ inLesson=false; practice=false; lessonOnly=null; Parlor.coach(null); deal(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set");
+  if(PREVIEW&&previewPick&&k!==previewPick){ document.body.setAttribute("data-set",previewPick); return; }
+  applyDesign(k||"rosewood"); }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
+var wasSeated=false;
+new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(function(){ fit(); },30); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){
+  fit(true); buildSlots(); applyDesign(document.body.getAttribute("data-set")||"rosewood"); previewBar();
+  S=fresh(randomDeal()); render(false); tools(); showStats();
+});
+</script>
+</body>
+</html>
