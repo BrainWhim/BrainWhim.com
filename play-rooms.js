@@ -19,7 +19,8 @@ window.BW_ROOMS={
   yahtzee:"yahtzee.html",
   cribbage:"cribbage.html",
   shutbox:"shutbox.html",
-  crazyeights:"crazyeights.html"
+  crazyeights:"crazyeights.html",
+  ginrummy:"ginrummy.html"
 };
 function bwGuessGame(room){
   if(!room) return "";
