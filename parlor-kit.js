@@ -18,6 +18,14 @@
   var P = window.Parlor = {};
   var C = null, mode = "house", seated = false, token = null, finished = false, started = 0;
   var GAMES = [];
+  /* the rooms in each category (the switcher bar and Switch Game). A card room without a page yet shows dimmed
+     ("Opening Soon"); give it its page when the room is built. cat:"cards" in Parlor.init picks the card list (Oct 26). */
+  var BOARD_GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
+  var CARD_GAMES = [["solitaire","Solitaire","solitaire.html"],["ginrummy","Gin Rummy",""],["hearts","Hearts",""],["spades","Spades",""],["euchre","Euchre",""],["crazyeights","Crazy Eights",""],["canasta","Canasta",""],["pinochle","Pinochle",""],["freecell","FreeCell",""],["bridge","Bridge",""],["cribbage","Cribbage","cribbage.html"]];
+  function gameLink(g, cls) {
+    if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening soon"; return x; }
+    var a = mk("a", cls, g[1]); a.href = g[2]; return a;
+  }
   var el = {}, accountInfo = { pts: 0, member: false, user: null };
 
   function $(s, r) { return (r || document).querySelector(s); }
@@ -34,9 +42,10 @@
 
     var room = $(".pk-room");
     /* game switcher (glass rectangle, same as chess) */
-    GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
+    GAMES = C.cat === "cards" ? CARD_GAMES : BOARD_GAMES;
+    if (C.solo) document.body.classList.add("pk-solo");
     var sw = mk("nav", "pk-games");
-    GAMES.forEach(function (g) { var a = mk("a", g[0] === C.game ? "on" : "", g[1]); a.href = g[2]; sw.appendChild(a); });
+    GAMES.forEach(function (g) { sw.appendChild(gameLink(g, g[0] === C.game ? "on" : "")); });
     room.appendChild(sw);
     /* phones: scroll the switcher so the current game is in view */
     setTimeout(function () { var on = sw.querySelector(".on"); if (on && sw.scrollWidth > sw.clientWidth) sw.scrollLeft = on.offsetLeft - (sw.clientWidth - on.offsetWidth) / 2; }, 0);
@@ -183,7 +192,7 @@
     var b = el.gamesM.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", "Switch Game"));
     var list = mk("div", "pk-gamelist");
-    GAMES.forEach(function (g) { var a = mk("a", "pk-btn" + (g[0] === C.game ? " on" : ""), g[1]); a.href = g[2]; list.appendChild(a); });
+    GAMES.forEach(function (g) { var a = gameLink(g, "pk-btn" + (g[0] === C.game ? " on" : "")); if (!g[2]) a.appendChild(mk("small", "", "Opening Soon")); list.appendChild(a); });
     b.appendChild(list);
     var r = mk("div", "pk-row"); r.appendChild(btn("Close", "quiet", function () { el.gamesM.veil.classList.remove("on"); })); b.appendChild(r);
     el.gamesM.veil.classList.add("on");
@@ -219,7 +228,8 @@
   P.turn = function (i) { (C.players || []).forEach(function (p, k) { if (p._row) { p._row.classList.toggle("turn", k === i); p._row2.classList.toggle("turn", k === i); } }); };
   /* which player row is "me" (0 or 1): mine goes under the board on phones */
   P.mySeat = function (i) {
-    var pl = C.players || []; if (pl.length < 2 || !el.mini) return;
+    var pl = C.players || []; if (!el.mini) return;
+    if (pl.length < 2) { if (pl[0]) { el.miniTop.innerHTML = ""; el.mini.innerHTML = ""; el.mini.appendChild(pl[0]._row2); } mine = 0; paintAv(); return; }
     var me = pl[i ? 1 : 0], them = pl[i ? 0 : 1]; mine = i ? 1 : 0;
     el.miniTop.innerHTML = ""; el.mini.innerHTML = "";
     el.miniTop.appendChild(them._row2); el.mini.appendChild(me._row2);
@@ -270,6 +280,13 @@
     d.appendChild(one(o, P.oppName(), o && o !== "house" ? BWAvatar.rank(o.skill_points).name : (o === "house" ? "Level " + P.level() + " of " + P.maxLevel : "")));
     return d;
   }
+  /* one-player rooms: just your avatar with its rank ring */
+  function solo1() {
+    if (!window.BWAvatar) return null;
+    var d = mk("div", "pk-duo pk-duo1"), x = mk("div", "p"), a = mk("span", "bwa-av"), m = meProf();
+    a.innerHTML = BWAvatar.html(m, { size: 96, title: "You", even: true }); x.appendChild(a);
+    x.appendChild(mk("b", "", "You")); x.appendChild(mk("i", "", m ? BWAvatar.rank(m.skill_points).name : "Guest")); d.appendChild(x); return d;
+  }
   window.addEventListener("bw-avatar", function () { renderAccount(); paintAv(); });
   /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
   P.seatDot = function (i) { var p = (C.players || [])[i]; if (!p) return null; var a = p._row2 && p._row2.querySelector(".sw"), b = p._row && p._row.querySelector(".sw"); if (a && a.offsetParent) return a; if (b && b.offsetParent) return b;
@@ -287,7 +304,8 @@
     sheet(null);
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
-      (score ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
+      (score && C.solo ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club members get more).</li></ul>" : "") +
+      (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
   };
@@ -298,6 +316,12 @@
     var b = el.seat.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", "Take your seat"));
     var s = mk("div", "pk-stack");
+    if (C.solo) {   /* one-player rooms (Solitaire, FreeCell): no House, no online table */
+      s.appendChild(btn(C.dealLabel || "Deal a Game", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
+      if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
+      s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
+      b.appendChild(s); el.seat.veil.classList.add("on"); return;
+    }
     s.appendChild(btn("Play vs. The House", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
     if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
     s.appendChild(btn("Match an Online Player", "", function () { location.href = (C.home || "lobby.html") + "?match=" + encodeURIComponent(C.game); }));
@@ -325,7 +349,7 @@
     P.lessonOn = false; P.lessonWaiting = false;   /* leaving a lesson for a real game */
     P.coach(null); if (el.newBtn) el.newBtn.textContent = "New Game"; if (el.learnBtn) el.learnBtn.style.display = "";
     mode = "house"; seat(); paintAv();
-    el.mode.textContent = "Playing The House"; showLevel();
+    el.mode.textContent = C.solo ? (C.soloLabel || "Playing solo") : "Playing The House"; showLevel();
     if (C.onNew) C.onNew("house");
   };
   /* online rooms: the daily limit was already applied in the Lobby when the match was made */
@@ -461,19 +485,19 @@
     if (el.forfeitBtn) el.forfeitBtn.style.display = "none";
     if (el.tblM) el.tblM.veil.classList.remove("on");
     P.sfx(kind === "win" ? "win" : kind === "lose" ? "lose" : "draw");
-    var lvlNote = mode === "house" ? levelAfter(kind) : "";
+    var lvlNote = mode === "house" && !C.solo ? levelAfter(kind) : "";
     var title = heading || (kind === "win" ? "Congratulations! You win!" : kind === "draw" ? "It's a Draw" : "Better Luck Next Time");
     var b = el.end.box; b.innerHTML = "";
     b.appendChild(mk("p", "pk-kick", kind === "win" ? "Victory" : kind === "draw" ? "Even match" : "Game over"));
     b.appendChild(mk("h2", "", title));
-    var dd = duo(); if (dd) b.appendChild(dd);
+    var dd = C.solo ? solo1() : duo(); if (dd) b.appendChild(dd);
     if (detail) b.appendChild(mk("p", "pk-pts", detail));
     if (lvlNote) b.appendChild(mk("p", "pk-lvlnote", lvlNote));
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
     var r = mk("div", "pk-row");
-    if (mode === "house") r.appendChild(btn("Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
+    if (mode === "house") r.appendChild(btn(C.solo ? "Deal Again" : "Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
     if (mode === "learn") {
-      b.insertBefore(mk("p", "pk-lvlnote", "A practice game: no points, and The House's level doesn't change."), pts);
+      b.insertBefore(mk("p", "pk-lvlnote", C.solo ? "A practice game: no points." : "A practice game: no points, and The House's level doesn't change."), pts);
       r.appendChild(btn("Practice Again", "", function () { el.end.veil.classList.remove("on"); finished = false; if (C.learn.practice) C.learn.practice(); else C.learn.start(); }));
       r.appendChild(btn("Play The House", "", function () { el.end.veil.classList.remove("on"); P.coach(null); P.sitHouse(); }));
     }
@@ -711,7 +735,7 @@
   P.maxLevel = 10;
   function lvlKey() { return "bwLevel:" + (C && C.game); }
   P.level = function () { var v = parseInt(store(lvlKey()) || "1", 10); return Math.max(1, Math.min(P.maxLevel, v || 1)); };
-  function showLevel() { if (el.level) el.level.textContent = mode === "house" ? "The House: level " + P.level() + " of " + P.maxLevel : ""; }
+  function showLevel() { if (el.level) el.level.textContent = mode === "house" && !C.solo ? "The House: level " + P.level() + " of " + P.maxLevel : ""; }
   function levelAfter(kind) {
     var L = P.level(), losses = parseInt(store(lvlKey() + ":l") || "0", 10) || 0, note = "";
     if (kind === "win") {
@@ -751,7 +775,7 @@
     env(ac, g, t, peak, a, d); var last = o; if (filt) { var f = ac.createBiquadFilter(); f.type = filt[0]; f.frequency.value = filt[1]; o.connect(f); last = f; }
     last.connect(g); g.connect(master); o.start(t); o.stop(t + a + d + 0.02);
   }
-  /* Parlor.sfx(name, {pitch}) : whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, mill, win, lose, draw */
+  /* Parlor.sfx(name, {pitch}) : card, deal ({n, gap}), whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, mill, win, lose, draw */
   P.sfx = function (name, o) {
     if (!P.soundOn()) return; var ac = audio(); if (!ac) return; o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
     try {
@@ -786,6 +810,17 @@
       }
       /* a mill: two soft bell notes */
       else if (name === "mill") { tone(ac, t, "triangle", 784 * p, 0, 0.09, 0.006, 0.5); tone(ac, t + 0.12, "triangle", 1175 * p, 0, 0.08, 0.006, 0.6); tone(ac, t, "sine", 392 * p, 0, 0.05, 0.01, 0.5); }
+      /* a playing card laid down on leather or felt: a soft snap with a little air (Oct 26) */
+      else if (name === "card") {
+        var nC = noise(ac, 0.06), bC = ac.createBiquadFilter(), gC = ac.createGain(); bC.type = "bandpass"; bC.frequency.value = 2600 * p; bC.Q.value = 0.9;
+        env(ac, gC, t, 0.13, 0.002, 0.05); nC.connect(bC); bC.connect(gC); gC.connect(master); nC.start(t); nC.stop(t + 0.07);
+        tone(ac, t, "sine", 160 * p, 90 * p, 0.07, 0.003, 0.06, ["lowpass", 400]);
+      }
+      /* a quick run of cards dealt (o.n cards, default 7) */
+      else if (name === "deal") {
+        for (var dn = 0, nn = o.n || 7; dn < nn; dn++) { var nd = noise(ac, 0.05), bd = ac.createBiquadFilter(), gd = ac.createGain(), td = t + dn * (o.gap || 0.07); bd.type = "bandpass"; bd.frequency.value = (2200 + Math.random() * 900) * p; bd.Q.value = 1;
+          env(ac, gd, td, 0.08, 0.002, 0.04); nd.connect(bd); bd.connect(gd); gd.connect(master); nd.start(td); nd.stop(td + 0.06); }
+      }
       else if (name === "win") { [523, 659, 784, 1047].forEach(function (f, i) { tone(ac, t + i * 0.11, "triangle", f, 0, 0.12, 0.01, 0.4); }); }
       else if (name === "lose") { [392, 330].forEach(function (f, i) { tone(ac, t + i * 0.18, "sine", f, f * 0.97, 0.1, 0.02, 0.45); }); }
       else if (name === "draw") { [440, 440].forEach(function (f, i) { tone(ac, t + i * 0.16, "sine", f, 0, 0.08, 0.01, 0.25); }); }

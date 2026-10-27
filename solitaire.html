@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Writing Desk Solitaire · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1026d">
+<link rel="stylesheet" href="bw-cards.css?v=1026a">
+<style>
+/* ===== Writing Desk Solitaire (Klondike): a writing desk seen from straight above, drawn in the browser =====
+   A wooden frame around a tooled leather writing surface with gold (or silver) tooling, warm lamp light from the top
+   left, like the room photo. Cards come from the shared card kit (bw-cards.js / .css). Desks (the Desks card):
+   one free, two for Club members. ?preview=1 shows a picker for all three. */
+.so-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.so-fit{position:relative;flex:none}
+.so-table{position:absolute;left:0;top:0;transform-origin:0 0}
+.so-desk{position:absolute;inset:0;border-radius:12px;background:var(--so-woodc);box-shadow:0 22px 44px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.35)}
+.so-rim{position:absolute;background-color:var(--so-woodc);background-repeat:repeat}
+.so-rim.t,.so-rim.b{left:0;right:0;height:var(--so-r);background-image:var(--so-wood)}
+.so-rim.t{top:0;border-radius:12px 12px 0 0;clip-path:polygon(0 0,100% 0,calc(100% - var(--so-r)) 100%,var(--so-r) 100%)}
+.so-rim.b{bottom:0;border-radius:0 0 12px 12px;clip-path:polygon(var(--so-r) 0,calc(100% - var(--so-r)) 0,100% 100%,0 100%);background-position:-300px -90px}
+.so-rim.l,.so-rim.r{top:0;bottom:0;width:var(--so-r);background-image:var(--so-woodv)}
+.so-rim.l{left:0;border-radius:12px 0 0 12px;clip-path:polygon(0 0,100% var(--so-r),100% calc(100% - var(--so-r)),0 100%)}
+.so-rim.r{right:0;border-radius:0 12px 12px 0;clip-path:polygon(0 var(--so-r),100% 0,100% 100%,0 calc(100% - var(--so-r)));background-position:-90px -400px}
+.so-rim::after{content:"";position:absolute;inset:0}
+.so-rim.t::after{background:linear-gradient(to bottom,rgba(255,232,200,.26),rgba(0,0,0,0) 35%,rgba(0,0,0,.28))}
+.so-rim.b::after{background:linear-gradient(to bottom,rgba(255,232,200,.12),rgba(0,0,0,0) 40%,rgba(0,0,0,.4))}
+.so-rim.l::after{background:linear-gradient(to right,rgba(255,232,200,.22),rgba(0,0,0,0) 40%,rgba(0,0,0,.25))}
+.so-rim.r::after{background:linear-gradient(to right,rgba(255,232,200,.08),rgba(0,0,0,0) 40%,rgba(0,0,0,.42))}
+.so-leather{position:absolute;inset:var(--so-r);border-radius:3px;background-image:radial-gradient(ellipse 70% 55% at 16% 8%,rgba(255,214,150,.2),rgba(255,214,150,0) 70%),radial-gradient(ellipse 120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.34)),var(--so-leath);
+  background-size:auto,auto,1024px 1024px;background-color:var(--so-leathc);box-shadow:inset 0 3px 7px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.5)}
+.so-tool{position:absolute;inset:var(--so-t1);border:2px solid var(--so-tool);border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(0,0,0,.35);pointer-events:none}
+.so-tool.i{inset:var(--so-t2);border-width:1px;opacity:.8}
+.so-fl{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;transform:rotate(45deg);border:1.5px solid var(--so-tool);background:rgba(0,0,0,.1);pointer-events:none}
+.so-mono{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:baseline;line-height:1;font-size:22px;pointer-events:none;opacity:.75}
+.so-mono b,.so-mono i{display:inline-block;color:transparent;background:var(--so-toolg);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.so-mono b{font:500 1em Montserrat,sans-serif}.so-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+#soSlots,#soCards{position:absolute;left:0;top:0}
+.so-table{--bwc-slot:var(--so-slot)}
+.so-table .bwc.can{cursor:grab}
+.so-table .bwc.nope{animation:so-nope .32s ease}
+@keyframes so-nope{25%{margin-left:-5px}75%{margin-left:5px}}
+.so-stock{cursor:pointer}
+/* the toolbar under the desk: Undo · Hint · Draw One / Draw Three · score and time on phones */
+.so-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.so-tools .pk-btn{width:auto;margin:0;padding:8px 16px;min-height:0}
+.so-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.so-seg{display:flex;border-radius:6px;border:1px solid rgba(255,255,255,.22);overflow:hidden}
+.so-seg button{font:600 12.5px Montserrat,sans-serif;color:rgba(255,255,255,.75);background:transparent;border:0;padding:8px 12px;cursor:pointer}
+.so-seg button.on{background:rgba(255,255,255,.18);color:#f0d27a}
+.so-stat{font:600 13px Montserrat,sans-serif;color:#fff;padding:0 8px;white-space:nowrap;display:none}
+.so-stat b{color:#f0d27a;font-weight:700}
+.so-toast{position:absolute;z-index:600;left:50%;top:44%;transform:translate(-50%,-50%);padding:9px 16px;border-radius:12px;background:rgba(15,23,42,.84);border:1px solid rgba(231,199,122,.6);color:#f3d68b;font:700 14px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none}
+.so-toast.on{opacity:1}
+/* desk preview (?preview=1): a picker for all three desks */
+.so-pick{position:fixed;z-index:60;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(231,199,122,.45);max-width:94vw}
+.so-pick button{font:600 13px Montserrat,sans-serif;color:#f3ead8;background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 12px;cursor:pointer}
+.so-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
+@media (max-width:999px){
+  .so-pick{top:8px;flex-wrap:nowrap;gap:2px;padding:4px}.so-pick button{font-size:11px;padding:7px 7px;white-space:nowrap}
+  .so-stat{display:block}
+  .so-tools{gap:6px;padding:5px;width:100%;max-width:calc(100vw - 16px);flex-wrap:nowrap}
+  .so-tools .pk-btn{padding:8px 11px;font-size:13px}
+  .so-seg button{padding:8px 8px;font-size:11.5px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+}
+@media (max-width:420px){ .so-seg button{padding:8px 6px;font-size:11px} .so-tools .pk-btn{padding:8px 9px} }
+</style>
+<script src="bw-auth.js?v=1026a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html?cat=cards">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1024b"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+<script src="parlor-kit.js?v=1026d"></script>
+<script src="bw-cards.js?v=1026a"></script>
+<script>
+var K=BWCards, PT=K.paint;
+/* ---------- the three desks ---------- */
+var DESIGNS={
+  /* Mahogany & Oxblood: the room photo's desk; oxblood leather, gold tooling, claret card backs */
+  mahogany:{name:"Mahogany & Oxblood",wood:{light:[122,48,28],dark:[56,18,8],freq:.035,turb:6,wx:420,wy:30,sharp:.9,ringAmt:.38,streakAmt:.5,pores:.012,blotch:.3,seed:41},woodc:"#5a2414",
+    leath:[108,40,26],tool:"rgba(222,186,98,.72)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.4)",
+    back:"linear-gradient(150deg,#a3242b,#5c0e14)",gold:"rgba(231,199,122,.8)",dots:["#5a2414","#6c281a","#a3242b"]},
+  /* Walnut & Bottle Green: a walnut desk with green leather, like the photo's side table */
+  walnut:{name:"Walnut & Bottle Green",wood:{light:[126,82,48],dark:[58,34,18],freq:.04,turb:9,wx:220,wy:20,sharp:.7,ringAmt:.66,streakAmt:.42,pores:.02,blotch:.3,seed:23},woodc:"#5e3c22",
+    leath:[30,66,46],tool:"rgba(222,186,98,.66)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.36)",
+    back:"linear-gradient(150deg,#21613f,#0b2c1d)",gold:"rgba(231,199,122,.8)",dots:["#5e3c22","#1e4230","#21613f"]},
+  /* Ebony & Midnight: an ebonised desk, midnight-navy leather, silver tooling, navy backs */
+  ebony:{name:"Ebony & Midnight",wood:{light:[44,36,32],dark:[12,10,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},woodc:"#1b1714",
+    leath:[30,42,76],tool:"rgba(214,220,232,.6)",toolg:"linear-gradient(170deg,#ffffff,#c8ced8 45%,#7c8696 75%,#eef1f6)",slot:"rgba(214,220,232,.34)",
+    back:"linear-gradient(150deg,#26407a,#0d1834)",gold:"rgba(222,228,238,.78)",dots:["#1b1714","#1e2a4c","#26407a"]}
+};
+var texCache={}, curDesign=null;
+function applyDesign(k){
+  if(!DESIGNS[k]) k="mahogany"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
+  if(!texCache[k]){ var w=PT.canvasOf(1400,260,PT.woodFn(d.wood)); texCache[k]={w:PT.cssUrl(w),v:PT.cssUrl(PT.rot(w)),l:PT.cssUrl(PT.seamless(PT.canvasOf(512,512,PT.leatherFn(d.leath,k.length*31+7))))}; }
+  var t=texCache[k], s=stage.style;
+  s.setProperty("--so-wood",t.w); s.setProperty("--so-woodv",t.v); s.setProperty("--so-woodc",d.woodc); s.setProperty("--so-leath",t.l); s.setProperty("--so-leathc","rgb("+d.leath+")");
+  s.setProperty("--so-tool",d.tool); s.setProperty("--so-toolg",d.toolg); s.setProperty("--so-slot",d.slot); s.setProperty("--bwc-back",d.back); s.setProperty("--bwc-gold",d.gold);
+}
+var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
+function previewBar(){
+  if(!PREVIEW) return;
+  var bar=document.createElement("div"); bar.className="so-pick";
+  Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k;
+    b.onclick=function(){ previewPick=k; document.body.setAttribute("data-set",k); mark(); }; bar.appendChild(b); });
+  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||curDesign)); }); }
+  document.body.appendChild(bar); previewPick="mahogany"; document.body.setAttribute("data-set","mahogany"); mark();
+}
+
+/* ---------- the desk ---------- */
+var stage=document.createElement("div"); stage.className="so-pad";
+stage.innerHTML='<div class="so-fit" id="soFit"><div class="so-table" id="soT"><div class="so-desk"><div class="so-rim t"></div><div class="so-rim b"></div><div class="so-rim l"></div><div class="so-rim r"></div>'+
+  '<div class="so-leather"><div class="so-tool"></div><div class="so-tool i"></div><span class="so-fl"></span><span class="so-fl"></span><span class="so-fl"></span><span class="so-fl"></span><span class="so-mono"><b>B</b><i>W</i></span></div></div>'+
+  '<div id="soSlots"></div><div id="soCards"></div><div class="so-toast" id="soToast" role="status"></div></div></div>'+
+  '<div class="so-tools" id="soTools"></div>';
+var T=stage.querySelector("#soT"), FIT=stage.querySelector("#soFit"), SL=stage.querySelector("#soSlots"), CL=stage.querySelector("#soCards"), TOOLS=stage.querySelector("#soTools"), toastEl=stage.querySelector("#soToast");
+
+/* layout in table units. Wide (desktop, tablets, landscape): roomy margins and a broad frame.
+   Narrow (portrait phones): cards nearly edge to edge, big corner indices, a slim frame. */
+var G={};
+function layoutFor(narrow){
+  if(narrow) return {narrow:true,W:800,R:12,PX:110,X0:20,TY:32,GAP:26,DOWN:13,UP:44,UPMIN:24,FAN:20,Hmin:960,Hmax:1560,T1:6,T2:10};
+  return {narrow:false,W:1000,R:30,PX:124,X0:78,TY:52,GAP:34,DOWN:15,UP:34,UPMIN:20,FAN:24,Hmin:660,Hmax:940,T1:12,T2:18};
+}
+G=layoutFor(false); G.H=760;
+function colX(i){ return G.X0+i*G.PX; }
+function tabY(){ return G.TY+K.H+G.GAP; }
+
+/* ---------- the game ----------
+   stock (face down, top = last), waste (face up, top = last), found[4] (A up to K), tab[7] (arrays of {c, up}).
+   Draw One or Draw Three; the stock can be turned over as often as you like. */
+var GID=0, S=null, DRAW=3, hist=[], busy=false, t0=0, tickT=0, cardEl={}, slotEl={}, sel=null, hintOn=null, lessonOnly=null, inLesson=false, practice=false, stuckShown=false;
+try{ DRAW=parseInt(localStorage.getItem("bwSolDraw")||"1",10)===3?3:1; }catch(e){ DRAW=1; }
+function fresh(seed){
+  var d=K.shuffle(K.deck(), seed?K.rng(seed):null), tab=[];
+  for(var i=0;i<7;i++){ tab.push([]); }
+  for(var r=0;r<7;r++) for(var c=r;c<7;c++){ tab[c].push({c:d.pop(),up:c===r}); }
+  GID++; return {stock:d,waste:[],found:[[],[],[],[]],tab:tab,score:0,moves:0,passes:0,draw:DRAW,started:false};
+}
+function snap(){ return JSON.stringify(S); }
+function topOf(a){ return a.length?a[a.length-1]:null; }
+function canFound(c,f){ var t=topOf(S.found[f]); return t?(t.s===c.s&&c.r===t.r+1):c.r===0; }
+function foundFor(c){ for(var f=0;f<4;f++) if(canFound(c,f)) return f; return -1; }
+function canTab(c,i){ var p=S.tab[i], t=topOf(p); if(!t) return c.r===12; return t.up&&K.red(t.c)!==K.red(c)&&t.c.r===c.r+1; }
+function homeCount(){ return S.found.reduce(function(n,f){ return n+f.length; },0); }
+
+/* where every card sits right now: [x, y, z, faceUp] by id */
+function positions(){
+  var P={}, n=S.stock.length, i, j;
+  S.stock.forEach(function(c,k){ var o=Math.floor(k/8)*.6; P[c.id]=[colX(0)-o,G.TY-o,100+k,false]; });
+  var w=S.waste, show=S.draw===3?Math.min(3,w.length):1;
+  w.forEach(function(c,k){ var f=Math.max(0,k-(w.length-show)); P[c.id]=[colX(1)+f*G.FAN,G.TY,200+k,true]; });
+  S.found.forEach(function(p,f){ p.forEach(function(c,k){ P[c.id]=[colX(3+f),G.TY,300+k,true]; }); });
+  var bottom=G.H-G.R-14;
+  S.tab.forEach(function(col,ci){
+    var downs=0,ups=0; col.forEach(function(x){ if(x.up) ups++; else downs++; });
+    var up=G.UP, dn=G.DOWN, need=downs*dn+Math.max(0,ups-1)*up+K.H, room=bottom-tabY();
+    if(need>room){ var spare=room-K.H-downs*dn; up=Math.max(G.UPMIN,spare/Math.max(1,ups-1)); if(spare/Math.max(1,ups-1)<G.UPMIN){ dn=Math.max(6,(room-K.H-Math.max(0,ups-1)*G.UPMIN)/Math.max(1,downs)); } }
+    var y=tabY();
+    col.forEach(function(x,k){ P[x.c.id]=[colX(ci),y,400+k,x.up]; y+=x.up?up:dn; });
+  });
+  return P;
+}
+function elFor(c){
+  var e=cardEl[c.id]; if(e) return e;
+  e=K.make(c,{up:false}); e._card=c; CL.appendChild(e); cardEl[c.id]=e;
+  e.addEventListener("pointerdown",onDown);
+  return e;
+}
+function buildSlots(){
+  SL.innerHTML=""; slotEl={};
+  function add(key,label,x,y,cls){ var s=K.slot(label,cls); K.place(s,x,y); SL.appendChild(s); slotEl[key]=s; return s; }
+  var st=add("stock","↻",colX(0),G.TY,"so-stock"); st.addEventListener("pointerdown",function(e){ e.preventDefault(); tapStock(); });
+  for(var f=0;f<4;f++) add("f"+f,"A",colX(3+f),G.TY);
+  for(var i=0;i<7;i++) add("t"+i,"K",colX(i),tabY());
+}
+/* draw the table; moved cards float to their new places (anim) */
+function render(anim){
+  var P=positions(), seen={}, jobs=[];
+  Object.keys(P).forEach(function(id){
+    var p=P[id], c=cardById(id), e=elFor(c); seen[id]=1; e.style.display="";
+    var moved=e._x!=null&&(Math.abs(e._x-p[0])>.5||Math.abs(e._y-p[1])>.5);
+    e.classList.remove("hint","drop","sel");
+    if(anim&&moved){
+      var flip=e._up!==p[3]?{c:c,up:p[3]}:null;
+      e.style.zIndex=p[2]; jobs.push(K.glide(e,p[0],p[1],{flip:flip}));
+    } else {
+      if(e._up!==p[3]) K.turn(e,c,p[3]);
+      K.place(e,p[0],p[1]); e.style.zIndex=p[2];
+    }
+  });
+  Object.keys(cardEl).forEach(function(id){ if(!seen[id]) cardEl[id].style.display="none"; });
+  markCan(); clearHint();
+  return Promise.all(jobs);
+}
+var BYID={}; K.deck().forEach(function(c){ BYID[c.id]=c; });
+function cardById(id){ return BYID[id]; }
+function markCan(){
+  Object.keys(cardEl).forEach(function(id){ cardEl[id].classList.remove("can"); });
+  if(!S) return;
+  var w=topOf(S.waste); if(w) cardEl[w.id].classList.add("can");
+  S.tab.forEach(function(col){ col.forEach(function(x){ if(x.up) cardEl[x.c.id].classList.add("can"); }); });
+  S.found.forEach(function(p){ var t=topOf(p); if(t) cardEl[t.id].classList.add("can"); });
+  var st=topOf(S.stock); if(st) cardEl[st.id].classList.add("can");
+  if(slotEl.stock){ var sp=slotEl.stock.firstChild; if(sp) sp.style.opacity=S.waste.length?"1":".25"; }
+}
+
+/* ---------- moves ----------
+   a pick: {t:"waste"} | {t:"found", i} | {t:"tab", i, j} (the run from card j to the top). A place: {t:"tab"|"found", i} */
+function runOf(pk){
+  if(pk.t==="waste") return [topOf(S.waste)];
+  if(pk.t==="found") return [topOf(S.found[pk.i])];
+  return S.tab[pk.i].slice(pk.j).map(function(x){ return x.c; });
+}
+function legal(pk,to){
+  var run=runOf(pk), c=run[0]; if(!c) return false;
+  if(to.t==="found") return run.length===1&&pk.t!=="found"&&canFound(c,to.i);
+  if(pk.t==="tab"&&pk.i===to.i) return false;
+  return canTab(c,to.i);
+}
+function targets(pk){ var out=[],i; for(i=0;i<4;i++) if(legal(pk,{t:"found",i:i})) out.push({t:"found",i:i}); for(i=0;i<7;i++) if(legal(pk,{t:"tab",i:i})) out.push({t:"tab",i:i}); return out; }
+function pushHist(){ hist.push(snap()); if(hist.length>200) hist.shift(); }
+function startClock(){ if(!S.started){ S.started=true; t0=Date.now(); S.t0=t0; } }
+async function doMove(pk,to,o){
+  o=o||{}; if(busy) return false;
+  if(!legal(pk,to)) return false;
+  if(!allowLesson({pick:pk,to:to})) return false;
+  pushHist(); startClock(); busy=true;
+  var run, pts=0;
+  if(pk.t==="waste") run=[S.waste.pop()];
+  else if(pk.t==="found") run=[S.found[pk.i].pop()];
+  else run=S.tab[pk.i].splice(pk.j).map(function(x){ return x.c; });
+  if(to.t==="found"){ S.found[to.i].push(run[0]); pts+=10; }
+  else { run.forEach(function(c){ S.tab[to.i].push({c:c,up:true}); }); if(pk.t==="waste") pts+=5; if(pk.t==="found") pts-=15; }
+  S.moves++; addScore(pts);
+  Parlor.sfx("card",{pitch:to.t==="found"?1.15:1});
+  var g=GID; await render(!o.noAnim);
+  if(g!==GID){ busy=false; return true; }
+  /* the card underneath turns face up by itself */
+  if(pk.t==="tab"){ var col=S.tab[pk.i], t=topOf(col); if(t&&!t.up){ t.up=true; addScore(5); Parlor.sfx("flip",{pitch:1.4}); await K.flip(cardEl[t.c.id],t.c,true); markCan(); } }
+  busy=false; after({pick:pk,to:to});
+  return true;
+}
+async function tapStock(){
+  if(busy||!S||!Parlor) return;
+  if(!seatedNow()) return;
+  if(!allowLesson({draw:true})) return;
+  if(!S.stock.length&&!S.waste.length) return;
+  pushHist(); startClock(); busy=true;
+  if(S.stock.length){
+    var n=Math.min(S.draw,S.stock.length);
+    for(var k=0;k<n;k++) S.waste.push(S.stock.pop());
+    Parlor.sfx("card",{pitch:1.3});
+  } else {
+    while(S.waste.length) S.stock.push(S.waste.pop());
+    S.passes++; addScore(S.draw===1?-100:-20);
+    Parlor.sfx("deal",{n:5,gap:.03});
+  }
+  S.moves++;
+  await render(true); busy=false; after({draw:true});
+}
+function addScore(n){ S.score=Math.max(0,S.score+n); }
+function undo(){
+  if(busy||!hist.length||inLesson&&Parlor.lessonWaiting) return;
+  S=JSON.parse(hist.pop()); Parlor.sfx("whoosh"); render(true); stuckShown=false; after({undo:true});
+}
+
+/* ---------- taps and drags ----------
+   Tap a card: it goes to the best place (home if it can, else a column). Drag it to choose the place yourself. */
+var drag=null;
+function pickFor(e){
+  var c=e._card, i, j;
+  if(!S) return null;
+  var w=topOf(S.waste); if(w&&w.id===c.id) return {t:"waste"};
+  for(i=0;i<4;i++){ var f=topOf(S.found[i]); if(f&&f.id===c.id) return {t:"found",i:i}; }
+  for(i=0;i<7;i++) for(j=0;j<S.tab[i].length;j++){ var x=S.tab[i][j]; if(x.c.id===c.id) return x.up?{t:"tab",i:i,j:j}:null; }
+  var st=topOf(S.stock); if(st&&st.id===c.id) return {t:"stock"};
+  return null;
+}
+function scaleNow(){ return FIT._s||1; }
+function toTable(ev){ var r=T.getBoundingClientRect(), s=scaleNow(); return [(ev.clientX-r.left)/s,(ev.clientY-r.top)/s]; }
+function onDown(ev){
+  if(busy||!seatedNow()) return;
+  var pk=pickFor(ev.currentTarget); if(!pk) return;
+  ev.preventDefault();
+  if(pk.t==="stock"){ tapStock(); return; }
+  var run=runOf(pk), els=run.map(function(c){ return cardEl[c.id]; }), p=toTable(ev);
+  drag={pk:pk,els:els,x0:p[0],y0:p[1],start:els.map(function(e){ return [e._x,e._y]; }),moved:false,id:ev.pointerId,tg:null};
+  try{ ev.currentTarget.setPointerCapture(ev.pointerId); }catch(e){}
+  ev.currentTarget.addEventListener("pointermove",onMove);
+  ev.currentTarget.addEventListener("pointerup",onUp);
+  ev.currentTarget.addEventListener("pointercancel",onUp);
+}
+function onMove(ev){
+  if(!drag||ev.pointerId!==drag.id) return;
+  var p=toTable(ev), dx=p[0]-drag.x0, dy=p[1]-drag.y0;
+  if(!drag.moved&&Math.hypot(dx,dy)<7) return;
+  if(!drag.moved){ drag.moved=true; drag.tg=targets(drag.pk); drag.els.forEach(function(e,k){ e.classList.add("drag"); e.style.zIndex=600+k; }); showDrops(drag.tg,true); clearHint(); }
+  drag.els.forEach(function(e,k){ K.place(e,drag.start[k][0]+dx,drag.start[k][1]+dy); });
+}
+async function onUp(ev){
+  if(!drag||ev.pointerId!==drag.id) return;
+  var d=drag; drag=null;
+  ev.currentTarget.removeEventListener("pointermove",onMove); ev.currentTarget.removeEventListener("pointerup",onUp); ev.currentTarget.removeEventListener("pointercancel",onUp);
+  if(!d.moved){ smartMove(d.pk,d.els[0]); return; }
+  showDrops(d.tg,false);
+  d.els.forEach(function(e){ e.classList.remove("drag"); });
+  var lead=d.els[0], cx=lead._x+K.W/2, cy=lead._y+K.H/2, best=null, bd=1e9;
+  d.tg.forEach(function(to){ var a=placeRect(to), inside=cx>=a[0]-14&&cx<=a[2]+14&&cy>=a[1]-30&&cy<=a[3]+60, dist=Math.hypot(cx-(a[0]+a[2])/2,cy-Math.min(Math.max(cy,a[1]),a[3]));
+    if(inside) dist-=1000; if(dist<bd){ bd=dist; best=to; } });
+  if(best&&bd<130){ if(await doMove(d.pk,best,{})) return; }
+  render(true);   /* back where it came from */
+}
+function placeRect(to){
+  if(to.t==="found") return [colX(3+to.i),G.TY,colX(3+to.i)+K.W,G.TY+K.H];
+  var col=S.tab[to.i], P=positions(), t=topOf(col), y1=t?P[t.c.id][1]+K.H:tabY()+K.H;
+  return [colX(to.i),tabY(),colX(to.i)+K.W,y1];
+}
+function showDrops(tg,on){
+  tg.forEach(function(to){
+    var t=to.t==="found"?topOf(S.found[to.i]):(topOf(S.tab[to.i])||{}).c, e=t?cardEl[t.id]:slotEl[(to.t==="found"?"f":"t")+to.i];
+    if(e) e.classList.toggle("drop",on);
+  });
+}
+function bestTarget(pk){
+  var tg=targets(pk); if(!tg.length) return null;
+  var run=runOf(pk), f=tg.filter(function(t){ return t.t==="found"; })[0];
+  if(f&&run.length===1) return f;
+  var tabs=tg.filter(function(t){ return t.t==="tab"; });
+  var filled=tabs.filter(function(t){ return S.tab[t.i].length; });
+  if(filled.length) return filled[0];
+  /* an empty column: worth it for a king that uncovers a card, or one from the waste or foundations */
+  if(tabs.length&&!(pk.t==="tab"&&pk.j===0)) return tabs[0];
+  return f||null;
+}
+async function smartMove(pk,el){
+  var to=bestTarget(pk);
+  if(to&&await doMove(pk,to,{})) return;
+  el.classList.remove("nope"); void el.offsetWidth; el.classList.add("nope");
+  render(false);
+}
+
+/* ---------- after every move: score, time, finish, stuck ---------- */
+function elapsed(){ return S&&S.started?Math.floor((Date.now()-(S.t0||t0))/1000):0; }
+function clock(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+(s<10?"0":"")+s; }
+function showStats(){
+  if(!S) return;
+  var sec=elapsed(), line=(S.draw===3?"Draw Three":"Draw One")+" · "+clock(sec)+" · "+S.moves+" moves";
+  Parlor.score([S.score]); Parlor.info(line);
+  var st=document.getElementById("soStat"); if(st) st.innerHTML="<b>"+S.score+"</b> · "+clock(sec);
+}
+function tick(){ showStats(); }
+function allUp(){ return !S.stock.length&&!S.waste.length&&S.tab.every(function(col){ return col.every(function(x){ return x.up; }); }); }
+function after(m){
+  showStats(); clearHint();
+  if(homeCount()===52){ won(); return; }
+  tools();
+  if(inLesson&&Parlor.lessonWaiting&&lessonOnly&&lessonOnly.check&&lessonOnly.check(m)){ Parlor.lessonDone(); return; }
+  if(!inLesson){
+    var any=hasMove();
+    if(!any&&!stuckShown){ stuckShown=true; Parlor.status("No more moves","Undo a few moves, or Give Up to end this game."); tools(); }
+    else if(any){ stuckShown=false; msg(); }
+    if(practice) practiceTip(m);
+  }
+}
+function msg(){
+  if(!S) return;
+  if(allUp()) Parlor.status("Every card is face up","Tap Finish to send them home");
+  else Parlor.status(homeCount()?homeCount()+" of 52 cards home":"Your move", S.draw===3?"Tap the stock to turn three cards":"Tap a card to move it, or drag it");
+}
+function hasMove(){
+  if(hint(true)) return true;
+  /* any card left in the stock or waste that could be played somewhere, given enough turns of the stock */
+  var pool=S.stock.concat(S.waste);
+  return pool.some(function(c){ if(foundFor(c)>=0) return true; for(var i=0;i<7;i++) if(canTab(c,i)) return true; return false; });
+}
+async function won(){
+  var g=GID, lesson=inLesson; stopClock(); tools();
+  var sec=Math.max(1,elapsed()), bonus=sec>30?Math.round(700000/sec):0; bonus=Math.min(bonus,5000);
+  S.score+=bonus; showStats();
+  Parlor.sfx("win");
+  await cascade();
+  if(g!==GID) return;   /* a new game was dealt meanwhile */
+  if(lesson){ toast("Every card is home!"); return; }
+  var best=0; try{ best=parseInt(localStorage.getItem("bwSolBest")||"0",10)||0; if(S.score>best) localStorage.setItem("bwSolBest",String(S.score)); }catch(e){}
+  var detail="Score "+S.score+(bonus?" (with a time bonus of "+bonus+")":"")+" · "+clock(sec)+" · "+S.moves+" moves."+(S.score>best&&best?" A new best score!":best?" Your best: "+best+".":"");
+  Parlor.finish("win",detail,"Every Card Is Home");
+}
+/* a little celebration: the foundations lift one after another */
+async function cascade(){
+  if(!Parlor.smooth()) return;
+  for(var f=0;f<4;f++){ var t=topOf(S.found[f]); if(!t) continue; var e=cardEl[t.id]; e.style.transition="transform .25s"; K.place(e,e._x,e._y-14); await Parlor.wait(120); K.place(e,e._x,e._y+14); }
+  await Parlor.wait(260); Object.keys(cardEl).forEach(function(id){ cardEl[id].style.transition=""; });
+}
+async function autoFinish(){
+  if(busy||!allUp()) return;
+  var guard=60, g=GID;
+  while(homeCount()<52&&guard--&&g===GID){
+    var done=false;
+    for(var i=0;i<7&&!done;i++){ var t=topOf(S.tab[i]); if(t&&foundFor(t.c)>=0){ var lo=lowestFirst(); if(lo&&lo.i===i){ await doMove({t:"tab",i:i,j:S.tab[i].length-1},{t:"found",i:foundFor(t.c)},{}); done=true; } } }
+    if(!done){ var l=lowestFirst(); if(!l) break; await doMove({t:"tab",i:l.i,j:S.tab[l.i].length-1},{t:"found",i:foundFor(l.c)},{}); }
+    if(homeCount()===52) return;
+  }
+}
+function lowestFirst(){ var best=null; for(var i=0;i<7;i++){ var t=topOf(S.tab[i]); if(t&&foundFor(t.c)>=0&&(!best||t.c.r<best.c.r)) best={i:i,c:t.c}; } return best; }
+function giveUp(){
+  if(!S||busy) return; stopClock();
+  var h=homeCount();
+  Parlor.finish("lose",h+" of 52 cards made it home. Score "+S.score+" · "+clock(elapsed())+".","No More Moves");
+}
+function stopClock(){ clearInterval(tickT); tickT=0; }
+function startTicking(){ clearInterval(tickT); tickT=setInterval(tick,1000); }
+
+/* ---------- hints ----------
+   The order a careful player thinks in: aces and twos home; moves that turn up a hidden card; a king into an empty
+   column when it uncovers something; the waste onto a column; anything else home; then the stock. */
+function hint(test){
+  var i,j,col,pk,to,tg;
+  var wtop=topOf(S.waste);
+  /* 1. aces and twos home */
+  if(wtop&&wtop.r<=1&&foundFor(wtop)>=0) return {pick:{t:"waste"},to:{t:"found",i:foundFor(wtop)}};
+  for(i=0;i<7;i++){ var t=topOf(S.tab[i]); if(t&&t.up&&t.c.r<=1&&foundFor(t.c)>=0) return {pick:{t:"tab",i:i,j:S.tab[i].length-1},to:{t:"found",i:foundFor(t.c)}}; }
+  /* 2. moves that uncover a hidden card (most hidden cards first) */
+  var order=[0,1,2,3,4,5,6].sort(function(a,b){ return downs(b)-downs(a); });
+  for(var o=0;o<7;o++){ i=order[o]; col=S.tab[i]; j=firstUp(col); if(j<=0) continue;
+    pk={t:"tab",i:i,j:j}; tg=targets(pk).filter(function(x){ return x.t==="tab"; });
+    if(tg.length){ var filled=tg.filter(function(x){ return S.tab[x.i].length; }); return {pick:pk,to:filled[0]||tg[0]}; }
+    if(j===col.length-1&&foundFor(col[j].c)>=0) return {pick:pk,to:{t:"found",i:foundFor(col[j].c)}};
+  }
+  /* 3. the waste onto a column */
+  if(wtop){ pk={t:"waste"}; tg=targets(pk).filter(function(x){ return x.t==="tab"&&(S.tab[x.i].length||wtop.r===12); }); if(tg.length) return {pick:pk,to:tg[0]}; }
+  /* 4. anything else home */
+  if(wtop&&foundFor(wtop)>=0) return {pick:{t:"waste"},to:{t:"found",i:foundFor(wtop)}};
+  for(i=0;i<7;i++){ var tt=topOf(S.tab[i]); if(tt&&tt.up&&foundFor(tt.c)>=0) return {pick:{t:"tab",i:i,j:S.tab[i].length-1},to:{t:"found",i:foundFor(tt.c)}}; }
+  if(test) return null;
+  /* 5. the stock */
+  if(S.stock.length) return {draw:true};
+  if(S.waste.length) return {draw:true,turn:true};
+  return null;
+}
+function downs(i){ return S.tab[i].filter(function(x){ return !x.up; }).length; }
+function firstUp(col){ for(var j=0;j<col.length;j++) if(col[j].up) return j; return -1; }
+function clearHint(){ hintOn=null; [].forEach.call(stage.querySelectorAll(".hint"),function(e){ e.classList.remove("hint"); }); }
+function showHint(){
+  if(!S||busy) return; clearHint();
+  var h=hint(false);
+  if(!h){ Parlor.status("No more moves","Undo a few moves, or Give Up to end this game."); if(practice) Parlor.hintSay("<p>There's nothing left to play. Tap <b>Undo</b> to go back a few moves and try another way.</p>"); return; }
+  hintOn=h; var say;
+  if(h.draw){
+    var top=topOf(S.stock); (top?cardEl[top.id]:slotEl.stock).classList.add("hint");
+    say=h.turn?"Tap the empty stock to turn the pile over.":"Tap the stock to turn "+(S.draw===3?"three cards":"a card")+".";
+  } else {
+    runOf(h.pick).forEach(function(c){ cardEl[c.id].classList.add("hint"); });
+    var dest=h.to.t==="found"?topOf(S.found[h.to.i]):(topOf(S.tab[h.to.i])||{}).c;
+    (dest?cardEl[dest.id]:slotEl[(h.to.t==="found"?"f":"t")+h.to.i]).classList.add("hint");
+    var c=runOf(h.pick)[0];
+    say=h.to.t==="found"?"Send the "+K.name(c)+" home.":dest?"Move the "+K.name(c)+" onto the "+K.name(dest)+".":"Move the "+K.name(c)+" into the empty column.";
+  }
+  Parlor.status("Hint",say);
+  if(practice) Parlor.hintSay("<p>"+say+"</p>"+(h.draw?"":"<p>Tap the glowing card, or drag it to the glowing place.</p>"));
+}
+
+/* ---------- the toolbar ---------- */
+function tools(){
+  TOOLS.innerHTML="";
+  function b(label,cls,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; TOOLS.appendChild(x); return x; }
+  var u=b("Undo","",undo); u.disabled=!hist.length;
+  b("Hint","",function(){ showHint(); });
+  if(S&&allUp()&&homeCount()<52) b("Finish","gold",autoFinish);
+  else if(S&&stuckShown&&!inLesson) b("Give Up","gold",giveUp);
+  else {
+    var seg=document.createElement("div"); seg.className="so-seg"; seg.setAttribute("role","group"); seg.setAttribute("aria-label","Cards turned from the stock");
+    [[1,"Draw One"],[3,"Draw Three"]].forEach(function(o){ var x=document.createElement("button"); x.type="button"; x.textContent=o[1]; x.className=DRAW===o[0]?"on":""; x.onclick=function(){ setDraw(o[0]); }; seg.appendChild(x); });
+    TOOLS.appendChild(seg);
+  }
+  var st=document.createElement("span"); st.className="so-stat"; st.id="soStat"; TOOLS.appendChild(st);
+  showStats();
+}
+function setDraw(n){
+  if(inLesson) { toast("Lessons use Draw One"); return; }
+  if(n===DRAW) return; DRAW=n; try{ localStorage.setItem("bwSolDraw",String(n)); }catch(e){}
+  if(S&&!S.moves){ S.draw=n; render(false); tools(); msg(); toast(n===3?"Draw Three: three cards at a time":"Draw One: one card at a time"); }
+  else { tools(); toast((n===3?"Draw Three":"Draw One")+" from your next deal"); }
+}
+function toast(t){ toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove("on"); },1800); }
+
+/* ---------- dealing ---------- */
+async function deal(seed,o){
+  o=o||{}; busy=true; stopClock();
+  S=fresh(seed); if(o.draw) S.draw=o.draw; hist=[]; stuckShown=false;
+  fit(true);
+  /* every card starts in the stock, then the columns are dealt one row at a time */
+  var all=S.stock.concat([]), deck=[];
+  S.tab.forEach(function(col){ col.forEach(function(x){ deck.push(x); }); });
+  var P=positions();
+  Object.keys(cardEl).forEach(function(id){ cardEl[id].style.display="none"; });
+  K.deck().forEach(function(c){ var e=elFor(c); e.style.display=""; e.classList.remove("hint","drop","can","sel"); K.turn(e,c,false); K.place(e,colX(0),G.TY); e.style.zIndex=150; });
+  tools(); msg(); showStats();
+  if(Parlor.smooth()&&!o.instant){
+    Parlor.sfx("deal",{n:28,gap:.038});
+    var order=[]; for(var r=0;r<7;r++) for(var c=r;c<7;c++) order.push(S.tab[c][r]);
+    var jobs=order.map(function(x,k){ var e=cardEl[x.c.id], p=P[x.c.id]; return Parlor.wait(k*38).then(function(){ e.style.zIndex=p[2]; return K.glide(e,p[0],p[1],{dur:300,flip:x.up?{c:x.c,up:true}:null}); }); });
+    await Promise.all(jobs);
+  }
+  await render(false); busy=false; tools(); msg(); startTicking();
+}
+
+/* ---------- Learn to Play (7 steps) ---------- */
+function cd(r,s){ return BYID[s+"-"+r]; }   /* r 0-12 (A..K), s 0 clubs 1 diamonds 2 hearts 3 spades */
+function setPos(cols,o){
+  o=o||{}; var used={};
+  function u(c){ used[c.id]=1; return c; }
+  var tab=cols.map(function(col){ return col.map(function(x){ return {c:x[0]?u(x[0]):null,up:!!x[1]}; }); });
+  var found=(o.found||[[],[],[],[]]).map(function(p){ return p.map(u); });
+  var waste=(o.waste||[]).map(u);
+  var stockTop=(o.stockTop||[]).map(u);
+  var rest=K.deck().filter(function(c){ return !used[c.id]; });
+  K.shuffle(rest,K.rng(11));
+  /* fill the hidden cards from the rest so the columns look natural */
+  tab.forEach(function(col){ col.forEach(function(x){ if(x.c===null){ x.c=rest.pop(); } }); });
+  var stock=(o.noStock?[]:rest.slice(0,o.stockN==null?14:o.stockN)).concat(stockTop.reverse());
+  GID++; S={stock:stock,waste:waste,found:found,tab:tab,score:0,moves:0,passes:0,draw:1,started:false};
+  hist=[]; stuckShown=false; clearHint(); render(false); tools(); showStats();
+}
+function hid(n){ var a=[]; for(var i=0;i<n;i++) a.push([null,0]); return a; }   /* hidden cards, filled from the spare cards */
+var LESSON=[
+  {title:"The Layout", text:"<p>Seven <b>columns</b> are dealt across the desk. Only the bottom card of each is face up.</p><p>Top left is the <b>stock</b>, the cards still to come. Top right are four <b>foundations</b>: the goal is to build every suit there from ace to king.</p>"},
+  {title:"Build Down, Alternating Colours", text:"<p>In the columns, a card goes on one rank higher in the <b>other colour</b>: a red 6 on a black 7.</p><p>Tap the glowing <b>6 of hearts</b>, or drag it onto the 7 of spades.</p>", sub:"Move the 6 of hearts onto the 7 of spades",
+    done:"<p>Well played. The hidden card underneath turned face up by itself, worth 5 points. Turning up hidden cards is how you win.</p>"},
+  {title:"Aces Go Home", text:"<p>An <b>ace</b> starts each foundation. Whenever one shows, send it home.</p><p>Tap the <b>ace of diamonds</b>.</p>", sub:"Send the ace of diamonds home",
+    done:"<p>The ace is home. That's 10 points for every card you send to a foundation.</p>"},
+  {title:"Building the Foundations", text:"<p>Each foundation builds <b>up in one suit</b>: ace, 2, 3 and so on to the king.</p><p>Tap the <b>2 of diamonds</b> to put it on its ace.</p>", sub:"Send the 2 of diamonds home",
+    done:"<p>Now the 3 of diamonds can follow, whenever it turns up.</p>"},
+  {title:"The Stock", text:"<p>Stuck on the desk? Tap the <b>stock</b> to turn a card. The top card of the pile beside it can be played like any other.</p><p>Tap the stock now.</p>", sub:"Tap the stock",
+    done:"<p>The 8 of hearts could go on the 9 of clubs. When the stock runs out, tap its empty place to turn the pile over and go round again.</p><p>With <b>Draw Three</b> (on the bar under the desk), three cards turn at a time and only the top one plays: a harder game.</p>"},
+  {title:"Kings Fill Empty Columns", text:"<p>Only a <b>king</b> can go into an empty column, and any cards on it come along.</p><p>Drag the <b>king of spades</b> into the empty column.</p>", sub:"Move the king of spades into the empty column",
+    done:"<p>The king and the queen on it moved together, and the card underneath turned up.</p>"},
+  {title:"How to Win", text:"<p>Get all <b>52 cards</b> home. Once every card is face up, tap <b>Finish</b> and they fly home on their own.</p><p><b>Undo</b> takes back a move; <b>Hint</b> suggests one. Faster wins earn a time bonus.</p>"}
+];
+function lessonSetup(k){
+  inLesson=true; practice=false; S&&(S.draw=1); lessonOnly=null; busy=false; stopClock();
+  if(k===0){ S=fresh(7); S.draw=1; hist=[]; render(false); tools(); showStats(); return; }
+  if(k===1){
+    setPos([[...hid(2),[cd(6,3),1]],[...hid(1),[cd(5,2),1]],[[cd(12,0),1]],[...hid(2),[cd(8,1),1]],[...hid(1),[cd(2,0),1]],[...hid(3),[cd(11,2),1]],[...hid(2),[cd(9,3),1]]]);
+    lessonOnly={pick:{t:"tab",i:1},to:{t:"tab",i:0},check:function(m){ return m.to&&m.to.t==="tab"&&m.to.i===0; }};
+    glowNeed(); return;
+  }
+  if(k===2){
+    setPos([[...hid(2),[cd(6,3),1],[cd(5,2),1]],[[cd(0,1),1]],[[cd(12,0),1]],[...hid(2),[cd(8,1),1]],[...hid(1),[cd(2,0),1]],[...hid(3),[cd(11,2),1]],[...hid(2),[cd(9,3),1]]]);
+    lessonOnly={pick:{t:"tab",i:1},to:{t:"found"},check:function(m){ return m.to&&m.to.t==="found"; }}; glowNeed(); return;
+  }
+  if(k===3){
+    setPos([[...hid(2),[cd(6,3),1],[cd(5,2),1]],[],[[cd(12,0),1]],[...hid(2),[cd(8,1),1]],[...hid(1),[cd(1,1),1]],[...hid(3),[cd(11,2),1]],[...hid(2),[cd(9,3),1]]],{found:[[cd(0,1)],[],[],[]]});
+    lessonOnly={pick:{t:"tab",i:4},to:{t:"found"},check:function(m){ return m.to&&m.to.t==="found"; }}; glowNeed(); return;
+  }
+  if(k===4){
+    setPos([[...hid(2),[cd(6,3),1],[cd(5,2),1]],[],[[cd(12,0),1]],[...hid(2),[cd(8,1),1]],[...hid(1),[cd(3,0),1]],[...hid(3),[cd(11,2),1]],[...hid(2),[cd(8,0),1]]],{found:[[cd(0,1),cd(1,1)],[],[],[]],stockTop:[cd(7,2)]});
+    lessonOnly={draw:true,check:function(m){ return !!m.draw; }}; slotGlow(); return;
+  }
+  if(k===5){
+    setPos([[...hid(2),[cd(6,3),1],[cd(5,2),1]],[],[[cd(12,0),1]],[...hid(2),[cd(8,1),1]],[...hid(1),[cd(3,0),1]],[...hid(2),[cd(12,3),1],[cd(11,2),1]],[...hid(2),[cd(8,0),1],[cd(7,2),1]]],{found:[[cd(0,1),cd(1,1)],[],[],[]]});
+    lessonOnly={pick:{t:"tab",i:5},to:{t:"tab",i:1},check:function(m){ return m.to&&m.to.t==="tab"&&m.to.i===1; }}; glowNeed(); return;
+  }
+  if(k===6){
+    /* nearly done: every card face up, the kings and queens still on the desk */
+    var found=[0,1,2,3].map(function(s){ var a=[]; for(var r=0;r<=10;r++) a.push(cd(r,s)); return a; });
+    setPos([[[cd(12,0),1],[cd(11,1),1]],[[cd(12,1),1],[cd(11,0),1]],[[cd(12,2),1],[cd(11,3),1]],[[cd(12,3),1],[cd(11,2),1]],[],[],[]],{found:found,noStock:true});
+    lessonOnly={free:true}; return;
+  }
+}
+function glowNeed(){
+  if(!lessonOnly||!lessonOnly.pick) return;
+  var p=lessonOnly.pick, col=S.tab[p.i], j=firstUp(col);
+  for(var x=j;x<col.length;x++) cardEl[col[x].c.id].classList.add("hint");
+}
+function slotGlow(){ var top=topOf(S.stock); if(top) cardEl[top.id].classList.add("hint"); }
+function allowLesson(m){
+  if(!inLesson) return true;
+  if(lessonOnly&&lessonOnly.free) return true;
+  if(!Parlor.lessonWaiting||!lessonOnly){ toast("Tap Next to keep going"); return false; }
+  if(lessonOnly.draw) { if(m.draw) return true; toast("Tap the stock"); return false; }
+  if(m.draw){ toast("Try the glowing card"); return false; }
+  var ok=m.pick.t===lessonOnly.pick.t&&m.pick.i===lessonOnly.pick.i&&m.to.t===lessonOnly.to.t&&(lessonOnly.to.i==null||m.to.i===lessonOnly.to.i);
+  if(!ok){ toast("Try the glowing card"); glowNeed(); }
+  return ok;
+}
+/* practice: a full Draw One game with a coach */
+var tipN=0, TIPS=["Turn up hidden cards first: the more you uncover, the more you can play.","Columns with the most hidden cards are the ones to work on.","Don't hurry to empty a column unless a king is ready to fill it.","Keep low cards on the desk if you'll need them to build on; send them home when they're no longer useful.","Tap Hint any time for a suggestion, and Undo to take a move back."];
+function startPractice(){
+  inLesson=false; practice=true; lessonOnly=null; tipN=0;
+  deal(null,{draw:1});
+  Parlor.practiceSay("Practice Game","<p>A full game of Draw One. Tap a card to send it to its best place, or drag it where you like.</p><p>Start with any <b>aces</b>, then look for moves that <b>turn up hidden cards</b>.</p>");
+}
+function practiceTip(m){
+  if(!practice||!S) return;
+  var wtop=topOf(S.waste), ace=(wtop&&wtop.r===0)||S.tab.some(function(c){ var t=topOf(c); return t&&t.up&&t.c.r===0; });
+  var empty=S.tab.some(function(c){ return !c.length; });
+  if(ace) { Parlor.practiceSay("An Ace Is Showing","<p>Send it home: tap it.</p>"); return; }
+  if(empty&&kingReady()) { Parlor.practiceSay("An Empty Column","<p>Only a king can go there. A king that uncovers hidden cards is the best one to move.</p>"); return; }
+  if(!hint(true)) { Parlor.practiceSay("Nothing to Play?","<p>Tap the <b>stock</b> to turn a card"+(S.stock.length?"":" (or tap its empty place to turn the pile over)")+".</p>"); return; }
+  if(m&&m.draw) return;
+  if(++tipN%3===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/3)%TIPS.length]+"</p>");
+}
+function kingReady(){ var w=topOf(S.waste); if(w&&w.r===12) return true; return S.tab.some(function(col){ var j=firstUp(col); return j>0&&col[j].c.r===12; }); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(noRender){
+  var wide=window.innerWidth>=1000, narrow=!wide&&window.innerWidth<700&&window.innerHeight>window.innerWidth;
+  var L=layoutFor(narrow), availW, availH, toolsH=(TOOLS.offsetHeight||46)+10;
+  if(!wide&&!narrow&&window.innerHeight<=520){ L.Hmin=430; L.Hmax=560; L.DOWN=9; L.UPMIN=17; L.UP=28; L.TY=34; L.GAP=20; }   /* phones held sideways: a shallower desk */
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
+  else { availW=window.innerWidth-12; var bar=64+24; availH=window.innerHeight-(seatedNow()?top:56)-bar-toolsH-6; }
+  var s=availW/L.W, H=Math.min(L.Hmax,Math.max(L.Hmin,availH/s));
+  if(H*s>availH){ s=availH/H; }
+  s=Math.max(.2,Math.min(s,1.3));
+  var changed=G.narrow!==L.narrow||Math.abs((G.H||0)-H)>1;
+  L.H=H; G=L; FIT._s=s;
+  T.style.width=L.W+"px"; T.style.height=H+"px"; T.style.transform="scale("+s+")";
+  FIT.style.width=Math.round(L.W*s)+"px"; FIT.style.height=Math.round(H*s)+"px";
+  T.classList.toggle("bwc-big",narrow);
+  stage.style.setProperty("--so-r",L.R+"px"); stage.style.setProperty("--so-t1",L.T1+"px"); stage.style.setProperty("--so-t2",L.T2+"px");
+  var fl=stage.querySelectorAll(".so-fl"), ins=L.T1+1; var lw=L.W-2*L.R, lh=H-2*L.R;
+  [[ins,ins],[lw-ins,ins],[ins,lh-ins],[lw-ins,lh-ins]].forEach(function(p,i){ fl[i].style.left=p[0]+"px"; fl[i].style.top=p[1]+"px"; });
+  var mono=stage.querySelector(".so-mono"); mono.style.bottom=(L.T2+8)+"px"; mono.style.fontSize=(narrow?18:22)+"px";
+  toastEl.style.fontSize=(narrow?26:16)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
+  TOOLS.style.maxWidth=wide?"none":"";
+  if(changed){ buildSlots(); }
+  if(!noRender&&S&&!busy) render(false);
+}
+window.addEventListener("resize",function(){ fit(); });
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"solitaire", cat:"cards", solo:true, title:"Writing Desk Solitaire", bg:"cards-solitaire.jpg", home:"lobby.html?cat=cards", stage:stage,
+  soloLabel:"Klondike solitaire", dealLabel:"Deal a Game",
+  tagline:"Build every suit from ace to king.", invite:"The lamp is lit and the cards are laid out on the leather. Pull up the chair and deal a game.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Desks",
+  sets:[
+    {id:"mahogany",name:DESIGNS.mahogany.name,need:0,dots:DESIGNS.mahogany.dots},
+    {id:"walnut",name:DESIGNS.walnut.name,club:true,dots:DESIGNS.walnut.dots},
+    {id:"ebony",name:DESIGNS.ebony.name,club:true,dots:DESIGNS.ebony.dots}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> move all 52 cards to the four foundations at the top right, each built up in one suit from ace to king.</li><li><b>The columns:</b> build down in alternating colours (a red 6 on a black 7). You can move a whole run of face-up cards together. Only a king (with any cards on it) can fill an empty column.</li><li><b>Hidden cards:</b> when you move the last face-up card off a column, the card underneath turns face up.</li><li><b>The stock:</b> tap it to turn one card (Draw One) or three (Draw Three); only the top card of the turned pile can be played. When the stock is empty, tap its place to turn the pile over again, as often as you like.</li><li><b>Moving cards:</b> tap a card to send it to its best place (home when it can go there), or drag it where you want it. <b>Undo</b> takes back a move and <b>Hint</b> suggests one.</li><li>When every card is face up, tap <b>Finish</b> and they fly home.</li></ol>",
+    score:"<ul><li><b>+10</b> for every card sent to a foundation; <b>+5</b> for a card played from the turned pile onto a column; <b>+5</b> for each hidden card turned up.</li><li><b>−15</b> for taking a card back off a foundation; turning the stock over costs <b>−100</b> in Draw One and <b>−20</b> in Draw Three. The score never drops below 0.</li><li>A win adds a <b>time bonus</b>: the faster, the bigger (up to 5,000).</li><li>Your best score is kept on this device.</li></ul>"
+  },
+  onNew:function(){ inLesson=false; practice=false; lessonOnly=null; Parlor.coach(null); deal(); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set");
+  if(PREVIEW&&previewPick&&k!==previewPick){ document.body.setAttribute("data-set",previewPick); return; }
+  applyDesign(k||"mahogany"); }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
+/* re-fit whenever the player sits down or stands up */
+var wasSeated=false;
+new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(function(){ fit(); },30); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"mahogany"); previewBar();
+  fit(true); buildSlots(); S=fresh(); render(false); tools(); showStats();
+});
+</script>
+</body>
+</html>
