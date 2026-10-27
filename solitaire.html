@@ -6,7 +6,7 @@
 <title>Writing Desk Solitaire · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1026d">
-<link rel="stylesheet" href="bw-cards.css?v=1026a">
+<link rel="stylesheet" href="bw-cards.css?v=1026b">
 <style>
 /* ===== Writing Desk Solitaire (Klondike): a writing desk seen from straight above, drawn in the browser =====
    A wooden frame around a tooled leather writing surface with gold (or silver) tooling, warm lamp light from the top
@@ -83,7 +83,7 @@
 <script src="play-rooms.js?v=1024b"></script>
 <script src="bw-avatars.js?v=1026a"></script>
 <script src="parlor-kit.js?v=1026d"></script>
-<script src="bw-cards.js?v=1026a"></script>
+<script src="bw-cards.js?v=1026b"></script>
 <script>
 var K=BWCards, PT=K.paint;
 /* ---------- the three desks ---------- */
@@ -92,10 +92,10 @@ var DESIGNS={
   mahogany:{name:"Mahogany & Oxblood",wood:{light:[122,48,28],dark:[56,18,8],freq:.035,turb:6,wx:420,wy:30,sharp:.9,ringAmt:.38,streakAmt:.5,pores:.012,blotch:.3,seed:41},woodc:"#5a2414",
     leath:[108,40,26],tool:"rgba(222,186,98,.72)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.4)",
     back:"linear-gradient(150deg,#a3242b,#5c0e14)",gold:"rgba(231,199,122,.8)",dots:["#5a2414","#6c281a","#a3242b"]},
-  /* Walnut & Bottle Green: a walnut desk with green leather, like the photo's side table */
-  walnut:{name:"Walnut & Bottle Green",wood:{light:[126,82,48],dark:[58,34,18],freq:.04,turb:9,wx:220,wy:20,sharp:.7,ringAmt:.66,streakAmt:.42,pores:.02,blotch:.3,seed:23},woodc:"#5e3c22",
+  /* Satinwood & Bottle Green: a pale golden satinwood frame (Regency style) with green leather, like the photo's side table */
+  satinwood:{name:"Satinwood & Bottle Green",wood:{light:[226,184,118],dark:[176,126,62],freq:.022,turb:4,wx:340,wy:26,sharp:.55,ringAmt:.42,streakAmt:.5,pores:.006,blotch:.16,seed:29},woodc:"#c99d5e",
     leath:[30,66,46],tool:"rgba(222,186,98,.66)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.36)",
-    back:"linear-gradient(150deg,#21613f,#0b2c1d)",gold:"rgba(231,199,122,.8)",dots:["#5e3c22","#1e4230","#21613f"]},
+    back:"linear-gradient(150deg,#21613f,#0b2c1d)",gold:"rgba(231,199,122,.8)",dots:["#c99d5e","#1e4230","#21613f"]},
   /* Ebony & Midnight: an ebonised desk, midnight-navy leather, silver tooling, navy backs */
   ebony:{name:"Ebony & Midnight",wood:{light:[44,36,32],dark:[12,10,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},woodc:"#1b1714",
     leath:[30,42,76],tool:"rgba(214,220,232,.6)",toolg:"linear-gradient(170deg,#ffffff,#c8ced8 45%,#7c8696 75%,#eef1f6)",slot:"rgba(214,220,232,.34)",
@@ -159,10 +159,12 @@ function homeCount(){ return S.found.reduce(function(n,f){ return n+f.length; },
 /* where every card sits right now: [x, y, z, faceUp] by id */
 function positions(){
   var P={}, n=S.stock.length, i, j;
-  S.stock.forEach(function(c,k){ var o=Math.floor(k/8)*.6; P[c.id]=[colX(0)-o,G.TY-o,100+k,false]; });
+  /* foundations on the left, the stock on the right (Judy, Oct 26: a hand on the stock no longer covers the desk);
+     the turned pile sits beside the stock, with Draw Three's lower cards peeking out to its left */
+  S.stock.forEach(function(c,k){ var o=Math.floor(k/8)*.6; P[c.id]=[colX(6)+o,G.TY-o,100+k,false]; });
   var w=S.waste, show=S.draw===3?Math.min(3,w.length):1;
-  w.forEach(function(c,k){ var f=Math.max(0,k-(w.length-show)); P[c.id]=[colX(1)+f*G.FAN,G.TY,200+k,true]; });
-  S.found.forEach(function(p,f){ p.forEach(function(c,k){ P[c.id]=[colX(3+f),G.TY,300+k,true]; }); });
+  w.forEach(function(c,k){ var f=Math.max(0,k-(w.length-show)); P[c.id]=[colX(5)-(show-1-f)*G.FAN,G.TY,200+k,true]; });
+  S.found.forEach(function(p,f){ p.forEach(function(c,k){ P[c.id]=[colX(f),G.TY,300+k,true]; }); });
   var bottom=G.H-G.R-14;
   S.tab.forEach(function(col,ci){
     var downs=0,ups=0; col.forEach(function(x){ if(x.up) ups++; else downs++; });
@@ -182,8 +184,8 @@ function elFor(c){
 function buildSlots(){
   SL.innerHTML=""; slotEl={};
   function add(key,label,x,y,cls){ var s=K.slot(label,cls); K.place(s,x,y); SL.appendChild(s); slotEl[key]=s; return s; }
-  var st=add("stock","↻",colX(0),G.TY,"so-stock"); st.addEventListener("pointerdown",function(e){ e.preventDefault(); tapStock(); });
-  for(var f=0;f<4;f++) add("f"+f,"A",colX(3+f),G.TY);
+  var st=add("stock","↻",colX(6),G.TY,"so-stock"); st.addEventListener("pointerdown",function(e){ e.preventDefault(); tapStock(); });
+  for(var f=0;f<4;f++) add("f"+f,"A",colX(f),G.TY);
   for(var i=0;i<7;i++) add("t"+i,"K",colX(i),tabY());
 }
 /* draw the table; moved cards float to their new places (anim) */
@@ -324,7 +326,7 @@ async function onUp(ev){
   render(true);   /* back where it came from */
 }
 function placeRect(to){
-  if(to.t==="found") return [colX(3+to.i),G.TY,colX(3+to.i)+K.W,G.TY+K.H];
+  if(to.t==="found") return [colX(to.i),G.TY,colX(to.i)+K.W,G.TY+K.H];
   var col=S.tab[to.i], P=positions(), t=topOf(col), y1=t?P[t.c.id][1]+K.H:tabY()+K.H;
   return [colX(to.i),tabY(),colX(to.i)+K.W,y1];
 }
@@ -405,14 +407,20 @@ async function cascade(){
   await Parlor.wait(260); Object.keys(cardEl).forEach(function(id){ cardEl[id].style.transition=""; });
 }
 async function autoFinish(){
+  /* every card flies home, lowest first, each one leaving before the last has landed: a quick flight with a high,
+     tilting lift and a rising card sound (Judy, Oct 26: faster, with more lift) */
   if(busy||!allUp()) return;
-  var guard=60, g=GID;
-  while(homeCount()<52&&guard--&&g===GID){
-    var done=false;
-    for(var i=0;i<7&&!done;i++){ var t=topOf(S.tab[i]); if(t&&foundFor(t.c)>=0){ var lo=lowestFirst(); if(lo&&lo.i===i){ await doMove({t:"tab",i:i,j:S.tab[i].length-1},{t:"found",i:foundFor(t.c)},{}); done=true; } } }
-    if(!done){ var l=lowestFirst(); if(!l) break; await doMove({t:"tab",i:l.i,j:S.tab[l.i].length-1},{t:"found",i:foundFor(l.c)},{}); }
-    if(homeCount()===52) return;
+  busy=true; pushHist(); var g=GID, jobs=[], k=0, l;
+  while((l=lowestFirst())){
+    var c=S.tab[l.i].pop().c, f=foundFor(c); S.found[f].push(c); addScore(10); S.moves++;
+    (function(c,f,k,z){ var e=cardEl[c.id];
+      jobs.push(Parlor.wait(k*70).then(function(){ if(g!==GID) return; e.style.zIndex=z; Parlor.sfx("card",{pitch:1+Math.min(k,30)*.02});
+        return K.glide(e,colX(f),G.TY,{dur:300,lift:1.24,spin:(k%2?-1:1)*9,soar:true}); })); })(c,f,k,300+S.found[f].length-1);
+    k++;
   }
+  await Promise.all(jobs);
+  if(g!==GID) return;
+  busy=false; render(false); after({finish:true});
 }
 function lowestFirst(){ var best=null; for(var i=0;i<7;i++){ var t=topOf(S.tab[i]); if(t&&foundFor(t.c)>=0&&(!best||t.c.r<best.c.r)) best={i:i,c:t.c}; } return best; }
 function giveUp(){
@@ -506,7 +514,7 @@ async function deal(seed,o){
   S.tab.forEach(function(col){ col.forEach(function(x){ deck.push(x); }); });
   var P=positions();
   Object.keys(cardEl).forEach(function(id){ cardEl[id].style.display="none"; });
-  K.deck().forEach(function(c){ var e=elFor(c); e.style.display=""; e.classList.remove("hint","drop","can","sel"); K.turn(e,c,false); K.place(e,colX(0),G.TY); e.style.zIndex=150; });
+  K.deck().forEach(function(c){ var e=elFor(c); e.style.display=""; e.classList.remove("hint","drop","can","sel"); K.turn(e,c,false); K.place(e,colX(6),G.TY); e.style.zIndex=150; });
   tools(); msg(); showStats();
   if(Parlor.smooth()&&!o.instant){
     Parlor.sfx("deal",{n:28,gap:.038});
@@ -536,7 +544,7 @@ function setPos(cols,o){
 }
 function hid(n){ var a=[]; for(var i=0;i<n;i++) a.push([null,0]); return a; }   /* hidden cards, filled from the spare cards */
 var LESSON=[
-  {title:"The Layout", text:"<p>Seven <b>columns</b> are dealt across the desk. Only the bottom card of each is face up.</p><p>Top left is the <b>stock</b>, the cards still to come. Top right are four <b>foundations</b>: the goal is to build every suit there from ace to king.</p>"},
+  {title:"The Layout", text:"<p>Seven <b>columns</b> are dealt across the desk. Only the bottom card of each is face up.</p><p>Top right is the <b>stock</b>, the cards still to come. Top left are four <b>foundations</b>: the goal is to build every suit there from ace to king.</p>"},
   {title:"Build Down, Alternating Colours", text:"<p>In the columns, a card goes on one rank higher in the <b>other colour</b>: a red 6 on a black 7.</p><p>Tap the glowing <b>6 of hearts</b>, or drag it onto the 7 of spades.</p>", sub:"Move the 6 of hearts onto the 7 of spades",
     done:"<p>Well played. The hidden card underneath turned face up by itself, worth 5 points. Turning up hidden cards is how you win.</p>"},
   {title:"Aces Go Home", text:"<p>An <b>ace</b> starts each foundation. Whenever one shows, send it home.</p><p>Tap the <b>ace of diamonds</b>.</p>", sub:"Send the ace of diamonds home",
@@ -653,11 +661,11 @@ Parlor.init({
   setsLabel:"Desks",
   sets:[
     {id:"mahogany",name:DESIGNS.mahogany.name,need:0,dots:DESIGNS.mahogany.dots},
-    {id:"walnut",name:DESIGNS.walnut.name,club:true,dots:DESIGNS.walnut.dots},
+    {id:"satinwood",name:DESIGNS.satinwood.name,club:true,dots:DESIGNS.satinwood.dots},
     {id:"ebony",name:DESIGNS.ebony.name,club:true,dots:DESIGNS.ebony.dots}
   ],
   rules:{
-    play:"<ol><li><b>The goal:</b> move all 52 cards to the four foundations at the top right, each built up in one suit from ace to king.</li><li><b>The columns:</b> build down in alternating colours (a red 6 on a black 7). You can move a whole run of face-up cards together. Only a king (with any cards on it) can fill an empty column.</li><li><b>Hidden cards:</b> when you move the last face-up card off a column, the card underneath turns face up.</li><li><b>The stock:</b> tap it to turn one card (Draw One) or three (Draw Three); only the top card of the turned pile can be played. When the stock is empty, tap its place to turn the pile over again, as often as you like.</li><li><b>Moving cards:</b> tap a card to send it to its best place (home when it can go there), or drag it where you want it. <b>Undo</b> takes back a move and <b>Hint</b> suggests one.</li><li>When every card is face up, tap <b>Finish</b> and they fly home.</li></ol>",
+    play:"<ol><li><b>The goal:</b> move all 52 cards to the four foundations at the top left, each built up in one suit from ace to king.</li><li><b>The columns:</b> build down in alternating colours (a red 6 on a black 7). You can move a whole run of face-up cards together. Only a king (with any cards on it) can fill an empty column.</li><li><b>Hidden cards:</b> when you move the last face-up card off a column, the card underneath turns face up.</li><li><b>The stock:</b> tap it to turn one card (Draw One) or three (Draw Three); only the top card of the turned pile can be played. When the stock is empty, tap its place to turn the pile over again, as often as you like.</li><li><b>Moving cards:</b> tap a card to send it to its best place (home when it can go there), or drag it where you want it. <b>Undo</b> takes back a move and <b>Hint</b> suggests one.</li><li>When every card is face up, tap <b>Finish</b> and they fly home.</li></ol>",
     score:"<ul><li><b>+10</b> for every card sent to a foundation; <b>+5</b> for a card played from the turned pile onto a column; <b>+5</b> for each hidden card turned up.</li><li><b>−15</b> for taking a card back off a foundation; turning the stock over costs <b>−100</b> in Draw One and <b>−20</b> in Draw Three. The score never drops below 0.</li><li>A win adds a <b>time bonus</b>: the faster, the bigger (up to 5,000).</li><li>Your best score is kept on this device.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; Parlor.coach(null); deal(); },

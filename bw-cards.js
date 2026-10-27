@@ -10,6 +10,7 @@
    BWCards.make(c, {up})        a card element (.bwc); BWCards.turn(el, c, up) turns it face up or down
    BWCards.slot(label)          an empty place on the table (.bwc-slot), e.g. "A" or "K" or "↻"
    BWCards.glide(el, x, y, o)   floats a card to (x, y) in table units along a small arc; resolves when it lands
+                                (o: dur, lift (peak scale), spin (peak tilt in degrees), soar (a deeper shadow), flip:{c, up})
    BWCards.paint.*              wood, leather and felt textures for tables (canvasOf, woodFn, leatherFn, feltFn, cssUrl, rot) */
 (function () {
   "use strict";
@@ -66,14 +67,15 @@
       var x0 = e._x == null ? x : e._x, y0 = e._y == null ? y : e._y, d = Math.hypot(x - x0, y - y0);
       if (!smooth || d < 1) { if (o.flip) K.turn(e, o.flip.c, o.flip.up); K.place(e, x, y); e.classList.remove("lift"); res(); return; }
       var dur = o.dur || Math.min(520, 220 + d * 0.32), lift = o.lift == null ? Math.min(1.08, 1.02 + d / 9000) : o.lift, t0 = performance.now(), flipped = false;
-      e.classList.add("flying");
+      e.classList.add("flying"); if (o.soar) e.classList.add("soar");
       (function step(now) {
         var p = Math.min(1, (now - t0) / dur), k = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, sc = 1 + (lift - 1) * Math.sin(Math.PI * p);
         if (o.flip && !flipped && p >= 0.5) { flipped = true; K.turn(e, o.flip.c, o.flip.up); }
         var sx = o.flip ? Math.abs(Math.cos(Math.PI * p)) * sc : sc;   /* a flip turns the card over half way */
         e._x = x0 + (x - x0) * k; e._y = y0 + (y - y0) * k;
-        e.style.transform = "translate(" + e._x + "px," + e._y + "px) scale(" + Math.max(0.04, sx).toFixed(3) + "," + sc.toFixed(3) + ")";
-        if (p < 1) requestAnimationFrame(step); else { e.classList.remove("flying"); K.place(e, x, y); res(); }
+        var rz = o.spin ? " rotate(" + (o.spin * Math.sin(Math.PI * p)).toFixed(2) + "deg)" : "";   /* o.spin: a tilt that peaks mid-flight */
+        e.style.transform = "translate(" + e._x + "px," + e._y + "px)" + rz + " scale(" + Math.max(0.04, sx).toFixed(3) + "," + sc.toFixed(3) + ")";
+        if (p < 1) requestAnimationFrame(step); else { e.classList.remove("flying", "soar"); K.place(e, x, y); res(); }
       })(t0);
     });
   };
