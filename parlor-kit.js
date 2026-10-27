@@ -311,6 +311,8 @@
   };
 
   /* ---------------- sitting down ---------------- */
+  /* the Lobby address with more on it: card rooms' home already has "?cat=cards", so join with "&" (Oct 26 fix) */
+  function homeWith(q) { var h = C.home || "lobby.html"; return h + (h.indexOf("?") >= 0 ? "&" : "?") + q; }
   P.openSeat = function () {
     if (mode === "online" && !finished) { seat(); return; }   /* stood up from an online table: Take a Seat goes straight back to it */
     var b = el.seat.box; b.innerHTML = "";
@@ -324,11 +326,11 @@
     }
     s.appendChild(btn("Play vs. The House", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
     if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
-    s.appendChild(btn("Match an Online Player", "", function () { location.href = (C.home || "lobby.html") + "?match=" + encodeURIComponent(C.game); }));
+    s.appendChild(btn("Match an Online Player", "", function () { location.href = homeWith("match=" + encodeURIComponent(C.game)); }));
     var f = mk("div", "pk-field"), inv = mk("input"); inv.placeholder = "Enter friend's public name..."; inv.maxLength = 20;
     var sendB = btn("Send Invite", "", function () {
       var n = (inv.value || "").trim(); if (!n) { inv.focus(); return; }
-      location.href = (C.home || "lobby.html") + "?invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game);
+      location.href = homeWith("invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game));
     });
     f.appendChild(inv); f.appendChild(sendB); s.appendChild(f);
     s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));

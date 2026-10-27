@@ -38,7 +38,9 @@
     else if (c.r >= 10) mid = '<div class="court"><i class="orn"></i><b>' + R + '</b><i class="su">' + SU + '</i><small>' + COURT[c.r] + '</small></div>';
     else mid = '<div class="pips">' + LAYOUT[c.r + 1].map(function (p) { return '<span class="' + (p[1] > 50 ? "dn" : "") + '" style="left:' + p[0] + '%;top:' + p[1] + '%">' + SU + '</span>'; }).join("") + '</div>';
     var tn = c.r === 9 ? " ten" : "";
-    return '<div class="ix' + tn + '"><b>' + R + '</b><i>' + SU + '</i></div>' + mid + '<div class="ix br' + tn + '"><b>' + R + '</b><i>' + SU + '</i></div>';
+    /* .bigsu: one large suit for the phone face (shown with .bwc-big / .bwc-bigv; framed in gold on court cards) */
+    return '<div class="ix' + tn + '"><b>' + R + '</b><i>' + SU + '</i></div>' + mid + '<div class="ix br' + tn + '"><b>' + R + '</b><i>' + SU + '</i></div>' +
+      '<div class="bigsu' + (c.r >= 10 ? " ct" : "") + '"><span>' + SU + '</span></div>';
   }
   var BACK = '<div class="bk"><span class="frame"></span><span class="mono"><b>B</b><i>W</i></span></div>';
   K.make = function (c, o) {
