@@ -21,7 +21,7 @@
   /* the rooms in each category (the switcher bar and Switch Game). A card room without a page yet shows dimmed
      ("Opening Soon"); give it its page when the room is built. cat:"cards" in Parlor.init picks the card list (Oct 26). */
   var BOARD_GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
-  var CARD_GAMES = [["solitaire","Solitaire","solitaire.html"],["ginrummy","Gin Rummy","ginrummy.html"],["hearts","Hearts","hearts.html"],["spades","Spades",""],["euchre","Euchre",""],["crazyeights","Crazy Eights","crazyeights.html"],["canasta","Canasta",""],["pinochle","Pinochle",""],["freecell","FreeCell","freecell.html"],["bridge","Bridge",""],["cribbage","Cribbage","cribbage.html"]];
+  var CARD_GAMES = [["solitaire","Solitaire","solitaire.html"],["ginrummy","Gin Rummy","ginrummy.html"],["hearts","Hearts","hearts.html"],["spades","Spades","spades.html"],["euchre","Euchre",""],["crazyeights","Crazy Eights","crazyeights.html"],["canasta","Canasta",""],["pinochle","Pinochle",""],["freecell","FreeCell","freecell.html"],["bridge","Bridge",""],["cribbage","Cribbage","cribbage.html"]];
   function gameLink(g, cls) {
     if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening soon"; return x; }
     var a = mk("a", cls, g[1]); a.href = g[2]; return a;
