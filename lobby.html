@@ -878,7 +878,7 @@ var LOBBY_CATS={
     {name:"Porch Gin Rummy", page:"ginrummy.html", img:"cards-gin-rummy-sm.jpg"},
     {name:"Rose Garden Hearts", page:"hearts.html", img:"cards-hearts-sm.jpg"},
     {name:"Study Spades", page:"spades.html", img:"cards-spades-sm.jpg"},
-    {name:"Lakehouse Euchre", img:"cards-euchre-sm.jpg", soon:true, about:"Euchre with a partner: call trump and take three tricks of five."},
+    {name:"Lakehouse Euchre", page:"euchre.html", img:"cards-euchre-sm.jpg"},
     {name:"Sunroom Crazy Eights", page:"crazyeights.html", img:"cards-crazy-eights-sm.jpg"},
     {name:"Club Room Canasta", img:"cards-canasta-sm.jpg", soon:true, about:"Canasta with a partner: meld seven of a kind into canastas."},
     {name:"Kitchen Table Pinochle", img:"cards-pinochle-sm.jpg", soon:true, about:"Pinochle: bid, meld and take tricks with the 48-card deck."},
@@ -964,7 +964,7 @@ renderLobby(lobbyCatFromUrl());
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028a"></script>
+<script src="play-rooms.js?v=1028b"></script>
 <script>
 var sb=null, sessionUser=null, myName="", noticeCh=null, waitTimer=null, waitRoom=null, beatTimer=null, myPts=0, myMember=false;
 function cleanName(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9_]/g,"").slice(0,20); }
@@ -999,7 +999,8 @@ var ROOM_PAGES={
   crazyeights:"crazyeights.html",
   ginrummy:"ginrummy.html",
   hearts:"hearts.html",
-  spades:"spades.html"
+  spades:"spades.html",
+  euchre:"euchre.html"
 };
 function roomPage(game){
   game=String(game||"").toLowerCase();
@@ -1055,6 +1056,7 @@ function startState(game){
   if(game==="ginrummy") return {game:"ginrummy", v:0};   /* the host's room deals the cards */
   if(game==="hearts") return {game:"hearts", v:0};
   if(game==="spades") return {game:"spades", v:0};
+  if(game==="euchre") return {game:"euchre", v:0};
   if(game==="shutbox") return {game:"shutbox", open:[1,2,3,4,5,6,7,8,9], pick:[], dice:[0,0], need:0, turn:1, score1:null, score2:null, rolled:false, over:false};
   return startBoard();
 }
@@ -1128,7 +1130,7 @@ async function inviteFriend(game, nameOverride){
   if(!(await BW.startMatch({mode:"online"}))) return;
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":game==="cribbage"?"club cribbage":game==="shutbox"?"tavern Shut the Box":game==="crazyeights"?"sunroom Crazy Eights":game==="ginrummy"?"porch Gin Rummy":game==="hearts"?"rose garden Hearts":game==="spades"?"study Spades":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":game==="cribbage"?"club cribbage":game==="shutbox"?"tavern Shut the Box":game==="crazyeights"?"sunroom Crazy Eights":game==="ginrummy"?"porch Gin Rummy":game==="hearts"?"rose garden Hearts":game==="spades"?"study Spades":game==="euchre"?"lakehouse Euchre":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
     body:(myName||"A player")+" invited you to "+label+"."
@@ -1293,8 +1295,8 @@ async function beat(){
    tables" with View, which opens a glass window listing them (lobby.html#yours opens it too). Leave Table asks
    first, then saves state.forfeit = my side + state.left = true, status "done", and reports the other side as the
    winner; the waiting player's room shows "sam Left the Table · … has left the table for good. The win is yours." */
-var YT_NAMES={chess:"Garden Chess",checkers:"Garden Checkers",backgammon:"Library Backgammon",yahtzee:"Club Yahtzee",dominoes:"Sunroom Dominoes",othello:"Night Terrace Othello",mancala:"Pavilion Mancala",cribbage:"Club Cribbage",shutbox:"Tavern Shut the Box",morris:"Cloister Morris",crazyeights:"Sunroom Crazy Eights",ginrummy:"Porch Gin Rummy",hearts:"Rose Garden Hearts",spades:"Study Spades"};
-var YT_SHORT={chess:"Chess",checkers:"Checkers",backgammon:"Backgammon",yahtzee:"Yahtzee",dominoes:"Dominoes",othello:"Othello",mancala:"Mancala",cribbage:"Cribbage",shutbox:"Shut the Box",morris:"Morris",crazyeights:"Crazy Eights",ginrummy:"Gin Rummy",hearts:"Hearts",spades:"Spades"};
+var YT_NAMES={chess:"Garden Chess",checkers:"Garden Checkers",backgammon:"Library Backgammon",yahtzee:"Club Yahtzee",dominoes:"Sunroom Dominoes",othello:"Night Terrace Othello",mancala:"Pavilion Mancala",cribbage:"Club Cribbage",shutbox:"Tavern Shut the Box",morris:"Cloister Morris",crazyeights:"Sunroom Crazy Eights",ginrummy:"Porch Gin Rummy",hearts:"Rose Garden Hearts",spades:"Study Spades",euchre:"Lakehouse Euchre"};
+var YT_SHORT={chess:"Chess",checkers:"Checkers",backgammon:"Backgammon",yahtzee:"Yahtzee",dominoes:"Dominoes",othello:"Othello",mancala:"Mancala",cribbage:"Cribbage",shutbox:"Shut the Box",morris:"Morris",crazyeights:"Crazy Eights",ginrummy:"Gin Rummy",hearts:"Hearts",spades:"Spades",euchre:"Euchre"};
 var ytRows=[];
 async function loadYourTables(){
   var box=document.getElementById("yourTables");
