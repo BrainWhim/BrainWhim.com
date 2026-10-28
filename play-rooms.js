@@ -24,7 +24,8 @@ window.BW_ROOMS={
   hearts:"hearts.html",
   spades:"spades.html",
   euchre:"euchre.html",
-  canasta:"canasta.html"
+  canasta:"canasta.html",
+  pinochle:"pinochle.html"
 };
 function bwGuessGame(room){
   if(!room) return "";
@@ -38,6 +39,7 @@ function bwGuessGame(room){
   if(st.game==="spades") return "spades";
   if(st.game==="euchre") return "euchre";
   if(st.game==="canasta") return "canasta";
+  if(st.game==="pinochle") return "pinochle";
   if(st.game==="shutbox" || (Array.isArray(st.open) && "score1" in st)) return "shutbox";
   if(st.y && st.h) return "mancala";
   if(st.game==="cribbage" || st.tossed) return "cribbage";
