@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Club Room Canasta · BrainWhim Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1026i">
+<link rel="stylesheet" href="bw-cards.css?v=1026d">
+<style>
+/* ===== Club Room Canasta: the club room's octagonal card table seen from straight above, drawn in the browser =====
+   Same machinery as Study Spades and Lakehouse Euchre (four seats, your hand along your side), with each team's
+   melds on its own side of the table. Tables (the Tables card): one free, two for Club members. */
+.ce-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ce-fit{position:relative;flex:none}
+.ce-table{position:absolute;left:0;top:0;transform-origin:0 0}
+.ce-round{position:absolute;left:0;top:0;width:1000px;height:1000px;border-radius:50%;background:var(--ce-rimc);background-image:var(--ce-rim);background-size:cover;
+  box-shadow:0 26px 50px rgba(0,0,0,.55),0 6px 12px rgba(0,0,0,.35),inset 0 0 0 2px rgba(0,0,0,.35)}
+.ce-round::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 26%,rgba(255,236,200,.3),rgba(255,236,200,0) 46%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 62%,rgba(0,0,0,.4) 100%)}
+.ce-bead{position:absolute;inset:34px;border-radius:50%;border:2px solid var(--ce-bead);box-shadow:0 1px 0 rgba(255,240,210,.25),inset 0 1px 0 rgba(0,0,0,.4)}
+.ce-felt{position:absolute;inset:44px;border-radius:50%;background-color:var(--ce-feltc);
+  background-image:radial-gradient(ellipse 18% 11% at 62% 28%,rgba(255,250,215,.17),rgba(255,250,215,0)),radial-gradient(ellipse 14% 9% at 74% 44%,rgba(255,250,215,.14),rgba(255,250,215,0)),radial-gradient(ellipse 20% 12% at 40% 70%,rgba(255,250,215,.1),rgba(255,250,215,0)),radial-gradient(ellipse 12% 8% at 26% 40%,rgba(255,250,215,.09),rgba(255,250,215,0)),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 58%,rgba(0,0,0,.36)),var(--ce-felt);background-size:auto,auto,auto,auto,auto,512px 512px;
+  box-shadow:inset 0 6px 14px rgba(0,0,0,.6),inset 0 0 0 2px rgba(0,0,0,.45)}
+.ce-round.nocups .ce-cup{display:none}
+.ce-cup{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#1a1208 0 34%,rgba(0,0,0,0) 36%),radial-gradient(circle at 35% 30%,#fff1c2,#d9b25a 45%,#7a5518 85%);
+  box-shadow:0 2px 3px rgba(0,0,0,.5),inset 0 -1px 2px rgba(0,0,0,.4)}
+.ce-mono{position:absolute;left:50%;top:922px;transform:translate(-50%,-50%);display:flex;align-items:baseline;font-size:24px;line-height:1;pointer-events:none}
+.ce-mono b,.ce-mono i{display:inline-block;color:transparent;background:linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 0 rgba(0,0,0,.5))}
+.ce-mono b{font:500 1em Montserrat,sans-serif}.ce-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.ce-shelf{position:absolute;left:10px;right:10px;border-radius:26px;background:rgba(15,23,42,.42);border:1.5px solid rgba(255,255,255,.14);display:none}
+.ce-table.narrow .ce-shelf{display:block}
+#ceCards{position:absolute;left:0;top:0}
+.ce-table .bwc.can{cursor:pointer}
+.ce-table .bwc.play .fc{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 16px 2px rgba(240,190,90,.45)}
+.ce-stock{position:absolute;width:150px;height:190px;margin:-95px 0 0 -75px;border-radius:14px;cursor:pointer}
+.ce-stock.glow{box-shadow:0 0 0 3px rgba(242,199,90,.85),0 0 24px 6px rgba(242,199,90,.45);animation:bwc-hint 1.2s ease-in-out infinite}
+.ce-lab{position:absolute;transform:translate(-50%,-50%);font:700 18px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,250,232,.82);text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none}
+/* the suit asked for after an eight: a gold-rimmed disc beside the pile */
+.ce-suit{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 40% 32%,#fffdf6,#efe6d2);box-shadow:0 0 0 4px #c9a24f,0 0 0 6px rgba(0,0,0,.35),0 10px 22px rgba(0,0,0,.45);opacity:0;transform:scale(.6);transition:opacity .3s,transform .3s;pointer-events:none}
+.ce-suit.on{opacity:1;transform:scale(1)}
+.ce-suit b{font:700 62px "Cormorant Garamond",Georgia,serif;line-height:.9}
+.ce-suit small{font:700 13px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5a4320}
+.ce-suit.red b{color:#ad1f2a}.ce-suit.blk b{color:#17171c}
+/* glass windows on the table: choose a suit, the end of a hand */
+.ce-panel{position:absolute;z-index:700;left:50%;top:50%;transform:translate(-50%,-50%);width:560px;padding:26px 28px 24px;border-radius:22px;background:rgba(15,23,42,.84);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1.5px solid rgba(231,199,122,.5);box-shadow:0 24px 50px rgba(0,0,0,.5);color:#fff;text-align:center;display:none}
+.ce-panel.on{display:block}
+.ce-panel .k{margin:0 0 6px;font:700 15px Montserrat,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#e6c25a}
+.ce-panel h3{margin:0 0 10px;font:700 34px Montserrat,sans-serif}
+.ce-panel p{margin:0 0 16px;font:500 21px/1.45 Montserrat,sans-serif;color:rgba(255,255,255,.86)}
+.ce-panel p b{color:#f0d27a}
+.ce-suits{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ce-suits button{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 10px;border-radius:12px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,250,240,.94);cursor:pointer;font:700 22px Montserrat,sans-serif;color:#17171c}
+.ce-suits button b{font:700 46px "Cormorant Garamond",Georgia,serif;line-height:.8}
+.ce-suits button.red{color:#ad1f2a}
+.ce-suits button.best{box-shadow:0 0 0 3px #e9b949}
+.ce-panel .pk-btn{display:inline-block;width:auto;min-width:240px;padding:14px 26px;font-size:21px;margin:4px 6px 0}
+.ce-toast{position:absolute;z-index:650;left:50%;top:620px;transform:translate(-50%,-50%);padding:12px 22px;border-radius:14px;background:rgba(15,23,42,.84);border:1.5px solid rgba(231,199,122,.6);color:#f3d68b;font:700 20px Montserrat,sans-serif;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none}
+.ce-toast.on{opacity:1}
+/* portrait phones: the table is drawn small, so its windows and labels are drawn bigger */
+.ce-table.narrow .ce-panel{transform:translate(-50%,-50%) scale(1.7)}
+.ce-table.narrow .ce-toast{transform:translate(-50%,-50%) scale(1.7)}
+.ce-table.narrow .ce-lab{font-size:30px}
+.ce-table.narrow .ce-suit{width:150px;height:150px;margin:-75px 0 0 -75px}
+.ce-table.narrow .ce-suit b{font-size:78px}.ce-table.narrow .ce-suit small{font-size:17px}
+/* melds in your hand: a gold line under each group; the card you've chosen to throw stands up */
+.ce-bar{position:absolute;height:5px;border-radius:3px;background:linear-gradient(90deg,#d9b25a,#f3d68b,#d9b25a);box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;z-index:690;opacity:0;transition:left .22s,top .22s,width .22s,opacity .2s}
+.ce-bar.on{opacity:1}
+.ce-table.narrow .ce-bar{height:8px;border-radius:4px}
+.ce-table .bwc.slide{transition:transform .14s ease-out}
+.ce-table .bwc.arr{z-index:950!important;cursor:grabbing;box-shadow:0 4px 4px rgba(0,0,0,.25),0 18px 30px rgba(0,0,0,.45)}
+.ce-table .bwc.pick .fc{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 20px 5px rgba(250,205,110,.6)}
+.ce-table .bwc.lay .fc{box-shadow:inset 0 0 0 3px rgba(120,190,255,.95),inset 0 0 14px 3px rgba(140,200,255,.45)}
+.ce-table.light .ce-lab{color:rgba(60,46,32,.85);text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.ce-dw{position:absolute;transform:translate(-50%,-50%);padding:6px 14px;border-radius:10px;background:rgba(15,23,42,.66);border:1.5px solid rgba(231,199,122,.45);color:#fff;font:700 17px Montserrat,sans-serif;letter-spacing:.06em;white-space:nowrap;pointer-events:none}
+.ce-dw b{color:#f0d27a}
+.ce-table.narrow .ce-dw{font-size:28px;padding:8px 18px}
+.ce-pile{position:absolute;width:150px;height:190px;margin:-95px 0 0 -75px;border-radius:14px;pointer-events:none}
+.ce-pile.glow,.ce-stock.glow2{box-shadow:0 0 0 3px rgba(242,199,90,.85),0 0 24px 6px rgba(242,199,90,.45)}
+/* the toolbar under the table */
+.ce-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.ce-tools .pk-btn{width:auto;margin:0;padding:8px 16px;min-height:0}
+.ce-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.ce-pick{position:fixed;z-index:60;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(231,199,122,.45);max-width:94vw}
+.ce-pick button{font:600 13px Montserrat,sans-serif;color:#f3ead8;background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 12px;cursor:pointer}
+.ce-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
+@media (max-width:999px){
+  .ce-pick{top:8px;flex-wrap:nowrap;gap:2px;padding:4px}.ce-pick button{font-size:11px;padding:7px 7px;white-space:nowrap}
+  .ce-tools{gap:6px;padding:5px;max-width:calc(100vw - 16px)}
+  .ce-tools .pk-btn{padding:8px 12px;font-size:13px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+}
+/* ---- shared with Study Spades ---- */
+/* the four seats: a name chip with the score and this hand's points */
+.ht-chip{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:12px;background:rgba(15,23,42,.66);border:1.5px solid rgba(255,255,255,.18);
+  color:#fff;font:700 16px Montserrat,sans-serif;white-space:nowrap;pointer-events:none;z-index:640;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:border-color .25s,box-shadow .25s}
+.ht-chip .av{display:inline-flex;width:26px;height:26px}
+.ht-chip .sc{color:#f0d27a;font-variant-numeric:tabular-nums}
+.ht-chip .hp{font-weight:600;font-size:14px;color:rgba(255,255,255,.75);font-variant-numeric:tabular-nums}
+.ht-chip .hp i{font-style:normal;color:#ff8f9e}
+.ht-chip.turn{border-color:rgba(242,199,90,.95);box-shadow:0 0 0 2px rgba(242,199,90,.35),0 0 18px 4px rgba(242,199,90,.35)}
+.ce-table.narrow .ht-chip{font-size:27px;padding:8px 18px 8px 10px;gap:12px;border-radius:16px}
+.ce-table.narrow .ht-chip .av{width:40px;height:40px}
+.ce-table.narrow .ht-chip .hp{font-size:23px}
+/* the pass arrow and "pass to" note in the middle of the table */
+.ht-mid{position:absolute;left:500px;top:480px;transform:translate(-50%,-50%);padding:10px 18px;border-radius:14px;background:rgba(15,23,42,.6);border:1.5px solid rgba(231,199,122,.45);
+  color:#f3e3b6;font:700 18px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;text-align:center;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;z-index:120}
+.ht-mid.on{opacity:1}
+.ht-mid b{display:block;font:700 44px "Cormorant Garamond",Georgia,serif;letter-spacing:0;line-height:1;color:#f0d27a;text-transform:none}
+.ce-table.narrow .ht-mid{font-size:26px}.ce-table.narrow .ht-mid b{font-size:62px}
+/* cards: playable ones stand up a little and glow; cards you've chosen to pass stand up; cards passed to you glow blue */
+.ce-table .bwc.can .fc{box-shadow:inset 0 0 0 3px rgba(214,164,62,.95),inset 0 0 16px 2px rgba(240,190,90,.45)}
+.ce-table .bwc.dim .fc{filter:brightness(.78) saturate(.8)}
+.ce-table .bwc.recv .fc{box-shadow:inset 0 0 0 3px rgba(120,190,255,.95),inset 0 0 14px 3px rgba(140,200,255,.45)}
+.ce-table .bwc.pick .fc{box-shadow:inset 0 0 0 4px #e9b949,inset 0 0 20px 5px rgba(250,205,110,.6)}
+.ce-table .bwc.won .fc{box-shadow:inset 0 0 0 3px rgba(242,199,90,.9)}
+/* the hand-over window lists the four players */
+.ht-tally{width:100%;border-collapse:collapse;margin:0 0 16px;font:600 20px Montserrat,sans-serif;color:#fff}
+.ht-tally td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.12);text-align:right}
+.ht-tally td:first-child{text-align:left}
+.ht-tally tr.me td{color:#f0d27a}
+.ht-tally .plus{color:#ff9eaa}
+.ht-tally th{font:700 13px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e6c25a;text-align:right;padding:0 8px 6px}
+.ht-tally th:first-child{text-align:left}
+/* the square study table: canted corners, a wooden frame and a tooled line round the playing surface */
+.ce-round.sq{border-radius:84px}.ce-round.sq::before{border-radius:84px;background:radial-gradient(circle at 34% 26%,rgba(255,226,180,.22),rgba(255,226,180,0) 50%),radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 62%,rgba(0,0,0,.35) 100%)}
+.ce-round.sq .ce-bead{inset:46px;border-radius:44px}
+.ce-round.sq .ce-felt{inset:58px;border-radius:34px;background-image:radial-gradient(ellipse 38% 30% at 36% 30%,rgba(255,220,160,.14),rgba(255,220,160,0)),radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),var(--ce-felt);background-size:auto,auto,512px 512px}
+.ce-round.sq .ce-mono{top:918px}
+.ce-table.narrow .ht-chip{font-size:30px}.ce-table.narrow .ht-chip .hp{font-size:26px}
+.ht-chip.mate{border-color:rgba(231,199,122,.5)}
+.ht-chip .hp i{font-style:normal;color:#f0d27a}
+/* phones: the team scores sit on the table, so the kit's two score strips aren't needed */
+body.pk.seated .pk-mini{display:none!important}
+.sp-score{z-index:630}.sp-score b{color:#f0d27a}.sp-score i{font-style:normal;font-weight:600;font-size:.8em;color:rgba(255,255,255,.6)}
+.ce-table.narrow .sp-score{font-size:30px}
+/* the bid window */
+.sp-bids{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:0 0 12px}
+.sp-bids button{padding:12px 0;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,250,240,.94);cursor:pointer;font:700 22px Montserrat,sans-serif;color:#17171c}
+.sp-bids button:first-child{font-size:17px}
+.sp-bids button.best{box-shadow:0 0 0 3px #e9b949;background:#fff4d6}
+.sp-bids button:hover{filter:brightness(1.05)}
+.sp-note{font-size:15px!important;margin:0!important;color:rgba(255,255,255,.65)!important}
+.ht-tally td small{display:block;font-size:13px;font-weight:500;color:rgba(255,255,255,.65)}
+@media (prefers-reduced-motion:reduce){.ht-mid{transition:none}}
+/* ---- Club Room Canasta ---- */
+/* the octagonal club table: the shape is cut with clip-path (set in the page for the table's height); a drop shadow follows it */
+.cn-shadow{position:absolute;left:0;top:0;width:1000px;filter:drop-shadow(0 26px 30px rgba(0,0,0,.5)) drop-shadow(0 6px 8px rgba(0,0,0,.35))}
+.ce-round.oct,.ce-round.oct::before{border-radius:0;box-shadow:none}
+.ce-round.oct::before{background:radial-gradient(circle at 34% 24%,rgba(255,226,180,.2),rgba(255,226,180,0) 50%),radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 60%,rgba(0,0,0,.32) 100%)}
+.ce-round.oct .ce-bead{display:none}
+.ce-round.oct .ce-felt{inset:58px;border-radius:0;box-shadow:none;background-image:radial-gradient(ellipse 40% 30% at 36% 30%,rgba(255,230,170,.12),rgba(255,230,170,0)),radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 52%,rgba(0,0,0,.42)),var(--ce-felt);background-size:auto,auto,512px 512px}
+/* wooden card trays for the stock and the discard pile, like the photo's */
+.cn-tray{position:absolute;transform:translate(-50%,-50%);border-radius:10px;pointer-events:none;
+  background:var(--cn-tray,linear-gradient(160deg,#7a4a26,#4a2a14));box-shadow:0 6px 12px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,230,190,.35),inset 0 -2px 0 rgba(0,0,0,.35)}
+.cn-tray::after{content:"";position:absolute;inset:9px;border-radius:5px;background:rgba(0,0,0,.28);box-shadow:inset 0 3px 8px rgba(0,0,0,.6)}
+.cn-hit{position:absolute;transform:translate(-50%,-50%);border-radius:12px;cursor:pointer;z-index:560}
+.cn-hit.glow{box-shadow:0 0 0 3px rgba(242,199,90,.85),0 0 24px 6px rgba(242,199,90,.45);animation:bwc-hint 1.2s ease-in-out infinite}
+.cn-lab{position:absolute;transform:translate(-50%,-50%);padding:4px 10px;border-radius:9px;background:rgba(15,23,42,.6);border:1px solid rgba(231,199,122,.35);color:#f3e3b6;
+  font:700 14px Montserrat,sans-serif;letter-spacing:.06em;white-space:nowrap;pointer-events:none;z-index:640;text-align:center;line-height:1.25}
+.cn-lab b{color:#f0d27a}.cn-lab.frz{border-color:rgba(140,200,255,.7);color:#cfe6ff}.cn-lab.stop{border-color:rgba(255,160,160,.7);color:#ffd0d0}
+.cn-lab small{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.ce-table.narrow .cn-lab{font-size:24px;padding:6px 14px}.ce-table.narrow .cn-lab small{font-size:18px}
+/* a meld's count and wild cards, under its stack; canastas get a ribbon (red: natural, black: mixed) */
+.cn-badge{position:absolute;transform:translate(-50%,0);min-width:34px;padding:2px 7px;border-radius:8px;background:rgba(15,23,42,.8);border:1px solid rgba(231,199,122,.55);
+  color:#fff;font:700 13px Montserrat,sans-serif;text-align:center;white-space:nowrap;pointer-events:none;z-index:700;font-variant-numeric:tabular-nums}
+.cn-badge i{font-style:normal;color:#f0d27a;font-size:11px;margin-left:3px}
+.cn-badge.can{background:linear-gradient(180deg,#b8232e,#7a121a);border-color:#f0d27a}
+.cn-badge.can.mix{background:linear-gradient(180deg,#2a2a30,#0e0e12)}
+.cn-badge.r3{background:rgba(120,16,24,.85)}
+.ce-table.narrow .cn-badge{font-size:22px;min-width:52px;padding:3px 9px;border-radius:10px}.ce-table.narrow .cn-badge i{font-size:18px}
+.cn-row{position:absolute;transform:translate(-50%,-50%);font:700 12px Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(240,220,170,.55);white-space:nowrap;pointer-events:none}
+.ce-table.narrow .cn-row{font-size:19px}
+.ce-table .bwc.mine-meld{cursor:pointer}
+.ce-table .bwc.target .fc{box-shadow:inset 0 0 0 3px rgba(242,199,90,.95),inset 0 0 14px 3px rgba(240,190,90,.5)}
+/* the joker: a gold star and a crescent moon, the BrainWhim sky */
+.bwc .jkr{position:absolute;left:18px;right:18px;top:20px;bottom:20px;border:1.5px solid #c9a24f;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 42%,#2d3a6e,#141a36 75%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.12)}
+.bwc .jkr span{font:700 46px "Cormorant Garamond",Georgia,serif;line-height:.9;color:transparent;background:linear-gradient(170deg,#fff1bf,#d9b25a 50%,#a07a2a);-webkit-background-clip:text;background-clip:text}
+.bwc .jkr em{position:absolute;left:12px;top:10px;font-style:normal;font-size:20px;color:#e9d49a}
+.bwc .jkr small{margin-top:4px;font:700 8px Montserrat,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#e9d49a}
+.bwc .ix.jk b{font-size:20px;color:#b08a2e}.bwc .ix.jk i{font:700 8px Montserrat,sans-serif;letter-spacing:.04em;color:#6a4a8a}
+.bwc-bigv .bwc .ix.jk b{font-size:34px;color:#a07a22}.bwc-bigv .bwc .ix.jk i{font-size:13px;margin-top:2px}
+.bwc-bigv .bwc .bigsu.jkb span{color:#a07a22}.bwc-bigv .bwc .jkr{display:none}
+.bwc .bigsu.jkb{display:none}
+.bwc-bigv .bwc .bigsu.jkb{display:flex}
+/* the end-of-hand window: two columns */
+.cn-tally td:nth-child(2),.cn-tally td:nth-child(3){width:26%}
+.ce-panel.wide{width:620px}
+.ce-table.narrow .ce-panel.wide{width:600px;transform:translate(-50%,-50%) scale(1.55)}
+</style>
+<script src="bw-auth.js?v=1027a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html?cat=cards">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1028c"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+<script src="parlor-kit.js?v=1028c"></script>
+<script src="bw-cards.js?v=1026d"></script>
+<script>
+var K=BWCards, PT=K.paint;
+/* ===== Club Room Canasta =====
+   The club room's octagonal card table seen from straight above (a walnut rim round green baize, wooden trays for
+   the stock and the discard pile), drawn in the browser. Classic partnership Canasta: four players in two teams,
+   two decks and four jokers (108 cards). Seats 0-3 clockwise: 0 South, 1 West, 2 North, 3 East; partners 0 & 2,
+   1 & 3. Each window turns the table so its own seat is at the bottom. Your team's melds lie on your side of the
+   table, the other team's on the far side.
+   Against The House: Margaret is your partner, Walter and Beatrice your opponents. Online, two people play against
+   each other: the host sits South with Margaret, the guest West with Beatrice (The House plays both partners, from
+   the host's window). */
+
+/* ---------- the deck: two packs and four jokers ---------- */
+var ALL=[], BYID={};
+(function(){ for(var d=0;d<2;d++) K.deck().forEach(function(c){ var x={s:c.s,r:c.r,id:c.id+"-"+d}; ALL.push(x.id); BYID[x.id]=x; });
+  for(var j=0;j<4;j++){ var x={s:4,r:13,joker:true,id:"j-"+j}; ALL.push(x.id); BYID[x.id]=x; } })();
+/* the card kit draws 52 cards; the jokers get their own face here */
+(function(){ var turn0=K.turn, name0=K.name, short0=K.short, red0=K.red;
+  K.red=function(c){ return !!c&&!c.joker&&red0(c); };
+  K.name=function(c){ return c&&c.joker?"joker":name0(c); };
+  K.short=function(c){ return c&&c.joker?"★":short0(c); };
+  K.turn=function(e,c,up){
+    if(!(c&&c.joker)) return turn0(e,c,up);
+    e._c=c; e._up=up; e.classList.toggle("up",!!up); e.classList.remove("red");
+    var f=e.firstChild; if(up){ if(f._id!==c.id){ f.innerHTML='<div class="ix jk"><b>★</b><i>JOKER</i></div><div class="jkr"><em>☾</em><span>★</span><small>Joker</small></div><div class="ix br jk"><b>★</b><i>JOKER</i></div><div class="bigsu jkb"><span>★</span></div>'; f._id=c.id; } e.setAttribute("aria-label","joker"); }
+    else e.setAttribute("aria-label","face-down card");
+  };
+})();
+function C(id){ return BYID[id]; }
+function rk(id){ return C(id).r; }                                  /* 0 A, 1 two, 2 three, 3-12 four..king, 13 joker */
+function isWild(id){ var r=rk(id); return r===13||r===1; }
+function isRed3(id){ var c=C(id); return c.r===2&&(c.s===1||c.s===2); }
+function isBlack3(id){ var c=C(id); return c.r===2&&(c.s===0||c.s===3); }
+function isNat(id){ return !isWild(id)&&!isRed3(id); }
+function val(id){ var r=rk(id); if(r===13) return 50; if(r===1||r===0) return 20; if(r>=7) return 10; if(r===2) return isRed3(id)?100:5; return 5; }
+var RNAME=["aces","twos","threes","fours","fives","sixes","sevens","eights","nines","tens","jacks","queens","kings"];
+var RSHORT=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+function sumVal(a){ return a.reduce(function(s,id){ return s+val(id); },0); }
+
+/* ---------- the three tables ---------- */
+var OCT=.293;
+function octD(x,y,W,H){ var c=OCT*Math.min(W,H), r2=Math.SQRT1_2;
+  return Math.min(x,W-x,y,H-y,(x+y-c)*r2,(W-x+y-c)*r2,(x+H-y-c)*r2,(W-x+H-y-c)*r2); }
+function octFrameFn(o,H,bead){ var wood=PT.woodFn(o); return function(x,y){ var c=wood(x,y), d=octD(x,y,1000,H);
+  var k=1+(d<8?-.3:d<15?.2:0)+(d>26&&d<30?.14:0)+(d>30&&d<34?-.16:0)+(d>44&&d<47?.3:0)+(d>47&&d<50?-.25:0)+(d>52?-.12:0);
+  if(bead&&d>44&&d<47){ return [Math.min(255,c[0]*.4+bead[0]*.6),Math.min(255,c[1]*.4+bead[1]*.6),Math.min(255,c[2]*.4+bead[2]*.6)]; }
+  return [Math.min(255,c[0]*k),Math.min(255,c[1]*k),Math.min(255,c[2]*k)]; }; }
+var DESIGNS={
+  /* Club Walnut & Green Baize: the photo's octagonal walnut table with dark green baize; claret card backs */
+  walnut:{name:"Club Walnut & Green Baize",rim:function(H){ return octFrameFn({light:[138,84,46],dark:[66,36,18],freq:.028,turb:6,wx:360,wy:26,sharp:.65,ringAmt:.55,streakAmt:.5,pores:.012,blotch:.3,seed:37},H,[214,176,104]); },rimc:"#5a3418",
+    top:function(){ return PT.feltFn([22,62,44],11); },feltc:[22,62,44],tray:"linear-gradient(160deg,#7a4a26,#4a2a14)",back:"linear-gradient(150deg,#9e2f3c,#5c1420)",dots:["#5a3418","#163e2c","#8e2a36"]},
+  /* Mahogany & Claret: a mahogany rim round claret leather with a gold tooled line; bottle-green backs */
+  claret:{name:"Mahogany & Claret",rim:function(H){ return octFrameFn({light:[128,52,34],dark:[62,22,14],freq:.03,turb:7,wx:320,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:61},H,[226,192,116]); },rimc:"#4e1c12",
+    top:function(){ return PT.leatherFn([110,26,34],23); },feltc:[110,26,34],tray:"linear-gradient(160deg,#6a2a1c,#3a120a)",back:"linear-gradient(150deg,#2f6a44,#12361f)",dots:["#4e1c12","#6e1a22","#2f6a44"]},
+  /* Burl & Navy Baize: a figured burl-walnut rim round navy baize with a silver line; plum backs */
+  burl:{name:"Burl & Navy Baize",rim:function(H){ return octFrameFn({light:[150,104,62],dark:[72,44,22],freq:.05,turb:14,wx:120,wy:60,sharp:.5,ringAmt:.7,streakAmt:.3,pores:.01,blotch:.45,seed:89},H,[214,220,232]); },rimc:"#6a4422",
+    top:function(){ return PT.feltFn([28,42,80],17); },feltc:[28,42,80],tray:"linear-gradient(160deg,#7e5630,#4a2e14)",back:"linear-gradient(150deg,#6a2e66,#2c1030)",dots:["#6a4422","#1c2a50","#6a2e66"]}
+};
+var texCache={}, curDesign=null;
+function octPoly(W,H,inset){ var c=OCT*Math.min(W+2*inset,H+2*inset)-inset*.414; return "polygon("+[[c,0],[W-c,0],[W,c],[W,H-c],[W-c,H],[c,H],[0,H-c],[0,c]].map(function(p){ return p[0].toFixed(1)+"px "+p[1].toFixed(1)+"px"; }).join(",")+")"; }
+function applyDesign(k){
+  if(!DESIGNS[k]) k="walnut"; var TH=G.tableH||1000, key=k+":"+TH; if(key===curDesign) return; curDesign=key; var d=DESIGNS[k];
+  if(!texCache[key]) texCache[key]={r:PT.cssUrl(PT.canvasOf(1000,TH,d.rim(TH))),f:PT.cssUrl(PT.seamless(PT.canvasOf(512,512,d.top())))};
+  var t=texCache[key], s=stage.style;
+  s.setProperty("--ce-rim",t.r); s.setProperty("--ce-rimc",d.rimc); s.setProperty("--ce-felt",t.f); s.setProperty("--ce-feltc","rgb("+d.feltc+")"); s.setProperty("--bwc-back",d.back); s.setProperty("--cn-tray",d.tray);
+  ROUND.style.clipPath=octPoly(1000,TH,0); FELT.style.clipPath=octPoly(1000-116,TH-116,58);
+}
+var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
+function previewBar(){
+  if(!PREVIEW) return;
+  var bar=document.createElement("div"); bar.className="ce-pick";
+  Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k;
+    b.onclick=function(){ previewPick=k; document.body.setAttribute("data-set",k); mark(); }; bar.appendChild(b); });
+  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||String(curDesign).split(":")[0])); }); }
+  document.body.appendChild(bar); previewPick="walnut"; document.body.setAttribute("data-set","walnut"); mark();
+}
+
+/* ---------- the table ---------- */
+var stage=document.createElement("div"); stage.className="ce-pad";
+(function(){
+  var h='<div class="ce-fit" id="ceFit"><div class="ce-table" id="ceT"><div class="cn-shadow" id="cnShadow"><div class="ce-round oct nocups"><div class="ce-bead"></div><div class="ce-felt"></div>';
+  h+='<span class="ce-mono"><b>B</b><i>W</i></span></div></div><div class="ce-shelf" id="ceShelf"></div><div class="ce-dw sp-score" id="spScore"></div>';
+  h+='<div class="cn-tray" id="cnTrayS"></div><div class="cn-tray" id="cnTrayP"></div><div class="cn-lab" id="cnLabS"></div><div class="cn-lab" id="cnLabP"></div><div class="cn-row" id="cnRow0"></div><div class="cn-row" id="cnRow1"></div>';
+  h+='<div id="htChips"></div><div id="ceCards"></div><div id="cnBadges"></div><div class="cn-hit" id="cnHitS"></div><div class="cn-hit" id="cnHitP"></div><div class="ce-panel" id="cePanel"></div><div class="ce-toast" id="ceToast" role="status"></div></div></div><div class="ce-tools" id="ceTools"></div>';
+  stage.innerHTML=h;
+})();
+function $(id){ return stage.querySelector("#"+id); }
+var T=$("ceT"), FIT=$("ceFit"), CL=$("ceCards"), TOOLS=$("ceTools"), PANEL=$("cePanel"), toastEl=$("ceToast"), SHELF=$("ceShelf"), CHIPS=$("htChips"), SCORE=$("spScore");
+var ROUND=stage.querySelector(".ce-round"), FELT=stage.querySelector(".ce-felt"), MONO=stage.querySelector(".ce-mono"), SHADOW=$("cnShadow"), BADGES=$("cnBadges");
+var TRAYS=$("cnTrayS"), TRAYP=$("cnTrayP"), LABS=$("cnLabS"), LABP=$("cnLabP"), HITS=$("cnHitS"), HITP=$("cnHitP"), ROWL=[$("cnRow0"),$("cnRow1")];
+HITS.addEventListener("pointerdown",function(e){ e.preventDefault(); tapStock(); });
+HITP.addEventListener("pointerdown",function(e){ e.preventDefault(); tapPile(); });
+
+/* layout in table units (1000 wide). Views: 0 me, 1 left, 2 across, 3 right */
+var G={};
+function layoutFor(narrow,TH){
+  var L;
+  if(narrow){ TH=Math.max(1000,Math.min(1240,Math.round(TH||1100))); var cy=TH/2+10;
+    L={narrow:true,W:1000,H:TH+440,tableH:TH,cs:1.0,
+      seat:[null,{x:150,y:100},{x:500,y:100},{x:850,y:100}],ssc:.4,
+      chip:[[500,TH-80],[150,190],[500,190],[850,190]],
+      rows:[TH-300,355],tsc:1.02,tsp:108,rowW:900,
+      stock:[330,cy],pile:[650,cy],psc:1.0,labS:[150,cy],labP:[860,cy],
+      score:[500,TH-165],me:{y:TH+215,y2:[TH+150,TH+292],sc:1.32,w:992,lift:40,max:14},shelf:[TH+20,TH+425],toast:cy+130};
+  } else L={narrow:false,W:1000,H:1000,tableH:1000,cs:.72,
+      seat:[null,{x:92,y:500,v:true},{x:500,y:92},{x:908,y:500,v:true}],ssc:.42,
+      chip:[[500,748],[110,355],[500,175],[890,355]],
+      rows:[655,292],tsc:.64,tsp:76,rowW:780,
+      stock:[410,472],pile:[590,472],psc:.74,labS:[300,472],labP:[704,472],
+      me:{y:865,sc:.92,w:900,lift:26,max:30,y2:[826,902]},toast:572};
+  return L;
+}
+G=layoutFor(false);
+
+/* ---------- the game ----------
+   Saved (and sent online) as plain ids ("s-r-d": suit, rank 0-12 = A..K, deck 0/1; "j-0".."j-3" the jokers):
+   h[0..3] the hands, stock, pile (bottom first), melds[team] = [{r, ids}], red3[team], phase (draw | play | handover |
+   over), turn, dealer, score[team], hand, start (did the team have melds when this turn began: for a concealed
+   going out), res, seq, mv. Teams: 0 = seats 0 & 2, 1 = seats 1 & 3. */
+var TARGET=5000, mySide=1, S=null, busy=false, cardEl={}, online=false, sb=null, room=null, me=null, reported=false, seq=0;
+var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
+var inLesson=false, practice=false, lessonOnly=null, GID=0, SEL=[];
+function team(p){ return p%2; }
+function humans(){ return online?[0,1]:[0]; }
+function isHouse(seat){ return humans().indexOf(seat)<0; }
+function mySeat(){ return online&&mySide===2?1:0; }
+function myTeam(){ return team(mySeat()); }
+function view(seat){ return (seat-mySeat()+4)%4; }
+function authority(){ return !online||mySide===1; }
+var HOUSE_NAMES=["","Walter","Margaret","Beatrice"];
+function nameOf(seat){ if(seat===mySeat()&&mySide!==0) return "You"; if(online&&!isHouse(seat)) return mySide===0?(seat===0?"Host":"Guest"):Parlor.oppName(); return HOUSE_NAMES[seat]||"The House"; }
+function teamName(t){ var a=t===team(mySeat())?mySeat():t, b=(a+2)%4; return nameOf(a)+" & "+nameOf(b); }
+function shuffleIds(a){ return K.shuffle(a); }
+function meldOf(t,r){ return S.melds[t].filter(function(m){ return m.r===r; })[0]||null; }
+function melded(t){ return S.melds[t].length>0; }
+function isCan(m){ return m.ids.length>=7; }
+function wildsIn(m){ return m.ids.filter(isWild).length; }
+function hasCanasta(t){ return S.melds[t].some(isCan); }
+function minNeed(t){ var s=S.score[t]; return s<0?15:s<1500?50:s<3000?90:120; }
+function pileTop(){ return S.pile[S.pile.length-1]||null; }
+function frozen(){ return S.pile.some(function(id){ return isWild(id)||isRed3(id); }); }
+function rankWord(r){ return RNAME[r]; }
+
+function newMatch(){ GID++; S={v:1,game:"canasta",h:[[],[],[],[]],stock:[],pile:[],melds:[[],[]],red3:[[],[]],phase:"draw",turn:0,dealer:3,score:[0,0],hand:0,start:false,res:null,seq:0,mv:null}; dealHand(); }
+function dealHand(){
+  var d=shuffleIds(ALL.slice());
+  S.hand++; if(S.hand>1) S.dealer=(S.dealer+1)%4;
+  S.h=[[],[],[],[]]; S.melds=[[],[]]; S.red3=[[],[]]; S.res=null;
+  for(var i=0;i<44;i++) S.h[(S.dealer+1+i)%4].push(d.pop());
+  S.stock=d; S.pile=[];
+  /* red threes are laid out at once and replaced from the stock */
+  for(var k=1;k<=4;k++){ var p=(S.dealer+k)%4;
+    for(;;){ var r3=S.h[p].filter(isRed3); if(!r3.length) break; r3.forEach(function(id){ S.h[p].splice(S.h[p].indexOf(id),1); S.red3[team(p)].push(id); S.h[p].push(S.stock.pop()); }); } }
+  /* turn the up card; a wild card or red three freezes the pile and another card goes on top */
+  do { S.pile.push(S.stock.pop()); } while(isWild(pileTop())||isRed3(pileTop()));
+  S.mv={p:-1,kind:"deal"};
+  beginTurn((S.dealer+1)%4);
+}
+function beginTurn(p){ S.turn=p; S.phase="draw"; S.start=melded(team(p)); if(!S.stock.length) endHand(-1); }
+function drawStock(p){
+  var got=[], r3=[];
+  while(S.stock.length){ var id=S.stock.pop(); if(isRed3(id)){ S.red3[team(p)].push(id); r3.push(id); continue; } S.h[p].push(id); got.push(id); break; }
+  S.phase="play"; S.mv={p:p,kind:"draw",ids:got,red3:r3};
+}
+
+/* making melds. A meld is three or more cards of one rank (aces, fours to kings) with at least two natural cards
+   and no more than three wild cards (twos and jokers). Seven or more cards make a canasta. Black threes can be
+   melded only when going out. Plans are lists of adds: {r, ids, existing} */
+function plan(t,ids,o){
+  o=o||{}; var groups={}, wilds=[], order=[], adds=[];
+  ids.forEach(function(id){ if(isWild(id)) wilds.push(id); else if(isRed3(id)) return; else { var r=rk(id); if(!groups[r]){ groups[r]=[]; order.push(r); } groups[r].push(id); } });
+  (o.extra||[]).forEach(function(id){ var r=rk(id); if(!groups[r]){ groups[r]=[]; order.push(r); } groups[r].push(id); });
+  for(var i=0;i<order.length;i++){ var r=order[i], n=groups[r].length, ex=meldOf(t,r);
+    if(r===2){ if(!o.goingOut) return {err:"Black threes can only be melded when you go out"}; if(n<3) return {err:"Meld at least three black threes"}; adds.push({r:2,ids:groups[r],existing:false,w:0}); continue; }
+    if(!ex&&n<2) return {err:"To start a meld of "+rankWord(r)+" you need at least two natural ones"};
+    adds.push({r:r,ids:groups[r].slice(),existing:!!ex,w:ex?wildsIn(ex):0,n:ex?ex.ids.length:0}); }
+  if(o.target!=null&&!adds.some(function(a){ return a.r===o.target; })){ var tm=meldOf(t,o.target); if(!tm) return {err:"That isn't one of your melds"}; adds.push({r:o.target,ids:[],existing:true,w:wildsIn(tm),n:tm.ids.length}); }
+  /* wild cards: first to new melds that need a third card, then to the meld nearest a canasta */
+  adds.forEach(function(a){ if(!a.existing&&a.r!==2&&a.ids.length<3&&wilds.length){ a.ids.push(wilds.shift()); a.w++; } });
+  if(adds.some(function(a){ return !a.existing&&a.ids.length<3; })) return {err:"A new meld needs at least three cards"};
+  if(wilds.length&&!adds.length) return {err:"Tap one of your melds to add the wild card to it"};
+  while(wilds.length){
+    var cand=adds.filter(function(a){ return a.r!==2&&a.w<3; }); if(!cand.length) return {err:"A meld can hold no more than three wild cards"};
+    if(o.target!=null) cand=cand.filter(function(a){ return a.r===o.target; }).concat(cand.filter(function(a){ return a.r!==o.target; }));
+    else cand.sort(function(x,y){ var a=x.n+x.ids.length, b=y.n+y.ids.length; return (a<7?0:1)-(b<7?0:1)||b-a; });
+    var a=cand[0]; a.ids.push(wilds.shift()); a.w++;
+  }
+  var pts=0; adds.forEach(function(a){ if(!a.existing) pts+=sumVal(a.ids); });
+  var canAfter=hasCanasta(t)||adds.some(function(a){ return a.n+a.ids.length>=7; });
+  return {adds:adds,pts:pts,canAfter:canAfter};
+}
+/* checks the hand after a meld: you may go out only with a canasta, and until then you keep two cards (one to throw) */
+function checkPlan(p,pl,left){
+  if(pl.err) return pl; var t=team(p);
+  if(!melded(t)&&pl.pts<minNeed(t)) return {err:"Your team's first meld must be worth at least "+minNeed(t)+" points (this is "+pl.pts+")"};
+  if(left===0&&!pl.canAfter) return {err:"Your team needs a canasta before you can go out"};
+  if(left===1&&!pl.canAfter) return {err:"Keep at least two cards until your team has a canasta"};
+  return pl;
+}
+function meldPlan(p,ids,target){ var left=S.h[p].length-ids.length; return checkPlan(p,plan(team(p),ids,{target:target,goingOut:left===0}),left); }
+function applyAdds(t,adds){
+  adds.forEach(function(a){ var m=meldOf(t,a.r); if(m) m.ids=m.ids.concat(a.ids.filter(function(id){ return m.ids.indexOf(id)<0; })); else S.melds[t].push({r:a.r,ids:a.ids.slice()}); });
+  S.melds[t].sort(function(a,b){ return rOrder(a.r)-rOrder(b.r); });
+}
+function rOrder(r){ return r===0?0:r===2?20:13-r; }   /* aces, kings ... fours, then black threes */
+function doMeld(p,ids,target){
+  var pl=meldPlan(p,ids,target); if(pl.err) return pl;
+  ids.forEach(function(id){ S.h[p].splice(S.h[p].indexOf(id),1); });
+  applyAdds(team(p),pl.adds); S.mv={p:p,kind:"meld",ids:ids.slice(),r:pl.adds.map(function(a){ return a.r; })};
+  if(!S.h[p].length) endHand(p);
+  return pl;
+}
+/* taking the pile: the top card must go into a meld at once. A frozen pile (a wild card or red three in it), or a team
+   that hasn't melded yet, needs a natural pair from the hand to match it. A black three or a wild card on top stops it. */
+function takePlan(p,sel){
+  var t=team(p), tp=pileTop(); if(!tp) return {err:"The pile is empty"};
+  if(isBlack3(tp)) return {err:"A black three is on top: the pile is stopped this turn"};
+  if(isWild(tp)) return {err:"A wild card is on top: the pile can't be taken now"};
+  var r=rk(tp), fz=frozen()||!melded(t), h=S.h[p], ex=meldOf(t,r), nat=h.filter(function(id){ return isNat(id)&&rk(id)===r; });
+  var gain=S.pile.length-1;
+  if(sel&&sel.length){
+    if(fz&&sel.filter(function(id){ return isNat(id)&&rk(id)===r; }).length<2) return {err:(melded(t)?"The pile is frozen: ":"Before your team's first meld ")+"you need two natural "+rankWord(r)+" to take it"};
+    var pl=plan(t,sel,{extra:[tp]}); if(pl.err) return pl;
+    pl=checkPlan(p,pl,h.length-sel.length+gain); if(pl.err) return pl; pl.sel=sel.slice(); return pl;
+  }
+  var use;
+  if(!fz&&ex) use=[];
+  else if(nat.length>=2) use=nat.slice();
+  else if(!fz&&nat.length===1){ var w=h.filter(isWild).sort(function(a,b){ return val(a)-val(b); }); if(w.length) use=[nat[0],w[0]]; }
+  if(!use) return {err:fz?(melded(t)?"The pile is frozen: you need two natural "+rankWord(r)+" to take it":"To take the pile for your first meld you need two natural "+rankWord(r)):"You need a meld of "+rankWord(r)+", or a natural "+RSHORT[r]+" and a wild card, to take it"};
+  var pl2=plan(t,use,{extra:[tp]});
+  if(!melded(t)&&!pl2.err&&pl2.pts<minNeed(t)){   /* add other melds from the hand to reach the first-meld minimum */
+    var more=findMelds(p,h.filter(function(id){ return use.indexOf(id)<0; }),{noRank:r});
+    for(var i=0;i<more.length&&pl2.pts<minNeed(t);i++){ use=use.concat(more[i]); pl2=plan(t,use,{extra:[tp]}); if(pl2.err) break; }
+  }
+  if(pl2.err) return pl2;
+  pl2=checkPlan(p,pl2,h.length-use.length+gain); if(pl2.err) return pl2; pl2.sel=use; return pl2;
+}
+function doTake(p,pl){
+  var t=team(p), tp=S.pile.pop(), rest=S.pile.slice(); S.pile=[];
+  pl.sel.forEach(function(id){ S.h[p].splice(S.h[p].indexOf(id),1); });
+  applyAdds(t,pl.adds);
+  var r3=rest.filter(isRed3); r3.forEach(function(id){ S.red3[t].push(id); });
+  var got=rest.filter(function(id){ return !isRed3(id); }); S.h[p]=S.h[p].concat(got);
+  S.phase="play"; S.mv={p:p,kind:"take",top:tp,ids:pl.sel.slice(),got:got,red3:r3};
+  if(!S.h[p].length) endHand(p);
+}
+function canDiscard(p,id){ if(S.h[p].length===1&&!hasCanasta(team(p))) return "Your team needs a canasta before you can go out"; return ""; }
+function doDiscard(p,id){
+  S.h[p].splice(S.h[p].indexOf(id),1); S.pile.push(id); S.mv={p:p,kind:"discard",card:id};
+  if(!S.h[p].length){ endHand(p); return; }
+  beginTurn((p+1)%4);
+}
+/* scoring a hand: every card in a team's melds, canastas (natural 500, mixed 300), red threes (100 each, 800 for all
+   four, minus if the team made no meld), going out 100 (200 concealed), minus the cards left in both partners' hands */
+function endHand(went){
+  var rows=[];
+  for(var t=0;t<2;t++){ var r={melds:0,can:0,red3:0,out:0,hand:0};
+    S.melds[t].forEach(function(m){ r.melds+=sumVal(m.ids); if(isCan(m)) r.can+=m.ids.some(isWild)?300:500; });
+    var n3=S.red3[t].length; r.red3=(n3===4?800:n3*100)*(melded(t)?1:-1);
+    if(went>=0&&team(went)===t) r.out=S.start?100:200;
+    r.hand=-(sumVal(S.h[t])+sumVal(S.h[t+2]));
+    r.total=r.melds+r.can+r.red3+r.out+r.hand; rows.push(r); }
+  S.score[0]+=rows[0].total; S.score[1]+=rows[1].total;
+  S.res={rows:rows,went:went,concealed:went>=0&&!S.start};
+  S.phase=((S.score[0]>=TARGET||S.score[1]>=TARGET)&&S.score[0]!==S.score[1])?"over":"handover";
+}
+function winnerTeam(){ var a=S.score[0], b=S.score[1]; return a>b?0:b>a?1:-1; }
+
+/* ---------- The House ----------
+   Melds: before its team's first meld it lays down the strongest natural sets (and pairs with a wild card) until the
+   minimum is reached. After that it adds every natural card it can to its team's melds, starts new melds from
+   three of a kind (or a pair and a spare wild card), and uses wild cards to finish canastas. It takes the pile
+   whenever the rules let it and the pile is worth having. Discards: black threes when the pile is worth stopping,
+   then single low cards the other team can't use, never a card the other team has melded while the pile is open,
+   and wild cards only when nothing else is left. Low levels play looser. */
+function sk(full){ return full?{loose:0,level:10}:Parlor.skill(); }
+function groupsOf(ids){ var g={}; ids.forEach(function(id){ if(isNat(id)&&!isBlack3(id)){ var r=rk(id); (g[r]=g[r]||[]).push(id); } }); return g; }
+function findMelds(p,ids,o){   /* candidate new melds from these cards: three of a kind first, then a pair and a wild */
+  o=o||{}; var g=groupsOf(ids), w=ids.filter(isWild).sort(function(a,b){ return val(a)-val(b); }), out=[], t=team(p);
+  Object.keys(g).forEach(function(k){ var r=+k; if(r===o.noRank||meldOf(t,r)) return; if(g[k].length>=3) out.push(g[k].slice()); });
+  out.sort(function(a,b){ return sumVal(b)-sumVal(a); });
+  var pairs=Object.keys(g).filter(function(k){ return +k!==o.noRank&&!meldOf(t,+k)&&g[k].length===2; }).map(function(k){ return g[k]; }).sort(function(a,b){ return sumVal(b)-sumVal(a); });
+  pairs.forEach(function(pr){ if(w.length) out.push(pr.concat([w.shift()])); });
+  return out;
+}
+function houseAction(p,full){
+  var s=sk(full), t=team(p), h=S.h[p], loose=!full&&Math.random()<s.loose*.5;
+  if(!melded(t)){
+    var c=findMelds(p,h), use=[], pts=0;
+    for(var i=0;i<c.length;i++){ use=use.concat(c[i]); pts+=sumVal(c[i]); if(pts>=minNeed(t)) break; }
+    if(pts>=minNeed(t)){ var pl=meldPlan(p,use); if(!pl.err) return {ids:use}; }
+    return null;
+  }
+  if(loose&&h.length>4) return null;   /* gentle levels hold cards back */
+  /* add naturals to our melds */
+  for(var j=0;j<h.length;j++){ var id=h[j]; if(isNat(id)&&!isBlack3(id)&&meldOf(t,rk(id))){ var same=h.filter(function(x){ return isNat(x)&&rk(x)===rk(id); }); if(!meldPlan(p,same).err) return {ids:same}; } }
+  /* new melds */
+  var c2=findMelds(p,h);
+  for(var k=0;k<c2.length;k++){ var wc=c2[k].filter(isWild).length, wl=h.filter(isWild).length;
+    if(wc&&(loose||wl<2)&&h.length<9) continue;
+    if(!meldPlan(p,c2[k]).err) return {ids:c2[k]}; }
+  /* wild cards to finish a canasta */
+  var wl2=h.filter(isWild).sort(function(a,b){ return val(a)-val(b); });
+  if(wl2.length){ var near=S.melds[t].filter(function(m){ return !isCan(m)&&m.r!==2&&7-m.ids.length<=Math.min(3-wildsIn(m),wl2.length)&&m.ids.length>=4; }).sort(function(a,b){ return b.ids.length-a.ids.length; })[0];
+    if(near){ var need=wl2.slice(0,7-near.ids.length); if(!meldPlan(p,need,near.r).err) return {ids:need,target:near.r}; } }
+  /* going out: everything that's left can be melded */
+  if(hasCanasta(t)&&h.length<=3){ var bl=h.filter(isBlack3); if(bl.length>=3&&bl.length===h.length&&!meldPlan(p,bl).err) return {ids:bl}; }
+  return null;
+}
+function houseTake(p,full){
+  var pl=takePlan(p,null); if(pl.err) return null;
+  var s=sk(full); if(!full&&Math.random()<s.loose*.9) return null;
+  if(S.pile.length>=3||pl.sel.filter(isWild).length===0) return pl;
+  return null;
+}
+function discardScore(p,id){
+  var t=team(p), o=1-t, h=S.h[p], r=rk(id), sc=val(id);
+  if(isWild(id)) sc+=400;
+  if(isBlack3(id)) sc-=12+S.pile.length*2;
+  var n=h.filter(function(x){ return isNat(x)&&rk(x)===r; }).length;
+  if(isNat(id)&&!isBlack3(id)){ if(n>=2) sc+=24*(n-1); if(meldOf(t,r)) sc+=60; }
+  if(isNat(id)&&!isBlack3(id)&&meldOf(o,r)&&!frozen()) sc+=150+S.pile.length*6;
+  /* cards the other team threw away are safer */
+  if(S.pile.slice(-6).some(function(x){ return rk(x)===r; })) sc-=8;
+  return sc;
+}
+function houseDiscard(p,full){
+  var s=sk(full), h=S.h[p].filter(function(id){ return !canDiscard(p,id); });
+  if(!h.length) h=S.h[p].slice();
+  var sorted=h.slice().sort(function(a,b){ return discardScore(p,a)-discardScore(p,b); });
+  if(!full&&Math.random()<s.loose) return sorted[Math.min(sorted.length-1,Math.floor(Math.random()*5))];
+  return sorted[0];
+}
+async function houseTurn(){
+  if(!S||busy||inLesson||!authority()||!isHouse(S.turn)) return;
+  var p=S.turn;
+  if(S.phase==="draw"){ var pl=houseTake(p); if(pl) await act(function(){ doTake(p,pl); }); else await act(function(){ drawStock(p); }); return; }
+  if(S.phase!=="play") return;
+  var a=houseAction(p); if(a){ await act(function(){ doMeld(p,a.ids,a.target); }); return; }
+  var d=houseDiscard(p); await act(function(){ doDiscard(p,d); });
+}
+
+/* ---------- where every card sits ---------- */
+function handKey(id){ var r=rk(id); return r===2?0:r===0?11:r===1?12:r===13?13:r-2; }
+function sortHand(ids){ return ids.slice().sort(function(a,b){ return handKey(a)-handKey(b)||C(a).s-C(b).s||(a<b?-1:1); }); }
+function fanMine(ids,o){
+  var P={}, s=sortHand(ids), n=s.length, rows=n>o.max?2:1, per=Math.ceil(n/rows);
+  for(var row=0;row<rows;row++){ var part=s.slice(row*per,(row+1)*per), m=part.length, w=100*o.sc, gaps=0;
+    for(var i=1;i<m;i++) if(handKey(part[i])!==handKey(part[i-1])) gaps++;
+    var gap=Math.min(12*o.sc,(o.w-w-(m-1)*16)/Math.max(1,gaps)), step=m>1?Math.min(w*.62,(o.w-w-gap*gaps)/(m-1)):0; if(gap<0) gap=0;
+    var total=step*(m-1)+gap*gaps+w, x=500-total/2, y=rows===2?o.y2[row]:o.y;
+    part.forEach(function(id,k){ if(k&&handKey(id)!==handKey(part[k-1])) x+=gap;
+      var off=k-(m-1)/2, rot=rows===2?0:Math.max(-8,Math.min(8,off*.8)), dy=rows===2?0:off*off*.25, lift=SEL.indexOf(id)>=0?o.lift:0;
+      P[id]={x:x+w/2-50,y:y+dy-70-lift,sc:o.sc,rot:rot,up:true,z:600+row*60+k}; x+=step; }); }
+  return P;
+}
+function fanSeat(ids,v){
+  var P={}, n=ids.length, o=G.seat[v], sc=G.ssc;
+  if(G.narrow){ ids.forEach(function(id,k){ P[id]={x:o.x-50+k*.9,y:o.y-70-k*.6,sc:sc,rot:-3+k*.25,up:false,z:200+k}; }); return P; }
+  var len=o.v?220:300, step=n>1?Math.min(16,len/(n-1)):0;
+  ids.forEach(function(id,k){ var off=k-(n-1)/2;
+    if(o.v){ var sg=v===1?1:-1; P[id]={x:o.x-50,y:o.y+off*step-70,sc:sc,rot:90*sg,up:false,z:200+k}; }
+    else P[id]={x:o.x+off*step-50,y:o.y-70,sc:sc,rot:180,up:false,z:200+k}; });
+  return P;
+}
+/* the melds of a team in one row: red threes first, then each meld as a squared stack with its count below */
+function rowItems(t){ var it=[]; if(S.red3[t].length) it.push({r3:true,ids:S.red3[t]}); S.melds[t].forEach(function(m){ it.push({m:m,ids:m.ids}); }); return it; }
+function rowSpots(t){
+  var it=rowItems(t), n=it.length, sp=n>1?Math.min(G.tsp,G.rowW/(n-1)):0, x0=500-sp*(n-1)/2, y=G.rows[t===myTeam()?0:1];
+  return it.map(function(x,k){ return {it:x,x:x0+k*sp,y:y}; });
+}
+function stackOrder(m){   /* wild cards underneath, a natural card on top: red for a natural canasta, black for a mixed one */
+  var nat=m.ids.filter(function(id){ return !isWild(id); }), w=m.ids.filter(isWild);
+  if(isCan(m)){ var want=m.ids.some(isWild)?false:true; nat.sort(function(a,b){ return (K.red(C(a))===want?1:0)-(K.red(C(b))===want?1:0); }); }
+  return w.concat(nat);
+}
+function positions(){
+  var P={};
+  for(var p=0;p<4;p++){ var v=view(p), Q=v===0?fanMine(S.h[p],G.me):fanSeat(S.h[p],v);
+    if(v===0&&mySide===0) Object.keys(Q).forEach(function(id){ Q[id].up=false; });   /* watchers see every hand face down */
+    Object.assign(P,Q); }
+  /* the stock: face down in its tray */
+  S.stock.forEach(function(id,k){ var d=Math.min(k,40)*.35; P[id]={x:G.stock[0]-50+d*.4,y:G.stock[1]-70-d,sc:G.psc,rot:0,up:false,z:100+k}; });
+  /* the pile: face up; wild cards and red threes lie crosswise (the pile is frozen) */
+  var np=S.pile.length; S.pile.forEach(function(id,k){ var cross=isWild(id)||isRed3(id), j=((k*37)%9-4)*.8, d=Math.max(0,k-np+12)*.3;
+    P[id]={x:G.pile[0]-50+(k===np-1?0:j*.6),y:G.pile[1]-70-d,sc:G.psc,rot:cross&&k!==np-1?90+j:j*(k===np-1?.2:1),up:true,z:200+k}; });
+  for(var t=0;t<2;t++) rowSpots(t).forEach(function(sp){
+    var ids=sp.it.r3?sp.it.ids:stackOrder(sp.it.m), can=sp.it.m&&isCan(sp.it.m);
+    ids.forEach(function(id,k){ var d=can?k*.25:k*1.6; P[id]={x:sp.x-50-d*.3,y:sp.y-70-d,sc:G.tsc,rot:sp.it.r3?-4+k*3:0,up:true,z:300+k,meld:t,mr:sp.it.m?sp.it.m.r:null}; }); });
+  return P;
+}
+function elFor(id){
+  var e=cardEl[id]; if(e) return e;
+  e=K.make(C(id),{up:false}); e._id=id; CL.appendChild(e); cardEl[id]=e;
+  e.addEventListener("pointerdown",function(ev){ ev.preventDefault(); tapCard(id); });
+  return e;
+}
+function render(anim,o){
+  o=o||{}; var P=positions(), jobs=[], mine=S.h[mySeat()];
+  SEL=SEL.filter(function(id){ return mine.indexOf(id)>=0; });
+  Object.keys(P).forEach(function(id){
+    var p=P[id], e=elFor(id), moved=e._x==null||Math.abs(e._x-p.x)>.5||Math.abs(e._y-p.y)>.5||Math.abs((e._sc||1)-p.sc)>.01||Math.abs((e._rot||0)-p.rot)>.5;
+    e.classList.toggle("hint",KEEP.indexOf(id)>=0&&SEL.indexOf(id)<0);
+    e.classList.toggle("pick",SEL.indexOf(id)>=0);
+    var myMeld=p.meld===myTeam()&&p.mr!=null&&mySide!==0;
+    e.classList.toggle("mine-meld",myMeld); e._mr=myMeld?p.mr:null;
+    e.classList.toggle("target",myMeld&&myTurnNow()&&S.phase==="play"&&SEL.length>0&&canTarget(p.mr));
+    if(anim&&moved&&e._x!=null){
+      var flip=e._up!==p.up?{c:C(id),up:p.up}:null;
+      jobs.push((function(e,p,flip){ e.style.zIndex=p.z; return K.glide(e,p.x,p.y,{sc:p.sc,rot:p.rot,flip:flip,dur:o.dur}); })(e,p,flip));
+    } else { if(e._up!==p.up) K.turn(e,C(id),p.up); K.place(e,p.x,p.y,p.sc,p.rot); e.style.zIndex=p.z; }
+  });
+  paintTable();
+  return Promise.all(jobs);
+}
+function canTarget(r){ if(r==null||r===2) return false; var t=myTeam(), pl=plan(t,SEL,{target:r}); return !pl.err&&pl.adds.length===1; }
+var chipEls=[], badgeEls={};
+function place(el,x,y){ el.style.left=x+"px"; el.style.top=y+"px"; }
+function paintTable(){
+  if(!chipEls.length) for(var i=0;i<4;i++){ var c=document.createElement("div"); c.className="ht-chip"; c.innerHTML='<span class="av bwa-av"></span><span class="nm"></span><span class="hp"></span>'; CHIPS.appendChild(c); chipEls.push(c); }
+  for(var p=0;p<4;p++){ var v=view(p), ch=chipEls[v], pos=G.chip[v];
+    place(ch,pos[0],pos[1]);
+    ch.querySelector(".nm").textContent=nameOf(p);
+    ch.querySelector(".hp").innerHTML=(v===0&&mySide!==0?"":"<i>"+S.h[p].length+"</i>");
+    ch.classList.toggle("turn",(S.phase==="play"||S.phase==="draw")&&S.turn===p);
+    ch.classList.toggle("mate",team(p)===myTeam());
+    var who=(!isHouse(p)&&p===mySeat()&&mySide!==0)?avMe():(!isHouse(p)?avOpp():"house");
+    var key=JSON.stringify([who&&who!=="house"?(who.avatar||"x"):who,G.narrow]);
+    if(ch._av!==key&&window.BWAvatar){ ch._av=key; ch.querySelector(".av").innerHTML=BWAvatar.html(who,{size:G.narrow?40:26,ring:false,charm:false,title:nameOf(p)}); }
+  }
+  var TH=G.tableH; ROUND.style.height=TH+"px"; SHADOW.style.height=TH+"px"; MONO.style.top=(TH-80)+"px";
+  if(G.narrow){ SHELF.style.top=G.shelf[0]+"px"; SHELF.style.height=(G.shelf[1]-G.shelf[0])+"px"; }
+  toastEl.style.top=G.toast+"px";
+  /* trays, labels and tap targets for the stock and the pile */
+  var cw=100*G.psc, chh=140*G.psc;
+  [[TRAYS,G.stock],[TRAYP,G.pile]].forEach(function(a){ place(a[0],a[1][0],a[1][1]-4); a[0].style.width=(cw+34)+"px"; a[0].style.height=(chh+40)+"px"; });
+  [[HITS,G.stock],[HITP,G.pile]].forEach(function(a){ place(a[0],a[1][0],a[1][1]-4); a[0].style.width=(cw+30)+"px"; a[0].style.height=(chh+36)+"px"; });
+  place(LABS,G.labS[0],G.labS[1]); place(LABP,G.labP[0],G.labP[1]);
+  LABS.innerHTML="<small>Stock</small><b>"+S.stock.length+"</b>";
+  var tp=pileTop(), fz=frozen(), st=tp&&isBlack3(tp);
+  LABP.innerHTML="<small>"+(st?"Stopped":fz?"Frozen":"Pile")+"</small><b>"+S.pile.length+"</b>";
+  LABP.classList.toggle("frz",fz&&!st); LABP.classList.toggle("stop",!!st);
+  var mine=myTurnNow()&&S.phase==="draw";
+  HITS.classList.toggle("glow",mine&&!inLessonBlock("stock")); HITP.classList.toggle("glow",mine&&!takePlan(mySeat(),SEL.length?SEL:null).err&&!inLessonBlock("pile"));
+  /* meld badges */
+  var used={};
+  for(var t=0;t<2;t++){ var spots=rowSpots(t);
+    spots.forEach(function(sp){ var key=t+":"+(sp.it.r3?"r3":sp.it.m.r), b=badgeEls[key];
+      if(!b){ b=document.createElement("div"); b.className="cn-badge"; BADGES.appendChild(b); badgeEls[key]=b; } used[key]=1;
+      var n=sp.it.ids.length, w=sp.it.r3?0:wildsIn(sp.it.m), can=!sp.it.r3&&isCan(sp.it.m);
+      b.className="cn-badge"+(sp.it.r3?" r3":"")+(can?" can"+(w?" mix":""):"");
+      b.innerHTML=sp.it.r3?"×"+n:n+(w?"<i>"+w+"★</i>":""); b.title=sp.it.r3?"Red threes":can?(w?"Mixed canasta":"Natural canasta"):"";
+      place(b,sp.x,sp.y+70*G.tsc+4); b.style.display=""; });
+    var rl=ROWL[t===myTeam()?0:1]; rl.textContent=spots.length?"":(t===myTeam()?"Your team's melds":"Their melds"); place(rl,500,G.rows[t===myTeam()?0:1]); }
+  Object.keys(badgeEls).forEach(function(k){ if(!used[k]) badgeEls[k].style.display="none"; });
+  var mt=myTeam();
+  if(G.score){ SCORE.style.display=""; place(SCORE,G.score[0],G.score[1]);
+    SCORE.innerHTML='Us <b>'+S.score[mt]+'</b> · Them <b>'+S.score[1-mt]+'</b>'+(!melded(mt)?' <i>first meld '+minNeed(mt)+'</i>':''); } else SCORE.style.display="none";
+  Parlor.names([teamName(mt),teamName(1-mt)]); Parlor.score([S.score[mt],S.score[1-mt]]);
+  Parlor.turn(S.phase==="play"||S.phase==="draw"?(team(S.turn)===mt?0:1):-1);
+}
+function avMe(){ var u=window.BW&&BW.user&&BW.user(); if(!u||u.is_anonymous) return null; return (BW.profile&&BW.profile())||{}; }
+var oppProfile=null;
+function avOpp(){ return oppProfile; }
+
+/* ---------- your turn ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function myTurnNow(){ return !!S&&(S.phase==="play"||S.phase==="draw")&&S.turn===mySeat()&&mySide!==0&&seatedNow()&&(!online||(room&&room.guest))&&!(inLesson&&!Parlor.lessonWaiting); }
+function inLessonBlock(what){ return inLesson&&lessonOnly&&lessonOnly.only&&lessonOnly.only!==what; }
+function tapCard(id){
+  if(busy||!S) return;
+  if(cardEl[id]&&cardEl[id]._mr!=null){ tapMeld(cardEl[id]._mr); return; }
+  if(S.pile.indexOf(id)>=0){ tapPile(); return; }
+  if(S.stock.indexOf(id)>=0){ tapStock(); return; }
+  if(!myTurnNow()||S.h[mySeat()].indexOf(id)<0) return;
+  var i=SEL.indexOf(id); if(i>=0) SEL.splice(i,1); else SEL.push(id);
+  Parlor.sfx("click",{pitch:i>=0?.9:1.3}); render(true,{dur:140}); tools(); selMsg();
+}
+function selMsg(){
+  if(!myTurnNow()) return;
+  if(S.phase==="draw"){ msg(); return; }
+  if(!SEL.length){ msg(); return; }
+  if(SEL.length===1) Parlor.status("1 card chosen","Discard it, tap one of your melds to add it, or choose more cards to meld");
+  else { var pl=meldPlan(mySeat(),SEL); Parlor.status(SEL.length+" cards chosen",pl.err?pl.err:"Tap Meld"+(pl.adds.length===1&&pl.adds[0].existing?" to add them to your "+rankWord(pl.adds[0].r):" to lay them down")); }
+}
+async function tapStock(){
+  if(busy||!myTurnNow()||S.phase!=="draw") return;
+  if(inLessonBlock("stock")){ toast(lessonOnly.say||"Follow the lesson"); return; }
+  SEL=[]; await act(function(){ drawStock(mySeat()); });
+}
+async function tapPile(){
+  if(busy||!myTurnNow()) return;
+  if(S.phase!=="draw"){ toast("Draw or take the pile at the start of your turn"); return; }
+  if(inLessonBlock("pile")){ toast(lessonOnly.say||"Follow the lesson"); return; }
+  var pl=takePlan(mySeat(),SEL.length?SEL:null);
+  if(pl.err){ toast(pl.err); Parlor.status("Can't take the pile",pl.err); return; }
+  SEL=[]; await act(function(){ doTake(mySeat(),pl); });
+}
+async function tapMeld(r){
+  if(busy||!myTurnNow()) return;
+  if(S.phase!=="play"){ toast(S.phase==="draw"?"Draw a card first":""); return; }
+  if(!SEL.length){ toast("Choose cards from your hand first, then tap the meld"); return; }
+  if(inLesson&&lessonOnly&&lessonOnly.target!=null&&r!==lessonOnly.target){ toast(lessonOnly.say); return; }
+  var pl=meldPlan(mySeat(),SEL,r); if(pl.err){ toast(pl.err); return; }
+  if(pl.adds.length!==1||pl.adds[0].r!==r){ toast("Those cards don't all go on that meld"); return; }
+  var ids=SEL.slice(); SEL=[]; await act(function(){ doMeld(mySeat(),ids,r); });
+}
+async function meldNow(){
+  if(busy||!myTurnNow()||S.phase!=="play"||!SEL.length) return;
+  if(inLesson&&lessonOnly&&lessonOnly.meld&&lessonOnly.meld.slice().sort().join()!==SEL.slice().sort().join()){ toast(lessonOnly.say); return; }
+  if(inLesson&&lessonOnly&&lessonOnly.target!=null){ toast(lessonOnly.say); return; }
+  var pl=meldPlan(mySeat(),SEL); if(pl.err){ toast(pl.err); Parlor.status("Can't meld that",pl.err); return; }
+  var ids=SEL.slice(); SEL=[]; await act(function(){ doMeld(mySeat(),ids); });
+}
+async function discardNow(){
+  if(busy||!myTurnNow()||S.phase!=="play"||SEL.length!==1) return;
+  if(inLesson&&lessonOnly&&!lessonOnly.discard){ toast(lessonOnly.say||"Follow the lesson"); return; }
+  var id=SEL[0], why=canDiscard(mySeat(),id); if(why){ toast(why); return; }
+  SEL=[]; await act(function(){ doDiscard(mySeat(),id); });
+}
+async function act(fn){
+  busy=true; clearHint(); var g=GID;
+  fn(); seq++; S.seq=seq;
+  push();
+  await animate(S.mv);
+  if(g!==GID) return;
+  busy=false; after();
+}
+async function animate(mv){
+  var g=GID;
+  if(!mv){ await render(true); return; }
+  var mine=mv.p===mySeat()&&mySide!==0, nm=nameOf(mv.p);
+  if(mv.kind==="draw"){ Parlor.sfx("card",{pitch:1.2}); if(mv.red3&&mv.red3.length) toast(nm+(mine?" draw":" draws")+" a red three: 100 points"); await render(true,{dur:300}); return; }
+  if(mv.kind==="take"){ Parlor.sfx("mill"); toast(nm+(mine?" take":" takes")+" the pile"+(mv.got.length?" ("+(mv.got.length+1)+" cards)":"")); await render(true,{dur:460}); return; }
+  if(mv.kind==="meld"){ Parlor.sfx("place");
+    var t=team(mv.p), cn=mv.r.map(function(r){ return meldOf(t,r); }).filter(function(m){ return m&&isCan(m)&&m.ids.length-mv.ids.filter(function(id){ return m.ids.indexOf(id)>=0; }).length<7; });
+    if(cn.length){ toast("Canasta! "+(cn[0].ids.some(isWild)?"Mixed: 300":"Natural: 500")); Parlor.sfx("mill"); }
+    await render(true,{dur:360}); return; }
+  if(mv.kind==="discard"){ Parlor.sfx("card",{pitch:.95}); if(isBlack3(mv.card)) toast(nm+(mine?" stop":" stops")+" the pile with a black three"); else if(isWild(mv.card)) toast(nm+(mine?" freeze":" freezes")+" the pile"); await render(true,{dur:300}); return; }
+  await render(true,{dur:200});
+}
+
+/* ---------- after every move ---------- */
+function after(){
+  showStats(); tools(); paintTable();
+  if(inLesson&&Parlor.lessonWaiting&&lessonOnly&&lessonOnly.check&&lessonOnly.check(S.mv)){ Parlor.lessonDone(); return; }
+  if(S.phase==="handover"||S.phase==="over"){ handOver(); return; }
+  msg();
+  if(practice&&!busy) practiceTip();
+  if(inLesson) return;
+  if(authority()&&(S.phase==="play"||S.phase==="draw")&&isHouse(S.turn)&&(!online||(room&&room.guest))) setTimeout(houseTurn,S.phase==="draw"?700:560);
+}
+function msg(){
+  if(!S||S.phase==="handover"||S.phase==="over") return;
+  if(online&&room&&!room.guest){ Parlor.status("Waiting for a player","Share your table code: "+(CODE||"")); return; }
+  var mine=S.turn===mySeat()&&mySide!==0, mt=myTeam();
+  if(mine&&S.phase==="draw") Parlor.status("Your turn","Tap the stock to draw"+(takePlan(mySeat(),null).err?"":", or tap the pile to take it"));
+  else if(mine) Parlor.status("Meld, then discard",melded(mt)?"Choose cards and tap Meld, or choose one card and Discard":"Your team's first meld needs "+minNeed(mt)+" points");
+  else Parlor.status(nameOf(S.turn)+(isHouse(S.turn)?" is playing…":"'s turn"),S.phase==="draw"?"Drawing":"Melding");
+}
+function showStats(){ if(!S) return; var mt=myTeam(); Parlor.info("Hand "+S.hand+" · first to "+TARGET+" · first meld: us "+(melded(mt)?"done":minNeed(mt))+", them "+(melded(1-mt)?"done":minNeed(1-mt))); }
+function tools(){
+  TOOLS.innerHTML=""; var my=myTurnNow()&&!busy;
+  function b(label,cls,fn,dis){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; x.disabled=!!dis; TOOLS.appendChild(x); return x; }
+  if(S&&S.phase==="draw"&&S.turn===mySeat()&&mySide!==0){ b("Draw","gold",tapStock,!my); b("Take the Pile","",tapPile,!my||!!takePlan(mySeat(),SEL.length?SEL:null).err); }
+  else if(S&&S.phase==="play"&&S.turn===mySeat()&&mySide!==0){ b("Meld"+(SEL.length>1?" ("+SEL.length+")":""),SEL.length&&!meldPlan(mySeat(),SEL).err?"gold":"",meldNow,!my||!SEL.length); b("Discard",SEL.length===1?"gold":"",discardNow,!my||SEL.length!==1);
+    if(SEL.length) b("Clear","",function(){ SEL=[]; render(true,{dur:140}); tools(); msg(); },!my); }
+  b("Hint","",showHint,!my);
+}
+function toast(t){ if(!t) return; toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove("on"); },2300); }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function handOver(){
+  var R=S.res, mt=myTeam(), a=R.rows[mt], b=R.rows[1-mt]; Parlor.turn(-1); render(true); SEL=[];
+  var head=R.went<0?"The Stock Ran Out":team(R.went)===mt?(R.went===mySeat()?"You Went Out":nameOf(R.went)+" Went Out"):nameOf(R.went)+" Went Out";
+  function sg(n){ return (n>0?"+":n<0?"−":"")+Math.abs(n); }
+  function line(lab,k){ return '<tr><td>'+lab+'</td><td>'+sg(a[k])+'</td><td>'+sg(b[k])+'</td></tr>'; }
+  var rows='<table class="ht-tally cn-tally"><tr><th></th><th>'+esc(teamName(mt))+'</th><th>'+esc(teamName(1-mt))+'</th></tr>'+line("Cards melded","melds")+line("Canastas","can")+line("Red threes","red3")+line("Going out"+(R.concealed?" (concealed)":""),"out")+line("Left in hand","hand")+
+    '<tr class="me"><td>This hand</td><td>'+sg(a.total)+'</td><td>'+sg(b.total)+'</td></tr><tr><td>Total</td><td>'+S.score[mt]+'</td><td>'+S.score[1-mt]+'</td></tr></table>';
+  Parlor.sfx(a.total>=b.total?"mill":"place"); PANEL.classList.add("wide");
+  if(S.phase==="over"){ var w=winnerTeam();
+    PANEL.innerHTML='<p class="k">Final Hand</p><h3>'+(w===mt?"Your Team Wins":esc(teamName(1-mt))+" Win")+'</h3>'+rows;
+    PANEL.classList.add("on"); Parlor.status(w===mt?"Your team wins":teamName(1-mt)+" win",""); setTimeout(matchOver,3200); return; }
+  var canDeal=authority()&&!inLesson;
+  PANEL.innerHTML='<p class="k">Hand '+S.hand+'</p><h3>'+head+'</h3>'+rows+(canDeal?'<button type="button" class="pk-btn" id="ceNext">Deal Next Hand</button>':'<p style="margin:0">Waiting for '+esc(Parlor.oppName())+' to deal…</p>');
+  PANEL.classList.add("on");
+  var nb=PANEL.querySelector("#ceNext"); if(nb) nb.onclick=function(){ PANEL.classList.remove("on"); dealNow(); };
+  Parlor.status(head,"First team to "+TARGET+" wins");
+}
+async function dealNow(){
+  if(busy) return; busy=true; GID++; var g=GID;
+  dealHand(); seq++; S.seq=seq; push();
+  await dealAnim(); if(g!==GID) return; busy=false; after();
+}
+async function dealAnim(){
+  PANEL.classList.remove("on","wide"); SEL=[];
+  var P=positions(), ctr=[G.stock[0]-50,G.stock[1]-70];
+  ALL.forEach(function(id){ var e=elFor(id); K.turn(e,C(id),false); K.place(e,ctr[0],ctr[1],G.psc,0); e.style.zIndex=100; e.classList.remove("pick","hint","target"); });
+  paintTable();
+  if(!Parlor.smooth()){ render(false); return; }
+  Parlor.sfx("deal",{n:20,gap:.05});
+  var order=[]; for(var i=0;i<11;i++) for(var k=1;k<=4;k++){ var p=(S.dealer+k)%4, id=S.h[p][i]; if(id) order.push(id); }
+  await Promise.all(order.map(function(id,k){ var e=cardEl[id], q=P[id]; return Parlor.wait(k*22).then(function(){ e.style.zIndex=q.z; return K.glide(e,q.x,q.y,{sc:q.sc,rot:q.rot,dur:260,flip:q.up?{c:C(id),up:true}:null}); }); }));
+  await render(true,{dur:380});
+}
+function matchOver(){
+  var mt=myTeam(), w=winnerTeam(); PANEL.classList.remove("on","wide");
+  var detail="Final score: "+teamName(mt)+" "+S.score[mt]+", "+teamName(1-mt)+" "+S.score[1-mt]+" after "+S.hand+" hand"+(S.hand>1?"s":"")+".";
+  if(online){ report(w===0?1:w===1?2:0); if(mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; } }
+  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":(online?Parlor.oppName()+"'s Team Wins":"Walter & Beatrice Win"));
+}
+
+/* ---------- hints ---------- */
+var KEEP=[];   /* cards to keep glowing (a lesson step or a hint) until the move is made */
+function clearHint(){ KEEP=[]; [].forEach.call(stage.querySelectorAll(".hint"),function(e){ e.classList.remove("hint"); }); }
+function hintText(){
+  var ms=mySeat();
+  if(S.phase==="draw"){ var pl=houseTake(ms,true);
+    if(pl) return {ids:pl.sel,pile:true,say:"Take the pile: the "+K.short(C(pileTop()))+" goes into a meld"+(pl.sel.length?" with your "+pl.sel.map(function(id){ return K.short(C(id)); }).join(" "):"")+(S.pile.length>2?", and the other "+(S.pile.length-1)+" cards come to your hand.":S.pile.length===2?", and the card under it comes to your hand.":".")};
+    return {ids:[],stock:true,say:"Draw from the stock"+(takePlan(ms,null).err?": "+takePlan(ms,null).err.toLowerCase()+".":".")}; }
+  var a=houseAction(ms,true);
+  if(a) return {ids:a.ids,target:a.target,say:(a.target!=null?"Add your wild card"+(a.ids.length>1?"s":"")+" to your "+rankWord(a.target)+(meldOf(myTeam(),a.target).ids.length+a.ids.length>=7?" to make a canasta.":"."):"Meld "+a.ids.map(function(id){ return K.short(C(id)); }).join(" ")+(melded(myTeam())?".":": that's your team's first meld."))+" Choose the glowing cards, then tap "+(a.target!=null?"the meld.":"Meld.")};
+  var d=houseDiscard(ms,true);
+  return {ids:[d],say:"Discard the "+K.name(C(d))+(isBlack3(d)?": a black three stops the next player from taking the pile.":meldOf(1-myTeam(),rk(d))?".":": the other team can't use it easily.")};
+}
+function showHint(){
+  if(!S||busy||!myTurnNow()) return; clearHint();
+  var h=hintText(); KEEP=h.ids.slice(); h.ids.forEach(function(id){ if(cardEl[id]) cardEl[id].classList.add("hint"); });
+  if(h.pile) HITP.classList.add("glow"); if(h.stock) HITS.classList.add("glow");
+  Parlor.status("Hint",h.say); if(practice) Parlor.hintSay("<p>"+h.say+"</p>");
+}
+
+/* ---------- Learn to Play (7 steps) ---------- */
+function setPos(o){
+  GID++; SEL=[]; var used={};
+  function pick(x){ if(x==="jk"){ for(var j=0;j<4;j++){ var id="j-"+j; if(!used[id]){ used[id]=1; return id; } } }
+    for(var d=0;d<2;d++){ var id2=x[1]+"-"+x[0]+"-"+d; if(!used[id2]){ used[id2]=1; return id2; } } throw new Error("no card "+x); }
+  var mine=(o.me||[]).map(pick), melds=[[],[]];
+  (o.melds||[[],[]]).forEach(function(arr,t){ arr.forEach(function(m){ melds[t].push({r:m.r,ids:m.cards.map(pick)}); }); });
+  var pile=(o.pile||[]).map(pick), rest=shuffleIds(ALL.filter(function(id){ return !used[id]&&!isRed3(id); })), h=[mine,[],[],[]];
+  for(var p=1;p<4;p++) while(h[p].length<(o.others||11)) h[p].push(rest.pop());
+  if(!pile.length) pile.push(rest.filter(function(id){ return isNat(id)&&!isBlack3(id); })[0]);
+  rest=rest.filter(function(id){ return pile.indexOf(id)<0; });
+  var red3=[[],[]]; ALL.filter(isRed3).forEach(function(id,k){ if(k<(o.red3||0)) red3[0].push(id); else rest.push(id); });
+  S={v:1,game:"canasta",h:h,stock:shuffleIds(rest),pile:pile,melds:melds,red3:red3,phase:o.phase||"play",turn:0,dealer:3,score:[0,0],hand:1,start:true,res:null,seq:0,mv:null};
+  S.melds.forEach(function(a){ a.sort(function(x,y){ return rOrder(x.r)-rOrder(y.r); }); });
+  PANEL.classList.remove("on","wide"); render(false); showStats(); tools(); paintTable(); msg();
+}
+function idsOf(spec){ var out=[]; spec.forEach(function(x){ var h=S.h[0]; for(var i=0;i<h.length;i++){ var id=h[i]; if(out.indexOf(id)<0&&(x==="jk"?C(id).joker:C(id).r===x[0]&&C(id).s===x[1])){ out.push(id); break; } } }); return out; }
+function glow(list){ KEEP=list.slice(); list.forEach(function(id){ cardEl[id].classList.add("hint"); }); }
+var LESSON=[
+  {title:"The Game", text:"<p>Canasta is played in two teams with <b>two decks and four jokers</b>. <b>Margaret</b>, across the table, is your partner; <b>Walter</b> and <b>Beatrice</b> play against you. Everyone gets <b>11 cards</b>.</p><p>You score by laying down <b>melds</b>: three or more cards of the same rank. Seven of a kind make a <b>canasta</b>, worth a big bonus. First team to <b>5,000</b> wins.</p>"},
+  {title:"Draw", text:"<p>Each turn starts with a draw: take the top card of the <b>stock</b> (face down), or take the whole <b>discard pile</b> (you'll learn how soon). The turn ends when you discard one card onto the pile.</p><p>Tap the <b>stock</b> to draw.</p>", sub:"Tap the stock",
+    done:"<p>Now you may meld, then you must discard one card.</p>"},
+  {title:"Your First Meld", text:"<p>A meld is three or more cards of one rank. Your team's <b>first meld</b> must add up to at least <b>50 points</b>: aces and twos are 20, kings to eights 10, sevens to fours 5, jokers 50.</p><p>Three aces make 60. Tap the three glowing <b>aces</b>, then tap <b>Meld</b>.</p>", sub:"Meld the three aces",
+    done:"<p>Your aces lie on your side of the table. From now on, either of you may add to them or start new melds.</p>"},
+  {title:"Wild Cards", text:"<p><b>Twos and jokers are wild</b>: they can join any meld. A meld needs at least two natural cards and may hold no more than three wild cards.</p><p>Tap your <b>joker</b>, then tap your team's <b>eights</b> to add it.</p>", sub:"Joker onto the eights",
+    done:"<p>The eights are now a <b>mixed</b> meld. Five cards: two more for a canasta.</p>"},
+  {title:"Canastas", text:"<p>Seven cards of one rank make a <b>canasta</b>: <b>500</b> if it's all natural cards, <b>300</b> if it has wild cards. Your team needs at least one canasta before anyone can go out.</p><p>Your team has six kings. Tap your <b>king</b>, then tap the kings on the table.</p>", sub:"Make a canasta",
+    done:"<p>A natural canasta: 500 points. Its top card is red; a mixed canasta shows a black one.</p>"},
+  {title:"Taking the Pile", text:"<p>Instead of drawing you may take the whole <b>discard pile</b> if you can meld its top card at once: with a pair of the same rank from your hand, or onto your team's meld.</p><p>The top card is a <b>seven</b> and you hold two sevens. Tap the <b>pile</b>.</p>", sub:"Take the pile",
+    done:"<p>The seven and your pair make a new meld, and the rest of the pile comes into your hand. A big pile is worth a lot.</p>"},
+  {title:"Threes, Going Out and Scoring", text:"<p><b>Red threes</b> are laid out at once for 100 points each (800 for all four). A <b>black three</b> thrown on the pile stops the next player taking it. A wild card thrown on the pile <b>freezes</b> it: then only a natural pair can take it.</p><p>With a canasta, you may <b>go out</b> by melding or discarding your last card (+100). At the end, your team scores every melded card and bonus, minus the cards left in both your hands.</p>"}
+];
+function lessonSetup(k){
+  inLesson=true; practice=false; lessonOnly=null; busy=false; PANEL.classList.remove("on","wide"); SEL=[]; KEEP=[];
+  var base=[[3,0],[6,1],[9,3],[11,2],[5,0],[4,1],[8,2],[10,0]];
+  if(k===0||k===6){ GID++; S=null; newMatch(); render(false); showStats(); tools(); paintTable(); msg(); return; }
+  if(k===1){ setPos({phase:"draw",me:base.concat([[0,0],[0,2],[5,3]]),pile:[[4,0],[9,1]]}); lessonOnly={only:"stock",say:"Tap the stock for this lesson",check:function(m){ return m&&m.kind==="draw"; }}; glow([]); HITS.classList.add("glow"); return; }
+  if(k===2){ setPos({me:base.concat([[0,0],[0,2],[0,1],[5,3]])}); var ac=idsOf([[0,0],[0,2],[0,1]]); lessonOnly={meld:ac,say:"Choose the three glowing aces, then tap Meld",check:function(m){ return m&&m.kind==="meld"; }}; glow(ac); return; }
+  if(k===3){ setPos({me:base.concat(["jk",[5,3]]),melds:[[{r:0,cards:[[0,0],[0,2],[0,1]]},{r:7,cards:[[7,0],[7,1],[7,2],[7,3]]}],[]]}); var jk=idsOf(["jk"]); lessonOnly={target:7,say:"Choose the joker, then tap your eights",check:function(m){ return m&&m.kind==="meld"; }}; glow(jk); return; }
+  if(k===4){ setPos({me:base.concat([[12,3],[5,3]]),melds:[[{r:0,cards:[[0,0],[0,2],[0,1]]},{r:12,cards:[[12,0],[12,1],[12,2],[12,3],[12,1],[12,2]]}],[]]}); var kg=idsOf([[12,3]]); lessonOnly={target:12,say:"Choose the king, then tap the kings on the table",check:function(m){ return m&&m.kind==="meld"; }}; glow(kg); return; }
+  if(k===5){ setPos({phase:"draw",me:base.concat([[6,0],[6,3]]),melds:[[{r:0,cards:[[0,0],[0,2],[0,1]]}],[]],pile:[[4,0],[9,1],[11,3],[5,1],[6,2]]}); lessonOnly={only:"pile",say:"Tap the pile for this lesson",check:function(m){ return m&&m.kind==="take"; }}; HITP.classList.add("glow"); return; }
+}
+/* practice: a short game to 1,000 against a gentle House, with a coach */
+var tipN=0, TIPS=["Keep pairs: they let you take the pile.","Don't throw a card the other team has melded while the pile isn't frozen: they'll take it.","A black three is a safe throw: nobody can take the pile on top of it.","Wild cards are best used to finish a canasta.","Tap Hint any time for a suggestion."];
+function startPractice(){
+  inLesson=false; practice=true; lessonOnly=null; tipN=0; TARGET=1000; mySide=1;
+  GID++; newMatch(); busy=true;
+  dealAnim().then(function(){ busy=false; after(); });
+  Parlor.practiceSay("Practice Game","<p>A short game to <b>1,000</b> with a gentle House. Draw, meld when you can (your first meld needs 50 points), then discard.</p><p>Tap <b>Hint</b> any time for a suggestion.</p>");
+}
+function practiceTip(){
+  if(!S||S.turn!==0) return;
+  if(S.phase==="draw"){ if(!takePlan(0,null).err){ Parlor.practiceSay("Take the Pile","<p>You can take the pile: its top card goes into a meld and the rest come to your hand. Tap the pile.</p>"); return; } }
+  if(S.phase==="play"&&!melded(0)&&houseAction(0,true)){ Parlor.practiceSay("First Meld","<p>You have enough for your team's first meld ("+minNeed(0)+" points). Tap Hint to see which cards.</p>"); return; }
+  if(++tipN%4===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/4)%TIPS.length]+"</p>");
+}
+
+/* ---------- online table (same page: ?code=XXXX). The host sits South with Margaret; the guest sits West with
+   Beatrice. The House plays Margaret and Beatrice from the host's window, and the host deals. ---------- */
+async function push(){
+  if(!online||!room||mySide===0) return;
+  var st=JSON.parse(JSON.stringify(S));
+  var status=S.phase==="over"?"done":(room.guest?"live":(room.status||"lobby"));
+  await sb.from("rooms").update({state:st,status:status,updated_at:new Date().toISOString()}).eq("id",room.id);
+}
+function report(w){ if(reported||!room||!window.bwRateGame||mySide===0) return; reported=true; room.state=JSON.parse(JSON.stringify(S)); bwRateGame(sb,room,me,w); }
+function validState(st){
+  if(!(st&&st.v===1&&st.game==="canasta"&&Array.isArray(st.h)&&st.h.length===4&&Array.isArray(st.stock)&&Array.isArray(st.pile)&&Array.isArray(st.melds)&&st.melds.length===2&&Array.isArray(st.red3)&&Array.isArray(st.score))) return false;
+  var all=st.stock.concat(st.pile); st.h.forEach(function(x){ all=all.concat(x||[]); }); st.red3.forEach(function(x){ all=all.concat(x||[]); });
+  st.melds.forEach(function(ms){ (ms||[]).forEach(function(m){ all=all.concat((m&&m.ids)||[]); }); });
+  var seenIds={}; return all.length===108&&all.every(function(id){ if(!BYID[id]||seenIds[id]) return false; seenIds[id]=1; return true; });
+}
+async function bootOnline(){
+  online=true; Parlor.seatOnline({label:"Online table "+CODE});
+  var cfg=window.BW_PLAY||{};
+  if(!cfg.url){ Parlor.status("Can't connect","Missing play-config.js"); return; }
+  sb=(window.BW&&BW.client&&BW.client())||supabase.createClient(cfg.url,cfg.anonKey);
+  if(window.BW) await BW.settled();
+  var sess=(await sb.auth.getSession()).data.session;
+  if(!sess){ Parlor.status("Sign in to join","Use the Lobby to sign in"); if(window.BW){ var a=await BW.openAuth({reason:"Sign in to join this table."}); if(!a.ok) return; sess=(await sb.auth.getSession()).data.session; } if(!sess) return; }
+  me=sess.user.id;
+  var q=await sb.from("rooms").select("*").eq("code",CODE).single();
+  if(q.error){ Parlor.status("Table not found",q.error.message); return; }
+  room=q.data;
+  if(typeof bwSendToGame==="function"&&bwSendToGame(bwGuessGame(room),CODE)) return;
+  if(room.host===me) mySide=1; else if(room.guest===me) mySide=2;
+  else if(!room.guest){ var u=await sb.from("rooms").update({guest:me,status:"live"}).eq("id",room.id).select().single(); if(!u.error){ room=u.data; mySide=2; } }
+  else mySide=0;   /* watching */
+  Parlor.mySeat(0); if(Parlor.table) Parlor.table({sb:sb,room:room,me:me,side:mySide});
+  loadOppProfile();
+  if(validState(room.state)){ S=room.state; seq=S.seq||0; fit(true); render(false); after(); }
+  else if(mySide===1){ newMatch(); seq=1; S.seq=seq; fit(true); await push(); busy=true; await dealAnim(); busy=false; after(); }
+  else { S=null; Parlor.status("Dealing…","The host is shuffling the cards"); }
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},async function(p){
+    var hadGuest=room&&room.guest; room=p.new; var st=p.new.state||{};
+    if(room.guest&&!hadGuest) loadOppProfile();
+    if(!validState(st)){
+      if(mySide===1&&(!S||!hadGuest)){ GID++; newMatch(); seq=(seq||0)+1; S.seq=seq; await push(); busy=true; await dealAnim(); busy=false; after(); }
+      return;
+    }
+    if(!hadGuest&&room.guest&&S) { after(); }
+    if((st.seq||0)<=seq&&S) return;   /* our own move coming back */
+    var dealt=st.mv&&st.mv.kind==="deal", was=S; seq=st.seq||0;
+    S=st; GID++; SEL=[];
+    busy=true; if(dealt||!was) await dealAnim(); else await animate(st.mv); busy=false;
+    if(st.phase!=="handover"&&st.phase!=="over") PANEL.classList.remove("on","wide");
+    after();
+  }).subscribe();
+}
+function loadOppProfile(){
+  if(!room||!sb||!window.BWAvatar) return; var id=mySide===2?room.host:room.guest; if(!id) return;
+  BWAvatar.fetch(sb,[id]).then(function(rows){ oppProfile=rows&&rows[0]||null; chipEls.forEach(function(c){ c._av=null; }); if(S) paintTable(); },function(){});
+}
+
+/* ---------- fit to the space ---------- */
+function fit(noRender){
+  var wide=window.innerWidth>=1000, narrow=!wide&&window.innerWidth<700&&window.innerHeight>window.innerWidth;
+  var L=layoutFor(narrow), toolsH=(TOOLS.offsetHeight||46)+10, availW, availH;
+  var st2=document.querySelector(".pk-stage"), tp=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-tp-22-toolsH; }
+  else { availW=window.innerWidth-12; availH=window.innerHeight-(seatedNow()?tp:56)-88-toolsH-6; }
+  if(narrow){ L=layoutFor(true,availH/availW*1000-440); }
+  var s=Math.max(.2,Math.min(availW/L.W,availH/L.H,1.2));
+  var shape=G.tableH!==L.tableH; G=L; FIT._s=s; if(shape&&curDesign){ var dk=String(curDesign).split(":")[0]; curDesign=null; applyDesign(dk); }
+  T.style.width=L.W+"px"; T.style.height=L.H+"px"; T.style.transform="scale("+s+")"; T.classList.toggle("narrow",narrow); T.classList.toggle("bwc-bigv",narrow);
+  FIT.style.width=Math.round(L.W*s)+"px"; FIT.style.height=Math.round(L.H*s)+"px";
+  document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
+  chipEls.forEach(function(c){ c._av=null; });
+  if(!noRender&&S&&!busy) render(false);
+}
+window.addEventListener("resize",function(){ fit(); });
+window.addEventListener("bw-avatar",function(){ chipEls.forEach(function(c){ c._av=null; }); if(S) paintTable(); });
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"canasta", cat:"cards", title:"Club Room Canasta", bg:"cards-canasta.jpg", home:"lobby.html?cat=cards", stage:stage,
+  tagline:"Meld, build canastas, and go out with your partner.", invite:"Leather chairs round the octagonal table and the lamp turned low. Take your seat across from your partner.",
+  players:[{name:"You & Margaret",color:"#c9a24f"},{name:"Walter & Beatrice",color:"#8e2a36"}],
+  setsLabel:"Tables",
+  sets:[
+    {id:"walnut",name:DESIGNS.walnut.name,need:0,dots:DESIGNS.walnut.dots},
+    {id:"claret",name:DESIGNS.claret.name,club:true,dots:DESIGNS.claret.dots},
+    {id:"burl",name:DESIGNS.burl.name,club:true,dots:DESIGNS.burl.dots}
+  ],
+  rules:{
+    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Margaret is your partner and Walter and Beatrice play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>The deck:</b> two packs and four jokers (108 cards). Eleven cards each; one card starts the discard pile.</li><li><b>Your turn:</b> draw one card from the stock, or take the whole discard pile (below). Then meld if you like, and end by discarding one card.</li><li><b>Melds:</b> three or more cards of the same rank (aces, or fours to kings), with at least two natural cards and no more than three wild cards. <b>Twos and jokers are wild.</b> You may add to your team's melds at any time on your turn.</li><li><b>First meld:</b> a team's first meld must be worth at least 50 points (15 while the team's score is below zero, 90 from 1,500, 120 from 3,000).</li><li><b>Canasta:</b> seven or more cards of one rank: natural (no wilds) or mixed.</li><li><b>Taking the pile:</b> you must meld its top card at once, onto your team's meld or with cards from your hand; then the rest of the pile comes to your hand. Before your team's first meld, or when the pile is <b>frozen</b> (a wild card or red three is in it, lying crosswise), you need a natural pair of the top card's rank. A black three or a wild card on top can't be taken.</li><li><b>Threes:</b> red threes are laid out at once and replaced. Black threes can be thrown to stop the next player taking the pile, and melded only when going out.</li><li><b>Going out:</b> once your team has a canasta, meld or discard your last card. Until then, keep at least two cards. When the stock runs out, the hand ends.</li><li>Tap cards in your hand to choose them, then tap <b>Meld</b>, or tap one of your melds to add them to it. Choose one card and tap <b>Discard</b> to end your turn.</li></ol>",
+    score:"<ul><li><b>Cards melded:</b> jokers 50, aces and twos 20, kings to eights 10, sevens to fours (and black threes) 5.</li><li><b>Canastas:</b> natural 500, mixed 300.</li><li><b>Red threes:</b> 100 each, 800 for all four; they count against a team that made no meld.</li><li><b>Going out:</b> 100, or 200 if the team hadn't melded before that turn (concealed).</li><li><b>Cards left in hand</b> count against both partners' team.</li><li>The first team to <b>5,000</b> wins. Practice games end at 1,000.</li></ul>"
+  },
+  onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=5000; mySide=1; Parlor.coach(null); PANEL.classList.remove("on","wide"); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },
+  lesson:{steps:LESSON,setup:lessonSetup,practice:startPractice,hint:showHint}
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set");
+  if(PREVIEW&&previewPick&&k!==previewPick){ document.body.setAttribute("data-set",previewPick); return; }
+  applyDesign(k||"walnut"); }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
+var wasSeated=false;
+new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(function(){ fit(); },30); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){
+  applyDesign(document.body.getAttribute("data-set")||"walnut"); previewBar();
+  fit(true); newMatch(); render(false); showStats(); tools(); paintTable();
+  if(CODE) bootOnline();
+});
+</script>
+</body>
+</html>
