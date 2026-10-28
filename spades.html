@@ -130,8 +130,13 @@
 .ce-round.sq .ce-bead{inset:46px;border-radius:44px}
 .ce-round.sq .ce-felt{inset:58px;border-radius:34px;background-image:radial-gradient(ellipse 38% 30% at 36% 30%,rgba(255,220,160,.14),rgba(255,220,160,0)),radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.4)),var(--ce-felt);background-size:auto,auto,512px 512px}
 .ce-round.sq .ce-mono{top:918px}
+.ce-table.narrow .ht-chip{font-size:30px}.ce-table.narrow .ht-chip .hp{font-size:26px}
 .ht-chip.mate{border-color:rgba(231,199,122,.5)}
 .ht-chip .hp i{font-style:normal;color:#f0d27a}
+/* phones: the team scores sit on the table, so the kit's two score strips aren't needed */
+body.pk.seated .pk-mini{display:none!important}
+.sp-score{z-index:630}.sp-score b{color:#f0d27a}.sp-score i{font-style:normal;font-weight:600;font-size:.8em;color:rgba(255,255,255,.6)}
+.ce-table.narrow .sp-score{font-size:30px}
 /* the bid window */
 .sp-bids{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:0 0 12px}
 .sp-bids button{padding:12px 0;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,250,240,.94);cursor:pointer;font:700 22px Montserrat,sans-serif;color:#17171c}
@@ -171,24 +176,24 @@ var K=BWCards, PT=K.paint;
    host's window). */
 
 /* ---------- the three tables ---------- */
-function frameFn(o){ var wood=PT.woodFn(o); return function(x,y){ var c=wood(x,y), dx=Math.min(x,1000-x), dy=Math.min(y,1000-y), d=Math.min(dx,dy);
+function frameFn(o,H){ H=H||1000; var wood=PT.woodFn(o); return function(x,y){ var c=wood(x,y), dx=Math.min(x,1000-x), dy=Math.min(y,H-y), d=Math.min(dx,dy);
   var k=1+(d<10?-.28:d<16?.18:0)+(d>34&&d<38?.22:0)+(d>38&&d<42?-.18:0); return [Math.min(255,c[0]*k),Math.min(255,c[1]*k),Math.min(255,c[2]*k)]; }; }
 var DESIGNS={
   /* Fireside Mahogany: the photo's mahogany card table with green baize; claret card backs */
-  mahogany:{name:"Fireside Mahogany",rim:function(){ return frameFn({light:[132,58,36],dark:[70,26,16],freq:.025,turb:6,wx:380,wy:28,sharp:.75,ringAmt:.5,streakAmt:.5,pores:.012,blotch:.25,seed:31}); },rimc:"#5a2618",
+  mahogany:{name:"Fireside Mahogany",rim:function(H){ return frameFn({light:[132,58,36],dark:[70,26,16],freq:.025,turb:6,wx:380,wy:28,sharp:.75,ringAmt:.5,streakAmt:.5,pores:.012,blotch:.25,seed:31},H); },rimc:"#5a2618",
     top:function(){ return PT.feltFn([34,84,56],9); },feltc:[34,84,56],bead:"rgba(214,180,110,.55)",back:"linear-gradient(150deg,#9e2f3c,#5c1420)",dots:["#5a2618","#22543a","#8e2a36"]},
   /* Rosewood & Oxblood: a dark rosewood frame round oxblood leather with a gold tooled line; navy backs */
-  oxblood:{name:"Rosewood & Oxblood",rim:function(){ return frameFn({light:[104,46,36],dark:[44,18,14],freq:.03,turb:7,wx:300,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:57}); },rimc:"#4a1e16",
+  oxblood:{name:"Rosewood & Oxblood",rim:function(H){ return frameFn({light:[104,46,36],dark:[44,18,14],freq:.03,turb:7,wx:300,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:57},H); },rimc:"#4a1e16",
     top:function(){ return PT.leatherFn([112,30,32],21); },feltc:[112,30,32],bead:"rgba(226,190,112,.8)",back:"linear-gradient(150deg,#26407a,#0d1834)",dots:["#4a1e16","#701e20","#26407a"]},
   /* Ebony & Midnight: an ebonised frame round navy baize with a silver line; bottle-green backs */
-  ebony:{name:"Ebony & Midnight",rim:function(){ return frameFn({light:[46,40,40],dark:[14,12,12],freq:.03,turb:5,wx:320,wy:26,sharp:.7,ringAmt:.4,streakAmt:.45,pores:.008,blotch:.2,seed:73}); },rimc:"#1c1818",
+  ebony:{name:"Ebony & Midnight",rim:function(H){ return frameFn({light:[46,40,40],dark:[14,12,12],freq:.03,turb:5,wx:320,wy:26,sharp:.7,ringAmt:.4,streakAmt:.45,pores:.008,blotch:.2,seed:73},H); },rimc:"#1c1818",
     top:function(){ return PT.feltFn([30,44,82],13); },feltc:[30,44,82],bead:"rgba(210,216,228,.6)",back:"linear-gradient(150deg,#2f6a4a,#123824)",dots:["#1c1818","#1e2c52","#2f6a4a"]}
 };
 var texCache={}, curDesign=null;
 function applyDesign(k){
-  if(!DESIGNS[k]) k="mahogany"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
-  if(!texCache[k]) texCache[k]={r:PT.cssUrl(PT.canvasOf(1000,1000,d.rim())),f:PT.cssUrl(PT.seamless(PT.canvasOf(512,512,d.top())))};
-  var t=texCache[k], s=stage.style;
+  if(!DESIGNS[k]) k="mahogany"; var TH=G.tableH||1000, key=k+":"+TH; if(key===curDesign) return; curDesign=key; var d=DESIGNS[k];
+  if(!texCache[key]) texCache[key]={r:PT.cssUrl(PT.canvasOf(1000,TH,d.rim(TH))),f:PT.cssUrl(PT.seamless(PT.canvasOf(512,512,d.top())))};
+  var t=texCache[key], s=stage.style;
   s.setProperty("--ce-rim",t.r); s.setProperty("--ce-rimc",d.rimc); s.setProperty("--ce-felt",t.f); s.setProperty("--ce-feltc","rgb("+d.feltc+")"); s.setProperty("--ce-bead",d.bead); s.setProperty("--bwc-back",d.back);
   T.classList.toggle("light",!!d.light);
 }
@@ -198,7 +203,7 @@ function previewBar(){
   var bar=document.createElement("div"); bar.className="ce-pick";
   Object.keys(DESIGNS).forEach(function(k){ var b=document.createElement("button"); b.type="button"; b.textContent=DESIGNS[k].name; b.dataset.k=k;
     b.onclick=function(){ previewPick=k; document.body.setAttribute("data-set",k); mark(); }; bar.appendChild(b); });
-  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||curDesign)); }); }
+  function mark(){ [].forEach.call(bar.children,function(b){ b.classList.toggle("on",b.dataset.k===(previewPick||String(curDesign).split(":")[0])); }); }
   document.body.appendChild(bar); previewPick="mahogany"; document.body.setAttribute("data-set","mahogany"); mark();
 }
 
@@ -206,20 +211,26 @@ function previewBar(){
 var stage=document.createElement("div"); stage.className="ce-pad";
 (function(){
   var h='<div class="ce-fit" id="ceFit"><div class="ce-table" id="ceT"><div class="ce-round sq nocups"><div class="ce-bead"></div><div class="ce-felt"></div>';
-  h+='<span class="ce-mono"><b>B</b><i>W</i></span></div><div class="ce-shelf" id="ceShelf"></div><div class="ht-mid" id="htMid"></div>';
+  h+='<span class="ce-mono"><b>B</b><i>W</i></span></div><div class="ce-shelf" id="ceShelf"></div><div class="ht-mid" id="htMid"></div><div class="ce-dw sp-score" id="spScore"></div>';
   h+='<div id="htChips"></div><div id="ceCards"></div><div class="ce-panel" id="cePanel"></div><div class="ce-toast" id="ceToast" role="status"></div></div></div><div class="ce-tools" id="ceTools"></div>';
   stage.innerHTML=h;
 })();
 var T=stage.querySelector("#ceT"), FIT=stage.querySelector("#ceFit"), CL=stage.querySelector("#ceCards"), TOOLS=stage.querySelector("#ceTools"), PANEL=stage.querySelector("#cePanel"), toastEl=stage.querySelector("#ceToast");
-var SHELF=stage.querySelector("#ceShelf"), MID=stage.querySelector("#htMid"), CHIPS=stage.querySelector("#htChips");
+var SHELF=stage.querySelector("#ceShelf"), MID=stage.querySelector("#htMid"), CHIPS=stage.querySelector("#htChips"), SCORE=stage.querySelector("#spScore"), ROUND=stage.querySelector(".ce-round"), MONO=stage.querySelector(".ce-mono");
 
 /* layout in table units (the table is 1000 square), by view: 0 me, 1 left, 2 across, 3 right */
 var G={};
-function layoutFor(narrow){
-  var L={narrow:narrow,W:1000,H:narrow?1390:1000,side:{sc:narrow?.6:.56,len:narrow?290:300},left:{x:130,y:490},right:{x:870,y:490},across:{y:150,w:400,sc:narrow?.6:.56},
-    chip:[[500,narrow?1030:688],[150,narrow?276:282],[narrow?770:760,148],[850,narrow?276:282]],pile:[[narrow?760:740,narrow?690:665],[140,722],[240,150],[860,722]],psc:.42};
-  if(narrow){ L.me={y:1195,sc:1.5,w:992,lift:44}; L.trick=[[500,612],[362,492],[500,372],[638,492]]; L.tsc=1.12; L.shelf=[1062,1360]; }
-  else { L.me={y:808,sc:1.0,w:780,lift:30}; L.trick=[[500,590],[392,480],[500,370],[608,480]]; L.tsc=.9; }
+function layoutFor(narrow,TH){
+  var L;
+  /* phones: the table runs taller than it is wide (TH 1000-1200, as tall as the screen allows) with bigger cards */
+  if(narrow){ TH=Math.max(1000,Math.min(1200,Math.round(TH||1200))); var cy=TH/2, big=(TH-1000)/200, sideY=cy;
+    L={narrow:true,W:1000,H:TH+330,tableH:TH,side:{sc:.7+.04*big,len:260+120*big},left:{x:150,y:sideY},right:{x:850,y:sideY},across:{y:178,w:big>=.5?520:400,sc:big>=.5?.78:.7},
+    chip:[[500,TH-88],[150,cy-270],big>=.5?[500,272]:[775,150],[850,cy-270]],pile:[[830,TH-110],[150,TH-295],[165,178],[850,TH-295]],psc:.5+.05*big,score:[500,TH-164],mid:cy,
+    me:{y:TH+162,sc:1.5,w:992,lift:44},trick:[[500,cy+150+20*big],[330,cy+10],[500,cy-150],[670,cy+10]],tsc:1.25+.2*big,shelf:[TH+22,TH+300]}; }
+  else L={narrow:false,W:1000,H:1000,tableH:1000,side:{sc:.56,len:300},left:{x:130,y:490},right:{x:870,y:490},across:{y:150,w:400,sc:.56},
+    chip:[[500,688],[150,282],[760,148],[860,282]],pile:[[740,665],[140,722],[240,150],[860,722]],psc:.42,mid:480,
+    me:{y:808,sc:1.0,w:780,lift:30},trick:[[500,590],[392,480],[500,370],[608,480]],tsc:.9};
+  L.chip[3][0]=850;
   return L;
 }
 G=layoutFor(false);
@@ -386,6 +397,9 @@ function paintTable(){
     if(ch._av!==key&&window.BWAvatar){ ch._av=key; ch.querySelector(".av").innerHTML=BWAvatar.html(who,{size:G.narrow?40:26,ring:false,charm:false,title:nameOf(p)}); }
   }
   if(G.narrow){ SHELF.style.top=G.shelf[0]+"px"; SHELF.style.height=(G.shelf[1]-G.shelf[0])+"px"; }
+  ROUND.style.height=G.tableH+"px"; MONO.style.top=(G.tableH-82)+"px"; MID.style.top=G.mid+"px";
+  if(G.score){ var mt0=myTeam(); SCORE.style.display=""; SCORE.style.left=G.score[0]+"px"; SCORE.style.top=G.score[1]+"px";
+    SCORE.innerHTML='Us <b>'+S.score[mt0]+'</b> <i>bags '+S.bags[mt0]+'</i> · Them <b>'+S.score[1-mt0]+'</b> <i>bags '+S.bags[1-mt0]+'</i>'; } else SCORE.style.display="none";
   var midTxt="";
   if(S.phase==="bid"&&S.turn!==mySeat()) midTxt="Bidding<b>"+teamBidLine()+"</b>";
   MID.innerHTML=midTxt; MID.classList.toggle("on",!!midTxt);
@@ -759,8 +773,9 @@ function fit(noRender){
   var miniH=0; if(!wide){ [].forEach.call(document.querySelectorAll(".pk-mini"),function(m){ miniH+=(m.offsetHeight||0)+10; }); }
   if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
   else { availW=window.innerWidth-12; availH=window.innerHeight-(seatedNow()?top:56)-88-toolsH-6-miniH; }
+  if(narrow){ L=layoutFor(true,availH/availW*1000-330); }   /* as tall as the screen allows, then sized to the width */
   var s=Math.max(.2,Math.min(availW/L.W,availH/L.H,1.2));
-  G=L; FIT._s=s;
+  var shape=G.tableH!==L.tableH; G=L; FIT._s=s; if(shape&&curDesign){ var dk=String(curDesign).split(":")[0]; curDesign=null; applyDesign(dk); }
   T.style.width=L.W+"px"; T.style.height=L.H+"px"; T.style.transform="scale("+s+")"; T.classList.toggle("narrow",narrow); T.classList.toggle("bwc-bigv",narrow);
   FIT.style.width=Math.round(L.W*s)+"px"; FIT.style.height=Math.round(L.H*s)+"px";
   document.body.style.setProperty("--pk-size",Math.round(L.W*s)+"px");
