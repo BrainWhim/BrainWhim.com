@@ -175,6 +175,8 @@ body.pk.seated .pk-mini{display:none!important}
 .cn-row{position:absolute;transform:translate(-50%,-50%);font:700 12px Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(240,220,170,.55);white-space:nowrap;pointer-events:none}
 .ce-table.narrow .cn-row{font-size:19px}
 .ce-table .bwc.mine-meld{cursor:pointer}
+.cn-mhit{position:absolute;z-index:690;border-radius:12px;cursor:pointer}
+.cn-mhit.can{box-shadow:0 0 0 3px rgba(242,199,90,.9),0 0 22px 6px rgba(242,199,90,.45);animation:bwc-hint 1.2s ease-in-out infinite}
 .ce-table .bwc.target .fc{box-shadow:inset 0 0 0 3px rgba(242,199,90,.95),inset 0 0 14px 3px rgba(240,190,90,.5)}
 /* the joker: a gold star and a crescent moon, the BrainWhim sky */
 .bwc .jkr{position:absolute;left:18px;right:18px;top:20px;bottom:20px;border:1.5px solid #c9a24f;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -626,7 +628,7 @@ function render(anim,o){
   return Promise.all(jobs);
 }
 function canTarget(r){ if(r==null||r===2) return false; var t=myTeam(), pl=plan(t,SEL,{target:r}); return !pl.err&&pl.adds.length===1; }
-var chipEls=[], badgeEls={};
+var chipEls=[], badgeEls={}, meldHits={};
 function place(el,x,y){ el.style.left=x+"px"; el.style.top=y+"px"; }
 function paintTable(){
   if(!chipEls.length) for(var i=0;i<4;i++){ var c=document.createElement("div"); c.className="ht-chip"; c.innerHTML='<span class="av bwa-av"></span><span class="nm"></span><span class="hp"></span>'; CHIPS.appendChild(c); chipEls.push(c); }
@@ -653,7 +655,7 @@ function paintTable(){
   LABP.innerHTML="<small>"+(st?"Stopped":fz?"Frozen":"Pile")+"</small><b>"+S.pile.length+"</b>";
   LABP.classList.toggle("frz",fz&&!st); LABP.classList.toggle("stop",!!st);
   var mine=myTurnNow()&&S.phase==="draw";
-  HITS.classList.toggle("glow",mine&&!inLessonBlock("stock")); HITP.classList.toggle("glow",mine&&!takePlan(mySeat(),SEL.length?SEL:null).err&&!inLessonBlock("pile"));
+  HITS.classList.toggle("glow",mine&&!inLessonBlock("stock")); HITP.classList.toggle("glow",(mine&&!takePlan(mySeat(),SEL.length?SEL:null).err&&!inLessonBlock("pile"))||(myTurnNow()&&S.phase==="play"&&SEL.length===1&&!canDiscard(mySeat(),SEL[0])));
   /* meld badges */
   var used={};
   for(var t=0;t<2;t++){ var spots=rowSpots(t);
@@ -665,6 +667,14 @@ function paintTable(){
       place(b,sp.x,sp.y+70*G.tsc+4); b.style.display=""; });
     var rl=ROWL[t===myTeam()?0:1]; rl.textContent=spots.length?"":(t===myTeam()?"Your team's melds":"Their melds"); place(rl,500,G.rows[t===myTeam()?0:1]); }
   Object.keys(badgeEls).forEach(function(k){ if(!used[k]) badgeEls[k].style.display="none"; });
+  /* your team's melds: a generous tap area over each stack and its count */
+  var hu={}, mine2=myTurnNow()&&S.phase==="play"&&SEL.length>0;
+  if(mySide!==0) rowSpots(myTeam()).forEach(function(sp){ if(sp.it.r3||sp.it.m.r===2) return; var r=sp.it.m.r, hh=meldHits[r];
+    if(!hh){ hh=document.createElement("div"); hh.className="cn-mhit"; hh.addEventListener("pointerdown",function(e){ e.preventDefault(); tapMeld(r); }); BADGES.appendChild(hh); meldHits[r]=hh; } hu[r]=1;
+    var w=100*G.tsc+Math.min(18,(G.tsp-100*G.tsc)), ht=140*G.tsc;
+    hh.style.left=(sp.x-w/2)+"px"; hh.style.top=(sp.y-ht/2-16)+"px"; hh.style.width=w+"px"; hh.style.height=(ht+56)+"px"; hh.style.display="";
+    hh.classList.toggle("can",mine2&&canTarget(r)); });
+  Object.keys(meldHits).forEach(function(k){ if(!hu[k]) meldHits[k].style.display="none"; });
   var mt=myTeam();
   if(G.score){ SCORE.style.display=""; place(SCORE,G.score[0],G.score[1]);
     SCORE.innerHTML='Us <b>'+S.score[mt]+'</b> · Them <b>'+S.score[1-mt]+'</b>'+(!melded(mt)?' <i>first meld '+minNeed(mt)+'</i>':''); } else SCORE.style.display="none";
@@ -679,16 +689,12 @@ function avOpp(){ return oppProfile; }
 function seatedNow(){ return document.body.classList.contains("seated"); }
 function myTurnNow(){ return !!S&&(S.phase==="play"||S.phase==="draw")&&S.turn===mySeat()&&mySide!==0&&seatedNow()&&(!online||(room&&room.guest))&&!(inLesson&&!Parlor.lessonWaiting); }
 function inLessonBlock(what){ return inLesson&&lessonOnly&&lessonOnly.only&&lessonOnly.only!==what; }
-var lastTap={id:null,t:0};
 function tapCard(id){
   if(busy||!S) return;
   if(cardEl[id]&&cardEl[id]._mr!=null){ tapMeld(cardEl[id]._mr); return; }
   if(S.pile.indexOf(id)>=0){ tapPile(); return; }
   if(S.stock.indexOf(id)>=0){ tapStock(); return; }
   if(!myTurnNow()||S.h[mySeat()].indexOf(id)<0) return;
-  /* a quick second tap (or a double-click) on the same card discards it */
-  var now=Date.now(), dbl=lastTap.id===id&&now-lastTap.t<450; lastTap={id:dbl?null:id,t:now};
-  if(dbl&&S.phase==="play"){ SEL=[id]; discardNow(); return; }
   var i=SEL.indexOf(id); if(i>=0) SEL.splice(i,1); else SEL.push(id);
   Parlor.sfx("click",{pitch:i>=0?.9:1.3}); render(true,{dur:140}); tools(); selMsg();
 }
@@ -696,7 +702,7 @@ function selMsg(){
   if(!myTurnNow()) return;
   if(S.phase==="draw"){ msg(); return; }
   if(!SEL.length){ msg(); return; }
-  if(SEL.length===1) Parlor.status("1 card chosen","Tap it again quickly or tap Discard to throw it, tap one of your melds to add it, or choose more cards");
+  if(SEL.length===1) Parlor.status("1 card chosen","Tap the pile to discard it, tap one of your melds to add it, or choose more cards");
   else { var pl=meldPlan(mySeat(),SEL); Parlor.status(SEL.length+" cards chosen",pl.err?pl.err:"Tap Meld"+(pl.adds.length===1&&pl.adds[0].existing?" to add them to your "+rankWord(pl.adds[0].r):" to lay them down")); }
 }
 async function tapStock(){
@@ -706,7 +712,8 @@ async function tapStock(){
 }
 async function tapPile(){
   if(busy||!myTurnNow()) return;
-  if(S.phase!=="draw"){ toast("Draw or take the pile at the start of your turn"); return; }
+  if(S.phase==="play"){ if(SEL.length===1){ discardNow(); return; } toast(SEL.length?"Choose just one card to discard, then tap the pile":"Choose a card to discard, then tap the pile"); return; }
+  if(S.phase!=="draw"){ return; }
   if(inLessonBlock("pile")){ toast(lessonOnly.say||"Follow the lesson"); return; }
   var pl=takePlan(mySeat(),SEL.length?SEL:null);
   if(pl.err){ toast(pl.err); Parlor.status("Can't take the pile",pl.err); return; }
@@ -771,7 +778,7 @@ function msg(){
   if(online&&room&&!room.guest){ Parlor.status("Waiting for a player","Share your table code: "+(CODE||"")); return; }
   var mine=S.turn===mySeat()&&mySide!==0, mt=myTeam();
   if(mine&&S.phase==="draw") Parlor.status("Your turn","Tap the stock to draw"+(takePlan(mySeat(),null).err?"":", or tap the pile to take it"));
-  else if(mine) Parlor.status("Meld, then discard",melded(mt)?"Choose cards and tap Meld, or double-tap a card to discard it":"Your team's first meld needs "+minNeed(mt)+" points");
+  else if(mine) Parlor.status("Meld, then discard",melded(mt)?"Choose cards, then tap one of your melds or Meld; choose one card and tap the pile to discard":"Your team's first meld needs "+minNeed(mt)+" points");
   else Parlor.status(nameOf(S.turn)+(isHouse(S.turn)?" is playing…":"'s turn"),S.phase==="draw"?"Drawing":"Melding");
 }
 function showStats(){ if(!S) return; var mt=myTeam(); Parlor.info("Hand "+S.hand+" · first to "+TARGET+" · first meld: us "+(melded(mt)?"done":minNeed(mt))+", them "+(melded(1-mt)?"done":minNeed(1-mt))); }
@@ -990,7 +997,7 @@ Parlor.init({
     {id:"burl",name:DESIGNS.burl.name,club:true,dots:DESIGNS.burl.dots}
   ],
   rules:{
-    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Margaret is your partner and Walter and Beatrice play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>The deck:</b> two packs and four jokers (108 cards). Eleven cards each; one card starts the discard pile.</li><li><b>Your turn:</b> draw one card from the stock, or take the whole discard pile (below). Then meld if you like, and end by discarding one card.</li><li><b>Melds:</b> three or more cards of the same rank (aces, or fours to kings), with at least two natural cards and no more than three wild cards. <b>Twos and jokers are wild.</b> You may add to your team's melds at any time on your turn.</li><li><b>First meld:</b> a team's first meld must be worth at least 50 points (15 while the team's score is below zero, 90 from 1,500, 120 from 3,000).</li><li><b>Canasta:</b> seven or more cards of one rank: natural (no wilds) or mixed.</li><li><b>Taking the pile:</b> you must meld its top card at once, onto your team's meld or with cards from your hand; then the rest of the pile comes to your hand. Before your team's first meld, or when the pile is <b>frozen</b> (a wild card or red three is in it, lying crosswise), you need a natural pair of the top card's rank. A black three or a wild card on top can't be taken.</li><li><b>Threes:</b> red threes are laid out at once and replaced. Black threes can be thrown to stop the next player taking the pile, and melded only when going out.</li><li><b>Going out:</b> once your team has a canasta, meld or discard your last card. Until then, keep at least two cards. When the stock runs out, the hand ends.</li><li>Tap cards in your hand to choose them, then tap <b>Meld</b>, or tap one of your melds to add them to it. Choose one card and tap <b>Discard</b>, or <b>double-tap</b> a card, to discard it and end your turn.</li></ol>",
+    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Margaret is your partner and Walter and Beatrice play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>The deck:</b> two packs and four jokers (108 cards). Eleven cards each; one card starts the discard pile.</li><li><b>Your turn:</b> draw one card from the stock, or take the whole discard pile (below). Then meld if you like, and end by discarding one card.</li><li><b>Melds:</b> three or more cards of the same rank (aces, or fours to kings), with at least two natural cards and no more than three wild cards. <b>Twos and jokers are wild.</b> You may add to your team's melds at any time on your turn.</li><li><b>First meld:</b> a team's first meld must be worth at least 50 points (15 while the team's score is below zero, 90 from 1,500, 120 from 3,000).</li><li><b>Canasta:</b> seven or more cards of one rank: natural (no wilds) or mixed.</li><li><b>Taking the pile:</b> you must meld its top card at once, onto your team's meld or with cards from your hand; then the rest of the pile comes to your hand. Before your team's first meld, or when the pile is <b>frozen</b> (a wild card or red three is in it, lying crosswise), you need a natural pair of the top card's rank. A black three or a wild card on top can't be taken.</li><li><b>Threes:</b> red threes are laid out at once and replaced. Black threes can be thrown to stop the next player taking the pile, and melded only when going out.</li><li><b>Going out:</b> once your team has a canasta, meld or discard your last card. Until then, keep at least two cards. When the stock runs out, the hand ends.</li><li>Tap cards in your hand to choose them, then tap <b>Meld</b>, or tap one of your melds to add them to it. Choose one card and tap the <b>discard pile</b> (or Discard) to throw it and end your turn.</li></ol>",
     score:"<ul><li><b>Cards melded:</b> jokers 50, aces and twos 20, kings to eights 10, sevens to fours (and black threes) 5.</li><li><b>Canastas:</b> natural 500, mixed 300.</li><li><b>Red threes:</b> 100 each, 800 for all four; they count against a team that made no meld.</li><li><b>Going out:</b> 100, or 200 if the team hadn't melded before that turn (concealed).</li><li><b>Cards left in hand</b> count against both partners' team.</li><li>The first team to <b>5,000</b> wins. Practice games end at 1,000.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=5000; mySide=1; Parlor.coach(null); PANEL.classList.remove("on","wide"); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },
