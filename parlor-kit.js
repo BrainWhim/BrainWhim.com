@@ -21,7 +21,7 @@
   /* the rooms in each category (the switcher bar and Switch Game). A card room without a page yet shows dimmed
      ("Opening Soon"); give it its page when the room is built. cat:"cards" in Parlor.init picks the card list (Oct 26). */
   var BOARD_GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
-  var CARD_GAMES = [["solitaire","Solitaire","solitaire.html"],["ginrummy","Gin Rummy","ginrummy.html"],["hearts","Hearts","hearts.html"],["spades","Spades","spades.html"],["euchre","Euchre","euchre.html"],["crazyeights","Crazy Eights","crazyeights.html"],["canasta","Canasta","canasta.html"],["pinochle","Pinochle","pinochle.html"],["freecell","FreeCell","freecell.html"],["bridge","Bridge",""],["cribbage","Cribbage","cribbage.html"]];
+  var CARD_GAMES = [["solitaire","Solitaire","solitaire.html"],["ginrummy","Gin Rummy","ginrummy.html"],["hearts","Hearts","hearts.html"],["spades","Spades","spades.html"],["euchre","Euchre","euchre.html"],["crazyeights","Crazy Eights","crazyeights.html"],["canasta","Canasta","canasta.html"],["pinochle","Pinochle","pinochle.html"],["freecell","FreeCell","freecell.html"],["bridge","Bridge","bridge.html"],["cribbage","Cribbage","cribbage.html"]];
   function gameLink(g, cls) {
     if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening soon"; return x; }
     var a = mk("a", cls, g[1]); a.href = g[2]; return a;
@@ -124,7 +124,7 @@
     var g1 = group("This Game");
     el.newBtn = btn("New Game", "", function () { P.newGame(); });
     g1.appendChild(el.newBtn);
-    el.forfeitBtn = btn("Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
+    el.forfeitBtn = btn(C.partners ? "Leave the Game" : "Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
     g1.appendChild(el.forfeitBtn);
     if (C.learn) { el.learnBtn = btn("Learn to Play", "", function () { P.sitLearn(); }); g1.appendChild(el.learnBtn); }
     g1.appendChild(btn("How to Play", "", function () { P.help("play"); }));
@@ -305,6 +305,13 @@
       x.appendChild(mk("b", "", name)); if (sub) x.appendChild(mk("i", "", sub)); return x;
     }
     var m = meProf(), o = oppProf();
+    if (C.partners && mode === "online") {   /* you and your partner against The House */
+      d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Guest"));
+      d.appendChild(one(o && o !== "house" ? o : null, P.oppName(), o && o !== "house" ? BWAvatar.rank(o.skill_points).name : "Your partner"));
+      d.appendChild(mk("span", "vs", "vs"));
+      d.appendChild(one("house", "The House", ""));
+      d.classList.add("trio"); return d;
+    }
     d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Guest"));
     d.appendChild(mk("span", "vs", "vs"));
     d.appendChild(one(o, P.oppName(), o && o !== "house" ? BWAvatar.rank(o.skill_points).name : (o === "house" ? "Level " + P.level() + " of " + P.maxLevel : "")));
@@ -335,7 +342,7 @@
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
       (score && C.solo ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club members get more).</li></ul>" : "") +
-      (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li><li>Playing <b>people online</b> moves your rating more, based on who you beat.</li></ul>" : "");
+      (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
   };
@@ -351,6 +358,19 @@
     if (C.solo) {   /* one-player rooms (Solitaire, FreeCell): no House, no online table */
       s.appendChild(btn(C.dealLabel || "Deal a Game", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
       if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
+      s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
+      b.appendChild(s); el.seat.veil.classList.add("on"); return;
+    }
+    if (C.partners) {   /* partnership rooms (Oct 28, Judy): people play together as partners against The House */
+      var opt = function (label, sub, fn) { var o = mk("div", "pk-opt"); o.appendChild(btn(label, "", fn)); o.appendChild(mk("small", "", sub)); s.appendChild(o); return o; };
+      opt("Play Solo vs. The House", "Practice your skills with three House players.", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); });
+      var tf = mk("div", "pk-field"), ti = mk("input"); ti.placeholder = "Your partner's public name..."; ti.maxLength = 20;
+      var tsend = btn("Send Invite", "", function () { var n = (ti.value || "").trim(); if (!n) { ti.focus(); return; } location.href = homeWith("invite=" + encodeURIComponent(n) + "&game=" + encodeURIComponent(C.game)); });
+      tf.appendChild(ti); tf.appendChild(tsend); tf.style.display = "none";
+      var to = opt("Team Up with a Friend", "Invite a partner to sit across from you against The House.", function () { tf.style.display = tf.style.display === "none" ? "" : "none"; if (tf.style.display === "") ti.focus(); });
+      to.appendChild(tf);
+      opt("Match an Online Partner", "Quickly team up with another live player against The House.", function () { location.href = homeWith("match=" + encodeURIComponent(C.game)); });
+      if (C.learn) opt("Learn to Play", "An interactive walkthrough of the rules and a guided practice game.", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); });
       s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
       b.appendChild(s); el.seat.veil.classList.add("on"); return;
     }
@@ -388,6 +408,10 @@
   P.seatOnline = function (info) {
     P.lessonOn = false; P.lessonWaiting = false; if (el.coach) P.coach(null);
     mode = "online"; seat(); token = null; finished = false; if (el.level) el.level.textContent = ""; paintAv();
+    if (C.partners) {   /* partners play The House together: each of them is scored like a House game */
+      started = Date.now();
+      (async function () { try { var c = sb(), u = window.BW && BW.user && BW.user(); if (c && u) { var r = await c.rpc("bw_house_begin", { p_game: C.game }); if (r && r.data && r.data.ok && mode === "online" && !finished) token = r.data.token; } } catch (e) {} })();
+    }
     el.mode.textContent = (info && info.label) || "Online table";
     if (el.newBtn) el.newBtn.style.display = "none";
     var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
@@ -536,7 +560,7 @@
     var back2 = mk("a", "pk-btn", "Return to the Lobby"); back2.href = C.home || "lobby.html"; r.appendChild(back2);
     b.appendChild(r); el.end.veil.classList.add("on");
 
-    if (mode !== "house") return;                       /* online results are scored by the room itself */
+    if (mode !== "house" && !(mode === "online" && C.partners)) return;   /* online results are scored by the room itself (partners: as House games) */
     var u = window.BW && BW.user && BW.user();
     if (!u) {                                           /* guests: invite them to keep their points */
       pts.textContent = "Create a free account to earn points from every game.";
@@ -563,7 +587,7 @@
   var T = null;
   P.oppName = function (lower) {
     if (mode !== "online") return "The House";
-    return (T && T.oppName) || (lower ? "your opponent" : "Your opponent");
+    return (T && T.oppName) || (C.partners ? (lower ? "your partner" : "Your partner") : (lower ? "your opponent" : "Your opponent"));
   };
   P.toast = function (text) {
     if (!el.toast) return; el.toast.textContent = text; el.toast.classList.add("on");
@@ -623,10 +647,10 @@
       b.appendChild(mk("p", "pk-center", "Their seat is held in case they come back. You can keep waiting, or head back to the Lobby."));
       r.appendChild(btn("Keep Waiting", "", function () { el.tblM.veil.classList.remove("on"); }));
     } else {
-      b.appendChild(mk("p", "pk-kick", "Forfeit"));
-      b.appendChild(mk("h2", "", "Forfeit This Game?"));
-      b.appendChild(mk("p", "pk-center", P.oppName() + " wins, and it counts as a loss for you."));
-      r.appendChild(btn("Forfeit", "", function () { el.tblM.veil.classList.remove("on"); doForfeit(); }));
+      b.appendChild(mk("p", "pk-kick", C.partners ? "Leave the Game" : "Forfeit"));
+      b.appendChild(mk("h2", "", C.partners ? "Leave This Game?" : "Forfeit This Game?"));
+      b.appendChild(mk("p", "pk-center", C.partners ? "The game ends for you and " + P.oppName() + ", your partner. It counts as a loss against The House." : P.oppName() + " wins, and it counts as a loss for you."));
+      r.appendChild(btn(C.partners ? "Leave the Game" : "Forfeit", "", function () { el.tblM.veil.classList.remove("on"); doForfeit(); }));
       r.appendChild(btn("Keep Playing", "quiet", function () { el.tblM.veil.classList.remove("on"); }));
     }
     if (kind === "left") { var a = mk("a", "pk-btn", "Return to the Lobby"); a.href = C.home || "lobby.html"; r.appendChild(a); }
@@ -637,6 +661,12 @@
     if (!T || finished) return;
     var side = T.side, other = 3 - side;
     try { T.ch.send({ type: "broadcast", event: "forfeit", payload: { side: side } }); } catch (e) {}
+    if (C.partners) {   /* partners: the game simply ends; nobody is scored against the other */
+      P.finish("lose", "You left the game. " + P.oppName() + " has been told.", "You Left the Game");
+      try { var st0 = Object.assign({}, (T.room && T.room.state) || {}, { forfeit: side }); T.room.state = st0; T.room.__bwReported = true;
+        await T.sb.from("rooms").update({ state: st0, status: "done", updated_at: new Date().toISOString() }).eq("id", T.room.id); } catch (e) {}
+      return;
+    }
     P.finish("lose", "You forfeited. " + P.oppName() + " takes the win.", "You Forfeited the Game");
     try {
       var st = Object.assign({}, (T.room && T.room.state) || {}, { forfeit: side });
@@ -649,6 +679,7 @@
     if (!T || finished) return;
     if (side === T.side) { P.finish("lose", left ? "You left this table." : "You forfeited this game.", left ? "You Left the Table" : "You Forfeited the Game"); return; }
     clearTimeout(T.timer); T.timer = 0;
+    if (C.partners) { token = null; P.finish("draw", P.oppName() + " left the game, so it ended here. No points either way.", P.oppName() + " Left the Game"); return; }
     if (left) P.finish("win", P.oppName() + " has left the table for good. The win is yours.", P.oppName() + " Left the Table");
     else P.finish("win", P.oppName() + " forfeited the game. The win is yours.", P.oppName() + " Forfeited");
     try { if (T.room) T.room.__bwReported = true; T.sb.rpc("bw_report_result", { p_room: String(T.room.id), p_winner: T.side }); } catch (e) {}
@@ -661,6 +692,9 @@
      Leave Table (asks first) saves state.forfeit = my side and state.left = true, status "done", and reports the other
      side as the winner; a waiting player sees "sam Left the Table · … has left the table for good. The win is yours." */
   var yoursAsked = false, TABLE_HOUR = 60 * 60 * 1000;
+  /* partnership games (Oct 28): the two people are partners against The House */
+  var PARTNER_GAMES = { spades: 1, euchre: 1, canasta: 1, pinochle: 1, bridge: 1 };
+  P.isPartnerGame = function (r) { var g = String((r && (r.game || (r.state && r.state.game))) || r || "").toLowerCase(); return !!PARTNER_GAMES[g]; };
   P.openTables = async function (c, me) {
     var since = new Date(Date.now() - TABLE_HOUR).toISOString(), cols = "id,code,game,host,guest,state,status,updated_at,created_at";
     var a = await c.from("rooms").select(cols).eq("host", me).eq("status", "live");
@@ -679,6 +713,7 @@
     var side = r.host === me ? 1 : 2;
     var st = Object.assign({}, r.state || {}, { forfeit: side, left: true });
     await c.from("rooms").update({ state: st, status: "done", updated_at: new Date().toISOString() }).eq("id", r.id);
+    if (P.isPartnerGame(r)) return;   /* partners: leaving just ends the game */
     try { await c.rpc("bw_report_result", { p_room: String(r.id), p_winner: 3 - side }); } catch (e) {}
   };
   P.yourTables = async function (force) {
@@ -695,7 +730,7 @@
         t.appendChild(document.createTextNode("Your " + g[1] + " game with ")); t.appendChild(mk("b", "", r.opp)); t.appendChild(document.createTextNode(" is still open."));
         var go = mk("a", "pk-btn", "Return"); go.href = (typeof bwRoomHref === "function") ? bwRoomHref(g[0], r.code) : (g[2] + "?code=" + encodeURIComponent(r.code));
         var lv = btn("Leave Table", "quiet", function () {
-          t.textContent = "Leave for good? " + r.opp + " wins, and it counts as a loss for you."; acts.innerHTML = "";
+          t.textContent = P.isPartnerGame(r) ? "Leave for good? The game ends for you and " + r.opp + "." : "Leave for good? " + r.opp + " wins, and it counts as a loss for you."; acts.innerHTML = "";
           acts.appendChild(btn("Leave Table", "", async function () { await P.leaveTable(c, r, u.id); P.yourTables(true); }));
           acts.appendChild(btn("Cancel", "quiet", function () { P.yourTables(true); }));
         });

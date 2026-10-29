@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Club Room Canasta · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1026i">
+<link rel="stylesheet" href="parlor-kit.css?v=1028e">
 <link rel="stylesheet" href="bw-cards.css?v=1026d">
 <style>
 /* ===== Club Room Canasta: the club room's octagonal card table seen from straight above, drawn in the browser =====
@@ -163,6 +163,12 @@ body.pk.seated .pk-mini{display:none!important}
   font:700 14px Montserrat,sans-serif;letter-spacing:.06em;white-space:nowrap;pointer-events:none;z-index:640;text-align:center;line-height:1.25}
 .cn-lab b{color:#f0d27a}.cn-lab.frz{border-color:rgba(140,200,255,.7);color:#cfe6ff}.cn-lab.stop{border-color:rgba(255,160,160,.7);color:#ffd0d0}
 .cn-lab small{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+#cnLabP{pointer-events:auto;cursor:pointer}
+.cn-lab small.see{margin-top:2px;font-size:9px;opacity:.7;text-decoration:underline}
+.ce-table.narrow .cn-lab small.see{font-size:14px}
+.cn-chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin:0 0 14px}
+.cn-chip{display:inline-block;padding:2px 7px;border-radius:5px;background:#fbf7ee;color:#17171c;font:700 18px "Cormorant Garamond",Georgia,serif;line-height:1.2}
+.cn-chip.red{color:#ad1f2a}.cn-chip.x{box-shadow:0 0 0 2px rgba(140,200,255,.9)}.cn-chip.top{box-shadow:0 0 0 2px #e9b949}
 .ce-table.narrow .cn-lab{font-size:24px;padding:6px 14px}.ce-table.narrow .cn-lab small{font-size:18px}
 /* a meld's count and wild cards, under its stack; canastas get a ribbon (red: natural, black: mixed) */
 .cn-badge{position:absolute;transform:translate(-50%,0);min-width:34px;padding:2px 7px;border-radius:8px;background:rgba(15,23,42,.8);border:1px solid rgba(231,199,122,.55);
@@ -206,9 +212,9 @@ body.pk.seated .pk-mini{display:none!important}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028d"></script>
+<script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1028d"></script>
+<script src="parlor-kit.js?v=1028e"></script>
 <script src="bw-cards.js?v=1026d"></script>
 <script>
 var K=BWCards, PT=K.paint;
@@ -218,9 +224,7 @@ var K=BWCards, PT=K.paint;
    two decks and four jokers (108 cards). Seats 0-3 clockwise: 0 South, 1 West, 2 North, 3 East; partners 0 & 2,
    1 & 3. Each window turns the table so its own seat is at the bottom. Your team's melds lie on your side of the
    table, the other team's on the far side.
-   Against The House: Margaret is your partner, Walter and Beatrice your opponents. Online, two people play against
-   each other: the host sits South with Margaret, the guest West with Beatrice (The House plays both partners, from
-   the host's window). */
+   Against The House: Margaret is your partner, Walter and Beatrice your opponents. Online (Oct 28), two people play as partners: the host sits South and the guest North, across from each other, against two House players (played from the host\'s window). */
 
 /* ---------- the deck: two packs and four jokers ---------- */
 var ALL=[], BYID={};
@@ -334,9 +338,9 @@ var TARGET=5000, mySide=1, S=null, busy=false, cardEl={}, online=false, sb=null,
 var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
 var inLesson=false, practice=false, lessonOnly=null, GID=0, SEL=[];
 function team(p){ return p%2; }
-function humans(){ return online?[0,1]:[0]; }
+function humans(){ return online?[0,2]:[0]; }   /* online (Oct 28): the two people are partners, across from each other */
 function isHouse(seat){ return humans().indexOf(seat)<0; }
-function mySeat(){ return online&&mySide===2?1:0; }
+function mySeat(){ return online&&mySide===2?2:0; }
 function myTeam(){ return team(mySeat()); }
 function view(seat){ return (seat-mySeat()+4)%4; }
 function authority(){ return !online||mySide===1; }
@@ -652,7 +656,7 @@ function paintTable(){
   place(LABS,G.labS[0],G.labS[1]); place(LABP,G.labP[0],G.labP[1]);
   LABS.innerHTML="<small>Stock</small><b>"+S.stock.length+"</b>";
   var tp=pileTop(), fz=frozen(), st=tp&&isBlack3(tp);
-  LABP.innerHTML="<small>"+(st?"Stopped":fz?"Frozen":"Pile")+"</small><b>"+S.pile.length+"</b>";
+  LABP.innerHTML="<small>"+(st?"Stopped":fz?"Frozen":"Pile")+"</small><b>"+S.pile.length+"</b>"+(S.pile.length>1?"<small class=\"see\">see all</small>":"");
   LABP.classList.toggle("frz",fz&&!st); LABP.classList.toggle("stop",!!st);
   var mine=myTurnNow()&&S.phase==="draw";
   HITS.classList.toggle("glow",mine&&!inLessonBlock("stock")); HITP.classList.toggle("glow",(mine&&!takePlan(mySeat(),SEL.length?SEL:null).err&&!inLessonBlock("pile"))||(myTurnNow()&&S.phase==="play"&&SEL.length===1&&!canDiscard(mySeat(),SEL[0])));
@@ -742,6 +746,7 @@ async function discardNow(){
   SEL=[]; await act(function(){ doDiscard(mySeat(),id); });
 }
 async function act(fn){
+  if(PANEL._pile){ PANEL.classList.remove("on"); PANEL._pile=false; }
   busy=true; clearHint(); var g=GID;
   fn(); seq++; S.seq=seq;
   push();
@@ -792,6 +797,15 @@ function tools(){
 }
 function toast(t){ if(!t) return; toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove("on"); },2300); }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+/* looking through the discard pile (Oct 28): tap the pile's label to see every card in it, bottom to top */
+LABP.addEventListener("pointerdown",function(e){ e.preventDefault(); showPile(); });
+function showPile(){
+  if(!S||busy||S.phase==="handover"||S.phase==="over"||S.pile.length<2) return;
+  var n=S.pile.length, fz=frozen(), chips=S.pile.map(function(id,k){ var c=C(id), cross=(isWild(id)||isRed3(id))&&k!==n-1; return '<span class="cn-chip'+(K.red(c)?" red":"")+(cross?" x":"")+(k===n-1?" top":"")+'">'+K.short(c)+'</span>'; }).join("");
+  PANEL.innerHTML='<p class="k">The Discard Pile</p><h3>'+n+' Cards</h3><p>From the bottom up; the top card is last.'+(fz?' The <b>crosswise</b> cards froze the pile: only a natural pair can take it.':'')+'</p><div class="cn-chips">'+chips+'</div><button type="button" class="pk-btn" id="cnPileClose">Close</button>';
+  PANEL.classList.add("on"); PANEL._pile=true;
+  PANEL.querySelector("#cnPileClose").onclick=function(){ PANEL.classList.remove("on"); PANEL._pile=false; };
+}
 function handOver(){
   var R=S.res, mt=myTeam(), a=R.rows[mt], b=R.rows[1-mt]; Parlor.turn(-1); render(true); SEL=[];
   var head=R.went<0?"The Stock Ran Out":team(R.went)===mt?(R.went===mySeat()?"You Went Out":nameOf(R.went)+" Went Out"):nameOf(R.went)+" Went Out";
@@ -828,8 +842,8 @@ async function dealAnim(){
 function matchOver(){
   var mt=myTeam(), w=winnerTeam(); PANEL.classList.remove("on","wide");
   var detail="Final score: "+teamName(mt)+" "+S.score[mt]+", "+teamName(1-mt)+" "+S.score[1-mt]+" after "+S.hand+" hand"+(S.hand>1?"s":"")+".";
-  if(online){ report(w===0?1:w===1?2:0); if(mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; } }
-  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":(online?Parlor.oppName()+"'s Team Wins":"Walter & Beatrice Win"));
+  if(online&&mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; }   /* partners online: the kit scores each of them as a game against The House */
+  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":teamName(1-mt)+" Win");
 }
 
 /* ---------- hints ---------- */
@@ -909,8 +923,8 @@ function practiceTip(){
   if(++tipN%4===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/4)%TIPS.length]+"</p>");
 }
 
-/* ---------- online table (same page: ?code=XXXX). The host sits South with Margaret; the guest sits West with
-   Beatrice. The House plays Margaret and Beatrice from the host's window, and the host deals. ---------- */
+/* ---------- online table (same page: ?code=XXXX). The host sits South and the guest North, as partners.
+   The House plays East and West from the host's window, and the host deals. ---------- */
 async function push(){
   if(!online||!room||mySide===0) return;
   var st=JSON.parse(JSON.stringify(S));
@@ -955,7 +969,7 @@ async function bootOnline(){
     if(!hadGuest&&room.guest&&S) { after(); }
     if((st.seq||0)<=seq&&S) return;   /* our own move coming back */
     var dealt=st.mv&&st.mv.kind==="deal", was=S; seq=st.seq||0;
-    S=st; GID++; SEL=[];
+    S=st; GID++; SEL=[]; if(PANEL._pile){ PANEL.classList.remove("on"); PANEL._pile=false; }
     busy=true; if(dealt||!was) await dealAnim(); else await animate(st.mv); busy=false;
     if(st.phase!=="handover"&&st.phase!=="over") PANEL.classList.remove("on","wide");
     after();
@@ -987,7 +1001,7 @@ window.addEventListener("bw-avatar",function(){ chipEls.forEach(function(c){ c._
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"canasta", cat:"cards", title:"Club Room Canasta", bg:"cards-canasta.jpg", home:"lobby.html?cat=cards", stage:stage,
+  game:"canasta", partners:true, cat:"cards", title:"Club Room Canasta", bg:"cards-canasta.jpg", home:"lobby.html?cat=cards", stage:stage,
   tagline:"Meld, build canastas, and go out with your partner.", invite:"Leather chairs round the octagonal table and the lamp turned low. Take your seat across from your partner.",
   players:[{name:"You & Margaret",color:"#c9a24f"},{name:"Walter & Beatrice",color:"#8e2a36"}],
   setsLabel:"Tables",
@@ -997,7 +1011,7 @@ Parlor.init({
     {id:"burl",name:DESIGNS.burl.name,club:true,dots:DESIGNS.burl.dots}
   ],
   rules:{
-    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Margaret is your partner and Walter and Beatrice play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>The deck:</b> two packs and four jokers (108 cards). Eleven cards each; one card starts the discard pile.</li><li><b>Your turn:</b> draw one card from the stock, or take the whole discard pile (below). Then meld if you like, and end by discarding one card.</li><li><b>Melds:</b> three or more cards of the same rank (aces, or fours to kings), with at least two natural cards and no more than three wild cards. <b>Twos and jokers are wild.</b> You may add to your team's melds at any time on your turn.</li><li><b>First meld:</b> a team's first meld must be worth at least 50 points (15 while the team's score is below zero, 90 from 1,500, 120 from 3,000).</li><li><b>Canasta:</b> seven or more cards of one rank: natural (no wilds) or mixed.</li><li><b>Taking the pile:</b> you must meld its top card at once, onto your team's meld or with cards from your hand; then the rest of the pile comes to your hand. Before your team's first meld, or when the pile is <b>frozen</b> (a wild card or red three is in it, lying crosswise), you need a natural pair of the top card's rank. A black three or a wild card on top can't be taken.</li><li><b>Threes:</b> red threes are laid out at once and replaced. Black threes can be thrown to stop the next player taking the pile, and melded only when going out.</li><li><b>Going out:</b> once your team has a canasta, meld or discard your last card. Until then, keep at least two cards. When the stock runs out, the hand ends.</li><li>Tap cards in your hand to choose them, then tap <b>Meld</b>, or tap one of your melds to add them to it. Choose one card and tap the <b>discard pile</b> (or Discard) to throw it and end your turn.</li></ol>",
+    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Margaret is your partner and Walter and Beatrice play against you. Online, you and a friend (or a player you're matched with) are partners across the table against two House players.</li><li><b>The deck:</b> two packs and four jokers (108 cards). Eleven cards each; one card starts the discard pile.</li><li><b>Your turn:</b> draw one card from the stock, or take the whole discard pile (below). Then meld if you like, and end by discarding one card.</li><li><b>Melds:</b> three or more cards of the same rank (aces, or fours to kings), with at least two natural cards and no more than three wild cards. <b>Twos and jokers are wild.</b> You may add to your team's melds at any time on your turn.</li><li><b>First meld:</b> a team's first meld must be worth at least 50 points (15 while the team's score is below zero, 90 from 1,500, 120 from 3,000).</li><li><b>Canasta:</b> seven or more cards of one rank: natural (no wilds) or mixed.</li><li><b>Taking the pile:</b> you must meld its top card at once, onto your team's meld or with cards from your hand; then the rest of the pile comes to your hand. Before your team's first meld, or when the pile is <b>frozen</b> (a wild card or red three is in it, lying crosswise), you need a natural pair of the top card's rank. A black three or a wild card on top can't be taken.</li><li><b>Threes:</b> red threes are laid out at once and replaced. Black threes can be thrown to stop the next player taking the pile, and melded only when going out.</li><li><b>Going out:</b> once your team has a canasta, meld or discard your last card. Until then, keep at least two cards. When the stock runs out, the hand ends.</li><li>Tap cards in your hand to choose them, then tap <b>Meld</b>, or tap one of your melds to add them to it. Choose one card and tap the <b>discard pile</b> (or Discard) to throw it and end your turn.</li></ol>",
     score:"<ul><li><b>Cards melded:</b> jokers 50, aces and twos 20, kings to eights 10, sevens to fours (and black threes) 5.</li><li><b>Canastas:</b> natural 500, mixed 300.</li><li><b>Red threes:</b> 100 each, 800 for all four; they count against a team that made no meld.</li><li><b>Going out:</b> 100, or 200 if the team hadn't melded before that turn (concealed).</li><li><b>Cards left in hand</b> count against both partners' team.</li><li>The first team to <b>5,000</b> wins. Practice games end at 1,000.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=5000; mySide=1; Parlor.coach(null); PANEL.classList.remove("on","wide"); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },

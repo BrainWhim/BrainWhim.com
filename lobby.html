@@ -883,7 +883,7 @@ var LOBBY_CATS={
     {name:"Club Room Canasta", page:"canasta.html", img:"cards-canasta-sm.jpg"},
     {name:"Kitchen Table Pinochle", page:"pinochle.html", img:"cards-pinochle-sm.jpg"},
     {name:"Observatory FreeCell", page:"freecell.html", img:"cards-freecell-sm.jpg"},
-    {name:"Ballroom Bridge", img:"cards-bridge-sm.jpg", soon:true, about:"Contract Bridge with a partner: bid the contract, then play it out."},
+    {name:"Ballroom Bridge", page:"bridge.html", img:"cards-bridge-sm.jpg"},
     {name:"Club Cribbage", page:"cribbage.html", img:"cribbage-snug.jpg", also:"Board Games"}
   ]}
 };
@@ -964,7 +964,7 @@ renderLobby(lobbyCatFromUrl());
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028d"></script>
+<script src="play-rooms.js?v=1028e"></script>
 <script>
 var sb=null, sessionUser=null, myName="", noticeCh=null, waitTimer=null, waitRoom=null, beatTimer=null, myPts=0, myMember=false;
 function cleanName(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9_]/g,"").slice(0,20); }
@@ -1002,7 +1002,8 @@ var ROOM_PAGES={
   spades:"spades.html",
   euchre:"euchre.html",
   canasta:"canasta.html",
-  pinochle:"pinochle.html"
+  pinochle:"pinochle.html",
+  bridge:"bridge.html"
 };
 function roomPage(game){
   game=String(game||"").toLowerCase();
@@ -1061,6 +1062,7 @@ function startState(game){
   if(game==="euchre") return {game:"euchre", v:0};
   if(game==="canasta") return {game:"canasta", v:0};
   if(game==="pinochle") return {game:"pinochle", v:0};
+  if(game==="bridge") return {game:"bridge", v:0};
   if(game==="shutbox") return {game:"shutbox", open:[1,2,3,4,5,6,7,8,9], pick:[], dice:[0,0], need:0, turn:1, score1:null, score2:null, rolled:false, over:false};
   return startBoard();
 }
@@ -1121,6 +1123,8 @@ async function playOnline(game){
   if(!waitRoom) return;
   goRoom(game, waitRoom.code, "mode=multiplayer&match_id="+encodeURIComponent(waitRoom.code)+"&seat=w");
 }
+/* partnership games (Oct 28): the two people are partners against The House, so leaving just ends the game */
+var LOBBY_PARTNERS={spades:1,euchre:1,canasta:1,pinochle:1,bridge:1};
 async function inviteFriend(game, nameOverride){
   var s=await needSession(); if(!s) return;
   game=game||"chess";
@@ -1134,10 +1138,10 @@ async function inviteFriend(game, nameOverride){
   if(!(await BW.startMatch({mode:"online"}))) return;
   var room=await makeRoom("private", game);
   if(!room) return;
-  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":game==="cribbage"?"club cribbage":game==="shutbox"?"tavern Shut the Box":game==="crazyeights"?"sunroom Crazy Eights":game==="ginrummy"?"porch Gin Rummy":game==="hearts"?"rose garden Hearts":game==="spades"?"study Spades":game==="euchre"?"lakehouse Euchre":game==="canasta"?"club room Canasta":game==="pinochle"?"kitchen table Pinochle":"garden chess";
+  var label=game==="checkers"?"garden checkers":game==="backgammon"?"library backgammon":game==="othello"?"terrace Othello":game==="morris"?"cloister Morris":game==="mancala"?"pavilion Mancala":game==="dominoes"?"sunroom dominoes":game==="yahtzee"?"club Yahtzee":game==="cribbage"?"club cribbage":game==="shutbox"?"tavern Shut the Box":game==="crazyeights"?"sunroom Crazy Eights":game==="ginrummy"?"porch Gin Rummy":game==="hearts"?"rose garden Hearts":game==="spades"?"study Spades":game==="euchre"?"lakehouse Euchre":game==="canasta"?"club room Canasta":game==="pinochle"?"kitchen table Pinochle":game==="bridge"?"ballroom Bridge":"garden chess";
   var n=await sb.from("notices").insert({
     to_id:p.data.id, from_id:s.user.id, kind:"invite", game:game, room_code:room.code,
-    body:(myName||"A player")+" invited you to "+label+"."
+    body:(myName||"A player")+(LOBBY_PARTNERS[game]?" invited you to be their partner at ":" invited you to ")+label+"."
   });
   if(n.error){ alert(n.error.message); return; }
   goRoom(game, room.code, "online=1&mode=multiplayer&match_id="+encodeURIComponent(room.code)+"&seat=w");   /* the inviter sits first (ivory) */
@@ -1299,8 +1303,8 @@ async function beat(){
    tables" with View, which opens a glass window listing them (lobby.html#yours opens it too). Leave Table asks
    first, then saves state.forfeit = my side + state.left = true, status "done", and reports the other side as the
    winner; the waiting player's room shows "sam Left the Table · … has left the table for good. The win is yours." */
-var YT_NAMES={chess:"Garden Chess",checkers:"Garden Checkers",backgammon:"Library Backgammon",yahtzee:"Club Yahtzee",dominoes:"Sunroom Dominoes",othello:"Night Terrace Othello",mancala:"Pavilion Mancala",cribbage:"Club Cribbage",shutbox:"Tavern Shut the Box",morris:"Cloister Morris",crazyeights:"Sunroom Crazy Eights",ginrummy:"Porch Gin Rummy",hearts:"Rose Garden Hearts",spades:"Study Spades",euchre:"Lakehouse Euchre",canasta:"Club Room Canasta",pinochle:"Kitchen Table Pinochle"};
-var YT_SHORT={chess:"Chess",checkers:"Checkers",backgammon:"Backgammon",yahtzee:"Yahtzee",dominoes:"Dominoes",othello:"Othello",mancala:"Mancala",cribbage:"Cribbage",shutbox:"Shut the Box",morris:"Morris",crazyeights:"Crazy Eights",ginrummy:"Gin Rummy",hearts:"Hearts",spades:"Spades",euchre:"Euchre",canasta:"Canasta",pinochle:"Pinochle"};
+var YT_NAMES={chess:"Garden Chess",checkers:"Garden Checkers",backgammon:"Library Backgammon",yahtzee:"Club Yahtzee",dominoes:"Sunroom Dominoes",othello:"Night Terrace Othello",mancala:"Pavilion Mancala",cribbage:"Club Cribbage",shutbox:"Tavern Shut the Box",morris:"Cloister Morris",crazyeights:"Sunroom Crazy Eights",ginrummy:"Porch Gin Rummy",hearts:"Rose Garden Hearts",spades:"Study Spades",euchre:"Lakehouse Euchre",canasta:"Club Room Canasta",pinochle:"Kitchen Table Pinochle",bridge:"Ballroom Bridge"};
+var YT_SHORT={chess:"Chess",checkers:"Checkers",backgammon:"Backgammon",yahtzee:"Yahtzee",dominoes:"Dominoes",othello:"Othello",mancala:"Mancala",cribbage:"Cribbage",shutbox:"Shut the Box",morris:"Morris",crazyeights:"Crazy Eights",ginrummy:"Gin Rummy",hearts:"Hearts",spades:"Spades",euchre:"Euchre",canasta:"Canasta",pinochle:"Pinochle",bridge:"Bridge"};
 var ytRows=[];
 async function loadYourTables(){
   var box=document.getElementById("yourTables");
@@ -1322,7 +1326,7 @@ function ytButton(label,cls,fn){ var b=bwMakeEl("button","yt-btn"+(cls?" "+cls:"
 function ytActions(r,acts,txt,after){
   var go=bwMakeEl("a","yt-btn","Return"); go.href=bwRoomHref(r.g,r.code); acts.appendChild(go);
   acts.appendChild(ytButton("Leave Table","quiet",function(){
-    txt.textContent="Leave for good? "+r.opp+" wins, and it counts as a loss for you."; acts.innerHTML="";
+    txt.textContent=LOBBY_PARTNERS[r.g||r.game]?"Leave for good? The game ends for you and "+r.opp+".":"Leave for good? "+r.opp+" wins, and it counts as a loss for you."; acts.innerHTML="";
     acts.appendChild(ytButton("Leave Table","",async function(){ await leaveTable(r); after(); }));
     acts.appendChild(ytButton("Cancel","quiet",after));
   }));
@@ -1359,7 +1363,7 @@ async function leaveTable(r){
   var me=sessionUser.id, side=r.host===me?1:2, st=Object.assign({},r.state||{},{forfeit:side,left:true});
   try{
     await sb.from("rooms").update({state:st,status:"done",updated_at:new Date().toISOString()}).eq("id",r.id);
-    await sb.rpc("bw_report_result",{p_room:String(r.id),p_winner:3-side});
+    if(!LOBBY_PARTNERS[r.g||r.game]) await sb.rpc("bw_report_result",{p_room:String(r.id),p_winner:3-side});
   }catch(e){}
   ytRows=ytRows.filter(function(x){ return x.id!==r.id; });
   var t=document.getElementById("toast"); if(t){ t.textContent="You left the table. "+r.opp+" has been told."; t.classList.add("on"); setTimeout(function(){ t.classList.remove("on"); },4000); }

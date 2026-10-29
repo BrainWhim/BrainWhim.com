@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kitchen Table Pinochle · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1026i">
+<link rel="stylesheet" href="parlor-kit.css?v=1028e">
 <link rel="stylesheet" href="bw-cards.css?v=1026d">
 <style>
 /* ===== Kitchen Table Pinochle: the farmhouse kitchen's round planked table seen from straight above, drawn in the browser =====
@@ -197,9 +197,9 @@ body.pk.seated .pk-mini{display:none!important}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028d"></script>
+<script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1028d"></script>
+<script src="parlor-kit.js?v=1028e"></script>
 <script src="bw-cards.js?v=1026d"></script>
 <script>
 var K=BWCards, PT=K.paint;
@@ -208,8 +208,7 @@ var K=BWCards, PT=K.paint;
    Classic four-handed partnership Pinochle: a 48-card deck (two each of the nine, ten, jack, queen, king and ace in
    every suit), 12 cards each, bidding, trump, meld, then 12 tricks. Seats 0-3 clockwise: 0 South, 1 West, 2 North,
    3 East; partners 0 & 2, 1 & 3. Each window turns the table so its own seat is at the bottom.
-   Against The House: Ruth is your partner, Earl and Dot your opponents. Online, two people play against each other:
-   the host sits South with Ruth, the guest West with Dot (The House plays both partners, from the host's window). */
+   Against The House: Ruth is your partner, Earl and Dot your opponents. Online (Oct 28), two people play as partners: the host sits South and the guest North, across from each other, against two House players (played from the host\'s window). */
 
 /* ---------- the deck ---------- */
 var PR=[8,9,10,11,12,0];                                  /* 9 10 J Q K A */
@@ -299,14 +298,21 @@ G=layoutFor(false);
    Saved (and sent online) as plain ids ("s-r-d"): h[0..3] the hands, trick [{p,id}], lead, turn, phase (bid | trump |
    meld | play | handover | over), dealer, bids[0..3] (null, a number, or "pass"), high, bidder, trump, meld[0..3]
    ({pts, items}), took[0..3], last, score[team], hand, res, seq, mv. Teams: 0 = seats 0 & 2, 1 = seats 1 & 3. */
-var TARGET=1500, MINBID=200, mySide=1, S=null, busy=false, cardEl={}, online=false, sb=null, room=null, me=null, reported=false, seq=0;
+var TARGET=1500, mySide=1, S=null, busy=false, cardEl={}, online=false, sb=null, room=null, me=null, reported=false, seq=0;
 var CODE=(location.search.match(/[?&]code=([A-Za-z0-9]+)/)||[])[1];
 var inLesson=false, practice=false, lessonOnly=null, GID=0;
+/* table rules (Oct 28, Judy's partnership spec): pass four cards between partners, a four-card kitty for the bid
+   winner, and the minimum bid. Chosen in the Table Rules window, saved on the device; online the host's rules apply. */
+var RULE_KEY="bwPinochleRules", DEFAULT_RULES={pass:true,kitty:false,min:250}, LESSON_RULES={pass:false,kitty:false,min:250};
+function savedRules(){ try{ var r=JSON.parse(localStorage.getItem(RULE_KEY)||"null"); if(r&&typeof r==="object") return {pass:r.pass!==false,kitty:!!r.kitty,min:[200,250].indexOf(+r.min)>=0?+r.min:DEFAULT_RULES.min}; }catch(e){} return {pass:DEFAULT_RULES.pass,kitty:DEFAULT_RULES.kitty,min:DEFAULT_RULES.min}; }
+function saveRules(r){ try{ localStorage.setItem(RULE_KEY,JSON.stringify(r)); }catch(e){} }
+function R(){ return (S&&S.rules)||DEFAULT_RULES; }
+function rulesLine(r){ r=r||R(); return (r.pass?"passing 4":"no passing")+" · "+(r.kitty?"kitty":"no kitty")+" · bids from "+r.min; }
 function team(p){ return p%2; }
 function shuffleIds(a){ return K.shuffle(a); }
-function humans(){ return online?[0,1]:[0]; }
+function humans(){ return online?[0,2]:[0]; }   /* online (Oct 28): the two people are partners, across from each other */
 function isHouse(seat){ return humans().indexOf(seat)<0; }
-function mySeat(){ return online&&mySide===2?1:0; }
+function mySeat(){ return online&&mySide===2?2:0; }
 function myTeam(){ return team(mySeat()); }
 function view(seat){ return (seat-mySeat()+4)%4; }
 function authority(){ return !online||mySide===1; }
@@ -342,11 +348,14 @@ function meldOf(h,t){
   return {pts:items.reduce(function(a,x){ return a+x.pts; },0),items:items,ids:Object.keys(used)};
 }
 
-function newMatch(){ GID++; S={v:1,game:"pinochle",h:[[],[],[],[]],trick:[],lead:0,turn:0,phase:"bid",dealer:3,bids:[null,null,null,null],high:0,bidder:-1,trump:null,meld:[null,null,null,null],took:[[],[],[],[]],last:null,score:[0,0],hand:0,res:null,seq:0,mv:null}; dealHand(); }
+function newMatch(){ GID++; S={v:1,game:"pinochle",rules:inLesson?Object.assign({},LESSON_RULES):savedRules(),h:[[],[],[],[]],kitty:[],buried:[],pass:null,trick:[],lead:0,turn:0,phase:"bid",dealer:3,bids:[null,null,null,null],high:0,bidder:-1,trump:null,meld:[null,null,null,null],took:[[],[],[],[]],last:null,score:[0,0],hand:0,res:null,seq:0,mv:null}; dealHand(); }
 function dealHand(){
   var d=shuffleIds(ALL.slice()), k=0;
   S.hand++; if(S.hand>1) S.dealer=(S.dealer+1)%4;
-  S.h=[[],[],[],[]]; for(var i=0;i<48;i++) S.h[(S.dealer+1+Math.floor(i/3))%4].push(d[i]);   /* dealt in threes */
+  S.h=[[],[],[],[]];
+  /* dealt in threes (with the kitty: 3, 3, 3 and 2 each, and four cards left face down in the middle) */
+  var each=R().kitty?11:12, k2=0; while(k2<each*4){ for(var q=1;q<=4;q++){ var p=(S.dealer+q)%4, n=Math.min(3,each-S.h[p].length); for(var j=0;j<n;j++) S.h[p].push(d[k2++]); } }
+  S.kitty=d.slice(k2); S.buried=[]; S.pass=null;
   S.trick=[]; S.took=[[],[],[],[]]; S.last=null; S.res=null; S.bids=[null,null,null,null]; S.high=0; S.bidder=-1; S.trump=null; S.meld=[null,null,null,null];
   S.phase="bid"; S.turn=(S.dealer+1)%4; S.lead=S.turn; S.mv={p:-1,kind:"deal"};
 }
@@ -354,21 +363,35 @@ function dealHand(){
    passed the last bidder wins. If the first three pass, the dealer must take it at 200. */
 function inBidding(p){ return S.bids[p]!=="pass"; }
 function nextBidder(p){ for(var k=1;k<=4;k++){ var q=(p+k)%4; if(inBidding(q)) return q; } return p; }
-function minNext(){ return S.high?S.high+10:MINBID; }
+function minNext(){ return S.high?S.high+10:R().min; }
 function placeBid(p,v){
   if(v==="pass"){ S.bids[p]="pass"; S.mv={p:p,kind:"bid",pass:true}; }
   else { S.bids[p]=v; S.high=v; S.bidder=p; S.mv={p:p,kind:"bid",bid:v}; }
   var live=[0,1,2,3].filter(inBidding);
-  if(live.length===1&&S.high){ S.bidder=live[0]; S.phase="trump"; S.turn=S.bidder; return; }
-  if(live.length===1&&!S.high){ var dl=live[0]; S.bids[dl]=MINBID; S.high=MINBID; S.bidder=dl; S.mv.stuck=dl; S.phase="trump"; S.turn=dl; return; }
+  if(live.length===1&&S.high){ S.bidder=live[0]; afterAuction(); return; }
+  if(live.length===1&&!S.high){ var dl=live[0]; S.bids[dl]=R().min; S.high=R().min; S.bidder=dl; S.mv.stuck=dl; afterAuction(); return; }
   S.turn=nextBidder(p);
 }
 function mustBid(p){ return [0,1,2,3].filter(function(q){ return q!==p&&inBidding(q); }).length===0; }
+/* after the auction: with the kitty, the bid winner takes its four cards and buries four; then trump is named */
+function afterAuction(){
+  if(R().kitty&&S.kitty.length){ S.h[S.bidder]=S.h[S.bidder].concat(S.kitty); S.mv.kitty=S.kitty.slice(); S.kitty=[]; S.phase="kitty"; S.turn=S.bidder; return; }
+  S.phase="trump"; S.turn=S.bidder;
+}
+function bury(p,ids){ ids.forEach(function(id){ S.h[p].splice(S.h[p].indexOf(id),1); }); S.buried=ids.slice(); S.mv={p:p,kind:"bury",n:ids.length}; S.phase="trump"; S.turn=p; }
 function nameTrump(p,t){
   S.trump=t; S.mv={p:p,kind:"trump",suit:t};
-  for(var q=0;q<4;q++) S.meld[q]=meldOf(S.h[q],t);
-  S.phase="meld"; S.turn=S.bidder;
+  if(R().pass){ S.phase="pass"; S.pass={step:0,got:[],to:-1}; S.turn=(S.bidder+2)%4; return; }
+  meldStart();
 }
+/* passing: the bid winner's partner sends four cards across, then the bid winner sends four back */
+function passCards(p,ids){
+  var to=(p+2)%4; ids.forEach(function(id){ S.h[p].splice(S.h[p].indexOf(id),1); S.h[to].push(id); });
+  S.pass.got=ids.slice(); S.pass.to=to; S.mv={p:p,kind:"pass",to:to,n:ids.length,step:S.pass.step};
+  if(S.pass.step===0){ S.pass.step=1; S.turn=S.bidder; return; }
+  meldStart();
+}
+function meldStart(){ for(var q=0;q<4;q++) S.meld[q]=meldOf(S.h[q],S.trump); S.phase="meld"; S.turn=S.bidder; }
 function startPlay(){ S.phase="play"; S.lead=S.bidder; S.turn=S.bidder; S.trick=[]; S.mv={p:-1,kind:"start"}; }
 /* the cards a seat may play: follow suit, and beat the winning card if you can; if you can't follow, trump (beating any
    trump already played if you can); otherwise anything */
@@ -390,7 +413,7 @@ function playCard(p,id){
   if(S.trick.length<4){ S.turn=(p+1)%4; return true; }
   var w=winningPlay(S.trick).p, cards=S.trick.map(function(x){ return x.id; });
   S.last={cards:S.trick.slice(),w:w}; S.took[w]=S.took[w].concat(cards); S.trick=[]; S.lead=w; S.turn=w; S.mv.done=true; S.mv.w=w;
-  if(!S.h[0].length&&!S.h[1].length) endHand();
+  if(!S.h[0].length&&!S.h[1].length&&!S.h[2].length&&!S.h[3].length) endHand();
   return true;
 }
 /* scoring: aces, tens and kings in your tricks are 10 each, the last trick 10 more (250 in all). Meld counts only for a
@@ -399,6 +422,7 @@ function endHand(){
   var bt=team(S.bidder), rows=[];
   for(var t=0;t<2;t++){ var cnt=0; [t,t+2].forEach(function(p){ S.took[p].forEach(function(id){ if(isCounter(id)) cnt+=10; }); });
     if(S.last&&team(S.last.w)===t) cnt+=10;
+    if(t===team(S.bidder)) (S.buried||[]).forEach(function(id){ if(isCounter(id)) cnt+=10; });   /* counters buried from the kitty */
     var md=S.meld[t].pts+S.meld[t+2].pts, took=teamTricks(t)>0, mdc=took?md:0, r={meld:md,meldKept:mdc,counters:cnt};
     if(t===bt){ r.bid=S.high; r.made=mdc+cnt>=S.high; r.total=r.made?mdc+cnt:-S.high; } else r.total=mdc+cnt;
     rows.push(r); }
@@ -421,6 +445,7 @@ function fanMine(ids,o){
   var gap=10*o.sc, step=n>1?Math.min(w*.62,(o.w-w-gap*gaps)/(n-1)):0, total=step*(n-1)+gap*gaps+w, x=500-total/2;
   s.forEach(function(id,k){ if(k&&C(id).s!==C(s[k-1]).s) x+=gap;
     var off=k-(n-1)/2, rot=Math.max(-12,Math.min(12,off*1.4)), dy=off*off*.8, lift=can.indexOf(id)>=0&&can.length<s.length?o.lift*.4:0;
+    if(PICK.indexOf(id)>=0) lift=o.lift;
     P[id]={x:x+w/2-50,y:o.y+dy-70-lift,sc:o.sc,rot:rot,up:true,z:600+k}; x+=step; });
   return P;
 }
@@ -444,6 +469,8 @@ function positions(o){
     if(o.showLast&&S.last) tk=tk.filter(function(id){ return !S.last.cards.some(function(t){ return t.id===id; }); });
     tk.forEach(function(id,k){ var tr=Math.floor(k/4), dd=tr*(v2===0||v2===2?8:6);
       P[id]={x:pl[0]-50+(v2===0?-dd:v2===2?dd:0),y:pl[1]-70+(v2===1||v2===3?-dd:0),sc:G.psc,rot:(tr%2?8:-6)+(v2%2?90:0),up:false,z:250+k}; }); }
+  (S.kitty||[]).forEach(function(id,k){ P[id]={x:G.disc[0]-50+(k-1.5)*16,y:G.disc[1]-70,sc:G.psc*1.4,rot:(k-1.5)*6,up:false,z:150+k}; });
+  if(S.buried&&S.buried.length&&S.bidder>=0){ var vb=view(S.bidder), pb=G.pile[vb]; S.buried.forEach(function(id,k){ P[id]={x:pb[0]-50+(vb%2?0:30)+k*2,y:pb[1]-70+(vb%2?30:0)-k*2,sc:G.psc,rot:vb%2?0:90,up:false,z:240+k}; }); }
   S.trick.forEach(atSpot);
   if(o.showLast&&S.last) S.last.cards.forEach(atSpot);
   return P;
@@ -456,13 +483,16 @@ function elFor(id){
 }
 function render(anim,o){
   o=o||{}; var P=positions(o), jobs=[], mine=S.h[mySeat()], can=myCan(), mel=S.phase==="meld"&&S.meld[mySeat()]?S.meld[mySeat()].ids:[];
+  var got=(S.phase==="pass"||S.phase==="meld")&&S.pass&&S.pass.to===mySeat()?S.pass.got:S.phase==="kitty"&&S.turn===mySeat()&&S.mv&&S.mv.kitty?S.mv.kitty:[];
+  PICK=PICK.filter(function(id){ return mine.indexOf(id)>=0; }); if(!(S.phase==="pass"||S.phase==="kitty")) PICK=[];
   Object.keys(P).forEach(function(id){
     var p=P[id], e=elFor(id), moved=e._x==null||Math.abs(e._x-p.x)>.5||Math.abs(e._y-p.y)>.5||Math.abs((e._sc||1)-p.sc)>.01||Math.abs((e._rot||0)-p.rot)>.5;
     var inMine=mine.indexOf(id)>=0&&mySide!==0;
     e.classList.toggle("hint",KEEP.indexOf(id)>=0);
     e.classList.toggle("can",inMine&&can.indexOf(id)>=0);
     e.classList.toggle("dim",inMine&&!!can.length&&can.indexOf(id)<0);
-    e.classList.toggle("recv",inMine&&mel.indexOf(id)>=0);
+    e.classList.toggle("recv",inMine&&(mel.indexOf(id)>=0||got.indexOf(id)>=0));
+    e.classList.toggle("pick",inMine&&PICK.indexOf(id)>=0);
     e.classList.toggle("won",!!(o.showLast&&S.last&&S.last.cards.some(function(t){ return t.id===id&&t.p===S.last.w; })));
     if(anim&&moved&&e._x!=null){
       var flip=e._up!==p.up?{c:C(id),up:p.up}:null;
@@ -472,10 +502,12 @@ function render(anim,o){
   paintTable(); panels();
   return Promise.all(jobs);
 }
-var chipEls=[];
+var chipEls=[], PICK=[];
 function chipText(p){
   if(S.phase==="bid"){ var b=S.bids[p]; if(b==="pass") return "<u>Pass</u>"; if(b!=null) return "<em>"+b+"</em>"; return S.turn===p?"bidding…":(p===S.dealer?"<u>Dealer</u>":""); }
   if(S.phase==="trump") return p===S.bidder?"<em>"+S.high+"</em> naming trump…":"";
+  if(S.phase==="kitty") return p===S.bidder?"<em>"+S.high+"</em> burying 4…":"";
+  if(S.phase==="pass") return S.turn===p?"passing 4…":(p===S.bidder?"<em>"+S.high+"</em>":"");
   if(S.phase==="meld") return "meld <em>"+(S.meld[p]?S.meld[p].pts:0)+"</em>";
   return (p===S.bidder?"<em>"+S.high+"</em> · ":"")+"<i>"+tricksOf(p)+"</i>";
 }
@@ -514,13 +546,14 @@ function chipHtml(id){ var c=C(id); return '<span class="pn-chip'+(K.red(c)?" re
 function myBest(){ var h=S.h[mySeat()], best=null; for(var t=0;t<4;t++){ var m=meldOf(h,t).pts; if(!best||m>best.pts) best={t:t,pts:m}; } return best; }
 function canAct(){ return mySide!==0&&seatedNow()&&(!online||(room&&room.guest))&&!(inLesson&&!Parlor.lessonWaiting); }
 function panels(){
-  if(!S) return;
+  if(!S||PANEL._k==="rules") return;   /* the Table Rules window stays until it's closed */
   var ms=mySeat(), key=null;
   if(S.phase==="bid"&&S.turn===ms&&canAct()) key="bid";
   else if(S.phase==="trump"&&S.turn===ms&&canAct()) key="trump";
+  else if((S.phase==="pass"||S.phase==="kitty")&&S.turn===ms&&canAct()) key=S.phase;
   else if(S.phase==="meld") key="meld";
   if(!key){ if(PANEL._k&&PANEL._k!=="hand"){ PANEL.classList.remove("on","pnw"); PANEL._k=null; } return; }
-  var sig=key+":"+S.hand+":"+S.seq; if(PANEL._sig===sig&&PANEL.classList.contains("on")) return; PANEL._sig=sig; PANEL._k=key;
+  var sig=key+":"+S.hand+":"+S.seq+":"+PICK.length; if(PANEL._sig===sig&&PANEL.classList.contains("on")) return; PANEL._sig=sig; PANEL._k=key;
   var h="";
   if(key==="bid"){ var mb=myBest(), sug=inLesson?(lessonOnly&&lessonOnly.bid):houseBid(ms,true), lo=minNext(), forced=mustBid(ms)&&!S.high;
     var partner=(ms+2)%4, pb=S.bids[partner];
@@ -534,6 +567,11 @@ function panels(){
     [0,1,3,2].forEach(function(t){ var n=hh.filter(function(id){ return C(id).s===t; }).length; h+='<button type="button" data-t="'+t+'" class="'+(t===1||t===2?"red":"")+(t===st?" best":"")+'"><b>'+SUITCH[t]+'</b>'+SUITNM[t]+'<small>meld '+meldOf(hh,t).pts+' · '+n+' cards</small></button>'; });
     h+='</div>';
   }
+  if(key==="pass"){ var to=(ms+2)%4, back=S.pass&&S.pass.step===1;
+    h='<p class="k">'+SUITNM[S.trump]+' are trump · bid '+S.high+'</p><h3>Pass 4 Cards '+(back?"Back ":"")+'to '+esc(nameOf(to))+'</h3><p>'+(back?esc(nameOf(to))+" passed you four cards (glowing blue). Send back four you don't need: low cards outside trump and your meld.":esc(nameOf(to))+" won the bid. Send your best help: trump, aces, and cards for "+(nameOf(to)==="You"?"your":"their")+" meld.")+'</p>'+
+      '<p>Choose four cards, then tap <b>'+esc(nameOf(to))+'\'s hand</b> or the button. <b>'+PICK.length+' of 4</b> chosen.</p><div class="pn-row"><button type="button" class="pk-btn'+(PICK.length===4?" best":"")+'" id="pnPass"'+(PICK.length===4?"":" disabled")+'>Pass to '+esc(nameOf(to))+'</button><button type="button" class="pk-btn" id="pnSug">Suggest</button></div>';
+  }
+  if(key==="kitty"){ h='<p class="k">You Won the Bid at '+S.high+'</p><h3>Bury 4 Cards</h3><p>The kitty\'s four cards are in your hand (glowing blue). Bury any four: counters you bury still count for your team.</p><p><b>'+PICK.length+' of 4</b> chosen.</p><div class="pn-row"><button type="button" class="pk-btn'+(PICK.length===4?" best":"")+'" id="pnBury"'+(PICK.length===4?"":" disabled")+'>Bury 4</button><button type="button" class="pk-btn" id="pnSug">Suggest</button></div>'; }
   if(key==="meld"){ var mt=myTeam(), bt=team(S.bidder), rows='';
     [mt,1-mt].forEach(function(t){ var tot=0;
       [t,t+2].forEach(function(p){ var m=S.meld[p]; tot+=m.pts; rows+='<tr><td><span class="nm">'+esc(nameOf(p))+'</span>'+(m.items.length?'<small>'+m.items.map(function(x){ return esc(x.name)+" "+x.pts; }).join(" · ")+'</small><div>'+m.ids.map(chipHtml).join("")+'</div>':'<small>no meld</small>')+'</td><td>'+m.pts+'</td></tr>'; });
@@ -546,6 +584,9 @@ function panels(){
   [].forEach.call(PANEL.querySelectorAll("button[data-b]"),function(b){ b.onclick=function(){ bidNow(b.dataset.b==="pass"?"pass":+b.dataset.b); }; });
   [].forEach.call(PANEL.querySelectorAll("button[data-t]"),function(b){ b.onclick=function(){ trumpNow(+b.dataset.t); }; });
   var go=PANEL.querySelector("#pnGo"); if(go) go.onclick=function(){ goNow(); };
+  var pp=PANEL.querySelector("#pnPass"); if(pp) pp.onclick=function(){ passNow(); };
+  var pbu=PANEL.querySelector("#pnBury"); if(pbu) pbu.onclick=function(){ buryNow(); };
+  var sg=PANEL.querySelector("#pnSug"); if(sg) sg.onclick=function(){ PICK=(S.phase==="pass"?housePass(ms,true):houseBury(ms,true)).slice(); PANEL._sig=null; render(true,{dur:160}); };
   if(key==="bid"&&mustBid(ms)&&!S.high){ var pb2=PANEL.querySelector('button[data-b="pass"]'); if(pb2) pb2.disabled=true; }
 }
 async function bidNow(v){
@@ -561,6 +602,16 @@ async function trumpNow(t){
   PANEL.classList.remove("on"); PANEL._sig=null;
   await act(function(){ nameTrump(mySeat(),t); });
 }
+async function passNow(){
+  if(busy||!S||S.phase!=="pass"||S.turn!==mySeat()||PICK.length!==4) return;
+  var ids=PICK.slice(); PICK=[]; PANEL.classList.remove("on"); PANEL._sig=null;
+  await act(function(){ passCards(mySeat(),ids); });
+}
+async function buryNow(){
+  if(busy||!S||S.phase!=="kitty"||S.turn!==mySeat()||PICK.length!==4) return;
+  var ids=PICK.slice(); PICK=[]; PANEL.classList.remove("on"); PANEL._sig=null;
+  await act(function(){ bury(mySeat(),ids); });
+}
 async function goNow(){
   if(busy||!S||S.phase!=="meld") return;
   if(inLesson&&lessonOnly&&lessonOnly.meldGo){ PANEL.classList.remove("on","pnw"); PANEL._sig=null; Parlor.lessonDone(); return; }
@@ -574,6 +625,13 @@ function seatedNow(){ return document.body.classList.contains("seated"); }
 function myTurnNow(){ return !!S&&S.phase==="play"&&S.turn===mySeat()&&canAct(); }
 async function tapCard(id){
   if(busy||!S) return;
+  var ms=mySeat();
+  if((S.phase==="pass"||S.phase==="kitty")&&S.turn===ms&&canAct()){
+    if(S.h[ms].indexOf(id)>=0){ var i=PICK.indexOf(id); if(i>=0) PICK.splice(i,1); else if(PICK.length<4) PICK.push(id); else { toast("Four cards are chosen: tap one to put it back"); return; }
+      Parlor.sfx("click",{pitch:i>=0?.9:1.3}); PANEL._sig=null; render(true,{dur:140}); return; }
+    if(S.phase==="pass"&&S.h[(ms+2)%4].indexOf(id)>=0){ if(PICK.length===4) passNow(); else toast("Choose four cards first"); }
+    return;
+  }
   if(!myTurnNow()||S.h[mySeat()].indexOf(id)<0) return;
   if(legal(mySeat()).indexOf(id)<0){ toast(whyNot(id)); return; }
   if(!allowLesson({play:id})) return;
@@ -581,7 +639,7 @@ async function tapCard(id){
 }
 function whyNot(id){
   var L=C(S.trick[0].id).s, w=winningPlay(S.trick), h=S.h[mySeat()];
-  if(C(id).s!==L&&h.some(function(x){ return C(x).s===L; })) return "Follow suit: play a "+SUIT1[L];
+  if(C(id).s!==L&&h.some(function(x){ return C(x).s===L; })) return "You must follow suit. You still have a "+SUIT1[L]+" in your hand.";
   if(C(id).s===L) return "You must beat the "+K.name(C(w.id))+" if you can";
   if(h.some(function(x){ return C(x).s===S.trump; })&&C(id).s!==S.trump) return "You can't follow suit, so you must trump";
   if(C(id).s===S.trump) return "You must beat the "+K.name(C(w.id))+" if you can";
@@ -603,7 +661,10 @@ async function animate(mv){
     await render(true); return;
   }
   var mine=mv&&mv.p===mySeat()&&mySide!==0;
-  if(mv&&mv.kind==="bid"){ Parlor.sfx("click",{pitch:1.4}); toast(nameOf(mv.p)+(mv.pass?(mine?" pass":" passes"):(mine?" bid ":" bids ")+mv.bid)+(mv.stuck!=null?" · "+nameOf(mv.stuck)+(mv.stuck===mySeat()?" take":" takes")+" it at "+MINBID:"")); }
+  if(mv&&mv.kind==="bid"){ Parlor.sfx("click",{pitch:1.4}); toast(nameOf(mv.p)+(mv.pass?(mine?" pass":" passes"):(mine?" bid ":" bids ")+mv.bid)+(mv.stuck!=null?" · "+nameOf(mv.stuck)+(mv.stuck===mySeat()?" take":" takes")+" it at "+R().min:"")); }
+  if(mv&&mv.kind==="pass"){ Parlor.sfx("card",{pitch:1.2}); toast(nameOf(mv.p)+(mine?" pass":" passes")+" 4 cards to "+nameOf(mv.to)); await render(true,{dur:420}); return; }
+  if(mv&&mv.kind==="bury"){ Parlor.sfx("card",{pitch:.9}); toast(nameOf(mv.p)+(mine?" bury":" buries")+" 4 cards"); await render(true,{dur:380}); return; }
+  if(mv&&mv.kind==="bid"&&mv.kitty){ toast(nameOf(S.bidder)+(S.bidder===mySeat()?" take":" takes")+" the kitty"); }
   if(mv&&mv.kind==="trump"){ Parlor.sfx("mill"); toast(nameOf(mv.p)+(mine?" name ":" names ")+SUITNM[mv.suit]+" as trump"); }
   await render(true,{dur:200});
 }
@@ -617,7 +678,7 @@ function after(){
   if(practice&&!busy) practiceTip();
   if(inLesson) return;
   if(!authority()||(online&&!(room&&room.guest))) return;
-  if((S.phase==="play"||S.phase==="bid"||S.phase==="trump")&&isHouse(S.turn)) setTimeout(houseTurn,S.phase==="play"?650:800);
+  if((S.phase==="play"||S.phase==="bid"||S.phase==="trump"||S.phase==="pass"||S.phase==="kitty")&&isHouse(S.turn)) setTimeout(houseTurn,S.phase==="play"?650:800);
 }
 function msg(){
   if(!S||S.phase==="handover"||S.phase==="over") return;
@@ -625,17 +686,35 @@ function msg(){
   var mine=S.turn===mySeat()&&mySide!==0;
   if(S.phase==="bid"){ if(mine) Parlor.status("Your bid","Bid "+minNext()+" or more, or pass"); else Parlor.status(nameOf(S.turn)+" is bidding…","High bid: "+(S.high||"none yet")); return; }
   if(S.phase==="trump"){ if(mine) Parlor.status("Name trump","You won the bid at "+S.high); else Parlor.status(nameOf(S.turn)+" is naming trump…","Bid "+S.high); return; }
+  if(S.phase==="pass"){ if(mine) Parlor.status("Pass 4 cards","Choose four cards for "+nameOf((S.turn+2)%4)); else Parlor.status(nameOf(S.turn)+" is passing cards…",SUITNM[S.trump]+" are trump"); return; }
+  if(S.phase==="kitty"){ if(mine) Parlor.status("Bury 4 cards","You took the kitty"); else Parlor.status(nameOf(S.turn)+" took the kitty","Burying four cards…"); return; }
   if(S.phase==="meld"){ Parlor.status("Meld",SUITNM[S.trump]+" are trump · bid "+S.high); return; }
   if(mine) Parlor.status("Your turn",!S.trick.length?"Your lead: tap a glowing card":"Follow suit and beat the winning card if you can");
   else Parlor.status(nameOf(S.turn)+(isHouse(S.turn)?" is thinking…":"'s turn"),SUITNM[S.trump]+" are trump");
 }
 function showStats(){ if(!S) return; var mt=myTeam();
-  Parlor.info("Hand "+S.hand+" · first to "+TARGET+(S.bidder>=0&&S.phase!=="bid"?" · bid "+S.high+" by "+nameOf(S.bidder):"")+(S.trump!=null?" · trump "+SUITCH[S.trump]:"")); }
+  Parlor.info("Hand "+S.hand+" · first to "+TARGET+" · "+rulesLine()+(S.bidder>=0&&S.phase!=="bid"?" · bid "+S.high+" by "+nameOf(S.bidder):"")+(S.trump!=null?" · trump "+SUITCH[S.trump]:"")); }
 function tools(){
   TOOLS.innerHTML="";
   function b(label,cls,fn,dis){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; x.disabled=!!dis; TOOLS.appendChild(x); return x; }
-  var ms=mySeat(), can=S&&canAct()&&S.turn===ms&&(S.phase==="play"||S.phase==="bid"||S.phase==="trump");
+  var ms=mySeat(), can=S&&canAct()&&S.turn===ms&&(S.phase==="play"||S.phase==="bid"||S.phase==="trump"||S.phase==="pass"||S.phase==="kitty");
   b("Hint","",showHint,!can||busy);
+  if(!inLesson) b("Table Rules","",rulesPanel,busy);
+}
+function rulesPanel(){
+  if(!S||busy) return;
+  var cur=R(), pend=savedRules(), host=!online||mySide===1;
+  function opt(key,vals,labels){ return '<div class="pn-row">'+vals.map(function(v,i){ return '<button type="button" class="pk-btn'+(pend[key]===v?" best":"")+'" data-rk="'+key+'" data-rv="'+i+'"'+(host?"":" disabled")+'>'+labels[i]+'</button>'; }).join("")+'</div>'; }
+  var h='<p class="k">Table Rules</p><h3>Kitchen Table Rules</h3><p>This game: <b>'+esc(rulesLine(cur))+'</b>.'+(host?" Changes start with your next game.":" The host sets the rules for this table.")+'</p>'+
+    '<p class="sp-note" style="margin:6px 0 4px!important">Pass 4 cards between partners after trump is named</p>'+opt("pass",[true,false],["Pass 4","No Passing"])+
+    '<p class="sp-note" style="margin:6px 0 4px!important">A 4-card kitty for the bid winner, who buries 4</p>'+opt("kitty",[false,true],["No Kitty","Kitty"])+
+    '<p class="sp-note" style="margin:6px 0 4px!important">The lowest opening bid</p>'+opt("min",[200,250],["200","250"])+
+    '<div class="pn-row" style="margin-top:12px">'+(host&&!online?'<button type="button" class="pk-btn" id="pnRulesNew">New Game with These Rules</button>':'')+'<button type="button" class="pk-btn" id="pnRulesClose">Close</button></div>';
+  PANEL.innerHTML=h; PANEL.classList.add("on","pnw"); PANEL._k="rules"; PANEL._sig="rules";
+  var vals={pass:[true,false],kitty:[false,true],min:[200,250]};
+  [].forEach.call(PANEL.querySelectorAll("button[data-rk]"),function(b){ b.onclick=function(){ var r=savedRules(); r[b.dataset.rk]=vals[b.dataset.rk][+b.dataset.rv]; saveRules(r); rulesPanel(); }; });
+  PANEL.querySelector("#pnRulesClose").onclick=function(){ PANEL.classList.remove("on","pnw"); PANEL._k=null; PANEL._sig=null; panels(); if(S.phase==="handover"||S.phase==="over") handOver(); };
+  var nb=PANEL.querySelector("#pnRulesNew"); if(nb) nb.onclick=function(){ PANEL.classList.remove("on","pnw"); PANEL._k=null; Parlor.newGame(); };
 }
 function toast(t){ if(!t) return; toastEl.textContent=t; toastEl.classList.add("on"); clearTimeout(toastEl._t); toastEl._t=setTimeout(function(){ toastEl.classList.remove("on"); },2100); }
 function handOver(){
@@ -675,8 +754,8 @@ async function dealAnim(){
 function matchOver(){
   var mt=myTeam(), w=winnerTeam(); PANEL.classList.remove("on");
   var detail="Final score: "+teamName(mt)+" "+S.score[mt]+", "+teamName(1-mt)+" "+S.score[1-mt]+" after "+S.hand+" hand"+(S.hand>1?"s":"")+".";
-  if(online){ report(w===0?1:w===1?2:0); if(mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; } }
-  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":(online?Parlor.oppName()+"'s Team Wins":"Earl & Dot Win"));
+  if(online&&mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; }   /* partners online: the kit scores each of them as a game against The House */
+  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":teamName(1-mt)+" Win");
 }
 
 /* ---------- The House ----------
@@ -695,9 +774,9 @@ function handValue(h,t){
 function bestSuit(h){ var b=0,bv=-1; for(var t=0;t<4;t++){ var v=handValue(h,t); if(v>bv){ bv=v; b=t; } } return {t:b,v:bv}; }
 function houseBid(p,full){
   var s=sk(full), h=S.h[p], bs=bestSuit(h), mate=(p+2)%4, mb=S.bids[mate];
-  var est=bs.v+30+(typeof mb==="number"?30:0)+(full?0:Math.round((Math.random()-.45)*s.loose*170));   /* gentle levels misjudge both ways */
+  var est=bs.v+30+(R().pass?55:0)+(R().kitty?25:0)+(typeof mb==="number"?30:0)+(full?0:Math.round((Math.random()-.45)*s.loose*170));   /* gentle levels misjudge both ways */
   var lo=minNext();
-  if(mustBid(p)&&!S.high) return MINBID;
+  if(mustBid(p)&&!S.high) return R().min;
   if(typeof mb==="number"&&S.bidder===mate&&est<lo+40) return "pass";   /* don't outbid a partner without a good reason */
   if(est>=lo) return lo;
   return "pass";
@@ -735,11 +814,30 @@ function bestPlay(p,full){
   }
   return low(L);
 }
+/* passing: the partner sends trump (highest first), then aces, then tens, keeping its own meld where it can;
+   the bid winner sends back low cards outside trump and its meld. Burying: low cards outside the best trump and meld,
+   counters first (they still count). */
+function housePass(p,full){
+  var h=S.h[p].slice(), t=S.trump, s=sk(full);
+  if(S.pass&&S.pass.step===1){ var keep=meldOf(h,t).ids;
+    return h.sort(function(a,b){ function v(x){ return (C(x).s===t?100:0)+(keep.indexOf(x)>=0?60:0)+(C(x).r===0?30:0)+rv(x)*2; } return v(a)-v(b); }).slice(0,4); }
+  var own=meldOf(h,t).ids;
+  var pick=h.sort(function(a,b){ function v(x){ var c=C(x); return (c.s===t?100+rv(x)*4:0)+(c.r===0?40:0)+(c.r===9?18:0)+((c.s===3&&c.r===11)||(c.s===1&&c.r===10)?12:0)-(own.indexOf(x)>=0&&c.s!==t?35:0); } return v(b)-v(a); });
+  if(!full&&Math.random()<s.loose) K.shuffle(pick);
+  return pick.slice(0,4);
+}
+function houseBury(p,full){
+  var h=S.h[p].slice(), t=bestSuit(h).t, keep=meldOf(h,t).ids, cnt={};
+  h.forEach(function(x){ cnt[C(x).s]=(cnt[C(x).s]||0)+1; });
+  return h.sort(function(a,b){ function v(x){ var c=C(x); return (c.s===t?200:0)+(keep.indexOf(x)>=0?100:0)+(c.r===0?60:0)-(isCounter(x)&&c.r!==0?20:0)+cnt[c.s]*3+rv(x); } return v(a)-v(b); }).slice(0,4);
+}
 async function houseTurn(){
   if(!S||busy||inLesson||!authority()||!isHouse(S.turn)) return;
   var p=S.turn;
   if(S.phase==="bid"){ var v=houseBid(p); await act(function(){ placeBid(p,v); }); return; }
   if(S.phase==="trump"){ var t=houseTrump(p); await act(function(){ nameTrump(p,t); }); return; }
+  if(S.phase==="kitty"){ var bu=houseBury(p); await act(function(){ bury(p,bu); }); return; }
+  if(S.phase==="pass"){ var pa=housePass(p); await act(function(){ passCards(p,pa); }); return; }
   if(S.phase!=="play") return;
   var id=bestPlay(p); await act(function(){ playCard(p,id); });
 }
@@ -750,6 +848,8 @@ function clearHint(){ KEEP=[]; [].forEach.call(stage.querySelectorAll(".hint"),f
 function hintText(){
   var ms=mySeat();
   if(S.phase==="bid"){ var v=houseBid(ms,true), mb=myBest(); return {ids:[],bid:v,say:v==="pass"?"Pass: your meld ("+mb.pts+") and likely counters don't reach "+minNext()+".":"Bid "+v+": your meld is "+mb.pts+" with "+SUITNM[mb.t]+" as trump, and your partner should add some meld and counters."}; }
+  if(S.phase==="pass"){ var pc=housePass(ms,true); return {ids:pc,say:(S.pass.step===0?"Pass trump, aces and tens to your partner: ":"Pass back cards you don't need: ")+pc.map(short).join(" ")+"."}; }
+  if(S.phase==="kitty"){ var bc=houseBury(ms,true); return {ids:bc,say:"Bury "+bc.map(short).join(" ")+": low cards outside your best trump and meld."}; }
   if(S.phase==="trump"){ var t=houseTrump(ms,true); return {ids:[],trump:t,say:"Name "+SUITNM[t]+": "+meldOf(S.h[ms],t).pts+" in meld and the most strength in your hand."}; }
   var id=bestPlay(ms,true), say="Play the "+K.name(C(id))+".";
   if(S.trick.length){ var ls=C(S.trick[0].id).s, w=winningPlay(S.trick);
@@ -768,7 +868,7 @@ function showHint(){
   Parlor.status("Hint",h.say); if(practice) Parlor.hintSay("<p>"+h.say+"</p>");
 }
 
-/* ---------- Learn to Play (7 steps) ---------- */
+/* ---------- Learn to Play (8 steps) ---------- */
 function setPos(o){
   GID++; var used={};
   function pick(x){ for(var d=0;d<2;d++){ var id=x[1]+"-"+x[0]+"-"+d; if(!used[id]){ used[id]=1; return id; } } throw new Error("no "+x); }
@@ -776,7 +876,7 @@ function setPos(o){
   var rest=shuffleIds(ALL.filter(function(id){ return !used[id]; })), h=[mine,[],[],[]], took=[[],[],[],[]];
   for(var p=1;p<4;p++){ var n=mine.length-(trick.some(function(t){ return t.p===p; })?1:0); while(h[p].length<n) h[p].push(rest.pop()); }
   var kb=o.tookBy||[1,2,3,0], i=0; while(rest.length>=4){ var who=kb[i%kb.length]; for(var j=0;j<4;j++) took[who].push(rest.pop()); i++; }
-  S={v:1,game:"pinochle",h:h,trick:trick,lead:trick.length?trick[0].p:0,turn:o.turn||0,phase:o.phase||"play",dealer:3,bids:o.bids||[null,null,null,null],high:o.high||0,bidder:o.bidder!=null?o.bidder:-1,trump:o.trump!=null?o.trump:null,
+  S={v:1,game:"pinochle",rules:Object.assign({},LESSON_RULES),kitty:[],buried:[],pass:null,h:h,trick:trick,lead:trick.length?trick[0].p:0,turn:o.turn||0,phase:o.phase||"play",dealer:3,bids:o.bids||[null,null,null,null],high:o.high||0,bidder:o.bidder!=null?o.bidder:-1,trump:o.trump!=null?o.trump:null,
     meld:[null,null,null,null],took:took,last:null,score:[0,0],hand:1,res:null,seq:0,mv:null};
   if(S.trump!=null) for(var q=0;q<4;q++) S.meld[q]=meldOf(S.h[q],S.trump);
   PANEL.classList.remove("on","pnw"); PANEL._sig=null; PANEL._k=null; render(false); showStats(); tools(); paintTable(); msg();
@@ -784,10 +884,11 @@ function setPos(o){
 var LHAND=[[0,2],[9,2],[12,2],[11,2],[10,2],[8,2],[11,3],[10,1],[0,0],[12,0],[9,3],[8,1]];   /* a run in hearts, the dix, a pinochle */
 var LESSON=[
   {title:"The Deck and Partners", text:"<p>Pinochle uses a <b>48-card deck</b>: two each of the nine, ten, jack, queen, king and ace in every suit. Everyone gets 12 cards.</p><p>The order is unusual: <b>ace, ten, king, queen, jack, nine</b>. The ten beats the king! <b>Ruth</b>, across the table, is your partner; <b>Earl</b> and <b>Dot</b> play against you. First team to <b>1,500</b> wins.</p>"},
-  {title:"Bidding", text:"<p>Each player bids how many points their team will score this hand, from <b>200</b> up, or passes. The highest bidder names trump.</p><p>Your hand is strong in hearts. Tap <b>200</b> to bid.</p>", sub:"Bid 200",
-    done:"<p>The others pass, so you win the bid at 200. Your team must now score at least 200 with meld and counters.</p>"},
+  {title:"Bidding", text:"<p>Each player bids how many points their team will score this hand, from <b>250</b> up, or passes. The highest bidder names trump.</p><p>Your hand is strong in hearts. Tap <b>250</b> to bid.</p>", sub:"Bid 250",
+    done:"<p>The others pass, so you win the bid at 250. Your team must now score at least 250 with meld and counters.</p>"},
   {title:"Naming Trump", text:"<p>The bid winner names the trump suit. The window shows how much meld your hand holds for each choice.</p><p>Choose <b>hearts</b>.</p>", sub:"Choose hearts",
     done:"<p>Hearts are trump. Now everyone shows their meld.</p>"},
+  {title:"Passing Cards", text:"<p>At most kitchen tables, partners now <b>trade four cards</b>. The bid winner's partner passes four first (trump and aces help most), then the bid winner passes four back.</p><p>To pass, tap four cards in your hand, then tap your partner's hand or <b>Pass</b>. You can turn passing off, add a <b>kitty</b>, or change the lowest bid in <b>Table Rules</b>.</p>"},
   {title:"Meld", text:"<p>Before play, everyone shows <b>meld</b>: scoring groups in their hand. A <b>run</b> (A 10 K Q J of trump) is 150, a <b>pinochle</b> (Q♠ J♦) 40, the <b>dix</b> (nine of trump) 10, a marriage (K Q) 20, or 40 in trump; four aces of different suits are 100.</p><p>Your run, pinochle and dix make 200, glowing blue in your hand. Tap <b>Play the Hand</b>.</p>", sub:"Tap Play the Hand",
     done:"<p>Meld counts for your team only if you win at least one trick. Now the cards go back into play.</p>"},
   {title:"Follow and Beat", text:"<p>You must <b>follow suit</b>, and you must <b>beat the winning card</b> if you can.</p><p>Earl led the king of clubs. You hold the ten and the jack: the ten beats the king, so it's the only card you may play. Play the <b>ten of clubs</b>.</p>", sub:"Play the ten of clubs",
@@ -798,13 +899,14 @@ var LESSON=[
 ];
 function lessonSetup(k){
   inLesson=true; practice=false; lessonOnly=null; busy=false; PANEL.classList.remove("on","pnw"); PANEL._sig=null; PANEL._k=null; KEEP=[];
-  if(k===0||k===6){ GID++; S=null; newMatch(); render(false); showStats(); tools(); paintTable(); msg(); return; }
-  if(k===1){ setPos({phase:"bid",me:LHAND,turn:0}); lessonOnly={bid:200,check:function(m){ return m&&m.kind==="bid"; }}; PANEL._sig=null; render(false); tools(); msg(); return; }
-  if(k===2){ setPos({phase:"trump",me:LHAND,turn:0,bidder:0,high:200,bids:[200,"pass","pass","pass"]}); lessonOnly={trump:2,check:function(m){ return m&&m.kind==="trump"; }}; PANEL._sig=null; render(false); msg(); return; }
-  if(k===3){ setPos({phase:"meld",me:LHAND,turn:0,bidder:0,high:200,trump:2,bids:[200,"pass","pass","pass"]}); lessonOnly={meldGo:true}; PANEL._sig=null; render(false); return; }
-  if(k===4){ setPos({trump:2,bidder:0,high:200,me:[[9,0],[10,0],[0,2],[12,1],[8,3],[11,3],[9,1],[11,2],[8,2],[0,3],[10,3]],trick:[[1,[12,0]],[2,[8,0]],[3,[11,0]]]}); S.lead=1; S.turn=0; render(false); tools(); msg();
+  if(k===3){ setPos({phase:"trump",me:LHAND,turn:0,bidder:0,high:250,trump:2,bids:[250,"pass","pass","pass"]}); return; }
+  if(k===0||k===7){ GID++; S=null; newMatch(); render(false); showStats(); tools(); paintTable(); msg(); return; }
+  if(k===1){ setPos({phase:"bid",me:LHAND,turn:0}); lessonOnly={bid:250,check:function(m){ return m&&m.kind==="bid"; }}; PANEL._sig=null; render(false); tools(); msg(); return; }
+  if(k===2){ setPos({phase:"trump",me:LHAND,turn:0,bidder:0,high:250,bids:[250,"pass","pass","pass"]}); lessonOnly={trump:2,check:function(m){ return m&&m.kind==="trump"; }}; PANEL._sig=null; render(false); msg(); return; }
+  if(k===4){ setPos({phase:"meld",me:LHAND,turn:0,bidder:0,high:250,trump:2,bids:[200,"pass","pass","pass"]}); lessonOnly={meldGo:true}; PANEL._sig=null; render(false); return; }
+  if(k===5){ setPos({trump:2,bidder:0,high:250,me:[[9,0],[10,0],[0,2],[12,1],[8,3],[11,3],[9,1],[11,2],[8,2],[0,3],[10,3]],trick:[[1,[12,0]],[2,[8,0]],[3,[11,0]]]}); S.lead=1; S.turn=0; render(false); tools(); msg();
     lessonOnly={play:"0-9-0",check:function(m){ return m&&m.kind==="play"; }}; KEEP=["0-9-0"]; cardEl["0-9-0"].classList.add("hint"); return; }
-  if(k===5){ setPos({trump:2,bidder:0,high:200,me:[[8,2],[12,2],[9,0],[10,0],[12,1],[11,1],[8,1],[0,0],[11,0],[10,1]],trick:[[1,[0,3]],[2,[8,3]],[3,[10,3]]],tookBy:[0,2]}); S.lead=1; S.turn=0; render(false); tools(); msg();
+  if(k===6){ setPos({trump:2,bidder:0,high:250,me:[[8,2],[12,2],[9,0],[10,0],[12,1],[11,1],[8,1],[0,0],[11,0],[10,1]],trick:[[1,[0,3]],[2,[8,3]],[3,[10,3]]],tookBy:[0,2]}); S.lead=1; S.turn=0; render(false); tools(); msg();
     lessonOnly={play:"2-8-0",check:function(m){ return m&&m.kind==="play"; }}; KEEP=["2-8-0"]; cardEl["2-8-0"].classList.add("hint"); return; }
 }
 function allowLesson(m){
@@ -830,8 +932,8 @@ function practiceTip(){
   if(++tipN%3===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/3)%TIPS.length]+"</p>");
 }
 
-/* ---------- online table (same page: ?code=XXXX). The host sits South with Ruth; the guest sits West with Dot.
-   The House plays Ruth and Dot from the host's window, and the host deals and starts each hand's play. ---------- */
+/* ---------- online table (same page: ?code=XXXX). The host sits South and the guest North, as partners.
+   The House plays East and West from the host's window, and the host deals and starts each hand's play. ---------- */
 async function push(){
   if(!online||!room||mySide===0) return;
   var st=JSON.parse(JSON.stringify(S));
@@ -841,7 +943,7 @@ async function push(){
 function report(w){ if(reported||!room||!window.bwRateGame||mySide===0) return; reported=true; room.state=JSON.parse(JSON.stringify(S)); bwRateGame(sb,room,me,w); }
 function validState(st){
   if(!(st&&st.v===1&&st.game==="pinochle"&&Array.isArray(st.h)&&st.h.length===4&&Array.isArray(st.trick)&&Array.isArray(st.took)&&st.took.length===4&&Array.isArray(st.score)&&Array.isArray(st.bids))) return false;
-  var all=[]; st.h.forEach(function(x){ all=all.concat(x||[]); }); st.took.forEach(function(x){ all=all.concat(x||[]); }); st.trick.forEach(function(t){ all.push(t&&t.id); });
+  var all=[].concat(st.kitty||[],st.buried||[]); st.h.forEach(function(x){ all=all.concat(x||[]); }); st.took.forEach(function(x){ all=all.concat(x||[]); }); st.trick.forEach(function(t){ all.push(t&&t.id); });
   var seenIds={}; return all.length===48&&all.every(function(id){ if(!BYID[id]||seenIds[id]) return false; seenIds[id]=1; return true; });
 }
 async function bootOnline(){
@@ -908,7 +1010,7 @@ window.addEventListener("bw-avatar",function(){ chipEls.forEach(function(c){ c._
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"pinochle", cat:"cards", title:"Kitchen Table Pinochle", bg:"cards-pinochle.jpg", home:"lobby.html?cat=cards", stage:stage,
+  game:"pinochle", partners:true, cat:"cards", title:"Kitchen Table Pinochle", bg:"cards-pinochle.jpg", home:"lobby.html?cat=cards", stage:stage,
   tagline:"Bid, show your meld, and take the counters with your partner.", invite:"Copper pans on the wall and a pie cooling on the counter. Pull out a chair across from your partner.",
   players:[{name:"You & Ruth",color:"#c9a24f"},{name:"Earl & Dot",color:"#b2343a"}],
   setsLabel:"Tables",
@@ -918,7 +1020,7 @@ Parlor.init({
     {id:"block",name:DESIGNS.block.name,club:true,dots:DESIGNS.block.dots}
   ],
   rules:{
-    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Ruth is your partner and Earl and Dot play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>The deck:</b> 48 cards, two each of the nine, ten, jack, queen, king and ace in every suit. 12 cards each. Card order: <b>ace, ten, king, queen, jack, nine</b>.</li><li><b>Bidding:</b> from the player left of the dealer, each bids (200 or more, by tens) or passes and is out. When three have passed, the last bidder wins. If the first three pass, the dealer must take it at 200.</li><li><b>Trump and meld:</b> the bid winner names trump. Everyone shows their meld (see Scoring), then the cards go back into play.</li><li><b>Tricks:</b> the bid winner leads. You must <b>follow suit</b> and <b>beat the winning card</b> if you can. If you can't follow suit you must <b>trump</b> (beating any trump already played if you can). Only with neither may you play anything. When two identical cards are played, the first one wins.</li><li>Tap a glowing card to play it. The deal passes to the left each hand.</li></ol>",
+    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, Ruth is your partner and Earl and Dot play against you. Online, you and a friend (or a player you're matched with) are partners across the table against two House players.</li><li><b>The deck:</b> 48 cards, two each of the nine, ten, jack, queen, king and ace in every suit. 12 cards each. Card order: <b>ace, ten, king, queen, jack, nine</b>.</li><li><b>Bidding:</b> from the player left of the dealer, each bids (200 or more, by tens) or passes and is out. When three have passed, the last bidder wins. If the first three pass, the dealer must take it at 200.</li><li><b>Trump and meld:</b> the bid winner names trump. Everyone shows their meld (see Scoring), then the cards go back into play.</li><li><b>Tricks:</b> the bid winner leads. You must <b>follow suit</b> and <b>beat the winning card</b> if you can. If you can't follow suit you must <b>trump</b> (beating any trump already played if you can). Only with neither may you play anything. When two identical cards are played, the first one wins.</li><li>Tap a glowing card to play it. The deal passes to the left each hand.</li></ol>",
     score:"<ul><li><b>Meld:</b> run (A 10 K Q J of trump) 150 · royal marriage (K Q of trump) 40 · marriage (K Q of another suit) 20 · dix (nine of trump) 10 · pinochle (Q♠ J♦) 40, double 300 · aces around 100 · kings around 80 · queens around 60 · jacks around 40 (double: 1000, 800, 600, 400) · double run 1500. A card may count once in each kind of meld.</li><li>Meld counts only for a team that wins at least one trick.</li><li><b>Counters:</b> every ace, ten and king you win in tricks is 10, and the last trick is 10 more (250 in all).</li><li><b>The bid:</b> if the bidding team's meld plus counters reach its bid, it scores them; if not, it's <b>set</b> and loses the bid. The other team scores its meld and counters.</li><li>The first team to <b>1,500</b> wins; if both reach it in the same hand, the bidding team wins. Practice games end at 750.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=1500; mySide=1; Parlor.coach(null); PANEL.classList.remove("on","pnw"); PANEL._k=null; GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },

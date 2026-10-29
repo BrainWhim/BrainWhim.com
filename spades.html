@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Study Spades · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1026i">
+<link rel="stylesheet" href="parlor-kit.css?v=1028e">
 <link rel="stylesheet" href="bw-cards.css?v=1026d">
 <style>
 /* ===== Study Spades: the study's square card table seen from straight above, drawn in the browser =====
@@ -135,6 +135,7 @@
 .ht-chip .hp i{font-style:normal;color:#f0d27a}
 /* phones: the team scores sit on the table, so the kit's two score strips aren't needed */
 body.pk.seated .pk-mini{display:none!important}
+.sp-bags{font-style:normal;letter-spacing:-.08em;font-size:.72em;color:rgba(240,210,122,.85)}.sp-bags.warn{color:#ff9f8a}
 .sp-score{z-index:630}.sp-score b{color:#f0d27a}.sp-score i{font-style:normal;font-weight:600;font-size:.8em;color:rgba(255,255,255,.6)}
 .ce-table.narrow .sp-score{font-size:30px}
 /* the bid window */
@@ -159,9 +160,9 @@ body.pk.seated .pk-mini{display:none!important}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028d"></script>
+<script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1028d"></script>
+<script src="parlor-kit.js?v=1028e"></script>
 <script src="bw-cards.js?v=1026d"></script>
 <script>
 var K=BWCards, PT=K.paint;
@@ -171,9 +172,8 @@ var K=BWCards, PT=K.paint;
    against the players on your left (West) and right (East). Seats are numbered 0-3 clockwise: 0 South, 1 West,
    2 North, 3 East; partners are 0 & 2 and 1 & 3. Each window turns the table so its own seat is at the bottom
    (view 0 = me, 1 = left, 2 = across = partner, 3 = right).
-   Against The House: Oliver is your partner, Clara and Henry your opponents. Online, two people play against each
-   other: the host sits South with Oliver, the guest West with Henry (The House plays both partners, from the
-   host's window). */
+   Against The House: Oliver is your partner, Clara and Henry your opponents. Online (Oct 28), two people play as partners:
+   the host sits South and the guest North, across from each other, against two House players (played from the host's window). */
 
 /* ---------- the three tables ---------- */
 function frameFn(o,H){ H=H||1000; var wood=PT.woodFn(o); return function(x,y){ var c=wood(x,y), dx=Math.min(x,1000-x), dy=Math.min(y,H-y), d=Math.min(dx,dy);
@@ -248,9 +248,9 @@ function C(id){ return BYID[id]; }
 function hr(id){ var r=C(id).r; return r===0?13:r; }          /* aces high */
 function team(p){ return p%2; }
 function shuffleIds(a){ return K.shuffle(a); }
-function humans(){ return online?[0,1]:[0]; }
+function humans(){ return online?[0,2]:[0]; }   /* online (Oct 28): the two people are partners, across from each other */
 function isHouse(seat){ return humans().indexOf(seat)<0; }
-function mySeat(){ return online&&mySide===2?1:0; }
+function mySeat(){ return online&&mySide===2?2:0; }
 function myTeam(){ return team(mySeat()); }
 function view(seat){ return (seat-mySeat()+4)%4; }
 function authority(){ return !online||mySide===1; }
@@ -399,7 +399,7 @@ function paintTable(){
   if(G.narrow){ SHELF.style.top=G.shelf[0]+"px"; SHELF.style.height=(G.shelf[1]-G.shelf[0])+"px"; }
   ROUND.style.height=G.tableH+"px"; MONO.style.top=(G.tableH-82)+"px"; MID.style.top=G.mid+"px";
   if(G.score){ var mt0=myTeam(); SCORE.style.display=""; SCORE.style.left=G.score[0]+"px"; SCORE.style.top=G.score[1]+"px";
-    SCORE.innerHTML='Us <b>'+S.score[mt0]+'</b> <i>bags '+S.bags[mt0]+'</i> · Them <b>'+S.score[1-mt0]+'</b> <i>bags '+S.bags[1-mt0]+'</i>'; } else SCORE.style.display="none";
+    SCORE.innerHTML='Us <b>'+S.score[mt0]+'</b> '+bagHtml(S.bags[mt0])+' · Them <b>'+S.score[1-mt0]+'</b> '+bagHtml(S.bags[1-mt0]); } else SCORE.style.display="none";
   var midTxt="";
   if(S.phase==="bid"&&S.turn!==mySeat()) midTxt="Bidding<b>"+teamBidLine()+"</b>";
   MID.innerHTML=midTxt; MID.classList.toggle("on",!!midTxt);
@@ -444,7 +444,8 @@ async function tapCard(id){
   await act(function(){ playCard(mySeat(),id); });
 }
 function whyNot(id){
-  if(S.trick.length){ var ls=C(S.trick[0].id).s; if(C(id).s!==ls) return "Follow suit: play a "+["club","diamond","heart","spade"][ls]; }
+  /* the reneging guard (Oct 28): a card off the led suit while you still hold that suit is refused, with the reason */
+  if(S.trick.length){ var ls=C(S.trick[0].id).s; if(C(id).s!==ls) return "You must follow suit. You still have a "+["club","diamond","heart","spade"][ls]+" in your hand."; }
   if(!S.trick.length&&C(id).s===3) return "Spades aren't broken yet: lead another suit";
   return "You can't play that card now";
 }
@@ -495,7 +496,10 @@ function msg(){
     Parlor.status("Your turn",sub);
   } else Parlor.status(nameOf(S.turn)+(isHouse(S.turn)?" is thinking…":"'s turn"),"");
 }
-function showStats(){ if(!S) return; var mt=myTeam(); Parlor.info("Hand "+S.hand+" · first to "+TARGET+" · bags: us "+S.bags[mt]+", them "+S.bags[1-mt]); }
+/* the bag gauge (Oct 28): ten pips beside each team's score; the tenth bag costs 100 and the gauge starts again */
+function bagPips(n){ n=Math.max(0,Math.min(10,n|0)); return new Array(n+1).join("●")+new Array(11-n).join("○"); }
+function bagHtml(n){ return '<i class="sp-bags'+(n>=7?' warn':'')+'" title="'+n+' bags">'+bagPips(n)+'</i>'; }
+function showStats(){ if(!S) return; var mt=myTeam(); Parlor.info("Hand "+S.hand+" · first to "+TARGET+" · bags: us "+bagPips(S.bags[mt])+" "+S.bags[mt]+", them "+bagPips(S.bags[1-mt])+" "+S.bags[1-mt]); }
 function tools(){
   TOOLS.innerHTML="";
   function b(label,cls,fn,dis){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; x.disabled=!!dis; TOOLS.appendChild(x); return x; }
@@ -542,8 +546,8 @@ function matchOver(){
   var mt=myTeam(), w=winnerTeam();
   PANEL.classList.remove("on");
   var detail="Final score: "+teamName(mt)+" "+S.score[mt]+", "+teamName(1-mt)+" "+S.score[1-mt]+" after "+S.hand+" hand"+(S.hand>1?"s":"")+".";
-  if(online){ report(w===0?1:w===1?2:0); if(mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; } }
-  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":(online?Parlor.oppName()+"'s Team Wins":"Clara & Henry Win"));
+  if(online&&mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; }   /* partners online: the kit scores each of them as a game against The House */
+  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":teamName(1-mt)+" Win");
 }
 
 /* ---------- The House ----------
@@ -709,8 +713,8 @@ function practiceTip(){
   if(++tipN%3===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/3)%TIPS.length]+"</p>");
 }
 
-/* ---------- online table (same page: ?code=XXXX). The host sits South with Oliver; the guest sits West with Henry.
-   The House plays Oliver and Henry from the host's window, and the host deals. ---------- */
+/* ---------- online table (same page: ?code=XXXX). The host sits South and the guest North, as partners.
+   The House plays East and West from the host's window, and the host deals. ---------- */
 async function push(){
   if(!online||!room||mySide===0) return;
   var st=JSON.parse(JSON.stringify(S));
@@ -787,7 +791,7 @@ window.addEventListener("bw-avatar",function(){ chipEls.forEach(function(c){ c._
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"spades", cat:"cards", title:"Study Spades", bg:"cards-spades.jpg", home:"lobby.html?cat=cards", stage:stage,
+  game:"spades", partners:true, cat:"cards", title:"Study Spades", bg:"cards-spades.jpg", home:"lobby.html?cat=cards", stage:stage,
   tagline:"Bid your tricks. Make them with your partner.", invite:"Lamplight on the leather chairs and a fire in the grate. Take your seat across from your partner.",
   players:[{name:"You & Oliver",color:"#c9a24f"},{name:"Clara & Henry",color:"#8e2a36"}],
   setsLabel:"Tables",
@@ -797,7 +801,7 @@ Parlor.init({
     {id:"ebony",name:DESIGNS.ebony.name,club:true,dots:DESIGNS.ebony.dots}
   ],
   rules:{
-    play:"<ol><li><b>Partners:</b> four players in two teams. Your partner sits across from you. Against The House, Oliver is your partner and Clara and Henry play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>Bidding:</b> after the deal, each player in turn bids how many tricks they expect to take (or <b>Nil</b>: none at all). Partners' bids add up to the team's contract.</li><li><b>Tricks:</b> the player left of the dealer leads. Everyone plays one card in turn and must <b>follow suit</b> if they can. The highest card of the suit led wins, unless someone plays a spade: <b>spades are trump</b> and the highest spade wins. Aces are high.</li><li><b>Breaking spades:</b> you can't lead a spade until one has been played on an earlier trick, unless you hold only spades.</li><li>Tap a glowing card to play it. Cards you can't play now are dimmed.</li><li>The deal passes to the left each hand.</li></ol>",
+    play:"<ol><li><b>Partners:</b> four players in two teams. Your partner sits across from you. Against The House, Oliver is your partner and Clara and Henry play against you. Online, you and a friend (or a player you're matched with) are partners across the table against two House players.</li><li><b>Bidding:</b> after the deal, each player in turn bids how many tricks they expect to take (or <b>Nil</b>: none at all). Partners' bids add up to the team's contract.</li><li><b>Tricks:</b> the player left of the dealer leads. Everyone plays one card in turn and must <b>follow suit</b> if they can. The highest card of the suit led wins, unless someone plays a spade: <b>spades are trump</b> and the highest spade wins. Aces are high.</li><li><b>Breaking spades:</b> you can't lead a spade until one has been played on an earlier trick, unless you hold only spades.</li><li>Tap a glowing card to play it. Cards you can't play now are dimmed.</li><li>The deal passes to the left each hand.</li></ol>",
     score:"<ul><li><b>Made it:</b> 10 points for each trick in the team's contract, plus 1 for each extra trick (a <b>bag</b>).</li><li><b>Set:</b> if the team takes fewer tricks than its contract, it loses 10 points for each trick bid.</li><li><b>Bags:</b> every 10 bags a team collects costs it 100 points.</li><li><b>Nil:</b> +100 if the Nil bidder takes no tricks, −100 if they take any (their tricks don't count toward the partner's bid, but they do count as bags).</li><li>The first team to <b>500</b> wins (a tie plays on); a team that falls to −200 loses. Practice games end at 250.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=500; mySide=1; Parlor.coach(null); PANEL.classList.remove("on"); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },

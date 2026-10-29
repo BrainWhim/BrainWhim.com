@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lakehouse Euchre · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1026i">
+<link rel="stylesheet" href="parlor-kit.css?v=1028e">
 <link rel="stylesheet" href="bw-cards.css?v=1026d">
 <style>
 /* ===== Lakehouse Euchre: the lake house's pine card table seen from straight above, drawn in the browser =====
@@ -191,9 +191,9 @@ body.pk.seated .pk-mini{display:none!important}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028d"></script>
+<script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1028d"></script>
+<script src="parlor-kit.js?v=1028e"></script>
 <script src="bw-cards.js?v=1026d"></script>
 <script>
 var K=BWCards, PT=K.paint;
@@ -203,9 +203,8 @@ var K=BWCards, PT=K.paint;
    left (West) and right (East). Seats are numbered 0-3 clockwise: 0 South, 1 West, 2 North, 3 East; partners are
    0 & 2 and 1 & 3. Each window turns the table so its own seat is at the bottom (view 0 = me, 1 = left, 2 = across,
    3 = right). Same machinery as Study Spades.
-   Against The House: June is your partner, Hank and Mabel your opponents. Online, two people play against each
-   other: the host sits South with June, the guest West with Mabel (The House plays both partners, from the host's
-   window). */
+   Against The House: June is your partner, Hank and Mabel your opponents. Online (Oct 28), two people play as partners:
+   the host sits South and the guest North, across from each other, against two House players (played from the host's window). */
 
 /* ---------- the three tables ---------- */
 function frameFn(o,H){ H=H||1000; var wood=PT.woodFn(o); return function(x,y){ var c=wood(x,y), dx=Math.min(x,1000-x), dy=Math.min(y,H-y), d=Math.min(dx,dy);
@@ -313,9 +312,9 @@ function powT(id,t){ var c=C(id), v=c.r===0?14:c.r+1;              /* A 14, K 13
 function suitOf(id){ return suitT(id,S.trump); }
 function power(id){ return powT(id,S.trump); }
 function shuffleIds(a){ return K.shuffle(a); }
-function humans(){ return online?[0,1]:[0]; }
+function humans(){ return online?[0,2]:[0]; }   /* online (Oct 28): the two people are partners, across from each other */
 function isHouse(seat){ return humans().indexOf(seat)<0; }
-function mySeat(){ return online&&mySide===2?1:0; }
+function mySeat(){ return online&&mySide===2?2:0; }
 function myTeam(){ return team(mySeat()); }
 function view(seat){ return (seat-mySeat()+4)%4; }
 function authority(){ return !online||mySide===1; }
@@ -560,7 +559,7 @@ async function tapCard(id){
 function whyNot(id){
   if(S.trick.length){ var ls=suitOf(S.trick[0].id), c=C(id);
     if(c.r===10&&suitOf(id)!==c.s&&ls===c.s) return "The "+cardName(id).replace(/ \(.*/,"")+" is a trump now: follow with a "+SUIT1[ls];
-    if(suitOf(id)!==ls) return "Follow suit: play a "+(ls===S.trump?"trump":SUIT1[ls]); }
+    if(suitOf(id)!==ls) return "You must follow suit. You still have a "+(ls===S.trump?"trump":SUIT1[ls])+" in your hand."; }
   return "You can't play that card now";
 }
 async function act(fn){
@@ -674,8 +673,8 @@ function matchOver(){
   var mt=myTeam(), w=winnerTeam();
   PANEL.classList.remove("on");
   var detail="Final score: "+teamName(mt)+" "+S.score[mt]+", "+teamName(1-mt)+" "+S.score[1-mt]+" after "+S.hand+" hand"+(S.hand>1?"s":"")+".";
-  if(online){ report(w===0?1:w===1?2:0); if(mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; } }
-  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":(online?Parlor.oppName()+"'s Team Wins":"Hank & Mabel Win"));
+  if(online&&mySide===0){ Parlor.finish("draw",detail,"Game Over"); return; }   /* partners online: the kit scores each of them as a game against The House */
+  Parlor.finish(w===mt?"win":w<0?"draw":"lose",detail,w===mt?"Your Team Wins":w<0?"All Square":teamName(1-mt)+" Win");
 }
 
 /* ---------- The House ----------
@@ -856,8 +855,8 @@ function practiceTip(){
   if(++tipN%3===1) Parlor.practiceSay("Practice Game","<p>"+TIPS[Math.floor(tipN/3)%TIPS.length]+"</p>");
 }
 
-/* ---------- online table (same page: ?code=XXXX). The host sits South with June; the guest sits West with Mabel.
-   The House plays June and Mabel from the host's window, and the host deals. ---------- */
+/* ---------- online table (same page: ?code=XXXX). The host sits South and the guest North, as partners.
+   The House plays East and West from the host's window, and the host deals. ---------- */
 async function push(){
   if(!online||!room||mySide===0) return;
   var st=JSON.parse(JSON.stringify(S));
@@ -936,7 +935,7 @@ window.addEventListener("bw-avatar",function(){ chipEls.forEach(function(c){ c._
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"euchre", cat:"cards", title:"Lakehouse Euchre", bg:"cards-euchre.jpg", home:"lobby.html?cat=cards", stage:stage,
+  game:"euchre", partners:true, cat:"cards", title:"Lakehouse Euchre", bg:"cards-euchre.jpg", home:"lobby.html?cat=cards", stage:stage,
   tagline:"Call trump. Take three of five with your partner.", invite:"Sunset on the lake and plaid on the chairs. Pull up a seat across from your partner.",
   players:[{name:"You & June",color:"#c9a24f"},{name:"Hank & Mabel",color:"#a8302a"}],
   setsLabel:"Tables",
@@ -946,7 +945,7 @@ Parlor.init({
     {id:"lake",name:DESIGNS.lake.name,club:true,dots:DESIGNS.lake.dots}
   ],
   rules:{
-    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, June is your partner and Hank and Mabel play against you. Online, you play against the other person, and each of you has a House partner.</li><li><b>The deck:</b> 24 cards, nine through ace in each suit. Five cards each; one card is turned up on the kitty.</li><li><b>Calling trump, round one:</b> starting left of the dealer, each player may <b>order up</b> the turned card (its suit becomes trump and the dealer takes it, putting one card away) or pass.</li><li><b>Round two:</b> if everyone passes, the card is turned down and each player may <b>name any other suit</b>, or pass. The dealer can't pass in round two (\"stick the dealer\").</li><li><b>Going alone:</b> whoever names trump may play alone; their partner sits out the hand.</li><li><b>Card order:</b> the jack of trump (<b>right bower</b>) is highest, then the other jack of the same colour (<b>left bower</b>, which counts as a trump), then ace, king, queen, ten, nine of trump. Other suits run ace high down to nine.</li><li><b>Tricks:</b> the player left of the dealer leads. You must <b>follow suit</b> if you can; otherwise play anything. The highest trump wins, or the highest card of the suit led.</li><li>Tap a glowing card to play it. The deal passes to the left each hand.</li></ol>",
+    play:"<ol><li><b>Partners:</b> four players in two teams; your partner sits across from you. Against The House, June is your partner and Hank and Mabel play against you. Online, you and a friend (or a player you're matched with) are partners across the table against two House players.</li><li><b>The deck:</b> 24 cards, nine through ace in each suit. Five cards each; one card is turned up on the kitty.</li><li><b>Calling trump, round one:</b> starting left of the dealer, each player may <b>order up</b> the turned card (its suit becomes trump and the dealer takes it, putting one card away) or pass.</li><li><b>Round two:</b> if everyone passes, the card is turned down and each player may <b>name any other suit</b>, or pass. The dealer can't pass in round two (\"stick the dealer\").</li><li><b>Going alone:</b> whoever names trump may play alone; their partner sits out the hand.</li><li><b>Card order:</b> the jack of trump (<b>right bower</b>) is highest, then the other jack of the same colour (<b>left bower</b>, which counts as a trump), then ace, king, queen, ten, nine of trump. Other suits run ace high down to nine.</li><li><b>Tricks:</b> the player left of the dealer leads. You must <b>follow suit</b> if you can; otherwise play anything. The highest trump wins, or the highest card of the suit led.</li><li>Tap a glowing card to play it. The deal passes to the left each hand.</li></ol>",
     score:"<ul><li><b>Makers</b> (the team that named trump) take 3 or 4 tricks: <b>1 point</b>.</li><li>Makers take all 5 (a <b>march</b>): <b>2 points</b>; <b>4 points</b> when the caller went alone.</li><li>Makers take fewer than 3: they're <b>euchred</b>, and the other team scores <b>2 points</b>.</li><li>The first team to <b>10</b> wins. Practice games end at 5.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; TARGET=10; mySide=1; Parlor.coach(null); PANEL.classList.remove("on","call"); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },
