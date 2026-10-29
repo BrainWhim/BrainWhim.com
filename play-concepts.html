@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Play · BrainWhim (Layout Concepts)</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   BrainWhim · Play page layout concepts (Oct 29, 2026)
+   Three desktop layouts on one page (?layout=a|b|c), one phone layout.
+   A: two sidebars like the Lobby · B: one sidebar · C: no sidebar, a dock.
+   The orbit system (sub-category orbs with parlor moons) is the same in all.
+   ========================================================================== */
+:root{
+  --navy:#1A2744; --whim:#7EB6D9; --gold:#C9A66B; --gold-b:#E5C158;
+  --glass:rgba(6,12,28,.28); --line:rgba(255,255,255,.15);
+  --hdr-h:80px; --side-w:290px; --bar-h:64px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{margin:0;background:#0a1630 url("galaxy-home.jpg") center/cover no-repeat fixed}
+body{margin:0;height:100dvh;overflow:hidden;display:flex;flex-direction:column;font-family:Montserrat,sans-serif;color:#fff;background:transparent}
+a{color:inherit}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--gold-b);outline-offset:3px}
+
+/* ---------- header (as the Lobby) ---------- */
+header.top{position:fixed!important;inset:0 0 auto 0;z-index:40;height:var(--hdr-h);padding:0 40px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,12,28,.18);backdrop-filter:blur(12px) saturate(1.15);-webkit-backdrop-filter:blur(12px) saturate(1.15);border-bottom:1px solid rgba(186,214,232,.16)}
+.brand{display:flex;align-items:center;color:#fff;text-decoration:none;font-weight:600;font-size:26px}
+.brand img{width:56px;height:56px;object-fit:contain;margin-right:-4px}
+.brand .whim{font-family:Pacifico,cursive;font-weight:400;color:var(--whim)}
+.hdr{display:flex;align-items:center;gap:8px}
+.hdr a{color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-left:8px}
+.hdr a:hover{color:var(--whim)}
+.hdr a.on{color:var(--gold-b)}
+header.top .bw-bell{width:36px;height:36px;padding:0!important;margin-left:18px!important;background:rgba(255,255,255,.08)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:50%!important;font-size:15px!important}
+.menu-btn{display:none;width:40px;height:40px;border:0;background:none;color:#fff;cursor:pointer;padding:8px}
+.menu-btn i{display:block;height:2px;background:#fff;margin:5px 0;border-radius:2px}
+.phone-menu{display:none}
+
+/* ---------- frame ---------- */
+.frame{flex:1;min-height:0;display:flex;padding-top:var(--hdr-h);overflow:hidden}
+.side{flex:0 0 var(--side-w);width:var(--side-w);display:flex;flex-direction:column;gap:16px;padding:28px 20px;overflow-y:auto;
+  background:rgba(6,12,28,.22);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-weight:600}
+.side *{text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.side-l{border-right:1px solid rgba(255,255,255,.1)}
+.side-r{border-left:1px solid rgba(255,255,255,.1)}
+.side:empty{display:none}
+.lane{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+
+/* ---------- panels (the Lobby's glass boxes) ---------- */
+.panel{width:100%;padding:18px;background:var(--glass);border:1px solid var(--line);border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.panel h3{margin:0 0 12px;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:center}
+.panel h3.gold{color:var(--gold-b)}
+.panel p{margin:0 0 10px;font-size:13px;line-height:1.55;color:rgba(255,255,255,.88)}
+.panel .center{text-align:center}
+.btn{display:block;width:100%;padding:11px 14px;margin-top:8px;text-align:center;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:6px;font:600 13px Montserrat,sans-serif;cursor:pointer;transition:background .2s,border-color .2s}
+.btn:hover{background:rgba(255,255,255,.18);border-color:var(--whim)}
+.btn.gold{color:#1b1406;background:linear-gradient(180deg,#e2c36f,#b8913f);border:0;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px;text-shadow:none}
+.btn.gold:hover{filter:brightness(1.08)}
+.btns{display:flex;gap:8px}
+.btns .btn{flex:1}
+
+/* seat */
+.seat{display:flex;flex-direction:column;align-items:center;text-align:center}
+.seat-av{border:0;background:none;padding:0;cursor:pointer;border-radius:50%;margin:2px 0 8px}
+.seat-name{font-size:16px;font-weight:700;margin:0 0 2px}
+.seat-rank{font-size:12px;color:var(--gold-b);letter-spacing:.04em;margin:0 0 10px}
+.bar{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin:0 0 6px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b8913f,#f0d27a);border-radius:3px}
+.seat-next{font-size:11px;color:rgba(255,255,255,.65);margin:0 0 6px}
+
+/* tiers (How the House Works, folded into the Club box) */
+.tiers{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:8px}
+.tiers li{padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);font-size:12px;line-height:1.45;color:rgba(255,255,255,.82)}
+.tiers b{display:block;font-size:12.5px;color:#fff;margin-bottom:1px}
+.tiers li.club{border-color:rgba(229,193,88,.45);background:rgba(229,193,88,.08)}
+.tiers li.club b{color:var(--gold-b)}
+
+/* ladder */
+.ladder{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.ladder li{display:flex;align-items:center;gap:10px;padding:4px 6px;border-radius:10px;font-size:12.5px}
+.ladder li small{margin-left:auto;font-size:11px;color:rgba(255,255,255,.55);font-weight:600}
+.ladder li.me{background:rgba(229,193,88,.12);color:var(--gold-b)}
+.ladder li.me small{color:var(--gold-b)}
+.ladder svg{flex:0 0 auto}
+
+/* whims */
+.whimp{text-align:center;cursor:pointer}
+.whimp .wt{font-family:Pacifico,cursive;font-size:17px;color:var(--whim);margin:0 0 6px}
+.whimp p{margin:0}
+
+/* ---------- hero: the orbit system ---------- */
+.hero{position:relative;height:calc(100dvh - var(--hdr-h) - 64px);min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.stage{position:relative;flex:1;width:100%;min-height:0}
+.sys{position:absolute;left:50%;top:50%;width:var(--bw,700px);height:var(--bh,640px);transform:translate(-50%,-50%) scale(var(--sc,1));transform-origin:50% 50%}
+.mainring{position:absolute;left:50%;top:50%;border-radius:50%;border:1px solid rgba(186,214,232,.16);transform:translate(-50%,-50%);pointer-events:none}
+.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;z-index:5;
+  background:radial-gradient(circle at 26% 22%,rgba(255,255,255,.2) 0%,transparent 26%),radial-gradient(circle at 78% 80%,rgba(0,8,20,.42) 0%,transparent 55%),url("planet-play.jpg") center/cover;
+  box-shadow:0 0 40px rgba(242,76,122,.35),0 0 120px rgba(242,76,122,.18),inset -18px -20px 30px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;flex-direction:column}
+.core{animation:breathe 5.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1);box-shadow:0 0 40px rgba(242,76,122,.35),0 0 120px rgba(242,76,122,.18),inset -18px -20px 30px rgba(0,0,0,.45)}50%{transform:translate(-50%,-50%) scale(1.05);box-shadow:0 0 56px rgba(242,76,122,.5),0 0 150px rgba(242,76,122,.26),inset -18px -20px 30px rgba(0,0,0,.45)}}
+.core b{font-family:Pacifico,cursive;font-weight:400;color:#fff;font-size:30px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+.cat{position:absolute;left:50%;top:50%;width:0;height:0}
+.track{position:absolute;left:0;top:0;border-radius:50%;border:1px dashed rgba(229,193,88,.28);transform:translate(-50%,-50%) rotate(var(--tilt,0deg));pointer-events:none}
+.orb{position:absolute;left:0;top:0;transform:translate(-50%,-50%);border-radius:50%;border:0;padding:0;cursor:pointer;z-index:20;color:#fff;text-decoration:none;
+  background-color:#071018;background-image:radial-gradient(circle at 28% 22%,rgba(255,255,255,.26) 0%,transparent 24%),radial-gradient(circle at 78% 80%,rgba(0,8,20,.4) 0%,transparent 50%),url("planet-app-play.jpg");background-size:cover;background-position:center;
+  box-shadow:0 10px 24px rgba(0,0,0,.45),0 0 26px var(--glow),0 0 64px var(--glow),inset -14px -16px 24px rgba(0,0,0,.5),inset 10px 8px 16px rgba(255,255,255,.14);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.orb:hover,.orb:focus-visible{transform:translate(-50%,-50%) scale(1.07)}
+.orb .ic{font-size:30px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.orb .nm{margin-top:6px;font-weight:700;font-size:14px;text-shadow:0 2px 6px rgba(0,0,0,.9);text-align:center;line-height:1.15;padding:0 8px}
+.cat-lab{position:absolute;left:0;transform:translateX(-50%);text-align:center;white-space:nowrap;pointer-events:none;z-index:21}
+.cat-lab b{display:block;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.9);margin-bottom:3px}
+.cat-sub{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-b);text-shadow:0 1px 6px rgba(0,0,0,.9);pointer-events:none;z-index:21}
+.cat-sub.soon{color:rgba(255,255,255,.6)}
+.moon{position:absolute;left:0;top:0;border-radius:50%;border:0;padding:0;cursor:pointer;will-change:transform;
+  background-size:cover;background-position:center 62%;
+  box-shadow:0 0 0 2px rgba(229,193,88,.85),0 6px 16px rgba(0,0,0,.55),inset -6px -8px 14px rgba(0,0,0,.55),inset 4px 4px 10px rgba(255,255,255,.18)}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 35%)}
+.moon.drawn{display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+.moon.drawn span{position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.moon.soon{box-shadow:0 0 0 2px rgba(255,255,255,.35),0 6px 16px rgba(0,0,0,.5),inset -6px -8px 14px rgba(0,0,0,.45)}
+.tip{position:absolute;z-index:60;pointer-events:none;padding:7px 11px;border-radius:8px;background:rgba(15,23,42,.88);border:1px solid rgba(229,193,88,.55);font-size:12px;font-weight:700;white-space:nowrap;transform:translate(-50%,calc(-100% - 12px));opacity:0;transition:opacity .15s}
+.tip small{display:block;font-weight:600;font-size:10.5px;color:rgba(255,255,255,.65);margin-top:2px}
+.tip.on{opacity:1}
+.pillars{display:flex;justify-content:center;gap:28px;padding:0 0 14px;font-size:13px;font-weight:700}
+.pillars a{text-decoration:none;color:rgba(255,255,255,.8)}
+.pillars a:hover{color:var(--whim)}
+.cue{position:relative;flex:none;margin:4px 0 12px;border:1px solid rgba(255,255,255,.18);background:rgba(6,12,28,.35);color:#fff;border-radius:6px;padding:8px 14px;font:600 12px Montserrat,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.cue span{display:inline-block;animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+
+/* ---------- Layout C: the dock ---------- */
+.dock{display:none}
+body.lay-c .dock{display:flex;gap:10px;margin:0 auto 14px;padding:8px;background:rgba(6,12,28,.42);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dock button{display:flex;align-items:center;gap:9px;border:1px solid transparent;background:rgba(255,255,255,.05);color:#fff;border-radius:8px;padding:8px 14px;font:600 13px Montserrat,sans-serif;cursor:pointer;white-space:nowrap}
+.dock button:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18)}
+.dock button small{display:block;font-size:10.5px;color:var(--gold-b);font-weight:700;letter-spacing:.04em}
+.dock .dk-t{text-align:left;line-height:1.2}
+.dock .ico{font-size:17px}
+body.lay-c .cue{bottom:auto;top:12px;display:none}
+
+/* ---------- rooms below ---------- */
+.rooms{padding:8px 40px 40px;max-width:1240px;margin:0 auto}
+.sec{margin:0 0 34px}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 14px}
+.sec-h h2{margin:0;font-size:24px;font-weight:700}
+.sec-h p{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.7)}
+.kick{margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-b)}
+.sec-r{display:flex;gap:8px;align-items:center}
+.arrow{width:34px;height:34px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-size:18px}
+.more{font-size:13px;font-weight:700;color:var(--gold-b);text-decoration:none;margin-left:6px}
+.row{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.room{position:relative;flex:0 0 260px;scroll-snap-align:start;border-radius:12px;overflow:hidden;text-decoration:none;color:#fff;background:rgba(6,12,28,.5);border:1px solid var(--line)}
+.room img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+.room div{padding:10px 12px 12px}
+.room b{display:block;font-size:14px}
+.room small{display:block;font-size:12px;color:rgba(255,255,255,.7);margin-top:3px}
+.room .tag{position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:4px;background:rgba(15,23,42,.8);border:1px solid rgba(229,193,88,.6);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-b)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.box{padding:20px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
+.box h2{margin:0 0 6px;font-size:20px}
+.box p{margin:0 0 12px;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5}
+.chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.chip{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);text-decoration:none;font-size:13px;font-weight:700}
+.chip i{font-style:normal;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(126,182,217,.18);border:1px solid rgba(126,182,217,.4)}
+.chip.soon{opacity:.6}
+footer{padding:22px 40px 30px;text-align:center;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.08)}
+footer a{color:rgba(255,255,255,.75);margin:0 8px}
+
+/* ---------- windows (Layout C) and sheets (phones) ---------- */
+.veil{position:fixed;inset:0;z-index:80;background:rgba(2,6,16,.45);display:none}
+.veil.on{display:block}
+.win{position:fixed;z-index:81;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,92vw);max-height:80vh;overflow:auto;padding:8px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.18);border-radius:18px;box-shadow:0 24px 50px rgba(0,0,0,.45);display:none}
+.win.on{display:block}
+.win .panel{background:none;border:0;box-shadow:none}
+.win .x{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;z-index:2}
+
+/* ---------- concept switch ---------- */
+.switch{position:fixed;left:16px;bottom:16px;z-index:70;padding:8px;border-radius:12px;background:rgba(15,23,42,.82);border:1px solid rgba(229,193,88,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 28px rgba(0,0,0,.4)}
+.switch p{margin:2px 6px 7px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-b)}
+.switch div{display:flex;gap:6px}
+.switch button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;border-radius:6px;padding:7px 10px;font:600 12px Montserrat,sans-serif;cursor:pointer}
+.switch button.on{background:rgba(229,193,88,.2);border-color:var(--gold-b);color:var(--gold-b)}
+.switch .hide{border:0;background:none;color:rgba(255,255,255,.6);padding:7px 4px}
+
+/* phone bar */
+.pbar{display:none}
+
+/* ---------- Layout B: one wider sidebar ---------- */
+body.lay-b{--side-w:320px}
+
+/* ---------- phones and narrow tablets ---------- */
+@media (max-width:900px){
+  :root{--hdr-h:64px}
+  header.top{padding:0 12px}
+  .brand{position:absolute;left:50%;transform:translateX(-50%);font-size:22px}
+  .brand img{width:44px;height:44px}
+  .hdr a{display:none}
+  .menu-btn{display:block}
+  .phone-menu{position:fixed;top:calc(var(--hdr-h) + 6px);left:10px;z-index:45;width:220px;padding:8px;border-radius:12px;background:rgba(15,23,42,.9);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+  .phone-menu.on{display:block}
+  .phone-menu a{display:block;padding:10px 12px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px}
+  .phone-menu a:hover{background:rgba(255,255,255,.08)}
+  .side{display:none}
+  .hero{height:auto;min-height:0;padding:6px 0 0}
+  .stage{flex:none;height:var(--ph,420px)}
+  body.lay-c .dock{display:none}
+  .cue{display:none}
+  .rooms{padding:4px 16px calc(var(--bar-h) + 40px)}
+  .sec-h h2{font-size:20px}
+  .arrow{display:none}
+  .room{flex-basis:72%}
+  .two{grid-template-columns:1fr}
+  footer{padding-bottom:calc(var(--bar-h) + 30px)}
+  .switch{display:none}
+  .pbar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;height:var(--bar-h);display:flex;border-radius:16px;
+    background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .pbar button{flex:1;border:0;background:none;color:rgba(255,255,255,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px Montserrat,sans-serif;cursor:pointer}
+  .pbar .ico{font-size:18px;line-height:1;height:22px;display:flex;align-items:center}
+  .win{left:0;right:0;top:auto;bottom:0;transform:none;width:auto;max-height:78vh;border-radius:18px 18px 0 0;padding:14px 8px calc(16px + env(safe-area-inset-bottom))}
+  .win::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.3);margin:0 auto 4px}
+}
+@media (prefers-reduced-motion:reduce){ .cue span,.core{animation:none} .orb{transition:none} }
+</style>
+<script src="bw-auth.js?v=1027a"></script>
+</head>
+<body class="lay-a">
+
+<header class="top">
+  <button class="menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
+  <a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+  <nav class="hdr">
+    <a href="lobby.html">Lobby</a><a class="on" href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a>
+  </nav>
+</header>
+<nav class="phone-menu" id="phoneMenu" aria-label="Site">
+  <a href="lobby.html">Lobby</a><a href="lobby.html?cat=cards">Cards</a><a href="puzzles.html">Puzzles</a><a href="index.html">Home</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a>
+</nav>
+
+<div class="frame">
+  <aside class="side side-l" id="sideL" aria-label="Your seat"></aside>
+
+  <main class="lane" id="lane">
+    <section class="hero" id="hero">
+      <div class="stage" id="stage">
+        <div class="sys" id="sys">
+          <div class="mainring" id="mainring"></div>
+          <div class="core" id="core"><b>Play</b></div>
+        </div>
+        <div class="tip" id="tip"></div>
+      </div>
+      <div class="dock" id="dock">
+        <button type="button" data-open="pSeat"><span id="dkAv"></span><span class="dk-t"><span id="dkName">Your Seat</span><small id="dkRank">Guest · 10 free games</small></span></button>
+        <button type="button" data-open="pMail"><span class="ico">✉</span><span class="dk-t">Mailbox<small>Invites</small></span></button>
+        <button type="button" data-open="pLadder"><span class="ico">✦</span><span class="dk-t">The Ladder<small>Seven ranks</small></span></button>
+        <button type="button" data-open="pClub"><span class="ico">✨</span><span class="dk-t">The Club<small>How the House works</small></span></button>
+        <button type="button" data-open="pLearn"><span class="ico">📖</span><span class="dk-t">Learn to Play<small>Always free</small></span></button>
+      </div>
+      <button class="cue" id="cue" type="button">Browse Every Parlor <span>↓</span></button>
+    </section>
+
+    <div class="rooms" id="rooms">
+      <section class="sec">
+        <div class="sec-h"><div><p class="kick">Ten Parlors</p><h2>Board Games</h2></div>
+          <div class="sec-r"><button class="arrow" data-row="rowBoard" data-dir="-1" aria-label="Scroll back">‹</button><button class="arrow" data-row="rowBoard" data-dir="1" aria-label="Scroll on">›</button><a class="more" href="lobby.html">Open the Lobby</a></div></div>
+        <div class="row" id="rowBoard"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-h"><div><p class="kick">Ten Parlors</p><h2>Cards</h2></div>
+          <div class="sec-r"><button class="arrow" data-row="rowCards" data-dir="-1" aria-label="Scroll back">‹</button><button class="arrow" data-row="rowCards" data-dir="1" aria-label="Scroll on">›</button><a class="more" href="lobby.html?cat=cards">Open the Card Lobby</a></div></div>
+        <div class="row" id="rowCards"></div>
+      </section>
+      <section class="sec two">
+        <div class="box">
+          <p class="kick">Four Daily Puzzles</p><h2>Puzzles &amp; Brain Games</h2>
+          <p>A word a day, a memory match and two more quick ones for the coffee break.</p>
+          <div class="chips">
+            <a class="chip" href="puzzles.html"><i>W</i>Sky Word</a><a class="chip" href="puzzles.html"><i>★</i>Star Match</a>
+            <a class="chip" href="puzzles.html"><i>≈</i>Drift Word</a><a class="chip" href="puzzles.html"><i>▦</i>Signal Grid</a>
+          </div>
+        </div>
+        <div class="box">
+          <p class="kick">Opening Soon</p><h2>The Kids' Corner</h2>
+          <p>Playful card rooms for young players, with friendlier rules and brighter tables.</p>
+          <div class="chips">
+            <span class="chip soon"><i>🐟</i>Go Fish</span><span class="chip soon"><i>⚔</i>War</span>
+            <span class="chip soon"><i>👵</i>Old Maid</span><span class="chip soon"><i>8</i>Crazy Eights</span>
+          </div>
+        </div>
+      </section>
+    </div>
+    <footer><nav class="pillars" aria-label="Other pillars"><a href="index.html">Home</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a></nav>© 2026 BrainWhim LLC · <a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="disclaimers.html">Disclaimers</a><a href="mailto:support@brainwhim.com">support@brainwhim.com</a></footer>
+  </main>
+
+  <aside class="side side-r" id="sideR" aria-label="Club and standing"></aside>
+</div>
+
+<!-- the panels (moved into the sidebars, the dock windows or the phone sheets by the script) -->
+<div hidden id="panelStore">
+  <section class="panel seat" id="pSeat">
+    <h3>Your Seat</h3>
+    <button class="seat-av" id="seatAv" type="button" aria-label="Choose your avatar"></button>
+    <p class="seat-name" id="seatName">Playing as a Guest</p>
+    <p class="seat-rank" id="seatRank">10 free games against The House</p>
+    <div class="bar" id="seatBar" hidden><i id="seatFill"></i></div>
+    <p class="seat-next" id="seatNext"></p>
+    <div id="seatActs" style="width:100%"></div>
+  </section>
+  <section class="panel" id="pClub">
+    <h3 class="gold">✨ Club Membership</h3>
+    <ul class="tiers">
+      <li><b>Guest</b>Ten free games against The House on this device.</li>
+      <li><b>Free Account</b>Unlimited games, online play, points saved.</li>
+      <li class="club"><b>The Club</b>Every table and board, Club avatars, more points a day.</li>
+    </ul>
+    <a class="btn gold" href="member.html">Join the Club</a>
+  </section>
+  <section class="panel" id="pMail">
+    <h3>Mailbox</h3>
+    <p class="center" id="mailLine">Sign in to see invites from friends.</p>
+    <button class="btn" type="button" id="mailOpen">Open Mailbox</button>
+  </section>
+  <section class="panel" id="pLadder">
+    <h3>Celestial Standing</h3>
+    <ul class="ladder" id="ladder"></ul>
+  </section>
+  <section class="panel" id="pLearn">
+    <h3>Learn to Play</h3>
+    <p class="center">Every parlor has a short lesson and a practice game. Always free, no points at stake.</p>
+    <a class="btn" href="lobby.html">Choose a Parlor</a>
+  </section>
+  <section class="panel whimp" id="pWhim" role="button" tabindex="0">
+    <p class="wt">✨ Tap for Whims</p>
+    <p id="whimText">A small spark, on purpose.</p>
+  </section>
+</div>
+
+<div class="veil" id="veil"></div>
+<div class="win" id="win" role="dialog" aria-modal="true"><button class="x" type="button" id="winX" aria-label="Close">✕</button><div id="winBody"></div></div>
+
+<nav class="pbar" id="pbar" aria-label="Your seat">
+  <button type="button" data-open="pSeat"><span class="ico" id="pbAv">👤</span>Seat</button>
+  <button type="button" data-open="pLadder"><span class="ico">✦</span>Ladder</button>
+  <button type="button" data-open="pClub"><span class="ico">✨</span>Club</button>
+  <button type="button" data-open="pMail"><span class="ico">✉</span>Mailbox</button>
+</nav>
+
+<div class="switch" id="switch" aria-label="Preview layout">
+  <p>Preview Layout</p>
+  <div>
+    <button type="button" data-lay="a">A · Two Sidebars</button>
+    <button type="button" data-lay="b">B · One Sidebar</button>
+    <button type="button" data-lay="c">C · No Sidebar</button>
+    <button type="button" class="hide" id="switchHide" title="Hide this box">✕</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){ return document.getElementById(id); };
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+var RM=window.matchMedia("(prefers-reduced-motion: reduce)");
+var PHONE=window.matchMedia("(max-width: 900px)");
+
+/* ---------- the rooms ---------- */
+var BOARD=[
+  ["Garden Chess","chess.html","garden-parlor-sm.jpg","The classic, inlaid in a garden table."],
+  ["Garden Checkers","checkers.html","checkers-parlor-sm.jpg","Jump, crown and corner your opponent."],
+  ["Library Backgammon","backgammon.html","library-bg-sm.jpg","Race your checkers home with the dice."],
+  ["Club Yahtzee","yahtzee.html","yahtzee-parlor-sm.jpg","Five dice, three rolls, thirteen boxes."],
+  ["Sunroom Dominoes","dominoes.html","dominoes-parlor-sm.jpg","Match the ends and empty your hand."],
+  ["Night Terrace Othello","othello.html","othello-terrace-sm.jpg","Outflank and flip the board your way."],
+  ["Pavilion Mancala","mancala.html","mancala-pavilion-sm.jpg","Sow the stones and fill your store."],
+  ["Club Cribbage","cribbage.html","cribbage-snug-sm.jpg","Fifteen-two, a pair, and pegs to 121."],
+  ["Tavern Shut the Box","shutbox.html","shutbox-tavern-sm.jpg","Roll and shut the tiles. Lowest wins."],
+  ["Cloister Morris","morris.html","morris-cloister-sm.jpg","Make mills and take your opponent's stones."]];
+var CARDS=[
+  ["Writing Desk Solitaire","solitaire.html","cards-solitaire-sm.jpg","Klondike, Draw One or Draw Three."],
+  ["Porch Gin Rummy","ginrummy.html","cards-gin-rummy-sm.jpg","Meld, knock, or go for gin."],
+  ["Rose Garden Hearts","hearts.html","cards-hearts-sm.jpg","Dodge the hearts and the queen."],
+  ["Study Spades","spades.html","cards-spades-sm.jpg","Bid your tricks with a partner.","Partners"],
+  ["Lakehouse Euchre","euchre.html","cards-euchre-sm.jpg","Call trump and take three tricks.","Partners"],
+  ["Sunroom Crazy Eights","crazyeights.html","cards-crazy-eights-sm.jpg","Match the suit or play an eight."],
+  ["Club Room Canasta","canasta.html","cards-canasta-sm.jpg","Two decks, wild cards and canastas.","Partners"],
+  ["Kitchen Table Pinochle","pinochle.html","cards-pinochle-sm.jpg","Bid, meld and count your counters.","Partners"],
+  ["Observatory FreeCell","freecell.html","cards-freecell-sm.jpg","Every deal can be won. Can you?"],
+  ["Ballroom Bridge","bridge.html","cards-bridge-sm.jpg","The auction, the dummy, the contract.","Partners"]];
+function row(id,list){
+  $(id).innerHTML=list.map(function(r){ return '<a class="room" href="'+r[1]+'">'+(r[4]?'<span class="tag">'+esc(r[4])+'</span>':'')+
+    '<img src="'+r[2]+'" alt="" width="1000" height="667" loading="lazy"><div><b>'+esc(r[0])+'</b><small>'+esc(r[3])+'</small></div></a>'; }).join("");
+}
+row("rowBoard",BOARD); row("rowCards",CARDS);
+[].forEach.call(document.querySelectorAll(".arrow"),function(b){ b.onclick=function(){ var r=$(b.dataset.row); r.scrollBy({left:+b.dataset.dir*r.clientWidth*.8,behavior:"smooth"}); }; });
+$("cue").onclick=function(){ $("lane").scrollTo({top:$("rooms").offsetTop-8,behavior:"smooth"}); };
+
+/* ---------- the orbit system ---------- */
+/* Each sub-category orb carries its own little system of moons: parlor photos (or drawn tiles)
+   on a tilted orbit. A moon opens that category's Lobby; the orb opens it too. */
+var CATS=[
+  {key:"board", name:"Board Games", ic:"♟️", sub:"10 Parlors", href:"lobby.html", glow:"rgba(229,193,88,.55)", pos:[-1,-1], dir:1, tilt:-10,
+   moons:[["Garden Chess","garden-parlor-sm.jpg"],["Library Backgammon","library-bg-sm.jpg"],["Night Terrace Othello","othello-terrace-sm.jpg"],["Pavilion Mancala","mancala-pavilion-sm.jpg"],["Garden Checkers","checkers-parlor-sm.jpg"]]},
+  {key:"cards", name:"Cards", ic:"🂠", sub:"10 Parlors", href:"lobby.html?cat=cards", glow:"rgba(242,76,122,.6)", pos:[1,-1], dir:-1, tilt:10,
+   moons:[["Rose Garden Hearts","cards-hearts-sm.jpg"],["Study Spades","cards-spades-sm.jpg"],["Ballroom Bridge","cards-bridge-sm.jpg"],["Porch Gin Rummy","cards-gin-rummy-sm.jpg"],["Club Room Canasta","cards-canasta-sm.jpg"]]},
+  {key:"puz", name:"Puzzles & Brain", ic:"🧩", sub:"4 Daily Puzzles", href:"puzzles.html", glow:"rgba(80,200,210,.55)", pos:[-1,1], dir:-1, tilt:8,
+   moons:[["Sky Word",null,"W","#2f6f9a"],["Star Match",null,"★","#3c5aa8"],["Drift Word",null,"≈","#2a7f86"],["Signal Grid",null,"▦","#475a8c"]]},
+  {key:"kids", name:"Kids", ic:"🪁", sub:"Opening Soon", href:null, glow:"rgba(170,140,240,.55)", pos:[1,1], dir:1, tilt:-8, soon:true,
+   moons:[["Go Fish",null,"🐟","#7f6bc4"],["War",null,"⚔","#b06a9a"],["Old Maid",null,"👵","#6a86c4"],["Crazy Eights",null,"8","#c07a6a"]]}
+];
+/* geometry in design units; the whole system is scaled to fit its stage */
+var G_DESK={bw:880,bh:850,core:156,ax:282,ay:254,orb:128,rx:118,ry:38,mFront:62,mBack:40,sub:16};
+var G_PHONE={bw:404,bh:530,core:92,ax:126,ay:162,orb:82,rx:50,ry:20,mFront:38,mBack:26,sub:12};
+var G, moons=[], cats=[], hold=0;
+/* where each orb starts on the big orbit (screen angles: board top left, cards top right, kids bottom right, puzzles bottom left) */
+var START={board:-135,cards:-45,kids:45,puz:135};
+
+function build(){
+  G=PHONE.matches?G_PHONE:G_DESK;
+  var sys=$("sys"); sys.style.setProperty("--bw",G.bw+"px"); sys.style.setProperty("--bh",G.bh+"px");
+  [].forEach.call(sys.querySelectorAll(".cat"),function(n){ n.remove(); });
+  var core=$("core"); core.style.width=core.style.height=G.core+"px";
+  var mr=$("mainring"); mr.style.width=(2*G.ax)+"px"; mr.style.height=(2*G.ay)+"px";
+  moons=[]; cats=[];
+  CATS.forEach(function(c,ci){
+    var cat=document.createElement("div"); cat.className="cat"; cats.push({el:cat,c:c}); cat.style.setProperty("--glow",c.glow);
+    cat.innerHTML='<div class="track" style="width:'+(2*G.rx)+'px;height:'+(2*G.ry)+'px;--tilt:'+c.tilt+'deg"></div>'+
+      (c.href?'<a class="orb" href="'+c.href+'"':'<button type="button" class="orb"')+' style="width:'+G.orb+'px;height:'+G.orb+'px" aria-label="'+esc(c.name)+(c.soon?' (opening soon)':'')+'">'+
+      '<span class="ic" style="font-size:'+(G.orb*.3)+'px">'+c.ic+'</span>'+(c.href?'</a>':'</button>')+
+      '<div class="cat-lab" style="top:'+(G.orb/2+G.ry+4)+'px"><b style="font-size:'+G.sub*1.15+'px">'+esc(c.name)+'</b><span class="cat-sub'+(c.soon?' soon':'')+'" style="font-size:'+(G.sub*0.68)+'px">'+esc(c.sub)+'</span></div>';
+    $("sys").appendChild(cat);
+    if(!c.href){ cat.querySelector(".orb").onclick=function(){ toast("The Kids’ Corner is being furnished and opens soon."); }; }
+    var orbEl=cat.querySelector(".orb");
+    orbEl.addEventListener("mouseenter",function(){ hold++; });
+    orbEl.addEventListener("mouseleave",function(){ hold=Math.max(0,hold-1); });
+    c.moons.forEach(function(m,mi){
+      var el=document.createElement(c.href?"a":"button");
+      if(c.href) el.href=c.href; else el.type="button";
+      el.className="moon"+(m[1]?"":" drawn")+(c.soon?" soon":"");
+      el.setAttribute("aria-label",m[0]+(c.soon?" (opening soon)":" · opens the "+c.name+" lobby"));
+      if(m[1]) el.style.backgroundImage="url('"+m[1]+"')";
+      else { el.style.background="radial-gradient(circle at 32% 26%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 50% 55%,"+m[3]+",#0e1a33 95%)"; el.innerHTML="<span>"+m[2]+"</span>"; }
+      if(!c.href) el.onclick=function(){ toast(m[0]+" is coming to the Kids’ Corner soon."); };
+      el.addEventListener("mouseenter",function(){ hold++; showTip(el,m[0],c.soon?"Opening soon":"Opens the "+c.name+" lobby"); });
+      el.addEventListener("mouseleave",function(){ hold=Math.max(0,hold-1); hideTip(); });
+      el.addEventListener("focus",function(){ hold++; showTip(el,m[0],c.soon?"Opening soon":"Opens the "+c.name+" lobby"); });
+      el.addEventListener("blur",function(){ hold=Math.max(0,hold-1); hideTip(); });
+      cat.appendChild(el);
+      moons.push({el:el,cat:c,phase:mi/c.moons.length*Math.PI*2+ci*.7,ang:0});
+    });
+  });
+  fit(); draw(performance.now());
+}
+function fit(){
+  var st=$("stage"), w=st.clientWidth, h=st.clientHeight;
+  if(PHONE.matches){ var s=Math.min((w-8)/G.bw,1.05); st.style.setProperty("--ph",Math.round(G.bh*s)+"px"); h=G.bh*s; $("sys").style.setProperty("--sc",s); return; }
+  $("sys").style.setProperty("--sc",Math.min(w/G.bw,h/G.bh,1.2));
+}
+var SPEED=2*Math.PI/40000;      /* the moons: one lap round their orb about every 40 s */
+var BIG=2*Math.PI/60000;        /* the four orbs: one lap round the planet about every 60 s */
+var acc={}, big=0, last=performance.now();
+function draw(now){
+  var dt=Math.min(64,now-last); last=now;
+  var go=!hold&&!RM.matches;   /* pointing at any orb or moon stops the whole system */
+  if(go) big+=dt*BIG;
+  cats.forEach(function(k){ var a=START[k.c.key]*Math.PI/180+big, x=Math.cos(a)*G.ax, y=Math.sin(a)*G.ay;
+    k.el.style.transform="translate("+x+"px,"+y+"px)"; k.el.style.zIndex=Math.round(50+y/10); });
+  CATS.forEach(function(c){ if(acc[c.key]==null) acc[c.key]=0; if(go) acc[c.key]+=dt*SPEED*c.dir; });
+  moons.forEach(function(m){
+    var c=m.cat, a=m.phase+acc[c.key], tl=c.tilt*Math.PI/180;
+    var ex=Math.cos(a)*G.rx, ey=Math.sin(a)*G.ry;              /* on the ellipse */
+    var x=ex*Math.cos(tl)-ey*Math.sin(tl), y=ex*Math.sin(tl)+ey*Math.cos(tl);
+    var depth=(Math.sin(a)+1)/2;                               /* 0 = behind the orb, 1 = in front */
+    var size=G.mBack+(G.mFront-G.mBack)*depth;
+    var el=m.el;
+    el.style.width=el.style.height=size+"px";
+    el.style.transform="translate("+(x-size/2)+"px,"+(y-size/2)+"px)";
+    el.style.zIndex=depth>.5?30:10;
+    el.style.filter="brightness("+(.55+.45*depth)+")";
+    if(el.classList.contains("drawn")) el.style.fontSize=(size*.42)+"px";
+  });
+  if(tipEl) placeTip();
+}
+function loop(now){ draw(now); requestAnimationFrame(loop); }
+
+/* tooltip */
+var tipEl=null;
+function showTip(el,name,sub){ tipEl=el; var t=$("tip"); t.innerHTML=esc(name)+"<small>"+esc(sub)+"</small>"; t.classList.add("on"); placeTip(); }
+function hideTip(){ tipEl=null; $("tip").classList.remove("on"); }
+function placeTip(){ var r=tipEl.getBoundingClientRect(), s=$("stage").getBoundingClientRect(), t=$("tip"); t.style.left=(r.left+r.width/2-s.left)+"px"; t.style.top=(r.top-s.top)+"px"; }
+
+/* toast (glass, no alert boxes) */
+function toast(msg){
+  var t=$("bwToastP"); if(!t){ t=document.createElement("div"); t.id="bwToastP"; t.style.cssText="position:fixed;left:50%;top:96px;transform:translateX(-50%);z-index:95;max-width:340px;padding:12px 16px;border-radius:12px;background:rgba(15,23,42,.9);border:1px solid rgba(229,193,88,.55);font:600 13px/1.45 Montserrat,sans-serif;box-shadow:0 12px 28px rgba(0,0,0,.35);text-align:center;transition:opacity .3s"; document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity="1"; clearTimeout(t._h); t._h=setTimeout(function(){ t.style.opacity="0"; },2600);
+}
+
+/* ---------- panels: where they live in each layout ---------- */
+var LAYS={
+  a:{L:["pSeat","pClub","pWhim"], R:["pMail","pLadder","pLearn"]},
+  b:{L:[], R:["pSeat","pMail","pClub","pLadder","pLearn"]},
+  c:{L:[], R:[]}
+};
+var lay="a";
+function place(k){
+  lay=LAYS[k]?k:"a";
+  document.body.className="lay-"+lay;
+  var store=$("panelStore");
+  closeWin();
+  ["pSeat","pClub","pMail","pLadder","pLearn","pWhim"].forEach(function(id){ store.appendChild($(id)); });
+  if(!PHONE.matches){
+    LAYS[lay].L.forEach(function(id){ $("sideL").appendChild($(id)); });
+    LAYS[lay].R.forEach(function(id){ $("sideR").appendChild($(id)); });
+  }
+  [].forEach.call(document.querySelectorAll(".switch [data-lay]"),function(b){ b.classList.toggle("on",b.dataset.lay===lay); });
+  try{ var u=new URL(location.href); u.searchParams.set("layout",lay); history.replaceState(null,"",u); }catch(e){}
+  requestAnimationFrame(function(){ fit(); });
+}
+[].forEach.call(document.querySelectorAll(".switch [data-lay]"),function(b){ b.onclick=function(){ place(b.dataset.lay); }; });
+$("switchHide").onclick=function(){ $("switch").style.display="none"; };
+
+/* windows (Layout C dock) and sheets (phone bar) */
+var openId=null;
+function openWin(id){
+  var store=$("panelStore"); if(openId) store.appendChild($(openId));
+  openId=id; $("winBody").appendChild($(id)); $("win").classList.add("on"); $("veil").classList.add("on");
+}
+function closeWin(){ if(openId){ $("panelStore").appendChild($(openId)); openId=null; } $("win").classList.remove("on"); $("veil").classList.remove("on"); }
+[].forEach.call(document.querySelectorAll("[data-open]"),function(b){ b.onclick=function(){ openWin(b.dataset.open); }; });
+$("winX").onclick=closeWin; $("veil").onclick=closeWin;
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeWin(); });
+/* swipe a sheet down to close (phones) */
+(function(){ var y0=null; var w=$("win");
+  w.addEventListener("touchstart",function(e){ if(w.scrollTop<=0) y0=e.touches[0].clientY; },{passive:true});
+  w.addEventListener("touchend",function(e){ if(y0!=null&&e.changedTouches[0].clientY-y0>70) closeWin(); y0=null; });
+})();
+
+/* phone menu */
+$("menuBtn").onclick=function(){ var m=$("phoneMenu"), on=!m.classList.contains("on"); m.classList.toggle("on",on); this.setAttribute("aria-expanded",on); };
+
+/* mailbox: the Lobby's mail pane (play-rooms.js adds the bell to the header) */
+$("mailOpen").onclick=function(){ closeWin(); var b=document.getElementById("bellBtn"); if(b) b.click(); else location.href="lobby.html"; };
+
+/* whims */
+var WHIMS=["Lose a game on purpose today. Watch what The House does.","Teach someone a game you love.","Play one hand slower than you need to.","Notice which room you choose first, and why.","Win, then say thank you to The House.","Try the parlor you have never opened."];
+var wi=-1; function whim(){ wi=(wi+1+Math.floor(Math.random()*(WHIMS.length-1)))%WHIMS.length; $("whimText").textContent=WHIMS[wi]; }
+$("pWhim").onclick=whim; $("pWhim").onkeydown=function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); whim(); } };
+
+/* ---------- seat and ladder (signed in or guest) ---------- */
+function avHtml(p,size){ return window.BWAvatar?BWAvatar.html(p,{size:size}):""; }
+function ladder(prof){
+  var R=(window.BWAvatar&&BWAvatar.RANKS)||[{name:"Baby Pawn Star",min:0},{name:"Whimsical Star",min:25},{name:"Wandering Comet",min:75},{name:"Rising Moon",min:150},{name:"Event Horizon",min:300},{name:"Quantum Brainwave",min:600},{name:"Keeper of the Cosmos",min:1000}];
+  var mine=prof&&window.BWAvatar?BWAvatar.rank(Number(prof.skill_points)||0).i:-1, av=(prof&&prof.avatar)||"sunny";
+  $("ladder").innerHTML=R.map(function(r,i){ return '<li'+(i===mine?' class="me"':'')+'>'+(window.BWAvatar?BWAvatar.svg(i===mine?av:"sunny",{size:30,ring:i}):'')+'<span>'+esc(r.name)+'</span><small>'+(i===mine?'You':r.min)+'</small></li>'; }).join("");
+}
+function seat(st){
+  var signed=st&&st.user, p=(st&&st.profile)||{};
+  $("seatAv").innerHTML=avHtml(signed?p:null,84);
+  if(signed){
+    var name=p.username||p.display_name||"friend", pts=Number(p.skill_points)||0, rk=window.BWAvatar?BWAvatar.rank(pts):null;
+    $("seatName").textContent="Welcome back, "+name;
+    $("seatRank").textContent=(rk?rk.name+" · ":"")+pts+" points"+(st.member?" · Club":"");
+    if(rk&&rk.next){ $("seatBar").hidden=false; $("seatFill").style.width=Math.max(4,Math.round((pts-rk.min)/(rk.next-rk.min)*100))+"%"; $("seatNext").textContent=(rk.next-pts)+" more to "+rk.nextName; }
+    else { $("seatBar").hidden=true; $("seatNext").textContent=rk?"The top of the ladder":""; }
+    $("seatActs").innerHTML='<a class="btn" href="lobby.html">Go to the Lobby</a><div class="btns"><button class="btn" type="button" id="seatAvBtn">Avatar</button><button class="btn" type="button" id="seatOut">Sign Out</button></div>';
+    $("seatAvBtn").onclick=function(){ closeWin(); if(window.BWAvatar) BWAvatar.studio(); };
+    $("seatOut").onclick=function(){ if(window.BW) BW.signOut(); };
+    $("seatAv").onclick=function(){ closeWin(); if(window.BWAvatar) BWAvatar.studio(); };
+    $("mailLine").textContent="Invites from friends land here.";
+    $("dkName").textContent=name; $("dkRank").textContent=rk?rk.name:"Your Seat";
+  } else {
+    var left=window.BW&&BW.guestMatchesLeft?BW.guestMatchesLeft():10;
+    $("seatName").textContent="Playing as a Guest";
+    $("seatRank").textContent=left+" of 10 free games left";
+    $("seatBar").hidden=true; $("seatNext").textContent="";
+    $("seatActs").innerHTML='<p class="center" style="font-size:12px">A free account saves your points, plays online, and has no limit.</p><button class="btn" type="button" id="seatIn">Sign In or Create Account</button>';
+    $("seatIn").onclick=function(){ closeWin(); if(window.BW) BW.openAuth(); };
+    $("seatAv").onclick=null;
+    $("mailLine").textContent="Sign in to see invites from friends.";
+    $("dkName").textContent="Your Seat"; $("dkRank").textContent=left+" free games left";
+  }
+  $("dkAv").innerHTML=avHtml(signed?p:null,30);
+  $("pbAv").innerHTML=avHtml(signed?p:null,24)||"👤";
+  ladder(signed?p:null);
+}
+
+/* ---------- start ---------- */
+var q=new URLSearchParams(location.search).get("layout");
+build(); place(q||"a"); seat(null); requestAnimationFrame(loop);
+window.addEventListener("resize",function(){ fit(); });
+PHONE.addEventListener("change",function(){ build(); place(lay); });
+window.addEventListener("load",function(){
+  seat(window.BW&&BW.user&&BW.user()?{user:BW.user(),profile:BW.profile(),member:BW.member()}:null);
+  if(window.BW&&BW.onChange) BW.onChange(function(st){ seat(st); });
+});
+window.addEventListener("bw-avatar",function(){ if(window.BW&&BW.user&&BW.user()) seat({user:BW.user(),profile:BW.profile(),member:BW.member()}); });
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1028e"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+</body>
+</html>
