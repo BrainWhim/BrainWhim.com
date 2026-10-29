@@ -260,7 +260,8 @@ var K=BWCards, PT=K.paint;
    drawn in the browser. Contract bridge for four in two partnerships: seats 0-3 clockwise, 0 South (you), 1 West,
    2 North (your partner), 3 East. Each window turns the table so its own seat is at the bottom.
    Against The House: Eleanor is your partner, Reginald and Vivienne your opponents; when your side wins the contract
-   you play both your hand and your partner's (declarer and dummy). Online (Judy's partnership spec, Oct 28): two
+   the declarer plays both hands of that side: when you declare you play yours and Eleanor's (the dummy); when
+   Eleanor declares, she plays hers and yours, and you watch. Online (Judy's partnership spec, Oct 28): two
    people are partners, the host South and the guest North, against two House players played from the host's
    window; the declarer plays the dummy's cards and the dummy's player watches.
    Scoring: Chicago, four deals a match, each deal scored like duplicate bridge (game, part-score and slam bonuses,
@@ -366,7 +367,7 @@ function dummyShown(){ return S.phase==="play"&&S.contract&&(S.history.length>0|
    when your side declares. Returns a human seat (0 or 2), or -1 for The House. */
 function controller(seat){
   if(S.phase==="play"&&S.contract){ var d=S.contract.decl; if(seat===(d+2)%4) seat=d;
-    if(!online&&team(d)===0&&(seat===0||seat===2)) return 0; }
+  }
   return isHuman(seat)?seat:-1;
 }
 function vulFor(deal){ return deal===1?[false,false]:deal===2?[false,true]:deal===3?[true,false]:[true,true]; }   /* dealers N, E, S, W */
@@ -794,7 +795,7 @@ function seatedNow(){ return document.body.classList.contains("seated"); }
 function myTurnNow(){ return !!S&&S.phase==="play"&&controller(S.turn)===mySeat()&&canAct(); }
 async function tapCard(id){
   if(busy||!S||REV) return;
-  if(!myTurnNow()) { if(S.phase==="play"&&S.h[S.turn].indexOf(id)<0&&S.h[mySeat()].indexOf(id)>=0&&controller(mySeat())===mySeat()&&S.turn!==mySeat()) toast(S.turn===dummy()&&controller(S.turn)===mySeat()?"Play from the dummy now":"It isn't your turn yet"); return; }
+  if(!myTurnNow()) { if(S.phase==="play"&&S.contract&&dummy()===mySeat()&&S.h[mySeat()].indexOf(id)>=0){ toast("You're the dummy: "+nameOf(S.contract.decl)+" plays your cards this deal"); return; } if(S.phase==="play"&&S.h[S.turn].indexOf(id)<0&&S.h[mySeat()].indexOf(id)>=0&&controller(mySeat())===mySeat()&&S.turn!==mySeat()) toast(S.turn===dummy()&&controller(S.turn)===mySeat()?"Play from the dummy now":"It isn't your turn yet"); return; }
   var p=S.turn; if(S.h[p].indexOf(id)<0){ if(S.h[mySeat()].indexOf(id)>=0||S.h[dummy()]&&S.h[dummy()].indexOf(id)>=0) toast(p===dummy()?"It's the dummy's turn: play one of "+nameOf(p)+"'s cards":"It's your own hand's turn"); return; }
   if(legal(p).indexOf(id)<0){ toast(whyNot(p,id)); return; }
   if(!allowLesson({play:id})) return;
@@ -811,7 +812,8 @@ async function animate(mv){
   var mine=mv&&mv.p===mySeat()&&mySide!==0;
   if(mv&&mv.kind==="call"){ Parlor.sfx("click",{pitch:1.4}); var c=mv.c;
     toast(nameOf(mv.p)+(c==="p"?(mine?" pass":" passes"):c==="x"?(mine?" double":" doubles"):c==="xx"?(mine?" redouble":" redoubles"):(mine?" bid ":" bids ")+bidText(c)));
-    if(mv.contract){ var con=S.contract; await Parlor.wait(500); Parlor.sfx("mill"); toast("Contract: "+bidText(con)+(con.dbl===2?" redoubled":con.dbl===1?" doubled":"")+" by "+nameOf(con.decl)+". "+nameOf((con.decl+1)%4)+(S.lead===mySeat()?" lead":" leads")); } }
+    if(mv.contract){ var con=S.contract; await Parlor.wait(500); Parlor.sfx("mill"); toast("Contract: "+bidText(con)+(con.dbl===2?" redoubled":con.dbl===1?" doubled":"")+" by "+nameOf(con.decl)+". "+nameOf((con.decl+1)%4)+(S.lead===mySeat()?" lead":" leads"));
+      if(!online&&con.decl===2){ await Parlor.wait(2400); toast("You're the dummy: Eleanor plays both hands"); } } }
   await render(true,{dur:200});
 }
 
@@ -833,6 +835,7 @@ function msg(){
   if(S.phase==="bid"){ if(S.turn===mySeat()&&mySide!==0) Parlor.status("Your call","Choose a bid, Pass, or Double"); else Parlor.status(nameOf(S.turn)+" is bidding…","Deal "+S.deal+" of "+DEALS); return; }
   var c=controller(S.turn);
   if(c===mySeat()&&mySide!==0) Parlor.status(S.turn===mySeat()?"Your turn":"Play from "+(S.turn===dummy()?"the dummy":nameOf(S.turn)+"'s hand"),!S.trick.length?"Lead: tap a glowing card":"Follow suit if you can: tap a glowing card");
+  else if(S.turn===mySeat()&&c<0) Parlor.status(nameOf(S.contract.decl)+" is playing from your hand","You're the dummy this deal: "+nameOf(S.contract.decl)+" plays both hands");
   else Parlor.status((c>=0?nameOf(c):nameOf(S.turn))+(c>=0?"'s turn":" is thinking…"),"Contract "+bidText(S.contract)+" by "+nameOf(S.contract.decl));
 }
 function showStats(){ if(!S) return; var mt=myTeam(); Parlor.info("Chicago · deal "+S.deal+" of "+DEALS+" · vulnerable: "+(S.vul[0]&&S.vul[1]?"both":S.vul[0]?"North-South":S.vul[1]?"East-West":"neither")+(S.contract&&S.phase==="play"?" · "+bidText(S.contract)+" by "+nameOf(S.contract.decl):"")); }
@@ -955,7 +958,7 @@ var LESSON=[
     done:"<p>A bid of 1♥ promises to take 7 tricks (six plus the level) with hearts as trump, if it becomes the final contract. Each bid must be higher than the last: by level, then ♣ ♦ ♥ ♠ NT.</p>"},
   {title:"The Auction", text:"<p>Bidding goes around the table. You may bid higher, <b>Pass</b>, or <b>Double</b> the other side's bid (it raises the stakes). The auction ends when three players pass in a row.</p><p>The last bid is the <b>contract</b>. The first player of that side who named its suit is the <b>declarer</b>.</p>"},
   {title:"Declarer and Dummy", text:"<p>The player on the declarer's left leads, then the declarer's partner lays their cards <b>face up</b>: the <b>dummy</b>. The declarer plays both hands.</p><p>You are declarer in 4♥ and Eleanor's hand is the dummy across the table. It's the dummy's turn: tap the glowing <b>ace of spades</b> in the dummy.</p>", sub:"Play from the dummy",
-    done:"<p>When your side wins the contract against The House, you play your hand and the dummy. When the other side declares, you defend with your own cards.</p>"},
+    done:"<p>When you're the declarer, you play your hand and the dummy. When Eleanor is the declarer, she plays both hands and yours is the dummy, so you just watch. When the other side declares, you defend with your own cards.</p>"},
   {title:"Follow Suit and Trump", text:"<p>You must <b>follow the suit</b> that was led if you can. If you can't, you may play a <b>trump</b>, which beats any card of another suit.</p><p>Vivienne led the king of diamonds and you have none. Trump it with the <b>two of hearts</b>.</p>", sub:"Trump with the two of hearts",
     done:"<p>The smallest trump wins the trick. In a notrump contract there are no trumps: the highest card of the suit led wins.</p>"},
   {title:"Scoring", text:"<p>Make your contract and you score its tricks (clubs and diamonds 20 each, hearts and spades 30, notrump 40 then 30), plus a bonus: <b>300</b> for a game (500 when <b>vulnerable</b>), 50 for a part-score, more for slams. Fall short and the other side scores 50 or 100 a trick.</p><p>Vulnerability changes each deal of the Chicago; a dot beside a name marks a vulnerable side.</p>"},
@@ -980,8 +983,9 @@ function startPractice(){
 }
 function practiceTip(){
   if(!S) return;
+  if(S.phase==="play"&&S.contract&&S.contract.decl===2&&S.history.length===0&&tipN<2){ tipN=2; Parlor.practiceSay("Eleanor Is Declarer","<p>Eleanor won the contract, so she plays both her hand and yours. Your hand is the <b>dummy</b> this deal: just watch how she plays it. You'll play again on the next deal.</p>"); return; }
   if(S.phase==="bid"&&S.turn===0){ if(tipN===0){ tipN++; Parlor.practiceSay("Your Call","<p>You hold "+hcp(S.h[0])+" points. The gold call in the bidding box is a good choice for this hand.</p>"); } return; }
-  if(S.phase==="play"&&controller(S.turn)===0&&S.history.length===0&&S.trick.length<=1&&S.contract&&team(S.contract.decl)===0&&tipN<2){ tipN=2; Parlor.practiceSay("You're Declarer","<p>Your side won the contract, so you play both your hand and the dummy. Glowing cards are the ones you may play now.</p>"); return; }
+  if(S.phase==="play"&&controller(S.turn)===0&&S.history.length===0&&S.trick.length<=1&&S.contract&&S.contract.decl===0&&tipN<2){ tipN=2; Parlor.practiceSay("You're Declarer","<p>Your side won the contract, so you play both your hand and the dummy. Glowing cards are the ones you may play now.</p>"); return; }
   if(S.phase==="play"&&controller(S.turn)===0&&++tipN%4===1) Parlor.practiceSay("Practice Match","<p>"+TIPS[Math.floor(tipN/4)%TIPS.length]+"</p>");
 }
 
@@ -1058,7 +1062,7 @@ Parlor.init({
     {id:"sapphire",name:DESIGNS.sapphire.name,club:true,dots:DESIGNS.sapphire.dots}
   ],
   rules:{
-    play:"<ol><li><b>Partners:</b> four players in two partnerships; your partner sits across from you (North). Against The House, Eleanor is your partner and Reginald and Vivienne play against you. Online, you and a friend (or a player you're matched with) are partners against two House players.</li><li><b>The auction:</b> starting with the dealer, each player calls in turn: a <b>bid</b> (a level 1-7 and a strain: ♣ ♦ ♥ ♠ or notrump), <b>Pass</b>, <b>Double</b> (an opponent's bid) or <b>Redouble</b> (your side's doubled bid). Each bid must be higher than the last: by level, then ♣ ♦ ♥ ♠ NT. Three passes in a row end the auction; if all four pass, the deal is passed out and dealt again.</li><li><b>The contract:</b> the last bid. The declaring side must take six tricks plus the level (1♥: 7 tricks). The <b>declarer</b> is the player of that side who first named the strain.</li><li><b>The dummy:</b> after the opening lead (by the declarer's left-hand opponent), the declarer's partner lays down their hand face up, and the declarer plays it. Against The House, when your side declares you play both hands. Online, the declarer plays the dummy's cards and the dummy's player watches.</li><li><b>Tricks:</b> follow suit if you can; otherwise play any card. The highest trump wins, or the highest card of the suit led.</li><li>Use the bidding box to call; tap a glowing card to play it (from the dummy too, when it's the dummy's turn).</li><li><b>Review Hand</b> (Club): after a deal, step through every trick with all four hands face up.</li></ol>",
+    play:"<ol><li><b>Partners:</b> four players in two partnerships; your partner sits across from you (North). Against The House, Eleanor is your partner and Reginald and Vivienne play against you. Online, you and a friend (or a player you're matched with) are partners against two House players.</li><li><b>The auction:</b> starting with the dealer, each player calls in turn: a <b>bid</b> (a level 1-7 and a strain: ♣ ♦ ♥ ♠ or notrump), <b>Pass</b>, <b>Double</b> (an opponent's bid) or <b>Redouble</b> (your side's doubled bid). Each bid must be higher than the last: by level, then ♣ ♦ ♥ ♠ NT. Three passes in a row end the auction; if all four pass, the deal is passed out and dealt again.</li><li><b>The contract:</b> the last bid. The declaring side must take six tricks plus the level (1♥: 7 tricks). The <b>declarer</b> is the player of that side who first named the strain.</li><li><b>The dummy:</b> after the opening lead (by the declarer's left-hand opponent), the declarer's partner lays down their hand face up, and the declarer plays it. Against The House, whoever declares plays both hands: when you're the declarer you play yours and Eleanor's; when Eleanor is, she plays hers and yours while you watch. Online, the declarer plays the dummy's cards and the dummy's player watches.</li><li><b>Tricks:</b> follow suit if you can; otherwise play any card. The highest trump wins, or the highest card of the suit led.</li><li>Use the bidding box to call; tap a glowing card to play it (from the dummy too, when it's the dummy's turn).</li><li><b>Review Hand</b> (Club): after a deal, step through every trick with all four hands face up.</li></ol>",
     score:"<ul><li><b>Contract made:</b> each trick bid scores 20 in clubs or diamonds, 30 in hearts or spades, and 40 for the first and 30 for each other in notrump (doubled ×2, redoubled ×4).</li><li><b>Bonuses:</b> a game (100 or more trick points) 300, or 500 vulnerable; a part-score 50; small slam (6) 500 / 750; grand slam (7) 1000 / 1500; making a doubled contract 50 (redoubled 100). Overtricks score their trick value (doubled: 100 each, 200 vulnerable).</li><li><b>Down:</b> the other side scores 50 a trick (100 vulnerable); doubled 100, 300, 500, then 300 more each (vulnerable 200, then 300 each); redoubled twice that.</li><li><b>Chicago:</b> a match is four deals. Deal 1: nobody vulnerable; deals 2 and 3: the dealer's side; deal 4: both. The higher total wins. Practice matches are two deals.</li></ul>"
   },
   onNew:function(){ inLesson=false; practice=false; lessonOnly=null; DEALS=4; mySide=1; REV=null; revBar(); Parlor.coach(null); closePanel(); GID++; newMatch(); busy=true; fit(true); dealAnim().then(function(){ busy=false; after(); }); },
