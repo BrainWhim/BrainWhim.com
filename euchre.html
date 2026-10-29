@@ -318,12 +318,28 @@ function mySeat(){ return online&&mySide===2?2:0; }
 function myTeam(){ return team(mySeat()); }
 function view(seat){ return (seat-mySeat()+4)%4; }
 function authority(){ return !online||mySide===1; }
-/* who deals (Oct 29, Judy): online, the deal passes round the table like a real game. The person whose deal it is
-   presses Deal; a House player's deal is started by the person on its right, so each of you starts half the hands. */
-function pressSeat(s){ return humans().indexOf(s)<0?(s+3)%4:s; }
-function iPress(s){ return !online||(mySide!==0&&pressSeat(s)===mySeat()); }
-function dealLabel(nd,base){ return (!online||nd===mySeat())?base:"Deal for "+nameOf(nd); }
-function dealWait(nd){ return humans().indexOf(nd)>=0?"Waiting for "+Parlor.oppName()+" to deal…":"Waiting for "+Parlor.oppName()+" to start the next hand. "+nameOf(nd)+" deals."; }
+/* who deals (Oct 29, Judy): the deal passes round the table like a real game. Online, the person whose deal it is
+   presses Deal. */
+function houseDeals(s){ return humans().indexOf(s)<0; }
+/* House players deal for themselves (Oct 29, Judy): the results stay up a few seconds, then The House deals on its
+   own (online, from the host's window, which plays the House seats). People press Deal only on their own deals. */
+var HOUSE_DEAL_MS=6500, autoDealT=null;
+function iPress(s){ return houseDeals(s)?authority():(!online||(mySide!==0&&s===mySeat())); }
+function dealLabel(nd,base){ return base; }
+function pressSeat(s){ return houseDeals(s)?(s+3)%4:s; }   /* Pinochle's Play the Hand after a House bid: the person on its right */
+function iMeldGo(s){ return !online||(mySide!==0&&pressSeat(s)===mySeat()); }
+function dealHide(nd){ return houseDeals(nd)&&!inLesson?' style="display:none"':''; }
+function dealNote(nd){ return houseDeals(nd)&&!inLesson?'<p style="margin:0">'+esc(nameOf(nd))+' deals the next hand in a moment…</p>':''; }
+function dealWait(nd){ return houseDeals(nd)?nameOf(nd)+" deals the next hand in a moment…":"Waiting for "+Parlor.oppName()+" to deal…"; }
+function autoDeal(nd){
+  clearTimeout(autoDealT); if(!houseDeals(nd)||inLesson) return;
+  var k=S.seq;
+  autoDealT=setTimeout(function(){
+    if(!S||S.seq!==k||S.phase!=="handover") return;
+    if(busy||(typeof REV!=="undefined"&&REV)){ autoDeal(nd); return; }   /* reviewing the hand, or mid-move: try again shortly */
+    var b=PANEL.querySelector("#ceNext"); if(b) b.click();
+  },HOUSE_DEAL_MS);
+}
 var HOUSE_NAMES=["","Hank","June","Mabel"];
 function nameOf(seat){ if(seat===mySeat()&&mySide!==0) return "You"; if(online&&!isHouse(seat)) return mySide===0?(seat===0?"Host":"Guest"):Parlor.oppName(); return HOUSE_NAMES[seat]||"The House"; }
 function teamName(t){ var a=t===team(mySeat())?mySeat():t, b=(a+2)%4; return nameOf(a)+" & "+nameOf(b); }   /* a person first, then their House partner */
@@ -650,9 +666,9 @@ function handOver(){
     PANEL.innerHTML='<p class="k">Final Hand</p><h3>'+(w===mt?"Your Team Wins":esc(teamName(1-mt))+" Win")+'</h3><p>'+esc(line)+'</p>'+rows;
     PANEL.classList.add("on"); Parlor.status(w===mt?"Your team wins":teamName(1-mt)+" win",""); setTimeout(matchOver,2800); return; }
   var nd=((S.dealer+1)%4), canDeal=iPress(nd)&&!inLesson;
-  PANEL.innerHTML='<p class="k">Hand '+S.hand+'</p><h3>'+head+'</h3><p>'+esc(line)+'</p>'+rows+(canDeal?'<button type="button" class="pk-btn" id="ceNext">'+esc(dealLabel(nd,"Deal Next Hand"))+'</button>':'<p style="margin:0">'+esc(dealWait(nd))+'</p>');
+  PANEL.innerHTML='<p class="k">Hand '+S.hand+'</p><h3>'+head+'</h3><p>'+esc(line)+'</p>'+rows+(canDeal?'<button type="button" class="pk-btn" id="ceNext"'+dealHide(nd)+'>'+esc(dealLabel(nd,"Deal Next Hand"))+'</button>'+dealNote(nd):'<p style="margin:0">'+esc(dealWait(nd))+'</p>');
   PANEL.classList.add("on");
-  var nb=PANEL.querySelector("#ceNext"); if(nb) nb.onclick=function(){ PANEL.classList.remove("on"); dealNow(); };
+  var nb=PANEL.querySelector("#ceNext"); if(nb) nb.onclick=function(){ PANEL.classList.remove("on"); dealNow(); }; autoDeal(nd);
   Parlor.status(head,"First team to "+TARGET+" wins");
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
