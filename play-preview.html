@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Play Preview · BrainWhim</title>
+
+    <!-- Google Fonts - BrainWhim Brand Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kulim+Park:wght@400&family=Pacifico&family=Montserrat:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* --- MASTER UNIVERSAL CELESTIAL DESIGN ENGINE --- */
+        :root {
+            --studio-bg: #192345;
+            --aurora-hombre-top: #1e3a60;
+            --aurora-hombre-mid: #134e5e;
+            --aurora-hombre-base: #10b981;
+
+            --white: #ffffff;
+            --silver-text: #CBD5E1;
+            --brand-whim-sky: #6BA3C9;
+
+            --glow-emerald: #10B981;
+            --glow-sapphire: #0066CC;
+            --glow-violet: #8B5CF6;
+            --glow-coral: #F24C7A;
+            --glow-berry: #F24C7A;
+            --glow-create: #8B5CF6;
+
+            --galaxy-image: url("galaxy-home.jpg");
+            --galaxy-filter: none;
+            --galaxy-vignette: radial-gradient(ellipse at center, rgba(10, 22, 48, 0.04) 0%, rgba(10, 22, 48, 0.18) 100%);
+        }
+
+        /* Same galaxy photo on every page. Color arrives as a side swath, not a full recolor. */
+        .theme-home {
+            --galaxy-filter: none;
+            --galaxy-swath: linear-gradient(108deg, rgba(56, 150, 220, 0.16) 0%, transparent 46%, rgba(16, 185, 129, 0.14) 100%);
+        }
+        .theme-learn {
+            --galaxy-filter: none;
+            --galaxy-swath: linear-gradient(108deg, rgba(0, 102, 204, 0.34) 0%, rgba(0, 80, 170, 0.08) 42%, rgba(90, 175, 255, 0.22) 100%);
+        }
+        .theme-live {
+            --galaxy-filter: none;
+            --galaxy-swath: linear-gradient(108deg, rgba(40, 130, 210, 0.14) 0%, rgba(16, 185, 129, 0.10) 40%, rgba(16, 185, 129, 0.46) 100%);
+        }
+        .theme-play {
+            --galaxy-filter: none;
+            --galaxy-swath: linear-gradient(108deg, rgba(40, 130, 210, 0.16) 0%, rgba(242, 76, 122, 0.18) 38%, rgba(242, 76, 122, 0.50) 100%);
+        }
+        .theme-create {
+            --galaxy-filter: none;
+            --galaxy-swath: linear-gradient(108deg, rgba(40, 130, 210, 0.16) 0%, rgba(139, 92, 246, 0.12) 38%, rgba(139, 92, 246, 0.52) 100%);
+        }
+
+        html,
+        body {
+            background-color: #0a1630 !important;
+            color: var(--white) !important;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            font-family: 'Montserrat', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Full-page galaxy so the header can sit on the same sky */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-color: #0a1630;
+            background-image:
+                var(--galaxy-vignette),
+                var(--galaxy-image);
+            background-size: cover, cover;
+            background-position: center center, center center;
+            background-repeat: no-repeat, no-repeat;
+            filter: brightness(1.14) saturate(1.06) contrast(1.04);
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: var(--galaxy-swath);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        strong {
+            color: var(--white) !important;
+        }
+
+        p,
+        span,
+        li,
+        a {
+            color: var(--silver-text) !important;
+        }
+
+        /* ===================================================
+           HEADER NAVIGATION BAR
+           =================================================== */
+        /* ===== HEADER LAYOUT - TIGHTER SPACING ===== */
+
+        header {
+            background: rgba(6, 12, 28, 0.18) !important;
+            backdrop-filter: blur(12px) saturate(1.15) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(1.15) !important;
+            border-bottom: 1px solid rgba(186, 214, 232, 0.16) !important;
+            padding: 0 40px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            max-width: none;
+            z-index: 999999 !important;
+            box-sizing: border-box !important;
+            height: 80px !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.22) !important;
+            margin: 0;
+        }
+
+        .header-left-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 260px;
+        }
+
+        .header-brand-container {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0px !important;
+            background: transparent !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            cursor: pointer;
+
+        }
+
+        .header-logo-asset {
+            width: 56px !important;
+            height: 56px !important;
+            object-fit: contain !important;
+            background: transparent !important;
+            margin-right: -4px !important;
+        }
+
+        .header-brand-text {
+            font-size: 26px !important;
+            display: flex !important;
+            align-items: center !important;
+            margin-left: -2px !important;
+            gap: 0px !important;
+        }
+
+        .header-navigation-menu {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: transparent !important;
+        }
+
+        .nav-link {
+            font-family: 'Montserrat', sans-serif !important;
+            color: var(--white) !important;
+            text-decoration: none !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            transition: color 0.2s ease !important;
+            letter-spacing: 0.5px !important;
+            opacity: 0.85;
+        }
+
+        .nav-link:hover {
+            opacity: 1 !important;
+            color: var(--brand-whim-sky) !important;
+        }
+
+        .header-widget-box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            background: transparent !important;
+            z-index: 100 !important;
+            min-width: 240px;
+            max-width: 280px;
+        }
+
+        .whim-generator-deck {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(210, 228, 242, 0.18);
+            padding: 10px 16px;
+            border-radius: 14px;
+            text-align: center;
+            width: 100%;
+            max-width: 270px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .whim-generator-deck:hover {
+            background: rgba(255, 255, 255, 0.10);
+            transform: translateY(-1px);
+            border-color: rgba(186, 214, 232, 0.32);
+            box-shadow: 0 10px 28px rgba(154, 197, 220, 0.16);
+        }
+
+        .whim-quote-output {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 11px;
+            color: var(--white);
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+
+
+        /* ===== BRAND TYPOGRAPHY (Unified) ===== */
+
+        .header-brand-text {
+            font-size: 26px !important;
+            display: flex !important;
+            align-items: center !important;
+            margin-left: -4px !important;
+            gap: 0px;
+        }
+
+        /* "Brain" – now Montserrat for consistency */
+        span.brand-brain,
+        .brand-brain {
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 600 !important;
+            font-size: 26px !important;
+            color: #ffffff !important;
+            letter-spacing: 0 !important;
+            display: inline-block !important;
+        }
+
+        /* "Whim" – keeps the playful Pacifico accent */
+        .brand-whim {
+            font-family: 'Pacifico', cursive !important;
+            font-weight: 400 !important;
+            font-size: 28px !important;
+            color: #7EB6D9 !important;
+            margin-left: -1px !important;
+            display: inline-block !important;
+            letter-spacing: 0.1px !important;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Generator title also stays Pacifico */
+        .whim-label {
+            font-family: 'Pacifico', cursive !important;
+            font-weight: 400 !important;
+            font-size: 14px !important;
+            color: #7EB6D9 !important;
+            margin: 0 0 5px 0 !important;
+            letter-spacing: 0.2px !important;
+        }
+
+        body {
+            padding-top: 110px;
+        }
+
+
+        /* ===== ABOUT SECTION ===== */
+        .about-section {
+            width: 100%;
+            padding: 100px 8% 70px;
+            background: transparent;
+            position: relative;
+            z-index: 5;
+            box-sizing: border-box;
+        }
+
+        .about-inner {
+            max-width: 680px;
+            margin: 0 auto;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(8, 16, 36, 0.30);
+            border: 1px solid rgba(210, 228, 242, 0.12);
+            border-radius: 18px;
+            padding: 36px 40px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .about-title {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 28px !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+            letter-spacing: -0.4px;
+            margin: 0 0 28px 0 !important;
+        }
+
+        .about-content p {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 16px !important;
+            line-height: 1.7 !important;
+            color: var(--silver-text) !important;
+            margin: 0 0 18px 0 !important;
+            font-weight: 400;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .about-closing {
+            color: #7EB6D9 !important;
+            font-weight: 500 !important;
+            margin-top: 8px !important;
+        }
+
+        @media (max-width: 992px) {
+            .about-section {
+                padding: 70px 6% 50px;
+            }
+
+            .about-title {
+                font-size: 24px !important;
+            }
+
+            .about-content p {
+                font-size: 15px !important;
+                line-height: 1.65 !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .about-section {
+                padding: 60px 5% 80px;
+            }
+
+            .about-title {
+                font-size: 22px !important;
+            }
+
+            .about-content p {
+                font-size: 14.5px !important;
+            }
+        }
+
+        /* ===== SUPPORT SECTION ===== */
+        .support-section {
+            width: 100%;
+            padding: 50px 8% 80px;
+            background: transparent;
+            position: relative;
+            z-index: 5;
+            box-sizing: border-box;
+            border-top: 1px solid rgba(210, 228, 242, 0.08);
+        }
+
+        .support-inner {
+            max-width: 680px;
+            margin: 0 auto;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(8, 16, 36, 0.30);
+            border: 1px solid rgba(210, 228, 242, 0.12);
+            border-radius: 18px;
+            padding: 36px 40px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .support-title {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 28px !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+            letter-spacing: -0.4px;
+            margin: 0 0 24px 0 !important;
+        }
+
+        .support-content p {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 16px !important;
+            line-height: 1.7 !important;
+            color: var(--silver-text) !important;
+            margin: 0 0 18px 0 !important;
+            font-weight: 400;
+        }
+
+        .support-email a {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 17px !important;
+            font-weight: 500 !important;
+            color: #7EB6D9 !important;
+            text-decoration: none !important;
+            letter-spacing: 0.2px;
+            transition: color 0.2s ease;
+        }
+
+        .support-email a:hover {
+            color: #a8d4f0 !important;
+        }
+
+        @media (max-width: 992px) {
+            .support-section {
+                padding: 40px 6% 90px;
+            }
+
+            .support-title {
+                font-size: 24px !important;
+            }
+
+            .support-content p,
+            .support-email a {
+                font-size: 15px !important;
+            }
+        }
+
+        /* ===================================================
+           RESPONSIVE MOBILE-FIRST CELESTIAL CANVASES
+           =================================================== */
+        .space-canvas {
+            background-color: transparent !important;
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 118px 0 48px;
+            box-sizing: border-box;
+        }
+
+        /* Photo lives on ::before so page tints do not recolor the orbs */
+        .space-canvas::before {
+            content: none;
+        }
+
+        .aurora-glow {
+            display: none !important;
+            position: absolute;
+            width: 85vw;
+            height: 85vw;
+            max-width: 850px;
+            max-height: 850px;
+            border-radius: 50%;
+            filter: blur(160px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .green-light {
+            background: radial-gradient(circle, #10B981 0%, transparent 70%);
+            top: 5%;
+            left: 5%;
+        }
+
+        .blue-light {
+            background: radial-gradient(circle, #3B82F6 0%, transparent 70%);
+            bottom: 5%;
+            right: 5%;
+        }
+
+        .universe-viewport {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .celestial-system-matrix {
+            position: relative;
+            width: 85vw;
+            height: 85vw;
+            max-width: 500px;
+            max-height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* CENTRAL SUN ORB */
+        .studio-spherical-core {
+            position: absolute;
+            width: 31vw;
+            height: 31vw;
+            max-width: 170px;
+            max-height: 170px;
+            border-radius: 50%;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: coreBreathe 5.5s ease-in-out infinite;
+            overflow: hidden;
+            background-color: #071018;
+            background-image:
+                radial-gradient(circle at 26% 22%, rgba(255, 255, 255, 0.22) 0%, transparent 24%),
+                radial-gradient(circle at 78% 80%, rgba(0, 8, 20, 0.45) 0%, transparent 50%),
+                url("earth-core.jpg");
+            background-size: cover, cover, 118%;
+            background-position: center, center, center;
+            box-shadow:
+                0 10px 24px rgba(0, 0, 0, 0.42),
+                0 0 26px rgba(186, 214, 232, 0.34),
+                0 0 60px rgba(154, 197, 220, 0.22),
+                inset -18px -20px 28px rgba(0, 0, 0, 0.42),
+                inset 12px 10px 16px rgba(255, 255, 255, 0.16);
+        }
+
+        /* Thin atmosphere rim only — Earth photo carries the continents */
+        .studio-spherical-core::before {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99;
+            box-shadow: inset 0 0 0 2px rgba(130, 190, 255, 0.28), 0 0 18px rgba(90, 170, 255, 0.25);
+            background: none;
+            opacity: 1;
+        }
+
+        .studio-spherical-core::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 101;
+            background:
+                radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.28) 0%, transparent 26%),
+                linear-gradient(145deg, rgba(255, 255, 255, 0.10) 0%, transparent 42%, rgba(0, 0, 0, 0.22) 100%);
+        }
+
+        .core-globe-surface {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 102;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .core-brain-graphic {
+            width: 125px !important;
+            height: 125px !important;
+            object-fit: contain !important;
+            opacity: 0.55;
+            mix-blend-mode: screen;
+            filter: drop-shadow(0 0 8px rgba(186, 214, 232, 0.25)) !important;
+        }
+
+        /* ORBIT RING */
+        .master-equidistant-ring {
+            position: absolute;
+            width: 72vw;
+            height: 72vw;
+            max-width: 420px;
+            max-height: 420px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: coreSystemSpin 28s linear infinite;
+            z-index: 50;
+        }
+
+        .master-equidistant-ring:hover {
+            animation-play-state: paused !important;
+        }
+
+        /* Soft visible orbital path */
+        .master-equidistant-ring::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1px solid rgba(107, 163, 201, 0.15);
+            box-shadow:
+                0 0 18px rgba(107, 163, 201, 0.10),
+                inset 0 0 18px rgba(107, 163, 201, 0.05);
+            pointer-events: none;
+        }
+
+        .sphere-node-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 24vw;
+            height: 24vw;
+            max-width: 120px;
+            max-height: 120px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .position-0 {
+            transform: translate(-50%, -50%) rotate(0deg) translateY(-168px) rotate(0deg);
+        }
+
+        .position-90 {
+            transform: translate(-50%, -50%) rotate(90deg) translateY(-168px) rotate(-90deg);
+        }
+
+        .position-180 {
+            transform: translate(-50%, -50%) rotate(180deg) translateY(-168px) rotate(-180deg);
+        }
+
+        .position-270 {
+            transform: translate(-50%, -50%) rotate(270deg) translateY(-168px) rotate(-270deg);
+        }
+
+        .master-equidistant-ring:hover .volumetric-sphere {
+            animation-play-state: paused !important;
+        }
+
+        .volumetric-sphere {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            isolation: isolate;
+            background:
+                radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 24%),
+                radial-gradient(circle at 32% 28%, #5a6e9a 0%, #243044 52%, #10182a 80%, #070b14 100%);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+            animation: counterSystemSpin 28s linear infinite;
+        }
+
+        .volumetric-sphere::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -28%;
+            width: 120%;
+            height: 52%;
+            transform: translateX(-50%);
+            background: radial-gradient(ellipse at center, var(--orb-glow, rgba(107,163,201,0.55)) 0%, transparent 72%);
+            filter: blur(10px);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 1;
+        }
+
+        .volumetric-sphere:hover,
+        .volumetric-sphere.is-active {
+            transform: scale(1.12);
+        }
+
+        .orb-learn {
+            --orb-glow: rgba(56, 160, 255, 0.95);
+            background-color: #07182e;
+            background-image:
+                radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.28) 0%, transparent 24%),
+                radial-gradient(circle at 78% 80%, rgba(0, 8, 20, 0.38) 0%, transparent 50%),
+                url("planet-learn.jpg");
+            background-size: cover, cover, cover;
+            background-position: center;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(56, 160, 255, 0.75), 0 0 80px rgba(56, 160, 255, 0.40), inset -14px -16px 24px rgba(0, 0, 0, 0.45), inset 10px 8px 16px rgba(255, 255, 255, 0.16);
+        }
+
+        .orb-live {
+            --orb-glow: rgba(16, 185, 129, 0.95);
+            background-color: #062018;
+            background-image:
+                radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.28) 0%, transparent 24%),
+                radial-gradient(circle at 78% 80%, rgba(0, 12, 8, 0.38) 0%, transparent 50%),
+                url("planet-live.jpg");
+            background-size: cover, cover, cover;
+            background-position: center;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(16, 185, 129, 0.75), 0 0 80px rgba(16, 185, 129, 0.40), inset -14px -16px 24px rgba(0, 0, 0, 0.45), inset 10px 8px 16px rgba(255, 255, 255, 0.16);
+        }
+
+        .orb-play {
+            --orb-glow: rgba(242, 76, 122, 0.95);
+            background-color: #220812;
+            background-image:
+                radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.28) 0%, transparent 24%),
+                radial-gradient(circle at 78% 80%, rgba(20, 0, 8, 0.38) 0%, transparent 50%),
+                url("planet-play.jpg");
+            background-size: cover, cover, cover;
+            background-position: center;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(242, 76, 122, 0.78), 0 0 80px rgba(242, 76, 122, 0.42), inset -14px -16px 24px rgba(0, 0, 0, 0.45), inset 10px 8px 16px rgba(255, 255, 255, 0.16);
+        }
+
+        .orb-create {
+            --orb-glow: rgba(139, 92, 246, 0.95);
+            background-color: #160a28;
+            background-image:
+                radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.28) 0%, transparent 24%),
+                radial-gradient(circle at 78% 80%, rgba(10, 0, 20, 0.38) 0%, transparent 50%),
+                url("planet-create.jpg");
+            background-size: cover, cover, cover;
+            background-position: center;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(139, 92, 246, 0.70), 0 0 80px rgba(139, 92, 246, 0.38), inset -14px -16px 24px rgba(0, 0, 0, 0.45), inset 10px 8px 16px rgba(255, 255, 255, 0.16);
+        }
+
+        .orb-learn:hover,
+        .orb-learn.is-active {
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 48px rgba(56, 160, 255, 0.95), 0 0 90px rgba(56, 160, 255, 0.45);
+        }
+
+        .orb-live:hover,
+        .orb-live.is-active {
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 48px rgba(16, 185, 129, 0.95), 0 0 90px rgba(16, 185, 129, 0.45);
+        }
+
+        .orb-play:hover,
+        .orb-play.is-active {
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 48px rgba(242, 76, 122, 0.95), 0 0 90px rgba(242, 76, 122, 0.48);
+        }
+
+        .orb-create:hover,
+        .orb-create.is-active {
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 48px rgba(139, 92, 246, 0.95), 0 0 90px rgba(139, 92, 246, 0.45);
+        }
+
+
+        /* ===== SPHERE LABEL CLARITY ===== */
+
+        .sphere-content-face {
+            text-align: center;
+            padding: 6px 4px;
+            z-index: 10;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .sphere-icon {
+            font-size: 26px;
+            margin-bottom: 3px;
+            line-height: 1;
+        }
+
+        .volumetric-sphere h3 {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.2px !important;
+            margin: 0 !important;
+            color: #ffffff !important;
+            text-transform: none !important;
+        }
+
+        .sphere-hover-panel {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+        }
+
+        .volumetric-sphere:hover .sphere-hover-panel,
+        .volumetric-sphere.is-active .sphere-hover-panel {
+            max-height: 100px;
+            opacity: 1;
+            margin-top: 4px;
+        }
+
+        .sphere-subtitle {
+            font-size: 8px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.4px !important;
+            margin: 0 0 2px 0 !important;
+        }
+
+        .orb-learn .sphere-subtitle {
+            color: var(--glow-sapphire) !important;
+        }
+
+        .orb-live .sphere-subtitle {
+            color: var(--glow-emerald) !important;
+        }
+
+        .orb-play .sphere-subtitle {
+            color: var(--glow-berry) !important;
+        }
+
+        .orb-create .sphere-subtitle {
+            color: var(--glow-violet) !important;
+        }
+
+        .sphere-desc {
+            font-size: 8px !important;
+            line-height: 1.25 !important;
+            color: var(--silver-text) !important;
+            margin: 0 !important;
+        }
+
+        .sphere-badge {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 7px !important;
+            font-weight: 800 !important;
+            padding: 2px 6px !important;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.10);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+
+
+        /* Mobile adjustments */
+        @media (max-width: 992px) {
+            header {
+                height: 80px !important;
+                padding: 0 40px !important;
+            }
+
+            .header-logo-asset {
+                width: 56px !important;
+                height: 56px !important;
+            }
+
+            .header-brand-text {
+                font-size: 24px !important;
+            }
+
+            .header-navigation-menu {
+                display: none !important;
+            }
+
+            .header-widget-box {
+                min-width: 140px;
+            }
+
+            .whim-generator-deck {
+                max-width: 150px;
+                padding: 6px 10px;
+            }
+
+            .whim-quote-output {
+                font-size: 9px;
+            }
+
+            .menu-toggle {
+                width: 36px;
+                height: 36px;
+                margin-right: 8px;
+            }
+
+            .header-widget-box {
+                display: flex !important;
+                min-width: 0;
+                max-width: 46%;
+            }
+
+            .whim-generator-deck {
+                max-width: 100%;
+                padding: 6px 8px;
+            }
+
+            .whim-label {
+                font-size: 11px !important;
+                margin-bottom: 2px !important;
+            }
+
+            .whim-quote-output {
+                font-size: 8px !important;
+                line-height: 1.2 !important;
+            }
+
+            .header-left-group {
+                min-width: 0;
+                gap: 6px;
+            }
+
+            body {
+                padding-top: 100px;
+            }
+
+            .space-canvas {
+                min-height: calc(100dvh - 100px);
+                padding: 0 0 20px;
+            }
+
+            .space-canvas::before {
+                background-position: center center, center center;
+                background-size: cover, cover;
+            }
+
+        }
+
+        @keyframes coreSystemSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes counterSystemSpin {
+            0% {
+                transform: rotate(360deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        @keyframes coreBreathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow:
+                    0 10px 24px rgba(0, 0, 0, 0.38),
+                    0 0 24px rgba(186, 214, 232, 0.32),
+                    0 0 58px rgba(154, 197, 220, 0.22),
+                    inset -14px -16px 24px rgba(0, 0, 0, 0.36),
+                    inset 10px 8px 16px rgba(255, 255, 255, 0.16);
+            }
+
+            50% {
+                transform: scale(1.035);
+                box-shadow:
+                    0 10px 24px rgba(0, 0, 0, 0.34),
+                    0 0 34px rgba(210, 228, 242, 0.42),
+                    0 0 74px rgba(154, 197, 220, 0.28),
+                    inset -14px -16px 24px rgba(0, 0, 0, 0.32),
+                    inset 10px 8px 16px rgba(255, 255, 255, 0.20);
+            }
+        }
+
+
+
+        /* ===== LEFT SLIDE-OUT MENU ===== */
+        .menu-toggle {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: 0.25s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 10, 24, 0.28);
+            z-index: 1000000;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: 0.3s ease;
+        }
+
+        .menu-overlay.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .left-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(340px, 88vw);
+            height: 100%;
+            background: rgba(8, 16, 36, 0.32);
+            backdrop-filter: blur(16px) saturate(1.15);
+            -webkit-backdrop-filter: blur(16px) saturate(1.15);
+            z-index: 1000002;
+            transform: translateX(-105%);
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 22px 30px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            border-right: 1px solid rgba(210, 228, 242, 0.14);
+            box-shadow: 16px 0 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .left-menu.is-open {
+            transform: translateX(0);
+        }
+
+        .left-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .left-menu-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+
+        .menu-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+
+        .menu-close:hover {
+            color: #fff;
+        }
+
+        .left-menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .left-menu-link {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            color: #D5DEE8;
+            text-decoration: none;
+            padding: 9px 0;
+            transition: color 0.2s ease;
+        }
+
+        .left-menu-link:hover {
+            color: #7EB6D9;
+        }
+
+        .menu-pillar {
+            margin-bottom: 20px;
+        }
+
+        .menu-pillar h3 {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: #7EB6D9 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin: 0 0 8px 0 !important;
+        }
+
+        .menu-pillar ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .menu-pillar li {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13.5px;
+            color: #E8EEF5;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .menu-pillar li:last-child {
+            border-bottom: none;
+        }
+
+        .menu-pillar li span {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.38);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 3px 7px;
+            border-radius: 999px;
+        }
+
+        .menu-pillar h3 a {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        .menu-pillar h3 a:hover {
+            color: #a8d4f0 !important;
+        }
+
+        .left-menu-footer {
+            margin-top: auto;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .left-menu-footer a {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            color: #7EB6D9;
+            text-decoration: none;
+        }
+
+        .left-menu-footer a:hover {
+            color: #a8d4f0;
+        }
+
+        @media (max-width: 992px) {
+            header {
+                height: 96px !important;
+                padding: 0 14px !important;
+            }
+
+            .header-left-group {
+                min-width: 0;
+                gap: 4px;
+                flex: 1;
+            }
+
+            .header-logo-asset {
+                width: 56px !important;
+                height: 56px !important;
+            }
+
+            .header-brand-text {
+                font-size: 22px !important;
+            }
+
+            .header-widget-box {
+                display: flex !important;
+                min-width: 0;
+                max-width: 130px;
+            }
+
+            .whim-generator-deck {
+                max-width: 130px;
+                padding: 8px 10px;
+            }
+
+            .whim-label {
+                font-size: 12px !important;
+                margin: 0 !important;
+            }
+
+            .whim-quote-output {
+                display: none !important;
+            }
+        }
+
+        .whim-mobile-card {
+            display: none;
+        }
+
+        @media (max-width: 992px) {
+            .whim-mobile-card.is-visible {
+                display: block;
+                position: fixed;
+                top: 100px;
+                left: 14px;
+                right: 14px;
+                z-index: 999998;
+                margin: 0;
+                padding: 12px 36px 12px 14px;
+                background: rgba(19, 32, 56, 0.96);
+                border: 1px solid rgba(126, 182, 217, 0.25);
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            }
+
+            .whim-mobile-card p {
+                font-family: 'Pacifico', cursive !important;
+                font-size: 16px !important;
+                font-weight: 400 !important;
+                letter-spacing: 0 px !important;
+                line-height: 1.4 !important;
+                color: #7EB6D9 !important;
+                margin: 0;
+                padding-right: 8px;
+            }
+
+            .whim-mobile-card button {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                border: none;
+                background: none;
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 16px;
+                cursor: pointer;
+            }
+        }
+
+        .site-footer {
+            width: 100%;
+            padding: 28px 8% 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            box-sizing: border-box;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: transparent;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .footer-logo {
+            width: 46px;
+            height: 46px;
+            object-fit: contain;
+            display: block;
+            margin: 0 -6px 0 0;
+        }
+
+        .footer-brand-text {
+            margin: 0 !important;
+            font-size: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            line-height: 1;
+            transform: translateX(-6px);
+        }
+
+        .footer-brand-text .brand-brain,
+        .footer-brand-text .brand-whim {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        .footer-year {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: rgba(255, 255, 255, 0.45) !important;
+            margin-left: 8px !important;
+        }
+
+        .site-footer a {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 13px !important;
+            color: #7EB6D9 !important;
+            text-decoration: none !important;
+        }
+
+        .site-footer a:hover {
+            color: #a8d4f0 !important;
+        }
+
+        @media (max-width: 768px) {
+            .site-footer {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+
+            .footer-compliance-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+
+        @media (max-width: 992px) {
+            .footer-logo {
+                width: 40px;
+                height: 40px;
+            }
+
+            .footer-brand-text {
+                font-size: 18px !important;
+                transform: translateX(-4px);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .position-0 {
+                transform: translate(-50%, -50%) rotate(0deg) translateY(-118px) rotate(0deg);
+            }
+
+            .position-90 {
+                transform: translate(-50%, -50%) rotate(90deg) translateY(-118px) rotate(-90deg);
+            }
+
+            .position-180 {
+                transform: translate(-50%, -50%) rotate(180deg) translateY(-118px) rotate(-180deg);
+            }
+
+            .position-270 {
+                transform: translate(-50%, -50%) rotate(270deg) translateY(-118px) rotate(-270deg);
+            }
+
+            .studio-spherical-core {
+                width: 38vw !important;
+                height: 38vw !important;
+                max-width: 150px !important;
+                max-height: 150px !important;
+            }
+
+            .core-brain-graphic {
+                width: 110px !important;
+                height: 80px !important;
+            }
+
+            .sphere-node-wrapper {
+                width: 26vw;
+                height: 26vw;
+                max-width: 96px;
+                max-height: 96px;
+            }
+
+            .sphere-node-wrapper {
+                cursor: pointer;
+                pointer-events: auto;
+            }
+
+            .volumetric-sphere {
+                cursor: pointer;
+            }
+        }
+
+        @media (max-width: 992px) {
+            header {
+                height: 88px !important;
+                padding: 0 10px !important;
+            }
+
+            .header-logo-asset {
+                width: 56px !important;
+                height: 56px !important;
+                margin-right: 1px !important;
+            }
+
+            .header-brand-text {
+                font-size: 18px !important;
+                margin-left: -8px !important;
+            }
+
+            .header-brand-container {
+                gap: 0 !important;
+                transform: translateX(-8px);
+            }
+
+            .whim-generator-deck {
+                max-width: 108px;
+                padding: 6px 8px;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        #apps,
+        #about,
+        #support {
+            scroll-margin-top: 120px;
+        }
+
+        /* ===================================================
+           GLOBAL FOOTER STYLING & COMPLIANCE SPACING
+           =================================================== */
+        .site-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            padding: 28px 8% 40px;
+            box-sizing: border-box;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: transparent;
+        }
+
+        .site-footer a {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 13px !important;
+            color: #7EB6D9 !important;
+            text-decoration: none !important;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .site-footer a:hover {
+            color: #a8d4f0 !important;
+        }
+
+        .footer-compliance-links {
+            display: flex;
+            gap: 24px;
+            /* Beautiful 24px gap separating each legal link */
+        }
+    
+        /* Galaxy photo — phones, iPads, desktops */
+        @media (max-width: 768px) {
+            .space-canvas {
+                min-height: calc(100dvh - 100px);
+            }
+            .space-canvas::before {
+                background-position: 42% center, 42% center;
+                background-size: cover, cover;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .space-canvas::before {
+                background-position: 40% center, 40% center;
+                background-size: cover, cover;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .space-canvas::before {
+                background-position: center center, center center;
+                background-size: cover, cover;
+            }
+        }
+
+
+        .orb-app {
+            --orb-glow: var(--app-glow, rgba(160, 200, 230, 0.7));
+            background-color: #071018;
+            background-image:
+                radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.26) 0%, transparent 24%),
+                radial-gradient(circle at 78% 80%, rgba(0, 8, 20, 0.38) 0%, transparent 50%),
+                var(--app-skin);
+            background-size: cover, cover, cover;
+            background-position: center;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 28px var(--app-glow), 0 0 70px var(--app-glow), inset -14px -16px 24px rgba(0, 0, 0, 0.45), inset 10px 8px 16px rgba(255, 255, 255, 0.14);
+            cursor: default;
+        }
+        .theme-learn { --app-skin: url("planet-app-learn.jpg"); --app-glow: rgba(56, 160, 255, 0.72); }
+        .theme-live  { --app-skin: url("planet-app-live.jpg");  --app-glow: rgba(16, 185, 129, 0.72); }
+        .theme-play  { --app-skin: url("planet-app-play.jpg");  --app-glow: rgba(242, 76, 122, 0.72); }
+        .theme-create{ --app-skin: url("planet-app-create.jpg"); --app-glow: rgba(139, 92, 246, 0.72); }
+
+        .coming-soon-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(8, 16, 36, 0.55);
+            border: 1px solid rgba(210, 228, 242, 0.18);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 14px;
+            z-index: 1000010;
+            opacity: 0;
+            pointer-events: none;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            font-family: Montserrat, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .coming-soon-toast.is-visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+
+        .footer-compliance-links a {
+            color: #E8F1F8 !important;
+            font-weight: 600 !important;
+            text-decoration: none;
+            opacity: 0.92;
+        }
+        .footer-compliance-links a:hover {
+            color: #fff !important;
+            opacity: 1;
+        }
+
+
+        .site-footer a:hover,
+        .site-footer a:focus,
+        .site-footer a:active,
+        .footer-compliance-links a:hover,
+        .footer-compliance-links a:focus,
+        .footer-compliance-links a:active,
+        .support-legal a:hover,
+        .support-legal a:focus,
+        .support-legal a:active,
+        .support-email a:hover,
+        .support-email a:focus,
+        .support-email a:active {
+            color: var(--brand-whim-sky) !important;
+            opacity: 1 !important;
+        }
+
+
+        .universe-viewport {
+            flex-direction: column;
+            padding-top: 8px;
+        }
+        .orbit-jump {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 36px;
+            z-index: 8;
+            position: relative;
+            margin-top: 2px;
+            padding: 0 16px 8px;
+        }
+        .orbit-jump a {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.4px;
+            color: #E8F1F8 !important;
+            text-decoration: none !important;
+            opacity: 0.9;
+        }
+        .orbit-jump a:hover,
+        .orbit-jump a:focus {
+            color: var(--brand-whim-sky) !important;
+            opacity: 1;
+        }
+
+
+        @media (max-width: 992px) {
+            .space-canvas {
+                align-items: center !important;
+                justify-content: flex-start !important;
+                padding: 4px 0 16px !important;
+                min-height: calc(100svh - 100px) !important;
+            }
+            .universe-viewport {
+                padding-top: 0;
+                transform: translateY(-6px);
+            }
+            .orbit-jump {
+                gap: 10px 28px;
+                margin-top: 8px;
+            }
+        }
+
+    
+.seat-strip{position:relative;z-index:5;display:flex;justify-content:center;padding:10px 16px 0}
+.seat-strip button{background:rgba(15,23,42,.55);color:#fff;border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(12px);border-radius:999px;padding:8px 16px;font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;cursor:pointer;min-height:44px}
+.seat-panel{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(8,12,20,.5);backdrop-filter:blur(8px)}
+.seat-panel.on{display:flex}
+.seat-card{width:min(420px,92vw);background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:24px;color:#fff}
+.seat-card h3{margin:0 0 6px;font-size:18px}
+.seat-card p{margin:0 0 14px;color:rgba(255,255,255,.75);font-size:13px}
+.seat-card input{width:100%;box-sizing:border-box;margin:0 0 8px;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;min-height:44px}
+.seat-card .row{display:flex;flex-direction:column;gap:8px}
+.seat-card button.act{min-height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer}
+.seat-card button.gold{border-color:#d4af37;background:#1A2744}
+.seat-card .err{color:#f6c37a;font-size:12px;min-height:16px;margin:6px 0}
+
+
+.play-hub{position:relative;z-index:5;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:8px 20px 0;max-width:920px;margin:0 auto}
+.play-card{flex:1 1 280px;max-width:420px;background:rgba(15,23,42,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.play-card h3{margin:0 0 8px;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.play-card p{margin:0 0 14px;color:rgba(255,255,255,.8);font-size:13px;line-height:1.5}
+.play-card .gold{color:#e5c158}
+.play-card a.act{display:inline-block;min-height:44px;line-height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-weight:700;text-decoration:none}
+.play-card a.club{border-color:#d4af37}
+
+
+.play-frame{position:relative;z-index:4;display:flex;align-items:flex-start;justify-content:center;gap:20px;padding:16px 24px 0;min-height:0}
+.play-side{width:260px;flex-shrink:0;background:rgba(15,23,42,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.play-side h3{margin:0 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.play-side p{margin:0 0 14px;color:rgba(255,255,255,.82);font-size:13px;line-height:1.5}
+.play-side .gold{color:#e5c158}
+.play-side a.act,.play-side button.act{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit}
+.play-side a.club{border-color:#d4af37}
+.play-frame .space-canvas{flex:1;min-width:0}
+.play-hub{display:none}
+@media (max-width:900px){
+  .play-side{display:none}
+  .play-frame{display:block;padding:0}
+}
+
+
+.play-header{height:80px !important;box-shadow:none !important}
+.play-header .hdr-right{display:flex;align-items:center;gap:18px;margin-left:auto}
+.play-header .header-navigation-menu{display:flex !important;align-items:center;gap:8px !important}
+.play-header .nav-link{color:#fff;font-weight:700;font-size:15px;text-decoration:none}
+.play-header .bell{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:50%;cursor:pointer}
+.play-side{background:rgba(6,12,28,0.22) !important}
+
+
+.play-header .header-logo-asset{width:56px !important;height:56px !important;margin-right:-4px !important}
+.play-header .header-brand-text{font-size:26px !important}
+.play-header .nav-link{font-size:15px !important;font-weight:700 !important;margin-left:8px !important;letter-spacing:0 !important}
+.header-widget-box,.whim-generator-deck{display:none !important}
+
+
+.header-widget-box,.whim-generator-deck{display:none !important}
+.play-header .bell{width:36px !important;height:36px !important}
+
+.bw-bell{display:none !important}
+
+
+
+/* Lobby header, copied exactly */
+header{height:80px !important;padding:0 40px !important;background:rgba(6,12,28,0.18) !important;backdrop-filter:blur(12px) saturate(1.15) !important;display:flex !important;align-items:center !important;justify-content:space-between !important;position:fixed !important;top:0 !important;left:0 !important;width:100% !important;z-index:40 !important;box-sizing:border-box !important}
+.brand{display:flex !important;align-items:center !important;color:#fff !important;text-decoration:none !important;font-size:26px !important;font-family:Montserrat,sans-serif !important;font-weight:600 !important;gap:0 !important}
+.brand img{width:56px !important;height:56px !important;object-fit:contain !important;margin-right:-4px !important}
+.brand span{font-family:Montserrat,sans-serif !important;font-weight:600 !important;font-size:26px !important;letter-spacing:0 !important;color:#fff !important}
+.brand .whim{font-family:Pacifico,cursive !important;font-weight:400 !important;font-size:26px !important;color:#7EB6D9 !important}
+.hdr-right{display:flex !important;align-items:center !important;gap:18px !important;margin-left:auto !important}
+.hdr{display:flex !important;align-items:center !important;gap:8px !important}
+.hdr a{color:#fff !important;font-weight:700 !important;font-size:15px !important;text-decoration:none !important;margin-left:8px !important;font-family:Montserrat,sans-serif !important}
+.bell{display:inline-flex !important;align-items:center !important;justify-content:center !important;width:36px !important;height:36px !important;padding:0 !important;background:rgba(255,255,255,0.08) !important;color:#fff !important;border:1px solid rgba(255,255,255,0.2) !important;border-radius:50% !important}
+
+
+@media (max-width: 900px) {
+  header { height: 64px !important; padding: 0 16px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; flex-wrap: nowrap !important; }
+  .brand { font-size: 18px !important; }
+  .brand img { width: 40px !important; height: 40px !important; }
+  .brand span { font-size: 18px !important; }
+  .brand .whim { font-size: 18px !important; }
+  .hdr, .hdr-right nav, .header-navigation-menu { display: none !important; }
+  .bell { width: 36px !important; height: 36px !important; }
+}
+
+
+@media (max-width: 900px) {
+  body { padding-top: 64px !important; }
+  header { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; }
+}
+
+/* ---------- Play page sections (Oct 29): glass and gold like the parlors ---------- */
+:root{--pp-gold:#d4af37;--pp-gold-b:#f3d68b;--pp-glass:rgba(255,255,255,.07);--pp-line:rgba(255,255,255,.14);--pp-ink:#0b1328}
+.about-section,.support-section{display:none}
+.pp{position:relative;padding:8px 40px 72px;background:linear-gradient(180deg,rgba(11,19,40,0) 0,#0b1328 120px,#0b1328 100%);margin-top:-110px;color:#fff;font-family:Montserrat,system-ui,sans-serif}
+.pp>*{max-width:1240px;margin-left:auto;margin-right:auto}
+.pp h2{margin:2px 0 0;font-size:26px;font-weight:700;letter-spacing:.01em;line-height:1.2}
+.pp h3{margin:2px 0 10px;font-size:18px;font-weight:700}
+.pp-kick{margin:0;color:var(--pp-gold-b);font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.pp-sub{margin:8px 0 0;color:rgba(255,255,255,.72);font-size:14.5px;line-height:1.55}
+.pp-sub.center,.pp-head.center{text-align:center;justify-content:center}
+.pp-btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 20px;border-radius:6px;border:1px solid rgba(255,255,255,.22);background:rgba(15,23,42,.6);color:#fff;font:600 14px Montserrat,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;transition:background .2s,border-color .2s}
+.pp-btn:hover{background:rgba(255,255,255,.12)}
+.pp-btn.gold{border-color:rgba(212,175,55,.7);color:var(--pp-gold-b)}
+.pp-btn.gold:hover{background:rgba(212,175,55,.14)}
+
+/* your seat */
+.pp-seat{display:flex;align-items:center;gap:22px;padding:22px 26px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(212,175,55,.4);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.pp-seat-av{flex:none;width:76px;height:76px}
+.pp-seat-av svg{width:76px;height:76px;display:block}
+.pp-seat-txt{flex:1;min-width:0}
+.pp-seat-txt h2{font-size:22px}
+.pp-seat-txt p:not(.pp-kick){margin:6px 0 0;color:rgba(255,255,255,.75);font-size:14px;line-height:1.5}
+.pp-bar{margin-top:10px;height:6px;max-width:420px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.pp-bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#b8892a,var(--pp-gold-b))}
+.pp-seat-acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+/* a category of parlors: a sliding row of room photos */
+.pp-cat{margin-top:44px}
+.pp-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.pp-head-r{display:flex;align-items:center;gap:8px}
+.pp-more{margin-left:8px;color:var(--pp-gold-b);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap}
+.pp-more span{display:inline-block;transition:transform .2s}
+.pp-more:hover span{transform:translateX(3px)}
+.pp-arrow{width:36px;height:36px;border-radius:6px;border:1px solid var(--pp-line);background:rgba(255,255,255,.06);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.pp-arrow:hover{background:rgba(255,255,255,.14)}
+.pp-row{display:grid;grid-auto-flow:column;grid-auto-columns:260px;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;scrollbar-width:thin;scrollbar-color:rgba(212,175,55,.45) transparent}
+.pp-room{position:relative;display:block;scroll-snap-align:start;border-radius:12px;overflow:hidden;background:var(--pp-glass);border:1px solid var(--pp-line);color:#fff;text-decoration:none;transition:transform .25s,border-color .25s,box-shadow .25s}
+.pp-room:hover{transform:translateY(-3px);border-color:rgba(212,175,55,.6);box-shadow:0 14px 30px rgba(0,0,0,.4)}
+.pp-room img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;background:#13203d}
+.pp-room div{padding:11px 14px 13px}
+.pp-room b{display:block;font-size:15px;font-weight:700}
+.pp-room small{display:block;margin-top:3px;color:rgba(255,255,255,.62);font-size:12.5px;line-height:1.4}
+.pp-room .tag{position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:6px;background:rgba(15,23,42,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(212,175,55,.55);color:var(--pp-gold-b);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+
+.pp-learn{margin-top:30px;padding:14px 20px;border-radius:12px;background:rgba(255,255,255,.05);border:1px dashed rgba(212,175,55,.4);color:rgba(255,255,255,.8);font-size:14.5px;line-height:1.55;text-align:center}
+.pp-learn b{color:#fff}
+
+/* puzzles and the kids' corner side by side */
+.pp-two{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;margin-top:44px}
+.pp-panel{padding:24px 26px;border-radius:12px;background:var(--pp-glass);border:1px solid var(--pp-line)}
+.pp-puzgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.pp-puzz{display:flex;flex-direction:column;gap:3px;padding:14px;border-radius:10px;background:rgba(15,23,42,.55);border:1px solid var(--pp-line);color:#fff;text-decoration:none;transition:border-color .2s,background .2s}
+.pp-puzz:hover{border-color:rgba(212,175,55,.6);background:rgba(15,23,42,.8)}
+.pp-puzz b{margin-top:8px;font-size:15px}
+.pp-puzz small{color:rgba(255,255,255,.62);font-size:12.5px;line-height:1.4}
+.pp-tiles{display:flex;gap:5px}
+.pp-tiles i{display:grid;place-items:center;width:28px;height:28px;border-radius:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);font:700 14px Montserrat,sans-serif;font-style:normal}
+.pp-tiles i.hit{background:#2f8f6b;border-color:#3fb889}
+.pp-tiles i.star{color:var(--pp-gold-b);background:rgba(212,175,55,.14);border-color:rgba(212,175,55,.5)}
+.pp-tiles i.tilt{transform:rotate(-12deg) translateY(-2px)}
+.pp-tiles.grid{display:grid;grid-template-columns:14px 14px;gap:3px}
+.pp-tiles.grid i{width:14px;height:14px;border-radius:3px}
+.pp-tiles.grid i.on{background:#0d1630;border-color:rgba(212,175,55,.6)}
+.pp-kids{position:relative;overflow:hidden;background:radial-gradient(circle at 85% 15%,rgba(255,170,200,.18),transparent 45%),radial-gradient(circle at 10% 90%,rgba(120,220,255,.16),transparent 50%),var(--pp-glass)}
+.pp-kidsh{font-family:Pacifico,cursive;font-weight:400;font-size:30px !important;color:#ffd7e6}
+.pp-chips{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0;padding:0;list-style:none}
+.pp-chips li{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);font-size:13.5px;font-weight:600}
+.pp-chips li span{display:grid;place-items:center;min-width:20px;font-weight:800;color:#ffd7e6}
+.pp-note{margin:16px 0 0;color:rgba(255,255,255,.55);font-size:12.5px;font-style:italic}
+
+/* how the house works */
+.pp-how{margin-top:56px}
+.pp-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.pp-tier{display:flex;flex-direction:column;padding:22px 24px;border-radius:12px;background:var(--pp-glass);border:1px solid var(--pp-line)}
+.pp-tier.club{background:linear-gradient(160deg,rgba(212,175,55,.14),rgba(255,255,255,.04) 60%);border-color:rgba(212,175,55,.5)}
+.pp-tier ul{flex:1;margin:0 0 16px;padding:0;list-style:none}
+.pp-tier li{position:relative;padding:6px 0 6px 20px;color:rgba(255,255,255,.8);font-size:14px;line-height:1.45}
+.pp-tier li::before{content:"";position:absolute;left:2px;top:13px;width:7px;height:7px;transform:rotate(45deg);background:var(--pp-gold)}
+.pp-tier .pp-btn{align-self:flex-start}
+
+/* the ladder */
+.pp-ranks{margin-top:56px}
+.pp-ladder{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:22px}
+.pp-rung{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:12px;text-align:center;border:1px solid transparent}
+.pp-rung svg{width:72px;height:72px}
+.pp-rung b{font-size:13px;line-height:1.25}
+.pp-rung small{color:rgba(255,255,255,.55);font-size:11.5px}
+.pp-rung.me{background:rgba(212,175,55,.1);border-color:rgba(212,175,55,.5)}
+.pp-rung.me small{color:var(--pp-gold-b)}
+
+/* support */
+.pp-support{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:56px;padding:24px 28px;border-radius:12px;background:var(--pp-glass);border:1px solid var(--pp-line)}
+.pp-support p:not(.pp-kick){margin:8px 0 0;color:rgba(255,255,255,.72);font-size:14.5px;line-height:1.55;max-width:560px}
+.pp-sup-r{text-align:right}
+.pp-legal{margin:12px 0 0 !important;font-size:13px !important}
+.pp-legal a{color:rgba(255,255,255,.7)}
+
+@media (max-width:900px){
+  .pp{padding:4px 16px 56px;margin-top:-40px}
+  .pp h2{font-size:22px}
+  .pp-seat{flex-wrap:wrap;gap:14px;padding:18px}
+  .pp-seat-av,.pp-seat-av svg{width:60px;height:60px}
+  .pp-seat-txt{flex:1 1 200px}
+  .pp-seat-txt h2{font-size:19px}
+  .pp-seat-acts{flex:1 1 100%;justify-content:stretch}
+  .pp-seat-acts .pp-btn{flex:1}
+  .pp-cat{margin-top:34px}
+  .pp-arrow{display:none}
+  .pp-row{grid-auto-columns:72%;margin:0 -16px;padding:4px 16px 12px;scroll-padding:0 16px}
+  .pp-two,.pp-tiers{grid-template-columns:1fr}
+  .pp-two{margin-top:34px}
+  .pp-panel{padding:20px}
+  .pp-how,.pp-ranks,.pp-support{margin-top:40px}
+  .pp-ladder{grid-template-columns:repeat(7,104px);overflow-x:auto;margin:22px -16px 0;padding:0 16px 8px}
+  .pp-support{flex-direction:column;align-items:flex-start}
+  .pp-sup-r{text-align:left}
+}
+@media (max-width:420px){ .pp-puzgrid{grid-template-columns:1fr 1fr;gap:8px} .pp-puzz{padding:12px} }
+
+</style>
+<link rel="stylesheet" href="mobile-frame.css">
+<style>
+@media (max-width: 900px) {
+  body { padding-top: 0 !important; }
+  header { position: sticky !important; top: 0 !important; margin: 0 !important; }
+}
+</style>
+
+<script src="bw-auth.js?v=1027a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+
+<body class="theme-play">
+    <!-- Other pages: use theme-learn / theme-live / theme-play / theme-create on <body> -->
+
+    <!-- LEFT MENU -->
+
+
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <nav class="left-menu" id="leftMenu">
+        <div class="left-menu-header">
+            <a href="index.html" class="left-menu-brand">BrainWhim</a>
+            <button class="menu-close" id="menuClose" aria-label="Close menu">✕</button>
+        </div>
+
+        <div class="left-menu-links">
+            <a href="index.html#apps" class="left-menu-link">Apps</a>
+            <a href="index.html#about" class="left-menu-link">About</a>
+            <a href="index.html#support" class="left-menu-link">Support</a>
+            <a href="terms.html" class="left-menu-link">Terms</a>
+            <a href="privacy.html" class="left-menu-link">Privacy</a>
+            <a href="disclaimers.html" class="left-menu-link">Disclaimers</a>
+        </div>
+
+        <div class="left-menu-pillars">
+            <div class="menu-pillar" id="menu-learn">
+                <h3><a href="learn.html">Learn</a></h3>
+                <ul>
+                    <li><a href="learn.html">Homeschool Connections</a> <span>Coming soon</span></li>
+                    <li>Kids & Early Learning <span>Coming soon</span></li>
+                    <li>Skills & Self-Improvement <span>Coming soon</span></li>
+                </ul>
+            </div>
+
+            <div class="menu-pillar" id="menu-live">
+                <h3><a href="live.html">Live</a></h3>
+                <ul>
+                    <li>Recipes & Cooking <span>Coming soon</span></li>
+                    <li>Work-Life Balance <span>Coming soon</span></li>
+                    <li>Personal Finance <span>Coming soon</span></li>
+                    <li>Habits & Routines <span>Coming soon</span></li>
+                    <li><a href="live.html">Recovery & Mindful Living</a> <span>Coming soon</span></li>
+                </ul>
+            </div>
+
+            <div class="menu-pillar" id="menu-play">
+                <h3><a href="play.html">Play</a></h3>
+                <ul>
+                    <li><a href="puzzles.html">Puzzle Play</a></li>
+                    <li><a href="lobby.html?cat=cards">Card Games</a></li>
+                    <li><a href="lobby.html">Board Games</a></li>
+                    <li><a href="board.html?scene=c4">More Play</a></li>
+                </ul>
+            </div>
+
+            <div class="menu-pillar" id="menu-create">
+                <h3><a href="create.html">Create</a></h3>
+                <ul>
+                    <li>Creative Tools <span>Coming soon</span></li>
+                    <li>Projects & Ideas <span>Coming soon</span></li>
+                    <li><a href="create.html">What’s Trending</a> <span>Coming soon</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="left-menu-footer">
+            <a href="mailto:support@brainwhim.com">support@brainwhim.com</a>
+        </div>
+    </nav>
+
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt=""><span>Brain</span><span class="whim">Whim</span></a>
+<div class="hdr-right">
+<nav class="hdr">
+  <a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a>
+</nav>
+<button class="bell" id="bellBtn" type="button" title="Mailbox" aria-label="Mailbox"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 7 9-7"/></svg></button>
+</div>
+</header>
+
+
+    <div class="whim-mobile-card" id="whimMobileCard">
+        <p id="whim-mobile-text"></p>
+        <button type="button" id="whimMobileClose" aria-label="Close">✕</button>
+    </div>
+
+    
+<div class="seat-strip">
+  <button type="button" id="seatStatus" onclick="BW.openAuth()">Playing as Guest  ·  Sign In</button>
+</div>
+
+<div class="play-frame">
+<aside class="play-side">
+  <h3>Your seat</h3>
+  <p id="playSeatLine">Playing as a guest: 10 free games against The House. Create a free account for unlimited games, saved points and online play.</p>
+  <button class="act" type="button" id="playSeatBtn" onclick="BW.openAuth()">Sign in</button>
+</aside>
+<main class="space-canvas" id="apps">
+        <div class="aurora-glow green-light"></div>
+        <div class="aurora-glow blue-light"></div>
+
+        <div class="universe-viewport">
+            <div class="celestial-system-matrix">
+
+                <div class="studio-spherical-core" style="background-image: radial-gradient(circle at 26% 22%, rgba(255,255,255,0.18) 0%, transparent 24%), radial-gradient(circle at 78% 80%, rgba(0,8,20,0.35) 0%, transparent 50%), url('planet-play.jpg'); background-size: cover, cover, cover;">
+                    <div class="core-globe-surface">
+                        <div class="core-brain-graphic" style="display:flex;align-items:center;justify-content:center;font-size:42px;opacity:0.72;mix-blend-mode:screen;">🧩</div>
+                    </div>
+                </div>
+
+                <div class="master-equidistant-ring">
+
+                                        <div class="sphere-node-wrapper position-0">
+                        <div class="volumetric-sphere orb-app" role="button" tabindex="0" onclick="window.location.href='lobby.html'">
+                            <div class="sphere-content-face">
+                                <div class="sphere-icon">♟️</div>
+                                <h3>Board Games</h3>
+                                <div class="sphere-hover-panel">
+                                    <p class="sphere-subtitle">Board Games</p>
+                                    <p class="sphere-desc">Ten parlors, from chess to Shut the Box.</p>
+                                    <span class="sphere-badge">Live</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sphere-node-wrapper position-90">
+                        <div class="volumetric-sphere orb-app" role="button" tabindex="0" onclick="window.location.href='puzzles.html'">
+                            <div class="sphere-content-face">
+                                <div class="sphere-icon">🧩</div>
+                                <h3>Puzzles &amp; Brain</h3>
+                                <div class="sphere-hover-panel">
+                                    <p class="sphere-subtitle">Puzzles &amp; Brain Games</p>
+                                    <p class="sphere-desc">Sky Word, Star Match, Drift Word and Signal Grid.</p>
+                                    <span class="sphere-badge">Live</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sphere-node-wrapper position-180">
+                        <div class="volumetric-sphere orb-app" role="button" tabindex="0" onclick="window.location.href='lobby.html?cat=cards'">
+                            <div class="sphere-content-face">
+                                <div class="sphere-icon">🂠</div>
+                                <h3>Cards</h3>
+                                <div class="sphere-hover-panel">
+                                    <p class="sphere-subtitle">Cards</p>
+                                    <p class="sphere-desc">Ten card parlors, from Solitaire to Bridge.</p>
+                                    <span class="sphere-badge">Live</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sphere-node-wrapper position-270">
+                        <div class="volumetric-sphere orb-app" role="button" tabindex="0" onclick="showComingSoon('The Kids\u2019 Corner')">
+                            <div class="sphere-content-face">
+                                <div class="sphere-icon">🪁</div>
+                                <h3>Kids</h3>
+                                <div class="sphere-hover-panel">
+                                    <p class="sphere-subtitle">The Kids’ Corner</p>
+                                    <p class="sphere-desc">Go Fish, War, Old Maid and more.</p>
+                                    <span class="sphere-badge">Opening Soon</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <nav class="orbit-jump" aria-label="Other tracks">
+                <a href="index.html">Home</a>
+                <a href="learn.html">Learn</a>
+                <a href="live.html">Live</a>
+                <a href="create.html">Create</a>
+            </nav>
+        </div>
+    </main>
+<aside class="play-side">
+  <h3 class="gold">Club membership</h3>
+  <p>Guests get 10 free games against The House. A free account plays unlimited games, online or against The House, with your points saved. The Club adds premium sets and more points.</p>
+  <a class="act club" href="member.html">Join the Club</a>
+</aside>
+</div>
+
+    <!-- PLAY PAGE SECTIONS (Oct 29 preview): your seat, the four parlors, how the house works, the ranks -->
+    <div class="pp">
+
+      <section class="pp-seat" id="ppSeat" aria-label="Your seat">
+        <div class="pp-seat-av" id="ppSeatAv"></div>
+        <div class="pp-seat-txt">
+          <p class="pp-kick" id="ppSeatKick">Pull Up a Chair</p>
+          <h2 id="ppSeatTitle">Ten free games, no account needed</h2>
+          <p id="ppSeatLine">Play The House in any parlor as a guest. A free account saves your points, plays online, and has no limit.</p>
+          <div class="pp-bar" id="ppSeatBar" hidden><i id="ppSeatFill"></i></div>
+        </div>
+        <div class="pp-seat-acts" id="ppSeatActs">
+          <button type="button" class="pp-btn gold" onclick="BW.openAuth()">Create a Free Account</button>
+          <a class="pp-btn" href="lobby.html">Go to the Lobby</a>
+        </div>
+      </section>
+
+      <section class="pp-cat" aria-labelledby="ppBoardH">
+        <div class="pp-head">
+          <div><p class="pp-kick">Ten Parlors</p><h2 id="ppBoardH">Board Games</h2></div>
+          <div class="pp-head-r"><button type="button" class="pp-arrow" data-scroll="ppBoard" data-dir="-1" aria-label="Scroll back">‹</button><button type="button" class="pp-arrow" data-scroll="ppBoard" data-dir="1" aria-label="Scroll on">›</button><a class="pp-more" href="lobby.html">Open the Lobby <span>→</span></a></div>
+        </div>
+        <div class="pp-row" id="ppBoard"></div>
+      </section>
+
+      <section class="pp-cat" aria-labelledby="ppCardsH">
+        <div class="pp-head">
+          <div><p class="pp-kick">Ten Parlors</p><h2 id="ppCardsH">Cards</h2></div>
+          <div class="pp-head-r"><button type="button" class="pp-arrow" data-scroll="ppCards" data-dir="-1" aria-label="Scroll back">‹</button><button type="button" class="pp-arrow" data-scroll="ppCards" data-dir="1" aria-label="Scroll on">›</button><a class="pp-more" href="lobby.html?cat=cards">Open the Card Lobby <span>→</span></a></div>
+        </div>
+        <div class="pp-row" id="ppCards"></div>
+      </section>
+
+      <p class="pp-learn"><b>New to a game?</b> Every parlor has <b>Learn to Play</b>: a short lesson where you make the moves yourself, then a practice game with hints. Always free.</p>
+
+      <div class="pp-two">
+        <section class="pp-panel pp-puz" aria-labelledby="ppPuzH">
+          <p class="pp-kick">Quiet Puzzles</p>
+          <h2 id="ppPuzH">Puzzles &amp; Brain Games</h2>
+          <p class="pp-sub">A few minutes, one clear mind. A new word every day.</p>
+          <div class="pp-puzgrid">
+            <a href="puzzles.html" class="pp-puzz"><span class="pp-tiles"><i>S</i><i class="hit">K</i><i>Y</i></span><b>Sky Word</b><small>A daily five-letter word in six tries.</small></a>
+            <a href="puzzles.html" class="pp-puzz"><span class="pp-tiles"><i class="star">★</i><i class="star">★</i></span><b>Star Match</b><small>Eight pairs. Flip two at a time.</small></a>
+            <a href="puzzles.html" class="pp-puzz"><span class="pp-tiles"><i>D</i><i class="tilt">R</i><i>I</i></span><b>Drift Word</b><small>Unscramble the drifting letters.</small></a>
+            <a href="puzzles.html" class="pp-puzz"><span class="pp-tiles grid"><i class="on"></i><i></i><i class="on"></i><i></i></span><b>Signal Grid</b><small>Turn every cell dark.</small></a>
+          </div>
+        </section>
+
+        <section class="pp-panel pp-kids" aria-labelledby="ppKidsH">
+          <p class="pp-kick">Opening Soon</p>
+          <h2 id="ppKidsH" class="pp-kidsh">The Kids' Corner</h2>
+          <p class="pp-sub">Bright, playful rooms for younger players, with big cards and friendly House players.</p>
+          <ul class="pp-chips">
+            <li><span>🐟</span>Go Fish</li><li><span>⚔️</span>War</li><li><span>👵</span>Old Maid</li><li><span>8</span>Crazy Eights</li>
+          </ul>
+          <p class="pp-note">This corner is being furnished.</p>
+        </section>
+      </div>
+
+      <section class="pp-how" aria-labelledby="ppHowH">
+        <div class="pp-head center"><div><p class="pp-kick">How the House Works</p><h2 id="ppHowH">Take a Seat Your Way</h2></div></div>
+        <div class="pp-tiers">
+          <div class="pp-tier">
+            <p class="pp-kick">Guest</p><h3>Just Visiting</h3>
+            <ul><li>10 free games against The House</li><li>Learn to Play in every room</li><li>No sign-up needed</li></ul>
+          </div>
+          <div class="pp-tier">
+            <p class="pp-kick">Free Account</p><h3>Your Own Seat</h3>
+            <ul><li>Unlimited games, any parlor</li><li>Play online with friends</li><li>Points, ranks and an avatar</li></ul>
+            <button type="button" class="pp-btn" id="ppTierFree" onclick="BW.openAuth()">Create a Free Account</button>
+          </div>
+          <div class="pp-tier club">
+            <p class="pp-kick">The Club</p><h3>The Best Seat in the House</h3>
+            <ul><li>Every Club table and board</li><li>Club avatars: Constellations, Nebulae</li><li>More points each day, Review Hand in Bridge</li></ul>
+            <a class="pp-btn gold" href="member.html" id="ppTierClub">Join the Club</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="pp-ranks" aria-labelledby="ppRanksH">
+        <div class="pp-head center"><div><p class="pp-kick">The Ladder</p><h2 id="ppRanksH">From Baby Pawn Star to Keeper of the Cosmos</h2></div></div>
+        <p class="pp-sub center">Win against The House and online to earn points. Your avatar's ring grows with every rank, and beating The House at its top level wins that room's charm.</p>
+        <div class="pp-ladder" id="ppLadder"></div>
+      </section>
+
+      <section class="pp-support" id="support" aria-labelledby="ppSupH">
+        <div><p class="pp-kick">Support</p><h2 id="ppSupH">Something Not Right?</h2>
+          <p>BrainWhim is new. If something breaks, you have a question, or you'd like a game added, write to us.</p></div>
+        <div class="pp-sup-r"><a class="pp-btn gold" href="mailto:support@brainwhim.com">support@brainwhim.com</a>
+          <p class="pp-legal"><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="disclaimers.html">Disclaimers</a></p></div>
+      </section>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-brand">
+            <img src="logo-image.png" alt="BrainWhim" class="footer-logo">
+            <p class="footer-brand-text">
+                <span class="brand-brain">Brain</span><span class="brand-whim">Whim</span>
+                <span class="footer-year">© 2026</span>
+            </p>
+        </div>
+        <div class="footer-compliance-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="disclaimers.html">Legal Disclaimers</a>
+        </div>
+
+        <a href="mailto:support@brainwhim.com">support@brainwhim.com</a>
+    </footer>
+
+        <div class="coming-soon-toast" id="comingSoonToast">Coming soon — this app is on the roadmap.</div>
+
+    <script>
+        const studioWhims = [
+            "Build something light enough to finish and strong enough to keep.",
+            "Catch the idea before it gets polite.",
+            "Some days need a system. Some days need a spark.",
+            "Your imagination called. It wants one small real step today.",
+            "Error 404: Overthinking not found. Proceed with curiosity.",
+            "A balanced life is part calculation, part daydream, part showing up.",
+            "Turn the raw thought into a tool someone can actually use.",
+            "Play is not the opposite of progress. Sometimes it is the path."
+        ];
+
+        function generateNewWhim() {
+            const randomIndex = Math.floor(Math.random() * studioWhims.length);
+            const newWhim = studioWhims[randomIndex];
+
+            const textNode = document.getElementById('whim-text-node');
+            if (textNode) {
+                textNode.innerText = newWhim;
+            }
+
+            const mobileCard = document.getElementById('whimMobileCard');
+            const mobileText = document.getElementById('whim-mobile-text');
+            if (window.innerWidth <= 992 && mobileCard && mobileText) {
+                mobileText.innerText = newWhim;
+                mobileCard.classList.add('is-visible');
+            }
+        }
+
+        const whimMobileClose = document.getElementById('whimMobileClose');
+        if (whimMobileClose) {
+            whimMobileClose.addEventListener('click', function () {
+                const mobileCard = document.getElementById('whimMobileCard');
+                if (mobileCard) mobileCard.classList.remove('is-visible');
+            });
+        }
+
+        function toggleMobileSphere(element) {
+            if (window.innerWidth <= 1024) {
+                const allSpheres = document.querySelectorAll('.volumetric-sphere');
+                const wasActive = element.classList.contains('is-active');
+                allSpheres.forEach(sphere => sphere.classList.remove('is-active'));
+                if (!wasActive) {
+                    element.classList.add('is-active');
+                }
+            }
+        }
+        window.onload = function () {
+            const textNode = document.getElementById('whim-text-node');
+            if (textNode) {
+                textNode.innerText = studioWhims[0];
+            }
+        };
+
+        
+        function showComingSoon(name) {
+            const t = document.getElementById('comingSoonToast');
+            if (!t) return;
+            t.textContent = name + ' is being furnished and opens soon.';
+            t.classList.add('is-visible');
+            clearTimeout(window.__soonTimer);
+            window.__soonTimer = setTimeout(() => t.classList.remove('is-visible'), 2800);
+        }
+
+        // Left menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const menuClose = document.getElementById('menuClose');
+        const leftMenu = document.getElementById('leftMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+
+        function openMenu() {
+            leftMenu.classList.add('is-open');
+            menuOverlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenu() {
+            leftMenu.classList.remove('is-open');
+            menuOverlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        menuToggle.addEventListener('click', openMenu);
+        menuClose.addEventListener('click', closeMenu);
+        menuOverlay.addEventListener('click', closeMenu);
+
+        // Close menu when a link is clicked
+        document.querySelectorAll('.left-menu-link').forEach(link => {
+            link.addEventListener('click', closeMenu);
+        });
+        function openPillarFromOrb(element, pillarId) {
+            toggleMobileSphere(element);
+
+            const pillar = document.getElementById(pillarId);
+            const menuAlreadyOpen = leftMenu.classList.contains('is-open');
+
+            if (menuAlreadyOpen) {
+                closeMenu();
+                setTimeout(function () {
+                    openMenu();
+                    if (pillar) pillar.scrollIntoView({ block: 'start' });
+                }, 280);
+            } else {
+                openMenu();
+                if (pillar) pillar.scrollIntoView({ block: 'start' });
+            }
+        }
+        if (location.hash && !window.BW_AUTH_HASH) {
+            history.replaceState(null, '', window.location.pathname);
+            window.scrollTo(0, 0);
+        }
+
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        window.addEventListener('load', function () {
+            if (location.hash && !window.BW_AUTH_HASH) {
+                history.replaceState(null, '', window.location.pathname);
+            }
+            window.scrollTo(0, 0);
+        });
+        const logoHomeLink = document.getElementById('logoHomeLink');
+        if (logoHomeLink) {
+            logoHomeLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.location.href = 'index.html';
+            });
+        }
+    </script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1028e"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+<script>
+/* Sign-in lives in bw-auth.js (one modal, no redirects). This page only reflects who is signed in. */
+BW.onChange(function(st){
+  var btn=document.getElementById('seatStatus'), line=document.getElementById('playSeatLine'), side=document.getElementById('playSeatBtn');
+  if(st.user){
+    var name=(st.profile && (st.profile.username||st.profile.display_name)) || '';
+    var tier=st.member ? 'Club member' : 'Free account';
+    if(btn) btn.textContent=(name?name+'  ·  ':'')+tier;
+    if(line) line.textContent='You have a seat. Your name and points follow you into every room.';
+    if(side){ side.textContent='Sign out'; side.onclick=function(){ BW.signOut(); }; }
+  } else {
+    if(btn) btn.textContent='Playing as Guest  ·  Sign In';
+    if(line) line.textContent='Playing as a guest: 10 free games against The House. Create a free account for unlimited games, saved points and online play.';
+    if(side){ side.textContent='Sign in'; side.onclick=function(){ BW.openAuth(); }; }
+  }
+});
+</script>
+
+<script>
+/* ---------- Play page sections (Oct 29) ---------- */
+(function(){
+var BOARD=[
+  ["Garden Chess","chess.html","garden-parlor-sm.jpg","The classic, inlaid in a garden table."],
+  ["Garden Checkers","checkers.html","checkers-parlor-sm.jpg","Jump, crown and corner your opponent."],
+  ["Library Backgammon","backgammon.html","library-bg-sm.jpg","Race your checkers home with the dice."],
+  ["Club Yahtzee","yahtzee.html","yahtzee-parlor-sm.jpg","Five dice, three rolls, thirteen boxes."],
+  ["Sunroom Dominoes","dominoes.html","dominoes-parlor-sm.jpg","Match the ends and empty your hand."],
+  ["Night Terrace Othello","othello.html","othello-terrace-sm.jpg","Outflank and flip the board your way."],
+  ["Pavilion Mancala","mancala.html","mancala-pavilion-sm.jpg","Sow the stones and fill your store."],
+  ["Club Cribbage","cribbage.html","cribbage-snug-sm.jpg","Fifteen-two, a pair, and pegs to 121."],
+  ["Tavern Shut the Box","shutbox.html","shutbox-tavern-sm.jpg","Roll and shut the tiles. Lowest wins."],
+  ["Cloister Morris","morris.html","morris-cloister-sm.jpg","Make mills and take your opponent's stones."]];
+var CARDS=[
+  ["Writing Desk Solitaire","solitaire.html","cards-solitaire-sm.jpg","Klondike, Draw One or Draw Three."],
+  ["Porch Gin Rummy","ginrummy.html","cards-gin-rummy-sm.jpg","Meld, knock, or go for gin."],
+  ["Rose Garden Hearts","hearts.html","cards-hearts-sm.jpg","Dodge the hearts and the queen."],
+  ["Study Spades","spades.html","cards-spades-sm.jpg","Bid your tricks with a partner.","Partners"],
+  ["Lakehouse Euchre","euchre.html","cards-euchre-sm.jpg","Call trump and take three tricks.","Partners"],
+  ["Sunroom Crazy Eights","crazyeights.html","cards-crazy-eights-sm.jpg","Match the suit or play an eight."],
+  ["Club Room Canasta","canasta.html","cards-canasta-sm.jpg","Two decks, wild cards and canastas.","Partners"],
+  ["Kitchen Table Pinochle","pinochle.html","cards-pinochle-sm.jpg","Bid, meld and count your counters.","Partners"],
+  ["Observatory FreeCell","freecell.html","cards-freecell-sm.jpg","Every deal can be won. Can you?"],
+  ["Ballroom Bridge","bridge.html","cards-bridge-sm.jpg","The auction, the dummy, the contract.","Partners"]];
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function row(id,list){
+  var el=document.getElementById(id); if(!el) return;
+  el.innerHTML=list.map(function(r,i){ return '<a class="pp-room" href="'+r[1]+'">'+(r[4]?'<span class="tag">'+esc(r[4])+'</span>':'')+
+    '<img src="'+r[2]+'" alt="" width="1000" height="667"'+(i>3?' loading="lazy"':'')+'><div><b>'+esc(r[0])+'</b><small>'+esc(r[3])+'</small></div></a>'; }).join("");
+}
+row("ppBoard",BOARD); row("ppCards",CARDS);
+[].forEach.call(document.querySelectorAll(".pp-arrow"),function(b){ b.onclick=function(){ var r=document.getElementById(b.dataset.scroll); if(r) r.scrollBy({left:+b.dataset.dir*(r.clientWidth*.8),behavior:"smooth"}); }; });
+
+function ladder(prof){
+  var el=document.getElementById("ppLadder"); if(!el||!window.BWAvatar) return;
+  var R=BWAvatar.RANKS||[], pts=prof?Number(prof.skill_points)||0:-1, mine=prof?BWAvatar.rank(pts).i:-1, av=(prof&&prof.avatar)||"sunny";
+  el.innerHTML=R.map(function(r,i){ return '<div class="pp-rung'+(i===mine?' me':'')+'">'+BWAvatar.svg(i===mine?av:"sunny",{size:72,ring:i})+'<b>'+esc(r.name)+'</b><small>'+(i===mine?'You are here':(r.min?r.min+' points':'Where everyone starts'))+'</small></div>'; }).join("");
+}
+function seat(st){
+  var av=document.getElementById("ppSeatAv"), kick=document.getElementById("ppSeatKick"), t=document.getElementById("ppSeatTitle"), line=document.getElementById("ppSeatLine"),
+      bar=document.getElementById("ppSeatBar"), fill=document.getElementById("ppSeatFill"), acts=document.getElementById("ppSeatActs");
+  var tierFree=document.getElementById("ppTierFree"), tierClub=document.getElementById("ppTierClub");
+  if(st&&st.user){
+    var p=st.profile||{}, name=p.username||p.display_name||"friend", pts=Number(p.skill_points)||0, rk=window.BWAvatar?BWAvatar.rank(pts):null;
+    if(av&&window.BWAvatar) av.innerHTML=BWAvatar.html(p,{size:76});
+    kick.textContent=st.member?"Club Member":"Your Seat";
+    t.textContent="Welcome back, "+name;
+    line.textContent=rk?(rk.name+" · "+pts+" points"+(rk.next?" · "+(rk.next-pts)+" more to "+rk.nextName:" · the top of the ladder")):(pts+" points");
+    if(rk&&rk.next){ bar.hidden=false; fill.style.width=Math.max(4,Math.round((pts-rk.min)/(rk.next-rk.min)*100))+"%"; } else bar.hidden=true;
+    acts.innerHTML='<a class="pp-btn gold" href="lobby.html">Go to the Lobby</a><button type="button" class="pp-btn" id="ppAvatarBtn">Avatar</button>';
+    var ab=document.getElementById("ppAvatarBtn"); if(ab) ab.onclick=function(){ if(window.BWAvatar) BWAvatar.studio(); };
+    if(tierFree){ tierFree.textContent="You Have a Seat"; tierFree.disabled=true; tierFree.style.opacity=".6"; tierFree.style.cursor="default"; }
+    if(tierClub&&st.member){ tierClub.textContent="Club Details"; }
+    ladder(p);
+  } else {
+    if(av&&window.BWAvatar) av.innerHTML=BWAvatar.html(null,{size:76});
+    kick.textContent="Pull Up a Chair"; t.textContent="Ten free games, no account needed";
+    line.textContent="Play The House in any parlor as a guest. A free account saves your points, plays online, and has no limit.";
+    bar.hidden=true;
+    acts.innerHTML='<button type="button" class="pp-btn gold" onclick="BW.openAuth()">Create a Free Account</button><a class="pp-btn" href="lobby.html">Go to the Lobby</a>';
+    if(tierFree){ tierFree.textContent="Create a Free Account"; tierFree.disabled=false; tierFree.style.opacity=""; tierFree.style.cursor=""; }
+    ladder(null);
+  }
+}
+ladder(null); seat(null);
+if(window.BW&&BW.onChange) BW.onChange(seat);
+window.addEventListener("bw-avatar",function(){ if(window.BW&&BW.user&&BW.user()) seat({user:BW.user(),profile:BW.profile(),member:BW.member()}); });
+})();
+</script>
+
+</body>
+
+</html>
