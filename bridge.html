@@ -358,6 +358,12 @@ function mySeat(){ return online&&mySide===2?2:0; }
 function myTeam(){ return team(mySeat()); }
 function view(seat){ return (seat-mySeat()+4)%4; }
 function authority(){ return !online||mySide===1; }
+/* who deals (Oct 29, Judy): online, the deal passes round the table like a real game. The person whose deal it is
+   presses Deal; a House player's deal is started by the person on its right, so each of you starts half the hands. */
+function pressSeat(s){ return humans().indexOf(s)<0?(s+3)%4:s; }
+function iPress(s){ return !online||(mySide!==0&&pressSeat(s)===mySeat()); }
+function dealLabel(nd,base){ return (!online||nd===mySeat())?base:"Deal for "+nameOf(nd); }
+function dealWait(nd){ return humans().indexOf(nd)>=0?"Waiting for "+Parlor.oppName()+" to deal…":"Waiting for "+Parlor.oppName()+" to start the next hand. "+nameOf(nd)+" deals."; }
 var SEATNM=["South","West","North","East"], HOUSE_NAMES=["","Reginald","Eleanor","Vivienne"];
 function nameOf(seat){ if(seat===mySeat()&&mySide!==0) return "You"; if(online&&isHuman(seat)) return mySide===0?(seat===0?"Host":"Guest"):Parlor.oppName(); return HOUSE_NAMES[seat]||"The House"; }
 function teamName(t){ var a=t===team(mySeat())?mySeat():t, b=(a+2)%4; return nameOf(a)+" & "+nameOf(b); }
@@ -856,15 +862,15 @@ function sheetHtml(){
 }
 function handOver(){
   Parlor.turn(-1); render(true); PANEL._k="hand"; PANEL.style.top=""; var mt=myTeam();
-  var canDeal=authority()&&!inLesson, isOver=S.phase==="over";
-  if(S.res&&S.res.passed){ PANEL.innerHTML='<p class="k">Deal '+S.deal+'</p><h3>Passed Out</h3><p>Nobody opened the bidding, so the cards are dealt again by the same dealer.</p>'+(canDeal?'<button type="button" class="pk-btn" id="ceNext">Deal Again</button>':'<p style="margin:0">Waiting for '+esc(Parlor.oppName())+' to deal…</p>');
+  var nd=(S.res&&S.res.passed?S.dealer:dealerFor(S.deal+1)), canDeal=iPress(nd)&&!inLesson, isOver=S.phase==="over";
+  if(S.res&&S.res.passed){ PANEL.innerHTML='<p class="k">Deal '+S.deal+'</p><h3>Passed Out</h3><p>Nobody opened the bidding, so the cards are dealt again by the same dealer.</p>'+(canDeal?'<button type="button" class="pk-btn" id="ceNext">'+esc(dealLabel(nd,"Deal Again"))+'</button>':'<p style="margin:0">'+esc(dealWait(nd))+'</p>');
     PANEL.classList.add("on","bdw"); var nb0=PANEL.querySelector("#ceNext"); if(nb0) nb0.onclick=function(){ closePanel(); dealNow(false); }; Parlor.status("Passed out","Dealing again"); return; }
   var x=S.chicago[S.chicago.length-1], ours=team(x.contract.decl)===mt, good=(x.res.made===ours);
   var head=x.res.made?(ours?"Contract Made":"They Made It"):(ours?"Down "+x.res.down:"They Went Down "+x.res.down);
   Parlor.sfx(good?"mill":"place");
   var rev='<button type="button" class="pk-btn" id="bdReview">Review Hand'+(clubMember()?'':' <span class="bd-lock">· Club</span>')+'</button>';
   PANEL.innerHTML='<p class="k">Deal '+x.deal+' of '+DEALS+'</p><h3>'+head+'</h3><p>'+esc(resultLine(x))+' '+(x.score[0]||x.score[1]?esc((x.score[mt]?"Your team scores ":"Their team scores ")+(x.score[mt]||x.score[1-mt])+"."):"")+'</p>'+sheetHtml()+
-    '<div class="pn-row">'+rev+(isOver?'':(canDeal?'<button type="button" class="pk-btn" id="ceNext">Next Deal</button>':''))+'</div>'+(!isOver&&!canDeal?'<p style="margin:0">Waiting for '+esc(Parlor.oppName())+' to deal…</p>':'');
+    '<div class="pn-row">'+rev+(isOver?'':(canDeal?'<button type="button" class="pk-btn" id="ceNext">'+esc(dealLabel(nd,"Next Deal"))+'</button>':''))+'</div>'+(!isOver&&!canDeal?'<p style="margin:0">'+esc(dealWait(nd))+'</p>':'');
   PANEL.classList.add("on","bdw");
   var nb=PANEL.querySelector("#ceNext"); if(nb) nb.onclick=function(){ closePanel(); dealNow(true); };
   PANEL.querySelector("#bdReview").onclick=function(){ openReview(); };
@@ -997,6 +1003,26 @@ function validState(st){
   var all=[]; st.h.forEach(function(x){ all=all.concat(x||[]); }); st.took.forEach(function(x){ all=all.concat(x||[]); }); st.trick.forEach(function(t){ all.push(t&&t.id); });
   var sn={}; return all.length===52&&all.every(function(id){ if(!BYID[id]||sn[id]) return false; sn[id]=1; return true; });
 }
+/* catching up (Oct 29): a phone that goes to sleep, a dropped connection or a slow start can miss a live update,
+   and the table would then wait forever for a move it never heard about. So each window also re-reads its table when
+   the live connection starts (or restarts), when it comes back to the screen, and every few seconds while it waits,
+   and plays any newer move it finds. */
+var ROWFN=null, catching=false, catchT=null;
+async function catchUp(){
+  if(!online||!sb||!room||!ROWFN||catching) return; catching=true;
+  try{
+    var q=await sb.from("rooms").select("*").eq("id",room.id).single(), r=q&&q.data;
+    if(r){ var st=r.state||{}, newer=(st.seq||0)>seq||(!S&&validState(st)), joined=!!r.guest&&!(room&&room.guest);
+      if(newer||joined) ROWFN(r); }
+  }catch(e){}
+  catching=false;
+}
+function startCatchUp(){
+  if(catchT) return;
+  catchT=setInterval(function(){ if(document.visibilityState!=="hidden"&&!busy) catchUp(); },4000);
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") catchUp(); });
+  ["focus","online","pageshow"].forEach(function(ev){ window.addEventListener(ev,function(){ catchUp(); }); });
+}
 async function bootOnline(){
   online=true; Parlor.seatOnline({label:"Online table "+CODE});
   var cfg=window.BW_PLAY||{}; if(!cfg.url){ Parlor.status("Can't connect","Missing play-config.js"); return; }
@@ -1015,7 +1041,7 @@ async function bootOnline(){
   if(validState(room.state)){ S=room.state; seq=S.seq||0; fit(true); render(false); after(); }
   else if(mySide===1){ newMatch(); seq=1; S.seq=seq; fit(true); await push(); busy=true; await dealAnim(); busy=false; after(); }
   else { S=null; Parlor.status("Dealing…","The host is shuffling the cards"); }
-  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},async function(p){
+  ROWFN=async function(row){ var p={new:row};
     var hadGuest=room&&room.guest; room=p.new; var st=p.new.state||{};
     if(room.guest&&!hadGuest) loadOppProfile();
     if(!validState(st)){ if(mySide===1&&(!S||!hadGuest)){ GID++; newMatch(); seq=(seq||0)+1; S.seq=seq; await push(); busy=true; await dealAnim(); busy=false; after(); } return; }
@@ -1026,7 +1052,9 @@ async function bootOnline(){
     busy=true; if(dealt||!was) await dealAnim(); else await animate(st.mv); busy=false;
     if(st.phase!=="handover"&&st.phase!=="over"&&PANEL._k==="hand") closePanel();
     after();
-  }).subscribe();
+  };
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){ ROWFN(p.new); }).subscribe(function(st){ if(st==="SUBSCRIBED") catchUp(); });
+  startCatchUp();
 }
 function loadOppProfile(){ if(!room||!sb||!window.BWAvatar) return; var id=mySide===2?room.host:room.guest; if(!id) return;
   BWAvatar.fetch(sb,[id]).then(function(rows){ oppProfile=rows&&rows[0]||null; chipEls.forEach(function(c){ c._av=null; }); if(S) paintTable(); },function(){}); }

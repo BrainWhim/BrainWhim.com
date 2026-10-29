@@ -632,6 +632,26 @@ async function push(){
 function report(w){ if(reported||!room||!window.bwRateGame) return; reported=true; room.state=JSON.parse(JSON.stringify(S)); bwRateGame(sb,room,me,w); }
 function validState(st){ return st&&st.v===1&&st.game==="ginrummy"&&Array.isArray(st.deck)&&st.h&&Array.isArray(st.h[1])&&Array.isArray(st.h[2])&&Array.isArray(st.pile)&&
   st.deck.concat(st.h[1],st.h[2],st.pile).every(function(id){ return !!BYID[id]; })&&st.deck.length+st.h[1].length+st.h[2].length+st.pile.length===52; }
+/* catching up (Oct 29): a phone that goes to sleep, a dropped connection or a slow start can miss a live update,
+   and the table would then wait forever for a move it never heard about. So each window also re-reads its table when
+   the live connection starts (or restarts), when it comes back to the screen, and every few seconds while it waits,
+   and plays any newer move it finds. */
+var ROWFN=null, catching=false, catchT=null;
+async function catchUp(){
+  if(!online||!sb||!room||!ROWFN||catching) return; catching=true;
+  try{
+    var q=await sb.from("rooms").select("*").eq("id",room.id).single(), r=q&&q.data;
+    if(r){ var st=r.state||{}, newer=(st.seq||0)>seq||(!S&&validState(st)), joined=!!r.guest&&!(room&&room.guest);
+      if(newer||joined) ROWFN(r); }
+  }catch(e){}
+  catching=false;
+}
+function startCatchUp(){
+  if(catchT) return;
+  catchT=setInterval(function(){ if(document.visibilityState!=="hidden"&&!busy) catchUp(); },4000);
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") catchUp(); });
+  ["focus","online","pageshow"].forEach(function(ev){ window.addEventListener(ev,function(){ catchUp(); }); });
+}
 async function bootOnline(){
   online=true; Parlor.seatOnline({label:"Online table "+CODE});
   var cfg=window.BW_PLAY||{};
@@ -653,7 +673,7 @@ async function bootOnline(){
   if(validState(room.state)){ S=room.state; seq=S.seq||0; fit(true); render(false); after(); }
   else if(mySide===1){ newMatch(); seq=1; S.seq=seq; fit(true); await push(); busy=true; await dealAnim(); busy=false; after(); }
   else { S=null; Parlor.status("Dealing…","The host is shuffling the cards"); }
-  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},async function(p){
+  ROWFN=async function(row){ var p={new:row};
     var hadGuest=room&&room.guest; room=p.new; var st=p.new.state||{};
     if(!validState(st)){
       if(mySide===1&&(!S||!hadGuest)){ GID++; newMatch(); seq=(seq||0)+1; S.seq=seq; await push(); busy=true; await dealAnim(); busy=false; after(); }
@@ -666,7 +686,9 @@ async function bootOnline(){
     busy=true; if(dealt||!was) await dealAnim(); else { Parlor.sfx(st.mv&&(st.mv.kind==="discard"||st.mv.kind==="knock")?"card":"flip"); await render(true); } busy=false;
     if(st.phase!=="handover"&&st.phase!=="over") PANEL.classList.remove("on");
     after();
-  }).subscribe();
+  };
+  sb.channel("room-"+CODE).on("postgres_changes",{event:"UPDATE",schema:"public",table:"rooms",filter:"code=eq."+CODE},function(p){ ROWFN(p.new); }).subscribe(function(st){ if(st==="SUBSCRIBED") catchUp(); });
+  startCatchUp();
 }
 
 /* ---------- fit to the space ---------- */
