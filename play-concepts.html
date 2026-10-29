@@ -21,7 +21,6 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html{margin:0;background:#0a1630 url("galaxy-home.jpg") center/cover no-repeat fixed}
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--wash,linear-gradient(108deg,rgba(40,130,210,.16) 0%,rgba(242,76,122,.18) 38%,rgba(242,76,122,.50) 100%))}
 body{margin:0;height:100dvh;overflow:hidden;display:flex;flex-direction:column;font-family:Montserrat,sans-serif;color:#fff;background:transparent}
 a{color:inherit}
 button{font-family:inherit}
@@ -101,8 +100,9 @@ header.top .bw-bell{width:36px;height:36px;padding:0!important;margin-left:18px!
 .rings{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1}
 .rings{will-change:transform}
 .rings ellipse{fill:none}
-.rings .halo{stroke:var(--halo-c,rgba(255,214,226,.22));stroke-width:var(--halo-w,7px);filter:url(#ringGlow)}
-.rings .core-line{stroke:var(--line-c,rgba(255,240,236,.16))}
+/* ring glow, tuned by Judy (Oct 29): desktop Ice Blue, phones Warm Gold (see the phone rules below) */
+.rings .halo{stroke:rgba(170,212,255,.22);stroke-width:7px;filter:url(#ringGlow)}
+.rings .core-line{stroke:rgba(170,212,255,.13)}
 .item{position:absolute;left:50%;top:50%;will-change:transform;backface-visibility:hidden;transform-origin:50% 50%}
 .core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;z-index:40;
   background:radial-gradient(circle at 26% 22%,rgba(255,255,255,.2) 0%,transparent 26%),radial-gradient(circle at 78% 80%,rgba(0,8,20,.42) 0%,transparent 55%),url("planet-play.jpg") center/cover;
@@ -200,6 +200,8 @@ body.lay-b{--side-w:320px}
 
 /* ---------- phones and narrow tablets ---------- */
 @media (max-width:900px){
+  .rings .halo{stroke:rgba(240,204,138,.22);stroke-width:2.9px}
+  .rings .core-line{stroke:rgba(240,204,138,.14)}
   :root{--hdr-h:64px}
   header.top{padding:0 12px}
   .brand{position:absolute;left:50%;transform:translateX(-50%);font-size:22px}
@@ -360,7 +362,6 @@ body.lay-b{--side-w:320px}
     <button type="button" data-lay="a">A · Two Sidebars</button>
     <button type="button" data-lay="b">B · One Sidebar</button>
     <button type="button" data-lay="c">C · No Sidebar</button>
-    <button type="button" id="tuneBtn">Tune Colors</button>
     <button type="button" class="hide" id="switchHide" title="Hide this box">✕</button>
   </div>
 </div>
@@ -436,11 +437,10 @@ function build(){
   $("rings").setAttribute("viewBox","0 0 "+G.bw+" "+G.bh);
   /* each ring: a wide, blurred halo for the soft glow, with a faint fine line inside it */
   var ph=PHONE.matches;
-  $("rings").innerHTML='<defs><filter id="ringGlow" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="'+(ph?2.2:3.6)+'"/></filter></defs>'+
+  $("rings").innerHTML='<defs><filter id="ringGlow" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="'+(ph?3.36:4.6)+'"/></filter></defs>'+
     G.r.map(function(r){ var e='cx="'+cx+'" cy="'+cy+'" rx="'+r+'" ry="'+(r*G.k).toFixed(1)+'" transform="rotate('+G.tilt+' '+cx+' '+cy+')"';
       return '<ellipse class="halo" '+e+'/><ellipse class="core-line" '+e+' style="stroke-width:'+(ph?.6:.8)+'"/>'; }).join("");
   items=[];
-  if(window.bwTuneApply) setTimeout(window.bwTuneApply,0);
   CATS.forEach(function(c,ri){
     var r=G.r[ri], label=c.soon?"Opening soon":"Opens the "+c.name+" lobby";
     function add(el,size,kind,name,sub){
@@ -456,7 +456,7 @@ function build(){
     /* the orb */
     var o=document.createElement(c.href?"a":"button");
     if(c.href) o.href=c.href; else { o.type="button"; o.onclick=function(){ toast("The Kids’ Corner is being furnished and opens soon."); }; }
-    o.className="orb"; o.style.setProperty("--glow",c.glow); o.dataset.glow=c.glow;
+    o.className="orb"; o.style.setProperty("--glow","rgba(235,235,255,.4)");   /* soft white for every orb (Judy, Oct 29) */
     o.setAttribute("aria-label",c.name+(c.soon?" (opening soon)":""));
     o.innerHTML='<span class="ic" style="font-size:'+(G.orb*.27)+'px">'+c.ic+'</span><span class="nm" style="font-size:'+G.font+'px">'+esc(c.name)+'</span>';
     var lead=add(o,G.orb,"orb",c.name,c.sub);
@@ -609,98 +609,6 @@ window.addEventListener("load",function(){
   if(window.BW&&BW.onChange) BW.onChange(function(st){ seat(st); });
 });
 window.addEventListener("bw-avatar",function(){ if(window.BW&&BW.user&&BW.user()) seat({user:BW.user(),profile:BW.profile(),member:BW.member()}); });
-})();
-</script>
-<!-- ===== Temporary: colour and glow tuner (Oct 29). Remove before this becomes play.html. ===== -->
-<style>
-.tune{position:fixed;left:16px;bottom:104px;z-index:75;width:300px;max-height:calc(100dvh - 210px);overflow:auto;padding:14px 16px;border-radius:12px;background:rgba(15,23,42,.88);border:1px solid rgba(229,193,88,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 12px 28px rgba(0,0,0,.4);font-size:12px;display:none}
-.tune.on{display:block}
-.tune h4{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-b)}
-.tune label{display:block;margin:10px 0 4px;font-weight:700}
-.tune label span{float:right;color:rgba(255,255,255,.6);font-weight:600}
-.tune input[type=range]{width:100%;accent-color:#e5c158}
-.tune .sw{display:flex;flex-wrap:wrap;gap:6px}
-.tune .sw button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;border-radius:6px;padding:6px 8px;font:600 11.5px Montserrat,sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px}
-.tune .sw button i{width:12px;height:12px;border-radius:50%;display:inline-block}
-.tune .sw button.on{border-color:var(--gold-b);background:rgba(229,193,88,.18)}
-.tune .row2{display:flex;gap:8px;margin-top:14px}
-.tune .row2 button{flex:1;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;border-radius:6px;padding:8px;font:700 12px Montserrat,sans-serif;cursor:pointer}
-.tune .out{margin-top:10px;padding:8px;border-radius:6px;background:rgba(255,255,255,.06);font-size:11px;line-height:1.5;color:rgba(255,255,255,.8);word-break:break-word}
-.tune-fab{display:none}
-@media (max-width:900px){
-  .tune{left:10px;right:10px;width:auto;bottom:calc(var(--bar-h) + 24px);max-height:52vh}
-  .tune-fab{display:block;position:fixed;right:12px;top:calc(var(--hdr-h) + 8px);z-index:76;border:1px solid rgba(229,193,88,.6);background:rgba(15,23,42,.85);color:var(--gold-b);border-radius:6px;padding:7px 10px;font:700 12px Montserrat,sans-serif}
-}
-</style>
-<button type="button" class="tune-fab" id="tuneFab">Tune Colors</button>
-<div class="tune" id="tune" aria-label="Tune colours">
-  <h4>Ring Glow</h4>
-  <label>Glow Color</label>
-  <div class="sw" id="tRing"></div>
-  <label>Glow Brightness <span id="vBright"></span></label><input type="range" id="tBright" min="0" max="70" step="1">
-  <label>Glow Width <span id="vWidth"></span></label><input type="range" id="tWidth" min="2" max="20" step="0.5">
-  <label>Softness <span id="vSoft"></span></label><input type="range" id="tSoft" min="0.5" max="10" step="0.1">
-  <label>Fine Line Inside <span id="vLine"></span></label><input type="range" id="tLine" min="0" max="60" step="1">
-  <h4 style="margin-top:16px">Background</h4>
-  <label>Tint</label>
-  <div class="sw" id="tWash"></div>
-  <label>Tint Strength <span id="vWashS"></span></label><input type="range" id="tWashS" min="0" max="160" step="5">
-  <h4 style="margin-top:16px">Orb Glow</h4>
-  <div class="sw" id="tOrb"></div>
-  <div class="row2"><button type="button" id="tReset">Reset</button><button type="button" id="tCopy">Copy My Settings</button></div>
-  <div class="out" id="tOut"></div>
-</div>
-<script>
-(function(){
-var RING={"Rose":[255,214,226],"Champagne":[255,236,212],"Warm Gold":[240,204,138],"Moonlight":[228,234,255],"Ice Blue":[170,212,255],"Lilac":[212,188,255],"Pure White":[255,255,255]};
-var WASH={
-  "Rose":[[40,130,210,.16],[242,76,122,.18],[242,76,122,.50]],
-  "Soft Rose":[[40,130,210,.10],[240,120,150,.10],[240,120,150,.28]],
-  "Plum":[[60,90,200,.14],[150,70,170,.18],[120,50,150,.45]],
-  "Twilight Blue":[[30,60,140,.10],[70,110,200,.16],[40,80,170,.40]],
-  "Gold Dusk":[[40,90,170,.12],[200,150,80,.12],[214,160,90,.34]],
-  "None":null};
-var ORB={"Each Its Own":null,"All Rose":"rgba(242,76,122,.6)","All Gold":"rgba(229,193,88,.55)","Soft White":"rgba(235,235,255,.4)"};
-var DEF={ring:"Rose",bright:22,width:7,soft:3.6,line:16,wash:"Rose",washS:100,orb:"Each Its Own"};
-var T; try{ T=JSON.parse(localStorage.getItem("bw-tune"))||{}; }catch(e){ T={}; }
-for(var k in DEF) if(T[k]==null) T[k]=DEF[k];
-var $=function(id){ return document.getElementById(id); };
-function sw(box,map,key,dot){
-  $(box).innerHTML=Object.keys(map).map(function(n){ var c=dot(n); return '<button type="button" data-v="'+n+'">'+(c?'<i style="background:'+c+'"></i>':'')+n+'</button>'; }).join("");
-  [].forEach.call($(box).children,function(b){ b.onclick=function(){ T[key]=b.dataset.v; apply(); }; });
-}
-sw("tRing",RING,"ring",function(n){ return "rgb("+RING[n].join(",")+")"; });
-sw("tWash",WASH,"wash",function(n){ var w=WASH[n]; return w?"rgb("+w[2].slice(0,3).join(",")+")":"transparent"; });
-sw("tOrb",ORB,"orb",function(n){ return ORB[n]||"linear-gradient(90deg,#e5c158,#f24c7a,#50c8d2,#aa8cf0)"; });
-[["tBright","bright"],["tWidth","width"],["tSoft","soft"],["tLine","line"],["tWashS","washS"]].forEach(function(p){ $(p[0]).oninput=function(){ T[p[1]]=+this.value; apply(); }; });
-function apply(){
-  var ph=window.matchMedia("(max-width: 900px)").matches, r=document.getElementById("rings"), c=RING[T.ring];
-  if(r){
-    r.style.setProperty("--halo-c","rgba("+c.join(",")+","+(T.bright/100)+")");
-    r.style.setProperty("--halo-w",(T.width*(ph?.58:1))+"px");
-    r.style.setProperty("--line-c","rgba("+c.join(",")+","+(T.line/100)+")");
-    var g=r.querySelector("feGaussianBlur"); if(g) g.setAttribute("stdDeviation",(T.soft*(ph?.6:1)).toFixed(2));
-  }
-  var w=WASH[T.wash], m=T.washS/100;
-  document.body.style.setProperty("--wash", w?"linear-gradient(108deg,rgba("+w[0].slice(0,3)+","+(w[0][3]*m).toFixed(3)+") 0%,rgba("+w[1].slice(0,3)+","+(w[1][3]*m).toFixed(3)+") 38%,rgba("+w[2].slice(0,3)+","+(w[2][3]*m).toFixed(3)+") 100%)":"none");
-  [].forEach.call(document.querySelectorAll(".orb"),function(o){ o.style.setProperty("--glow",ORB[T.orb]||o.dataset.glow); });
-  $("tBright").value=T.bright; $("vBright").textContent=T.bright+"%";
-  $("tWidth").value=T.width; $("vWidth").textContent=T.width;
-  $("tSoft").value=T.soft; $("vSoft").textContent=(+T.soft).toFixed(1);
-  $("tLine").value=T.line; $("vLine").textContent=T.line+"%";
-  $("tWashS").value=T.washS; $("vWashS").textContent=T.washS+"%";
-  [["tRing","ring"],["tWash","wash"],["tOrb","orb"]].forEach(function(p){ [].forEach.call($(p[0]).children,function(b){ b.classList.toggle("on",b.dataset.v===T[p[1]]); }); });
-  $("tOut").textContent=summary();
-  try{ localStorage.setItem("bw-tune",JSON.stringify(T)); }catch(e){}
-}
-function summary(){ return "Ring glow: "+T.ring+", brightness "+T.bright+"%, width "+T.width+", softness "+(+T.soft).toFixed(1)+", fine line "+T.line+"%. Background: "+T.wash+" at "+T.washS+"%. Orb glow: "+T.orb+"."; }
-window.bwTuneApply=apply;
-function toggle(){ $("tune").classList.toggle("on"); }
-$("tuneBtn").onclick=toggle; $("tuneFab").onclick=toggle;
-$("tReset").onclick=function(){ T=JSON.parse(JSON.stringify(DEF)); apply(); };
-$("tCopy").onclick=function(){ var t=summary(), b=this; function ok(){ b.textContent="Copied"; setTimeout(function(){ b.textContent="Copy My Settings"; },1600); }
-  if(navigator.clipboard) navigator.clipboard.writeText(t).then(ok,function(){ ok(); }); else ok(); };
-apply();
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
