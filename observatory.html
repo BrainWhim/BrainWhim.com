@@ -6,7 +6,7 @@
 <title>The Observatory · BrainWhim Puzzles</title>
 <meta name="description" content="The Observatory: a daily star-chart puzzle at BrainWhim. Join the stars with the right lines and a real constellation appears, with its story.">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1029b">
+<link rel="stylesheet" href="parlor-kit.css?v=1031b">
 <style>
 /* ===== The Observatory (Puzzles & Brain Games, Oct 31; the chart in perspective, raised stars and wire, Oct 31 later): a daily star-chart puzzle =====
    The stars of a real constellation, each showing how many lines it needs, and dotted sight lines between some of them.
@@ -16,7 +16,13 @@
    Scoring: ★★★ with no hints, ★★ with one or two, ★ otherwise. */
 .ob-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
 .ob-fit{position:relative;flex:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.ob-fit svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.ob-fit svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible;transform-origin:0 0}
+/* zoomed in (Oct 31): the chart is seen through a brass-rimmed eyepiece window */
+.ob-fit.zoomed{overflow:hidden;border-radius:14px}
+.ob-rim{position:absolute;z-index:4;display:none;border-radius:14px;pointer-events:none;border:2px solid rgba(231,199,122,.8);box-shadow:inset 0 0 0 1px rgba(60,40,10,.6),inset 0 0 22px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35)}
+.ob-fit.zoomed .ob-rim{display:block}
+.ob-zbtn{position:absolute;z-index:5;right:10px;bottom:10px;pointer-events:auto;display:none;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;border:1px solid rgba(231,199,122,.75);background:rgba(8,14,32,.82);color:#f0d27a;font:700 13px Montserrat,sans-serif;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.4);touch-action:manipulation}
+.ob-zbtn.on{display:inline-flex}
 .ob-toast{position:absolute;z-index:6;left:50%;top:4px;transform:translateX(-50%);width:max-content;max-width:88%;padding:8px 14px;border-radius:12px;background:rgba(8,14,32,.9);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .ob-toast.on{opacity:1}
 .ob-tools{display:flex;flex-direction:column;align-items:center;gap:7px;padding:7px 10px;border-radius:12px;background:rgba(10,18,40,.66);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
@@ -48,6 +54,17 @@
   body.pk.seated .pk-stage{justify-content:flex-start}
 }
 @media (max-width:400px){ .ob-tools .pk-btn{padding:8px 10px;font-size:12.5px} .ob-count{font-size:12px} }
+/* phones held sideways (Oct 31): the chart window takes the full height; the tools stand in a column on the right */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .ob-tools{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:var(--pk-landR);max-width:none;padding:8px}
+  body.pk-land.seated.pk-coaching .ob-tools{top:auto;bottom:8px;transform:none}
+  body.pk-land.seated .ob-help{display:none}
+  body.pk-land.seated .ob-row{flex-direction:column;align-items:stretch;gap:8px}
+  body.pk-land.seated.pk-coaching .ob-row{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:6px}
+  body.pk-land.seated .ob-tools .pk-btn{padding:10px 8px;font-size:13px}
+  body.pk-land.seated.pk-coaching .ob-tools .pk-btn{flex:1 1 30%;padding:8px 6px;font-size:12.5px}
+  body.pk-land.seated .ob-count{white-space:normal;text-align:center;font-size:12.5px;line-height:1.3}
+}
 </style>
 <script src="bw-auth.js?v=1027a"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -63,7 +80,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1031b"></script>
 <script src="observatory-sky.js?v=1031c"></script>
 <script>
 /* ===== Observatory core (rules, solver, daily maker) — shared by the page and the tests =====
@@ -273,16 +290,18 @@ function proj(x,y){ var v=y-500, w=1-TP*v; return [500+(x-500)/w, v*TK/w, 1/w]; 
 function poly(pts){ return "M"+pts.map(function(p){ var q=proj(p[0],p[1]); return q[0].toFixed(1)+" "+q[1].toFixed(1); }).join(" L")+" Z"; }
 var VB=(function(){ var bl=proj(-44,1044), br=proj(1044,1044), tl=proj(-44,-44), x0=bl[0]-30, x1=br[0]+30, y0=tl[1]-84, y1=bl[1]+THK+40; return [Math.round(x0),Math.round(y0),Math.round(x1-x0),Math.round(y1-y0)]; })();
 var stage=document.createElement("div"); stage.className="ob-pad";
-stage.innerHTML='<div class="ob-fit" id="obFit"><svg id="obSvg" viewBox="'+VB.join(" ")+'" role="img" aria-label="The star chart"></svg><div class="ob-toast" id="obToast" role="status"></div></div>'+
+stage.innerHTML='<div class="ob-fit" id="obFit"><svg id="obSvg" viewBox="'+VB.join(" ")+'" role="img" aria-label="The star chart"></svg><div class="ob-toast" id="obToast" role="status"></div><div class="ob-rim" id="obRim"><button class="ob-zbtn" type="button" id="obZoomFit" aria-label="Show the whole chart">⤢ Fit</button></div></div>'+
   '<div class="ob-tools" id="obTools">'+
-    '<div class="ob-help" id="obHelp">Tap a dotted line to draw it, tap again to rub it out. Hold it (or right-click) to rule it out.</div>'+
+    '<div class="ob-help" id="obHelp">Click a dotted line to draw it, click again to rub it out. Right-click to rule it out. Pinch the trackpad (or Ctrl + scroll) to zoom.</div>'+
     '<div class="ob-row"><button class="pk-btn" type="button" id="obUndo">Undo</button><button class="pk-btn gold" type="button" id="obHint">Hint</button><button class="pk-btn" type="button" id="obRestart">Restart</button><span class="ob-count" id="obCount"></span></div>'+
   '</div>';
-var FIT=$("#obFit",stage), SVG=$("#obSvg",stage), TOAST=$("#obToast",stage);
+var FIT=$("#obFit",stage), SVG=$("#obSvg",stage), TOAST=$("#obToast",stage), ZBTN=$("#obZoomFit",stage), RIM=$("#obRim",stage);
 var G={};   /* the drawn pieces: lines[k] = {base, inkL, hi, sh, glow, x, a, b}, stars[v] = {g, ring, num, r}, sp[v] = [x, y] on screen */
 /* on a small screen everything that has to be read or tapped is drawn larger (Z) */
 var Z=1;
-function zoomFor(){ return Math.max(1,Math.min(1.9,700/(FIT.offsetWidth||700))); }
+/* the whole chart's width on screen (sideways on a phone, the window is wider than the chart) */
+function chartPx(){ var w=FIT.offsetWidth||700, h=FIT.offsetHeight||700; return Math.min(w,h*VB[2]/VB[3]); }
+function zoomFor(){ return Math.max(1,Math.min(1.9,700/chartPx())); }
 var RMAX=99;   /* no star wider than its neighbors allow */
 function grad(defs,id,stops,attrs){ attrs=attrs||{}; attrs.id=id; var g=sv(attrs.x1!=null?"linearGradient":"radialGradient",attrs,defs); stops.forEach(function(s){ sv("stop",{offset:s[0],"stop-color":s[1]},g); }); return "url(#"+id+")"; }
 function shadeHex(hex,f){ var n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255; function c(v){ return Math.max(0,Math.min(255,Math.round(v*(1+f)))); } return "rgb("+c(r)+","+c(g)+","+c(b)+")"; }
@@ -399,18 +418,67 @@ function hint(){
   if(done||!P) return; var h=OB.hint(P,ink); if(!h) return;
   hints++; clearHint(); hintK=h.k; var a=G.lines[h.k].a, b=G.lines[h.k].b;
   G.hintL.setAttribute("x1",a[0]); G.hintL.setAttribute("y1",a[1]); G.hintL.setAttribute("x2",b[0]); G.hintL.setAttribute("y2",b[1]);
-  G.hintL.setAttribute("stroke",h.wrong?"rgba(255,110,90,.85)":"rgba(255,226,140,.85)");
+  G.hintL.setAttribute("stroke",h.wrong?"rgba(255,110,90,.85)":"rgba(255,226,140,.85)"); showPoint(a,b);
   toast(h.wrong?"The glowing line doesn't belong in the figure.":"The glowing line belongs in the figure.",2200);
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+(h.wrong?"The glowing line doesn't belong: tap it to rub it out.":"The glowing line belongs in the figure: tap it to draw it.")+"</p>");
   update();
 }
 function clearHint(){ hintK=-1; if(G.hintL) G.hintL.setAttribute("stroke","rgba(255,226,140,0)"); }
 
+/* ---------- the view: zoom and pan (Oct 31) ----------
+   The chart can be looked at closer: pinch with two fingers (or pinch a trackpad, or Ctrl + scroll), double-tap empty
+   sky, or drag empty sky to move around while zoomed. "⤢ Fit" brings the whole chart back. The view is the part of
+   the chart (in chart units) shown in the window; it's drawn with the SVG viewBox, so stars and lines stay sharp.
+   While fingers are moving, a quick CSS transform shows the change; the view is set for real when they lift.
+   Phone held sideways: the window is wider than the chart, and the view starts framed on the constellation's stars. */
+var V=null, HOME=null, ZMAX=3;
+function fitWH(){ return [FIT.offsetWidth||VB[2], FIT.offsetHeight||VB[3]]; }
+/* the smallest view, the window's shape, that shows the whole chart */
+function baseView(){ var wh=fitWH(), a=wh[0]/wh[1], w=VB[2], h=VB[3]; if(w/h<a) w=h*a; else h=w/a; return {x:VB[0]+VB[2]/2-w/2,y:VB[1]+VB[3]/2-h/2,w:w,h:h}; }
+function zOf(v){ return baseView().w/v.w; }
+function clampV(v){ var b=baseView(), z=Math.max(1,Math.min(ZMAX,b.w/v.w)), w=b.w/z, h=b.h/z, cx=v.x+v.w/2, cy=v.y+v.h/2;
+  function ax(c,len,lo,span){ return len>=span?lo+span/2:Math.max(lo+len/2,Math.min(lo+span-len/2,c)); }
+  cx=ax(cx,w,VB[0],VB[2]); cy=ax(cy,h,VB[1],VB[3]); return {x:cx-w/2,y:cy-h/2,w:w,h:h}; }
+/* where the view rests: the whole chart; sideways on a phone, framed on the stars (up to 1.8x) */
+function homeView(){ var b=baseView(); if(!P||!G.sp||!G.sp.length||!(window.Parlor&&Parlor.land&&Parlor.land())) return b;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; G.sp.forEach(function(p,v){ var r=(G.stars[v]?G.stars[v].r:20)+60; x0=Math.min(x0,p[0]-r); x1=Math.max(x1,p[0]+r); y0=Math.min(y0,p[1]-r-30); y1=Math.max(y1,p[1]+r); });
+  var a=b.w/b.h, w=Math.max(x1-x0,(y1-y0)*a), z=Math.max(1,Math.min(1.8,b.w/w));
+  return clampV({x:(x0+x1)/2-b.w/z/2,y:(y0+y1)/2-b.h/z/2,w:b.w/z,h:b.h/z}); }
+function same(a,b){ return a&&b&&Math.abs(a.w-b.w)<b.w*.01&&Math.abs(a.x-b.x)<b.w*.01&&Math.abs(a.y-b.y)<b.h*.01; }
+/* the rim hugs the part of the chart that's in the window (its brass frame, -44 to 1044 on the flat chart) */
+function rim(v,zoomed){ var wh=fitWH(), sx=wh[0]/v.w, sy=wh[1]/v.h;
+  var tl=proj(-44,-44), br=proj(1044,1044);
+  var l=Math.max(0,(tl[0]-v.x)*sx), r=Math.min(wh[0],(br[0]-v.x)*sx), t=Math.max(0,(tl[1]-v.y)*sy), b=Math.min(wh[1],(br[1]+THK-v.y)*sy);
+  RIM.style.left=l.toFixed(1)+"px"; RIM.style.top=t.toFixed(1)+"px"; RIM.style.width=Math.max(0,r-l).toFixed(1)+"px"; RIM.style.height=Math.max(0,b-t).toFixed(1)+"px";
+  FIT.classList.toggle("zoomed",zoomed); }
+function setView(v){ V=clampV(v); SVG.setAttribute("viewBox",[V.x,V.y,V.w,V.h].map(function(n){ return n.toFixed(2); }).join(" ")); SVG.style.transform="";
+  rim(V,zOf(V)>1.01); ZBTN.classList.toggle("on",!same(V,HOME||baseView())); }
+/* a quick look at view v while fingers move (no redraw) */
+function preview(v){ var wh=fitWH(), s=V.w/v.w, tx=(V.x-v.x)*wh[0]/v.w, ty=(V.y-v.y)*wh[1]/v.h; rim(v,true); SVG.style.transform="translate("+tx.toFixed(1)+"px,"+ty.toFixed(1)+"px) scale("+s.toFixed(4)+")"; }
+var anim=0;
+function animateTo(v,ms){ cancelAnimationFrame(anim); v=clampV(v); var a=V, t0=performance.now(); ms=ms||320;
+  if(window.Parlor&&Parlor.smooth&&!Parlor.smooth()) ms=0;   /* Sound & Motion: Reduced */
+  (function step(now){ var f=ms?Math.min(1,(now-t0)/ms):1, e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2;
+    var w=a.w*Math.pow(v.w/a.w,e), cx=a.x+a.w/2+(v.x+v.w/2-a.x-a.w/2)*e, cy=a.y+a.h/2+(v.y+v.h/2-a.y-a.h/2)*e, h=w*a.h/a.w;
+    var mid={x:cx-w/2,y:cy-h/2,w:w,h:h}; if(f<1){ preview(mid); anim=requestAnimationFrame(step); } else setView(v); })(t0); }
+/* zoom view v by factor k about screen point (px, py) inside the window */
+function zoomAbout(v,k,px,py){ var wh=fitWH(), b=baseView(), z=Math.max(1,Math.min(ZMAX,(b.w/v.w)*k)), w=b.w/z, h=b.h/z;
+  var cx=v.x+px/wh[0]*v.w, cy=v.y+py/wh[1]*v.h; return clampV({x:cx-px/wh[0]*w,y:cy-py/wh[1]*h,w:w,h:h}); }
+function goHome(){ HOME=homeView(); animateTo(HOME); }
+/* a new chart or a new window size: rest at home (or keep a zoomed view where it was, if the window just changed) */
+function resetView(keep){ var was=V; HOME=homeView(); if(keep&&was&&!same(was,HOME)){ setView(was); return; } setView(HOME); }
+/* make sure chart point q is in view (a hint off to the side) */
+function showPoint(a,b){ if(!V) return; var m=[(a[0]+b[0])/2,(a[1]+b[1])/2], pad=V.w*.12;
+  if(m[0]>V.x+pad&&m[0]<V.x+V.w-pad&&m[1]>V.y+pad&&m[1]<V.y+V.h-pad) return; animateTo({x:m[0]-V.w/2,y:m[1]-V.h/2,w:V.w,h:V.h}); }
+ZBTN.addEventListener("click",function(e){ e.stopPropagation(); hideToast(); goHome(); });
+ZBTN.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
+
 /* ---------- touch and mouse ----------
    Tap a sight line to draw it (or rub it out). Hold it, or right-click it, to rule it out.
-   Or drag from one star to another, or tap one star and then the other. */
-var press=null;
-function local(e){ var r=FIT.getBoundingClientRect(), s=VB[2]/r.width; return [VB[0]+(e.clientX-r.left)*s,VB[1]+(e.clientY-r.top)*s]; }
+   Or drag from one star to another, or tap one star and then the other.
+   Two fingers pinch to zoom; one finger on empty sky (or on a line, once it moves) pans; double-tap empty sky zooms. */
+var press=null, ptrs={}, pinch=null, lastTap=null, gestured=false;
+function local(e){ var r=FIT.getBoundingClientRect(), v=V||{x:VB[0],y:VB[1],w:VB[2],h:VB[3]}; return [v.x+(e.clientX-r.left)*v.w/r.width,v.y+(e.clientY-r.top)*v.h/r.height]; }
 function starAt(q){ var best=-1, bd=1e9; G.sp.forEach(function(p,v){ var d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<bd){ bd=d; best=v; } }); return best>=0&&bd<=Math.max(26*Z,G.stars[best].r+10*Z)?best:-1; }
 /* the nearest sight line, and the next nearest (to tell when a tap is too close to call) */
 function linesNear(q){ var best=-1, bd=1e9, nd=1e9, nk=-1;
@@ -422,62 +490,110 @@ function linesNear(q){ var best=-1, bd=1e9, nd=1e9, nk=-1;
       function dirTo(e){ var o=G.sp[e[0]===sh?e[1]:e[0]]; var a=Math.atan2(o[1]-S[1],o[0]-S[0])-at; while(a>Math.PI) a-=2*Math.PI; while(a<-Math.PI) a+=2*Math.PI; return Math.abs(a); }
       var a1=dirTo(e1), a2=dirTo(e2); if(Math.abs(a1-a2)>.07){ r.sure=true; if(a2<a1){ r.k=nk; } } } }
   return r; }
-/* chart units per screen pixel (finger-sized limits are set in pixels) */
-function pxU(){ return VB[2]/(FIT.getBoundingClientRect().width||VB[2]); }
+/* chart units per screen pixel (finger-sized limits are set in pixels, so they stay finger-sized when zoomed) */
+function pxU(){ var v=V||{w:VB[2]}; return v.w/(FIT.getBoundingClientRect().width||v.w); }
 function lineAt(q){ return linesNear(q).k; }
 function tooClose(q){ var list=P.cand.map(function(e,k){ return [OB.segDist(q,G.lines[k].a,G.lines[k].b),k]; }).sort(function(x,y){ return x[0]-y[0]; }).slice(0,2);
   list.forEach(function(x){ var L=G.lines[x[1]]; L.glow.setAttribute("stroke","rgba(160,200,255,.6)"); setTimeout(function(){ update(); },650); });
-  toast("Two lines meet there. Tap nearer the one you want, or tap its two stars.",2200); }
+  toast(fine()?"Two lines meet there. Click nearer the one you want, or click its two stars.":"Two lines meet there. Pinch to zoom in, or tap its two stars.",2400); }
+function fine(){ return matchMedia("(hover: hover) and (pointer: fine)").matches; }
 /* the first time a star is chosen, say what it's for */
 var selTold=false;
 function candBetween(a,b){ var k=P.key[Math.min(a,b)+","+Math.max(a,b)]; return k==null?-1:k; }
 function lookOnly(){ toast(mode==="lesson"&&LESSONS[lessonK].done?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to start drawing.",2400);
   [].forEach.call(document.querySelectorAll(".pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("ob-pulse"); void b.offsetWidth; b.classList.add("ob-pulse"); } }); }
+function nPtrs(){ return Object.keys(ptrs).length; }
+function dropPress(){ if(press){ clearTimeout(press.timer); press=null; } if(G.drag) G.drag.setAttribute("opacity",0); }
+function startPinch(){ var ids=Object.keys(ptrs), a=ptrs[ids[0]], b=ptrs[ids[1]], r=FIT.getBoundingClientRect();
+  cancelAnimationFrame(anim); dropPress(); gestured=true; hideToast();
+  pinch={ids:ids,d0:Math.max(20,Math.hypot(a.x-b.x,a.y-b.y)),m0:[(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top],v0:V,cur:V}; }
+function pinchMove(){ var a=ptrs[pinch.ids[0]], b=ptrs[pinch.ids[1]]; if(!a||!b) return; var r=FIT.getBoundingClientRect(), wh=fitWH();
+  var k=Math.hypot(a.x-b.x,a.y-b.y)/pinch.d0, m=[(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top];
+  /* zoom about the starting midpoint, then follow the fingers' midpoint */
+  var v=zoomAbout(pinch.v0,k,pinch.m0[0],pinch.m0[1]); v=clampV({x:v.x-(m[0]-pinch.m0[0])*v.w/wh[0],y:v.y-(m[1]-pinch.m0[1])*v.h/wh[1],w:v.w,h:v.h});
+  pinch.cur=v; preview(v); }
+function endPinch(){ if(!pinch) return; var v=pinch.cur; pinch=null; setView(v); }
+FIT.addEventListener("gesturestart",function(e){ e.preventDefault(); });   /* Safari: the page itself never zooms from the chart */
 SVG.addEventListener("pointerdown",function(e){
   hideToast(); if(!P) return;
-  if(mode==="lesson"&&(done||!Parlor.lessonWaiting)){ lookOnly(); return; }
-  if(done) return;
-  if(e.button===2) return;
+  if(e.pointerType==="mouse"&&e.button!==0) return;
   e.preventDefault(); try{ SVG.setPointerCapture(e.pointerId); }catch(x){}
-  var q=local(e), v=starAt(q), near=linesNear(q), k=near.k;
-  /* between two close stars: a tap off the star's bright core but right on a line means the line */
-  if(v>=0&&k>=0){ var sp=G.sp[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]); if(ds>G.stars[v].r*.9&&near.d<ds*.6) v=-1; else k=-1; }
-  /* two lines almost equally close: don't guess */
-  var U=pxU(); if(v<0&&k>=0&&!near.sure&&near.next-near.d<5*U&&near.next<13*U){ tooClose(q); return; }
-  press={id:e.pointerId,q:q,star:v,line:k,moved:false,long:false};
+  ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(nPtrs()===2){ startPinch(); return; }
+  if(nPtrs()>2) return;
+  gestured=false;
+  /* look-only lesson pages and finished charts: the chart can still be moved and zoomed, not drawn on */
+  var blocked=done||(mode==="lesson"&&!Parlor.lessonWaiting);
+  var q=local(e), v=-1, k=-1, tc=false, near=null;
+  if(!blocked){
+    v=starAt(q); near=linesNear(q); k=near.k;
+    /* between two close stars: a tap off the star's bright core but right on a line means the line */
+    if(v>=0&&k>=0){ var sp=G.sp[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]); if(ds>G.stars[v].r*.9&&near.d<ds*.6) v=-1; else k=-1; }
+    /* two lines almost equally close: don't guess (said when the finger lifts, so the spot can still be dragged to pan) */
+    var U=pxU(); if(v<0&&k>=0&&!near.sure&&near.next-near.d<5*U&&near.next<13*U){ tc=true; k=-1; }
+  }
+  press={id:e.pointerId,q:q,cx:e.clientX,cy:e.clientY,star:v,line:k,tc:tc,blocked:blocked,moved:false,long:false,v0:V};
   if(k>=0) press.timer=setTimeout(function(){ if(press&&!press.moved){ press.long=true; ruleOut(k); if(navigator.vibrate) try{ navigator.vibrate(12); }catch(x){} } },480);
 });
 SVG.addEventListener("pointermove",function(e){
+  if(ptrs[e.pointerId]){ ptrs[e.pointerId].x=e.clientX; ptrs[e.pointerId].y=e.clientY; }
+  if(pinch){ pinchMove(); return; }
   if(!press||e.pointerId!==press.id) return; var q=local(e);
-  if(!press.moved&&Math.hypot(q[0]-press.q[0],q[1]-press.q[1])>14){ press.moved=true; clearTimeout(press.timer); }
-  if(press.moved&&press.star>=0){ var a=G.sp[press.star], t=starAt(q), b=t>=0&&t!==press.star?G.sp[t]:q;
-    G.drag.setAttribute("x1",a[0]); G.drag.setAttribute("y1",a[1]); G.drag.setAttribute("x2",b[0]); G.drag.setAttribute("y2",b[1]); G.drag.setAttribute("opacity",1); }
+  if(!press.moved&&Math.hypot(e.clientX-press.cx,e.clientY-press.cy)>7){ press.moved=true; clearTimeout(press.timer); }
+  if(!press.moved) return;
+  if(press.star>=0){ var a=G.sp[press.star], t=starAt(q), b=t>=0&&t!==press.star?G.sp[t]:q;
+    G.drag.setAttribute("x1",a[0]); G.drag.setAttribute("y1",a[1]); G.drag.setAttribute("x2",b[0]); G.drag.setAttribute("y2",b[1]); G.drag.setAttribute("opacity",1); return; }
+  /* one finger off the stars: move the view around */
+  var v0=press.v0, wh=fitWH(), nv=clampV({x:v0.x-(e.clientX-press.cx)*v0.w/wh[0],y:v0.y-(e.clientY-press.cy)*v0.h/wh[1],w:v0.w,h:v0.h});
+  if(!same(nv,v0)||press.panned){ press.panned=nv; preview(nv); }
 });
 function endPress(e){
+  if(e&&ptrs[e.pointerId]) delete ptrs[e.pointerId];
+  if(pinch){ if(nPtrs()<2) endPinch(); return; }
   if(!press||(e&&e.pointerId!==press.id)) return; var p=press; press=null; clearTimeout(p.timer); G.drag.setAttribute("opacity",0);
-  if(p.long||done) return;
+  if(gestured){ if(!nPtrs()) gestured=false; return; }   /* the last finger of a pinch lifting: not a tap */
+  if(p.panned){ setView(p.panned); return; }
+  if(p.long) return;
   var q=e?local(e):p.q;
-  if(p.star>=0&&p.moved){ var t=starAt(q); if(t<0||t===p.star) return; var k=candBetween(p.star,t);
+  if(p.star>=0&&p.moved){ if(p.blocked) return; var t=starAt(q); if(t<0||t===p.star) return; var k=candBetween(p.star,t);
     if(k<0){ toast("There's no sight line between those two stars."); return; } sel=-1; toggle(k); return; }
   if(p.moved) return;
+  /* a tap on empty sky: a second one straight after zooms in (or back out) */
+  if(p.star<0&&p.line<0&&!p.tc){
+    var now=Date.now();
+    if(lastTap&&now-lastTap.t<330&&Math.hypot(p.cx-lastTap.x,p.cy-lastTap.y)<34){
+      lastTap=null; hideToast(); var r=FIT.getBoundingClientRect();
+      if(zOf(V)>zOf(HOME||V)*1.08) goHome(); else animateTo(zoomAbout(V,2.2,p.cx-r.left,p.cy-r.top));
+      return; }
+    lastTap={t:now,x:p.cx,y:p.cy};
+  } else lastTap=null;
+  if(p.blocked){ if(!done) lookOnly(); return; }
+  if(p.tc){ tooClose(p.q); return; }
   if(p.star>=0){ if(sel>=0&&sel!==p.star){ var k2=candBetween(sel,p.star); if(k2>=0){ sel=-1; toggle(k2); return; } }
     sel=sel===p.star?-1:p.star; update(); if(sel>=0&&!selTold){ selTold=true; toast("Now tap a star it has a sight line to, and the line is drawn.",2200); } return; }
   if(p.line>=0){ sel=-1; toggle(p.line); return; }
   if(sel>=0){ sel=-1; update(); }
 }
-SVG.addEventListener("pointerup",endPress); SVG.addEventListener("pointercancel",function(e){ if(press){ clearTimeout(press.timer); press=null; G.drag.setAttribute("opacity",0); } });
+SVG.addEventListener("pointerup",endPress);
+SVG.addEventListener("pointercancel",function(e){ delete ptrs[e.pointerId]; if(pinch){ if(nPtrs()<2) endPinch(); return; } if(press){ var p=press; dropPress(); if(p.panned) setView(p.panned); } });
 SVG.addEventListener("contextmenu",function(e){ e.preventDefault(); if(!P||done||(mode==="lesson"&&!Parlor.lessonWaiting)) return; var k=lineAt(local(e)); if(k>=0) ruleOut(k); });
+/* trackpad pinch (arrives as Ctrl + scroll) and Ctrl + mouse wheel zoom; plain scrolling moves a zoomed chart */
+SVG.addEventListener("wheel",function(e){
+  if(!P||!V) return; var r=FIT.getBoundingClientRect(), wh=fitWH();
+  if(e.ctrlKey){ e.preventDefault(); cancelAnimationFrame(anim); setView(zoomAbout(V,Math.exp(-e.deltaY*.01),e.clientX-r.left,e.clientY-r.top)); return; }
+  if(zOf(V)>1.01){ e.preventDefault(); setView({x:V.x+e.deltaX*V.w/wh[0],y:V.y+e.deltaY*V.h/wh[1],w:V.w,h:V.h}); }
+},{passive:false});
 document.addEventListener("keydown",function(e){
   if(!document.body.classList.contains("seated")||!P||document.querySelector(".pk-veil.on")) return;
   if((e.key==="z"||e.key==="Z")&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); undo(); }
 });
-function tools(){ if(!matchMedia("(hover: hover) and (pointer: fine)").matches) $("#obHelp",stage).textContent="Tap two stars to draw the line between them (or tap a dotted line). Tap a line again to rub it out; hold it to rule it out.";
+function tools(){ if(!matchMedia("(hover: hover) and (pointer: fine)").matches) $("#obHelp",stage).textContent="Tap two stars to draw the line between them (or tap a dotted line). Tap a line again to rub it out; hold it to rule it out. Pinch to zoom.";
   $("#obUndo",stage).onclick=undo; $("#obHint",stage).onclick=function(){ if(mode==="lesson"&&!Parlor.lessonWaiting){ lookOnly(); return; } hint(); }; $("#obRestart",stage).onclick=restart; }
 
 /* ---------- loading a chart ---------- */
 function load(puz,how){
   P=puz; ink=new Int8Array(P.cand.length).fill(-1); hist=[]; hints=0; sel=-1; t0=0; done=false; mode=how; hintK=-1;
-  fit(); drawChart();
+  fit(); drawChart(); resetView(false);
 }
 var DAILY=null;
 function daily(){ if(!DAILY){ var wd=today.getDay(); DAILY=OB.make(todayKey,wd,OB.pick(OB_SKY,wd,dayNo(today))); } return DAILY; }
@@ -494,6 +610,7 @@ function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).pa
 function streak(){ try{ return JSON.parse(store("bwObsStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
 function reveal(){
   var C=P.C; if(!C) return;
+  animateTo(baseView(),600);   /* step back to see the whole constellation, its name and its stars */
   G.title.textContent=C.name; G.names.innerHTML="";
   C.n.forEach(function(s,v){ if(!s[3]) return; var p=G.sp[v], up=P.nodes[v][1]>140, t=sv("text",{x:p[0],y:up?p[1]-G.stars[v].r-12*Z:p[1]+G.stars[v].r+26*Z,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"600","font-size":Math.round(24*Z),fill:"#f6e3a8",stroke:"#0b1430","stroke-width":5,"paint-order":"stroke"},G.names); t.textContent=s[3]; });
   var s0=performance.now();
@@ -571,20 +688,36 @@ function lessonSetup(k){ lessonK=k; load(LESSONS[k].puz(),"lesson"); if(!LESSONS
 var TOOLS=$("#obTools",stage);
 function seatedNow(){ return document.body.classList.contains("seated"); }
 function fit(){
-  var wide=window.innerWidth>=1000, toolsH=(TOOLS.offsetHeight||90)+10, availW, availH;
+  /* measure the screen with the chart out of the way (turning the phone, the old size could make the page wider than the screen) */
+  FIT.style.width=FIT.style.height="200px"; var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9);
+  /* a phone held sideways (Oct 31): the chart window fills the height, between the kit's rail and the tools column */
+  if(window.Parlor&&Parlor.land&&Parlor.land()){
+    var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+    var R=coaching?Math.round(Math.max(230,Math.min(300,VW*.36))):120;
+    document.body.style.setProperty("--pk-landR",R+"px");
+    var lw=VW-ins.l-ins.r-(100+16)-8-(R+8), lh=window.innerHeight-16;
+    FIT.style.width=Math.max(200,Math.round(lw))+"px"; FIT.style.height=Math.max(200,Math.round(lh))+"px";
+    TOOLS.style.maxWidth="";
+    document.body.style.setProperty("--pk-landTools",coaching?(TOOLS.offsetHeight+8)+"px":"0px");
+    document.body.style.setProperty("--pk-size",Math.round(chartPx())+"px");
+    return;
+  }
+  document.body.style.removeProperty("--pk-landR");
+  var wide=VW>=1000, toolsH=(TOOLS.offsetHeight||90)+10, availW, availH;
   var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
-  if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
-  else { availW=window.innerWidth-14; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
+  if(wide){ availW=(st2&&st2.clientWidth)||(VW-560); availH=window.innerHeight-top-22-toolsH; }
+  else { availW=VW-14; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
   var s=Math.max(260,Math.min(availW,availH*VB[2]/VB[3],wide?860:720));
   FIT.style.width=Math.round(s)+"px"; FIT.style.height=Math.round(s*VB[3]/VB[2])+"px";
   TOOLS.style.maxWidth=wide?Math.max(s,520)+"px":"";
   document.body.style.setProperty("--pk-size",Math.round(s)+"px");
 }
-window.addEventListener("resize",function(){ fit(); if(P&&Math.abs(zoomFor()-Z)>.08){ drawChart(); if(done&&mode!=="lesson") reveal(); } });
+function refit(){ fit(); if(!P) return; if(Math.abs(zoomFor()-Z)>.08){ drawChart(); if(done&&mode!=="lesson") reveal(); } resetView(true); }
+window.addEventListener("resize",refit);
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"observatory", cat:"puzzles", solo:true, free:true, title:"The Observatory", bg:"puzzles-observatory.jpg", home:"puzzles.html", stage:stage,
+  game:"observatory", cat:"puzzles", solo:true, free:true, land:true, title:"The Observatory", bg:"puzzles-observatory.jpg", home:"puzzles.html", stage:stage,
   soloLabel:"Tonight's chart", dealLabel:"Tonight's Chart",
   tagline:"Join the stars. Find the constellation.", invite:"The dome is open and the first stars are out. Join them with the right lines and tonight's constellation will appear, with its story.",
   players:[{name:"You",color:"#9fb8ff"}],
@@ -598,11 +731,12 @@ Parlor.init({
 /* until the room photo arrives, a night-sky gradient stands in behind it */
 function skyBg(){ document.body.style.setProperty("--pk-bg",'url("puzzles-observatory.jpg"), radial-gradient(ellipse at 50% 28%, #2a4683 0%, #12214a 45%, #070d22 100%)'); }
 skyBg();
-var wasSeated=false;
-new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(refit,30); setTimeout(refit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("DOMContentLoaded",function(){ tools(); skyBg(); startDaily(true); fit(); setTimeout(skyBg,50); });
 window.OBS={get:function(){ return {P:P,ink:ink,hints:hints,done:done,mode:mode,sel:sel}; },toggle:toggle,hint:hint, clearSel:function(){ sel=-1; update(); },   /* for testing */
-  pt:function(x,y){ var r=FIT.getBoundingClientRect(), z=r.width/VB[2], q=proj(x,y); return [r.left+(q[0]-VB[0])*z,r.top+(q[1]-VB[1])*z]; }};
+  pt:function(x,y){ var r=FIT.getBoundingClientRect(), v=V||{x:VB[0],y:VB[1],w:VB[2],h:VB[3]}, q=proj(x,y); return [r.left+(q[0]-v.x)*r.width/v.w,r.top+(q[1]-v.y)*r.height/v.h]; },
+  view:function(){ return V; }, home:goHome, zoomAt:function(k,px,py){ setView(zoomAbout(V,k,px,py)); }};
 })();
 </script>
 </body>

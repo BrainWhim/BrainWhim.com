@@ -39,6 +39,7 @@
   /* ---------------- building the page ---------------- */
   function build() {
     document.body.classList.add("pk");
+    if (C.land) document.body.classList.add("pk-land");   /* phones held sideways: the room opts in to the side-rail layout (Oct 31) */
     if (window.BWAvatar) document.body.classList.add("pk-avatars");
     if (C.bg) document.body.style.setProperty("--pk-bg", 'url("' + C.bg + '")');
 
@@ -247,6 +248,17 @@
   }
   var fitT = 0; function fitSoon() { clearTimeout(fitT); fitT = setTimeout(fitLeft, 60); }
   P.fitLeft = fitSoon;
+  /* phones held sideways (Oct 31): rooms that pass land:true get the whole screen height. The header hides, the bar
+     becomes a slim rail down the left, and the coach card moves to a right-hand column (--pk-landR wide, set by the room).
+     Parlor.land() says whether that layout is showing now; Parlor.insets() gives the notch/home-bar safe areas in px. */
+  var LANDQ = "(max-width:999px) and (orientation:landscape) and (max-height:540px)";
+  P.land = function () { return !!(C && C.land) && seated && window.matchMedia(LANDQ).matches; };
+  var insetProbe = null;
+  P.insets = function () {
+    if (!insetProbe) { insetProbe = mk("div"); insetProbe.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"; document.body.appendChild(insetProbe); }
+    var cs = getComputedStyle(insetProbe);
+    return { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
+  };
   window.addEventListener("resize", fitSoon);
 
   /* ---------------- status, score, turn ---------------- */
@@ -464,7 +476,7 @@
     var st = el.stage; if (!st) return;
     st.style.transform = ""; st.style.transformOrigin = "";
     var c = el.coach, phone = window.innerWidth < 1000;
-    if (!phone || !seated || !c || c.hidden || c.parentNode !== document.body || (C && C.onCoachSize)) return;   /* rooms with onCoachSize make their own room */
+    if (!phone || !seated || !c || c.hidden || c.parentNode !== document.body || (C && C.onCoachSize) || P.land()) return;   /* sideways rooms keep the coach in their own right-hand column */   /* rooms with onCoachSize make their own room */
     var top = 1e9, bot = -1e9;
     [].forEach.call(st.children, function (k) { if (k.classList.contains("pk-whim")) return; if (!k.offsetParent && getComputedStyle(k).position !== "fixed") return; var r = k.getBoundingClientRect(); if (r.height < 2 || r.width < 2) return; top = Math.min(top, r.top); bot = Math.max(bot, r.bottom); });
     if (top > 1e8) return;

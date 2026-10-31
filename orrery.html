@@ -6,7 +6,7 @@
 <title>The Orrery · BrainWhim Puzzles</title>
 <meta name="description" content="The Orrery: a daily brass-and-gears puzzle at BrainWhim. Turn the rings, mind the gears and set every planet on its mark.">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1029b">
+<link rel="stylesheet" href="parlor-kit.css?v=1031b">
 <style>
 /* ===== The Orrery (Puzzles & Brain Games, Oct 30; 3-D look and smooth dragging Oct 31): a daily puzzle on a tilted brass orrery =====
    A turned walnut base with engraved spokes, brass rings round a gold sun, enamel planets on brass arms.
@@ -55,6 +55,16 @@
   body.pk.seated .pk-stage{justify-content:flex-start}
 }
 @media (max-width:400px){ .or-tools .pk-btn{padding:8px 9px;font-size:12.5px} .or-count{font-size:12px} .or-sel{min-width:96px} }
+/* phones held sideways (Oct 31): the orrery takes the full height; the tools stand in a column on the right */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .or-tools{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:var(--pk-landR);max-width:none;padding:8px;gap:8px}
+  body.pk-land.seated.pk-coaching .or-tools{top:auto;bottom:8px;transform:none}
+  body.pk-land.seated .or-gears{font-size:11px;padding:0}
+  body.pk-land.seated .or-sel{min-width:0;flex:1;font-size:12.5px}
+  body.pk-land.seated .or-row{width:100%;flex-wrap:wrap;gap:6px}
+  body.pk-land.seated .or-row .pk-btn:not(.or-turn){flex:1 1 30%;padding:8px 4px;font-size:12.5px}
+  body.pk-land.seated .or-count{width:100%;text-align:center;font-size:12.5px}
+}
 </style>
 <script src="bw-auth.js?v=1027a"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -70,7 +80,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1031b"></script>
 <script>
 /* ===== Orrery core (rules, solver, daily maker) — shared by the page and the tests ===== */
 var OR = (function () {
@@ -721,6 +731,19 @@ function lessonHint(){ hint(); }
 var TOOLS=$("#orTools",stage);
 function seatedNow(){ return document.body.classList.contains("seated"); }
 function fit(){
+  /* a phone held sideways (Oct 31): the orrery fills the height, between the kit's rail and the tools column */
+  if(window.Parlor&&Parlor.land&&Parlor.land()){
+    FIT.style.width=FIT.style.height="200px";
+    var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+    var R=coaching?Math.round(Math.max(230,Math.min(300,VW*.36))):210;
+    document.body.style.setProperty("--pk-landR",R+"px");
+    var lw=VW-ins.l-ins.r-(100+16)-8-(R+8), lh=window.innerHeight-16, sz=Math.max(200,Math.min(lw,lh*1000/VH));
+    FIT.style.width=Math.round(sz)+"px"; FIT.style.height=Math.round(sz*VH/1000)+"px"; TOOLS.style.maxWidth="";
+    document.body.style.setProperty("--pk-landTools",coaching?(TOOLS.offsetHeight+8)+"px":"0px");
+    document.body.style.setProperty("--pk-size",Math.round(sz)+"px");
+    return;
+  }
+  document.body.style.removeProperty("--pk-landR");
   var wide=window.innerWidth>=1000, toolsH=(TOOLS.offsetHeight||110)+10, availW, availH;
   var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
   if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
@@ -734,7 +757,7 @@ window.addEventListener("resize",fit);
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"orrery", cat:"puzzles", solo:true, free:true, title:"The Orrery", bg:"puzzles-orrery.jpg", home:"puzzles.html", stage:stage,
+  game:"orrery", cat:"puzzles", solo:true, free:true, land:true, title:"The Orrery", bg:"puzzles-orrery.jpg", home:"puzzles.html", stage:stage,
   soloLabel:"Today's puzzle", dealLabel:"Today's Puzzle",
   tagline:"Set every planet on its mark.", invite:"The morning sun is on the brass. Turn the rings, mind the gears, and set every planet on its mark.",
   players:[{name:"You",color:"#c9a24f"}],
@@ -753,7 +776,8 @@ Parlor.init({
 });
 new MutationObserver(function(){ var k=document.body.getAttribute("data-set"); var f=FIN[k]||FIN.brass; if(f!==fin){ fin=f; if(P){ drawBase(); drawLive(); showSel(); } } }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
 var wasSeated=false;
-new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+var wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("DOMContentLoaded",function(){ tools(); fin=FIN[document.body.getAttribute("data-set")]||FIN.brass; startDaily(true); fit(); });
 window.ORR={get:function(){ return {P:P,t:t,moves:moves,par:P&&P.par,done:done,mode:mode,sel:sel}; },turn:turn,hint:hint,   /* for testing */
   path:function(i,steps,viaPlanet){ var r=FIT.getBoundingClientRect(), z=r.width/1000, out=[], n=Math.abs(steps)*12+1, B=RG[i].bodies[0];
