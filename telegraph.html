@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Telegraph Office · BrainWhim Puzzles</title>
+<meta name="description" content="The Telegraph Office: a daily coded telegram at BrainWhim. Every letter stands for another. Crack the code and read the day's message.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Special+Elite&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1031e">
+<style>
+/* ===== The Telegraph Office (Puzzles & Brain Games, Oct 31): a daily coded telegram =====
+   A cream telegram form lies on the honey-oak counter, its message pasted on in strips of ticker tape, in code:
+   every letter stands for a different one, the same all the way through. Write the real letters in, in ink, above the tape.
+   The operator has already written a few in (more on Monday, fewer by Sunday). Ask the Operator for help when stuck.
+   Forms (the Forms card): Cream & Green Ink (free); Blue Form & Navy Ink, Buff & Sepia (Club). */
+body{--tg-paper:#f4ecd6;--tg-paper2:#e9dcbc;--tg-print:#2f5a43;--tg-print2:#7f9a86;--tg-ink:#1d2a4a;--tg-op:#9a3b22;--tg-tape:#fbf7ea;--tg-stamp:#8e2f45}
+body[data-set="blue"]{--tg-paper:#e3ebf2;--tg-paper2:#cbd8e4;--tg-print:#1f3d66;--tg-print2:#7d93b0;--tg-ink:#16213f;--tg-op:#a3332a;--tg-tape:#f8f8f2;--tg-stamp:#1f3d66}
+body[data-set="buff"]{--tg-paper:#efdcb8;--tg-paper2:#dcc398;--tg-print:#6b3d1f;--tg-print2:#a7825f;--tg-ink:#2b1d14;--tg-op:#8f2a1e;--tg-tape:#fbf3e0;--tg-stamp:#7a2b18}
+.tg-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+/* the honey-oak counter */
+.tg-desk{position:relative;flex:none;padding:var(--tg-dp,22px);border-radius:10px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .55' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .16 0 0 0 0 .04 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(90deg,rgba(90,45,10,.07) 0 1px,transparent 1px 7px,rgba(255,230,180,.05) 7px 8px,transparent 8px 19px),
+    radial-gradient(ellipse at 30% 20%,rgba(255,236,190,.38),transparent 60%),
+    linear-gradient(180deg,#bd7d40 0%,#9d602c 45%,#804a21 100%);
+  box-shadow:0 1px 0 rgba(255,235,190,.6) inset,0 -3px 0 rgba(80,40,10,.35) inset,0 4px 0 #7d4a1d,0 5px 0 #6a3d16,0 18px 34px rgba(0,0,0,.45)}
+/* the telegram form */
+.tg-form{position:relative;color:var(--tg-print);border-radius:3px;transform:rotate(-.5deg);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23p)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 40% 30%,rgba(255,255,255,.45),transparent 70%),linear-gradient(180deg,var(--tg-paper),var(--tg-paper2));
+  box-shadow:0 1px 1px rgba(0,0,0,.2),0 6px 14px rgba(40,20,5,.35),0 0 0 1px rgba(0,0,0,.06)}
+.tg-form::before{content:"";position:absolute;inset:7px;border:1.5px solid var(--tg-print2);border-radius:2px;pointer-events:none;opacity:.7}
+.tg-form::after{content:"";position:absolute;inset:11px;border:.75px solid var(--tg-print2);border-radius:1px;pointer-events:none;opacity:.5}
+.tg-head{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:var(--tg-hp,18px 26px 8px)}
+.tg-no{font:600 11px/1.3 Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--tg-print);opacity:.85}
+.tg-no b{display:block;font:700 italic 17px Cormorant Garamond,serif;letter-spacing:0;text-transform:none;color:var(--tg-ink)}
+.tg-title{text-align:center;font:700 var(--tg-tf,30px)/1 Cormorant Garamond,serif;letter-spacing:.32em;padding-left:.32em;color:var(--tg-print)}
+.tg-title small{display:block;margin-top:5px;font:600 9.5px/1.2 Montserrat,sans-serif;letter-spacing:.2em;opacity:.8}
+.tg-stampd{justify-self:end;width:var(--tg-sd,62px);height:var(--tg-sd,62px);transform:rotate(-12deg);opacity:.72}
+.tg-rule{height:0;margin:0 var(--tg-mx,26px);border-top:1.5px solid var(--tg-print2);border-bottom:.75px solid var(--tg-print2);padding-top:2px;opacity:.8}
+/* the message: strips of ticker tape pasted on, the real letters written above them in ink */
+.tg-msgw{position:relative}
+.tg-more{position:absolute;left:0;right:0;bottom:0;height:16px;pointer-events:none;opacity:0;transition:opacity .2s;background:linear-gradient(180deg,transparent,var(--tg-paper2))}
+.tg-more span{position:absolute;right:12px;bottom:3px;padding:3px 9px;border-radius:10px;background:var(--tg-print);color:var(--tg-paper);font:700 10px/1.2 Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 2px 5px rgba(0,0,0,.25)}
+.tg-more.on{opacity:1}
+.tg-msg{position:relative;padding:var(--tg-mp,14px 26px 6px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.tg-line{position:relative;display:flex;flex-wrap:nowrap;align-items:flex-end;gap:0;margin:0 0 var(--tg-lg,8px)}
+.tg-line:nth-child(odd) .tg-tape{transform:rotate(.25deg)}
+.tg-line:nth-child(even) .tg-tape{transform:rotate(-.3deg)}
+.tg-word{display:flex;position:relative}
+.tg-gap{width:calc(var(--cw) * .55);flex:none}
+.tg-c{position:relative;width:var(--cw);flex:none;display:flex;flex-direction:column;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tg-c.p{width:calc(var(--cw) * .5);cursor:default}
+.tg-ink{height:calc(var(--cw) * var(--tg-ih,1.08));width:100%;display:flex;align-items:flex-end;justify-content:center;font:700 calc(var(--cw) * .92)/1 Cormorant Garamond,serif;color:var(--tg-ink);
+  border-bottom:1px solid rgba(60,50,30,.28);position:relative}
+.tg-c.p .tg-ink{border-bottom-color:transparent}
+.tg-ink.op{color:var(--tg-op);font-style:italic}
+.tg-ink.new{animation:tg-write .32s ease-out}
+@keyframes tg-write{0%{opacity:0;transform:translateY(-3px) scale(1.15)}100%{opacity:1;transform:none}}
+.tg-tapec{height:calc(var(--cw) * .86);width:100%;display:flex;align-items:center;justify-content:center;margin-top:3px;font:400 calc(var(--cw) * .62)/1 "Special Elite",monospace;color:#2b2a27;position:relative}
+.tg-tape{position:absolute;left:-2px;right:-2px;bottom:0;height:calc(var(--cw) * .86);background:linear-gradient(180deg,rgba(255,255,255,.65),transparent 30%),var(--tg-tape);box-shadow:0 1px 1.5px rgba(60,40,10,.28),0 0 0 .5px rgba(120,100,60,.15);z-index:0;pointer-events:none}
+.tg-word .tg-c{z-index:1}
+.tg-line .tg-tape.first{clip-path:polygon(3px 0,100% 0,100% 100%,0 100%,4px 80%,0 62%,4px 44%,0 26%,4px 8%)}
+.tg-line .tg-tape.last{clip-path:polygon(0 0,calc(100% - 3px) 0,100% 18%,calc(100% - 4px) 36%,100% 54%,calc(100% - 4px) 72%,100% 90%,calc(100% - 2px) 100%,0 100%)}
+/* choosing: every copy of the chosen code letter lights up gold; the one you tapped is ringed */
+.tg-c.on .tg-tapec::before{content:"";position:absolute;inset:1px 1px;border-radius:3px;background:rgba(229,184,64,.42)}
+.tg-c.on .tg-ink{border-bottom:2px solid #c9962f}
+.tg-c.cur .tg-tapec::after{content:"";position:absolute;inset:-1px;border-radius:4px;box-shadow:0 0 0 2px #b8862a,0 0 10px rgba(229,184,64,.8)}
+.tg-c.bad .tg-ink{color:#c0392b;animation:tg-bad .5s ease 2}
+@keyframes tg-bad{50%{transform:translateX(2px)}}
+.tg-c.lesson .tg-tapec::before{content:"";position:absolute;inset:0;border-radius:3px;background:rgba(229,184,64,.55);animation:tg-glow 1.2s ease-in-out infinite}
+@keyframes tg-glow{50%{background:rgba(229,184,64,.15)}}
+.tg-c span{position:relative;z-index:1}
+.tg-from{display:flex;align-items:baseline;gap:10px;padding:var(--tg-fp,4px 26px 18px);font:600 11px Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+.tg-from i{flex:1;font:700 italic var(--tg-ff,20px)/1.2 Cormorant Garamond,serif;letter-spacing:0;text-transform:none;color:var(--tg-ink);border-bottom:1px solid rgba(60,50,30,.3);min-height:1.2em}
+.tg-from i small{font-size:.72em;opacity:.8}
+.tg-delivered{position:absolute;right:7%;bottom:calc(var(--cw,30px) * 1.4);z-index:4;padding:6px 14px;border:3px solid var(--tg-stamp);border-radius:6px;color:var(--tg-stamp);font:700 var(--tg-df,26px)/1 "Special Elite",monospace;letter-spacing:.14em;
+  transform:rotate(-14deg) scale(1);opacity:0;pointer-events:none;mix-blend-mode:multiply;box-shadow:inset 0 0 0 2px rgba(255,255,255,.2)}
+.tg-delivered.on{animation:tg-stamp .42s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes tg-stamp{0%{opacity:0;transform:rotate(-11deg) scale(2.2)}100%{opacity:.62;transform:rotate(-11deg) scale(1)}}
+.tg-toast{position:absolute;z-index:6;left:50%;top:6px;transform:translateX(-50%);width:max-content;max-width:90%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.88);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.tg-toast.on{opacity:1}
+.tg-nope{animation:tg-nope .34s ease}
+@keyframes tg-nope{20%{transform:translateX(-7px) rotate(-.5deg)}60%{transform:translateX(7px) rotate(-.5deg)}}
+/* the tools: brass-and-ivory keys and the buttons */
+.tg-tools{display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.tg-keys{display:flex;flex-direction:column;align-items:center;gap:var(--kg,6px)}
+.tg-krow{display:flex;gap:var(--kg,6px);justify-content:center}
+.tg-k{position:relative;width:var(--kw,38px);height:var(--kw,38px);border-radius:50%;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:radial-gradient(circle at 50% 38%,#fffaf0 0%,#f1e8d2 55%,#d8ccae 100%);color:#1c1a16;font:700 calc(var(--kw,38px) * .5)/1 Cormorant Garamond,serif;
+  box-shadow:0 0 0 2px #b8913f,0 0 0 3px #7a5a1e,inset 0 -2px 3px rgba(0,0,0,.18),0 3px 0 2px #4a3410,0 5px 8px rgba(0,0,0,.5);transition:transform .06s,box-shadow .06s}
+.tg-k:active,.tg-k.down{transform:translateY(2px);box-shadow:0 0 0 2px #b8913f,0 0 0 3px #7a5a1e,inset 0 -1px 2px rgba(0,0,0,.18),0 1px 0 2px #4a3410,0 2px 4px rgba(0,0,0,.5)}
+.tg-k.used{color:rgba(28,26,22,.38)}
+.tg-k.used::after{content:"";position:absolute;right:16%;top:16%;width:5px;height:5px;border-radius:50%;background:var(--tg-ink,#1d2a4a);opacity:.6}
+.tg-k.op{color:rgba(154,59,34,.45)}
+.tg-k.wide{width:calc(var(--kw,38px) * 1.7);border-radius:calc(var(--kw,38px) / 2);font:700 calc(var(--kw,38px) * .4)/1 Montserrat,sans-serif}
+.tg-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:center}
+.tg-tools .pk-btn{width:auto;margin:0;padding:8px 14px;min-height:0;white-space:nowrap}
+.tg-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.tg-op.ring{animation:tg-ring 1.2s ease 2}
+@keyframes tg-ring{50%{box-shadow:0 0 0 5px rgba(240,210,122,.55)}}
+.tg-count{font:600 13px Montserrat,sans-serif;color:#fff;padding:0 6px;white-space:nowrap}
+.tg-count b{color:#f0d27a;font-weight:700}
+/* the result window */
+.tg-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.tg-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.tg-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.tg-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.tg-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.tg-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.tg-quote{margin:10px 0 4px;padding:12px 14px;border-radius:10px;background:linear-gradient(180deg,rgba(244,236,214,.96),rgba(233,220,188,.96));color:#1d2a4a;text-align:left}
+.tg-quote q{display:block;font:700 italic 19px/1.35 Cormorant Garamond,serif;quotes:"\201C" "\201D"}
+.tg-quote p{margin:6px 0 0;font:600 12px/1.4 Montserrat,sans-serif;color:#2f5a43}
+.tg-quote p i{font-weight:600}
+.tg-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#tgEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-width:999px){
+  .tg-tools{width:100%;max-width:calc(100vw - 12px);padding:6px;gap:6px}
+  .tg-tools .pk-btn{padding:8px 10px;font-size:12.5px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .tg-form{transform:none}
+  .tg-no{font-size:9px}
+  .tg-no b{font-size:14px}
+  .tg-title small{font-size:8px;margin-top:3px}
+  .tg-count{display:none}
+}
+body.pk-land .tg-count{display:inline}
+@media (max-width:999px) and (max-height:760px){
+  #tgEnd .pk-modal{padding:16px 16px 14px}
+  #tgEnd h2{font-size:21px;margin-bottom:2px}
+  #tgEnd .tg-stars{font-size:24px;margin:0 0 2px}
+  #tgEnd .tg-facts b{font-size:15px}
+  #tgEnd .tg-quote{margin:8px 0 2px;padding:9px 11px}
+  #tgEnd .tg-quote q{font-size:16.5px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  #tgEnd .tg-note{font-size:11.5px;margin-top:4px}
+  #tgEnd .pk-row{margin-top:10px;gap:8px}
+  #tgEnd .pk-row .pk-btn{padding:10px 8px;font-size:13px}
+}
+/* phones held sideways: the telegram fills the height; the keys stand in a column on the right */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .tg-tools{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:var(--pk-landR);max-width:none;padding:7px;gap:6px}
+  body.pk-land.seated.pk-coaching .tg-tools{top:auto;bottom:8px;transform:none}
+  body.pk-land.seated .tg-row{width:100%;flex-wrap:wrap;gap:5px}
+  body.pk-land.seated .tg-row .pk-btn{flex:1 1 40%;padding:7px 4px;font-size:12px}
+  body.pk-land.seated .tg-count{width:100%;text-align:center;font-size:12px}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1031h"></script>
+<script src="telegraph-wires.js?v=1031a"></script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+/* a small seeded random (the same code for everyone on the same day) */
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+var AZ="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+/* the code: every letter swapped for another, never itself */
+function makeKey(seed){ var r=rng(seed), a;
+  do { a=AZ.split(""); for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } } while(a.some(function(c,i){ return c===AZ[i]; }));
+  var k={}; AZ.split("").forEach(function(c,i){ k[c]=a[i]; }); return k; }
+
+/* ---------- the puzzle ---------- */
+var today=new Date(), todayKey=ymd(today);
+var T=null;            /* {text, author, source, key{plain:code}, given{plain:1}, cells[], syms[]} */
+var guess={}, op={}, sel=null, cur=-1, hints=0, t0=0, done=false, mode="daily", lessonK=0;
+function build(w,seed,how){
+  var text=w[0], key=makeKey(seed), given={};
+  (w[3]||"").toUpperCase().split("").forEach(function(c){ if(c.trim()) given[c]=1; });
+  var cells=[], up=text.toUpperCase();
+  for(var i=0;i<up.length;i++){ var c=up[i]; cells.push(/[A-Z]/.test(c)?{ch:c,sym:c}:{ch:text[i]==="’"?"'":c,sym:null}); }
+  var syms=[]; cells.forEach(function(c){ if(c.sym&&syms.indexOf(c.sym)<0) syms.push(c.sym); });
+  return {text:text,author:w[1],source:w[2],key:key,given:given,cells:cells,syms:syms,how:how};
+}
+function shown(s){ return T.given[s]?s:op[s]?s:guess[s]||""; }
+function locked(s){ return !!(T.given[s]||op[s]); }
+function used(L){ for(var s in guess) if(guess[s]===L) return s; return null; }
+function usedLocked(L){ return T.syms.some(function(s){ return s===L&&locked(s); }); }
+function filled(){ return T.syms.every(function(s){ return shown(s); }); }
+function right(){ return T.syms.every(function(s){ return shown(s)===s; }); }
+function openSyms(){ return T.syms.filter(function(s){ return !locked(s); }); }
+
+/* ---------- the drawing ---------- */
+var stage=mk("div","tg-pad");
+stage.innerHTML='<div class="tg-desk" id="tgDesk"><div class="tg-form" id="tgForm">'+
+  '<div class="tg-head"><div class="tg-no">Telegram No.<b id="tgNo">1</b></div><div class="tg-title">TELEGRAM<small>THE TELEGRAPH OFFICE</small></div>'+
+  '<svg class="tg-stampd" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="var(--tg-stamp)" stroke-width="3"><circle cx="50" cy="50" r="45"/><circle cx="50" cy="50" r="33" stroke-width="1.5"/></g>'+
+  '<text id="tgStM" x="50" y="46" text-anchor="middle" font-family="Special Elite,monospace" font-size="17" fill="var(--tg-stamp)">OCT</text><text id="tgStD" x="50" y="66" text-anchor="middle" font-family="Special Elite,monospace" font-size="19" fill="var(--tg-stamp)">31</text>'+
+  '<path id="tgArc" d="M14 50a36 36 0 0 1 72 0" fill="none"/><text font-family="Montserrat,sans-serif" font-weight="700" font-size="8.5" letter-spacing="2" fill="var(--tg-stamp)"><textPath href="#tgArc" startOffset="50%" text-anchor="middle">RECEIVED</textPath></text></svg></div>'+
+  '<div class="tg-rule"></div><div class="tg-msgw"><div class="tg-msg" id="tgMsg" data-bws="off"></div><div class="tg-more" id="tgMore"><span>▾ More Below</span></div></div>'+
+  '<div class="tg-from">From<i id="tgFrom"></i></div><div class="tg-delivered" id="tgDel">DELIVERED</div></div>'+
+  '<div class="tg-toast" id="tgToast"></div></div>'+
+  '<div class="tg-tools" id="tgTools"><div class="tg-keys" id="tgKeys"></div>'+
+  '<div class="tg-row"><span class="tg-count" id="tgCount"></span><button class="pk-btn" type="button" id="tgErase">Erase</button><button class="pk-btn gold tg-op" type="button" id="tgHint">Ask the Operator</button><button class="pk-btn" type="button" id="tgRestart">Restart</button></div></div>';
+var DESK=$("#tgDesk",stage), FORM=$("#tgForm",stage), MSG=$("#tgMsg",stage), TOAST=$("#tgToast",stage), TOOLS=$("#tgTools",stage), KEYS=$("#tgKeys",stage);
+var CELLS=[];
+function layout(cw){
+  /* words never break across strips; each line is one strip of tape */
+  MSG.textContent=""; CELLS=[];
+  var W=MSG.clientWidth-parseFloat(getComputedStyle(MSG).paddingLeft)-parseFloat(getComputedStyle(MSG).paddingRight);
+  var words=[], curW=[];
+  T.cells.forEach(function(c,i){ if(c.ch===" "){ if(curW.length) words.push(curW); curW=[]; } else curW.push(i); });
+  if(curW.length) words.push(curW);
+  function wlen(w){ return w.reduce(function(s,i){ return s+(T.cells[i].sym?1:.5); },0)*cw; }
+  var lines=[], line=[], lw=0, gap=cw*.55;
+  words.forEach(function(w){ var l=wlen(w); if(line.length&&lw+gap+l>W){ lines.push(line); line=[]; lw=0; } lw+=(line.length?gap:0)+l; line.push(w); });
+  if(line.length) lines.push(line);
+  lines.forEach(function(ln){
+    var L=mk("div","tg-line"), tape=mk("div","tg-tape first last"); L.appendChild(tape);
+    var start=null;
+    ln.forEach(function(w,wi){
+      if(wi) L.appendChild(mk("div","tg-gap"));
+      var Wd=mk("div","tg-word");
+      w.forEach(function(i){ var c=T.cells[i], e=mk("div","tg-c"+(c.sym?"":" p"));
+        e.innerHTML='<div class="tg-ink"><span></span></div><div class="tg-tapec"><span>'+esc(c.sym?T.key[c.sym]:c.ch)+'</span></div>';
+        if(c.sym){ e.dataset.i=i; e.addEventListener("click",function(){ tapCell(i); }); }
+        CELLS[i]=e; Wd.appendChild(e); });
+      L.appendChild(Wd);
+    });
+    MSG.appendChild(L);
+    /* the tape runs under the whole line */
+    tape.style.left="-3px"; tape.style.width=(L.scrollWidth+6)+"px"; tape.style.right="auto";
+  });
+  paintCells(true);
+  return lines.length;
+}
+function paintCells(quiet){
+  if(!T) return;
+  T.cells.forEach(function(c,i){ if(!c.sym) return; var e=CELLS[i]; if(!e) return; var ink=e.firstChild, sp=ink.firstChild, v=shown(c.sym);
+    if(sp.textContent!==v){ sp.textContent=v; if(!quiet&&v){ ink.classList.remove("new"); void ink.offsetWidth; ink.classList.add("new"); } }
+    ink.classList.toggle("op",locked(c.sym));
+    e.classList.toggle("on",c.sym===sel); e.classList.toggle("cur",i===cur);
+  });
+  paintKeys(); counts();
+}
+/* ---------- keys ---------- */
+var ROWS=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+function buildKeys(land){
+  KEYS.textContent="";
+  var rows=land?["ABCDEFG","HIJKLMN","OPQRSTU","VWXYZ"]:ROWS;
+  rows.forEach(function(r,ri){ var R=mk("div","tg-krow");
+    r.split("").forEach(function(L){ var k=mk("button","tg-k",L); k.type="button"; k.dataset.k=L; k.setAttribute("aria-label",L);
+      k.addEventListener("pointerdown",function(e){ e.preventDefault(); press(k); type(L); }); R.appendChild(k); });
+    if(ri===rows.length-1){ var b=mk("button","tg-k wide","⌫"); b.type="button"; b.setAttribute("aria-label","Erase"); b.addEventListener("pointerdown",function(e){ e.preventDefault(); press(b); erase(); }); R.appendChild(b); }
+    KEYS.appendChild(R); });
+  paintKeys();
+}
+function press(k){ k.classList.add("down"); setTimeout(function(){ k.classList.remove("down"); },110); }
+function paintKeys(){ if(!T) return; [].forEach.call(KEYS.querySelectorAll(".tg-k[data-k]"),function(k){ var L=k.dataset.k; k.classList.toggle("op",usedLocked(L)); k.classList.toggle("used",!usedLocked(L)&&!!used(L)); }); }
+
+/* ---------- sounds (Oct 31): the telegraph office, made in the browser through the kit ----------
+   tg-key: a letter typed in (a typewriter's typebar striking the platen) · tg-pick: choosing a code letter (a pencil tap)
+   tg-erase: rubbing a letter out · tg-no: the sounder's dull double clack (that won't go, or the message doesn't read right)
+   tg-hint: the operator answers on the sounder, a little Morse (dot-dash-dot, "R": received)
+   tg-stamp: the DELIVERED stamp · tg-solve: the end-of-message signal in Morse, the counter bell, and a warm chord */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("tg-key",function(h,o){ var d=h.out(.08), t=h.t, p=h.p*(.96+Math.random()*.08);
+    h.burst(d,t,.028,"bandpass",2500*p,2.6,.66,.001,.022);                  /* the typebar strikes */
+    h.osc(d,t,"sine",150*p,92*p,.2,.002,.07,["lowpass",420]);              /* and the platen knocks */
+    h.bell(d,t+.003,3150*p,.018,.05,[[1,1,1],[1.48,.5,.6]]); });            /* a tiny ring of steel */
+  D("tg-pick",function(h){ var d=h.out(.05); h.burst(d,h.t,.018,"highpass",4200,1,.2,.001,.012); h.osc(d,h.t,"sine",1700,1500,.05,.001,.03); });
+  D("tg-erase",function(h){ var d=h.out(.05), t=h.t;
+    for(var i=0;i<3;i++) h.burst(d,t+i*.055,.06,"bandpass",900+i*140,1.1,.2,.01,.045);
+    h.osc(d,t,"sine",130,100,.05,.003,.05,["lowpass",380]); });
+  D("tg-no",function(h){ var d=h.out(.1), t=h.t;
+    [[0,1],[.12,.8]].forEach(function(s){ h.osc(d,t+s[0],"sine",230*s[1],150*s[1],.085,.003,.12,["lowpass",520]); h.burst(d,t+s[0],.04,"bandpass",1150*s[1],2,.085,.001,.035); }); });
+  function sounder(h,d,t,len,lvl){                                         /* one Morse element: the armature down, then up */
+    h.burst(d,t,.02,"bandpass",2100,3,.3*lvl,.001,.016); h.osc(d,t,"sine",420,360,.07*lvl,.002,.03,["lowpass",900]);
+    h.osc(d,t+.004,"sine",700,0,.035*lvl,.006,len);                         /* a faint tone, for music */
+    h.burst(d,t+len,.02,"bandpass",1350,3,.22*lvl,.001,.018); h.osc(d,t+len,"sine",300,250,.05*lvl,.002,.03,["lowpass",700]); }
+  D("tg-hint",function(h){ var d=h.out(.2), t=h.t, u=.07;
+    [[0,1],[2,3],[6,1]].forEach(function(e){ sounder(h,d,t+e[0]*u,e[1]*u,1); }); });
+  D("tg-stamp",function(h){ var d=h.out(.12), t=h.t; h.osc(d,t,"sine",130,58,.45,.004,.18,["lowpass",320]); h.burst(d,t,.09,"lowpass",700,1,.3,.002,.07); h.burst(d,t+.015,.05,"bandpass",2600,1.5,.06,.002,.04); });
+  D("tg-solve",function(h,o){ var d=h.out(.4), t=h.t, u=.06, at=0;
+    if(!o.short){ /* AR, the end-of-message signal: .-.-. */
+      [[1],[3],[1],[3],[1]].forEach(function(e){ sounder(h,d,t+at,e[0]*u,.9); at+=(e[0]+1)*u; }); at+=.12; }
+    h.bell(d,t+at,1870,.11,2.2,[[1,1,1],[2.41,.5,.6],[3.86,.25,.45],[5.6,.1,.3]]);   /* the counter bell: ding */
+    [392,523.3,659.3,784].forEach(function(f,i){ h.osc(d,t+at+.05+i*.04,"triangle",f,0,.045,.02,1.6); });
+  });
+})();
+function snd(name,o,old){ if(!window.Parlor) return; if(Parlor.defSfx) Parlor.sfx(name,o); else if(old) Parlor.sfx(old[0],old[1]); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2000); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function nope(){ FORM.classList.remove("tg-nope"); void FORM.offsetWidth; FORM.classList.add("tg-nope"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done; }
+function tapCell(i){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done) return;
+  var s=T.cells[i].sym;
+  if(locked(s)){ toast(T.given[s]?"The operator already wrote that one in.":"The operator gave you that letter."); return; }
+  sel=s; cur=i; snd("tg-pick"); paintCells(true); scrollTo(i);
+}
+function moreCue(){ $("#tgMore",stage).classList.toggle("on",MSG.scrollHeight-MSG.scrollTop-MSG.clientHeight>4); }
+MSG.addEventListener("scroll",moreCue,{passive:true});
+function scrollTo(i){ var e=CELLS[i]; if(!e) return; var r=e.getBoundingClientRect(), m=MSG.getBoundingClientRect(); if(r.top<m.top+4||r.bottom>m.bottom-4) MSG.scrollTop+=r.top-m.top-(m.height-r.height)/2; }
+function firstOpen(after){
+  var n=T.cells.length;
+  for(var k=1;k<=n;k++){ var i=((after==null?-1:after)+k+n)%n, c=T.cells[i]; if(c.sym&&!locked(c.sym)&&!shown(c.sym)) return i; }
+  return -1;
+}
+function step(dir){ if(!T||done) return; var n=T.cells.length, i=cur<0?0:cur;
+  for(var k=1;k<=n;k++){ var j=(i+dir*k+n*4)%n, c=T.cells[j]; if(c.sym&&!locked(c.sym)&&c.sym!==sel){ sel=c.sym; cur=j; snd("tg-pick"); paintCells(true); scrollTo(j); return; } } }
+function type(L){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!T) return;
+  if(!sel){ var f=firstOpen(); if(f<0){ toast("Tap a code letter on the tape first."); return; } sel=T.cells[f].sym; cur=f; }
+  if(usedLocked(L)){ snd("tg-no",{},["tile"]); nope(); toast(L+" is already written in by the operator."); return; }
+  if(!t0) t0=Date.now();
+  var was=used(L), moved=was&&was!==sel;
+  if(moved) delete guess[was];
+  guess[sel]=L; snd("tg-key");
+  if(moved) toast(L+" moved here. Each letter stands for just one code letter.",2200);
+  var at=cur; paintCells(false);
+  if(filled()){ check(); return; }
+  var nx=firstOpen(at); if(nx>=0){ sel=T.cells[nx].sym; cur=nx; paintCells(true); scrollTo(nx); }
+  lessonCheck();
+}
+function erase(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!T||!sel) { if(!sel) toast("Tap a letter on the tape, then Erase."); return; }
+  if(!guess[sel]){ return; }
+  delete guess[sel]; snd("tg-erase"); paintCells(true);
+}
+function check(){
+  if(right()){ solved(); return; }
+  snd("tg-no",{},["tile"]); nope();
+  toast(mode==="lesson"?"Not quite. Look again at the letters you wrote.":"Every letter is in, but the message doesn't read right yet. Ask the Operator to point out a mistake.",3600);
+  lessonCheck();
+}
+function hint(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!T) return;
+  var wrong=T.syms.filter(function(s){ return guess[s]&&guess[s]!==s; }), s, msg;
+  if(wrong.length){
+    s=wrong.indexOf(sel)>=0?sel:wrong[0]; var was=guess[s]; delete guess[s];
+    T.cells.forEach(function(c,i){ if(c.sym===s&&CELLS[i]){ CELLS[i].classList.add("bad"); setTimeout(function(){ CELLS[i].classList.remove("bad"); },1100); } });
+    msg="The operator crosses out a wrong letter: that one isn't "+was+".";
+    sel=s; cur=T.cells.findIndex(function(c){ return c.sym===s; });
+  } else {
+    var open=T.syms.filter(function(x){ return !locked(x)&&!guess[x]; });
+    if(!open.length) open=T.syms.filter(function(x){ return !locked(x); });
+    if(sel&&open.indexOf(sel)>=0) s=sel;
+    else { var cnt={}; T.cells.forEach(function(c){ if(c.sym) cnt[c.sym]=(cnt[c.sym]||0)+1; }); open.sort(function(a,b){ return cnt[b]-cnt[a]; }); s=open[0]; }
+    if(!s) return;
+    var other=used(s); if(other&&other!==s) delete guess[other];
+    delete guess[s]; op[s]=1; msg="The operator writes in every "+s+".";
+    sel=null; cur=-1;
+  }
+  hints++; snd("tg-hint"); paintCells(false);
+  var first=T.cells.findIndex(function(c){ return c.sym===s; }); if(first>=0) scrollTo(first);
+  toast(msg,2600);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+msg+"</p>");
+  if(filled()) { check(); return; }
+  if(!sel){ var nx=firstOpen(first); if(nx>=0){ sel=T.cells[nx].sym; cur=nx; paintCells(true); } }
+  lessonCheck();
+}
+function restart(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(!T) return;
+  if(done&&mode==="daily"){ startDaily(true); return; }
+  if(Object.keys(guess).length) snd("tg-erase");
+  guess={}; done=false; FORM.querySelector("#tgDel").classList.remove("on"); $("#tgFrom",stage).textContent="";
+  var f=firstOpen(); sel=f>=0?T.cells[f].sym:null; cur=f; paintCells(true);
+}
+function counts(){
+  if(!T) return;
+  var open=openSyms(), got=open.filter(function(s){ return guess[s]; }).length;
+  $("#tgCount",stage).innerHTML="Letters <b>"+got+"</b> of "+open.length+(hints?" · "+hints+" hint"+(hints>1?"s":""):"");
+  if(window.Parlor){ Parlor.score([got+"/"+open.length]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Telegram",got+" of "+open.length+" letters"+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+/* the keyboard on a computer */
+document.addEventListener("keydown",function(e){
+  if(!document.body.classList.contains("seated")||!T) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  var k=e.key;
+  if(/^[a-zA-Z]$/.test(k)){ e.preventDefault(); var b=KEYS.querySelector('[data-k="'+k.toUpperCase()+'"]'); if(b) press(b); type(k.toUpperCase()); }
+  else if(k==="Backspace"||k==="Delete"){ e.preventDefault(); erase(); }
+  else if(k==="ArrowRight"||k==="ArrowDown"){ e.preventDefault(); step(1); }
+  else if(k==="ArrowLeft"||k==="ArrowUp"){ e.preventDefault(); step(-1); }
+});
+
+/* ---------- loading ---------- */
+function load(t,how){
+  T=t; guess={}; op={}; hints=0; t0=0; done=false; mode=how; hideToast();
+  FORM.querySelector("#tgDel").classList.remove("on"); $("#tgFrom",stage).textContent="";
+  var d=how==="daily"?today:new Date();
+  $("#tgNo",stage).textContent=how==="daily"?dayNo(today):how==="practice"?"Practice":"Lesson";
+  $("#tgStM",stage).textContent=MONTHS[d.getMonth()].slice(0,3).toUpperCase(); $("#tgStD",stage).textContent=d.getDate();
+  var f=firstOpen(); sel=f>=0?T.cells[f].sym:null; cur=f;
+  fit(); MSG.scrollTop=0;
+}
+function wireFor(d){ var list=TG_WIRES[String(d.getDay())], n=dayNo(d); return list[((Math.floor((n-1)/7))%list.length+list.length)%list.length]; }
+var DAILY=null;
+function daily(){ if(!DAILY) DAILY=wireFor(today); return build(DAILY,"tg:"+todayKey,"daily"); }
+function rec(){ try{ return JSON.parse(store("bwTele:"+todayKey)||"null"); }catch(e){ return null; } }
+function startDaily(again){
+  load(daily(),"daily");
+  if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+  var r=rec();
+  if(r&&!again) toast("You decoded today's telegram. Play it again for fun; tomorrow brings a new one.",3600);
+  else if(!again) toast("Tap a letter on the tape, then type the letter it stands for.",3200);
+  if(window.Parlor) Parlor.coach(null);
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwTeleStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function solved(){
+  if(done) return; done=true; sel=null; cur=-1; paintCells(true);
+  snd("tg-solve",{short:mode==="lesson"},["win"]);
+  var from=$("#tgFrom",stage); from.innerHTML=esc(T.author)+(T.source?' <small>· '+esc(T.source)+'</small>':"");
+  setTimeout(function(){ FORM.querySelector("#tgDel").classList.add("on"); snd("tg-stamp"); },mode==="lesson"?250:900);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },700); return; }
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:st,h:hints,sec:secs}; store("bwTele:"+todayKey,JSON.stringify(r));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwTeleStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(st,secs,first,sk,sv); }); },1900);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+function result(st,secs,first,sk,sv){
+  var v=$("#tgEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="tgEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Telegram":"The Telegraph Office · No. "+dayNo(today);
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"Message Received":"Decoded Without Help!")+'</h2>'+
+    '<div class="tg-stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(st)+'</i></div>'+
+    '<div class="tg-facts"><div><b>'+openSyms().length+'</b><small>Letters</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<div class="tg-quote"><q>'+esc(T.text)+'</q><p>'+esc(T.author)+(T.source?', <i>'+esc(T.source)+'</i>':"")+'</p></div>'+
+    '<p class="tg-note">'+(mode==="daily"?(first?"A new telegram arrives every day at midnight.":"You'd already decoded today's telegram; your first result is the one kept."):"Practice telegrams don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(st,secs,sk); });
+  bt(mode==="practice"?"Another Telegram":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Telegram",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  v.classList.add("on");
+}
+function share(st,secs,sk){
+  var txt="BrainWhim · The Telegraph Office No. "+dayNo(today)+"\n"+"★★★".slice(0,st)+"☆☆☆".slice(st)+" "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/telegraph.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["A one-letter word is almost always A or I.","The most common three-letter word is THE. Look for a three-letter word that repeats.","A letter never stands for itself: the code letter on the tape is always a different letter.","Words ending in an apostrophe and one letter are often 'S or 'T.","Stuck? Ask the Operator: a wrong letter gets crossed out, or a new letter written in."];
+var tipN=0;
+function startPractice(){
+  var r=Math.random(), band=TG_WIRES[r<.5?"1":"2"], w=band[Math.floor(Math.random()*band.length)];
+  load(build(w,"practice:"+Date.now()+":"+Math.random(),"practice"),"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Telegram","<p>Tap a letter on the tape, then type the letter it stands for. Every copy of it fills in at once.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%6===3&&window.Parlor) Parlor.practiceSay("Practice Telegram","<p>"+TIPS[(Math.floor(tipN/6)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()){ Parlor.lessonDone(); markLesson(); }
+}
+
+/* ---------- Learn to Play ---------- */
+function LW(text,given,seed){ return build([text,"","",given],"lesson:"+seed,"lesson"); }
+var LESSONS=[
+  {title:"The Telegraph Office",text:"<p>Every day a telegram arrives <b>in code</b>. Each letter on the tape stands for a <b>different letter</b>, the same one all the way through.</p><p>Write the real letters in above the tape, and the day's message appears.</p><p>This first page is just for looking. Tap <b>Next</b> to write your first letter.</p>",
+    puz:function(){ return LW("Good morning from the office.","dfghmnort","a"); }},
+  {title:"Write In a Letter",text:"<p>The code letter that stands for <b>S</b> is glowing. <b>Tap it</b>, then press <b>S</b> on the keys.</p>",done:"<p>Every copy filled in at once. A code letter always stands for the same letter, everywhere in the telegram.</p>",
+    puz:function(){ return LW("Safe and sound.","adefnou","b"); },glow:"S",goal:function(){ return shown("S")==="S"; }},
+  {title:"Little Words Help",text:"<p>A word of <b>one letter</b> is almost always <b>A</b> or <b>I</b>. Here the telegram starts with one.</p><p>Fill in the two missing letters.</p>",done:"<p>Little words are the way in. Two-letter words like OF, TO, IN and IS help too.</p>",
+    puz:function(){ return LW("I am on my way.","mnowy","c"); },goal:function(){ return right(); }},
+  {title:"Look for THE",text:"<p>The most common word of all is <b>THE</b>. Find a three-letter word that comes up twice, and you'll have three letters that are everywhere.</p><p>Fill in the rest.</p>",done:"<p>That's how real code breakers start: the little words, then the patterns.</p>",
+    puz:function(){ return LW("The train is on the way to the sea.","ainorswy","d"); },goal:function(){ return right(); }},
+  {title:"Ask the Operator",text:"<p>Stuck? Press <b>Ask the Operator</b>. If one of your letters is wrong, the operator crosses it out; if not, they write in a new letter for you.</p><p>Try it now.</p>",done:"<p>Each request is counted: solve with no help for <b>three stars</b>, with one or two for two.</p>",
+    puz:function(){ return LW("All aboard for the night train.","adfgnor","e"); },goal:function(){ return hints>0; }},
+  {title:"Stars and Streaks",text:"<p>A new telegram every day, the same for everyone: short and gentle on <b>Monday</b>, longer by <b>Sunday</b>, with fewer letters written in.</p><p>★★★ with no help · ★★ with one or two hints. Keep your streak going!</p>",
+    puz:function(){ return LW("Message received with thanks.","acdeghimnrstvw","f"); },solvedLook:true}
+];
+function markLesson(){ T.cells.forEach(function(c,i){ if(CELLS[i]) CELLS[i].classList.remove("lesson"); }); }
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k]; load(Ls.puz(),"lesson");
+  if(!Ls.goal){ sel=null; cur=-1; }
+  if(Ls.solvedLook){ T.syms.forEach(function(s){ guess[s]=s; }); done=true; $("#tgFrom",stage).textContent="The Telegraph Office"; FORM.querySelector("#tgDel").classList.add("on"); }
+  paintCells(true);
+  if(Ls.glow){ sel=null; cur=-1; T.cells.forEach(function(c,i){ if(c.sym===Ls.glow&&CELLS[i]) CELLS[i].classList.add("lesson"); }); paintCells(true); }
+}
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+var landWas=null;
+function fit(){
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  if(land!==landWas){ landWas=land; buildKeys(land); }
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000, phone=!wide;
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  /* the keys' size */
+  var kw;
+  if(land){ var R=Math.round(Math.max(250,Math.min(320,VW*.36))); document.body.style.setProperty("--pk-landR",R+"px"); kw=Math.floor(Math.min(40,(R-14-6*6)/7)); }
+  else { document.body.style.removeProperty("--pk-landR"); kw=wide?(window.innerHeight<920?32:38):Math.floor(Math.min(window.innerHeight<720?31:40,(VW-12-12-9*5)/10.2)); }
+  TOOLS.style.setProperty("--kw",kw+"px"); TOOLS.style.setProperty("--kg",(kw<32?5:6)+"px");
+  var toolsH=land?0:(TOOLS.offsetHeight||170)+10, availW, availH;
+  if(land){ var ins=Parlor.insets(); availW=VW-ins.l-ins.r-(100+16)-8-(parseFloat(getComputedStyle(document.body).getPropertyValue("--pk-landR"))||260)-16; availH=window.innerHeight-16; }
+  else if(wide){ availW=Math.min((st2&&st2.clientWidth)||(VW-560),900); availH=window.innerHeight-top-22-toolsH; }
+  else { availW=VW-8; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
+  /* the counter and the form */
+  var dp=phone?6:Math.round(Math.max(12,Math.min(26,availW*.03)));
+  DESK.style.setProperty("--tg-dp",dp+"px");
+  var fw=Math.max(260,Math.round(availW-dp*2));
+  FORM.style.width=fw+"px";
+  var compact=phone||availH<520;
+  FORM.style.setProperty("--tg-hp",compact?"12px 16px 6px":"18px 26px 8px");
+  FORM.style.setProperty("--tg-mx",compact?"16px":"26px");
+  FORM.style.setProperty("--tg-mp",compact?"10px 16px 4px":"14px 26px 6px");
+  FORM.style.setProperty("--tg-fp",compact?"2px 16px 12px":"4px 26px 18px");
+  var short=phone&&window.innerHeight<760&&!land;
+  FORM.style.setProperty("--tg-tf",(short?18:compact?Math.min(24,fw*.06):30)+"px");
+  FORM.style.setProperty("--tg-sd",(short?30:compact?42:62)+"px");
+  FORM.style.setProperty("--tg-ih",short?".96":"1.08");
+  if(short) FORM.style.setProperty("--tg-hp","8px 14px 4px");
+  FORM.style.setProperty("--tg-ff",(compact?16:20)+"px");
+  if(!T) return;
+  /* the largest letters that fit: try sizes until the message fits the height left */
+  MSG.style.maxHeight="none"; MSG.style.height="auto";
+  var fixed=function(){ return FORM.offsetHeight-MSG.offsetHeight; };
+  var maxCW=phone?(land?34:32):44, minCW=phone?21:24, cw=maxCW, best=minCW;
+  for(cw=maxCW;cw>=minCW;cw--){
+    FORM.style.setProperty("--cw",cw+"px"); MSG.style.setProperty("--cw",cw+"px");
+    FORM.style.setProperty("--tg-lg",Math.round(cw*.3)+"px");
+    layout(cw);
+    var over=MSG.scrollWidth>MSG.clientWidth+1;
+    if(!over&&FORM.offsetHeight+dp*2<=availH){ best=cw; break; }
+    best=cw;
+  }
+  /* still too tall at the smallest size: the message scrolls inside the form */
+  var room=availH-dp*2-fixed();
+  if(FORM.offsetHeight+dp*2>availH&&room>120){ MSG.style.maxHeight=Math.floor(room)+"px"; }
+  FORM.style.setProperty("--tg-df",Math.round(best*.85)+"px");
+  moreCue();
+  if(mode==="lesson"&&LESSONS[lessonK].glow&&!done) T.cells.forEach(function(c,i){ if(c.sym===LESSONS[lessonK].glow&&CELLS[i]&&shown(c.sym)!==c.sym) CELLS[i].classList.add("lesson"); });
+  TOOLS.style.maxWidth=wide?Math.max(fw+dp*2,560)+"px":"";
+  document.body.style.setProperty("--pk-size",Math.round(fw+dp*2)+"px");
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#tgErase",stage).onclick=erase; $("#tgHint",stage).onclick=hint; $("#tgRestart",stage).onclick=restart; }
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"telegraph", cat:"puzzles", solo:true, free:true, daily:{key:"bwTele:",streak:"bwTeleStreak"}, land:true, title:"The Telegraph Office", bg:"puzzles-telegraph.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Telegram",
+  tagline:"Crack the code. Read the day's message.", invite:"A telegram has come in over the wire, in code. Every letter stands for another. Crack it and read the day's message.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Forms",
+  sets:[
+    {id:"cream",name:"Cream & Green Ink",need:0,dots:["#f4ecd6","#2f5a43"]},
+    {id:"blue",name:"Blue Form & Navy Ink",club:true,dots:["#e3ebf2","#1f3d66"]},
+    {id:"buff",name:"Buff & Sepia",club:true,dots:["#efdcb8","#6b3d1f"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> the telegram's message is in <b>code</b>: every letter on the tape stands for a different letter, the same one all the way through. Write the real letters in to read it.</li><li><b>Writing in:</b> tap a letter on the tape (every copy of it lights up), then press a key. Every copy fills in at once. On a keyboard, just type; ← → move between letters, Backspace erases.</li><li><b>One letter each:</b> a real letter can stand for only one code letter. Type it somewhere new and it moves.</li><li><b>The operator's letters</b> are written in red-brown at the start. They're always right.</li><li><b>Ask the Operator:</b> if a letter you wrote is wrong, the operator crosses it out; if none are, they write in a new letter for you.</li><li>When every letter is in and the message reads right, it's delivered.</li><li>A letter never stands for itself.</li></ol>",
+    score:"<ul><li><b>One telegram a day</b>, the same for everyone. It changes at midnight on your device. Monday's is short with plenty written in; through the week they grow longer, with fewer letters given, and Sunday's is the hardest.</li><li><b>★★★</b> with no help from the operator · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice telegrams (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); fit(); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+/* for testing */
+window.TGO={get:function(){ return {T:T,guess:guess,op:op,sel:sel,cur:cur,hints:hints,done:done,mode:mode}; },type:type,hint:hint,erase:erase,tap:tapCell,
+  solve:function(){ T.syms.forEach(function(s){ if(!locked(s)) guess[s]=s; }); paintCells(true); check(); },
+  wire:wireFor, build:build, load:function(w,seed){ load(build(w,seed||"t","daily"),"daily"); paintCells(true); }};
+})();
+</script>
+</body>
+</html>
