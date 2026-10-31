@@ -22,6 +22,8 @@
      ("Opening Soon"); give it its page when the room is built. cat:"cards" in Parlor.init picks the card list (Oct 26). */
   var BOARD_GAMES = [["checkers","Checkers","checkers.html"],["chess","Chess","chess.html"],["backgammon","Backgammon","backgammon.html"],["yahtzee","Yahtzee","yahtzee.html"],["dominoes","Dominoes","dominoes.html"],["othello","Othello","othello.html"],["mancala","Mancala","mancala.html"],["cribbage","Cribbage","cribbage.html"],["shutbox","Shut the Box","shutbox.html"],["morris","Morris","morris.html"]];
   var CARD_GAMES = [["solitaire","Solitaire","solitaire.html"],["ginrummy","Gin Rummy","ginrummy.html"],["hearts","Hearts","hearts.html"],["spades","Spades","spades.html"],["euchre","Euchre","euchre.html"],["crazyeights","Crazy Eights","crazyeights.html"],["canasta","Canasta","canasta.html"],["pinochle","Pinochle","pinochle.html"],["freecell","FreeCell","freecell.html"],["bridge","Bridge","bridge.html"],["cribbage","Cribbage","cribbage.html"]];
+  /* the Puzzles & Brain Games wing (Oct 30): one room per daily puzzle; a puzzle without a page yet shows dimmed */
+  var PUZZLE_GAMES = [["orrery","Orrery","orrery.html"],["observatory","Observatory"],["telegraph","Telegraph"],["nighttrain","Night Train"],["gardenplots","Garden Plots"],["countinghouse","Counting House"],["harbor","Harbor"],["skyword","Sky Word"],["maproom","Map Room"],["clockmaker","Clockmaker"]];
   function gameLink(g, cls) {
     if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening soon"; return x; }
     var a = mk("a", cls, g[1]); a.href = g[2]; return a;
@@ -42,7 +44,7 @@
 
     var room = $(".pk-room");
     /* game switcher (glass rectangle, same as chess) */
-    GAMES = C.cat === "cards" ? CARD_GAMES : BOARD_GAMES;
+    GAMES = C.cat === "cards" ? CARD_GAMES : C.cat === "puzzles" ? PUZZLE_GAMES : BOARD_GAMES;
     if (C.solo) document.body.classList.add("pk-solo");
     var sw = mk("nav", "pk-games");
     GAMES.forEach(function (g) { sw.appendChild(gameLink(g, g[0] === C.game ? "on" : "")); });
@@ -341,7 +343,7 @@
     sheet(null);
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
-      (score && C.solo ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club members get more).</li></ul>" : "") +
+      (score && C.solo && !C.free ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club members get more).</li></ul>" : "") +
       (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
@@ -387,6 +389,8 @@
     b.appendChild(s); el.seat.veil.classList.add("on");
   };
   async function gateAndBegin() {
+    /* free:true (the daily puzzles, Oct 30): no guest game used, no House points; the room keeps its own daily record */
+    if (C.free) { token = null; started = Date.now(); finished = false; return true; }
     /* guests get 10 free games, then a prompt to make a free account; signed-in players are unlimited */
     if (window.BW) { var ok = await BW.startMatch({ mode: "house" }); if (!ok) return false; }
     token = null;

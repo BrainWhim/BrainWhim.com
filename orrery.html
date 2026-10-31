@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Orrery · BrainWhim Puzzles</title>
+<meta name="description" content="The Orrery: a daily brass-and-gears puzzle at BrainWhim. Turn the rings, mind the gears and set every planet on its mark.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1029b">
+<style>
+/* ===== The Orrery (Puzzles & Brain Games, Oct 30): a daily puzzle on a brass orrery seen from straight above =====
+   A turned walnut base with engraved spokes, brass rings round a gold sun, enamel planets on brass arms.
+   Turn the rings (drag one, or tap it and use the turn buttons) until every planet sits on its engraved mark.
+   Gears: turning some rings turns another too. Rings without a handle turn only through their gear.
+   Planets on neighbouring rings can never share a spoke (their arms would clash).
+   One puzzle a day (the same for everyone, by the player's own date); Monday is gentle, Sunday the hardest.
+   Par = the fewest turns possible (found by the solver). Finishes (the Finishes card): one free, two for Club members. */
+.or-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
+.or-fit{position:relative;flex:none;touch-action:none;-webkit-user-select:none;user-select:none}
+.or-fit svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.or-fit .or-live{cursor:grab}
+.or-fit.drag .or-live{cursor:grabbing}
+.or-ring{transition:none}
+.or-nope{animation:or-nope .34s ease}
+@keyframes or-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+.or-toast{position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);max-width:82%;padding:9px 16px;border-radius:12px;background:rgba(15,23,42,.86);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.or-toast.on{opacity:1}
+/* the toolbar under the orrery */
+.or-tools{display:flex;flex-direction:column;align-items:center;gap:7px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.or-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:center}
+.or-tools .pk-btn{width:auto;margin:0;padding:8px 14px;min-height:0;white-space:nowrap}
+.or-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.or-turn{font-size:19px!important;line-height:1;padding:7px 14px!important}
+.or-sel{min-width:132px;text-align:center;font:600 13px Montserrat,sans-serif;color:#fff;padding:0 4px}
+.or-sel small{display:block;font-size:10.5px;color:rgba(255,255,255,.62);font-weight:600;margin-top:2px}
+.or-count{font:600 13px Montserrat,sans-serif;color:#fff;padding:0 6px;white-space:nowrap}
+.or-count b{color:#f0d27a;font-weight:700}
+.or-gears{font:600 11.5px/1.45 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;max-width:560px;padding:0 6px}
+.or-gears b{color:#f0d27a;font-weight:700}
+/* the result window's extras */
+.or-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.or-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.or-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.or-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.or-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.or-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.or-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+.or-done{font:600 12.5px/1.5 Montserrat,sans-serif;color:#f0d27a;text-align:center;margin:0 0 4px}
+@media (max-width:999px){
+  .or-tools{width:100%;max-width:calc(100vw - 16px);padding:6px}
+  .or-tools .pk-btn{padding:8px 11px;font-size:13px}
+  .or-sel{min-width:112px}
+  .or-gears{font-size:11px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+}
+@media (max-width:400px){ .or-tools .pk-btn{padding:8px 9px;font-size:12.5px} .or-count{font-size:12px} .or-sel{min-width:96px} }
+</style>
+<script src="bw-auth.js?v=1027a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1028e"></script>
+<script src="bw-avatars.js?v=1026a"></script>
+<script src="parlor-kit.js?v=1030a"></script>
+<script>
+/* ===== Orrery core (rules, solver, daily maker) — shared by the page and the tests ===== */
+var OR = (function () {
+  "use strict";
+  /* a small seeded random (mulberry32) */
+  function rng(seed) { var a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function hash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+  /* a puzzle: { S: stops round a ring, rings:[{p:[offsets of its planet (0) and moons], crank:true|false}],
+     links:[{a: driver ring, b: follower ring, dir: +1 same way | -1 opposite}], start:[turn of each ring], goal:[…] }
+     A planet's stop = (ring turn + its offset) mod S. Planets on neighbouring rings may never share a stop. */
+  function prep(P) {
+    var R = P.rings.length, S = P.S;
+    /* what each crank does: a list of [ring, step] for +1 on that crank (followers follow, and their followers too) */
+    var eff = [];
+    for (var i = 0; i < R; i++) {
+      var d = new Array(R).fill(0); d[i] = 1;
+      var changed = true, guard = 0;
+      while (changed && guard++ < 10) { changed = false; P.links.forEach(function (L) { var want = d[L.a] * L.dir; if (d[L.a] && d[L.b] !== want) { d[L.b] = want; changed = true; } }); }
+      eff.push(d);
+    }
+    var pow = []; for (var k = 0, m = 1; k < R; k++, m *= S) pow.push(m);
+    P._eff = eff; P._pow = pow; P._N = pow[R - 1] * S; P._R = R;
+    return P;
+  }
+  function enc(P, t) { var s = 0; for (var i = 0; i < P._R; i++) s += t[i] * P._pow[i]; return s; }
+  function dec(P, s) { var t = []; for (var i = 0; i < P._R; i++) { t.push(s % P.S); s = Math.floor(s / P.S); } return t; }
+  function mod(a, n) { return ((a % n) + n) % n; }
+  /* is this arrangement free of clashes? */
+  function okState(P, t) {
+    for (var i = 0; i + 1 < P._R; i++)
+      for (var x = 0; x < P.rings[i].p.length; x++) for (var y = 0; y < P.rings[i + 1].p.length; y++)
+        if (mod(t[i] + P.rings[i].p[x] - t[i + 1] - P.rings[i + 1].p[y], P.S) === 0) return false;
+    return true;
+  }
+  /* turn crank `ring` one stop (d = +1 or -1). Returns the new turns, or null if two arms would clash on the way.
+     (Two planets turning towards each other would pass through each other mid-step: that's a clash too.) */
+  function step(P, t, ring, d, noClash) {
+    if (!P.rings[ring].crank) return null;
+    var e = P._eff[ring], n = t.slice();
+    for (var i = 0; i < P._R; i++) n[i] = mod(t[i] + e[i] * d, P.S);
+    if (noClash) return n;
+    for (var j = 0; j + 1 < P._R; j++) {
+      var ch = (e[j] - e[j + 1]) * d; if (!ch) continue;
+      for (var x = 0; x < P.rings[j].p.length; x++) for (var y = 0; y < P.rings[j + 1].p.length; y++) {
+        var rel = mod(t[j] + P.rings[j].p[x] - t[j + 1] - P.rings[j + 1].p[y], P.S), sg = ch > 0 ? 1 : -1;
+        for (var k = 1; k <= Math.abs(ch); k++) if (mod(rel + sg * k, P.S) === 0) return null;
+      }
+    }
+    return n;
+  }
+  /* breadth-first search back from the goal: dist[state] = fewest turns to finish (-1 = can't be reached) */
+  function solve(P, noClash) {
+    var N = P._N, dist = new Int16Array(N).fill(-1), q = new Int32Array(N), h = 0, tl = 0, g = enc(P, P.goal);
+    dist[g] = 0; q[tl++] = g;
+    while (h < tl) {
+      var s = q[h++], t = dec(P, s), dd = dist[s];
+      for (var r = 0; r < P._R; r++) { if (!P.rings[r].crank) continue;
+        for (var d = -1; d <= 1; d += 2) { var n = step(P, t, r, d, noClash); if (!n) continue; var e = enc(P, n); if (dist[e] < 0) { dist[e] = dd + 1; q[tl++] = e; } } }
+    }
+    return dist;
+  }
+  /* the best moves from here (each one brings the planets a turn closer) */
+  function bestMoves(P, dist, t) {
+    var cur = dist[enc(P, t)], out = [];
+    for (var r = 0; r < P._R; r++) { if (!P.rings[r].crank) continue;
+      for (var d = -1; d <= 1; d += 2) { var n = step(P, t, r, d); if (n && dist[enc(P, n)] === cur - 1) out.push({ ring: r, d: d }); } }
+    return out;
+  }
+
+  /* ---------- the daily puzzle ----------
+     Monday is gentle and the week climbs to Sunday. band = the par range; detour = how many extra turns the
+     clashing arms must cost compared with the same gears and no clashes (the "go the long way round" part). */
+  var DAYS = {
+    1: { name: "Monday",    R: 3, S: 8,  links: 1, still: 0, moons: 0, band: [5, 8],   detour: 1 },
+    2: { name: "Tuesday",   R: 3, S: 8,  links: 2, still: 0, moons: 0, band: [7, 10],  detour: 2 },
+    3: { name: "Wednesday", R: 4, S: 8,  links: 2, still: 0, moons: 0, band: [9, 12],  detour: 2 },
+    4: { name: "Thursday",  R: 4, S: 10, links: 2, still: 1, moons: 0, band: [10, 14], detour: 3 },
+    5: { name: "Friday",    R: 4, S: 10, links: 3, still: 1, moons: 1, band: [12, 16], detour: 3 },
+    6: { name: "Saturday",  R: 5, S: 10, links: 3, still: 1, moons: 1, band: [13, 18], detour: 4 },
+    0: { name: "Sunday",    R: 5, S: 12, links: 3, still: 1, moons: 2, band: [15, 22], detour: 4 }
+  };
+  function make(seedStr, wd) {
+    var D = DAYS[wd], rand = rng(hash("orrery:" + seedStr));
+    function ri(n) { return Math.floor(rand() * n); }
+    for (var tries = 0; tries < 400; tries++) {
+      var R = D.R, S = D.S, rings = [], links = [], i;
+      for (i = 0; i < R; i++) rings.push({ p: [0], crank: true });
+      /* moons ride the outer rings, a little way round from their planet */
+      var moonRings = [];
+      for (i = 0; i < D.moons; i++) { var mr = R - 1 - i; if (mr < 1) break; moonRings.push(mr); rings[mr].p.push(2 + ri(S - 3)); }
+      /* gears: each ring is driven by at most one other, no loops */
+      var drivenBy = new Array(R).fill(-1), ok = true;
+      for (i = 0; i < D.links; i++) {
+        var guard = 0, a, b;
+        do { a = ri(R); b = ri(R); guard++; } while (guard < 60 && (a === b || drivenBy[b] >= 0 || loops(a, b)));
+        if (guard >= 60) { ok = false; break; }
+        drivenBy[b] = a; links.push({ a: a, b: b, dir: rand() < 0.5 ? 1 : -1 });
+      }
+      if (!ok) continue;
+      function loops(a, b) { var x = a, g = 0; while (x >= 0 && g++ < 10) { if (x === b) return true; x = drivenBy[x]; } return false; }
+      /* rings without a crank (they turn only through their gear) */
+      var followers = []; for (i = 0; i < R; i++) if (drivenBy[i] >= 0) followers.push(i);
+      if (followers.length < D.still) continue;
+      for (i = 0; i < D.still; i++) { var k = ri(followers.length); rings[followers[k]].crank = false; followers.splice(k, 1); }
+      var P = prep({ S: S, rings: rings, links: links, start: [], goal: [] });
+      /* every ring must actually be movable independently enough: no two cranks doing the same thing */
+      var sig = {}, dup = false;
+      for (i = 0; i < R; i++) if (rings[i].crank) { var key = P._eff[i].join(","), neg = P._eff[i].map(function (v) { return -v; }).join(","); if (sig[key] || sig[neg]) dup = true; sig[key] = 1; }
+      if (dup) continue;
+      var goal = []; for (i = 0; i < R; i++) goal.push(ri(S));
+      if (!okState(P, goal)) continue;
+      P.goal = goal;
+      var dist = solve(P), free = solve(P, true), pick = [];
+      for (var s = 0; s < P._N; s++) {
+        var dd = dist[s]; if (dd < D.band[0] || dd > D.band[1]) continue;
+        if (dd - free[s] < D.detour) continue;
+        var t = dec(P, s), allMoved = true;
+        for (i = 0; i < R; i++) if (t[i] === goal[i]) allMoved = false;
+        if (allMoved) pick.push(s);
+      }
+      if (!pick.length) continue;
+      P.start = dec(P, pick[ri(pick.length)]);
+      P.par = dist[enc(P, P.start)]; P.tries = tries + 1; P.day = D.name; P._dist = dist;
+      return P;
+    }
+    return null;
+  }
+  return { rng: rng, hash: hash, prep: prep, enc: enc, dec: dec, okState: okState, step: step, solve: solve, bestMoves: bestMoves, make: make, DAYS: DAYS };
+})();
+
+
+/* ================= the room ================= */
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+function $(s,r){ return (r||document).querySelector(s); }
+function sv(tag,attrs,parent){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+/* ---------- finishes ---------- */
+var FIN={
+  brass:{name:"Polished Brass",base:["#5a3520","#3a2213","#1f110a"],grain:"rgba(255,214,160,.07)",ring:["#fff1bf","#d9b25a","#8f6a22"],eng:"rgba(231,199,122,.30)",engB:"rgba(231,199,122,.55)",mark:"#f0d27a",knob:["#fff6d2","#c99a3c","#6e4f17"],dots:["#3a2213","#d9b25a","#f0d27a"]},
+  silver:{name:"Silver & Lapis",base:["#2a4d93","#183470","#0a1838"],grain:"rgba(255,226,140,.08)",ring:["#ffffff","#c8ced8","#7c8696"],eng:"rgba(214,220,232,.28)",engB:"rgba(214,220,232,.55)",mark:"#e9eef6",knob:["#ffffff","#b9c1cd","#5d6676"],dots:["#183470","#c8ced8","#e9eef6"]},
+  rose:{name:"Rose Gold & Ivory",base:["#f6efe3","#e6dac6","#c9b89c"],grain:"rgba(120,80,50,.06)",ring:["#ffe6da","#dda08a","#93563f"],eng:"rgba(120,70,50,.26)",engB:"rgba(140,80,58,.5)",mark:"#b86c52",knob:["#fff0e8","#d39a83","#80462f"],dots:["#e6dac6","#dda08a","#b86c52"]}
+};
+var fin=FIN.brass;
+
+/* the planets, inner to outer (enamel colours from the room photo) and their moons */
+var PL=[
+  {name:"Mercury",c:["#e9eef2","#9aa7b4","#4c5966"]},
+  {name:"Venus",c:["#fff4d6","#e6c27a","#8e6a2a"]},
+  {name:"Earth",c:["#d8f0ff","#3f7fc4","#173c6e"]},
+  {name:"Mars",c:["#ffd2b8","#d2643a","#7a2a12"]},
+  {name:"Jupiter",c:["#fff0d8","#d9a56c","#7d5128"]}
+];
+var MOON={c:["#ffffff","#d9d6cc","#8c887c"]};
+
+/* ---------- the dates ---------- */
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);   /* puzzle No. 1 (re-base at launch if wanted) */
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function niceDate(d){ return OR.DAYS[d.getDay()].name+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+
+/* ---------- state ---------- */
+var P=null, dist=null, t=null, hist=[], moves=0, hints=0, sel=-1, t0=0, done=false, busy=false;
+var mode="daily";   /* daily | practice | lesson */
+var today=new Date(), todayKey=ymd(today);
+var GEO={};          /* ring radii etc. in drawing units (1000 x 1000) */
+
+/* ---------- the drawing ---------- */
+var stage=document.createElement("div"); stage.className="or-pad";
+stage.innerHTML='<div class="or-fit" id="orFit"><svg id="orBase" viewBox="0 0 1000 1000" aria-hidden="true"></svg><svg id="orLive" class="or-live" viewBox="0 0 1000 1000" role="img" aria-label="The orrery"></svg><div class="or-toast" id="orToast" role="status"></div></div>'+
+  '<div class="or-tools" id="orTools">'+
+    '<div class="or-gears" id="orGears"></div>'+
+    '<div class="or-row"><button class="pk-btn or-turn" type="button" id="orCCW" aria-label="Turn anticlockwise">↺</button><div class="or-sel" id="orSel">Choose a Ring<small>Tap or drag a ring</small></div><button class="pk-btn or-turn" type="button" id="orCW" aria-label="Turn clockwise">↻</button></div>'+
+    '<div class="or-row"><button class="pk-btn" type="button" id="orUndo">Undo</button><button class="pk-btn gold" type="button" id="orHint">Hint</button><button class="pk-btn" type="button" id="orRestart">Restart</button><span class="or-count" id="orCount"></span></div>'+
+  '</div>';
+var FIT=$("#orFit",stage), BASE=$("#orBase",stage), LIVE=$("#orLive",stage), TOAST=$("#orToast",stage);
+
+function ang(k){ return (-90+k*360/P.S)*Math.PI/180; }
+function pt(r,a){ return [500+r*Math.cos(a),500+r*Math.sin(a)]; }
+function geo(){
+  var R=P.rings.length, rin=R>=5?150:R>=4?160:175, rout=430;
+  GEO.r=[]; for(var i=0;i<R;i++) GEO.r.push(R===1?300:rin+(rout-rin)*i/(R-1));
+  GEO.gap=R>1?(rout-rin)/(R-1):200;
+  GEO.pr=Math.min(34,GEO.gap*.36+4);           /* planet radius */
+  GEO.mr=GEO.pr*.62;                            /* moon radius */
+}
+function grad(defs,id,c,cx,cy){
+  var g=sv("radialGradient",{id:id,cx:cx||"35%",cy:cy||"30%",r:"75%"},defs);
+  sv("stop",{offset:"0%","stop-color":c[0]},g); sv("stop",{offset:"45%","stop-color":c[1]},g); sv("stop",{offset:"100%","stop-color":c[2]},g); return "url(#"+id+")";
+}
+function lin(defs,id,c){
+  var g=sv("linearGradient",{id:id,x1:"0",y1:"0",x2:"1",y2:"1"},defs);
+  sv("stop",{offset:"0%","stop-color":c[0]},g); sv("stop",{offset:"50%","stop-color":c[1]},g); sv("stop",{offset:"100%","stop-color":c[2]},g); return "url(#"+id+")";
+}
+/* the base: a turned wooden (or lapis, or ivory) plate with an engraved chapter ring and spokes; drawn once per puzzle */
+function drawBase(){
+  BASE.innerHTML=""; var d=sv("defs",{},BASE);
+  var f=grad(d,"orBaseG",fin.base,"40%","34%");
+  sv("circle",{cx:500,cy:500,r:492,fill:"rgba(0,0,0,.45)",transform:"translate(0 10)",filter:"url(#orSoft)"},BASE);
+  var soft=sv("filter",{id:"orSoft",x:"-10%",y:"-10%",width:"120%",height:"120%"},d); sv("feGaussianBlur",{stdDeviation:"10"},soft);
+  sv("circle",{cx:500,cy:500,r:490,fill:f},BASE);
+  /* turned rings in the grain */
+  for(var r=30;r<490;r+=7+((r*7)%5)) sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.grain,"stroke-width":(r%3)+1},BASE);
+  /* a soft window light from the top left */
+  var hl=sv("radialGradient",{id:"orHL",cx:"28%",cy:"22%",r:"60%"},d); sv("stop",{offset:"0%","stop-color":"rgba(255,240,210,.22)"},hl); sv("stop",{offset:"100%","stop-color":"rgba(255,240,210,0)"},hl);
+  sv("circle",{cx:500,cy:500,r:490,fill:"url(#orHL)"},BASE);
+  /* the brass bezel and the engraved chapter ring */
+  sv("circle",{cx:500,cy:500,r:486,fill:"none",stroke:lin(d,"orBez",fin.ring),"stroke-width":9},BASE);
+  sv("circle",{cx:500,cy:500,r:470,fill:"none",stroke:fin.engB,"stroke-width":1.4},BASE);
+  /* the spokes: one engraved line per stop */
+  for(var k=0;k<P.S;k++){ var a=ang(k), p0=pt(118,a), p1=pt(464,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:fin.eng,"stroke-width":1.3,"stroke-dasharray":"2 6"},BASE);
+    var q=pt(478,a); sv("circle",{cx:q[0],cy:q[1],r:3.4,fill:fin.engB},BASE); }
+  /* the ring tracks (engraved grooves the rings sit in) */
+  GEO.r.forEach(function(r){ sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.28)","stroke-width":12},BASE); });
+  /* the chart marks: where each planet (and moon) belongs */
+  GEO.marks=[];
+  P.rings.forEach(function(ring,i){ ring.p.forEach(function(off,j){
+    var a=ang(P.goal[i]+off), q=pt(GEO.r[i],a), rr=(j?GEO.mr:GEO.pr)+7;
+    var m=sv("circle",{cx:q[0],cy:q[1],r:rr,fill:"none",stroke:fin.mark,"stroke-width":2.4,"stroke-dasharray":"5 5",opacity:.85},BASE);
+    GEO.marks.push({el:m,i:i,j:j});
+  }); });
+}
+/* the moving parts: rings, arms, planets, the sun, crank handles */
+var RG=[];   /* per ring: {g (rotating group), band, sel} */
+function drawLive(){
+  LIVE.innerHTML=""; RG=[]; var d=sv("defs",{},LIVE);
+  var ringFill=lin(d,"orRingG",fin.ring), knobF=grad(d,"orKnob",fin.knob);
+  var shadow=sv("filter",{id:"orSh",x:"-30%",y:"-30%",width:"160%",height:"160%"},d); sv("feDropShadow",{dx:"2",dy:"5",stdDeviation:"4","flood-color":"rgba(0,0,0,.5)"},shadow);
+  var glow=sv("filter",{id:"orGlow",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"5"},glow);
+  /* crank handles: fixed on the base at the bottom-right, one per ring that has a crank */
+  var under=sv("g",{},LIVE), rings=sv("g",{},LIVE), arms=sv("g",{},LIVE), bodies=sv("g",{},LIVE), over=sv("g",{},LIVE);
+  P.rings.forEach(function(ring,i){
+    var r=GEO.r[i], g=sv("g",{"class":"or-ring"},rings);
+    var hiG=sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(255,226,140,.0)","stroke-width":20,filter:"url(#orGlow)"},g);
+    var band=sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:ringFill,"stroke-width":ring.crank?8:4.5,filter:"url(#orSh)"},g);
+    /* knurling on rings with a crank (rotates with the ring, so you see it turn) */
+    var kn=sv("g",{},g);
+    if(ring.crank) for(var k=0;k<P.S*4;k++){ var a=(k/(P.S*4))*Math.PI*2, p0=pt(r-4,a), p1=pt(r+4,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:"rgba(0,0,0,.28)","stroke-width":1.2},kn); }
+    else sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.25)","stroke-width":1,"stroke-dasharray":"3 7"},g);
+    /* arms and planets ride on the ring */
+    var arm=sv("g",{},arms), body=sv("g",{},bodies);
+    ring.p.forEach(function(off,j){
+      var a=ang(off), q=pt(r,a), p0=pt(70,a);
+      /* (a solid colour: a gradient on a straight horizontal or vertical line has no box to fill and vanishes) */
+      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[1],"stroke-width":j?3.2:4.6,"stroke-linecap":"round",filter:"url(#orSh)"},arm);
+      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[0],"stroke-width":1.2,"stroke-linecap":"round",opacity:.7},arm);
+      var col=j?MOON.c:PL[i].c, rad=j?GEO.mr:GEO.pr;
+      sv("circle",{cx:q[0],cy:q[1],r:rad+3,fill:ringFill,filter:"url(#orSh)"},body);
+      sv("circle",{cx:q[0],cy:q[1],r:rad,fill:grad(d,"orP"+i+"_"+j,col)},body);
+      if(!j&&i===4){ /* Jupiter's bands */
+        sv("path",{d:"M"+(q[0]-rad*.92)+" "+(q[1]-rad*.25)+" Q"+q[0]+" "+(q[1]-rad*.05)+" "+(q[0]+rad*.92)+" "+(q[1]-rad*.25),stroke:"rgba(122,72,30,.55)","stroke-width":rad*.16,fill:"none"},body);
+        sv("path",{d:"M"+(q[0]-rad*.85)+" "+(q[1]+rad*.32)+" Q"+q[0]+" "+(q[1]+rad*.5)+" "+(q[0]+rad*.85)+" "+(q[1]+rad*.32),stroke:"rgba(122,72,30,.4)","stroke-width":rad*.12,fill:"none"},body);
+      }
+      if(!j&&i===2) sv("path",{d:"M"+(q[0]-rad*.5)+" "+(q[1]-rad*.2)+" q"+rad*.3+" "+(-rad*.35)+" "+rad*.6+" "+(-rad*.1)+" q"+rad*.1+" "+rad*.4+" "+(-rad*.3)+" "+rad*.5+" z",fill:"rgba(70,140,80,.7)"},body);
+      sv("circle",{cx:q[0]-rad*.32,cy:q[1]-rad*.36,r:rad*.28,fill:"rgba(255,255,255,.38)"},body);
+    });
+    /* the crank handle, fixed on the base outside the bezel's inner line, below-right */
+    if(ring.crank){ var ka=(118-i*7)*Math.PI/180, kq=pt(r,ka), kh=sv("g",{},under);
+      sv("circle",{cx:kq[0],cy:kq[1],r:13,fill:knobF,filter:"url(#orSh)"},kh); sv("circle",{cx:kq[0],cy:kq[1],r:4,fill:"rgba(0,0,0,.35)"},kh); }
+    RG.push({g:g,arm:arm,body:body,hi:hiG,band:band,turn:0});
+  });
+  /* the sun */
+  var sunG=grad(d,"orSun",["#fffbe6","#f7c948","#c46a12"]);
+  sv("circle",{cx:500,cy:500,r:86,fill:"rgba(255,200,80,.18)",filter:"url(#orGlow)"},over);
+  sv("circle",{cx:500,cy:500,r:72,fill:ringFill,filter:"url(#orSh)"},over);
+  sv("circle",{cx:500,cy:500,r:64,fill:sunG},over);
+  sv("circle",{cx:478,cy:476,r:18,fill:"rgba(255,255,255,.45)"},over);
+  /* direction markers for the selected ring and the rings its gears turn */
+  GEO.dirs=sv("g",{},over);
+  paint(false);
+}
+/* place every ring at its current turn (animated when `anim`) */
+var animT=0;
+function paint(anim,from){
+  var step=360/P.S;
+  function setAll(f){ RG.forEach(function(R,i){ var a=(from?from[i]+(t[i]-from[i])*f:t[i]); if(from){ var dd=t[i]-from[i]; if(dd>P.S/2) dd-=P.S; if(dd<-P.S/2) dd+=P.S; a=from[i]+dd*f; }
+    var tr="rotate("+(a*step).toFixed(3)+" 500 500)"; R.arm.setAttribute("transform",tr); R.body.setAttribute("transform",tr); R.g.setAttribute("transform",tr); }); }
+  cancelAnimationFrame(animT);
+  if(!anim||!window.Parlor||!Parlor.smooth()){ setAll(1); marks(); return; }
+  var s0=performance.now(), dur=260;
+  (function tick(now){ var p=Math.min(1,(now-s0)/dur), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; setAll(e); if(p<1) animT=requestAnimationFrame(tick); else marks(); })(s0);
+}
+/* chart marks glow when their planet is home */
+function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"5 5"); m.el.setAttribute("stroke-width",home?3.4:2.4); m.el.setAttribute("opacity",home?1:.85); }); }
+/* the selected ring glows; arrows show which way each ring turns for a clockwise turn of the crank */
+function showSel(){
+  RG.forEach(function(R,i){ R.hi.setAttribute("stroke",i===sel?"rgba(255,226,140,.55)":"rgba(255,226,140,0)"); });
+  var g=GEO.dirs; if(!g) return; g.innerHTML="";
+  var name=$("#orSel",stage);
+  if(sel<0){ name.innerHTML="Choose a Ring<small>Tap or drag a ring</small>"; return; }
+  var ring=P.rings[sel];
+  name.innerHTML=esc(PL[sel].name)+" Ring<small>"+(ring.crank?gearLine(sel):"No crank: turns by its gear")+"</small>";
+  if(!ring.crank) return;
+  var e=P._eff[sel];
+  e.forEach(function(v,i){ if(!v) return; var r=GEO.r[i], a0=-62*Math.PI/180, a1=a0+(v>0?1:-1)*0.42, p0=pt(r,a0), p1=pt(r,a1);
+    var col=i===sel?"#ffe08a":"rgba(255,226,140,.8)";
+    sv("path",{d:"M"+p0[0]+" "+p0[1]+" A"+r+" "+r+" 0 0 "+(v>0?1:0)+" "+p1[0]+" "+p1[1],fill:"none",stroke:col,"stroke-width":i===sel?5:3.5,"stroke-linecap":"round"},g);
+    var tg=[Math.cos(a1+(v>0?1:-1)*Math.PI/2),Math.sin(a1+(v>0?1:-1)*Math.PI/2)], nx=[Math.cos(a1),Math.sin(a1)], h=12;
+    sv("path",{d:"M"+(p1[0]+tg[0]*h)+" "+(p1[1]+tg[1]*h)+" L"+(p1[0]+nx[0]*h*.8)+" "+(p1[1]+nx[1]*h*.8)+" L"+(p1[0]-nx[0]*h*.8)+" "+(p1[1]-nx[1]*h*.8)+" z",fill:col},g);
+  });
+}
+function gearLine(i){
+  var e=P._eff[i], out=[]; e.forEach(function(v,k){ if(v&&k!==i) out.push(PL[k].name+(v>0?" turns with it":" turns the other way")); });
+  return out.length?out.join(" · "):"Turns on its own";
+}
+function gearsText(){
+  if(!P.links.length) return "";
+  return "⚙ "+P.links.map(function(L){ return "<b>"+PL[L.a].name+"</b> turns <b>"+PL[L.b].name+"</b> "+(L.dir>0?"the same way":"the opposite way"); }).join(" · ")+
+    (P.rings.some(function(r){ return !r.crank; })?" · "+P.rings.map(function(r,i){ return r.crank?null:"<b>"+PL[i].name+"</b> has no crank"; }).filter(Boolean).join(" · "):"");
+}
+
+/* ---------- moves ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(function(){ TOAST.classList.remove("on"); },ms||2200); }
+function clashWho(ring,d){
+  /* which neighbouring planets would clash? (for the message) */
+  var e=P._eff[ring];
+  for(var j=0;j+1<P.rings.length;j++){ var ch=(e[j]-e[j+1])*d; if(!ch) continue;
+    for(var x=0;x<P.rings[j].p.length;x++) for(var y=0;y<P.rings[j+1].p.length;y++){
+      var rel=((t[j]+P.rings[j].p[x]-t[j+1]-P.rings[j+1].p[y])%P.S+P.S)%P.S, sg=ch>0?1:-1;
+      for(var k=1;k<=Math.abs(ch);k++) if(((rel+sg*k)%P.S+P.S)%P.S===0) return [j,x,j+1,y]; } }
+  return null;
+}
+function nm(i,j){ return j?PL[i].name+"'s moon":PL[i].name; }
+function turn(ring,d){
+  if(done||busy||!P) return false;
+  if(!P.rings[ring].crank){ toast("The "+PL[ring].name+" ring has no crank. It turns only when its gear does."); nope(); return false; }
+  if(mode==="lesson"&&!lessonAllows(ring,d)) return false;
+  var n=OR.step(P,t,ring,d);
+  if(!n){ var w=clashWho(ring,d); toast(w?nm(w[0],w[1])+" and "+nm(w[2],w[3])+" would clash. Their arms can't share a spoke.":"Those arms would clash."); nope(); if(window.Parlor) Parlor.sfx("tile",{pitch:1.6}); return false; }
+  var from=t; hist.push(t); t=n; moves++; sel=ring;
+  if(!t0) t0=Date.now();
+  if(window.Parlor) Parlor.sfx("click",{pitch:.75+ring*.08});
+  paint(true,from); showSel(); counts();
+  if(OR.enc(P,t)===OR.enc(P,P.goal)) setTimeout(solved,320);
+  else if(mode==="practice") practiceTip();
+  return true;
+}
+function nope(){ FIT.classList.remove("or-nope"); void FIT.offsetWidth; FIT.classList.add("or-nope"); }
+function undo(){ if(done||busy||!hist.length) return; var from=t; t=hist.pop(); moves=Math.max(0,moves-1); paint(true,from); counts(); }
+function restart(){ if(busy||!P) return; if(done&&mode==="daily") { startDaily(true); return; } t=P.start.slice(); hist=[]; moves=0; done=false; paint(true,null); counts(); }
+function hint(){
+  if(done||!P) return;
+  var best=OR.bestMoves(P,dist,t); if(!best.length) return;
+  var m=best[0]; hints++; sel=m.ring; showSel(); counts();
+  var msg="Turn the "+PL[m.ring].name+" ring "+(m.d>0?"clockwise ↻":"anticlockwise ↺")+".";
+  toast(msg,2600);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+msg+"</p>");
+  hintGlow(m);
+}
+function hintGlow(m){ var R=RG[m.ring]; if(!R) return; var n=0; (function blink(){ R.hi.setAttribute("stroke",n%2?"rgba(255,226,140,.15)":"rgba(255,226,140,.8)"); if(++n<6) setTimeout(blink,230); else showSel(); })(); }
+function counts(){
+  var c=$("#orCount",stage);
+  c.innerHTML="Moves <b>"+moves+"</b> · Par <b>"+P.par+"</b>";
+  if(window.Parlor){ Parlor.score([moves]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Orrery", "Moves "+moves+" · par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+
+/* ---------- drag to turn, tap to choose ---------- */
+var drag=null;
+function local(e){ var r=FIT.getBoundingClientRect(), s=1000/r.width; return [(e.clientX-r.left)*s,(e.clientY-r.top)*s]; }
+function ringAt(p){ var rr=Math.hypot(p[0]-500,p[1]-500), best=-1, bd=1e9; GEO.r.forEach(function(r,i){ var d=Math.abs(rr-r); if(d<bd){ bd=d; best=i; } }); return bd<=Math.max(30,GEO.gap*.55)?best:-1; }
+LIVE.addEventListener("pointerdown",function(e){
+  if(!P||done||busy) return; var p=local(e), i=ringAt(p); if(i<0) return;
+  e.preventDefault(); try{ LIVE.setPointerCapture(e.pointerId); }catch(x){}
+  drag={i:i,a:Math.atan2(p[1]-500,p[0]-500),moved:false,id:e.pointerId}; FIT.classList.add("drag");
+  sel=i; showSel();
+});
+LIVE.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.id) return; var p=local(e), a=Math.atan2(p[1]-500,p[0]-500), da=a-drag.a;
+  if(da>Math.PI) da-=2*Math.PI; if(da<-Math.PI) da+=2*Math.PI;
+  var stepA=2*Math.PI/P.S;
+  if(Math.abs(da)>=stepA*.55){ var d=da>0?1:-1; drag.moved=true; if(turn(drag.i,d)) drag.a+=d*stepA; else { drag.a=a; } }
+});
+function endDrag(e){ if(!drag) return; FIT.classList.remove("drag"); drag=null; }
+LIVE.addEventListener("pointerup",endDrag); LIVE.addEventListener("pointercancel",endDrag);
+document.addEventListener("keydown",function(e){
+  if(!document.body.classList.contains("seated")||!P||document.querySelector(".pk-veil.on")) return;
+  if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); sel=sel<0?0:(sel+(e.key==="ArrowUp"?1:-1)+P.rings.length)%P.rings.length; showSel(); }
+  else if((e.key==="ArrowRight"||e.key==="ArrowLeft")&&sel>=0){ e.preventDefault(); turn(sel,e.key==="ArrowRight"?1:-1); }
+  else if((e.key==="z"||e.key==="Z")&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); undo(); }
+});
+function tools(){
+  $("#orCW",stage).onclick=function(){ if(sel<0){ toast("Tap a ring first, or drag it round."); return; } turn(sel,1); };
+  $("#orCCW",stage).onclick=function(){ if(sel<0){ toast("Tap a ring first, or drag it round."); return; } turn(sel,-1); };
+  $("#orUndo",stage).onclick=undo; $("#orHint",stage).onclick=hint; $("#orRestart",stage).onclick=restart;
+}
+
+/* ---------- loading a puzzle ---------- */
+function load(puz,how){
+  P=puz; if(!P._eff) OR.prep(P);
+  dist=P._dist||OR.solve(P); if(P.par==null) P.par=dist[OR.enc(P,P.start)];
+  t=P.start.slice(); hist=[]; moves=0; hints=0; sel=-1; t0=0; done=false; mode=how;
+  geo(); drawBase(); drawLive(); showSel();
+  $("#orGears",stage).innerHTML=gearsText(); $("#orGears",stage).style.display=P.links.length||P.rings.some(function(r){return !r.crank;})?"":"none";
+  counts(); fit();
+}
+var DAILY=null;
+function daily(){ if(!DAILY){ DAILY=OR.make(todayKey,today.getDay()); } return DAILY; }
+function rec(){ try{ return JSON.parse(store("bwOrrery:"+todayKey)||"null"); }catch(e){ return null; } }
+function startDaily(again){
+  load(daily(),"daily");
+  if(window.Parlor){ Parlor.info("No. "+dayNo(today)+" · "+niceDate(today)); }
+  var r=rec();
+  if(r&&!again) toast("You set today's planets in "+r.m+" moves. Play it again for fun; tomorrow brings a new one.",3600);
+  if(window.Parlor) Parlor.coach(null);
+}
+
+/* ---------- solved ---------- */
+function stars(m,par,h){ var s=m<=par?3:m<=par+3?2:1; if(h) s=Math.min(s,2); return s; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwOrreryStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function solved(){
+  if(done) return; done=true; sel=-1; showSel();
+  if(window.Parlor) Parlor.sfx("win");
+  RG.forEach(function(R,i){ setTimeout(function(){ R.hi.setAttribute("stroke","rgba(255,226,140,.6)"); },i*90); });
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },500); return; }
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(moves,P.par,hints), first=false, sk=streak();
+  if(mode==="daily"&&!rec()){
+    first=true; store("bwOrrery:"+todayKey,JSON.stringify({m:moves,par:P.par,s:st,h:hints,sec:secs}));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwOrreryStreak",JSON.stringify(sk));
+  }
+  setTimeout(function(){ result(st,secs,first,sk); },700);
+}
+function result(st,secs,first,sk){
+  var v=$("#orEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="orEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, perfect=moves<=P.par;
+  var head=mode==="practice"?"Practice Puzzle":"The Orrery · No. "+dayNo(today);
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(perfect&&!hints?"Perfect Alignment!":"The Planets Are Set")+'</h2>'+
+    '<div class="or-stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(st)+'</i></div>'+
+    '<div class="or-facts"><div><b>'+moves+'</b><small>Moves</small></div><div><b>'+P.par+'</b><small>Par</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<p class="or-note">'+(perfect?(hints?"Par, with "+hints+" hint"+(hints>1?"s":"")+". Try tomorrow's without one.":"Not a turn wasted."):"Par is "+P.par+": the fewest turns it can be done in. "+(moves-P.par)+" more than that this time.")+
+    (mode==="daily"?(first?" A new orrery is laid out every day.":" You'd already set today's planets; your first result is the one kept."):"")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  function bt(label,cls,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result","",function(){ share(st,secs,sk); });
+  bt(mode==="practice"?"Another Practice Puzzle":"Play It Again","",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  v.classList.add("on");
+}
+function share(st,secs,sk){
+  var txt="BrainWhim · The Orrery No. "+dayNo(today)+"\n"+"★★★".slice(0,st)+"☆☆☆".slice(st)+" "+moves+" moves (par "+P.par+") · "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/orrery.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice (a gentle puzzle, any time) ---------- */
+var TIPS=["Look at the gears before you turn: a turn can move two rings at once.","If two planets are in each other's way, one of them can go round the other way.","Set the rings that have no crank first: their gears decide where the others end up.","Hint always shows a best next turn."];
+var tipN=0;
+function startPractice(){
+  var seed="practice:"+Date.now()+":"+Math.random(), p=OR.make(seed,1+Math.floor(Math.random()*2));
+  load(p,"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Puzzle","<p>Set each planet on its dashed mark. Drag a ring, or tap it and use ↺ ↻.</p><p>Par is <b>"+P.par+"</b> turns. Hint shows a best next turn.</p>");
+}
+function practiceTip(){ if(++tipN%4===2&&window.Parlor) Parlor.practiceSay("Practice Puzzle","<p>"+TIPS[Math.floor(tipN/4)%TIPS.length]+"</p>"); }
+
+/* ---------- Learn to Play ---------- */
+function L(S,rings,links,start,goal){ return OR.prep({S:S,rings:rings,links:links,start:start,goal:goal}); }
+var LESSONS=[
+  {title:"The Orrery",text:"<p>Brass rings carry the planets round the sun. Each planet has a <b>dashed mark</b> on its ring: today's chart.</p><p>Turn the rings until <b>every planet sits on its mark</b>.</p>",
+    puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true},{p:[0],crank:true}],[{a:1,b:2,dir:-1}],[6,1,4],[0,3,2]); }},
+  {title:"Turn a Ring",text:"<p>Rings with a <b>brass handle</b> can be turned. Drag the ring round, or tap it and press <b>↺</b> or <b>↻</b>.</p><p>Turn <b>Mercury</b> one stop clockwise onto its mark.</p>",done:"<p>Lovely. One turn moves a ring one stop.</p>",
+    puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true}],[],[7,4],[0,4]); },allow:[[0,1]]},
+  {title:"Gears",text:"<p>Some rings are joined by a <b>gear</b>. Turn <b>Venus</b> and its gear turns <b>Earth</b> too, the opposite way. The arrows show which way each ring will go.</p><p>Turn Venus clockwise once: both land on their marks.</p>",done:"<p>Two planets home with one turn. Reading the gears is half the puzzle.</p>",
+    puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true},{p:[0],crank:true}],[{a:1,b:2,dir:-1}],[0,1,6],[0,2,5]); },allow:[[1,1]]},
+  {title:"Arms Can't Clash",text:"<p>Planets on <b>neighbouring rings can never share a spoke</b>: their arms would clash. Venus is in Mercury's way.</p><p>Get <b>Mercury</b> to its mark by going <b>the long way round</b> (anticlockwise).</p>",done:"<p>That's the heart of The Orrery: sometimes the short way is blocked, and the best route goes round, or moves another ring out of the way first.</p>",
+    puz:function(){ return L(6,[{p:[0],crank:true},{p:[0],crank:false}],[],[0,1],[2,1]); },allow:"any"},
+  {title:"No Crank",text:"<p>A ring <b>without a handle</b> has no crank: it turns only through its gear. Here <b>Mercury</b> drives <b>Venus</b> the same way.</p><p>Turn Mercury clockwise once.</p>",done:"<p>Exactly. Rings without a crank are set through their gears.</p>",
+    puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:false}],[{a:0,b:1,dir:1}],[2,4],[3,5]); },allow:[[0,1]]},
+  {title:"Par and Stars",text:"<p><b>Par</b> is the fewest turns the puzzle can be done in. Match it for <b>three stars</b>; within three turns of it, two. A hint caps the day at two stars.</p><p>A new orrery every day: gentle on Monday, a real test by Sunday. Keep your streak going!</p>",
+    puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true},{p:[0],crank:true}],[{a:1,b:2,dir:-1}],[0,3,2],[0,3,2]); }}
+];
+var lessonK=0;
+function lessonSetup(k){ lessonK=k; var Ls=LESSONS[k]; load(Ls.puz(),"lesson"); if(!Ls.done) { done=true; } if(k===0||k===5){ /* look-and-read: show the finished chart on the last step */ } }
+function lessonAllows(ring,d){
+  var Ls=LESSONS[lessonK]; if(!Parlor.lessonWaiting||!Ls.done){ toast("Tap Next to keep going"); return false; }
+  if(Ls.allow==="any") return true;
+  var ok=Ls.allow.some(function(a){ return a[0]===ring&&a[1]===d; }); if(!ok){ toast(Ls.allow[0][1]>0?"Try turning "+PL[Ls.allow[0][0]].name+" clockwise":"Try turning "+PL[Ls.allow[0][0]].name+" anticlockwise"); sel=Ls.allow[0][0]; showSel(); }
+  return ok;
+}
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+var TOOLS=$("#orTools",stage);
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  var wide=window.innerWidth>=1000, toolsH=(TOOLS.offsetHeight||110)+10, availW, availH;
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
+  else { availW=window.innerWidth-14; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
+  var s=Math.max(240,Math.min(availW,availH,760));
+  FIT.style.width=FIT.style.height=Math.round(s)+"px";
+  TOOLS.style.maxWidth=wide?Math.max(s,520)+"px":"";
+  document.body.style.setProperty("--pk-size",Math.round(s)+"px");
+}
+window.addEventListener("resize",fit);
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"orrery", cat:"puzzles", solo:true, free:true, title:"The Orrery", bg:"puzzles-orrery.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Puzzle",
+  tagline:"Set every planet on its mark.", invite:"The morning sun is on the brass. Turn the rings, mind the gears, and set every planet on its mark.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Finishes",
+  sets:[
+    {id:"brass",name:FIN.brass.name,need:0,dots:FIN.brass.dots},
+    {id:"silver",name:FIN.silver.name,club:true,dots:FIN.silver.dots},
+    {id:"rose",name:FIN.rose.name,club:true,dots:FIN.rose.dots}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> turn the brass rings until every planet (and moon) sits on its <b>dashed mark</b>.</li><li><b>Turning:</b> drag a ring round, or tap it and press <b>↺</b> or <b>↻</b>. Each turn moves a ring one stop. On a keyboard: ↑ ↓ choose a ring, ← → turn it.</li><li><b>Gears:</b> turning some rings turns another ring too, the same way or the opposite way (it's written under the orrery, and arrows show it when you choose a ring). A gear works one way only: turning the driven ring doesn't turn the one that drives it.</li><li><b>No crank:</b> a ring without a brass handle can't be turned by hand; it turns only through its gear.</li><li><b>Arms can't clash:</b> planets on neighbouring rings can never share a spoke. A turn that would make them clash, or pass through each other, won't go. Sometimes the best way is the long way round.</li><li><b>Undo</b> takes back a turn, <b>Hint</b> shows a best next turn, <b>Restart</b> lays the puzzle out again.</li></ol>",
+    score:"<ul><li><b>One puzzle a day</b>, the same for everyone. It changes at midnight on your device. Monday is gentle; it gets harder through the week, with more rings, more gears and moons by the weekend.</li><li><b>Par</b> is the fewest turns the puzzle can be done in (worked out by a solver).</li><li><b>★★★</b> at par · <b>★★</b> within three turns of par · <b>★</b> otherwise. Using a hint caps the day at two stars.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice puzzles (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+new MutationObserver(function(){ var k=document.body.getAttribute("data-set"); var f=FIN[k]||FIN.brass; if(f!==fin){ fin=f; if(P){ drawBase(); drawLive(); showSel(); } } }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
+var wasSeated=false;
+new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); fin=FIN[document.body.getAttribute("data-set")]||FIN.brass; startDaily(true); fit(); });
+window.ORR={get:function(){ return {P:P,t:t,moves:moves,par:P&&P.par,done:done,mode:mode,sel:sel}; },turn:turn,hint:hint};   /* for testing */
+})();
+</script>
+</body>
+</html>
