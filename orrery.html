@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1029b">
 <style>
-/* ===== The Orrery (Puzzles & Brain Games, Oct 30): a daily puzzle on a brass orrery seen from straight above =====
+/* ===== The Orrery (Puzzles & Brain Games, Oct 30; 3-D look and smooth dragging Oct 31): a daily puzzle on a tilted brass orrery =====
    A turned walnut base with engraved spokes, brass rings round a gold sun, enamel planets on brass arms.
    Turn the rings (drag one, or tap it and use the turn buttons) until every planet sits on its engraved mark.
    Gears: turning some rings turns another too. Rings without a handle turn only through their gear.
@@ -18,7 +18,6 @@
 .or-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
 .or-fit{position:relative;flex:none;touch-action:none;-webkit-user-select:none;user-select:none}
 .or-fit svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
-.or-fit .or-live{cursor:grab}
 .or-fit.drag .or-live{cursor:grabbing}
 .or-ring{transition:none}
 .or-nope{animation:or-nope .34s ease}
@@ -200,6 +199,7 @@ var OR = (function () {
   }
   return { rng: rng, hash: hash, prep: prep, enc: enc, dec: dec, okState: okState, step: step, solve: solve, bestMoves: bestMoves, make: make, DAYS: DAYS };
 })();
+if (typeof module !== "undefined") module.exports = OR;
 
 
 /* ================= the room ================= */
@@ -242,126 +242,226 @@ var mode="daily";   /* daily | practice | lesson */
 var today=new Date(), todayKey=ymd(today);
 var GEO={};          /* ring radii etc. in drawing units (1000 x 1000) */
 
-/* ---------- the drawing ---------- */
+/* ---------- the drawing (Oct 31: a tilted, three-dimensional orrery) ----------
+   The plate, rings, arms and marks are drawn flat on a "plane" (1000 x 1000, centre 500,500) and tilted by squashing
+   it top to bottom (K). The planets, moons, sun and crank knobs stand up off the plate on brass stems: they're drawn
+   upright in screen space at the point where their stem meets the ring, nearer ones a little larger, sorted back to front. */
+var THICK=34, K=window.innerWidth<1000?.66:.58;   /* plate thickness; the tilt (a little less on phones, so the rings stay easy to touch) */
+var CY=Math.round(108+490*K), VH=Math.round(CY+490*K+THICK+34);   /* where the plate's centre sits; the picture's height */
 var stage=document.createElement("div"); stage.className="or-pad";
-stage.innerHTML='<div class="or-fit" id="orFit"><svg id="orBase" viewBox="0 0 1000 1000" aria-hidden="true"></svg><svg id="orLive" class="or-live" viewBox="0 0 1000 1000" role="img" aria-label="The orrery"></svg><div class="or-toast" id="orToast" role="status"></div></div>'+
+stage.innerHTML='<div class="or-fit" id="orFit"><svg id="orBase" viewBox="0 0 1000 '+VH+'" aria-hidden="true"></svg><svg id="orLive" class="or-live" viewBox="0 0 1000 '+VH+'" role="img" aria-label="The orrery"></svg><div class="or-toast" id="orToast" role="status"></div></div>'+
   '<div class="or-tools" id="orTools">'+
     '<div class="or-gears" id="orGears"></div>'+
     '<div class="or-row"><button class="pk-btn or-turn" type="button" id="orCCW" aria-label="Turn anticlockwise">↺</button><div class="or-sel" id="orSel">Choose a Ring<small>Tap or drag a ring</small></div><button class="pk-btn or-turn" type="button" id="orCW" aria-label="Turn clockwise">↻</button></div>'+
     '<div class="or-row"><button class="pk-btn" type="button" id="orUndo">Undo</button><button class="pk-btn gold" type="button" id="orHint">Hint</button><button class="pk-btn" type="button" id="orRestart">Restart</button><span class="or-count" id="orCount"></span></div>'+
   '</div>';
 var FIT=$("#orFit",stage), BASE=$("#orBase",stage), LIVE=$("#orLive",stage), TOAST=$("#orToast",stage);
+var PLANE="matrix(1 0 0 "+K+" 0 "+(CY-500*K)+")";   /* plane -> screen */
 
 function ang(k){ return (-90+k*360/P.S)*Math.PI/180; }
 function pt(r,a){ return [500+r*Math.cos(a),500+r*Math.sin(a)]; }
+function scr(p){ return [p[0],CY+(p[1]-500)*K]; }               /* a point on the plate, on screen */
+function unproj(q){ return [q[0],500+(q[1]-CY)/K]; }            /* a screen point back onto the plate */
+function depth(p){ return 1+.15*(p[1]-500)/490; }                /* nearer things look a little larger */
 function geo(){
   var R=P.rings.length, rin=R>=5?150:R>=4?160:175, rout=430;
   GEO.r=[]; for(var i=0;i<R;i++) GEO.r.push(R===1?300:rin+(rout-rin)*i/(R-1));
   GEO.gap=R>1?(rout-rin)/(R-1):200;
-  GEO.pr=Math.min(34,GEO.gap*.36+4);           /* planet radius */
-  GEO.mr=GEO.pr*.62;                            /* moon radius */
+  GEO.pr=Math.min(42,GEO.gap*.44+7);           /* planet radius */
+  GEO.mr=GEO.pr*.6;                             /* moon radius */
+  GEO.H=[]; for(i=0;i<R;i++) GEO.H.push(60-i*(R>=5?6:7));   /* stem heights: the inner planets stand tallest */
 }
-function grad(defs,id,c,cx,cy){
-  var g=sv("radialGradient",{id:id,cx:cx||"35%",cy:cy||"30%",r:"75%"},defs);
+function grad(defs,id,c,cx,cy,r){
+  var g=sv("radialGradient",{id:id,cx:cx||"35%",cy:cy||"30%",r:r||"75%"},defs);
   sv("stop",{offset:"0%","stop-color":c[0]},g); sv("stop",{offset:"45%","stop-color":c[1]},g); sv("stop",{offset:"100%","stop-color":c[2]},g); return "url(#"+id+")";
 }
-function lin(defs,id,c){
-  var g=sv("linearGradient",{id:id,x1:"0",y1:"0",x2:"1",y2:"1"},defs);
-  sv("stop",{offset:"0%","stop-color":c[0]},g); sv("stop",{offset:"50%","stop-color":c[1]},g); sv("stop",{offset:"100%","stop-color":c[2]},g); return "url(#"+id+")";
+function lin(defs,id,c,x2,y2){
+  var g=sv("linearGradient",{id:id,x1:"0",y1:"0",x2:x2==null?"1":x2,y2:y2==null?"1":y2},defs);
+  for(var i=0;i<c.length;i++) sv("stop",{offset:(i/(c.length-1)*100)+"%","stop-color":c[i]},g); return "url(#"+id+")";
 }
-/* the base: a turned wooden (or lapis, or ivory) plate with an engraved chapter ring and spokes; drawn once per puzzle */
+function stops(defs,tag,id,attrs,list){ attrs.id=id; var g=sv(tag,attrs,defs); list.forEach(function(s){ sv("stop",{offset:s[0],"stop-color":s[1]},g); }); return "url(#"+id+")"; }
+function shade(hex,f){ var n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255; function c(v){ return Math.max(0,Math.min(255,Math.round(f<0?v*(1+f):v+(255-v)*f))); } return "rgb("+c(r)+","+c(g)+","+c(b)+")"; }
+
+/* ---------- the planets: little lit globes, drawn once at radius 100 and placed with <use> ----------
+   (To use painted images later: give a planet img:"planet-earth.webp" in PL and it's used instead of the drawing.) */
+function globeDefs(d){
+  sv("circle",{r:100},sv("clipPath",{id:"orClip"},d));
+  stops(d,"radialGradient","orShade",{cx:"34%",cy:"30%",r:"82%"},[["0%","rgba(0,0,0,0)"],["52%","rgba(0,0,0,0)"],["80%","rgba(10,6,20,.32)"],["100%","rgba(10,6,20,.66)"]]);
+  stops(d,"radialGradient","orSpec",{cx:"32%",cy:"26%",r:"34%"},[["0%","rgba(255,255,255,.85)"],["35%","rgba(255,255,255,.32)"],["100%","rgba(255,255,255,0)"]]);
+  stops(d,"linearGradient","orRim",{x1:"0",y1:"0",x2:"1",y2:"1"},[["0%","rgba(255,255,255,0)"],["62%","rgba(255,255,255,0)"],["100%","rgba(255,226,180,.42)"]]);
+  stops(d,"radialGradient","orShadow",{},[["0%","rgba(0,0,0,.55)"],["60%","rgba(0,0,0,.25)"],["100%","rgba(0,0,0,0)"]]);
+  function globe(id,col,img,detail){
+    var g=sv("g",{id:id},d);
+    if(img){ sv("image",{href:img,x:-100,y:-100,width:200,height:200,"clip-path":"url(#orClip)"},g); return; }
+    sv("circle",{r:100,fill:grad(d,id+"B",col,"36%","32%","80%")},g);
+    var det=sv("g",{"clip-path":"url(#orClip)"},g); detail(det);
+    sv("circle",{r:100,fill:"url(#orShade)"},g);
+    sv("circle",{r:98,fill:"none",stroke:"url(#orRim)","stroke-width":5},g);
+    sv("circle",{r:100,fill:"url(#orSpec)"},g);
+  }
+  function blob(g,dd,fill,op){ sv("path",{d:dd,fill:fill,opacity:op==null?1:op},g); }
+  function crater(g,x,y,r,o){ sv("circle",{cx:x,cy:y,r:r,fill:"rgba(30,30,40,"+(o||.22)+")"},g); sv("circle",{cx:x+r*.18,cy:y+r*.18,r:r*.86,fill:"none",stroke:"rgba(255,255,255,.22)","stroke-width":Math.max(1.5,r*.12)},g); }
+  function band(g,y,w,col,bend){ sv("path",{d:"M-120 "+y+" Q0 "+(y+(bend||10))+" 120 "+y,stroke:col,"stroke-width":w,fill:"none"},g); }
+  /* Mercury: grey and cratered */
+  globe("orG0",PL[0].c,PL[0].img,function(g){ [[-30,-20,16],[25,10,22],[-10,45,12],[48,-40,10],[-55,20,9],[10,-60,8],[55,55,11],[-40,-60,7]].forEach(function(c){ crater(g,c[0],c[1],c[2]); }); });
+  /* Venus: pale gold under swirling cloud */
+  globe("orG1",PL[1].c,PL[1].img,function(g){ band(g,-50,18,"rgba(255,255,255,.22)",14); band(g,-18,26,"rgba(170,120,50,.18)",-12); band(g,20,20,"rgba(255,250,230,.25)",16); band(g,55,24,"rgba(170,120,50,.16)",-8);
+    sv("path",{d:"M-20 0 q30 -26 52 -4 q12 18 -14 24",stroke:"rgba(255,255,255,.28)","stroke-width":9,fill:"none","stroke-linecap":"round"},g); });
+  /* Earth: blue ocean, green and sand continents, white cloud and a polar cap */
+  globe("orG2",PL[2].c,PL[2].img,function(g){
+    blob(g,"M-70 -40 C-50 -70 -10 -66 -4 -40 C2 -20 -18 -10 -12 10 C-6 30 -30 44 -44 30 C-60 14 -84 -10 -70 -40Z","#4f9a58");
+    blob(g,"M-44 -20 C-34 -30 -22 -24 -24 -12 C-28 0 -40 0 -44 -20Z","#b8a565",.85);
+    blob(g,"M20 -10 C40 -30 74 -22 82 0 C90 22 70 36 56 54 C44 70 26 62 28 40 C30 22 6 10 20 -10Z","#4a9152");
+    blob(g,"M46 8 C58 4 66 14 60 26 C52 34 40 22 46 8Z","#c2ad6c",.8);
+    blob(g,"M-26 62 C-10 54 8 62 6 76 C-6 86 -24 80 -26 62Z","#4f9a58");
+    sv("ellipse",{cx:0,cy:-96,rx:60,ry:16,fill:"rgba(255,255,255,.9)"},g);
+    [["M-90 -6 q30 -14 60 -4 q20 6 40 -2",6],["M-10 30 q26 -10 54 0 q16 6 36 -4",5],["M-60 70 q24 -8 46 2",5],["M10 -60 q24 -10 50 4",4]].forEach(function(c){ sv("path",{d:c[0],stroke:"rgba(255,255,255,.75)","stroke-width":c[1],fill:"none","stroke-linecap":"round"},g); }); });
+  /* Mars: rust red with dark seas and an ice cap */
+  globe("orG3",PL[3].c,PL[3].img,function(g){
+    blob(g,"M-60 -10 C-40 -30 -6 -20 4 0 C12 18 -10 30 -30 26 C-52 22 -74 8 -60 -10Z","rgba(95,30,14,.42)");
+    blob(g,"M20 30 C40 18 70 28 70 48 C66 66 36 66 24 54 C14 46 10 36 20 30Z","rgba(95,30,14,.36)");
+    blob(g,"M10 -54 C28 -62 54 -54 50 -40 C44 -28 18 -34 10 -54Z","rgba(95,30,14,.3)");
+    sv("ellipse",{cx:-6,cy:-94,rx:40,ry:13,fill:"rgba(255,250,245,.92)"},g);
+    blob(g,"M-80 40 C-60 30 -40 44 -46 60 C-56 72 -78 62 -80 40Z","rgba(255,200,160,.22)"); });
+  /* Jupiter: cream and copper bands with the great red spot */
+  globe("orG4",PL[4].c,PL[4].img,function(g){
+    [[-72,14,"rgba(150,92,46,.45)"],[-48,10,"rgba(255,242,220,.45)"],[-26,18,"rgba(160,96,48,.55)"],[2,14,"rgba(255,244,226,.5)"],[26,20,"rgba(150,88,40,.5)"],[52,10,"rgba(255,240,215,.4)"],[74,14,"rgba(140,86,44,.42)"]].forEach(function(b){ band(g,b[0],b[1],b[2],6); });
+    sv("ellipse",{cx:34,cy:38,rx:22,ry:12,fill:"#c4643c",opacity:.9},g); sv("ellipse",{cx:34,cy:38,rx:22,ry:12,fill:"none",stroke:"rgba(255,230,200,.55)","stroke-width":3},g); });
+  /* the moon: pale and cratered */
+  globe("orGM",MOON.c,MOON.img,function(g){ [[-28,-20,20],[30,16,16],[-6,48,14],[44,-44,12],[-58,26,10]].forEach(function(c){ crater(g,c[0],c[1],c[2],.18); }); });
+  /* the sun: no shadow side, a hot limb and a corona */
+  var sun=sv("g",{id:"orGS"},d);
+  sv("circle",{r:150,fill:stops(d,"radialGradient","orCorona",{},[["55%","rgba(255,214,110,.55)"],["75%","rgba(255,180,70,.18)"],["100%","rgba(255,170,60,0)"]])},sun);
+  sv("circle",{r:100,fill:stops(d,"radialGradient","orSunB",{cx:"40%",cy:"36%",r:"70%"},[["0%","#fffdf0"],["35%","#ffe58a"],["75%","#f6a93a"],["100%","#d0661a"]])},sun);
+  var sd=sv("g",{"clip-path":"url(#orClip)",opacity:.35},sun);
+  [[-30,30,22],[36,-10,16],[10,50,12],[-50,-30,10],[50,40,9]].forEach(function(c){ sv("circle",{cx:c[0],cy:c[1],r:c[2],fill:"#f5b347"},sd); });
+  sv("circle",{r:100,fill:"url(#orSpec)",opacity:.8},sun);
+}
+
+/* the base: the turned plate standing on the table, its engraving, the ring grooves and today's marks (drawn once per puzzle) */
 function drawBase(){
   BASE.innerHTML=""; var d=sv("defs",{},BASE);
-  var f=grad(d,"orBaseG",fin.base,"40%","34%");
-  sv("circle",{cx:500,cy:500,r:492,fill:"rgba(0,0,0,.45)",transform:"translate(0 10)",filter:"url(#orSoft)"},BASE);
-  var soft=sv("filter",{id:"orSoft",x:"-10%",y:"-10%",width:"120%",height:"120%"},d); sv("feGaussianBlur",{stdDeviation:"10"},soft);
-  sv("circle",{cx:500,cy:500,r:490,fill:f},BASE);
-  /* turned rings in the grain */
-  for(var r=30;r<490;r+=7+((r*7)%5)) sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.grain,"stroke-width":(r%3)+1},BASE);
-  /* a soft window light from the top left */
-  var hl=sv("radialGradient",{id:"orHL",cx:"28%",cy:"22%",r:"60%"},d); sv("stop",{offset:"0%","stop-color":"rgba(255,240,210,.22)"},hl); sv("stop",{offset:"100%","stop-color":"rgba(255,240,210,0)"},hl);
-  sv("circle",{cx:500,cy:500,r:490,fill:"url(#orHL)"},BASE);
-  /* the brass bezel and the engraved chapter ring */
-  sv("circle",{cx:500,cy:500,r:486,fill:"none",stroke:lin(d,"orBez",fin.ring),"stroke-width":9},BASE);
-  sv("circle",{cx:500,cy:500,r:470,fill:"none",stroke:fin.engB,"stroke-width":1.4},BASE);
+  var soft=sv("filter",{id:"orSoft",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"14"},soft);
+  var soft2=sv("filter",{id:"orSoft2",x:"-10%",y:"-10%",width:"120%",height:"120%"},d); sv("feGaussianBlur",{stdDeviation:"3.5"},soft2);
+  /* its shadow on the table, then the plate's turned edge (a short cylinder) */
+  sv("ellipse",{cx:510,cy:CY+THICK+16,rx:500,ry:490*K+10,fill:"rgba(0,0,0,.55)",filter:"url(#orSoft)"},BASE);
+  var side=lin(d,"orSide",[shade(fin.base[1],-.35),shade(fin.base[2],-.2),shade(fin.base[1],-.1),shade(fin.base[2],-.45)],1,0);
+  sv("ellipse",{cx:500,cy:CY+THICK,rx:490,ry:490*K,fill:side},BASE);
+  sv("rect",{x:10,y:CY,width:980,height:THICK,fill:side},BASE);
+  /* a brass band round the edge */
+  sv("ellipse",{cx:500,cy:CY+THICK*.42,rx:490,ry:490*K,fill:"none",stroke:fin.ring[1],"stroke-width":3,opacity:.55},BASE);
+  var top=sv("g",{transform:PLANE},BASE);
+  sv("circle",{cx:500,cy:500,r:490,fill:grad(d,"orBaseG",fin.base,"42%","30%","78%")},top);
+  for(var r=30;r<490;r+=7+((r*7)%5)) sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.grain,"stroke-width":(r%3)+1},top);
+  var hl=sv("radialGradient",{id:"orHL",cx:"30%",cy:"18%",r:"62%"},d); sv("stop",{offset:"0%","stop-color":"rgba(255,240,210,.26)"},hl); sv("stop",{offset:"100%","stop-color":"rgba(255,240,210,0)"},hl);
+  sv("circle",{cx:500,cy:500,r:490,fill:"url(#orHL)"},top);
+  /* the bezel: a polished brass rim with engraved degree ticks */
+  sv("circle",{cx:500,cy:500,r:484,fill:"none",stroke:lin(d,"orBez",[fin.ring[0],fin.ring[1],fin.ring[2],fin.ring[1]]),"stroke-width":14},top);
+  sv("circle",{cx:500,cy:500,r:476,fill:"none",stroke:"rgba(0,0,0,.35)","stroke-width":1.2},top);
+  for(var k=0;k<72;k++){ var a=k*5*Math.PI/180, p0=pt(k%6?481:478,a), p1=pt(489,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:"rgba(60,40,10,.55)","stroke-width":k%6?1:2},top); }
+  sv("circle",{cx:500,cy:500,r:462,fill:"none",stroke:fin.engB,"stroke-width":1.4},top);
   /* the spokes: one engraved line per stop */
-  for(var k=0;k<P.S;k++){ var a=ang(k), p0=pt(118,a), p1=pt(464,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:fin.eng,"stroke-width":1.3,"stroke-dasharray":"2 6"},BASE);
-    var q=pt(478,a); sv("circle",{cx:q[0],cy:q[1],r:3.4,fill:fin.engB},BASE); }
-  /* the ring tracks (engraved grooves the rings sit in) */
-  GEO.r.forEach(function(r){ sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.28)","stroke-width":12},BASE); });
-  /* the chart marks: where each planet (and moon) belongs */
+  for(k=0;k<P.S;k++){ a=ang(k); p0=pt(80,a); p1=pt(456,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:fin.eng,"stroke-width":1.4,"stroke-dasharray":"2 6"},top);
+    var q=pt(469,a); sv("circle",{cx:q[0],cy:q[1],r:4,fill:fin.engB},top); }
+  /* the ring grooves, and each ring's shadow and edge (rings are round, so these never need to turn) */
+  GEO.r.forEach(function(r,i){
+    sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.3)","stroke-width":14},top);
+    sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.5)","stroke-width":P.rings[i].crank?9:6,transform:"translate(5 14)",filter:"url(#orSoft2)"},top);
+  });
+  /* the chart marks: where each planet's (and moon's) stem belongs */
   GEO.marks=[];
   P.rings.forEach(function(ring,i){ ring.p.forEach(function(off,j){
-    var a=ang(P.goal[i]+off), q=pt(GEO.r[i],a), rr=(j?GEO.mr:GEO.pr)+7;
-    var m=sv("circle",{cx:q[0],cy:q[1],r:rr,fill:"none",stroke:fin.mark,"stroke-width":2.4,"stroke-dasharray":"5 5",opacity:.85},BASE);
+    var a=ang(P.goal[i]+off), q=pt(GEO.r[i],a), rr=(j?GEO.mr:GEO.pr)*.85+8;
+    sv("circle",{cx:q[0],cy:q[1],r:rr,fill:"rgba(0,0,0,.18)"},top);
+    var m=sv("circle",{cx:q[0],cy:q[1],r:rr,fill:"none",stroke:fin.mark,"stroke-width":3,"stroke-dasharray":"6 5",opacity:.9},top);
     GEO.marks.push({el:m,i:i,j:j});
   }); });
 }
-/* the moving parts: rings, arms, planets, the sun, crank handles */
-var RG=[];   /* per ring: {g (rotating group), band, sel} */
+
+/* the moving parts. RG[i] = {g (the turning ring), hi (its glow), side (its edge), bodies:[…]}; BODIES = everything standing up, sorted back to front */
+var RG=[], BODIES=[], STAND=null, hov=-1;
 function drawLive(){
-  LIVE.innerHTML=""; RG=[]; var d=sv("defs",{},LIVE);
-  var ringFill=lin(d,"orRingG",fin.ring), knobF=grad(d,"orKnob",fin.knob);
-  var shadow=sv("filter",{id:"orSh",x:"-30%",y:"-30%",width:"160%",height:"160%"},d); sv("feDropShadow",{dx:"2",dy:"5",stdDeviation:"4","flood-color":"rgba(0,0,0,.5)"},shadow);
-  var glow=sv("filter",{id:"orGlow",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"5"},glow);
-  /* crank handles: fixed on the base at the bottom-right, one per ring that has a crank */
-  var under=sv("g",{},LIVE), rings=sv("g",{},LIVE), arms=sv("g",{},LIVE), bodies=sv("g",{},LIVE), over=sv("g",{},LIVE);
+  LIVE.innerHTML=""; RG=[]; BODIES=[]; var d=sv("defs",{},LIVE);
+  globeDefs(d);
+  var ringFill=lin(d,"orRingG",[fin.ring[0],fin.ring[1],fin.ring[2],fin.ring[1],fin.ring[0]]), knobF=grad(d,"orKnob",fin.knob);
+  var stemF=lin(d,"orStem",[fin.ring[2],fin.ring[0],fin.ring[1],fin.ring[2]],1,0);
+  var glow=sv("filter",{id:"orGlow",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"6"},glow);
+  /* on the plate: ring edges (fixed), glows (fixed), then the turning rings with their arms */
+  var edges=sv("g",{transform:"translate(0 6)"},LIVE), eplane=sv("g",{transform:PLANE},edges), glows=sv("g",{transform:PLANE},LIVE), turning=sv("g",{transform:PLANE},LIVE);
+  GEO.dirs=sv("g",{transform:PLANE},LIVE); STAND=sv("g",{},LIVE);
   P.rings.forEach(function(ring,i){
-    var r=GEO.r[i], g=sv("g",{"class":"or-ring"},rings);
-    var hiG=sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(255,226,140,.0)","stroke-width":20,filter:"url(#orGlow)"},g);
-    var band=sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:ringFill,"stroke-width":ring.crank?8:4.5,filter:"url(#orSh)"},g);
-    /* knurling on rings with a crank (rotates with the ring, so you see it turn) */
-    var kn=sv("g",{},g);
-    if(ring.crank) for(var k=0;k<P.S*4;k++){ var a=(k/(P.S*4))*Math.PI*2, p0=pt(r-4,a), p1=pt(r+4,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:"rgba(0,0,0,.28)","stroke-width":1.2},kn); }
-    else sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.25)","stroke-width":1,"stroke-dasharray":"3 7"},g);
-    /* arms and planets ride on the ring */
-    var arm=sv("g",{},arms), body=sv("g",{},bodies);
-    ring.p.forEach(function(off,j){
-      var a=ang(off), q=pt(r,a), p0=pt(70,a);
-      /* (a solid colour: a gradient on a straight horizontal or vertical line has no box to fill and vanishes) */
-      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[1],"stroke-width":j?3.2:4.6,"stroke-linecap":"round",filter:"url(#orSh)"},arm);
-      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[0],"stroke-width":1.2,"stroke-linecap":"round",opacity:.7},arm);
-      var col=j?MOON.c:PL[i].c, rad=j?GEO.mr:GEO.pr;
-      sv("circle",{cx:q[0],cy:q[1],r:rad+3,fill:ringFill,filter:"url(#orSh)"},body);
-      sv("circle",{cx:q[0],cy:q[1],r:rad,fill:grad(d,"orP"+i+"_"+j,col)},body);
-      if(!j&&i===4){ /* Jupiter's bands */
-        sv("path",{d:"M"+(q[0]-rad*.92)+" "+(q[1]-rad*.25)+" Q"+q[0]+" "+(q[1]-rad*.05)+" "+(q[0]+rad*.92)+" "+(q[1]-rad*.25),stroke:"rgba(122,72,30,.55)","stroke-width":rad*.16,fill:"none"},body);
-        sv("path",{d:"M"+(q[0]-rad*.85)+" "+(q[1]+rad*.32)+" Q"+q[0]+" "+(q[1]+rad*.5)+" "+(q[0]+rad*.85)+" "+(q[1]+rad*.32),stroke:"rgba(122,72,30,.4)","stroke-width":rad*.12,fill:"none"},body);
-      }
-      if(!j&&i===2) sv("path",{d:"M"+(q[0]-rad*.5)+" "+(q[1]-rad*.2)+" q"+rad*.3+" "+(-rad*.35)+" "+rad*.6+" "+(-rad*.1)+" q"+rad*.1+" "+rad*.4+" "+(-rad*.3)+" "+rad*.5+" z",fill:"rgba(70,140,80,.7)"},body);
-      sv("circle",{cx:q[0]-rad*.32,cy:q[1]-rad*.36,r:rad*.28,fill:"rgba(255,255,255,.38)"},body);
+    var r=GEO.r[i], w=ring.crank?9:5;
+    sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.ring[2],"stroke-width":w},eplane);
+    var hiG=sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(255,226,140,0)","stroke-width":24,filter:"url(#orGlow)"},glows);
+    var g=sv("g",{"class":"or-ring"},turning);
+    /* the arms: brass spokes from the centre column out to the ring */
+    ring.p.forEach(function(off,j){ var a=ang(off), q=pt(r,a), p0=pt(52,a);
+      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[2],"stroke-width":j?6:8,"stroke-linecap":"round"},g);
+      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[1],"stroke-width":j?3.6:5,"stroke-linecap":"round"},g);
+      sv("line",{x1:p0[0],y1:p0[1],x2:q[0],y2:q[1],stroke:fin.ring[0],"stroke-width":1.4,"stroke-linecap":"round",opacity:.8},g);
+      sv("circle",{cx:q[0],cy:q[1],r:j?8:11,fill:fin.ring[1],stroke:fin.ring[2],"stroke-width":2},g);   /* the stem's collar */
     });
-    /* the crank handle, fixed on the base outside the bezel's inner line, below-right */
-    if(ring.crank){ var ka=(118-i*7)*Math.PI/180, kq=pt(r,ka), kh=sv("g",{},under);
-      sv("circle",{cx:kq[0],cy:kq[1],r:13,fill:knobF,filter:"url(#orSh)"},kh); sv("circle",{cx:kq[0],cy:kq[1],r:4,fill:"rgba(0,0,0,.35)"},kh); }
-    RG.push({g:g,arm:arm,body:body,hi:hiG,band:band,turn:0});
+    sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:ringFill,"stroke-width":w},g);
+    sv("circle",{cx:500,cy:500,r:r-w/2+.8,fill:"none",stroke:"rgba(255,255,255,.35)","stroke-width":1.2},g);
+    /* knurling on rings with a crank (it turns with the ring, so you see it go round) */
+    if(ring.crank) for(var k=0;k<P.S*4;k++){ var a=(k/(P.S*4))*Math.PI*2, p0=pt(r-4.5,a), p1=pt(r+4.5,a); sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:"rgba(0,0,0,.3)","stroke-width":1.3},g); }
+    else sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(0,0,0,.28)","stroke-width":1,"stroke-dasharray":"3 7"},g);
+    var R={g:g,hi:hiG,bodies:[]};
+    /* the planet (and moons) on brass stems */
+    ring.p.forEach(function(off,j){
+      var rad=j?GEO.mr:GEO.pr, H=GEO.H[i]-(j?14:0), bg=sv("g",{},STAND);
+      sv("ellipse",{cx:H*.36,cy:H*.12,rx:rad*1.05,ry:rad*1.05*K,fill:"url(#orShadow)"},bg);
+      sv("rect",{x:-3.4,y:-H,width:6.8,height:H,rx:3,fill:stemF},bg);
+      sv("ellipse",{cx:0,cy:-H+rad*.86,rx:rad*.36,ry:rad*.36*K,fill:fin.ring[1],stroke:fin.ring[2],"stroke-width":1.5},bg);
+      sv("use",{href:"#orG"+(j?"M":i),transform:"translate(0 "+(-H)+") scale("+(rad/100)+")"},bg);
+      var bad=sv("circle",{cx:0,cy:-H,r:rad+5,fill:"none",stroke:"rgba(255,90,70,0)","stroke-width":4},bg);
+      var B={el:bg,ring:i,j:j,off:off,H:H,rad:rad,bad:bad,x:0,y:0,s:1}; R.bodies.push(B); BODIES.push(B);
+    });
+    /* the crank handle: a turned knob standing on the plate, front left */
+    if(ring.crank){ var ka=(122-i*7)*Math.PI/180, kp=pt(r,ka), kq=scr(kp), ks=depth(kp), kg=sv("g",{transform:"translate("+kq[0]+" "+kq[1]+") scale("+ks+")"},STAND);
+      sv("ellipse",{cx:7,cy:3,rx:15,ry:15*K,fill:"url(#orShadow)"},kg);
+      sv("rect",{x:-5,y:-20,width:10,height:20,rx:3,fill:stemF},kg);
+      sv("circle",{cx:0,cy:-24,r:12,fill:knobF},kg); sv("circle",{cx:-4,cy:-28,r:4,fill:"rgba(255,255,255,.55)"},kg);
+      BODIES.push({el:kg,fixed:true,y:kq[1]}); }
+    RG.push(R);
   });
-  /* the sun */
-  var sunG=grad(d,"orSun",["#fffbe6","#f7c948","#c46a12"]);
-  sv("circle",{cx:500,cy:500,r:86,fill:"rgba(255,200,80,.18)",filter:"url(#orGlow)"},over);
-  sv("circle",{cx:500,cy:500,r:72,fill:ringFill,filter:"url(#orSh)"},over);
-  sv("circle",{cx:500,cy:500,r:64,fill:sunG},over);
-  sv("circle",{cx:478,cy:476,r:18,fill:"rgba(255,255,255,.45)"},over);
-  /* direction markers for the selected ring and the rings its gears turn */
-  GEO.dirs=sv("g",{},over);
+  /* the sun on its column */
+  var sg=sv("g",{transform:"translate(500 "+CY+")"},STAND), SH=72;
+  sv("ellipse",{cx:SH*.36,cy:SH*.12,rx:60,ry:60*K,fill:"url(#orShadow)"},sg);
+  sv("ellipse",{cx:0,cy:0,rx:52,ry:52*K,fill:fin.ring[2]},sg); sv("ellipse",{cx:0,cy:-6,rx:52,ry:52*K,fill:ringFill},sg);
+  sv("rect",{x:-13,y:-SH,width:26,height:SH-6,fill:stemF},sg);
+  sv("ellipse",{cx:0,cy:-SH*.55,rx:20,ry:20*K,fill:fin.ring[1],stroke:fin.ring[2],"stroke-width":2},sg);
+  sv("use",{href:"#orGS",transform:"translate(0 "+(-SH-26)+") scale(.5)"},sg);
+  BODIES.push({el:sg,fixed:true,y:CY});
   paint(false);
+}
+/* place everything for ring turns `tt` (whole or part turns) */
+function render(tt){
+  var step=360/P.S;
+  RG.forEach(function(R,i){ R.g.setAttribute("transform","rotate("+(tt[i]*step).toFixed(3)+" 500 500)");
+    R.bodies.forEach(function(B){ var p=pt(GEO.r[i],ang(tt[i]+B.off)), q=scr(p), s=depth(p); B.x=q[0]; B.y=q[1]; B.s=s;
+      B.el.setAttribute("transform","translate("+q[0].toFixed(2)+" "+q[1].toFixed(2)+") scale("+s.toFixed(4)+")"); }); });
+  /* back to front: only re-stack when the order has changed */
+  var order=BODIES.slice().sort(function(a,b){ return a.y-b.y; }), kids=STAND.childNodes, same=true;
+  for(var n=0;n<order.length;n++) if(kids[n]!==order[n].el){ same=false; break; }
+  if(!same) order.forEach(function(B){ STAND.appendChild(B.el); });
 }
 /* place every ring at its current turn (animated when `anim`) */
 var animT=0;
 function paint(anim,from){
-  var step=360/P.S;
-  function setAll(f){ RG.forEach(function(R,i){ var a=(from?from[i]+(t[i]-from[i])*f:t[i]); if(from){ var dd=t[i]-from[i]; if(dd>P.S/2) dd-=P.S; if(dd<-P.S/2) dd+=P.S; a=from[i]+dd*f; }
-    var tr="rotate("+(a*step).toFixed(3)+" 500 500)"; R.arm.setAttribute("transform",tr); R.body.setAttribute("transform",tr); R.g.setAttribute("transform",tr); }); }
+  function setAll(f){ var tt=t.map(function(v,i){ if(!from) return v; var dd=v-from[i]; if(dd>P.S/2) dd-=P.S; if(dd<-P.S/2) dd+=P.S; return from[i]+dd*f; }); render(tt); }
   cancelAnimationFrame(animT);
   if(!anim||!window.Parlor||!Parlor.smooth()){ setAll(1); marks(); return; }
-  var s0=performance.now(), dur=260;
-  (function tick(now){ var p=Math.min(1,(now-s0)/dur), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; setAll(e); if(p<1) animT=requestAnimationFrame(tick); else marks(); })(s0);
+  var s0=performance.now(), dur=240;
+  (function tick(now){ var p=Math.min(1,(now-s0)/dur), e=1-Math.pow(1-p,3); setAll(e); if(p<1) animT=requestAnimationFrame(tick); else marks(); })(s0);
 }
 /* chart marks glow when their planet is home */
-function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"5 5"); m.el.setAttribute("stroke-width",home?3.4:2.4); m.el.setAttribute("opacity",home?1:.85); }); }
-/* the selected ring glows; arrows show which way each ring turns for a clockwise turn of the crank */
+function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"6 5"); m.el.setAttribute("stroke-width",home?4:3); m.el.setAttribute("opacity",home?1:.9); }); }
+/* the selected ring glows (and the one under the mouse, faintly) */
+function glowRings(){ RG.forEach(function(R,i){ R.hi.setAttribute("stroke",i===sel?"rgba(255,226,140,.6)":i===hov?"rgba(255,226,140,.26)":"rgba(255,226,140,0)"); }); }
+/* arrows show which way each ring turns for a clockwise turn of the selected crank */
 function showSel(){
-  RG.forEach(function(R,i){ R.hi.setAttribute("stroke",i===sel?"rgba(255,226,140,.55)":"rgba(255,226,140,0)"); });
+  glowRings();
   var g=GEO.dirs; if(!g) return; g.innerHTML="";
   var name=$("#orSel",stage);
   if(sel<0){ name.innerHTML="Choose a Ring<small>Tap or drag a ring</small>"; return; }
@@ -369,10 +469,10 @@ function showSel(){
   name.innerHTML=esc(PL[sel].name)+" Ring<small>"+(ring.crank?gearLine(sel):"No crank: turns by its gear")+"</small>";
   if(!ring.crank) return;
   var e=P._eff[sel];
-  e.forEach(function(v,i){ if(!v) return; var r=GEO.r[i], a0=-62*Math.PI/180, a1=a0+(v>0?1:-1)*0.42, p0=pt(r,a0), p1=pt(r,a1);
-    var col=i===sel?"#ffe08a":"rgba(255,226,140,.8)";
-    sv("path",{d:"M"+p0[0]+" "+p0[1]+" A"+r+" "+r+" 0 0 "+(v>0?1:0)+" "+p1[0]+" "+p1[1],fill:"none",stroke:col,"stroke-width":i===sel?5:3.5,"stroke-linecap":"round"},g);
-    var tg=[Math.cos(a1+(v>0?1:-1)*Math.PI/2),Math.sin(a1+(v>0?1:-1)*Math.PI/2)], nx=[Math.cos(a1),Math.sin(a1)], h=12;
+  e.forEach(function(v,i){ if(!v) return; var r=GEO.r[i], a0=24*Math.PI/180, a1=a0+(v>0?1:-1)*0.42, p0=pt(r,a0), p1=pt(r,a1);
+    var col=i===sel?"#ffe08a":"rgba(255,226,140,.85)";
+    sv("path",{d:"M"+p0[0]+" "+p0[1]+" A"+r+" "+r+" 0 0 "+(v>0?1:0)+" "+p1[0]+" "+p1[1],fill:"none",stroke:col,"stroke-width":i===sel?7:5,"stroke-linecap":"round"},g);
+    var tg=[Math.cos(a1+(v>0?1:-1)*Math.PI/2),Math.sin(a1+(v>0?1:-1)*Math.PI/2)], nx=[Math.cos(a1),Math.sin(a1)], h=16;
     sv("path",{d:"M"+(p1[0]+tg[0]*h)+" "+(p1[1]+tg[1]*h)+" L"+(p1[0]+nx[0]*h*.8)+" "+(p1[1]+nx[1]*h*.8)+" L"+(p1[0]-nx[0]*h*.8)+" "+(p1[1]-nx[1]*h*.8)+" z",fill:col},g);
   });
 }
@@ -397,21 +497,23 @@ function clashWho(ring,d){
       for(var k=1;k<=Math.abs(ch);k++) if(((rel+sg*k)%P.S+P.S)%P.S===0) return [j,x,j+1,y]; } }
   return null;
 }
+function flashClash(w){ if(!w) return; [RG[w[0]].bodies[w[1]],RG[w[2]].bodies[w[3]]].forEach(function(B){ if(!B) return; B.bad.setAttribute("stroke","rgba(255,90,70,.9)"); clearTimeout(B._h); B._h=setTimeout(function(){ B.bad.setAttribute("stroke","rgba(255,90,70,0)"); },1500); }); }
+function clashSay(ring,d){ var w=clashWho(ring,d); flashClash(w); toast(w?nm(w[0],w[1])+" and "+nm(w[2],w[3])+" would clash. Their arms can't share a spoke.":"Those arms would clash."); if(window.Parlor) Parlor.sfx("tile",{pitch:1.6}); }
 function nm(i,j){ return j?PL[i].name+"'s moon":PL[i].name; }
 function turn(ring,d){
   if(done||busy||!P) return false;
   if(!P.rings[ring].crank){ toast("The "+PL[ring].name+" ring has no crank. It turns only when its gear does."); nope(); return false; }
   if(mode==="lesson"&&!lessonAllows(ring,d)) return false;
   var n=OR.step(P,t,ring,d);
-  if(!n){ var w=clashWho(ring,d); toast(w?nm(w[0],w[1])+" and "+nm(w[2],w[3])+" would clash. Their arms can't share a spoke.":"Those arms would clash."); nope(); if(window.Parlor) Parlor.sfx("tile",{pitch:1.6}); return false; }
+  if(!n){ clashSay(ring,d); nope(); return false; }
   var from=t; hist.push(t); t=n; moves++; sel=ring;
   if(!t0) t0=Date.now();
   if(window.Parlor) Parlor.sfx("click",{pitch:.75+ring*.08});
   paint(true,from); showSel(); counts();
-  if(OR.enc(P,t)===OR.enc(P,P.goal)) setTimeout(solved,320);
-  else if(mode==="practice") practiceTip();
+  afterMove();
   return true;
 }
+function afterMove(){ if(OR.enc(P,t)===OR.enc(P,P.goal)) setTimeout(solved,320); else if(mode==="practice") practiceTip(); }
 function nope(){ FIT.classList.remove("or-nope"); void FIT.offsetWidth; FIT.classList.add("or-nope"); }
 function undo(){ if(done||busy||!hist.length) return; var from=t; t=hist.pop(); moves=Math.max(0,moves-1); paint(true,from); counts(); }
 function restart(){ if(busy||!P) return; if(done&&mode==="daily") { startDaily(true); return; } t=P.start.slice(); hist=[]; moves=0; done=false; paint(true,null); counts(); }
@@ -425,30 +527,80 @@ function hint(){
   hintGlow(m);
 }
 function hintGlow(m){ var R=RG[m.ring]; if(!R) return; var n=0; (function blink(){ R.hi.setAttribute("stroke",n%2?"rgba(255,226,140,.15)":"rgba(255,226,140,.8)"); if(++n<6) setTimeout(blink,230); else showSel(); })(); }
-function counts(){
-  var c=$("#orCount",stage);
-  c.innerHTML="Moves <b>"+moves+"</b> · Par <b>"+P.par+"</b>";
-  if(window.Parlor){ Parlor.score([moves]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Orrery", "Moves "+moves+" · par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+function counts(extra){
+  var c=$("#orCount",stage), mv=moves+(extra||0);
+  c.innerHTML="Moves <b>"+mv+"</b> · Par <b>"+P.par+"</b>";
+  if(window.Parlor){ Parlor.score([mv]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Orrery", "Moves "+mv+" · par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
 }
 
-/* ---------- drag to turn, tap to choose ---------- */
+/* ---------- drag to turn, tap to choose (Oct 31: the ring follows your hand) ----------
+   Grab a planet or anywhere on a ring. While you drag, the ring (and the rings its gears drive) turn smoothly under the
+   pointer and click into each stop as you pass it. A ring can't be pushed into a clash: it gives a little and springs
+   back, and the two planets in the way flash. Let go and it settles on the nearest stop; each stop moved is one turn. */
 var drag=null;
 function local(e){ var r=FIT.getBoundingClientRect(), s=1000/r.width; return [(e.clientX-r.left)*s,(e.clientY-r.top)*s]; }
-function ringAt(p){ var rr=Math.hypot(p[0]-500,p[1]-500), best=-1, bd=1e9; GEO.r.forEach(function(r,i){ var d=Math.abs(rr-r); if(d<bd){ bd=d; best=i; } }); return bd<=Math.max(30,GEO.gap*.55)?best:-1; }
+function ringAt(p){ var rr=Math.hypot(p[0]-500,p[1]-500), best=-1, bd=1e9; if(rr>500) return -1; GEO.r.forEach(function(r,i){ var d=Math.abs(rr-r); if(d<bd){ bd=d; best=i; } }); return bd<=Math.max(34,GEO.gap*.6)?best:-1; }
+/* what's under the pointer: a planet first (front ones first), then the nearest ring on the plate */
+function hit(q){
+  var order=BODIES.filter(function(B){ return !B.fixed; }).sort(function(a,b){ return b.y-a.y; });
+  for(var n=0;n<order.length;n++){ var B=order[n], cy=B.y-B.H*B.s; if(Math.hypot(q[0]-B.x,q[1]-cy)<=B.rad*B.s+10) return {i:B.ring,lift:B.H*B.s}; }
+  var i=ringAt(unproj(q)); return i<0?null:{i:i,lift:0};
+}
+function planeAngle(q,lift){ var p=unproj([q[0],q[1]+lift]); return Math.atan2(p[1]-500,p[0]-500); }
+function lessonQuiet(ring,d){ var Ls=LESSONS[lessonK]; if(!window.Parlor||!Parlor.lessonWaiting||!Ls.done) return false; if(Ls.allow==="any") return true; return Ls.allow.some(function(a){ return a[0]===ring&&a[1]===d; }); }
+/* every arrangement a ring can reach turning one way before it's blocked */
+function reach(ring,d){ var path=[t.slice()], cur=t; if(mode==="lesson"&&!lessonQuiet(ring,d)) return path;
+  for(var n=1;n<P.S;n++){ var nx=OR.step(P,cur,ring,d); if(!nx) break; path.push(nx); cur=nx; } return path; }
+function dragPath(k){ return k>=0?drag.fwd[k]:drag.back[-k]; }
 LIVE.addEventListener("pointerdown",function(e){
-  if(!P||done||busy) return; var p=local(e), i=ringAt(p); if(i<0) return;
-  e.preventDefault(); try{ LIVE.setPointerCapture(e.pointerId); }catch(x){}
-  drag={i:i,a:Math.atan2(p[1]-500,p[0]-500),moved:false,id:e.pointerId}; FIT.classList.add("drag");
-  sel=i; showSel();
+  if(!P||done||busy||drag) return; var h=hit(local(e)); if(!h) return;
+  e.preventDefault(); var i=h.i;
+  sel=i; hov=-1; showSel();
+  if(!P.rings[i].crank){ toast("The "+PL[i].name+" ring has no crank. It turns only when its gear does."); nope(); return; }
+  if(mode==="lesson"&&!lessonQuiet(i,1)&&!lessonQuiet(i,-1)){ lessonAllows(i,1); return; }
+  try{ LIVE.setPointerCapture(e.pointerId); }catch(x){}
+  cancelAnimationFrame(animT); paint(false);
+  drag={i:i,id:e.pointerId,lift:h.lift,a0:planeAngle(local(e),h.lift),acc:0,last:0,k:0,vis:0,from:t.slice(),fwd:reach(i,1),back:reach(i,-1),told:0,x0:e.clientX,y0:e.clientY};
+  FIT.classList.add("drag"); LIVE.style.cursor="grabbing";
 });
 LIVE.addEventListener("pointermove",function(e){
-  if(!drag||e.pointerId!==drag.id) return; var p=local(e), a=Math.atan2(p[1]-500,p[0]-500), da=a-drag.a;
-  if(da>Math.PI) da-=2*Math.PI; if(da<-Math.PI) da+=2*Math.PI;
-  var stepA=2*Math.PI/P.S;
-  if(Math.abs(da)>=stepA*.55){ var d=da>0?1:-1; drag.moved=true; if(turn(drag.i,d)) drag.a+=d*stepA; else { drag.a=a; } }
+  var q=local(e);
+  if(!drag){ /* the mouse shows what it would grab */
+    if(e.pointerType!=="mouse"||!P||done) return; var h=hit(q), i=h?h.i:-1;
+    LIVE.style.cursor=i<0?"default":P.rings[i].crank?"grab":"not-allowed";
+    if(i!==hov){ hov=i; glowRings(); } return;
+  }
+  if(e.pointerId!==drag.id) return;
+  var a=planeAngle(q,drag.lift), da=a-drag.a0; if(da>Math.PI) da-=2*Math.PI; if(da<-Math.PI) da+=2*Math.PI;
+  drag.acc+=da; drag.a0=a;                                   /* keep counting past a full half turn */
+  var stepA=2*Math.PI/P.S, f=drag.acc/stepA, kmax=drag.fwd.length-1, kmin=-(drag.back.length-1), vis=f;
+  /* past a block the ring only gives a little, like a gear against a stop */
+  if(f>kmax) vis=kmax+.22*(1-Math.exp(-(f-kmax)*2.2)); else if(f<kmin) vis=kmin-.22*(1-Math.exp((f-kmin)*2.2));
+  var k=Math.max(kmin,Math.min(kmax,Math.round(vis)));
+  if(k!==drag.k){ drag.k=k; t=dragPath(k); marks(); counts(Math.abs(k)); if(window.Parlor) Parlor.sfx("click",{pitch:.75+drag.i*.08}); }
+  /* pushing into a block: say why, once each way per drag */
+  var push=f>kmax+.45?1:f<kmin-.45?-1:0;
+  if(push&&drag.told!==push&&(push>0?kmax:-kmin)<P.S-1){ drag.told=push;
+    if(mode==="lesson"&&!lessonQuiet(drag.i,push)) lessonAllows(drag.i,push); else clashSay(drag.i,push); }
+  drag.vis=vis; var e2=P._eff[drag.i];
+  render(drag.from.map(function(v,n){ return v+e2[n]*vis; }));
 });
-function endDrag(e){ if(!drag) return; FIT.classList.remove("drag"); drag=null; }
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var D=drag; drag=null; FIT.classList.remove("drag"); LIVE.style.cursor="";
+  var k=D.k, e2=P._eff[D.i], v0=D.vis;
+  /* settle onto the stop */
+  var s0=performance.now(), dur=Math.min(220,80+Math.abs(v0-k)*300);
+  cancelAnimationFrame(animT);
+  (function tick(now){ var p=Math.min(1,(now-s0)/dur), ee=1-Math.pow(1-p,3), v=v0+(k-v0)*ee;
+    render(D.from.map(function(x,n){ return x+e2[n]*v; })); if(p<1) animT=requestAnimationFrame(tick); else { render(t); marks(); } })(s0);
+  if(!k){ counts(); return; }
+  /* each stop passed is one turn (Undo takes them back one at a time) */
+  var sg=k>0?1:-1; for(var n=0;n<Math.abs(k);n++) hist.push(n?(sg>0?D.fwd[n]:D.back[n]):D.from);
+  t=k>0?D.fwd[k]:D.back[-k]; moves+=Math.abs(k); if(!t0) t0=Date.now();
+  counts(); afterMove();
+}
 LIVE.addEventListener("pointerup",endDrag); LIVE.addEventListener("pointercancel",endDrag);
+LIVE.addEventListener("pointerleave",function(e){ if(!drag&&hov>=0){ hov=-1; glowRings(); } });
 document.addEventListener("keydown",function(e){
   if(!document.body.classList.contains("seated")||!P||document.querySelector(".pk-veil.on")) return;
   if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); sel=sel<0?0:(sel+(e.key==="ArrowUp"?1:-1)+P.rings.length)%P.rings.length; showSel(); }
@@ -565,8 +717,8 @@ function fit(){
   var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
   if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
   else { availW=window.innerWidth-14; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
-  var s=Math.max(240,Math.min(availW,availH,760));
-  FIT.style.width=FIT.style.height=Math.round(s)+"px";
+  var s=Math.max(260,Math.min(availW,availH*1000/VH,wide?900:760));
+  FIT.style.width=Math.round(s)+"px"; FIT.style.height=Math.round(s*VH/1000)+"px";
   TOOLS.style.maxWidth=wide?Math.max(s,520)+"px":"";
   document.body.style.setProperty("--pk-size",Math.round(s)+"px");
 }
@@ -595,7 +747,13 @@ new MutationObserver(function(){ var k=document.body.getAttribute("data-set"); v
 var wasSeated=false;
 new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("DOMContentLoaded",function(){ tools(); fin=FIN[document.body.getAttribute("data-set")]||FIN.brass; startDaily(true); fit(); });
-window.ORR={get:function(){ return {P:P,t:t,moves:moves,par:P&&P.par,done:done,mode:mode,sel:sel}; },turn:turn,hint:hint};   /* for testing */
+window.ORR={get:function(){ return {P:P,t:t,moves:moves,par:P&&P.par,done:done,mode:mode,sel:sel}; },turn:turn,hint:hint,   /* for testing */
+  path:function(i,steps,viaPlanet){ var r=FIT.getBoundingClientRect(), z=r.width/1000, out=[], n=Math.abs(steps)*12+1, B=RG[i].bodies[0];
+    for(var k=0;k<=n;k++){ var f=steps*k/(n-1||1), q;
+      if(viaPlanet){ var p=pt(GEO.r[i],ang(t[i]+B.off+Math.min(f,steps<0?0:steps)*(k<n?1:1))), s1=depth(pt(GEO.r[i],ang(t[i]+B.off))); q=scr(p); q=[q[0],q[1]-B.H*s1]; }
+      else { q=scr(pt(GEO.r[i],ang(t[i]+B.off+P.S/2+f))); }
+      out.push([r.left+q[0]*z,r.top+q[1]*z]); }
+    return out; }};
 })();
 </script>
 </body>
