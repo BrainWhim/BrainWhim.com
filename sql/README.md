@@ -9,4 +9,6 @@ Run order (already done on the live project):
 3. `supabase-scores.sql`      - server-side scoring (`bw_report_result`) with anti-cheat checks
 4. `supabase-house.sql`       - points for games against The House (`bw_house_begin` / `bw_house_finish`), capped per day (NEW: not yet run on the live project)
 
+5. `supabase-puzzles.sql`     - daily puzzle streaks saved to accounts (`bw_puzzle_finish` / `bw_puzzle_streak` / `bw_puzzle_import`), Club Streak Shield and catch-up (Oct 31; NEW: Judy to run on the live project)
+
 If the database is ever rebuilt from scratch, run them in this order.

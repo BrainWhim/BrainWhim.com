@@ -6,7 +6,7 @@
 <title>The Orrery · BrainWhim Puzzles</title>
 <meta name="description" content="The Orrery: a daily brass-and-gears puzzle at BrainWhim. Turn the rings, mind the gears and set every planet on its mark.">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1031b">
+<link rel="stylesheet" href="parlor-kit.css?v=1031c">
 <style>
 /* ===== The Orrery (Puzzles & Brain Games, Oct 30; 3-D look and smooth dragging Oct 31): a daily puzzle on a tilted brass orrery =====
    A turned walnut base with engraved spokes, brass rings round a gold sun, enamel planets on brass arms.
@@ -80,7 +80,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1031b"></script>
+<script src="parlor-kit.js?v=1031c"></script>
 <script>
 /* ===== Orrery core (rules, solver, daily maker) — shared by the page and the tests ===== */
 var OR = (function () {
@@ -660,15 +660,18 @@ function solved(){
   if(window.Parlor) Parlor.sfx("win");
   RG.forEach(function(R,i){ setTimeout(function(){ R.hi.setAttribute("stroke","rgba(255,226,140,.6)"); },i*90); });
   if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },500); return; }
-  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(moves,P.par,hints), first=false, sk=streak();
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(moves,P.par,hints), first=false, sk=streak(), srv=null;
   if(mode==="daily"&&!rec()){
     first=true; store("bwOrrery:"+todayKey,JSON.stringify({m:moves,par:P.par,s:st,h:hints,sec:secs}));
     var y=new Date(today); y.setDate(y.getDate()-1);
     sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwOrreryStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,{m:moves,par:P.par,s:st,h:hints,sec:secs}):null;
   }
-  setTimeout(function(){ result(st,secs,first,sk); },700);
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(st,secs,first,sk,sv); }); },700);
 }
-function result(st,secs,first,sk){
+/* the account's streak, when saved there (Oct 31): wait a moment for it, so the window shows the true streak */
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+function result(st,secs,first,sk,sv){
   var v=$("#orEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="orEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
   var b=v.firstChild, perfect=moves<=P.par;
   var head=mode==="practice"?"Practice Puzzle":"The Orrery · No. "+dayNo(today);
@@ -679,6 +682,7 @@ function result(st,secs,first,sk){
     (mode==="daily"?(first?" A new orrery is laid out every day.":" You'd already set today's planets; your first result is the one kept."):"")+'</p>'+
     '<div class="pk-row" style="flex-wrap:wrap"></div>';
   var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);   /* guests: keep your streak; accounts: saved */
   function bt(label,cls,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
   if(mode==="daily") bt("Share Result","",function(){ share(st,secs,sk); });
   bt(mode==="practice"?"Another Practice Puzzle":"Play It Again","",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
@@ -757,7 +761,7 @@ window.addEventListener("resize",fit);
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"orrery", cat:"puzzles", solo:true, free:true, land:true, title:"The Orrery", bg:"puzzles-orrery.jpg", home:"puzzles.html", stage:stage,
+  game:"orrery", cat:"puzzles", solo:true, free:true, daily:{key:"bwOrrery:",streak:"bwOrreryStreak"}, land:true, title:"The Orrery", bg:"puzzles-orrery.jpg", home:"puzzles.html", stage:stage,
   soloLabel:"Today's puzzle", dealLabel:"Today's Puzzle",
   tagline:"Set every planet on its mark.", invite:"The morning sun is on the brass. Turn the rings, mind the gears, and set every planet on its mark.",
   players:[{name:"You",color:"#c9a24f"}],

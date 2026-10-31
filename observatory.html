@@ -6,7 +6,7 @@
 <title>The Observatory · BrainWhim Puzzles</title>
 <meta name="description" content="The Observatory: a daily star-chart puzzle at BrainWhim. Join the stars with the right lines and a real constellation appears, with its story.">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1031b">
+<link rel="stylesheet" href="parlor-kit.css?v=1031c">
 <style>
 /* ===== The Observatory (Puzzles & Brain Games, Oct 31; the chart in perspective, raised stars and wire, Oct 31 later): a daily star-chart puzzle =====
    The stars of a real constellation, each showing how many lines it needs, and dotted sight lines between some of them.
@@ -80,7 +80,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
-<script src="parlor-kit.js?v=1031b"></script>
+<script src="parlor-kit.js?v=1031c"></script>
 <script src="observatory-sky.js?v=1031c"></script>
 <script>
 /* ===== Observatory core (rules, solver, daily maker) — shared by the page and the tests =====
@@ -671,15 +671,18 @@ function solved(){
   if(window.Parlor) Parlor.sfx("win");
   if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },500); return; }
   reveal();
-  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(hints), first=false, sk=streak();
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(hints), first=false, sk=streak(), srv=null;
   if(mode==="daily"&&!rec()){
     first=true; store("bwObs:"+todayKey,JSON.stringify({c:P.C.id,s:st,h:hints,sec:secs}));
     var y=new Date(today); y.setDate(y.getDate()-1);
     sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwObsStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,{c:P.C.id,s:st,h:hints,sec:secs}):null;
   }
-  setTimeout(function(){ result(st,secs,first,sk); },1900);
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(st,secs,first,sk,sv); }); },1900);
 }
-function result(st,secs,first,sk){
+/* the account's streak, when saved there (Oct 31): wait a moment for it, so the window shows the true streak */
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+function result(st,secs,first,sk,sv){
   var v=$("#obEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="obEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
   var b=v.firstChild, C=P.C;
   var head=mode==="practice"?"Practice Chart":"The Observatory · No. "+dayNo(today);
@@ -690,6 +693,7 @@ function result(st,secs,first,sk){
     '<p class="ob-note">'+(hints?"★★★ goes to a chart solved without hints.":"Found without a single hint.")+(mode==="daily"?(first?" A new sky every day.":" You'd already found tonight's constellation; your first result is the one kept."):"")+'</p>'+
     '<div class="pk-row" style="flex-wrap:wrap"></div>';
   var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);   /* guests: keep your streak; accounts: saved */
   function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
   if(mode==="daily") bt("Share Result",function(){ share(st,secs,sk); });
   bt("Look at the Sky",function(){ v.classList.remove("on"); });
@@ -765,7 +769,7 @@ window.addEventListener("resize",refit);
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"observatory", cat:"puzzles", solo:true, free:true, land:true, title:"The Observatory", bg:"puzzles-observatory.jpg", home:"puzzles.html", stage:stage,
+  game:"observatory", cat:"puzzles", solo:true, free:true, daily:{key:"bwObs:",streak:"bwObsStreak"}, land:true, title:"The Observatory", bg:"puzzles-observatory.jpg", home:"puzzles.html", stage:stage,
   soloLabel:"Tonight's chart", dealLabel:"Tonight's Chart",
   tagline:"Join the stars. Find the constellation.", invite:"The dome is open and the first stars are out. Join them with the right lines and tonight's constellation will appear, with its story.",
   players:[{name:"You",color:"#9fb8ff"}],

@@ -432,7 +432,7 @@
     if (el.newBtn) el.newBtn.style.display = "none";
     var nb = $(".pk-bar .pk-btn.primary"); if (nb) nb.style.display = "none";
   };
-  function seat() { seated = true; document.body.classList.add("seated"); sheet(null); window.scrollTo(0, 0); setTimeout(function () { hint(true); }, 900); fitSoon(); setTimeout(fitSoon, 700); }
+  function seat() { seated = true; document.body.classList.add("seated"); sheet(null); window.scrollTo(0, 0); setTimeout(function () { hint(true); }, 900); fitSoon(); setTimeout(fitSoon, 700); if (C.daily) setTimeout(dailyNudge, 2400); }
   P.stand = function () {
     seated = false; document.body.classList.remove("seated"); sheet(null);
     var sit = $("#pkSit"); if (sit) sit.textContent = (mode === "online" && !finished) ? "Return to Your Table" : "Take a Seat";
@@ -766,7 +766,7 @@
     accountInfo.user = u || null;
     var p = (window.BW && BW.profile && BW.profile()) || {};
     accountInfo.pts = Number(p.skill_points || 0); accountInfo.member = !!p.member; accountInfo.name = p.display_name || p.username || "";
-    renderAccount(); renderSets(); paintAv(); P.yourTables();
+    renderAccount(); renderSets(); paintAv(); P.yourTables(); dailySync();
   }
   function renderAccount() {
     var a = el.acct; if (!a) return; a.innerHTML = "<h3 style=\"margin:0 0 8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85\">Account</h3>";
@@ -952,6 +952,92 @@
   };
 
   /* ---------------- start ---------------- */
+  /* ---------------- daily puzzles: streaks saved to the account (Oct 31) ----------------
+     A daily puzzle room passes daily:{key:"bwObs:", streak:"bwObsStreak"} in Parlor.init: where it keeps each day's
+     first finish ("bwObs:2026-10-31") and its streak ({n, best, last}) on the device. (sql/supabase-puzzles.sql)
+       Guests: the streak lives on this device only; the result window offers "Keep Your Streak" (a free account).
+       Free accounts: each finish is saved (bw_puzzle_finish), so the streak follows them to any phone or computer.
+         Days already finished on the device are carried over the first time they sign in (bw_puzzle_import).
+       Club: a Streak Shield (a missed day is covered, at most one a week) is applied by the server automatically.
+     Rooms call Parlor.dailyFinish(day, result) on a first finish and put Parlor.dailyNote(streak) in their result window. */
+  var dailyLive = null, dailySyncing = null;
+  function realUser() { var u = window.BW && BW.user && BW.user(); return u && !u.is_anonymous ? u : null; }
+  function localStreak() { try { return JSON.parse(store(C.daily.streak) || "null") || { n: 0, best: 0, last: "" }; } catch (e) { return { n: 0, best: 0, last: "" }; } }
+  /* the account's streak is the true one: copy it onto the device */
+  function takeServer(r) {
+    if (!r || !r.ok) return null; dailyLive = r;
+    var loc = localStreak(); store(C.daily.streak, JSON.stringify({ n: r.n || 0, best: Math.max(r.best || 0, loc.best || 0), last: r.last || loc.last || "" }));
+    return r;
+  }
+  async function rpc(name, args) {
+    try { var c = sb(); if (!c || !realUser()) return null; var r = await c.rpc(name, args); return r && !r.error && r.data && r.data.ok ? r.data : null; } catch (e) { return null; }
+  }
+  function dailySync() {
+    if (!C || !C.daily || !realUser()) { dailyLive = null; return Promise.resolve(null); }
+    var uid = realUser().id;
+    if (dailySyncing && dailySyncing.uid === uid) return dailySyncing.p;
+    var p = (async function () {
+      var flag = "bwDailyIn:" + uid + ":" + C.game;
+      if (!store(flag)) {   /* carry over what this device already holds, once per account */
+        var days = [];
+        try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf(C.daily.key) === 0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(C.daily.key.length))) { var r0 = null; try { r0 = JSON.parse(localStorage.getItem(k)); } catch (e) {} days.push({ day: k.slice(C.daily.key.length), r: r0 }); } } } catch (e) {}
+        days.sort(function (a, b) { return a.day < b.day ? 1 : -1; }); days = days.slice(0, 60);
+        var im = days.length ? await rpc("bw_puzzle_import", { p_game: C.game, p_days: days }) : await rpc("bw_puzzle_streak", { p_game: C.game });
+        if (im) { store(flag, "1"); return takeServer(im); }
+        return null;
+      }
+      return takeServer(await rpc("bw_puzzle_streak", { p_game: C.game }));
+    })();
+    dailySyncing = { uid: uid, p: p };
+    return p;
+  }
+  /* a first finish of a day's puzzle: saved to the account (resolves to the account's streak, or null for guests/offline) */
+  P.dailyFinish = async function (day, result, catchup) {
+    if (!C.daily || !realUser()) return null;
+    if (dailySyncing) { try { await dailySyncing.p; } catch (e) {} }   /* device days go up first, so the streak counts them */
+    return takeServer(await rpc("bw_puzzle_finish", { p_game: C.game, p_day: day, p_result: result || null, p_catchup: !!catchup }));
+  };
+  P.dailyStreak = function () { return dailyLive; };
+  P.dailySync = dailySync;
+  /* the streak card in a result window: n = the streak shown; server = what dailyFinish returned (or null) */
+  P.dailyNote = function (n, server) {
+    var box = mk("div", "pk-streak");
+    function guest() {
+      box.className = "pk-streak";
+      var days = Math.max(1, n || 1);
+      box.appendChild(mk("b", "t", days > 1 ? "Keep Your " + days + "-Day Streak" : "Start a Streak That Lasts"));
+      box.appendChild(mk("p", "", (days > 1 ? "Right now it's kept on this device only. " : "Come back tomorrow to make it 2 days. ") + "Create a free account and your streak is saved, on any phone or computer."));
+      box.appendChild(btn("Create a Free Account", "", async function () {
+        if (!window.BW) return;
+        var a = await BW.openAuth({ reason: "Create a free account to keep your puzzle streak, on any phone or computer." });
+        if (a && a.sent && !realUser()) { box.innerHTML = ""; box.className = "pk-streak saved"; box.appendChild(mk("p", "pk-gold", "Check your email to finish signing up. Your streak is saved the first time you sign in.")); return; }
+        if (a && a.ok && realUser()) { dailySyncing = null; var r = await dailySync(); box.innerHTML = ""; saved(r, null); }
+      }));
+    }
+    function saved(r, sv) {
+      box.className = "pk-streak saved";
+      if (!r) { box.appendChild(mk("p", "", "✓ Your streak is kept on this device.")); return; }
+      box.appendChild(mk("p", "", "✓ Your streak is saved to your account, on any phone or computer."));
+      if (sv && sv.shielded) { var d = new Date(sv.shielded + "T12:00:00"); box.appendChild(mk("p", "pk-gold", "Your Streak Shield covered " + ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()] + ", so your streak is safe.")); }
+      else if (r.member && r.shieldReady) box.appendChild(mk("p", "pk-gold", "Streak Shield ready: miss a day and your streak is safe."));
+      else if (!r.member) { var c = mk("p", "pk-club"); c.innerHTML = "Club members get a <b>Streak Shield</b>: miss a day and keep your streak. <a href=\"member.html\">Join the Club</a>"; box.appendChild(c); }
+    }
+    var old = document.getElementById("bwa-toast"); if (old) old.remove();   /* the arrival reminder says the same thing */
+    if (!realUser()) guest(); else saved(server || dailyLive, server);
+    return box;
+  };
+  /* a guest with a streak going, sitting down: a gentle reminder (once a day) */
+  function dailyNudge() {
+    if (!C.daily || realUser() || !window.BW || !BW.toast) return;
+    var s = localStreak(), y = new Date(); y.setDate(y.getDate() - 1);
+    function k(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+    var today = k(new Date());
+    if (!s || s.n < 2 || (s.last !== today && s.last !== k(y)) || store("bwDailyNudge") === today) return;
+    store("bwDailyNudge", today);
+    BW.toast("Your " + s.n + "-day streak is kept on this device only. Create a free account to keep it anywhere.", { label: "Keep My Streak", onClick: function () { BW.openAuth({ reason: "Create a free account to keep your puzzle streak, on any phone or computer." }); } });
+  }
+  P.dailyNudge = dailyNudge;
+
   P.init = function (cfg) {
     if (cfg.lesson && !cfg.learn) cfg.learn = { start: function () { P.lessonGo(0); }, practice: function () { P.startPractice(); } };
     C = cfg;
