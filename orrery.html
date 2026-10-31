@@ -12,7 +12,7 @@
    A turned walnut base with engraved spokes, brass rings round a gold sun, enamel planets on brass arms.
    Turn the rings (drag one, or tap it and use the turn buttons) until every planet sits on its engraved mark.
    Gears: turning some rings turns another too. Rings without a handle turn only through their gear.
-   Planets on neighbouring rings can never share a spoke (their arms would clash).
+   Planets on neighboring rings can never share a spoke (their arms would clash).
    One puzzle a day (the same for everyone, by the player's own date); Monday is gentle, Sunday the hardest.
    Par = the fewest turns possible (found by the solver). Finishes (the Finishes card): one free, two for Club members. */
 .or-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -22,8 +22,10 @@
 .or-ring{transition:none}
 .or-nope{animation:or-nope .34s ease}
 @keyframes or-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
-.or-toast{position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);max-width:82%;padding:9px 16px;border-radius:12px;background:rgba(15,23,42,.86);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.or-toast{position:absolute;z-index:6;left:50%;top:4px;transform:translateX(-50%);width:max-content;max-width:88%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.86);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .or-toast.on{opacity:1}
+.or-pulse{animation:or-pulse .8s ease 3}
+@keyframes or-pulse{50%{box-shadow:0 0 0 6px rgba(240,210,122,.55);transform:scale(1.06)}}
 /* the toolbar under the orrery */
 .or-tools{display:flex;flex-direction:column;align-items:center;gap:7px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
 .or-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:center}
@@ -252,7 +254,7 @@ var stage=document.createElement("div"); stage.className="or-pad";
 stage.innerHTML='<div class="or-fit" id="orFit"><svg id="orBase" viewBox="0 0 1000 '+VH+'" aria-hidden="true"></svg><svg id="orLive" class="or-live" viewBox="0 0 1000 '+VH+'" role="img" aria-label="The orrery"></svg><div class="or-toast" id="orToast" role="status"></div></div>'+
   '<div class="or-tools" id="orTools">'+
     '<div class="or-gears" id="orGears"></div>'+
-    '<div class="or-row"><button class="pk-btn or-turn" type="button" id="orCCW" aria-label="Turn anticlockwise">↺</button><div class="or-sel" id="orSel">Choose a Ring<small>Tap or drag a ring</small></div><button class="pk-btn or-turn" type="button" id="orCW" aria-label="Turn clockwise">↻</button></div>'+
+    '<div class="or-row"><button class="pk-btn or-turn" type="button" id="orCCW" aria-label="Turn counterclockwise">↺</button><div class="or-sel" id="orSel">Choose a Ring<small>Tap or drag a ring</small></div><button class="pk-btn or-turn" type="button" id="orCW" aria-label="Turn clockwise">↻</button></div>'+
     '<div class="or-row"><button class="pk-btn" type="button" id="orUndo">Undo</button><button class="pk-btn gold" type="button" id="orHint">Hint</button><button class="pk-btn" type="button" id="orRestart">Restart</button><span class="or-count" id="orCount"></span></div>'+
   '</div>';
 var FIT=$("#orFit",stage), BASE=$("#orBase",stage), LIVE=$("#orLive",stage), TOAST=$("#orToast",stage);
@@ -487,9 +489,10 @@ function gearsText(){
 }
 
 /* ---------- moves ---------- */
-function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(function(){ TOAST.classList.remove("on"); },ms||2200); }
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||1700); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
 function clashWho(ring,d){
-  /* which neighbouring planets would clash? (for the message) */
+  /* which neighboring planets would clash? (for the message) */
   var e=P._eff[ring];
   for(var j=0;j+1<P.rings.length;j++){ var ch=(e[j]-e[j+1])*d; if(!ch) continue;
     for(var x=0;x<P.rings[j].p.length;x++) for(var y=0;y<P.rings[j+1].p.length;y++){
@@ -521,8 +524,8 @@ function hint(){
   if(done||!P) return;
   var best=OR.bestMoves(P,dist,t); if(!best.length) return;
   var m=best[0]; hints++; sel=m.ring; showSel(); counts();
-  var msg="Turn the "+PL[m.ring].name+" ring "+(m.d>0?"clockwise ↻":"anticlockwise ↺")+".";
-  toast(msg,2600);
+  var msg="Turn the "+PL[m.ring].name+" ring "+(m.d>0?"clockwise ↻":"counterclockwise ↺")+".";
+  toast(msg,2200);
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+msg+"</p>");
   hintGlow(m);
 }
@@ -547,12 +550,17 @@ function hit(q){
   var i=ringAt(unproj(q)); return i<0?null:{i:i,lift:0};
 }
 function planeAngle(q,lift){ var p=unproj([q[0],q[1]+lift]); return Math.atan2(p[1]-500,p[0]-500); }
-function lessonQuiet(ring,d){ var Ls=LESSONS[lessonK]; if(!window.Parlor||!Parlor.lessonWaiting||!Ls.done) return false; if(Ls.allow==="any") return true; return Ls.allow.some(function(a){ return a[0]===ring&&a[1]===d; }); }
+function lessonQuiet(ring,d){ var Ls=LESSONS[lessonK]; if(!window.Parlor||!Parlor.lessonWaiting||!Ls.done) return false; if(Ls.allow==="any") return true; return Ls.allow.some(function(a){ return a[0]===ring; }); }
+/* a lesson page that's only for reading (or one already finished): point at the Next button */
+function lookOnly(){ toast(LESSONS[lessonK].done?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to start turning.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("or-pulse"); void b.offsetWidth; b.classList.add("or-pulse"); } }); }
 /* every arrangement a ring can reach turning one way before it's blocked */
 function reach(ring,d){ var path=[t.slice()], cur=t; if(mode==="lesson"&&!lessonQuiet(ring,d)) return path;
   for(var n=1;n<P.S;n++){ var nx=OR.step(P,cur,ring,d); if(!nx) break; path.push(nx); cur=nx; } return path; }
 function dragPath(k){ return k>=0?drag.fwd[k]:drag.back[-k]; }
 LIVE.addEventListener("pointerdown",function(e){
+  hideToast();
+  if(P&&mode==="lesson"&&(done||!Parlor.lessonWaiting)&&!drag){ lookOnly(); return; }
   if(!P||done||busy||drag) return; var h=hit(local(e)); if(!h) return;
   e.preventDefault(); var i=h.i;
   sel=i; hov=-1; showSel();
@@ -608,8 +616,8 @@ document.addEventListener("keydown",function(e){
   else if((e.key==="z"||e.key==="Z")&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); undo(); }
 });
 function tools(){
-  $("#orCW",stage).onclick=function(){ if(sel<0){ toast("Tap a ring first, or drag it round."); return; } turn(sel,1); };
-  $("#orCCW",stage).onclick=function(){ if(sel<0){ toast("Tap a ring first, or drag it round."); return; } turn(sel,-1); };
+  $("#orCW",stage).onclick=function(){ if(sel<0){ toast("Tap a ring first, or drag it around."); return; } turn(sel,1); };
+  $("#orCCW",stage).onclick=function(){ if(sel<0){ toast("Tap a ring first, or drag it around."); return; } turn(sel,-1); };
   $("#orUndo",stage).onclick=undo; $("#orHint",stage).onclick=hint; $("#orRestart",stage).onclick=restart;
 }
 
@@ -674,7 +682,7 @@ function share(st,secs,sk){
 }
 
 /* ---------- practice (a gentle puzzle, any time) ---------- */
-var TIPS=["Look at the gears before you turn: a turn can move two rings at once.","If two planets are in each other's way, one of them can go round the other way.","Set the rings that have no crank first: their gears decide where the others end up.","Hint always shows a best next turn."];
+var TIPS=["Look at the gears before you turn: a turn can move two rings at once.","If two planets are in each other's way, one of them can go around the other way.","Set the rings that have no crank first: their gears decide where the others end up.","Hint always shows a best next turn."];
 var tipN=0;
 function startPractice(){
   var seed="practice:"+Date.now()+":"+Math.random(), p=OR.make(seed,1+Math.floor(Math.random()*2));
@@ -686,13 +694,13 @@ function practiceTip(){ if(++tipN%4===2&&window.Parlor) Parlor.practiceSay("Prac
 /* ---------- Learn to Play ---------- */
 function L(S,rings,links,start,goal){ return OR.prep({S:S,rings:rings,links:links,start:start,goal:goal}); }
 var LESSONS=[
-  {title:"The Orrery",text:"<p>Brass rings carry the planets round the sun. Each planet has a <b>dashed mark</b> on its ring: today's chart.</p><p>Turn the rings until <b>every planet sits on its mark</b>.</p>",
+  {title:"The Orrery",text:"<p>Brass rings carry the planets around the sun. Each planet has a <b>dashed mark</b> on its ring: today's chart.</p><p>Turn the rings until <b>every planet sits on its mark</b>.</p><p>This first page is just for looking. Tap <b>Next</b> to turn your first ring.</p>",
     puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true},{p:[0],crank:true}],[{a:1,b:2,dir:-1}],[6,1,4],[0,3,2]); }},
-  {title:"Turn a Ring",text:"<p>Rings with a <b>brass handle</b> can be turned. Drag the ring round, or tap it and press <b>↺</b> or <b>↻</b>.</p><p>Turn <b>Mercury</b> one stop clockwise onto its mark.</p>",done:"<p>Lovely. One turn moves a ring one stop.</p>",
+  {title:"Turn a Ring",text:"<p>Rings with a <b>brass handle</b> can be turned. Drag the ring around, or tap it and press <b>↺</b> or <b>↻</b>.</p><p>Turn <b>Mercury</b> one stop clockwise onto its mark. Gone too far? Just turn it back.</p>",done:"<p>Lovely. One turn moves a ring one stop.</p>",
     puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true}],[],[7,4],[0,4]); },allow:[[0,1]]},
   {title:"Gears",text:"<p>Some rings are joined by a <b>gear</b>. Turn <b>Venus</b> and its gear turns <b>Earth</b> too, the opposite way. The arrows show which way each ring will go.</p><p>Turn Venus clockwise once: both land on their marks.</p>",done:"<p>Two planets home with one turn. Reading the gears is half the puzzle.</p>",
     puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true},{p:[0],crank:true}],[{a:1,b:2,dir:-1}],[0,1,6],[0,2,5]); },allow:[[1,1]]},
-  {title:"Arms Can't Clash",text:"<p>Planets on <b>neighbouring rings can never share a spoke</b>: their arms would clash. Venus is in Mercury's way.</p><p>Get <b>Mercury</b> to its mark by going <b>the long way round</b> (anticlockwise).</p>",done:"<p>That's the heart of The Orrery: sometimes the short way is blocked, and the best route goes round, or moves another ring out of the way first.</p>",
+  {title:"Arms Can't Clash",text:"<p>Planets on <b>neighboring rings can never share a spoke</b>: their arms would clash. Venus is in Mercury's way.</p><p>Get <b>Mercury</b> to its mark by going <b>the long way around</b> (counterclockwise).</p>",done:"<p>That's the heart of The Orrery: sometimes the short way is blocked, and the best route goes around, or moves another ring out of the way first.</p>",
     puz:function(){ return L(6,[{p:[0],crank:true},{p:[0],crank:false}],[],[0,1],[2,1]); },allow:"any"},
   {title:"No Crank",text:"<p>A ring <b>without a handle</b> has no crank: it turns only through its gear. Here <b>Mercury</b> drives <b>Venus</b> the same way.</p><p>Turn Mercury clockwise once.</p>",done:"<p>Exactly. Rings without a crank are set through their gears.</p>",
     puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:false}],[{a:0,b:1,dir:1}],[2,4],[3,5]); },allow:[[0,1]]},
@@ -702,9 +710,9 @@ var LESSONS=[
 var lessonK=0;
 function lessonSetup(k){ lessonK=k; var Ls=LESSONS[k]; load(Ls.puz(),"lesson"); if(!Ls.done) { done=true; } if(k===0||k===5){ /* look-and-read: show the finished chart on the last step */ } }
 function lessonAllows(ring,d){
-  var Ls=LESSONS[lessonK]; if(!Parlor.lessonWaiting||!Ls.done){ toast("Tap Next to keep going"); return false; }
+  var Ls=LESSONS[lessonK]; if(!Parlor.lessonWaiting||!Ls.done){ lookOnly(); return false; }
   if(Ls.allow==="any") return true;
-  var ok=Ls.allow.some(function(a){ return a[0]===ring&&a[1]===d; }); if(!ok){ toast(Ls.allow[0][1]>0?"Try turning "+PL[Ls.allow[0][0]].name+" clockwise":"Try turning "+PL[Ls.allow[0][0]].name+" anticlockwise"); sel=Ls.allow[0][0]; showSel(); }
+  var ok=Ls.allow.some(function(a){ return a[0]===ring; }); if(!ok){ toast(Ls.allow[0][1]>0?"Try turning "+PL[Ls.allow[0][0]].name+" clockwise":"Try turning "+PL[Ls.allow[0][0]].name+" counterclockwise"); sel=Ls.allow[0][0]; showSel(); }
   return ok;
 }
 function lessonHint(){ hint(); }
@@ -737,7 +745,7 @@ Parlor.init({
     {id:"rose",name:FIN.rose.name,club:true,dots:FIN.rose.dots}
   ],
   rules:{
-    play:"<ol><li><b>The goal:</b> turn the brass rings until every planet (and moon) sits on its <b>dashed mark</b>.</li><li><b>Turning:</b> drag a ring round, or tap it and press <b>↺</b> or <b>↻</b>. Each turn moves a ring one stop. On a keyboard: ↑ ↓ choose a ring, ← → turn it.</li><li><b>Gears:</b> turning some rings turns another ring too, the same way or the opposite way (it's written under the orrery, and arrows show it when you choose a ring). A gear works one way only: turning the driven ring doesn't turn the one that drives it.</li><li><b>No crank:</b> a ring without a brass handle can't be turned by hand; it turns only through its gear.</li><li><b>Arms can't clash:</b> planets on neighbouring rings can never share a spoke. A turn that would make them clash, or pass through each other, won't go. Sometimes the best way is the long way round.</li><li><b>Undo</b> takes back a turn, <b>Hint</b> shows a best next turn, <b>Restart</b> lays the puzzle out again.</li></ol>",
+    play:"<ol><li><b>The goal:</b> turn the brass rings until every planet (and moon) sits on its <b>dashed mark</b>.</li><li><b>Turning:</b> drag a ring around, or tap it and press <b>↺</b> or <b>↻</b>. Each turn moves a ring one stop. On a keyboard: ↑ ↓ choose a ring, ← → turn it.</li><li><b>Gears:</b> turning some rings turns another ring too, the same way or the opposite way (it's written under the orrery, and arrows show it when you choose a ring). A gear works one way only: turning the driven ring doesn't turn the one that drives it.</li><li><b>No crank:</b> a ring without a brass handle can't be turned by hand; it turns only through its gear.</li><li><b>Arms can't clash:</b> planets on neighboring rings can never share a spoke. A turn that would make them clash, or pass through each other, won't go. Sometimes the best way is the long way around.</li><li><b>Undo</b> takes back a turn, <b>Hint</b> shows a best next turn, <b>Restart</b> lays the puzzle out again.</li></ol>",
     score:"<ul><li><b>One puzzle a day</b>, the same for everyone. It changes at midnight on your device. Monday is gentle; it gets harder through the week, with more rings, more gears and moons by the weekend.</li><li><b>Par</b> is the fewest turns the puzzle can be done in (worked out by a solver).</li><li><b>★★★</b> at par · <b>★★</b> within three turns of par · <b>★</b> otherwise. Using a hint caps the day at two stars.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice puzzles (in Learn to Play) are free and don't count.</li></ul>"
   },
   onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
