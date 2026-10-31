@@ -6,7 +6,7 @@
 <title>The Observatory · BrainWhim Puzzles</title>
 <meta name="description" content="The Observatory: a daily star-chart puzzle at BrainWhim. Join the stars with the right lines and a real constellation appears, with its story.">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="parlor-kit.css?v=1031d">
+<link rel="stylesheet" href="parlor-kit.css?v=1031e">
 <style>
 /* ===== The Observatory (Puzzles & Brain Games, Oct 31; the chart in perspective, raised stars and wire, Oct 31 later): a daily star-chart puzzle =====
    The stars of a real constellation, each showing how many lines it needs, and dotted sight lines between some of them.
@@ -47,6 +47,25 @@
 .ob-story{font:500 14.5px/1.6 Montserrat,sans-serif;color:rgba(255,255,255,.88);margin:8px 0 2px;text-align:left}
 .ob-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.7);text-align:center;margin:8px 0 0}
 #obEnd .pk-row .pk-btn{flex:1 1 40%}
+.ob-more{display:none;margin:2px auto 0;padding:2px 8px;border:0;background:none;color:#f0d27a;font:700 12px Montserrat,sans-serif;cursor:pointer}
+/* phones (Oct 31, late): a tighter result window, so the streak card and the buttons are in view without hunting */
+@media (max-width:600px){
+  #obEnd .pk-modal{padding:14px 16px 12px}
+  #obEnd .pk-modal p.pk-kick{margin:0 0 6px}
+  #obEnd .pk-modal h2{margin:0 0 4px;font-size:20px}
+  #obEnd .ob-stars{font-size:24px;margin:0 0 4px}
+  #obEnd .ob-story{font-size:13px;line-height:1.5;margin:4px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  #obEnd .ob-story.open{display:block}
+  #obEnd .ob-more{display:block}
+  #obEnd .ob-facts{margin:6px 0 2px}
+  #obEnd .ob-facts div{padding:5px 2px}
+  #obEnd .ob-facts b{font-size:15px}
+  #obEnd .ob-facts small{font-size:9px}
+  #obEnd .ob-note{font-size:11.5px;margin:5px 0 0}
+  #obEnd .pk-streak.saved.plain{margin-top:8px}
+  #obEnd .pk-row{margin-top:10px;gap:8px}
+  #obEnd .pk-row .pk-btn{padding:10px 8px;font-size:13px}
+}
 @media (max-width:999px){
   .ob-tools{width:100%;max-width:calc(100vw - 16px);padding:6px}
   .ob-tools .pk-btn{padding:8px 12px;font-size:13px}
@@ -54,6 +73,15 @@
   body.pk.seated .pk-stage{justify-content:flex-start}
 }
 @media (max-width:400px){ .ob-tools .pk-btn{padding:8px 10px;font-size:12.5px} .ob-count{font-size:12px} }
+/* desktop (Oct 31, late): the tools stand in a column beside the chart, so the chart can use the full height */
+@media (min-width:1000px){
+  .ob-pad{flex-direction:row;align-items:center;justify-content:center;gap:14px}
+  .ob-tools{width:172px;flex:none;padding:12px 10px;gap:10px}
+  .ob-row{flex-direction:column;align-items:stretch;gap:8px}
+  .ob-tools .pk-btn{padding:10px 12px}
+  .ob-count{order:-1;text-align:center;white-space:normal;padding:2px 0 4px;font-size:13.5px}
+  .ob-help{order:2;font-size:11px;line-height:1.5;color:rgba(255,255,255,.62)}
+}
 /* phones held sideways (Oct 31): the chart window takes the full height; the tools stand in a column on the right */
 @media (max-width:999px) and (orientation:landscape) and (max-height:540px){
   body.pk-land.seated .ob-tools{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:var(--pk-landR);max-width:none;padding:8px}
@@ -80,7 +108,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1031a"></script>
 <script src="bw-avatars.js?v=1031a"></script>
-<script src="parlor-kit.js?v=1031e"></script>
+<script src="parlor-kit.js?v=1031f"></script>
 <script src="observatory-sky.js?v=1031c"></script>
 <script>
 /* ===== Observatory core (rules, solver, daily maker) — shared by the page and the tests =====
@@ -688,11 +716,13 @@ function result(st,secs,first,sk,sv){
   var head=mode==="practice"?"Practice Chart":"The Observatory · No. "+dayNo(today);
   b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+esc(C.name)+'</h2>'+
     '<div class="ob-stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(st)+'</i></div>'+
-    '<p class="ob-story">'+esc(C.story)+'</p>'+
+    '<p class="ob-story">'+esc(C.story)+'</p><button type="button" class="ob-more">Read More</button>'+
     '<div class="ob-facts"><div><b>'+P.N+'</b><small>Stars</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
-    '<p class="ob-note">'+(hints?"★★★ goes to a chart solved without hints.":"Found without a single hint.")+(mode==="daily"?(first?" A new sky every day.":" You'd already found tonight's constellation; your first result is the one kept."):"")+'</p>'+
+    '<p class="ob-note">'+(hints?"★★★ goes to a chart solved without hints.":"Found without a single hint.")+(mode==="daily"?(first?" A new sky every day.":" Your first result today is the one kept."):"")+'</p>'+
     '<div class="pk-row" style="flex-wrap:wrap"></div>';
-  var row=b.querySelector(".pk-row");
+  var row=b.querySelector(".pk-row"), more=b.querySelector(".ob-more"), story=b.querySelector(".ob-story");
+  more.onclick=function(){ var o=story.classList.toggle("open"); more.textContent=o?"Show Less":"Read More"; };
+  requestAnimationFrame(function(){ if(story.scrollHeight<=story.clientHeight+2) more.style.display="none"; });   /* short stories need no button */
   if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);   /* guests: keep your streak; accounts: saved */
   function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
   if(mode==="daily") bt("Share Result",function(){ share(st,secs,sk); });
@@ -757,11 +787,11 @@ function fit(){
   document.body.style.removeProperty("--pk-landR");
   var wide=VW>=1000, toolsH=(TOOLS.offsetHeight||90)+10, availW, availH;
   var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
-  if(wide){ availW=(st2&&st2.clientWidth)||(VW-560); availH=window.innerHeight-top-22-toolsH; }
+  if(wide){ availW=((st2&&st2.clientWidth)||(VW-560))-(TOOLS.offsetWidth||172)-14; availH=window.innerHeight-top-22; }
   else { availW=VW-14; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
   var s=Math.max(260,Math.min(availW,availH*VB[2]/VB[3],wide?860:720));
   FIT.style.width=Math.round(s)+"px"; FIT.style.height=Math.round(s*VB[3]/VB[2])+"px";
-  TOOLS.style.maxWidth=wide?Math.max(s,520)+"px":"";
+  TOOLS.style.maxWidth="";
   document.body.style.setProperty("--pk-size",Math.round(s)+"px");
 }
 function refit(){ fit(); if(!P) return; if(Math.abs(zoomFor()-Z)>.08){ drawChart(); if(done&&mode!=="lesson") reveal(); } resetView(true); }

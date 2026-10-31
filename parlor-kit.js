@@ -1023,13 +1023,13 @@
         if (sv && sv.shielded) { var d = new Date(sv.shielded + "T12:00:00"); box.appendChild(mk("p", "pk-gold", "Your Streak Shield covered " + ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()] + ", so your streak is safe.")); }
         else if (member && r.shieldReady) box.appendChild(mk("p", "pk-gold", "Streak Shield ready: miss a day and your streak is safe."));
       }
-      if (!member) clubCard();
+      if (!member) { box.className = "pk-streak saved plain"; var f = box.firstChild; if (f && r) f.textContent = "✓ Your streak is saved to your account."; clubCard(); }
     }
     /* signed in but not in the Club: what the Club adds (perks that exist only) */
     function clubCard() {
       var c = mk("div", "pk-clubcard");
-      c.appendChild(mk("b", "t", "Club Members Never Lose a Streak to One Missed Day"));
-      c.appendChild(mk("p", "", "The Streak Shield covers a missed day. Club Members also get every Club table and board, the Constellation and Nebula avatars, and House points on 20 games a day."));
+      c.appendChild(mk("b", "t", "Keep Your Streak Safe"));
+      c.appendChild(mk("p", "", "Club Members get a Streak Shield for a missed day, plus every Club table and board, Club avatars and more points."));
       c.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
       box.appendChild(c);
     }
