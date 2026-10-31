@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1029b">
 <style>
-/* ===== The Observatory (Puzzles & Brain Games, Oct 31): a daily star-chart puzzle =====
+/* ===== The Observatory (Puzzles & Brain Games, Oct 31; the chart in perspective, raised stars and wire, Oct 31 later): a daily star-chart puzzle =====
    The stars of a real constellation, each showing how many lines it needs, and dotted sight lines between some of them.
    Draw lines so every star has exactly its number, no two lines cross, and all the stars join into one figure.
    The one answer is the constellation's real figure: solving it reveals the constellation, its bright stars and its story.
@@ -64,7 +64,7 @@
 <script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
 <script src="parlor-kit.js?v=1031a"></script>
-<script src="observatory-sky.js?v=1031a"></script>
+<script src="observatory-sky.js?v=1031b"></script>
 <script>
 /* ===== Observatory core (rules, solver, daily maker) — shared by the page and the tests =====
    A puzzle: the stars of a real constellation, each showing how many lines it needs, and dotted "sight lines"
@@ -264,8 +264,14 @@ function niceDate(d){ return OB.DAYS[d.getDay()].name+", "+MONTHS[d.getMonth()]+
 var P=null, ink=null, hist=[], hints=0, sel=-1, t0=0, done=false, mode="daily", hintK=-1;
 var today=new Date(), todayKey=ymd(today);
 
-/* ---------- the chart ---------- */
-var VB=[-50,-50,1100,1100];
+/* ---------- the chart (Oct 31, later: lying on the table in perspective) ----------
+   The puzzle lives on a flat 1000 x 1000 chart. It's drawn tilted away from you in true perspective (straight lines
+   stay straight, the far edge is narrower), under glass in a thick brass frame. The stars are lit, raised orbs drawn
+   upright where they sit, nearer ones a little larger; drawn lines are raised gold wire with a shadow. */
+var TP=.00019, TK=.82, THK=30;   /* perspective strength, tilt (how much the chart is foreshortened), frame thickness */
+function proj(x,y){ var v=y-500, w=1-TP*v; return [500+(x-500)/w, v*TK/w, 1/w]; }
+function poly(pts){ return "M"+pts.map(function(p){ var q=proj(p[0],p[1]); return q[0].toFixed(1)+" "+q[1].toFixed(1); }).join(" L")+" Z"; }
+var VB=(function(){ var bl=proj(-44,1044), br=proj(1044,1044), tl=proj(-44,-44), x0=bl[0]-30, x1=br[0]+30, y0=tl[1]-112, y1=bl[1]+THK+40; return [Math.round(x0),Math.round(y0),Math.round(x1-x0),Math.round(y1-y0)]; })();
 var stage=document.createElement("div"); stage.className="ob-pad";
 stage.innerHTML='<div class="ob-fit" id="obFit"><svg id="obSvg" viewBox="'+VB.join(" ")+'" role="img" aria-label="The star chart"></svg><div class="ob-toast" id="obToast" role="status"></div></div>'+
   '<div class="ob-tools" id="obTools">'+
@@ -273,70 +279,95 @@ stage.innerHTML='<div class="ob-fit" id="obFit"><svg id="obSvg" viewBox="'+VB.jo
     '<div class="ob-row"><button class="pk-btn" type="button" id="obUndo">Undo</button><button class="pk-btn gold" type="button" id="obHint">Hint</button><button class="pk-btn" type="button" id="obRestart">Restart</button><span class="ob-count" id="obCount"></span></div>'+
   '</div>';
 var FIT=$("#obFit",stage), SVG=$("#obSvg",stage), TOAST=$("#obToast",stage);
-var G={};   /* the drawn pieces: lines[k] = {base, inkL, glow, x}, stars[v] = {g, ring, num} */
+var G={};   /* the drawn pieces: lines[k] = {base, inkL, hi, sh, glow, x, a, b}, stars[v] = {g, ring, num, r}, sp[v] = [x, y] on screen */
 /* on a small screen everything that has to be read or tapped is drawn larger (Z) */
 var Z=1;
-function zoomFor(){ return Math.max(1,Math.min(1.75,640/(FIT.offsetWidth||640))); }
+function zoomFor(){ return Math.max(1,Math.min(1.9,700/(FIT.offsetWidth||700))); }
 var RMAX=99;   /* no star wider than its neighbors allow */
-function starR(m){ return Math.min(RMAX,Math.max(15,Math.min(21,20-(m-1)*1.5))*Z); }
 function grad(defs,id,stops,attrs){ attrs=attrs||{}; attrs.id=id; var g=sv(attrs.x1!=null?"linearGradient":"radialGradient",attrs,defs); stops.forEach(function(s){ sv("stop",{offset:s[0],"stop-color":s[1]},g); }); return "url(#"+id+")"; }
+function shadeHex(hex,f){ var n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255; function c(v){ return Math.max(0,Math.min(255,Math.round(v*(1+f)))); } return "rgb("+c(r)+","+c(g)+","+c(b)+")"; }
 function drawChart(){
-  Z=zoomFor(); var md=1e9; P.nodes.forEach(function(a,i){ P.nodes.forEach(function(b,j){ if(j>i) md=Math.min(md,Math.hypot(a[0]-b[0],a[1]-b[1])); }); }); RMAX=Math.max(14,md*.36);
-  SVG.innerHTML=""; G={lines:[],stars:[]}; var d=sv("defs",{},SVG), C=P.C||{};
+  Z=zoomFor(); SVG.innerHTML=""; G={lines:[],stars:[],sp:[]}; var d=sv("defs",{},SVG), C=P.C||{};
   var blur=sv("filter",{id:"obBlur",x:"-50%",y:"-50%",width:"200%",height:"200%"},d); sv("feGaussianBlur",{stdDeviation:"5"},blur);
-  var soft=sv("filter",{id:"obSoft",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"14"},soft);
-  /* the chart: a brass-framed square of night sky lying on the table */
-  sv("rect",{x:-34,y:-20,width:1068,height:1068,rx:40,fill:"rgba(0,0,0,.55)",filter:"url(#obSoft)"},SVG);
-  sv("rect",{x:-38,y:-38,width:1076,height:1076,rx:40,fill:grad(d,"obBrass",[["0%","#fff1bf"],["35%","#d9b25a"],["70%","#8f6a22"],["100%","#d9b25a"]],{x1:"0",y1:"0",x2:"1",y2:"1"})},SVG);
-  sv("rect",{x:-24,y:-24,width:1048,height:1048,rx:30,fill:grad(d,"obSky",[["0%","#1f3b74"],["55%","#0e1d45"],["100%","#060c22"]],{cx:"45%",cy:"38%",r:"80%"})},SVG);
-  /* a faint milky haze and the chart's grid */
-  sv("ellipse",{cx:520,cy:470,rx:520,ry:170,transform:"rotate(-28 520 470)",fill:"rgba(170,190,255,.06)",filter:"url(#obSoft)"},SVG);
-  var grid=sv("g",{stroke:"rgba(170,195,255,.11)","stroke-width":1.2,fill:"none"},SVG);
-  for(var i=1;i<10;i++){ sv("line",{x1:i*100,y1:-14,x2:i*100,y2:1014},grid); sv("line",{x1:-14,y1:i*100,x2:1014,y2:i*100},grid); }
-  sv("circle",{cx:500,cy:500,r:470,stroke:"rgba(170,195,255,.09)","stroke-dasharray":"3 9"},grid);
-  /* the background stars (not part of the puzzle) */
-  var bg=sv("g",{},SVG);
-  (C.bg||[]).forEach(function(b,n){ var r=Math.max(1.2,4.2-(b[2]-2)*.85); var c=sv("circle",{cx:b[0],cy:b[1],r:r,fill:b[3],opacity:Math.max(.25,Math.min(.85,1.2-b[2]*.16))},bg); if(n%7===3){ c.setAttribute("class","ob-tw"); c.style.animationDelay=(n%5)*.7+"s"; } });
-  /* sight lines, then the inked lines over them */
-  var LB=sv("g",{},SVG), LG=sv("g",{},SVG), LI=sv("g",{},SVG), LX=sv("g",{},SVG);
+  var blur2=sv("filter",{id:"obBlur2",x:"-50%",y:"-50%",width:"200%",height:"200%"},d); sv("feGaussianBlur",{stdDeviation:"2.2"},blur2);
+  var soft=sv("filter",{id:"obSoft",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"16"},soft);
+  /* the frame's shadow on the table, its front edge, the brass bezel, then the sky under glass */
+  var front=[proj(-44,1044),proj(1044,1044)];
+  sv("path",{d:poly([[-44,-44],[1044,-44],[1044,1044],[-44,1044]]),transform:"translate(10 "+(THK+18)+")",fill:"rgba(0,0,0,.6)",filter:"url(#obSoft)"},SVG);
+  sv("path",{d:"M"+front[0][0]+" "+front[0][1]+" L"+front[1][0]+" "+front[1][1]+" L"+front[1][0]+" "+(front[1][1]+THK)+" L"+front[0][0]+" "+(front[0][1]+THK)+" Z",fill:grad(d,"obEdge",[["0%","#6e4f17"],["30%","#c99a3c"],["55%","#8f6a22"],["100%","#3e2b0b"]],{x1:"0",y1:"0",x2:"0",y2:"1"})},SVG);
+  sv("path",{d:poly([[-44,-44],[1044,-44],[1044,1044],[-44,1044]]),fill:grad(d,"obBrass",[["0%","#fff1bf"],["30%","#d9b25a"],["62%","#8f6a22"],["100%","#d9b25a"]],{x1:"0",y1:"0",x2:"1",y2:"1"})},SVG);
+  sv("path",{d:poly([[-32,-32],[1032,-32],[1032,1032],[-32,1032]]),fill:"none",stroke:"rgba(255,248,220,.55)","stroke-width":2},SVG);
+  sv("path",{d:poly([[-22,-22],[1022,-22],[1022,1022],[-22,1022]]),fill:"none",stroke:"rgba(60,40,10,.7)","stroke-width":4},SVG);
+  var skyD=poly([[-20,-20],[1020,-20],[1020,1020],[-20,1020]]);
+  sv("path",{id:"obSkyP",d:skyD},sv("clipPath",{id:"obSkyClip"},d));
+  sv("path",{d:skyD,fill:grad(d,"obSky",[["0%","#21407c"],["55%","#0f1f4a"],["100%","#060c22"]],{cx:"45%",cy:"40%",r:"80%"})},SVG);
+  var inSky=sv("g",{"clip-path":"url(#obSkyClip)"},SVG);
+  /* a soft Milky Way haze, the chart's grid and circle, and the background stars */
+  [[520,470,520,170,-28,.07],[300,640,260,110,-20,.05],[760,300,230,90,-35,.05]].forEach(function(h){ var c=proj(h[0],h[1]); sv("ellipse",{cx:c[0],cy:c[1],rx:h[2]*c[2],ry:h[3]*c[2]*TK,transform:"rotate("+h[4]*TK+" "+c[0]+" "+c[1]+")",fill:"rgba(170,190,255,"+h[5]+")",filter:"url(#obSoft)"},inSky); });
+  var grid=sv("g",{stroke:"rgba(170,195,255,.12)","stroke-width":1.3,fill:"none"},inSky);
+  for(var i=1;i<10;i++){ var a=proj(i*100,-20), b=proj(i*100,1020), c2=proj(-20,i*100), d2=proj(1020,i*100); sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1]},grid); sv("line",{x1:c2[0],y1:c2[1],x2:d2[0],y2:d2[1]},grid); }
+  var circ=[]; for(i=0;i<96;i++){ var t=i/96*Math.PI*2; circ.push([500+470*Math.cos(t),500+470*Math.sin(t)]); } sv("path",{d:poly(circ),stroke:"rgba(170,195,255,.1)","stroke-dasharray":"3 9"},grid);
+  (C.bg||[]).forEach(function(b,n){ var q=proj(b[0],b[1]), r=Math.max(1.2,4.2-(b[2]-2)*.85)*q[2]; var c=sv("circle",{cx:q[0],cy:q[1],r:r,fill:b[3],opacity:Math.max(.25,Math.min(.85,1.2-b[2]*.16))},inSky); if(n%7===3){ c.setAttribute("class","ob-tw"); c.style.animationDelay=(n%5)*.7+"s"; } });
+  /* where each star sits on screen, and how big it can be */
+  P.nodes.forEach(function(p){ G.sp.push(proj(p[0],p[1])); });
+  /* each star is as big as its own nearest neighbor allows (only crowded stars are drawn smaller) */
+  var near=G.sp.map(function(a,i){ var m=1e9; G.sp.forEach(function(b,j){ if(j!==i) m=Math.min(m,Math.hypot(a[0]-b[0],a[1]-b[1])); }); return m; }), md=Math.min.apply(null,near);
+  var rs=P.nodes.map(function(p,v){ var info=(C.n&&C.n[v])||[0,0,2.5]; return Math.max(9,Math.min(near[v]*.44,Math.max(16,Math.min(22,21-(info[2]-1)*1.5))*Z*Math.pow(G.sp[v][2],.8))); });
+  /* sight lines (dots only between the stars' edges, packed closer on short lines), wire shadows, wires */
+  var LB=sv("g",{},SVG), LS=sv("g",{},SVG), LG=sv("g",{},SVG), LI=sv("g",{},SVG), LX=sv("g",{},SVG);
   G.hintL=sv("line",{x1:0,y1:0,x2:0,y2:0,stroke:"rgba(255,226,140,0)","stroke-width":18*Z,"stroke-linecap":"round",filter:"url(#obBlur)"},LG);
-  P.cand.forEach(function(e,k){ var a=P.nodes[e[0]], b=P.nodes[e[1]];
-    var base=sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:"rgba(205,220,255,.42)","stroke-width":3*Z,"stroke-dasharray":"1 "+Math.round(11*Z),"stroke-linecap":"round"},LB);
-    var glow=sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:"rgba(255,214,120,0)","stroke-width":14*Z,"stroke-linecap":"round",filter:"url(#obBlur)"},LG);
-    var inkL=sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:"#f3d58a","stroke-width":5*Z,"stroke-linecap":"round",opacity:0},LI);
-    var m=[(a[0]+b[0])/2,(a[1]+b[1])/2], h=8*Z, x=sv("path",{d:"M"+(m[0]-h)+" "+(m[1]-h)+" L"+(m[0]+h)+" "+(m[1]+h)+" M"+(m[0]+h)+" "+(m[1]-h)+" L"+(m[0]-h)+" "+(m[1]+h),stroke:"rgba(255,140,120,.75)","stroke-width":3*Z,"stroke-linecap":"round",opacity:0},LX);
-    G.lines.push({base:base,glow:glow,inkL:inkL,x:x}); });
-  G.drag=sv("line",{x1:0,y1:0,x2:0,y2:0,stroke:"rgba(243,213,138,.7)","stroke-width":4*Z,"stroke-dasharray":"8 8","stroke-linecap":"round",opacity:0},SVG);
-  /* the stars: a glow in the star's own colour, a bright core, and the number of lines it needs */
+  P.cand.forEach(function(e,k){ var A=G.sp[e[0]], B=G.sp[e[1]], L=Math.hypot(B[0]-A[0],B[1]-A[1]), ux=(B[0]-A[0])/L, uy=(B[1]-A[1])/L;
+    var s0=rs[e[0]]+4*Z, s1=rs[e[1]]+4*Z, vis=Math.max(0,L-s0-s1), gap=Math.max(5*Z,Math.min(11*Z,vis/5));
+    var p0=[A[0]+ux*s0,A[1]+uy*s0], p1=[B[0]-ux*s1,B[1]-uy*s1];
+    var base=sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:"rgba(215,228,255,.62)","stroke-width":3.4*Z,"stroke-dasharray":vis<14*Z?"0":"1 "+gap.toFixed(1),"stroke-linecap":"round"},LB);
+    var sh=sv("line",{x1:A[0]+3*Z,y1:A[1]+6*Z,x2:B[0]+3*Z,y2:B[1]+6*Z,stroke:"rgba(0,0,0,.55)","stroke-width":5.5*Z,"stroke-linecap":"round",filter:"url(#obBlur2)",opacity:0},LS);
+    var glow=sv("line",{x1:A[0],y1:A[1],x2:B[0],y2:B[1],stroke:"rgba(255,214,120,0)","stroke-width":14*Z,"stroke-linecap":"round",filter:"url(#obBlur)"},LG);
+    var inkL=sv("line",{x1:A[0],y1:A[1],x2:B[0],y2:B[1],stroke:"#e8c46a","stroke-width":5.5*Z,"stroke-linecap":"round",opacity:0},LI);
+    var hi=sv("line",{x1:A[0],y1:A[1]-1.2*Z,x2:B[0],y2:B[1]-1.2*Z,stroke:"#fff4cf","stroke-width":1.6*Z,"stroke-linecap":"round",opacity:0},LI);
+    var m=[(p0[0]+p1[0])/2,(p0[1]+p1[1])/2], h=7*Z, x=sv("path",{d:"M"+(m[0]-h)+" "+(m[1]-h)+" L"+(m[0]+h)+" "+(m[1]+h)+" M"+(m[0]+h)+" "+(m[1]-h)+" L"+(m[0]-h)+" "+(m[1]+h),stroke:"rgba(255,140,120,.85)","stroke-width":3*Z,"stroke-linecap":"round",opacity:0},LX);
+    G.lines.push({base:base,sh:sh,glow:glow,inkL:inkL,hi:hi,x:x,a:A,b:B}); });
+  G.drag=sv("line",{x1:0,y1:0,x2:0,y2:0,stroke:"rgba(243,213,138,.75)","stroke-width":4*Z,"stroke-dasharray":"8 8","stroke-linecap":"round",opacity:0},SVG);
+  /* the stars: raised, lit orbs with a shadow on the chart, a glow in their own colour and the number of lines they need */
   var ST=sv("g",{},SVG);
-  P.nodes.forEach(function(p,v){ var info=(C.n&&C.n[v])||[p[0],p[1],2.5,0,"#fff4e0"], col=info[4]||"#fff4e0", r=starR(info[2]);
-    var g=sv("g",{},ST);
-    sv("circle",{cx:p[0],cy:p[1],r:r*2.3,fill:grad(d,"obH"+v,[["0%",col],["35%",col],["100%","rgba(0,0,0,0)"]],{}),opacity:.32},g);
-    var ring=sv("circle",{cx:p[0],cy:p[1],r:r+Math.min(6*Z,md*.08),fill:"none",stroke:"rgba(0,0,0,0)","stroke-width":3.5*Z},g);
-    sv("circle",{cx:p[0],cy:p[1],r:r,fill:grad(d,"obC"+v,[["0%","#ffffff"],["55%",col],["100%",col]],{cx:"40%",cy:"36%",r:"70%"})},g);
-    var fz=Math.round(Math.min(22*Z,r*1.3)), num=sv("text",{x:p[0],y:p[1]+fz*.35,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"700","font-size":fz,fill:"#0b1430"},g); num.textContent=P.need[v];
+  stops(d,"obShadowG",[["0%","rgba(0,0,0,.6)"],["60%","rgba(0,0,0,.25)"],["100%","rgba(0,0,0,0)"]]);
+  stops(d,"obSpec",[["0%","rgba(255,255,255,.95)"],["40%","rgba(255,255,255,.35)"],["100%","rgba(255,255,255,0)"]],{cx:"34%",cy:"28%",r:"36%"});
+  P.nodes.forEach(function(p,v){ var info=(C.n&&C.n[v])||[p[0],p[1],2.5,0,"#fff4e0"], col=info[4]||"#fff4e0", r=rs[v], q=G.sp[v];
+    var g=sv("g",{transform:"translate("+q[0].toFixed(1)+" "+q[1].toFixed(1)+")"},ST);
+    sv("ellipse",{cx:4*Z,cy:7*Z,rx:r*1.15,ry:r*1.15*TK,fill:"url(#obShadowG)"},g);
+    sv("circle",{r:r*2.4,fill:grad(d,"obH"+v,[["0%",col],["30%",col],["100%","rgba(0,0,0,0)"]]),opacity:.3},g);
+    if(info[2]<1.6){ var sp=r*2.9; sv("path",{d:"M"+(-sp)+" 0 L"+sp+" 0 M0 "+(-sp)+" L0 "+sp,stroke:col,"stroke-width":1.6*Z,opacity:.45,"stroke-linecap":"round"},g); }
+    var ring=sv("circle",{r:r+Math.min(5*Z,near[v]*.06),fill:"none",stroke:"rgba(0,0,0,0)","stroke-width":3.5*Z},g);
+    sv("circle",{r:r,fill:grad(d,"obC"+v,[["0%","#ffffff"],["38%",col],["85%",shadeHex(col,-.28)],["100%",shadeHex(col,-.45)]],{cx:"38%",cy:"32%",r:"72%"})},g);
+    sv("circle",{r:r,fill:"url(#obSpec)"},g);
+    sv("circle",{r:r-.8,fill:"none",stroke:"rgba(255,255,255,.35)","stroke-width":1.2},g);
+    var fz=Math.round(Math.min(22*Z,r*1.25)), num=sv("text",{x:0,y:fz*.36,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"700","font-size":fz,fill:"#0b1430"},g); num.textContent=P.need[v];
     G.stars.push({g:g,ring:ring,num:num,r:r});
   });
+  /* the glass: a faint sweep of reflected lamplight across the far corner */
+  var glare=sv("g",{"clip-path":"url(#obSkyClip)","pointer-events":"none"},SVG);
+  var g0=proj(-20,-20), g1=proj(640,-20), g2=proj(-20,520);
+  sv("path",{d:"M"+g0[0]+" "+g0[1]+" L"+g1[0]+" "+g1[1]+" L"+g2[0]+" "+g2[1]+" Z",fill:grad(d,"obGlare",[["0%","rgba(255,236,200,.13)"],["100%","rgba(255,236,200,0)"]],{x1:"0",y1:"0",x2:".7",y2:".7"})},glare);
   G.names=sv("g",{opacity:0},SVG);
-  G.title=sv("text",{x:500,y:46,"text-anchor":"middle","font-family":"Cormorant Garamond,serif","font-weight":"700","font-size":"64",fill:"#f6e3a8",opacity:0,"letter-spacing":"2"},SVG);
+  G.title=sv("text",{x:500,y:VB[1]+70,"text-anchor":"middle","font-family":"Cormorant Garamond,serif","font-weight":"700","font-size":"66",fill:"#f6e3a8",stroke:"rgba(8,14,32,.6)","stroke-width":4,"paint-order":"stroke",opacity:0,"letter-spacing":"2"},SVG);
   update();
 }
+function stops(defs,id,list,attrs){ return grad(defs,id,list,attrs); }
 /* show the current lines: drawn, ruled out, crossing (red), and each star's count */
 function update(){
   if(!P) return;
   var bad={}, deg=new Array(P.N).fill(0);
   P.cand.forEach(function(e,k){ if(ink[k]!==1) return; deg[e[0]]++; deg[e[1]]++; P.X[k].forEach(function(j){ if(ink[j]===1){ bad[k]=1; bad[j]=1; } }); });
   P.cand.forEach(function(e,k){ var L=G.lines[k], on=ink[k]===1, out=ink[k]===0, sw=(sel>=0&&(e[0]===sel||e[1]===sel));
-    L.inkL.setAttribute("opacity",on?1:0); L.inkL.setAttribute("stroke",bad[k]?"#ff7a66":done?"#ffe9a8":"#f3d58a");
-    L.glow.setAttribute("stroke",on?(bad[k]?"rgba(255,100,80,.55)":"rgba(255,214,120,.5)"):"rgba(0,0,0,0)");
-    L.base.setAttribute("opacity",on?0:out?.18:sw?1:.85); L.base.setAttribute("stroke",sw&&!out?"rgba(255,236,170,.85)":"rgba(205,220,255,.42)");
+    L.inkL.setAttribute("opacity",on?1:0); L.hi.setAttribute("opacity",on?(bad[k]?.3:.85):0); L.sh.setAttribute("opacity",on?1:0);
+    L.inkL.setAttribute("stroke",bad[k]?"#ff7a66":done?"#ffe39a":"#e8c46a");
+    L.glow.setAttribute("stroke",on?(bad[k]?"rgba(255,100,80,.55)":"rgba(255,214,120,.42)"):"rgba(0,0,0,0)");
+    L.base.setAttribute("opacity",on?0:out?.2:1); L.base.setAttribute("stroke",sw&&!out?"rgba(255,236,170,.95)":"rgba(215,228,255,.62)");
     L.x.setAttribute("opacity",out&&!done?1:0); });
   var set=0;
   P.nodes.forEach(function(p,v){ var S=G.stars[v], n=deg[v], need=P.need[v];
-    S.ring.setAttribute("stroke",v===sel?"#ffe08a":n>need?"#ff7a66":n===need?"rgba(243,213,138,.85)":"rgba(0,0,0,0)");
-    S.num.setAttribute("fill",n>need?"#a11d0e":"#0b1430"); S.num.setAttribute("opacity",n===need&&!done?.45:1);
+    S.ring.setAttribute("stroke",v===sel?"#ffe08a":n>need?"#ff7a66":n===need?"rgba(243,213,138,.9)":"rgba(0,0,0,0)");
+    S.num.setAttribute("fill",n>need?"#a11d0e":"#0b1430"); S.num.setAttribute("opacity",n===need&&!done?.5:1);
     if(n===need) set++; });
-  var lines=0; for(var k=0;k<ink.length;k++) if(ink[k]===1) lines++;
   $("#obCount",stage).innerHTML="Stars set <b>"+set+"</b> of "+P.N;
   if(window.Parlor) Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Tonight's Chart","Stars set "+set+" of "+P.N+(hints?" · "+hints+" hint"+(hints>1?"s":""):""));
 }
@@ -366,7 +397,7 @@ function check(){
 }
 function hint(){
   if(done||!P) return; var h=OB.hint(P,ink); if(!h) return;
-  hints++; clearHint(); hintK=h.k; var e=P.cand[h.k], a=P.nodes[e[0]], b=P.nodes[e[1]];
+  hints++; clearHint(); hintK=h.k; var a=G.lines[h.k].a, b=G.lines[h.k].b;
   G.hintL.setAttribute("x1",a[0]); G.hintL.setAttribute("y1",a[1]); G.hintL.setAttribute("x2",b[0]); G.hintL.setAttribute("y2",b[1]);
   G.hintL.setAttribute("stroke",h.wrong?"rgba(255,110,90,.85)":"rgba(255,226,140,.85)");
   toast(h.wrong?"The glowing line doesn't belong in the figure.":"The glowing line belongs in the figure.",2200);
@@ -380,10 +411,17 @@ function clearHint(){ hintK=-1; if(G.hintL) G.hintL.setAttribute("stroke","rgba(
    Or drag from one star to another, or tap one star and then the other. */
 var press=null;
 function local(e){ var r=FIT.getBoundingClientRect(), s=VB[2]/r.width; return [VB[0]+(e.clientX-r.left)*s,VB[1]+(e.clientY-r.top)*s]; }
-function starAt(q){ var best=-1, bd=1e9; P.nodes.forEach(function(p,v){ var d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<bd){ bd=d; best=v; } }); return bd<=Math.max(30,G.stars[best].r+12)?best:-1; }
-function lineAt(q){ var best=-1, bd=1e9;
-  P.cand.forEach(function(e,k){ var a=P.nodes[e[0]], b=P.nodes[e[1]], d=OB.segDist(q,a,b); if(d<bd){ bd=d; best=k; } });   /* (a tap on a star itself is caught first) */
-  return bd<=30*Z?best:-1; }
+function starAt(q){ var best=-1, bd=1e9; G.sp.forEach(function(p,v){ var d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<bd){ bd=d; best=v; } }); return best>=0&&bd<=Math.max(26*Z,G.stars[best].r+10*Z)?best:-1; }
+/* the nearest sight line, and the next nearest (to tell when a tap is too close to call) */
+function linesNear(q){ var best=-1, bd=1e9, nd=1e9;
+  P.cand.forEach(function(e,k){ var L=G.lines[k], d=OB.segDist(q,L.a,L.b); if(d<bd){ nd=bd; bd=d; best=k; } else if(d<nd) nd=d; });
+  return {k:bd<=26*Z?best:-1,d:bd,next:nd}; }
+function lineAt(q){ return linesNear(q).k; }
+function tooClose(q){ var list=P.cand.map(function(e,k){ return [OB.segDist(q,G.lines[k].a,G.lines[k].b),k]; }).sort(function(x,y){ return x[0]-y[0]; }).slice(0,2);
+  list.forEach(function(x){ var L=G.lines[x[1]]; L.glow.setAttribute("stroke","rgba(160,200,255,.6)"); setTimeout(function(){ update(); },650); });
+  toast("Two lines meet there. Tap nearer the one you want, or tap its two stars.",2200); }
+/* the first time a star is chosen, say what it's for */
+var selTold=false;
 function candBetween(a,b){ var k=P.key[Math.min(a,b)+","+Math.max(a,b)]; return k==null?-1:k; }
 function lookOnly(){ toast(mode==="lesson"&&LESSONS[lessonK].done?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to start drawing.",2400);
   [].forEach.call(document.querySelectorAll(".pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("ob-pulse"); void b.offsetWidth; b.classList.add("ob-pulse"); } }); }
@@ -393,16 +431,18 @@ SVG.addEventListener("pointerdown",function(e){
   if(done) return;
   if(e.button===2) return;
   e.preventDefault(); try{ SVG.setPointerCapture(e.pointerId); }catch(x){}
-  var q=local(e), v=starAt(q), k=lineAt(q);
+  var q=local(e), v=starAt(q), near=linesNear(q), k=near.k;
   /* between two close stars: a tap off the star's bright core but right on a line means the line */
-  if(v>=0&&k>=0){ var sp=P.nodes[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]), e2=P.cand[k], dl=OB.segDist(q,P.nodes[e2[0]],P.nodes[e2[1]]); if(ds>G.stars[v].r*.85&&dl<ds*.6) v=-1; else k=-1; }
+  if(v>=0&&k>=0){ var sp=G.sp[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]); if(ds>G.stars[v].r*.9&&near.d<ds*.6) v=-1; else k=-1; }
+  /* two lines almost equally close: don't guess */
+  if(v<0&&k>=0&&near.next-near.d<6*Z&&near.d>3*Z){ tooClose(q); return; }
   press={id:e.pointerId,q:q,star:v,line:k,moved:false,long:false};
   if(k>=0) press.timer=setTimeout(function(){ if(press&&!press.moved){ press.long=true; ruleOut(k); if(navigator.vibrate) try{ navigator.vibrate(12); }catch(x){} } },480);
 });
 SVG.addEventListener("pointermove",function(e){
   if(!press||e.pointerId!==press.id) return; var q=local(e);
   if(!press.moved&&Math.hypot(q[0]-press.q[0],q[1]-press.q[1])>14){ press.moved=true; clearTimeout(press.timer); }
-  if(press.moved&&press.star>=0){ var a=P.nodes[press.star], t=starAt(q), b=t>=0&&t!==press.star?P.nodes[t]:q;
+  if(press.moved&&press.star>=0){ var a=G.sp[press.star], t=starAt(q), b=t>=0&&t!==press.star?G.sp[t]:q;
     G.drag.setAttribute("x1",a[0]); G.drag.setAttribute("y1",a[1]); G.drag.setAttribute("x2",b[0]); G.drag.setAttribute("y2",b[1]); G.drag.setAttribute("opacity",1); }
 });
 function endPress(e){
@@ -413,7 +453,7 @@ function endPress(e){
     if(k<0){ toast("There's no sight line between those two stars."); return; } sel=-1; toggle(k); return; }
   if(p.moved) return;
   if(p.star>=0){ if(sel>=0&&sel!==p.star){ var k2=candBetween(sel,p.star); if(k2>=0){ sel=-1; toggle(k2); return; } }
-    sel=sel===p.star?-1:p.star; update(); return; }
+    sel=sel===p.star?-1:p.star; update(); if(sel>=0&&!selTold){ selTold=true; toast("Now tap a star it has a sight line to, and the line is drawn.",2200); } return; }
   if(p.line>=0){ sel=-1; toggle(p.line); return; }
   if(sel>=0){ sel=-1; update(); }
 }
@@ -447,7 +487,7 @@ function streak(){ try{ return JSON.parse(store("bwObsStreak")||'{"n":0,"best":0
 function reveal(){
   var C=P.C; if(!C) return;
   G.title.textContent=C.name; G.names.innerHTML="";
-  C.n.forEach(function(s,v){ if(!s[3]) return; var p=P.nodes[v], up=p[1]>120, t=sv("text",{x:p[0],y:up?p[1]-G.stars[v].r-14:p[1]+G.stars[v].r+30,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"600","font-size":Math.round(24*Z),fill:"#f6e3a8",stroke:"#0b1430","stroke-width":5,"paint-order":"stroke"},G.names); t.textContent=s[3]; });
+  C.n.forEach(function(s,v){ if(!s[3]) return; var p=G.sp[v], up=P.nodes[v][1]>140, t=sv("text",{x:p[0],y:up?p[1]-G.stars[v].r-12*Z:p[1]+G.stars[v].r+26*Z,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"600","font-size":Math.round(24*Z),fill:"#f6e3a8",stroke:"#0b1430","stroke-width":5,"paint-order":"stroke"},G.names); t.textContent=s[3]; });
   var s0=performance.now();
   (function tick(now){ var f=Math.min(1,(now-s0)/900); G.title.setAttribute("opacity",f); G.names.setAttribute("opacity",f);
     G.lines.forEach(function(L,k){ if(ink[k]===1) L.glow.setAttribute("stroke","rgba(255,226,150,"+(.45+.35*Math.sin(f*Math.PI))+")"); });
@@ -527,8 +567,8 @@ function fit(){
   var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
   if(wide){ availW=(st2&&st2.clientWidth)||(window.innerWidth-560); availH=window.innerHeight-top-22-toolsH; }
   else { availW=window.innerWidth-14; availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-toolsH-6; }
-  var s=Math.max(260,Math.min(availW,availH,wide?760:640));
-  FIT.style.width=FIT.style.height=Math.round(s)+"px";
+  var s=Math.max(260,Math.min(availW,availH*VB[2]/VB[3],wide?860:720));
+  FIT.style.width=Math.round(s)+"px"; FIT.style.height=Math.round(s*VB[3]/VB[2])+"px";
   TOOLS.style.maxWidth=wide?Math.max(s,520)+"px":"";
   document.body.style.setProperty("--pk-size",Math.round(s)+"px");
 }
@@ -554,7 +594,7 @@ var wasSeated=false;
 new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("DOMContentLoaded",function(){ tools(); skyBg(); startDaily(true); fit(); setTimeout(skyBg,50); });
 window.OBS={get:function(){ return {P:P,ink:ink,hints:hints,done:done,mode:mode,sel:sel}; },toggle:toggle,hint:hint,   /* for testing */
-  pt:function(x,y){ var r=FIT.getBoundingClientRect(), z=r.width/VB[2]; return [r.left+(x-VB[0])*z,r.top+(y-VB[1])*z]; }};
+  pt:function(x,y){ var r=FIT.getBoundingClientRect(), z=r.width/VB[2], q=proj(x,y); return [r.left+(q[0]-VB[0])*z,r.top+(q[1]-VB[1])*z]; }};
 })();
 </script>
 </body>
