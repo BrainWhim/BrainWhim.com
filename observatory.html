@@ -64,7 +64,7 @@
 <script src="play-rooms.js?v=1028e"></script>
 <script src="bw-avatars.js?v=1026a"></script>
 <script src="parlor-kit.js?v=1031a"></script>
-<script src="observatory-sky.js?v=1031b"></script>
+<script src="observatory-sky.js?v=1031c"></script>
 <script>
 /* ===== Observatory core (rules, solver, daily maker) — shared by the page and the tests =====
    A puzzle: the stars of a real constellation, each showing how many lines it needs, and dotted "sight lines"
@@ -264,14 +264,14 @@ function niceDate(d){ return OB.DAYS[d.getDay()].name+", "+MONTHS[d.getMonth()]+
 var P=null, ink=null, hist=[], hints=0, sel=-1, t0=0, done=false, mode="daily", hintK=-1;
 var today=new Date(), todayKey=ymd(today);
 
-/* ---------- the chart (Oct 31, later: lying on the table in perspective) ----------
+/* ---------- the chart (Oct 31, later: a raised brass-framed chart under glass; a perspective tilt was tried and set aside) ----------
    The puzzle lives on a flat 1000 x 1000 chart. It's drawn tilted away from you in true perspective (straight lines
    stay straight, the far edge is narrower), under glass in a thick brass frame. The stars are lit, raised orbs drawn
    upright where they sit, nearer ones a little larger; drawn lines are raised gold wire with a shadow. */
-var TP=.00019, TK=.82, THK=30;   /* perspective strength, tilt (how much the chart is foreshortened), frame thickness */
+var TP=0, TK=1, THK=14;   /* perspective and tilt (Judy preferred the chart lying flat: kept at 0 and 1), frame thickness */
 function proj(x,y){ var v=y-500, w=1-TP*v; return [500+(x-500)/w, v*TK/w, 1/w]; }
 function poly(pts){ return "M"+pts.map(function(p){ var q=proj(p[0],p[1]); return q[0].toFixed(1)+" "+q[1].toFixed(1); }).join(" L")+" Z"; }
-var VB=(function(){ var bl=proj(-44,1044), br=proj(1044,1044), tl=proj(-44,-44), x0=bl[0]-30, x1=br[0]+30, y0=tl[1]-112, y1=bl[1]+THK+40; return [Math.round(x0),Math.round(y0),Math.round(x1-x0),Math.round(y1-y0)]; })();
+var VB=(function(){ var bl=proj(-44,1044), br=proj(1044,1044), tl=proj(-44,-44), x0=bl[0]-30, x1=br[0]+30, y0=tl[1]-84, y1=bl[1]+THK+40; return [Math.round(x0),Math.round(y0),Math.round(x1-x0),Math.round(y1-y0)]; })();
 var stage=document.createElement("div"); stage.className="ob-pad";
 stage.innerHTML='<div class="ob-fit" id="obFit"><svg id="obSvg" viewBox="'+VB.join(" ")+'" role="img" aria-label="The star chart"></svg><div class="ob-toast" id="obToast" role="status"></div></div>'+
   '<div class="ob-tools" id="obTools">'+
@@ -348,7 +348,7 @@ function drawChart(){
   var g0=proj(-20,-20), g1=proj(640,-20), g2=proj(-20,520);
   sv("path",{d:"M"+g0[0]+" "+g0[1]+" L"+g1[0]+" "+g1[1]+" L"+g2[0]+" "+g2[1]+" Z",fill:grad(d,"obGlare",[["0%","rgba(255,236,200,.13)"],["100%","rgba(255,236,200,0)"]],{x1:"0",y1:"0",x2:".7",y2:".7"})},glare);
   G.names=sv("g",{opacity:0},SVG);
-  G.title=sv("text",{x:500,y:VB[1]+70,"text-anchor":"middle","font-family":"Cormorant Garamond,serif","font-weight":"700","font-size":"66",fill:"#f6e3a8",stroke:"rgba(8,14,32,.6)","stroke-width":4,"paint-order":"stroke",opacity:0,"letter-spacing":"2"},SVG);
+  G.title=sv("text",{x:500,y:VB[1]+62,"text-anchor":"middle","font-family":"Cormorant Garamond,serif","font-weight":"700","font-size":"66",fill:"#f6e3a8",stroke:"rgba(8,14,32,.6)","stroke-width":4,"paint-order":"stroke",opacity:0,"letter-spacing":"2"},SVG);
   update();
 }
 function stops(defs,id,list,attrs){ return grad(defs,id,list,attrs); }
@@ -413,9 +413,17 @@ var press=null;
 function local(e){ var r=FIT.getBoundingClientRect(), s=VB[2]/r.width; return [VB[0]+(e.clientX-r.left)*s,VB[1]+(e.clientY-r.top)*s]; }
 function starAt(q){ var best=-1, bd=1e9; G.sp.forEach(function(p,v){ var d=Math.hypot(q[0]-p[0],q[1]-p[1]); if(d<bd){ bd=d; best=v; } }); return best>=0&&bd<=Math.max(26*Z,G.stars[best].r+10*Z)?best:-1; }
 /* the nearest sight line, and the next nearest (to tell when a tap is too close to call) */
-function linesNear(q){ var best=-1, bd=1e9, nd=1e9;
-  P.cand.forEach(function(e,k){ var L=G.lines[k], d=OB.segDist(q,L.a,L.b); if(d<bd){ nd=bd; bd=d; best=k; } else if(d<nd) nd=d; });
-  return {k:bd<=26*Z?best:-1,d:bd,next:nd}; }
+function linesNear(q){ var best=-1, bd=1e9, nd=1e9, nk=-1;
+  P.cand.forEach(function(e,k){ var L=G.lines[k], d=OB.segDist(q,L.a,L.b); if(d<bd){ nd=bd; nk=best; bd=d; best=k; } else if(d<nd){ nd=d; nk=k; } });
+  var r={k:bd<=24*pxU()?best:-1,d:bd,next:nd,nk:nk};
+  /* two lines from the same star: the direction of the tap from that star tells them apart better than distance */
+  if(r.k>=0&&nk>=0){ var e1=P.cand[best], e2=P.cand[nk], sh=e1[0]===e2[0]||e1[0]===e2[1]?e1[0]:e1[1]===e2[0]||e1[1]===e2[1]?e1[1]:-1;
+    if(sh>=0){ var S=G.sp[sh], at=Math.atan2(q[1]-S[1],q[0]-S[0]);
+      function dirTo(e){ var o=G.sp[e[0]===sh?e[1]:e[0]]; var a=Math.atan2(o[1]-S[1],o[0]-S[0])-at; while(a>Math.PI) a-=2*Math.PI; while(a<-Math.PI) a+=2*Math.PI; return Math.abs(a); }
+      var a1=dirTo(e1), a2=dirTo(e2); if(Math.abs(a1-a2)>.07){ r.sure=true; if(a2<a1){ r.k=nk; } } } }
+  return r; }
+/* chart units per screen pixel (finger-sized limits are set in pixels) */
+function pxU(){ return VB[2]/(FIT.getBoundingClientRect().width||VB[2]); }
 function lineAt(q){ return linesNear(q).k; }
 function tooClose(q){ var list=P.cand.map(function(e,k){ return [OB.segDist(q,G.lines[k].a,G.lines[k].b),k]; }).sort(function(x,y){ return x[0]-y[0]; }).slice(0,2);
   list.forEach(function(x){ var L=G.lines[x[1]]; L.glow.setAttribute("stroke","rgba(160,200,255,.6)"); setTimeout(function(){ update(); },650); });
@@ -435,7 +443,7 @@ SVG.addEventListener("pointerdown",function(e){
   /* between two close stars: a tap off the star's bright core but right on a line means the line */
   if(v>=0&&k>=0){ var sp=G.sp[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]); if(ds>G.stars[v].r*.9&&near.d<ds*.6) v=-1; else k=-1; }
   /* two lines almost equally close: don't guess */
-  if(v<0&&k>=0&&near.next-near.d<6*Z&&near.d>3*Z){ tooClose(q); return; }
+  var U=pxU(); if(v<0&&k>=0&&!near.sure&&near.next-near.d<5*U&&near.next<13*U){ tooClose(q); return; }
   press={id:e.pointerId,q:q,star:v,line:k,moved:false,long:false};
   if(k>=0) press.timer=setTimeout(function(){ if(press&&!press.moved){ press.long=true; ruleOut(k); if(navigator.vibrate) try{ navigator.vibrate(12); }catch(x){} } },480);
 });
@@ -463,7 +471,7 @@ document.addEventListener("keydown",function(e){
   if(!document.body.classList.contains("seated")||!P||document.querySelector(".pk-veil.on")) return;
   if((e.key==="z"||e.key==="Z")&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); undo(); }
 });
-function tools(){ if(!matchMedia("(hover: hover) and (pointer: fine)").matches) $("#obHelp",stage).textContent="Tap a dotted line to draw it, tap again to rub it out. Hold it to rule it out.";
+function tools(){ if(!matchMedia("(hover: hover) and (pointer: fine)").matches) $("#obHelp",stage).textContent="Tap two stars to draw the line between them (or tap a dotted line). Tap a line again to rub it out; hold it to rule it out.";
   $("#obUndo",stage).onclick=undo; $("#obHint",stage).onclick=function(){ if(mode==="lesson"&&!Parlor.lessonWaiting){ lookOnly(); return; } hint(); }; $("#obRestart",stage).onclick=restart; }
 
 /* ---------- loading a chart ---------- */
@@ -545,7 +553,7 @@ function L(nodes,fig,cand){ var p=OB.build(nodes,fig,cand); p.C=null; return p; 
 var LESSONS=[
   {title:"Tonight's Chart",text:"<p>Each bright star shows a <b>number</b>: how many lines it needs. The faint <b>dotted lines</b> are sight lines, where lines may be drawn.</p><p>Draw the right lines and a real <b>constellation</b> appears, with its story.</p><p>This first page is just for looking. Tap <b>Next</b> to draw your first line.</p>",
     puz:function(){ var C=OB_SKY.filter(function(c){ return c.id==="Cas"; })[0]||OB_SKY[0]; var p=OB.make("lesson",1,C); return p; }},
-  {title:"Draw a Line",text:"<p><b>Tap a dotted line</b> to draw it. Tap it again to rub it out. You can also drag from one star to another.</p><p>The middle star needs 2 lines; each end star needs 1. Draw both lines.</p>",done:"<p>Lovely. Every number is matched, so the stars glow gold.</p>",
+  {title:"Draw a Line",text:"<p><b>Tap a dotted line</b> to draw it, or <b>tap one star and then the other</b> (easiest on a phone). Tap a line again to rub it out.</p><p>The middle star needs 2 lines; each end star needs 1. Draw both lines.</p>",done:"<p>Lovely. Every number is matched, so the stars glow gold.</p>",
     puz:function(){ return L([[300,520],[500,420],[700,540]],[[0,1],[1,2]],[[0,1],[1,2]]); }},
   {title:"Count the Lines",text:"<p>A star's number is <b>exactly</b> how many lines it needs: not more, not less.</p><p>The middle star needs <b>3</b> and has exactly 3 sight lines, so draw all three. Then finish the rest.</p>",done:"<p>That's the first trick: when a star's number equals its sight lines, draw them all. And when a star is full, its other sight lines are out.</p>",
     puz:function(){ return L([[230,300],[500,480],[770,300],[500,800],[200,720]],[[1,0],[1,2],[1,3],[3,4]],[[1,0],[1,2],[1,3],[3,4],[0,4],[0,2]]); }},
@@ -581,7 +589,7 @@ Parlor.init({
   tagline:"Join the stars. Find the constellation.", invite:"The dome is open and the first stars are out. Join them with the right lines and tonight's constellation will appear, with its story.",
   players:[{name:"You",color:"#9fb8ff"}],
   rules:{
-    play:"<ol><li><b>The goal:</b> draw lines between the stars so that every star has <b>exactly</b> the number of lines it shows.</li><li><b>Sight lines:</b> lines can only be drawn along the faint dotted sight lines. Tap one to draw it, tap again to rub it out. You can also drag from star to star, or tap one star and then another.</li><li><b>No crossing:</b> two drawn lines may never cross.</li><li><b>One figure:</b> all the stars must join into a single figure, with no islands left on their own.</li><li><b>Ruling out:</b> hold a sight line (or right-click it) to mark it with a ✕ when you're sure it's wrong.</li><li>Every chart has exactly one answer: the real figure of a constellation. Solve it and the constellation is revealed, with its brightest stars and its story.</li><li><b>Undo</b> takes back a line, <b>Hint</b> lights up a line you can be sure of (or one that doesn't belong), <b>Restart</b> clears the chart.</li></ol>",
+    play:"<ol><li><b>The goal:</b> draw lines between the stars so that every star has <b>exactly</b> the number of lines it shows.</li><li><b>Sight lines:</b> lines can only be drawn along the faint dotted sight lines. Tap one to draw it, or tap one star and then the other (easiest on a phone, especially where stars are close together), or drag from star to star. Tap a line again to rub it out.</li><li><b>No crossing:</b> two drawn lines may never cross.</li><li><b>One figure:</b> all the stars must join into a single figure, with no islands left on their own.</li><li><b>Ruling out:</b> hold a sight line (or right-click it) to mark it with a ✕ when you're sure it's wrong.</li><li>Every chart has exactly one answer: the real figure of a constellation. Solve it and the constellation is revealed, with its brightest stars and its story.</li><li><b>Undo</b> takes back a line, <b>Hint</b> lights up a line you can be sure of (or one that doesn't belong), <b>Restart</b> clears the chart.</li></ol>",
     score:"<ul><li><b>One chart a day</b>, the same for everyone. It changes at midnight on your device. Monday is a small, gentle constellation; through the week they grow bigger and trickier, with the biggest on Sunday.</li><li><b>★★★</b> with no hints · <b>★★</b> with one or two · <b>★</b> otherwise. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice charts (in Learn to Play) are free and don't count.</li></ul>"
   },
   onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Tonight's Chart"; }); startDaily(true); },
@@ -593,7 +601,7 @@ skyBg();
 var wasSeated=false;
 new MutationObserver(function(){ var now=seatedNow(); if(now===wasSeated) return; wasSeated=now; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("DOMContentLoaded",function(){ tools(); skyBg(); startDaily(true); fit(); setTimeout(skyBg,50); });
-window.OBS={get:function(){ return {P:P,ink:ink,hints:hints,done:done,mode:mode,sel:sel}; },toggle:toggle,hint:hint,   /* for testing */
+window.OBS={get:function(){ return {P:P,ink:ink,hints:hints,done:done,mode:mode,sel:sel}; },toggle:toggle,hint:hint, clearSel:function(){ sel=-1; update(); },   /* for testing */
   pt:function(x,y){ var r=FIT.getBoundingClientRect(), z=r.width/VB[2], q=proj(x,y); return [r.left+(q[0]-VB[0])*z,r.top+(q[1]-VB[1])*z]; }};
 })();
 </script>
