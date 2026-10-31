@@ -318,7 +318,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     v.innerHTML='<div class="bw-gcard" role="dialog" aria-label="Club membership"><p class="k">BrainWhim Club</p><h2>Your Seat Is a Club Seat</h2>'+
       '<ul>'+
       '<li><b>Every set unlocked</b> in every room: pieces, discs, dice, stones and tiles.</li>'+
-      '<li><b>More House points:</b> up to 20 games a day earn points (free accounts: 3).</li></ul>'+
+      '<li><b>More House points:</b> up to 20 games a day earn points (House Guests: 3).</li></ul>'+
       '<p class="pts">'+(Number(pts)||0)+' points on your account</p><button type="button">Back to the Table</button></div>';
     function close(){ if(v.parentNode) v.parentNode.removeChild(v); document.removeEventListener("keydown",esc); }
     function esc(e){ if(e.key==="Escape") close(); }

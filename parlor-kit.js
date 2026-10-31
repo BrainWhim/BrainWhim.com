@@ -320,13 +320,13 @@
     }
     var m = meProf(), o = oppProf();
     if (C.partners && mode === "online") {   /* you and your partner against The House */
-      d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Guest"));
+      d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Visitor"));
       d.appendChild(one(o && o !== "house" ? o : null, P.oppName(), o && o !== "house" ? BWAvatar.rank(o.skill_points).name : "Your partner"));
       d.appendChild(mk("span", "vs", "vs"));
       d.appendChild(one("house", "The House", ""));
       d.classList.add("trio"); return d;
     }
-    d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Guest"));
+    d.appendChild(one(m, "You", m ? BWAvatar.rank(m.skill_points).name : "Visitor"));
     d.appendChild(mk("span", "vs", "vs"));
     d.appendChild(one(o, P.oppName(), o && o !== "house" ? BWAvatar.rank(o.skill_points).name : (o === "house" ? "Level " + P.level() + " of " + P.maxLevel : "")));
     return d;
@@ -336,7 +336,7 @@
     if (!window.BWAvatar) return null;
     var d = mk("div", "pk-duo pk-duo1"), x = mk("div", "p"), a = mk("span", "bwa-av"), m = meProf();
     a.innerHTML = BWAvatar.html(m, { size: 96, title: "You", even: true }); x.appendChild(a);
-    x.appendChild(mk("b", "", "You")); x.appendChild(mk("i", "", m ? BWAvatar.rank(m.skill_points).name : "Guest")); d.appendChild(x); return d;
+    x.appendChild(mk("b", "", "You")); x.appendChild(mk("i", "", m ? BWAvatar.rank(m.skill_points).name : "Visitor")); d.appendChild(x); return d;
   }
   window.addEventListener("bw-avatar", function () { renderAccount(); paintAv(); });
   /* the colour dot for player i (0 or 1) that's on screen right now: the phone score strip or the side card */
@@ -355,8 +355,8 @@
     sheet(null);
     var score = kind === "score";
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
-      (score && C.solo && !C.free ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club members get more).</li></ul>" : "") +
-      (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
+      (score && C.solo && !C.free ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club Members get more).</li></ul>" : "") +
+      (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club Members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
   };
@@ -775,17 +775,17 @@
       var prof = meProf() || {}, rk = BWAvatar.rank(accountInfo.pts);
       t.className = "pk-me";
       var av = mk("button", "av bwa-av"); av.type = "button"; av.title = "Change your avatar"; av.innerHTML = BWAvatar.html(prof, { size: 72 }); av.onclick = function () { BWAvatar.studio(); };
-      var tx = mk("div"); tx.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><small>" + esc(rk.name) + "</small>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club member" : "");
+      var tx = mk("div"); tx.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><small>" + esc(rk.name) + "</small>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club Member" : " · House Guest");
       t.appendChild(av); t.appendChild(tx);
       if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Club Details" : "Join the Club";
       a.appendChild(btn("Avatar", "", function () { BWAvatar.studio(); }));
       if (!accountInfo.member) a.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
     } else if (accountInfo.user) {
-      t.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><br>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club member" : "");
+      t.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><br>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club Member" : " · House Guest");
       if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Club Details" : "Join the Club";
       if (!accountInfo.member) a.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
     } else {
-      t.textContent = "Playing as a guest. Create a free account to earn points and unlock sets.";
+      t.textContent = "Playing as a Visitor. Create a free account to become a House Guest: earn points and unlock sets.";
       a.appendChild(btn("Create Free Account", "", function () { if (window.BW) BW.openAuth({ reason: "Earn points and unlock sets." }); }));
     }
   }
@@ -801,7 +801,7 @@
       var b = mk("button", "pk-set" + (s.id === cur ? " on" : "") + (ok ? "" : " lock")); b.type = "button";
       var dots = mk("span", "dots"); (s.dots || []).forEach(function (c) { var i = mk("i"); i.style.background = c; dots.appendChild(i); });
       var nm = mk("span", "nm"); nm.appendChild(document.createTextNode(s.name + (ok ? "" : " 🔒")));
-      var sm = mk("small", "", s.club ? (ok ? "Club board" : "Club members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
+      var sm = mk("small", "", s.club ? (ok ? "Club board" : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
       b.appendChild(dots); b.appendChild(nm);
       b.onclick = function () {
         if (!ok) { location.href = "member.html"; return; }
@@ -1016,11 +1016,22 @@
     }
     function saved(r, sv) {
       box.className = "pk-streak saved";
-      if (!r) { box.appendChild(mk("p", "", "✓ Your streak is kept on this device.")); return; }
-      box.appendChild(mk("p", "", "✓ Your streak is saved to your account, on any phone or computer."));
-      if (sv && sv.shielded) { var d = new Date(sv.shielded + "T12:00:00"); box.appendChild(mk("p", "pk-gold", "Your Streak Shield covered " + ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()] + ", so your streak is safe.")); }
-      else if (r.member && r.shieldReady) box.appendChild(mk("p", "pk-gold", "Streak Shield ready: miss a day and your streak is safe."));
-      else if (!r.member) { var c = mk("p", "pk-club"); c.innerHTML = "Club members get a <b>Streak Shield</b>: miss a day and keep your streak. <a href=\"member.html\">Join the Club</a>"; box.appendChild(c); }
+      var member = r ? !!r.member : !!(window.BW && BW.member && BW.member());
+      if (!r) box.appendChild(mk("p", "", "✓ Your streak is kept on this device."));
+      else {
+        box.appendChild(mk("p", "", "✓ Your streak is saved to your account, on any phone or computer."));
+        if (sv && sv.shielded) { var d = new Date(sv.shielded + "T12:00:00"); box.appendChild(mk("p", "pk-gold", "Your Streak Shield covered " + ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()] + ", so your streak is safe.")); }
+        else if (member && r.shieldReady) box.appendChild(mk("p", "pk-gold", "Streak Shield ready: miss a day and your streak is safe."));
+      }
+      if (!member) clubCard();
+    }
+    /* signed in but not in the Club: what the Club adds (perks that exist only) */
+    function clubCard() {
+      var c = mk("div", "pk-clubcard");
+      c.appendChild(mk("b", "t", "Club Members Never Lose a Streak to One Missed Day"));
+      c.appendChild(mk("p", "", "The Streak Shield covers a missed day. Club Members also get every Club table and board, the Constellation and Nebula avatars, and House points on 20 games a day."));
+      c.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
+      box.appendChild(c);
     }
     var old = document.getElementById("bwa-toast"); if (old) old.remove();   /* the arrival reminder says the same thing */
     if (!realUser()) guest(); else saved(server || dailyLive, server);

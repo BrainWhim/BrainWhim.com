@@ -219,7 +219,7 @@
       '<button type="button" class="bwa-link" id="bwa-forgot" hidden>Forgot password?</button>' +
       '<button type="button" class="bwa-link" id="bwa-sms" hidden>Text me a code instead</button>' +
       '<button type="button" class="bwa-link" id="bwa-alt" hidden></button>' +
-      '<button type="button" class="bwa-link" id="bwa-guest" hidden>Play as guest</button>' +
+      '<button type="button" class="bwa-link" id="bwa-guest" hidden>Play as a Visitor</button>' +
       '<button type="button" class="bwa-link" id="bwa-close">Not now</button>' +
       "</div></div>";
     document.body.appendChild(ov);
@@ -455,7 +455,7 @@
         if (!a.ok) return false;
       } else {
         if (guestUsed() >= LIMIT) {
-          var b = await openAuth({ reason: "You've played your " + LIMIT + " free guest games. Create a free account to keep playing: unlimited games, and your points are saved." });
+          var b = await openAuth({ reason: "You've played your " + LIMIT + " free Visitor games. Create a free account to become a House Guest: unlimited games, and your points are saved." });
           if (!b.ok) return false;
         } else { guestBump(); return true; }
       }

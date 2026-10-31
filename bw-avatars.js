@@ -292,7 +292,7 @@ var FAMS=[
 ];
 var BY={};FAMS.forEach(function(F){F.items.forEach(function(it){it.fam=F.key;it.tier=F.tier;BY[it.id]=it})});
 BY.house={id:"house",fam:"house",tier:"club",name:"The House"};
-BY.guest={id:"guest",fam:"guest",tier:"free",name:"Guest"};
+BY.guest={id:"guest",fam:"guest",tier:"free",name:"Visitor"};
 var DEFAULT="sunny";
 function drawGuest(p){
   return {d:'<linearGradient id="'+p+'gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6ecf6" stop-opacity=".75"/><stop offset="1" stop-color="#9fb0cc" stop-opacity=".45"/></linearGradient>',
@@ -449,7 +449,7 @@ function studio(){
     btnEl.disabled=true;note.textContent="Saving…";
     var row={avatar:pick,avatar_charm:charmPick};
     Promise.resolve(c.from("profiles").update(row).eq("id",u.id)).then(function(r){
-      if(r&&r.error){btnEl.disabled=false;note.textContent=/club/i.test(r.error.message||"")?"That avatar is for Club members.":"Couldn't save just now. Please try again.";return}
+      if(r&&r.error){btnEl.disabled=false;note.textContent=/club/i.test(r.error.message||"")?"That avatar is for Club Members.":"Couldn't save just now. Please try again.";return}
       var prof=myProfile();if(prof){prof.avatar=pick;prof.avatar_charm=charmPick}
       close();try{window.dispatchEvent(new CustomEvent("bw-avatar",{detail:row}))}catch(e){}
     },function(){btnEl.disabled=false;note.textContent="Couldn't save just now. Please try again."});

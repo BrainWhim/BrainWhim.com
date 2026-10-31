@@ -788,8 +788,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-<script src="bw-auth.js?v=1027a"></script>
-<script src="bw-avatars.js?v=1026a"></script>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
 </head>
 <body>
@@ -831,7 +831,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="premium-passport-card">
   <div class="passport-glow"></div>
   <h5>✨ Club Membership</h5>
-  <p>Guests get 10 free games against The House. A free account plays unlimited games, online or against The House, with your points saved. The Club adds premium sets and more points.</p>
+  <p>Visitors get 10 free games against The House. House Guests (a free account) play unlimited games, online or against The House, with their points saved. Club Members add premium sets and more points.</p>
   <button class="upgrade-club-btn" type="button" onclick="location.href='member.html'">Join the Club</button>
 </div>
 <div class="whim-box" onclick="bwWhim()">
@@ -964,7 +964,7 @@ renderLobby(lobbyCatFromUrl());
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1028e"></script>
+<script src="play-rooms.js?v=1031a"></script>
 <script>
 var sb=null, sessionUser=null, myName="", noticeCh=null, waitTimer=null, waitRoom=null, beatTimer=null, myPts=0, myMember=false;
 function cleanName(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9_]/g,"").slice(0,20); }
@@ -1261,9 +1261,9 @@ async function paint(session){
   if(sessionUser){
     var prof=await loadProfile(sessionUser);
     var handle=cleanName((prof && prof.username) || myName);
-    if(sessionUser.is_anonymous || (prof && prof.is_guest) || (handle && handle.indexOf("guest")===0)) handle="Guest";
+    if(sessionUser.is_anonymous || (prof && prof.is_guest) || (handle && handle.indexOf("guest")===0)) handle="Visitor";
     var seatBtn=document.getElementById("seatAction");
-    if(seatBtn) seatBtn.textContent = (sessionUser.is_anonymous||handle==="Guest") ? "Sign in" : "Sign out";
+    if(seatBtn) seatBtn.textContent = (sessionUser.is_anonymous||handle==="Visitor") ? "Sign in" : "Sign out";
     who.textContent=handle ? ("Signed in as "+handle) : "Signed in";
     document.getElementById("seatHint").textContent=handle
       ? ("Friends invite you as "+handle+".")
@@ -1275,7 +1275,7 @@ async function paint(session){
     var tier = window.BWAvatar ? BWAvatar.rank(myPts).i : 0;
     for(var i=0;i<7;i++){ var el=document.getElementById("tier"+i); if(el) el.classList.toggle("here", i===tier); }
     myMember=!!(prof && prof.member);
-    myGuest = handle==="Guest";
+    myGuest = handle==="Visitor";
     paintSeatAv();
     var title=window.BWAvatar ? BWAvatar.rank(myPts).name : (typeof bwTitle==="function"?bwTitle(myPts):"New");
     who.textContent=(handle||"Signed in")+" · "+title+" · "+myPts+" pts"+(myMember?" · member":"");
@@ -1287,7 +1287,7 @@ async function paint(session){
     myName=""; myPts=0; myMember=false; myProf=null; myGuest=true; paintSeatAv();
     for(var k=0;k<7;k++){ var tk=document.getElementById("tier"+k); if(tk) tk.classList.remove("here"); }
     who.textContent="Sign in to keep a seat";
-    document.getElementById("seatHint").textContent="Sign in with your email, phone, or username. Guests can play The House (10 free games).";
+    document.getElementById("seatHint").textContent="Sign in with your email, phone, or username. Visitors can play The House (10 free games).";
     form.classList.remove("closed"); out.classList.add("closed");
     document.getElementById("mailDot").classList.remove("on");
     signedOutMail();
@@ -1371,7 +1371,7 @@ async function leaveTable(r){
 document.addEventListener("click",function(e){ if(e.target&&e.target.id==="ytVeil") closeYourTables(); });
 async function refreshOnline(){
   var box=document.getElementById("onlineList");
-  if(!sb || !sessionUser){ box.textContent="Sign in or sit as a guest to see the parlor."; return; }
+  if(!sb || !sessionUser){ box.textContent="Sign in or sit as a Visitor to see the parlor."; return; }
   var since=new Date(Date.now()-120000).toISOString();
   var cols="username,display_name,skill_points,is_guest,last_seen";
   var q=await sb.from("profiles").select("avatar,avatar_charm,member,"+cols).gte("last_seen", since).order("last_seen",{ascending:false}).limit(24);
@@ -1382,9 +1382,9 @@ async function refreshOnline(){
   box.textContent="";
   rows.forEach(function(p){
     var raw=p.username||"";
-    var label=(p.is_guest || raw.indexOf("guest")===0) ? "Guest" : (p.display_name||raw||"Guest");
+    var label=(p.is_guest || raw.indexOf("guest")===0) ? "Visitor" : (p.display_name||raw||"Visitor");
     var guest=(p.is_guest || raw.indexOf("guest")===0);
-    var title=window.BWAvatar ? (guest?"Guest":BWAvatar.rank(p.skill_points).name) : (typeof bwTitle==="function"?bwTitle(p.skill_points):"New");
+    var title=window.BWAvatar ? (guest?"Visitor":BWAvatar.rank(p.skill_points).name) : (typeof bwTitle==="function"?bwTitle(p.skill_points):"New");
     var mine=cleanName(p.username)===myName;
     var row=bwMakeEl("div","player-row");
     if(window.BWAvatar){ var pav=bwMakeEl("span","pav"); pav.innerHTML=BWAvatar.html(guest?null:p,{size:28,ring:false,charm:false,title:label}); pav.appendChild(bwMakeEl("span","dot")); row.appendChild(pav); }
