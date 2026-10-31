@@ -334,7 +334,6 @@ function drawChart(){
   var rs=P.nodes.map(function(p,v){ var info=(C.n&&C.n[v])||[0,0,2.5]; return Math.max(9,Math.min(near[v]*.44,Math.max(16,Math.min(22,21-(info[2]-1)*1.5))*Z*Math.pow(G.sp[v][2],.8))); });
   /* sight lines (dots only between the stars' edges, packed closer on short lines), wire shadows, wires */
   var LB=sv("g",{},SVG), LS=sv("g",{},SVG), LG=sv("g",{},SVG), LI=sv("g",{},SVG), LX=sv("g",{},SVG);
-  G.hintL=sv("line",{x1:0,y1:0,x2:0,y2:0,stroke:"rgba(255,226,140,0)","stroke-width":18*Z,"stroke-linecap":"round",filter:"url(#obBlur)"},LG);
   P.cand.forEach(function(e,k){ var A=G.sp[e[0]], B=G.sp[e[1]], L=Math.hypot(B[0]-A[0],B[1]-A[1]), ux=(B[0]-A[0])/L, uy=(B[1]-A[1])/L;
     var s0=rs[e[0]]+4*Z, s1=rs[e[1]]+4*Z, vis=Math.max(0,L-s0-s1), gap=Math.max(5*Z,Math.min(11*Z,vis/5));
     var p0=[A[0]+ux*s0,A[1]+uy*s0], p1=[B[0]-ux*s1,B[1]-uy*s1];
@@ -366,9 +365,10 @@ function drawChart(){
   var glare=sv("g",{"clip-path":"url(#obSkyClip)","pointer-events":"none"},SVG);
   var g0=proj(-20,-20), g1=proj(640,-20), g2=proj(-20,520);
   sv("path",{d:"M"+g0[0]+" "+g0[1]+" L"+g1[0]+" "+g1[1]+" L"+g2[0]+" "+g2[1]+" Z",fill:grad(d,"obGlare",[["0%","rgba(255,236,200,.13)"],["100%","rgba(255,236,200,0)"]],{x1:"0",y1:"0",x2:".7",y2:".7"})},glare);
+  G.hintG=sv("g",{"pointer-events":"none"},SVG);   /* the hint: drawn over the stars' glow, under the names */
   G.names=sv("g",{opacity:0},SVG);
   G.title=sv("text",{x:500,y:VB[1]+62,"text-anchor":"middle","font-family":"Cormorant Garamond,serif","font-weight":"700","font-size":"66",fill:"#f6e3a8",stroke:"rgba(8,14,32,.6)","stroke-width":4,"paint-order":"stroke",opacity:0,"letter-spacing":"2"},SVG);
-  update();
+  update(); if(hintK>=0) showHint(hintK,hintWrong);
 }
 function stops(defs,id,list,attrs){ return grad(defs,id,list,attrs); }
 /* show the current lines: drawn, ruled out, crossing (red), and each star's count */
@@ -414,16 +414,38 @@ function check(){
   for(var v=0;v<P.N;v++) if(deg[v]!==P.need[v]) allSet=false;
   if(allSet) toast("Every number is right, but the stars must all join into one figure with no crossing lines.",2600);
 }
+/* the hint, made to be found on a phone (Oct 31): a pulsing glow, a bright core with marching dashes, and pulsing rings
+   around its two stars; it stays until that line is changed. On a phone, a short line is zoomed in on. */
+var hintWrong=false;
+function showHint(k,wrong){
+  var g=G.hintG; if(!g) return; g.innerHTML=""; var L=G.lines[k], e=P.cand[k], a=L.a, b=L.b, live=!(window.Parlor&&Parlor.smooth&&!Parlor.smooth());
+  var col=wrong?"#ff6e5a":"#ffd970", soft=wrong?"rgba(255,110,90,":"rgba(255,222,120,";
+  /* the line runs from star edge to star edge, so both numbers stay readable */
+  var x1=+L.base.getAttribute("x1"), y1=+L.base.getAttribute("y1"), x2=+L.base.getAttribute("x2"), y2=+L.base.getAttribute("y2");
+  if(Math.hypot(x2-x1,y2-y1)>2){ a=[x1,y1]; b=[x2,y2]; }
+  function anim(el,attr,vals,dur){ if(!live) return; sv("animate",{attributeName:attr,values:vals,dur:dur,repeatCount:"indefinite"},el); }
+  var glow=sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:soft+".9)","stroke-width":22*Z,"stroke-linecap":"round",filter:"url(#obBlur)"},g); anim(glow,"opacity","1;.35;1","1.3s");
+  var dash=14*Z, gap=10*Z;
+  sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:"rgba(10,16,36,.85)","stroke-width":9*Z,"stroke-linecap":"round"},g);
+  var core=sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:col,"stroke-width":6*Z,"stroke-linecap":"round","stroke-dasharray":dash.toFixed(1)+" "+gap.toFixed(1)},g);
+  anim(core,"stroke-dashoffset","0;"+(-(dash+gap)).toFixed(1),".8s");
+  e.forEach(function(v){ var p=G.sp[v], r=G.stars[v].r;
+    var ring=sv("circle",{cx:p[0],cy:p[1],r:r+7*Z,fill:"none",stroke:col,"stroke-width":4*Z},g);
+    anim(ring,"r",(r+5*Z).toFixed(1)+";"+(r+16*Z).toFixed(1)+";"+(r+5*Z).toFixed(1),"1.3s"); anim(ring,"opacity","1;.5;1","1.3s"); });
+}
 function hint(){
   if(done||!P) return; var h=OB.hint(P,ink); if(!h) return;
-  hints++; clearHint(); hintK=h.k; var a=G.lines[h.k].a, b=G.lines[h.k].b;
-  G.hintL.setAttribute("x1",a[0]); G.hintL.setAttribute("y1",a[1]); G.hintL.setAttribute("x2",b[0]); G.hintL.setAttribute("y2",b[1]);
-  G.hintL.setAttribute("stroke",h.wrong?"rgba(255,110,90,.85)":"rgba(255,226,140,.85)"); showPoint(a,b);
-  toast(h.wrong?"The glowing line doesn't belong in the figure.":"The glowing line belongs in the figure.",2200);
+  hints++; clearHint(); hintK=h.k; hintWrong=!!h.wrong; var a=G.lines[h.k].a, b=G.lines[h.k].b;
+  showHint(h.k,hintWrong);
+  /* bring it into view; on a phone, a line that's short on screen is zoomed in on so it's easy to see and tap */
+  var lenPx=Math.hypot(b[0]-a[0],b[1]-a[1])/pxU();
+  if(!fine()&&lenPx<90&&zOf(V)<2.4){ var m=[(a[0]+b[0])/2,(a[1]+b[1])/2], z=Math.min(2.4,zOf(V)*Math.max(1.4,130/lenPx)), bw=baseView(); animateTo({x:m[0]-bw.w/z/2,y:m[1]-bw.h/z/2,w:bw.w/z,h:bw.h/z},420); }
+  else showPoint(a,b);
+  toast(h.wrong?"The glowing line, between the two ringed stars, doesn't belong in the figure.":"The glowing line, between the two ringed stars, belongs in the figure.",2600);
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+(h.wrong?"The glowing line doesn't belong: tap it to rub it out.":"The glowing line belongs in the figure: tap it to draw it.")+"</p>");
   update();
 }
-function clearHint(){ hintK=-1; if(G.hintL) G.hintL.setAttribute("stroke","rgba(255,226,140,0)"); }
+function clearHint(){ hintK=-1; if(G.hintG) G.hintG.innerHTML=""; }
 
 /* ---------- the view: zoom and pan (Oct 31) ----------
    The chart can be looked at closer: pinch with two fingers (or pinch a trackpad, or Ctrl + scroll), double-tap empty
@@ -488,14 +510,19 @@ function linesNear(q){ var best=-1, bd=1e9, nd=1e9, nk=-1;
   if(r.k>=0&&nk>=0){ var e1=P.cand[best], e2=P.cand[nk], sh=e1[0]===e2[0]||e1[0]===e2[1]?e1[0]:e1[1]===e2[0]||e1[1]===e2[1]?e1[1]:-1;
     if(sh>=0){ var S=G.sp[sh], at=Math.atan2(q[1]-S[1],q[0]-S[0]);
       function dirTo(e){ var o=G.sp[e[0]===sh?e[1]:e[0]]; var a=Math.atan2(o[1]-S[1],o[0]-S[0])-at; while(a>Math.PI) a-=2*Math.PI; while(a<-Math.PI) a+=2*Math.PI; return Math.abs(a); }
-      var a1=dirTo(e1), a2=dirTo(e2); if(Math.abs(a1-a2)>.07){ r.sure=true; if(a2<a1){ r.k=nk; } } } }
+      /* sure only if the two directions differ by more than a finger's wobble at that distance from the star */
+      var a1=dirTo(e1), a2=dirTo(e2), far=Math.hypot(q[0]-S[0],q[1]-S[1])/pxU(), wob=PICK_OLD?.07:Math.max(.07,TUNE.wob/Math.max(1,far));
+      if(Math.abs(a1-a2)>wob){ r.sure=true; if(a2<a1){ r.k=nk; } } } }
   return r; }
 /* chart units per screen pixel (finger-sized limits are set in pixels, so they stay finger-sized when zoomed) */
 function pxU(){ var v=V||{w:VB[2]}; return v.w/(FIT.getBoundingClientRect().width||v.w); }
 function lineAt(q){ return linesNear(q).k; }
-function tooClose(q){ var list=P.cand.map(function(e,k){ return [OB.segDist(q,G.lines[k].a,G.lines[k].b),k]; }).sort(function(x,y){ return x[0]-y[0]; }).slice(0,2);
-  list.forEach(function(x){ var L=G.lines[x[1]]; L.glow.setAttribute("stroke","rgba(160,200,255,.6)"); setTimeout(function(){ update(); },650); });
-  toast(fine()?"Two lines meet there. Click nearer the one you want, or click its two stars.":"Two lines meet there. Pinch to zoom in, or tap its two stars.",2400); }
+function tooClose(q,cx,cy){ var list=P.cand.map(function(e,k){ return [OB.segDist(q,G.lines[k].a,G.lines[k].b),k]; }).sort(function(x,y){ return x[0]-y[0]; }).slice(0,2);
+  list.forEach(function(x){ var L=G.lines[x[1]]; L.glow.setAttribute("stroke","rgba(150,205,255,.85)"); }); setTimeout(function(){ update(); },1600);
+  /* not zoomed in much yet: zoom in on the spot, so the two lines come apart and the next tap is easy */
+  if(cx!=null&&zOf(V)<2.4){ var r=FIT.getBoundingClientRect(); animateTo(zoomAbout(V,Math.min(2.4,zOf(V)*2)/zOf(V),cx-r.left,cy-r.top));
+    toast(fine()?"Two lines meet there. Zoomed in: click the one you want.":"Two lines meet there. Zoomed in: tap the one you want.",2400); return; }
+  toast(fine()?"Two lines meet there. Click nearer the one you want, or click its two stars.":"Two lines meet there. Tap nearer the one you want, or tap its two stars.",2400); }
 function fine(){ return matchMedia("(hover: hover) and (pointer: fine)").matches; }
 /* the first time a star is chosen, say what it's for */
 var selTold=false;
@@ -513,6 +540,33 @@ function pinchMove(){ var a=ptrs[pinch.ids[0]], b=ptrs[pinch.ids[1]]; if(!a||!b)
   var v=zoomAbout(pinch.v0,k,pinch.m0[0],pinch.m0[1]); v=clampV({x:v.x-(m[0]-pinch.m0[0])*v.w/wh[0],y:v.y-(m[1]-pinch.m0[1])*v.h/wh[1],w:v.w,h:v.h});
   pinch.cur=v; preview(v); }
 function endPinch(){ if(!pinch) return; var v=pinch.cur; pinch=null; setView(v); }
+/* what a touch at chart point q means: a star (v), a line (k), or too close to call (tc) */
+var PICK_OLD=false, TUNE={wob:10,next:20,gap:9,board:true};   /* tuned Oct 31 on simulated fingertips: wrong lines 5-8% -> 0.5-1.7% where lines run close */   /* (tests: the rules before Oct 31 afternoon) */
+function pickAt(q){
+  var v=starAt(q), near=linesNear(q), k=near.k, tc=false;
+  /* between two close stars: a tap off the star's bright core but right on a line means the line */
+  if(v>=0&&k>=0){ var sp=G.sp[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]); if(ds>G.stars[v].r*.9&&near.d<ds*.6) v=-1; else k=-1; }
+  if(v>=0||k<0||near.sure) return {v:v,k:k,tc:false};
+  var U=pxU();
+  if(PICK_OLD){ if(near.next-near.d<5*U&&near.next<13*U) return {v:-1,k:-1,tc:true}; return {v:-1,k:k,tc:false}; }
+  /* two lines nearly as close as each other (where lines cross, a fingertip lands a few pixels off): don't guess.
+     But if the board says one of them can't be what's meant, take the other: a ruled-out line, or an undrawn line that
+     would cross a drawn one or give a full star one line too many. */
+  if(near.nk>=0&&near.next<TUNE.next*U&&near.next-near.d<TUNE.gap*U){
+    if(hintK===k||hintK===near.nk) return {v:-1,k:hintK,tc:false};   /* the glowing hint line is the one meant */
+    var la=!TUNE.board||likely(k), lb=!TUNE.board||likely(near.nk);
+    if(la&&!lb) return {v:-1,k:k,tc:false};
+    if(lb&&!la) return {v:-1,k:near.nk,tc:false};
+    return {v:-1,k:-1,tc:true};
+  }
+  return {v:-1,k:k,tc:false};
+}
+function likely(k){
+  if(ink[k]===1) return true; if(ink[k]===0) return false;
+  for(var j=0;j<P.X[k].length;j++) if(ink[P.X[k][j]]===1) return false;
+  var e=P.cand[k]; for(var t=0;t<2;t++){ var n=0; P.inc[e[t]].forEach(function(x){ if(ink[x]===1) n++; }); if(n>=P.need[e[t]]) return false; }
+  return true;
+}
 FIT.addEventListener("gesturestart",function(e){ e.preventDefault(); });   /* Safari: the page itself never zooms from the chart */
 SVG.addEventListener("pointerdown",function(e){
   hideToast(); if(!P) return;
@@ -524,14 +578,8 @@ SVG.addEventListener("pointerdown",function(e){
   gestured=false;
   /* look-only lesson pages and finished charts: the chart can still be moved and zoomed, not drawn on */
   var blocked=done||(mode==="lesson"&&!Parlor.lessonWaiting);
-  var q=local(e), v=-1, k=-1, tc=false, near=null;
-  if(!blocked){
-    v=starAt(q); near=linesNear(q); k=near.k;
-    /* between two close stars: a tap off the star's bright core but right on a line means the line */
-    if(v>=0&&k>=0){ var sp=G.sp[v], ds=Math.hypot(q[0]-sp[0],q[1]-sp[1]); if(ds>G.stars[v].r*.9&&near.d<ds*.6) v=-1; else k=-1; }
-    /* two lines almost equally close: don't guess (said when the finger lifts, so the spot can still be dragged to pan) */
-    var U=pxU(); if(v<0&&k>=0&&!near.sure&&near.next-near.d<5*U&&near.next<13*U){ tc=true; k=-1; }
-  }
+  var q=local(e), v=-1, k=-1, tc=false;
+  if(!blocked){ var pk=pickAt(q); v=pk.v; k=pk.k; tc=pk.tc; }
   press={id:e.pointerId,q:q,cx:e.clientX,cy:e.clientY,star:v,line:k,tc:tc,blocked:blocked,moved:false,long:false,v0:V};
   if(k>=0) press.timer=setTimeout(function(){ if(press&&!press.moved){ press.long=true; ruleOut(k); if(navigator.vibrate) try{ navigator.vibrate(12); }catch(x){} } },480);
 });
@@ -568,7 +616,7 @@ function endPress(e){
     lastTap={t:now,x:p.cx,y:p.cy};
   } else lastTap=null;
   if(p.blocked){ if(!done) lookOnly(); return; }
-  if(p.tc){ tooClose(p.q); return; }
+  if(p.tc){ tooClose(p.q,p.cx,p.cy); return; }
   if(p.star>=0){ if(sel>=0&&sel!==p.star){ var k2=candBetween(sel,p.star); if(k2>=0){ sel=-1; toggle(k2); return; } }
     sel=sel===p.star?-1:p.star; update(); if(sel>=0&&!selTold){ selTold=true; toast("Now tap a star it has a sight line to, and the line is drawn.",2200); } return; }
   if(p.line>=0){ sel=-1; toggle(p.line); return; }
@@ -736,7 +784,9 @@ new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList
 document.addEventListener("DOMContentLoaded",function(){ tools(); skyBg(); startDaily(true); fit(); setTimeout(skyBg,50); });
 window.OBS={get:function(){ return {P:P,ink:ink,hints:hints,done:done,mode:mode,sel:sel}; },toggle:toggle,hint:hint, clearSel:function(){ sel=-1; update(); },   /* for testing */
   pt:function(x,y){ var r=FIT.getBoundingClientRect(), v=V||{x:VB[0],y:VB[1],w:VB[2],h:VB[3]}, q=proj(x,y); return [r.left+(q[0]-v.x)*r.width/v.w,r.top+(q[1]-v.y)*r.height/v.h]; },
-  view:function(){ return V; }, home:goHome, zoomAt:function(k,px,py){ setView(zoomAbout(V,k,px,py)); }};
+  view:function(){ return V; }, home:goHome, zoomAt:function(k,px,py){ setView(zoomAbout(V,k,px,py)); },
+  pick:function(cx,cy,old){ PICK_OLD=!!old; var r=pickAt(local({clientX:cx,clientY:cy})); PICK_OLD=false; return r; },
+  load:function(p){ load(p,"practice"); }, tune:TUNE, setInk:function(a){ ink=Int8Array.from(a); update(); }};
 })();
 </script>
 </body>
