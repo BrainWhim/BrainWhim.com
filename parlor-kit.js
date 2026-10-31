@@ -861,6 +861,7 @@
   /* Parlor.sfx(name, {pitch}) : card, deal ({n, gap}), whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, mill, win, lose, draw */
   P.sfx = function (name, o) {
     if (!P.soundOn()) return; var ac = audio(); if (!ac) return; o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
+    if (ROOM[name]) { try { roomBus(ac); ROOM[name](roomH(ac, t, p), o); } catch (e) {} return; }
     try {
       if (name === "whoosh") { var n = noise(ac, 0.36), bp = ac.createBiquadFilter(), g = ac.createGain(); bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(1100, t); bp.frequency.exponentialRampToValueAtTime(380, t + 0.34); env(ac, g, t, 0.16, 0.05, 0.3); n.connect(bp); bp.connect(g); g.connect(master); n.start(t); n.stop(t + 0.37); }
       else if (name === "land") { tone(ac, t, "sine", 190, 55, 0.22, 0.006, 0.15, ["lowpass", 300]); }
@@ -909,6 +910,39 @@
       else if (name === "draw") { [440, 440].forEach(function (f, i) { tone(ac, t + i * 0.16, "sine", f, 0, 0.08, 0.01, 0.25); }); }
     } catch (e) {}
   };
+  /* ---------------- a room's own sounds (Oct 31) ----------------
+     A room adds sounds of its own with Parlor.defSfx("or-tick", function (h, o) { ... }) and plays them with
+     Parlor.sfx("or-tick", {pitch, ...}), so Sound On/Off and the volume apply as usual. The function gets:
+       h.ac, h.t (start time), h.p (o.pitch, or 1)
+       h.out(wet)  a fresh input to play into: dry through a soft limiter, plus `wet` (0 to 1) sent to a shared room reverb
+       h.osc(dest, t, type, f0, f1, peak, attack, decay, [filterType, freq, Q])   one shaped oscillator (f1: glide to)
+       h.burst(dest, t, len, filterType, freq, Q, peak, attack, decay)           a shaped burst of filtered noise
+       h.bell(dest, t, f, peak, decay, parts)   struck partials, parts = [[ratio, level, decayScale], ...] (default: a small bell)
+     Room sound names start with the room's prefix (or-, ob-, ...). */
+  var ROOM = {}, rBus = null, rVerb = null;
+  P.defSfx = function (name, fn) { ROOM[name] = fn; };
+  function roomBus(ac) {
+    if (rBus && rBus.context === ac) return;
+    var lim = ac.createDynamicsCompressor(); lim.threshold.value = -12; lim.knee.value = 8; lim.ratio.value = 5; lim.attack.value = 0.003; lim.release.value = 0.25; lim.connect(master);
+    /* the reverb: a made-up 2.4 s room, bright at first and darker as it dies away */
+    var sr = ac.sampleRate, len = Math.floor(sr * 2.4), ir = ac.createBuffer(2, len, sr);
+    for (var c = 0; c < 2; c++) { var d = ir.getChannelData(c), lp = 0; for (var i = 0; i < len; i++) { var f = i / len; lp += (Math.random() * 2 - 1 - lp) * (0.08 + 0.6 * Math.pow(1 - f, 3)); d[i] = lp * Math.pow(1 - f, 2.4) * Math.min(1, i / (sr * 0.01)); } }
+    var cv = ac.createConvolver(); cv.buffer = ir; cv.connect(lim);
+    rBus = lim; rVerb = cv;
+  }
+  function roomH(ac, t, p) {
+    function osc(dest, t1, type, f0, f1, peak, a, d, filt) {
+      var o = ac.createOscillator(), g = ac.createGain(), last = o; o.type = type; o.frequency.setValueAtTime(f0, t1); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t1 + a + d);
+      env(ac, g, t1, peak, a, d); if (filt) { var fl = ac.createBiquadFilter(); fl.type = filt[0]; fl.frequency.value = filt[1]; if (filt[2]) fl.Q.value = filt[2]; o.connect(fl); last = fl; }
+      last.connect(g); g.connect(dest); o.start(t1); o.stop(t1 + a + d + 0.03);
+    }
+    return {
+      ac: ac, t: t, p: p, osc: osc,
+      out: function (wet) { var g = ac.createGain(); g.connect(rBus); if (wet) { var s = ac.createGain(); s.gain.value = wet; g.connect(s); s.connect(rVerb); } return g; },
+      burst: function (dest, t1, len, ft, fq, Q, peak, a, d) { var n = noise(ac, len), fl = ac.createBiquadFilter(), g = ac.createGain(); fl.type = ft; fl.frequency.value = fq; fl.Q.value = Q || 1; env(ac, g, t1, peak, a, d); n.connect(fl); fl.connect(g); g.connect(dest); n.start(t1); n.stop(t1 + len + 0.01); },
+      bell: function (dest, t1, f, peak, dec, parts) { (parts || [[1, 1, 1], [2.76, 0.42, 0.55], [5.4, 0.2, 0.35], [8.93, 0.08, 0.22]]).forEach(function (q) { if (f * q[0] < 16000) osc(dest, t1, "sine", f * q[0], 0, peak * q[1], 0.002, dec * q[2]); }); }
+    };
+  }
   /* Parlor.fly(fromEl, toEl, html, {dur, lift, size, sound}) : a piece floats along an arc from one spot to another.
      Resolves when it lands. With reduced motion it resolves at once. */
   P.fly = function (from, to, html, o) {

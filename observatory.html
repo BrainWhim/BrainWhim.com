@@ -108,7 +108,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1031a"></script>
 <script src="bw-avatars.js?v=1031a"></script>
-<script src="parlor-kit.js?v=1031f"></script>
+<script src="parlor-kit.js?v=1031g"></script>
 <script src="observatory-sky.js?v=1031c"></script>
 <script>
 /* ===== Observatory core (rules, solver, daily maker) — shared by the page and the tests =====
@@ -419,21 +419,62 @@ function update(){
   if(window.Parlor) Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Tonight's Chart","Stars set "+set+" of "+P.N+(hints?" · "+hints+" hint"+(hints>1?"s":""):""));
 }
 
+/* ---------- sounds (Oct 31): glass and starlight, made in the browser through the kit ----------
+   ob-draw: a crystal note for each line drawn, pitched by its length (long lines lower, like strings) · ob-erase: a softer, lower one
+   ob-rule: a pencil tick for a ✕ · ob-cross: a muted, uneasy tone when lines cross · ob-pick: a faint twinkle choosing a star
+   ob-set: a rising shimmer as stars get their number (climbs as the chart fills) · ob-hint: a twinkle of little bells
+   ob-clear: Restart, glass notes falling · ob-solve: a shimmering chord for the reveal (short:1 for a lesson page) */
+var OB_SCALE=[587.3,659.3,740,880,987.8,1174.7,1318.5,1480,1760,1975.5,2349.3];   /* D major pentatonic */
+var GLASS=[[1,1,1],[2.32,.32,.5],[4.25,.13,.3],[6.63,.05,.2]];
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("ob-draw",function(h,o){ var d=h.out(.45), f=o.f||880, t=h.t;
+    h.burst(d,t,.012,"highpass",7000,1,.03,.001,.008); h.bell(d,t,f,.1*Math.pow(587/f,.35),1.5,GLASS); h.osc(d,t,"sine",f*.5,0,.025,.01,.6); });
+  D("ob-erase",function(h,o){ var d=h.out(.22), f=(o.f||880)*.5, t=h.t, k=o.soft?.6:1;
+    h.burst(d,t,.08,"bandpass",1600,1.2,.04*k,.006,.06); h.bell(d,t+.01,f,.05*k,.35,[[1,1,1],[2.32,.2,.4]]); h.osc(d,t+.01,"sine",f*1.5,f*1.2,.02*k,.004,.18); });
+  D("ob-rule",function(h){ var d=h.out(.08), t=h.t; h.burst(d,t,.035,"bandpass",3300,2,.27,.001,.03); h.burst(d,t+.05,.03,"bandpass",2700,2,.22,.001,.025); });
+  D("ob-cross",function(h){ var d=h.out(.18), t=h.t+.09;
+    h.osc(d,t,"triangle",233.1,0,.06,.02,.42,["lowpass",650]); h.osc(d,t,"triangle",247,0,.06,.02,.42,["lowpass",650]); h.osc(d,t,"sine",116.5,0,.05,.02,.36); });
+  D("ob-pick",function(h){ var d=h.out(.35); h.bell(d,h.t,2349.3,.025,.35,[[1,1,1],[2.32,.2,.4]]); });
+  D("ob-set",function(h,o){ var d=h.out(.5), t=h.t+.08, b=Math.max(0,Math.min(7,Math.round((o.frac||0)*7))), n=o.n||1;
+    for(var i=0;i<2+Math.min(2,n);i++){ var f=OB_SCALE[Math.min(OB_SCALE.length-1,b+i)]*2; h.osc(d,t+i*.045,"sine",f,0,.028-i*.004,.004,.5); } });
+  D("ob-hint",function(h){ var d=h.out(.55), t=h.t, notes=[6,8,7,9,10,8];
+    notes.forEach(function(k,i){ h.bell(d,t+i*.07+(i%2)*.012,OB_SCALE[k]*1.0,.04*(1-i*.1),.7,[[1,1,1],[2.32,.15,.4]]); }); });
+  D("ob-clear",function(h){ var d=h.out(.4), t=h.t; [9,7,5,3,1].forEach(function(k,i){ h.bell(d,t+i*.06,OB_SCALE[k],.035,.5,GLASS); }); });
+  D("ob-solve",function(h,o){ var d=h.out(.6), t=h.t, L=o.short?1.6:3.4;
+    /* a slow-blooming chord: each note a pair of gently detuned voices */
+    [146.8,293.7,440,587.3,740,880,1318.5].forEach(function(f,i){ var pk=(i<2?.05:.04)*(o.short?.8:1)*.75;
+      h.osc(d,t,"triangle",f*1.0024,0,pk,.35+i*.04,L,["lowpass",2400]); h.osc(d,t,"sine",f*.9976,0,pk,.4+i*.04,L); });
+    /* and starlight rising over it */
+    var n=o.short?5:9; for(var i=0;i<n;i++) h.bell(d,t+.12+i*.11,OB_SCALE[Math.min(OB_SCALE.length-1,i+2)]*(i>6?2:1),.036,1.4,GLASS);
+  });
+})();
+function snd(name,o,old){ if(!window.Parlor) return; if(Parlor.defSfx) Parlor.sfx(name,o); else if(old) Parlor.sfx(old[0],old[1]); }
+/* a line's note: long lines ring low, short ones high */
+function noteOf(k){ var e=P.cand[k], a=P.nodes[e[0]], b=P.nodes[e[1]], len=Math.hypot(a[0]-b[0],a[1]-b[1]); return OB_SCALE[Math.max(0,Math.min(7,Math.round((1-Math.log(Math.max(100,len)/100)/Math.log(6))*7)))]; }   /* chart lines run ~100 to 1100 units, median ~200 */
+function setCount(){ var deg=new Array(P.N).fill(0), n=0; P.cand.forEach(function(e,k){ if(ink[k]===1){ deg[e[0]]++; deg[e[1]]++; } }); for(var v=0;v<P.N;v++) if(deg[v]===P.need[v]) n++; return n; }
+
 /* ---------- moves ---------- */
 function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||1700); }
 function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
 function change(k,to){
   if(done||!P) return;
+  var was=ink[k], set0=setCount(), crossed=false;
   hist.push(Int8Array.from(ink)); ink[k]=to; if(!t0) t0=Date.now(); clearHint();
-  if(window.Parlor) Parlor.sfx(to===1?"click":"tile",{pitch:to===1?1.2:.9});
   /* a line that crosses a drawn one: say so once */
-  if(to===1){ for(var j=0;j<P.X[k].length;j++) if(ink[P.X[k][j]]===1){ toast("Lines can't cross. One of these two has to go."); break; } }
+  if(to===1){ for(var j=0;j<P.X[k].length;j++) if(ink[P.X[k][j]]===1){ crossed=true; toast("Lines can't cross. One of these two has to go."); break; } }
+  if(to===1) snd("ob-draw",{f:noteOf(k)},["click",{pitch:1.2}]);
+  else if(to===0||was===0) snd("ob-rule",{},["tile",{pitch:.9}]);
+  else snd("ob-erase",{f:noteOf(k)},["tile",{pitch:.9}]);
+  if(crossed) snd("ob-cross");
+  var set1=setCount(); if(set1>set0&&!crossed&&set1<P.N) snd("ob-set",{n:set1-set0,frac:set1/P.N});
   update(); check();
 }
 function toggle(k){ change(k,ink[k]===1?-1:1); }
 function ruleOut(k){ change(k,ink[k]===0?-1:0); if(ink[k]===0) toast("Ruled out. Tap it to draw it after all.",1500); }
-function undo(){ if(done||!hist.length) return; ink=hist.pop(); clearHint(); update(); }
-function restart(){ if(!P) return; if(done&&mode==="daily"){ startDaily(true); return; } ink=new Int8Array(P.cand.length).fill(-1); hist=[]; sel=-1; done=false; clearHint(); update(); }
+function undo(){ if(done||!hist.length) return; snd("ob-erase",{f:740,soft:1}); ink=hist.pop(); clearHint(); update(); }
+function restart(){ if(!P) return; if(done&&mode==="daily"){ startDaily(true); return; } if(ink&&ink.some(function(v){ return v!==-1; })) snd("ob-clear"); ink=new Int8Array(P.cand.length).fill(-1); hist=[]; sel=-1; done=false; clearHint(); update(); }
 function check(){
   var s=new Int8Array(ink.length); for(var k=0;k<ink.length;k++) s[k]=ink[k]===1?1:0;
   if(OB.valid(P,s)){ solved(); return; }
@@ -469,7 +510,7 @@ function hint(){
   var lenPx=Math.hypot(b[0]-a[0],b[1]-a[1])/pxU();
   if(!fine()&&lenPx<90&&zOf(V)<2.4){ var m=[(a[0]+b[0])/2,(a[1]+b[1])/2], z=Math.min(2.4,zOf(V)*Math.max(1.4,130/lenPx)), bw=baseView(); animateTo({x:m[0]-bw.w/z/2,y:m[1]-bw.h/z/2,w:bw.w/z,h:bw.h/z},420); }
   else showPoint(a,b);
-  toast(h.wrong?"The glowing line, between the two ringed stars, doesn't belong in the figure.":"The glowing line, between the two ringed stars, belongs in the figure.",2600);
+  toast(h.wrong?"The glowing line, between the two ringed stars, doesn't belong in the figure.":"The glowing line, between the two ringed stars, belongs in the figure.",2600); snd("ob-hint");
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+(h.wrong?"The glowing line doesn't belong: tap it to rub it out.":"The glowing line belongs in the figure: tap it to draw it.")+"</p>");
   update();
 }
@@ -646,7 +687,7 @@ function endPress(e){
   if(p.blocked){ if(!done) lookOnly(); return; }
   if(p.tc){ tooClose(p.q,p.cx,p.cy); return; }
   if(p.star>=0){ if(sel>=0&&sel!==p.star){ var k2=candBetween(sel,p.star); if(k2>=0){ sel=-1; toggle(k2); return; } }
-    sel=sel===p.star?-1:p.star; update(); if(sel>=0&&!selTold){ selTold=true; toast("Now tap a star it has a sight line to, and the line is drawn.",2200); } return; }
+    sel=sel===p.star?-1:p.star; if(sel>=0) snd("ob-pick"); update(); if(sel>=0&&!selTold){ selTold=true; toast("Now tap a star it has a sight line to, and the line is drawn.",2200); } return; }
   if(p.line>=0){ sel=-1; toggle(p.line); return; }
   if(sel>=0){ sel=-1; update(); }
 }
@@ -696,7 +737,7 @@ function reveal(){
 }
 function solved(){
   if(done) return; done=true; sel=-1; clearHint(); update();
-  if(window.Parlor) Parlor.sfx("win");
+  snd("ob-solve",{short:mode==="lesson"},["win"]);
   if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },500); return; }
   reveal();
   var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(hints), first=false, sk=streak(), srv=null;

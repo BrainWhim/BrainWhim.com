@@ -80,7 +80,7 @@
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1031a"></script>
 <script src="bw-avatars.js?v=1031a"></script>
-<script src="parlor-kit.js?v=1031f"></script>
+<script src="parlor-kit.js?v=1031g"></script>
 <script>
 /* ===== Orrery core (rules, solver, daily maker) — shared by the page and the tests ===== */
 var OR = (function () {
@@ -468,7 +468,7 @@ function paint(anim,from){
   (function tick(now){ var p=Math.min(1,(now-s0)/dur), e=1-Math.pow(1-p,3); setAll(e); if(p<1) animT=requestAnimationFrame(tick); else marks(); })(s0);
 }
 /* chart marks glow when their planet is home */
-function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"6 5"); m.el.setAttribute("stroke-width",home?4:3); m.el.setAttribute("opacity",home?1:.9); }); }
+function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"6 5"); m.el.setAttribute("stroke-width",home?4:3); m.el.setAttribute("opacity",home?1:.9); }); homeSync(); }
 /* the selected ring glows (and the one under the mouse, faintly) */
 function glowRings(){ RG.forEach(function(R,i){ R.hi.setAttribute("stroke",i===sel?"rgba(255,226,140,.6)":i===hov?"rgba(255,226,140,.26)":"rgba(255,226,140,0)"); }); }
 /* arrows show which way each ring turns for a clockwise turn of the selected crank */
@@ -498,6 +498,50 @@ function gearsText(){
     (P.rings.some(function(r){ return !r.crank; })?" · "+P.rings.map(function(r,i){ return r.crank?null:"<b>"+PL[i].name+"</b> has no crank"; }).filter(Boolean).join(" · "):"");
 }
 
+/* ---------- sounds (Oct 31): brass and clockwork, made in the browser through the kit ----------
+   or-tick: one stop of a brass ratchet; with gear:n it adds the quick whir of meshing teeth (n = other rings turned)
+   or-back: Undo, a softer tick · or-clunk: arms that would clash (soft:1 = a ring with no crank, locked)
+   or-home: a chime when a planet reaches its mark (inner planets ring higher) · or-hint: two small bell notes
+   or-spin: Restart, the rings run back · or-solve: a music-box flourish (short:1 for a lesson page) */
+var OR_NOTE=[1046.5,880,784,659.3,523.3];   /* Mercury to Jupiter: C major pentatonic, inner planets higher */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("or-tick",function(h,o){ var d=h.out(.12), t=h.t, p=h.p, g=o.gear||0;
+    h.burst(d,t,.03,"bandpass",4300*p,5,.7,.001,.022);                       /* the pawl snapping over a tooth */
+    h.bell(d,t,2650*p,.07,.07,[[1,1,1],[1.51,.6,.7],[2.37,.35,.5]]);        /* the brass rings a little */
+    h.osc(d,t,"sine",210*p,120*p,.1,.002,.045,["lowpass",500]);             /* and the plate knocks under it */
+    if(g){ var n=Math.min(10,4+g*2);                                          /* gears: a run of tiny teeth, quick then easing */
+      for(var i=0;i<n;i++){ var tt=t+.012+i*.0135*(1+i*.04); h.burst(d,tt,.016,"bandpass",(2400+((i*7)%5)*260)*p,6,.028*(1-i/(n+3)),.001,.01); }
+      h.osc(d,t+.01,"sawtooth",160*p,120*p,.006,.02,.11,["bandpass",1400*p,3]); }
+  });
+  D("or-back",function(h){ var d=h.out(.1), t=h.t, p=h.p;
+    h.burst(d,t,.025,"bandpass",3400*p,4,.09,.001,.02); h.bell(d,t+.006,2100*p,.03,.06,[[1,1,1],[1.51,.5,.6]]); h.osc(d,t,"sine",180*p,110*p,.05,.002,.04,["lowpass",420]); });
+  D("or-clunk",function(h,o){ var d=h.out(.1), t=h.t, s=o.soft?.3:.55;
+    h.osc(d,t,"sine",150,62,.3*s,.004,.2,["lowpass",380]);                   /* a dull brass knock */
+    h.burst(d,t,.07,"lowpass",900,1,.15*s,.002,.06);
+    h.bell(d,t+.004,410,.05*s,.09,[[1,1,1],[1.73,.5,.6]]);
+    if(!o.soft) h.osc(d,t+.085,"sine",118,80,.06,.004,.12,["lowpass",300]); }); /* and the ring gives back */
+  D("or-home",function(h,o){ var d=h.out(.32), f=OR_NOTE[o.ring]||784;
+    h.bell(d,h.t,f,.09,1.7); h.osc(d,h.t,"sine",f*2,0,.02,.004,.8); });
+  D("or-hint",function(h){ var d=h.out(.4); h.bell(d,h.t,1318.5,.07,1.1); h.bell(d,h.t+.15,1760,.055,1.3); });
+  D("or-spin",function(h){ var d=h.out(.12), t=h.t, tk=0;
+    for(var i=0;i<9;i++){ h.burst(d,t+tk,.02,"bandpass",(3800-i*120),5,.3*(1-i/12),.001,.016); tk+=.028+i*.006; } });
+  D("or-solve",function(h,o){ var d=h.out(.42), t=h.t, tine=[[1,1,1],[3.01,.16,.25],[5.9,.05,.12]];
+    function pluck(at,f,pk,dec){ h.bell(d,t+at,f,pk*.78,dec,tine); h.burst(d,t+at,.01,"highpass",6500,1,.025,.001,.006); }
+    var c=0;
+    if(!o.short){ [[0,784],[.12,1046.5],[.24,1318.5],[.36,1568],[.52,1318.5],[.64,1568],[.76,2093]].forEach(function(m){ pluck(m[0],m[1],.085,.9); }); c=.98; }
+    [523.3,659.3,784,1046.5,1568].forEach(function(f,i){ pluck(c+i*.03,f,i===4?.05:.075,2.4); });   /* and a ringing chord */
+  });
+})();
+function snd(name,o,old){ if(!window.Parlor) return; if(Parlor.defSfx) Parlor.sfx(name,o); else if(old) Parlor.sfx(old[0],old[1]); }
+function geared(ring){ var e=P._eff[ring], n=0; e.forEach(function(v,k){ if(v&&k!==ring) n++; }); return n; }
+function tickPitch(ring){ return 1.12-ring*.07; }   /* the outer rings are bigger, so a little deeper */
+/* a chime when a planet arrives on its mark (several at once ring one after another) */
+var homeWas=[];
+function homeSync(quiet){ if(!P) return; var at=0;
+  P.rings.forEach(function(r,i){ var h=t[i]===P.goal[i]; if(h&&!homeWas[i]&&!quiet){ (function(i,at){ setTimeout(function(){ if(!done) snd("or-home",{ring:i}); },at); })(i,at); at+=80; } homeWas[i]=h; }); }
+
 /* ---------- moves ---------- */
 function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||1700); }
 function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
@@ -511,31 +555,31 @@ function clashWho(ring,d){
   return null;
 }
 function flashClash(w){ if(!w) return; [RG[w[0]].bodies[w[1]],RG[w[2]].bodies[w[3]]].forEach(function(B){ if(!B) return; B.bad.setAttribute("stroke","rgba(255,90,70,.9)"); clearTimeout(B._h); B._h=setTimeout(function(){ B.bad.setAttribute("stroke","rgba(255,90,70,0)"); },1500); }); }
-function clashSay(ring,d){ var w=clashWho(ring,d); flashClash(w); toast(w?nm(w[0],w[1])+" and "+nm(w[2],w[3])+" would clash. Their arms can't share a spoke.":"Those arms would clash."); if(window.Parlor) Parlor.sfx("tile",{pitch:1.6}); }
+function clashSay(ring,d){ var w=clashWho(ring,d); flashClash(w); toast(w?nm(w[0],w[1])+" and "+nm(w[2],w[3])+" would clash. Their arms can't share a spoke.":"Those arms would clash."); snd("or-clunk",{},["tile",{pitch:1.6}]); }
 function nm(i,j){ return j?PL[i].name+"'s moon":PL[i].name; }
 function turn(ring,d){
   if(done||busy||!P) return false;
-  if(!P.rings[ring].crank){ toast("The "+PL[ring].name+" ring has no crank. It turns only when its gear does."); nope(); return false; }
+  if(!P.rings[ring].crank){ toast("The "+PL[ring].name+" ring has no crank. It turns only when its gear does."); snd("or-clunk",{soft:1}); nope(); return false; }
   if(mode==="lesson"&&!lessonAllows(ring,d)) return false;
   var n=OR.step(P,t,ring,d);
   if(!n){ clashSay(ring,d); nope(); return false; }
   var from=t; hist.push(t); t=n; moves++; sel=ring;
   if(!t0) t0=Date.now();
-  if(window.Parlor) Parlor.sfx("click",{pitch:.75+ring*.08});
+  snd("or-tick",{pitch:tickPitch(ring),gear:geared(ring)},["click",{pitch:.75+ring*.08}]);
   paint(true,from); showSel(); counts();
   afterMove();
   return true;
 }
 function afterMove(){ if(OR.enc(P,t)===OR.enc(P,P.goal)) setTimeout(solved,320); else if(mode==="practice") practiceTip(); }
 function nope(){ FIT.classList.remove("or-nope"); void FIT.offsetWidth; FIT.classList.add("or-nope"); }
-function undo(){ if(done||busy||!hist.length) return; var from=t; t=hist.pop(); moves=Math.max(0,moves-1); paint(true,from); counts(); }
-function restart(){ if(busy||!P) return; if(done&&mode==="daily") { startDaily(true); return; } t=P.start.slice(); hist=[]; moves=0; done=false; paint(true,null); counts(); }
+function undo(){ if(done||busy||!hist.length) return; snd("or-back"); var from=t; t=hist.pop(); moves=Math.max(0,moves-1); paint(true,from); counts(); }
+function restart(){ if(busy||!P) return; if(done&&mode==="daily") { startDaily(true); return; } if(moves) snd("or-spin"); t=P.start.slice(); hist=[]; moves=0; done=false; homeSync(true); paint(true,null); counts(); }
 function hint(){
   if(done||!P) return;
   var best=OR.bestMoves(P,dist,t); if(!best.length) return;
   var m=best[0]; hints++; sel=m.ring; showSel(); counts();
   var msg="Turn the "+PL[m.ring].name+" ring "+(m.d>0?"clockwise ↻":"counterclockwise ↺")+".";
-  toast(msg,2200);
+  toast(msg,2200); snd("or-hint");
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+msg+"</p>");
   hintGlow(m);
 }
@@ -574,7 +618,7 @@ LIVE.addEventListener("pointerdown",function(e){
   if(!P||done||busy||drag) return; var h=hit(local(e)); if(!h) return;
   e.preventDefault(); var i=h.i;
   sel=i; hov=-1; showSel();
-  if(!P.rings[i].crank){ toast("The "+PL[i].name+" ring has no crank. It turns only when its gear does."); nope(); return; }
+  if(!P.rings[i].crank){ toast("The "+PL[i].name+" ring has no crank. It turns only when its gear does."); snd("or-clunk",{soft:1}); nope(); return; }
   if(mode==="lesson"&&!lessonQuiet(i,1)&&!lessonQuiet(i,-1)){ lessonAllows(i,1); return; }
   try{ LIVE.setPointerCapture(e.pointerId); }catch(x){}
   cancelAnimationFrame(animT); paint(false);
@@ -595,7 +639,7 @@ LIVE.addEventListener("pointermove",function(e){
   /* past a block the ring only gives a little, like a gear against a stop */
   if(f>kmax) vis=kmax+.22*(1-Math.exp(-(f-kmax)*2.2)); else if(f<kmin) vis=kmin-.22*(1-Math.exp((f-kmin)*2.2));
   var k=Math.max(kmin,Math.min(kmax,Math.round(vis)));
-  if(k!==drag.k){ drag.k=k; t=dragPath(k); marks(); counts(Math.abs(k)); if(window.Parlor) Parlor.sfx("click",{pitch:.75+drag.i*.08}); }
+  if(k!==drag.k){ drag.k=k; t=dragPath(k); marks(); counts(Math.abs(k)); snd("or-tick",{pitch:tickPitch(drag.i),gear:geared(drag.i)},["click",{pitch:.75+drag.i*.08}]); }
   /* pushing into a block: say why, once each way per drag */
   var push=f>kmax+.45?1:f<kmin-.45?-1:0;
   if(push&&drag.told!==push&&(push>0?kmax:-kmin)<P.S-1){ drag.told=push;
@@ -635,7 +679,7 @@ function tools(){
 function load(puz,how){
   P=puz; if(!P._eff) OR.prep(P);
   dist=P._dist||OR.solve(P); if(P.par==null) P.par=dist[OR.enc(P,P.start)];
-  t=P.start.slice(); hist=[]; moves=0; hints=0; sel=-1; t0=0; done=false; mode=how;
+  t=P.start.slice(); hist=[]; moves=0; hints=0; sel=-1; t0=0; done=false; mode=how; homeWas=[]; homeSync(true);
   geo(); drawBase(); drawLive(); showSel();
   $("#orGears",stage).innerHTML=gearsText(); $("#orGears",stage).style.display=P.links.length||P.rings.some(function(r){return !r.crank;})?"":"none";
   counts(); fit();
@@ -656,8 +700,8 @@ function stars(m,par,h){ var s=m<=par?3:m<=par+3?2:1; if(h) s=Math.min(s,2); ret
 function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
 function streak(){ try{ return JSON.parse(store("bwOrreryStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
 function solved(){
-  if(done) return; done=true; sel=-1; showSel();
-  if(window.Parlor) Parlor.sfx("win");
+  if(done) return; done=true; sel=-1; showSel(); homeSync(true);   /* the flourish speaks for the last planets */
+  snd("or-solve",{short:mode==="lesson"},["win"]);
   RG.forEach(function(R,i){ setTimeout(function(){ R.hi.setAttribute("stroke","rgba(255,226,140,.6)"); },i*90); });
   if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },500); return; }
   var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(moves,P.par,hints), first=false, sk=streak(), srv=null;
