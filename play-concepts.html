@@ -412,20 +412,22 @@ $("cue").onclick=function(){ $("lane").scrollTo({top:$("rooms").offsetTop-8,beha
    spaced unevenly on purpose; the places were chosen by checking every position through a full turn,
    on desktop and phone sizes, so no two pieces on neighbouring rings ever come within about 14px. A moon or an orb opens that category's Lobby. */
 var CATS=[
-  {key:"board", name:"Board Games", ic:"♟️", sub:"10 Parlors", href:"lobby.html", glow:"rgba(229,193,88,.55)", at:[71,-12,-134],
+  {key:"board", name:"Board Games", ic:"♟️", sub:"10 Parlors", href:"lobby.html", glow:"rgba(229,193,88,.55)", at:[71,-12,-134], atP:[80,2,-130],
    moons:[["Garden Chess","garden-parlor-sm.jpg"],["Library Backgammon","library-bg-sm.jpg"]]},
-  {key:"cards", name:"Cards", ic:"🂠", sub:"10 Parlors", href:"lobby.html?cat=cards", glow:"rgba(242,76,122,.6)", at:[288,188,124],
+  {key:"cards", name:"Cards", ic:"🂠", sub:"10 Parlors", href:"lobby.html?cat=cards", glow:"rgba(242,76,122,.6)", at:[288,188,124], atP:[296,180,136],
    moons:[["Rose Garden Hearts","cards-hearts-sm.jpg"],["Ballroom Bridge","cards-bridge-sm.jpg"]]},
-  {key:"puz", name:"Brain Puzzles", ic:"🧩", sub:"4 Daily Puzzles", href:"puzzles.html", glow:"rgba(80,200,210,.55)", at:[41,-30,-114],
+  {key:"puz", name:"Brain Puzzles", ic:"🧩", sub:"4 Daily Puzzles", href:"puzzles.html", glow:"rgba(80,200,210,.55)", at:[41,-30,-114], atP:[37,-25,-104],
    moons:[["Sky Word",null,"W","#2f6f9a"],["Star Match",null,"★","#3c5aa8"]]},
-  {key:"kids", name:"Kids", ic:"🪁", sub:"Opening Soon", href:null, glow:"rgba(170,140,240,.55)", at:[137,79,-3], soon:true,
+  {key:"kids", name:"Kids", ic:"🪁", sub:"Opening Soon", href:null, glow:"rgba(170,140,240,.55)", at:[137,79,-3], atP:[211,109,5], soon:true,
    moons:[["Go Fish",null,"🐟","#7f6bc4"],["Old Maid",null,"👵","#6a86c4"]]}
 ];
 /* design units; the whole system is scaled to fit its stage.
    r: each ring's long radius; k: how round the rings are (1 = circle); tilt: the plane's turn in degrees;
    orb/moon: sizes at the front of a ring (they shrink to `back` of that at the rear) */
 var G_DESK ={bw:860,bh:630,core:168,r:[150,228,306,384],k:.66,tilt:-14,orb:90,moon:74,back:.72,font:14};
-var G_PHONE={bw:416,bh:370,core:96, r:[74,110,146,182],  k:.8, tilt:-10,orb:58,moon:44,back:.74,font:10.5};
+/* phones (Oct 30): the same tilt and roundness as desktop, a smaller planet (Judy: it looked too big and breathed into the inner ring),
+   and their own places on the rings (`atP`), checked for every pair of pieces through a full turn at 360-430px: never closer than about 13px */
+var G_PHONE={bw:444,bh:336,core:72, r:[76,114,152,190],  k:.66,tilt:-14,orb:58,moon:44,back:.74,font:10.5};
 var G, items=[], hold=0, LAP=60000;
 
 function build(){
@@ -461,7 +463,8 @@ function build(){
     o.innerHTML='<span class="ic" style="font-size:'+(G.orb*.27)+'px">'+c.ic+'</span><span class="nm" style="font-size:'+G.font+'px">'+esc(c.name)+'</span>';
     var lead=add(o,G.orb,"orb",c.name,c.sub);
     /* the games trail behind it; spacing is worked out so they clear each other even where the ring is foreshortened */
-    lead.a=c.at[0]*Math.PI/180; items.push(lead);
+    var at=(PHONE.matches&&c.atP)?c.atP:c.at;
+    lead.a=at[0]*Math.PI/180; items.push(lead);
     c.moons.forEach(function(m,mi){
       var el=document.createElement(c.href?"a":"button");
       if(c.href) el.href=c.href; else { el.type="button"; el.onclick=function(){ toast(m[0]+" is coming to the Kids’ Corner soon."); }; }
@@ -469,7 +472,7 @@ function build(){
       el.setAttribute("aria-label",m[0]+(c.soon?" (opening soon)":" · opens the "+c.name+" lobby"));
       if(m[1]) el.style.backgroundImage="url('"+m[1]+"')";
       else { el.style.background="radial-gradient(circle at 32% 26%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 50% 55%,"+m[3]+",#0e1a33 95%)"; el.innerHTML='<span style="font-size:'+(G.moon*.42)+'px">'+m[2]+'</span>'; }
-      var it=add(el,G.moon,"moon",m[0],label); it.a=c.at[mi+1]*Math.PI/180; items.push(it);
+      var it=add(el,G.moon,"moon",m[0],label); it.a=at[mi+1]*Math.PI/180; items.push(it);
     });
   });
   fit(); draw(performance.now());
