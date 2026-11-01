@@ -25,7 +25,11 @@
 .ob-zbtn.on{display:inline-flex}
 .ob-toast{position:absolute;z-index:6;left:50%;top:4px;transform:translateX(-50%);width:max-content;max-width:88%;padding:8px 14px;border-radius:12px;background:rgba(8,14,32,.9);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .ob-toast.on{opacity:1}
-.ob-tools{display:flex;flex-direction:column;align-items:center;gap:7px;padding:7px 10px;border-radius:12px;background:rgba(10,18,40,.66);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.ob-tools{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;padding:7px 10px;border-radius:12px;border:0;
+  background:radial-gradient(ellipse 70% 60% at 20% 0%,rgba(170,195,255,.14),transparent 70%),linear-gradient(165deg,#1d2a4d 0%,#0f1730 50%,#080d1d 100%);
+  box-shadow:inset 1px 1px 0 rgba(200,215,255,.22),inset -1px -1px 0 rgba(0,0,0,.6),0 0 0 1px #03060f,0 3px 0 #03060f,6px 14px 22px rgba(0,0,0,.5)}
+/* 3-D pass (Nov 1): a brass pinstripe inside the panel */
+.ob-tools::before{content:"";position:absolute;inset:4px;border-radius:9px;border:1px solid rgba(212,175,55,.4);pointer-events:none}
 .ob-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:center}
 .ob-tools .pk-btn{width:auto;margin:0;padding:8px 14px;min-height:0;white-space:nowrap}
 .ob-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
@@ -343,8 +347,20 @@ function drawChart(){
   sv("path",{d:poly([[-44,-44],[1044,-44],[1044,1044],[-44,1044]]),transform:"translate(10 "+(THK+18)+")",fill:"rgba(0,0,0,.6)",filter:"url(#obSoft)"},SVG);
   sv("path",{d:"M"+front[0][0]+" "+front[0][1]+" L"+front[1][0]+" "+front[1][1]+" L"+front[1][0]+" "+(front[1][1]+THK)+" L"+front[0][0]+" "+(front[0][1]+THK)+" Z",fill:grad(d,"obEdge",[["0%","#6e4f17"],["30%","#c99a3c"],["55%","#8f6a22"],["100%","#3e2b0b"]],{x1:"0",y1:"0",x2:"0",y2:"1"})},SVG);
   sv("path",{d:poly([[-44,-44],[1044,-44],[1044,1044],[-44,1044]]),fill:grad(d,"obBrass",[["0%","#fff1bf"],["30%","#d9b25a"],["62%","#8f6a22"],["100%","#d9b25a"]],{x1:"0",y1:"0",x2:"1",y2:"1"})},SVG);
-  sv("path",{d:poly([[-32,-32],[1032,-32],[1032,1032],[-32,1032]]),fill:"none",stroke:"rgba(255,248,220,.55)","stroke-width":2},SVG);
-  sv("path",{d:poly([[-22,-22],[1022,-22],[1022,1022],[-22,1022]]),fill:"none",stroke:"rgba(60,40,10,.7)","stroke-width":4},SVG);
+  /* 3-D pass (Nov 1): the frame is a beveled moulding, lit from the top left. The outer slope's top and left faces catch the light,
+     the inner slope (falling toward the glass) the bottom and right ones */
+  function faces(o,i,lt,dk){ var A=[o,o],B=[1000-o,o],C=[1000-o,1000-o],D=[o,1000-o],a=[i,i],b=[1000-i,i],c=[1000-i,1000-i],dd=[i,1000-i];
+    [[A,B,b,a,lt[0]],[A,a,dd,D,lt[1]],[D,dd,c,C,dk[0]],[B,C,c,b,dk[1]]].forEach(function(f){ sv("path",{d:poly(f.slice(0,4)),fill:f[4]},SVG); }); }
+  faces(-44,-33,["rgba(255,250,225,.42)","rgba(255,250,225,.24)"],["rgba(50,30,5,.4)","rgba(50,30,5,.3)"]);
+  faces(-28,-20,["rgba(50,30,5,.42)","rgba(50,30,5,.32)"],["rgba(255,250,225,.34)","rgba(255,250,225,.22)"]);
+  sv("path",{d:poly([[-44,-44],[1044,-44],[1044,1044],[-44,1044]]),fill:"none",stroke:"rgba(60,40,10,.75)","stroke-width":1.6},SVG);
+  sv("path",{d:poly([[-33,-33],[1033,-33],[1033,1033],[-33,1033]]),fill:"none",stroke:"rgba(255,248,220,.7)","stroke-width":1.4},SVG);
+  sv("path",{d:poly([[-28,-28],[1028,-28],[1028,1028],[-28,1028]]),fill:"none",stroke:"rgba(80,55,15,.55)","stroke-width":1.2},SVG);
+  sv("path",{d:poly([[-21,-21],[1021,-21],[1021,1021],[-21,1021]]),fill:"none",stroke:"rgba(30,20,5,.8)","stroke-width":2.4},SVG);
+  /* four brass screws in the corners of the frame */
+  [[-38,-38],[1038,-38],[1038,1038],[-38,1038]].forEach(function(c){ var q=proj(c[0],c[1]), sg=sv("g",{transform:"translate("+q[0].toFixed(1)+" "+q[1].toFixed(1)+")"},SVG);
+    sv("circle",{r:5.2,fill:"rgba(40,25,5,.55)",cx:.8,cy:1.2},sg); sv("circle",{r:4.6,fill:grad(d,"obScrew",[["0%","#fff1bf"],["45%","#c99a3c"],["100%","#5e4212"]],{x1:"0",y1:"0",x2:"1",y2:"1"})},sg);
+    sv("path",{d:"M-3 3 L3 -3",stroke:"rgba(50,30,5,.75)","stroke-width":1.3,"stroke-linecap":"round"},sg); });
   /* the BW monogram (Oct 31): a small brass maker's plate on the frame's front edge, as on the Orrery */
   var mq=proj(500,1036), mg=sv("g",{transform:"translate("+mq[0].toFixed(1)+" "+mq[1].toFixed(1)+")"},SVG);   /* centered on the frame's bottom bar (Judy, Nov 1) */
   sv("rect",{x:-40,y:-12,width:80,height:24,rx:4,fill:grad(d,"obPlate",[["0%","#fff1bf"],["40%","#d9b25a"],["75%","#a8802c"],["100%","#d9b25a"]],{x1:"0",y1:"0",x2:"0",y2:"1"}),stroke:"#6e4f17","stroke-width":1.3},mg);
@@ -356,12 +372,18 @@ function drawChart(){
   sv("path",{id:"obSkyP",d:skyD},sv("clipPath",{id:"obSkyClip"},d));
   sv("path",{d:skyD,fill:grad(d,"obSky",[["0%","#21407c"],["55%","#0f1f4a"],["100%","#060c22"]],{cx:"45%",cy:"40%",r:"80%"})},SVG);
   var inSky=sv("g",{"clip-path":"url(#obSkyClip)"},SVG);
+  G.lipShade=function(){   /* drawn last inside the sky, over the background stars and under the figure */
+    var t0=proj(-20,-20), t1=proj(1020,-20), l1=proj(-20,1020);
+    sv("rect",{x:t0[0],y:t0[1],width:t1[0]-t0[0],height:26,fill:grad(d,"obLipT",[["0%","rgba(0,0,0,.55)"],["100%","rgba(0,0,0,0)"]],{x1:"0",y1:"0",x2:"0",y2:"1"})},inSky);
+    sv("rect",{x:t0[0],y:t0[1],width:22,height:l1[1]-t0[1],fill:grad(d,"obLipL",[["0%","rgba(0,0,0,.45)"],["100%","rgba(0,0,0,0)"]],{x1:"0",y1:"0",x2:"1",y2:"0"})},inSky);
+    var b0=proj(-20,1020); sv("rect",{x:b0[0],y:b0[1]-3,width:t1[0]-t0[0],height:3,fill:"rgba(255,240,200,.12)"},inSky); };
   /* a soft Milky Way haze, the chart's grid and circle, and the background stars */
   [[520,470,520,170,-28,.07],[300,640,260,110,-20,.05],[760,300,230,90,-35,.05]].forEach(function(h){ var c=proj(h[0],h[1]); sv("ellipse",{cx:c[0],cy:c[1],rx:h[2]*c[2],ry:h[3]*c[2]*TK,transform:"rotate("+h[4]*TK+" "+c[0]+" "+c[1]+")",fill:"rgba(170,190,255,"+h[5]+")",filter:"url(#obSoft)"},inSky); });
   var grid=sv("g",{stroke:"rgba(170,195,255,.12)","stroke-width":1.3,fill:"none"},inSky);
   for(var i=1;i<10;i++){ var a=proj(i*100,-20), b=proj(i*100,1020), c2=proj(-20,i*100), d2=proj(1020,i*100); sv("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1]},grid); sv("line",{x1:c2[0],y1:c2[1],x2:d2[0],y2:d2[1]},grid); }
   var circ=[]; for(i=0;i<96;i++){ var t=i/96*Math.PI*2; circ.push([500+470*Math.cos(t),500+470*Math.sin(t)]); } sv("path",{d:poly(circ),stroke:"rgba(170,195,255,.1)","stroke-dasharray":"3 9"},grid);
   (C.bg||[]).forEach(function(b,n){ var q=proj(b[0],b[1]), r=Math.max(1.2,4.2-(b[2]-2)*.85)*q[2]; var c=sv("circle",{cx:q[0],cy:q[1],r:r,fill:b[3],opacity:Math.max(.25,Math.min(.85,1.2-b[2]*.16))},inSky); if(n%7===3){ c.setAttribute("class","ob-tw"); c.style.animationDelay=(n%5)*.7+"s"; } });
+  G.lipShade();
   /* where each star sits on screen, and how big it can be */
   P.nodes.forEach(function(p){ G.sp.push(proj(p[0],p[1])); });
   /* each star is as big as its own nearest neighbor allows (only crowded stars are drawn smaller) */
@@ -373,33 +395,50 @@ function drawChart(){
     var s0=rs[e[0]]+4*Z, s1=rs[e[1]]+4*Z, vis=Math.max(0,L-s0-s1), gap=Math.max(5*Z,Math.min(11*Z,vis/5));
     var p0=[A[0]+ux*s0,A[1]+uy*s0], p1=[B[0]-ux*s1,B[1]-uy*s1];
     var base=sv("line",{x1:p0[0],y1:p0[1],x2:p1[0],y2:p1[1],stroke:"rgba(215,228,255,.62)","stroke-width":3.4*Z,"stroke-dasharray":vis<14*Z?"0":"1 "+gap.toFixed(1),"stroke-linecap":"round"},LB);
-    var sh=sv("line",{x1:A[0]+3*Z,y1:A[1]+6*Z,x2:B[0]+3*Z,y2:B[1]+6*Z,stroke:"rgba(0,0,0,.55)","stroke-width":5.5*Z,"stroke-linecap":"round",filter:"url(#obBlur2)",opacity:0},LS);
+    var sh=sv("line",{x1:A[0]+4*Z,y1:A[1]+7*Z,x2:B[0]+4*Z,y2:B[1]+7*Z,stroke:"rgba(0,0,0,.5)","stroke-width":6*Z,"stroke-linecap":"round",filter:"url(#obBlur2)",opacity:0},LS);
+    var sh2=sv("line",{x1:A[0]+1.6*Z,y1:A[1]+2.8*Z,x2:B[0]+1.6*Z,y2:B[1]+2.8*Z,stroke:"rgba(0,0,0,.42)","stroke-width":5*Z,"stroke-linecap":"round",opacity:0},LS);
+    /* the side of the rod facing the light (top left) */
+    var nx=-uy, ny=ux; if(nx+ny>0){ nx=-nx; ny=-ny; }
     var glow=sv("line",{x1:A[0],y1:A[1],x2:B[0],y2:B[1],stroke:"rgba(255,214,120,0)","stroke-width":14*Z,"stroke-linecap":"round",filter:"url(#obBlur)"},LG);
-    var inkL=sv("line",{x1:A[0],y1:A[1],x2:B[0],y2:B[1],stroke:"#e8c46a","stroke-width":5.5*Z,"stroke-linecap":"round",opacity:0},LI);
-    var hi=sv("line",{x1:A[0],y1:A[1]-1.2*Z,x2:B[0],y2:B[1]-1.2*Z,stroke:"#fff4cf","stroke-width":1.6*Z,"stroke-linecap":"round",opacity:0},LI);
+    var lo=sv("line",{x1:A[0]-nx*1.3*Z,y1:A[1]-ny*1.3*Z,x2:B[0]-nx*1.3*Z,y2:B[1]-ny*1.3*Z,stroke:"#6e4f17","stroke-width":4.4*Z,"stroke-linecap":"round",opacity:0},LI);
+    var inkL=sv("line",{x1:A[0]+nx*.4*Z,y1:A[1]+ny*.4*Z,x2:B[0]+nx*.4*Z,y2:B[1]+ny*.4*Z,stroke:"#e8c46a","stroke-width":4.6*Z,"stroke-linecap":"round",opacity:0},LI);
+    var hi=sv("line",{x1:A[0]+nx*1.25*Z,y1:A[1]+ny*1.25*Z,x2:B[0]+nx*1.25*Z,y2:B[1]+ny*1.25*Z,stroke:"#fff6d6","stroke-width":1.5*Z,"stroke-linecap":"round",opacity:0},LI);
     var m=[(p0[0]+p1[0])/2,(p0[1]+p1[1])/2], h=7*Z, x=sv("path",{d:"M"+(m[0]-h)+" "+(m[1]-h)+" L"+(m[0]+h)+" "+(m[1]+h)+" M"+(m[0]+h)+" "+(m[1]-h)+" L"+(m[0]-h)+" "+(m[1]+h),stroke:"rgba(255,140,120,.85)","stroke-width":3*Z,"stroke-linecap":"round",opacity:0},LX);
-    G.lines.push({base:base,sh:sh,glow:glow,inkL:inkL,hi:hi,x:x,a:A,b:B}); });
+    G.lines.push({base:base,sh:sh,sh2:sh2,lo:lo,glow:glow,inkL:inkL,hi:hi,x:x,a:A,b:B}); });
   G.drag=sv("line",{x1:0,y1:0,x2:0,y2:0,stroke:"rgba(243,213,138,.75)","stroke-width":4*Z,"stroke-dasharray":"8 8","stroke-linecap":"round",opacity:0},SVG);
   /* the stars: raised, lit orbs with a shadow on the chart, a glow in their own colour and the number of lines they need */
   var ST=sv("g",{},SVG);
   stops(d,"obShadowG",[["0%","rgba(0,0,0,.6)"],["60%","rgba(0,0,0,.25)"],["100%","rgba(0,0,0,0)"]]);
-  stops(d,"obSpec",[["0%","rgba(255,255,255,.95)"],["40%","rgba(255,255,255,.35)"],["100%","rgba(255,255,255,0)"]],{cx:"34%",cy:"28%",r:"36%"});
+  stops(d,"obSpec",[["0%","rgba(255,255,255,.95)"],["40%","rgba(255,255,255,.35)"],["100%","rgba(255,255,255,0)"]],{cx:"32%",cy:"27%",r:"40%"});
+  stops(d,"obCaustic",[["0%","rgba(255,255,255,.55)"],["45%","rgba(255,255,255,.12)"],["100%","rgba(255,255,255,0)"]],{cx:"66%",cy:"76%",r:"32%"});
+  stops(d,"obBezel",[["0%","#fff3c6"],["32%","#e0bb62"],["64%","#a87d2c"],["100%","#4a3410"]],{x1:"0",y1:"0",x2:"1",y2:"1"});
   P.nodes.forEach(function(p,v){ var info=(C.n&&C.n[v])||[p[0],p[1],2.5,0,"#fff4e0"], col=info[4]||"#fff4e0", r=rs[v], q=G.sp[v];
     var g=sv("g",{transform:"translate("+q[0].toFixed(1)+" "+q[1].toFixed(1)+")"},ST);
-    sv("ellipse",{cx:4*Z,cy:7*Z,rx:r*1.15,ry:r*1.15*TK,fill:"url(#obShadowG)"},g);
-    sv("circle",{r:r*2.4,fill:grad(d,"obH"+v,[["0%",col],["30%",col],["100%","rgba(0,0,0,0)"]]),opacity:.3},g);
+    sv("ellipse",{cx:4.5*Z,cy:7.5*Z,rx:r*1.18,ry:r*1.18*TK,fill:"url(#obShadowG)"},g);
+    sv("circle",{cx:1.4*Z,cy:2.4*Z,r:r*1.01,fill:"rgba(0,0,0,.45)"},g);   /* the stud's contact shadow on the chart */
+    sv("circle",{r:r*2.4,fill:grad(d,"obH"+v,[["0%",col],["30%",col],["100%","rgba(0,0,0,0)"]]),opacity:.38},g);
     if(info[2]<1.6){ var sp=r*2.9; sv("path",{d:"M"+(-sp)+" 0 L"+sp+" 0 M0 "+(-sp)+" L0 "+sp,stroke:col,"stroke-width":1.6*Z,opacity:.45,"stroke-linecap":"round"},g); }
     var ring=sv("circle",{r:r+Math.min(5*Z,near[v]*.06),fill:"none",stroke:"rgba(0,0,0,0)","stroke-width":3.5*Z},g);
-    sv("circle",{r:r,fill:grad(d,"obC"+v,[["0%","#ffffff"],["38%",col],["85%",shadeHex(col,-.28)],["100%",shadeHex(col,-.45)]],{cx:"38%",cy:"32%",r:"72%"})},g);
-    sv("circle",{r:r,fill:"url(#obSpec)"},g);
-    sv("circle",{r:r-.8,fill:"none",stroke:"rgba(255,255,255,.35)","stroke-width":1.2},g);
-    var fz=Math.round(Math.min(22*Z,r*1.25)), num=sv("text",{x:0,y:fz*.36,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"700","font-size":fz,fill:"#0b1430"},g); num.textContent=P.need[v];
+    /* the brass bezel (thin, so the glass and its number stay big) */
+    var bz=Math.max(1.6*Z,r*.13), rg=r-bz;
+    sv("circle",{r:r,fill:"url(#obBezel)"},g);
+    sv("circle",{r:r-.5,fill:"none",stroke:"rgba(60,40,10,.6)","stroke-width":1},g);
+    /* the glass: lit from within (brightest a little low of center), darker at the rim where it meets the bezel */
+    sv("circle",{r:rg,fill:grad(d,"obC"+v,[["0%","#ffffff"],["30%",shadeHex(col,.12)],["66%",col],["90%",shadeHex(col,-.3)],["100%",shadeHex(col,-.55)]],{cx:"46%",cy:"50%",r:"60%"})},g);
+    /* light gathered through the dome onto its lower right (a caustic), the lamp's reflection on its upper left */
+    sv("circle",{r:rg,fill:"url(#obCaustic)"},g);
+    sv("circle",{r:rg,fill:"url(#obSpec)"},g);
+    sv("ellipse",{cx:-rg*.36,cy:-rg*.42,rx:rg*.3,ry:rg*.17,transform:"rotate(-35 "+(-rg*.36).toFixed(1)+" "+(-rg*.42).toFixed(1)+")",fill:"rgba(255,255,255,.75)"},g);
+    sv("circle",{r:rg-.4,fill:"none",stroke:"rgba(20,15,5,.35)","stroke-width":1},g);
+    var fz=Math.round(Math.min(22*Z,r*1.25)), num=sv("text",{x:0,y:fz*.36,"text-anchor":"middle","font-family":"Montserrat,sans-serif","font-weight":"700","font-size":fz,fill:"#0b1430",stroke:"rgba(255,255,255,.35)","stroke-width":Math.max(1,fz*.06),"paint-order":"stroke"},g); num.textContent=P.need[v];
     G.stars.push({g:g,ring:ring,num:num,r:r});
   });
   /* the glass: a faint sweep of reflected lamplight across the far corner */
   var glare=sv("g",{"clip-path":"url(#obSkyClip)","pointer-events":"none"},SVG);
   var g0=proj(-20,-20), g1=proj(640,-20), g2=proj(-20,520);
   sv("path",{d:"M"+g0[0]+" "+g0[1]+" L"+g1[0]+" "+g1[1]+" L"+g2[0]+" "+g2[1]+" Z",fill:grad(d,"obGlare",[["0%","rgba(255,236,200,.13)"],["100%","rgba(255,236,200,0)"]],{x1:"0",y1:"0",x2:".7",y2:".7"})},glare);
+  var r0=proj(1020,300), r1=proj(1020,420), r2=proj(420,1020), r3=proj(300,1020);
+  sv("path",{d:"M"+r0[0]+" "+r0[1]+" L"+r1[0]+" "+r1[1]+" L"+r2[0]+" "+r2[1]+" L"+r3[0]+" "+r3[1]+" Z",fill:"rgba(220,230,255,.035)"},glare);
   G.hintG=sv("g",{"pointer-events":"none"},SVG);   /* the hint: drawn over the stars' glow, under the names */
   G.names=sv("g",{opacity:0},SVG);
   G.title=sv("text",{x:500,y:VB[1]+62,"text-anchor":"middle","font-family":"Cormorant Garamond,serif","font-weight":"700","font-size":"66",fill:"#f6e3a8",stroke:"rgba(8,14,32,.6)","stroke-width":4,"paint-order":"stroke",opacity:0,"letter-spacing":"2"},SVG);
@@ -412,8 +451,8 @@ function update(){
   var bad={}, deg=new Array(P.N).fill(0);
   P.cand.forEach(function(e,k){ if(ink[k]!==1) return; deg[e[0]]++; deg[e[1]]++; P.X[k].forEach(function(j){ if(ink[j]===1){ bad[k]=1; bad[j]=1; } }); });
   P.cand.forEach(function(e,k){ var L=G.lines[k], on=ink[k]===1, out=ink[k]===0, sw=(sel>=0&&(e[0]===sel||e[1]===sel));
-    L.inkL.setAttribute("opacity",on?1:0); L.hi.setAttribute("opacity",on?(bad[k]?.3:.85):0); L.sh.setAttribute("opacity",on?1:0);
-    L.inkL.setAttribute("stroke",bad[k]?"#ff7a66":done?"#ffe39a":"#e8c46a");
+    L.inkL.setAttribute("opacity",on?1:0); L.hi.setAttribute("opacity",on?(bad[k]?.35:.9):0); L.sh.setAttribute("opacity",on?1:0); L.sh2.setAttribute("opacity",on?1:0); L.lo.setAttribute("opacity",on?1:0);
+    L.inkL.setAttribute("stroke",bad[k]?"#ff7a66":done?"#ffe39a":"#e8c46a"); L.lo.setAttribute("stroke",bad[k]?"#8a2416":done?"#9a7428":"#6e4f17");
     L.glow.setAttribute("stroke",on?(bad[k]?"rgba(255,100,80,.55)":"rgba(255,214,120,.42)"):"rgba(0,0,0,0)");
     L.base.setAttribute("opacity",on?0:out?.2:1); L.base.setAttribute("stroke",sw&&!out?"rgba(255,236,170,.95)":"rgba(215,228,255,.62)");
     L.x.setAttribute("opacity",out&&!done?1:0); });
