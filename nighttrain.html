@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Night Train · BrainWhim Puzzles</title>
+<meta name="description" content="The Night Train: a daily 1920s mystery at BrainWhim. Seat every passenger so the steward's clues all hold, and find out who took the necklace.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Special+Elite&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1031e">
+<style>
+/* ===== The Night Train (Puzzles & Brain Games, Nov 1): a daily seating mystery aboard a 1920s sleeping car =====
+   A model sleeping car stands on its rails on a walnut plinth. Its compartments are numbered from the engine end.
+   The passengers (and, from Friday, their luggage) wait on the platform; seat each one so every one of the steward's
+   clues holds. Only one seating works, and it tells you who took the necklace.
+   Carriages (the Carriages card): Claret & Gold (free); Midnight & Silver, Racing Green & Brass (Club). */
+body{--car1:#7a1f2b;--car2:#4e1119;--car3:#2f0a10;--line:#e2bd62;--metal1:#fff0bf;--metal2:#d9b25a;--metal3:#8f6a22;--roof:#2d2a2a;--glow:#ffcf7a}
+body[data-set="midnight"]{--car1:#21345a;--car2:#152340;--car3:#0b1428;--line:#d9dde6;--metal1:#ffffff;--metal2:#c3c9d4;--metal3:#6d7584;--roof:#23252b;--glow:#ffd99a}
+body[data-set="green"]{--car1:#1f4a33;--car2:#143323;--car3:#0b1f15;--line:#e2bd62;--metal1:#fff0bf;--metal2:#d9b25a;--metal3:#8f6a22;--roof:#2a2b28;--glow:#ffcf7a}
+.nt-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.nt-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.nt-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:16px;align-items:start;justify-content:center}
+.nt-left{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.nt-right{display:flex;flex-direction:column;gap:10px;width:var(--nt-nw,300px)}
+/* ---------- the model: the sleeping car on its rails, on a walnut plinth ---------- */
+.nt-model{position:relative;padding:0 var(--nt-px,14px);-webkit-user-select:none;user-select:none;touch-action:none}
+.nt-car{position:relative;border-radius:calc(var(--ww) * .16) calc(var(--ww) * .16) 6px 6px;padding:calc(var(--ww) * .2) calc(var(--ww) * .2) calc(var(--ww) * .14);
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 18%,rgba(0,0,0,0) 80%,rgba(0,0,0,.28)),linear-gradient(90deg,var(--car2),var(--car1) 12%,var(--car1) 88%,var(--car2));
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.18),0 10px 18px rgba(0,0,0,.4)}
+/* the roof, with its ventilators */
+.nt-car::before{content:"";position:absolute;left:-4px;right:-4px;top:calc(var(--ww) * -.17);height:calc(var(--ww) * .27);border-radius:calc(var(--ww) * .2) calc(var(--ww) * .2) 3px 3px;
+  background:radial-gradient(ellipse 9px 4px at 12% 18%,#4a4646 60%,transparent 64%),radial-gradient(ellipse 9px 4px at 37% 18%,#4a4646 60%,transparent 64%),radial-gradient(ellipse 9px 4px at 63% 18%,#4a4646 60%,transparent 64%),radial-gradient(ellipse 9px 4px at 88% 18%,#4a4646 60%,transparent 64%),
+    linear-gradient(180deg,#5a5656,var(--roof) 45%,#141313);box-shadow:0 2px 3px rgba(0,0,0,.5)}
+/* the gold coach lines */
+.nt-car::after{content:"";position:absolute;inset:calc(var(--ww) * .1) 6px 5px;border:1.5px solid var(--line);border-radius:calc(var(--ww) * .1) calc(var(--ww) * .1) 3px 3px;opacity:.75;pointer-events:none;box-shadow:inset 0 0 0 3px transparent,inset 0 0 0 4px rgba(226,189,98,.25)}
+.nt-name{position:relative;z-index:1;text-align:center;font:700 calc(var(--ww) * .14)/1 Cormorant Garamond,serif;letter-spacing:.42em;padding-left:.42em;color:var(--line);text-shadow:0 1px 0 rgba(0,0,0,.6);margin:calc(var(--ww) * .02) 0 calc(var(--ww) * .07);white-space:nowrap}
+.nt-row{position:relative;z-index:1;display:flex;gap:var(--wg,8px);justify-content:center}
+.nt-comp{width:var(--ww);display:flex;flex-direction:column;align-items:center;gap:calc(var(--ww) * .05)}
+.nt-no{min-width:calc(var(--ww) * .3);height:calc(var(--ww) * .22);padding:0 4px;border-radius:99px;display:flex;align-items:center;justify-content:center;font:700 calc(var(--ww) * .16)/1 Montserrat,sans-serif;color:#3b2a0c;
+  background:linear-gradient(180deg,var(--metal1),var(--metal2) 50%,var(--metal3));box-shadow:0 0 0 1px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.5)}
+/* a window: the compartment glowing in the sunset, its curtains tied back, the seat below */
+.nt-win{position:relative;width:var(--ww);height:calc(var(--ww) * 1.06);border-radius:calc(var(--ww) * .13);overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:linear-gradient(180deg,rgba(255,236,190,.55),rgba(255,180,90,.22) 40%,transparent 60%),linear-gradient(180deg,#f7b45b 0%,#d98a3d 46%,#7a3b1f 70%,#3e2a1f 72%,#2d4a33 74%,#1f3424 100%);
+  box-shadow:0 0 0 2px var(--metal3),0 0 0 3px var(--metal2),inset 0 0 0 1px rgba(255,255,255,.35),inset 0 -8px 14px rgba(0,0,0,.35),0 3px 5px rgba(0,0,0,.45);transition:box-shadow .15s}
+.nt-win::before{content:"";position:absolute;left:0;right:0;top:0;height:28%;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 30% 100% at 0 0,#a33b2c 72%,transparent 74%),radial-gradient(ellipse 30% 100% at 100% 0,#a33b2c 72%,transparent 74%),linear-gradient(180deg,#8a2c20,#8a2c20 22%,transparent 24%)}
+.nt-win::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.28) 0 12%,transparent 13% 30%,rgba(255,255,255,.12) 31% 35%,transparent 36%)}
+.nt-win.over{box-shadow:0 0 0 2px var(--metal3),0 0 0 4px #ffd36b,0 0 16px 4px rgba(255,211,107,.85),inset 0 0 0 1px rgba(255,255,255,.35)}
+.nt-win.lesson,.nt-rack.lesson{animation:nt-beckon 1.1s ease-in-out infinite}
+@keyframes nt-beckon{50%{box-shadow:0 0 0 2px var(--metal3),0 0 0 5px #ffd36b,0 0 20px 6px rgba(255,211,107,.9)}}
+.nt-win .nt-who{position:absolute;left:4%;right:4%;bottom:0;height:86%;z-index:1;display:flex;justify-content:center;align-items:flex-end}
+.nt-win .nt-who svg{width:100%;height:100%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.nt-plate{width:calc(var(--ww) * 1.04);height:calc(var(--ww) * .34);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;
+  background:linear-gradient(180deg,#f8f0dc,#e7d8b6);color:#2a2116;box-shadow:0 0 0 1px var(--metal3),0 0 0 2px var(--metal2),0 2px 3px rgba(0,0,0,.4);font:600 calc(var(--ww) * .118)/1.08 Montserrat,sans-serif}
+.nt-plate b{display:block;font:700 calc(var(--ww) * .15)/1.05 Cormorant Garamond,serif;white-space:nowrap}
+.nt-plate.empty{background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px rgba(226,189,98,.4);color:rgba(255,240,200,.55);font-style:italic}
+/* the luggage rack under each window (Friday to Sunday) */
+.nt-rack{position:relative;width:calc(var(--ww) * .74);height:calc(var(--ww) * .62);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  background:repeating-linear-gradient(90deg,rgba(226,189,98,.22) 0 1.5px,transparent 1.5px 7px),rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(226,189,98,.45);transition:box-shadow .15s}
+.nt-rack.over{box-shadow:inset 0 0 0 1px rgba(226,189,98,.45),0 0 0 3px #ffd36b,0 0 14px 3px rgba(255,211,107,.8)}
+/* the underframe, the bogies, the rails and the plinth */
+.nt-under{position:relative;height:calc(var(--ww) * .3);margin:0 calc(var(--ww) * .12)}
+.nt-under::before{content:"";position:absolute;left:4%;right:4%;top:0;height:28%;background:linear-gradient(180deg,#1b1818,#0c0b0b);border-radius:0 0 3px 3px}
+.nt-bogie{position:absolute;top:8%;width:calc(var(--ww) * .72);height:84%;display:flex;justify-content:space-between}
+.nt-bogie i{width:calc(var(--ww) * .26);height:calc(var(--ww) * .26);border-radius:50%;background:radial-gradient(circle,#c9c3b6 0 14%,#2a2626 16% 40%,#4d4747 42% 58%,#151313 60%);box-shadow:0 0 0 1px #000}
+.nt-rail{height:calc(var(--ww) * .07);background:linear-gradient(180deg,#d8d6d2,#7f7b75);margin:0 -6px;border-radius:2px;box-shadow:0 2px 0 #3b2414}
+.nt-plinth{position:relative;height:calc(var(--ww) * .32);margin:0 calc(var(--nt-px,14px) * -1);border-radius:3px 3px 6px 6px;
+  background:linear-gradient(180deg,rgba(255,230,190,.25),transparent 30%),repeating-linear-gradient(92deg,rgba(60,25,8,.12) 0 2px,transparent 2px 9px),linear-gradient(180deg,#7b4524,#5a2f17 60%,#3d1f0e);
+  box-shadow:0 1px 0 rgba(255,220,170,.35) inset,0 12px 22px rgba(0,0,0,.5)}
+.nt-bw{position:absolute;left:50%;top:calc(50% + 1px);transform:translate(-50%,-50%);padding:2px 11px 1px;border-radius:3px;font-size:calc(var(--ww) * .17);line-height:1.1;color:#4a3410;
+  background:linear-gradient(180deg,#fbe7a6 0%,#d9b25a 45%,#a8802c 100%);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),0 1px 2px rgba(0,0,0,.45);text-shadow:0 1px 0 rgba(255,240,200,.6)}
+.nt-bw::before,.nt-bw::after{content:"";position:absolute;top:50%;width:3px;height:3px;margin-top:-1.5px;border-radius:50%;background:#7a5a1e}
+.nt-bw::before{left:4px}.nt-bw::after{right:4px}
+.nt-engine{position:absolute;left:4px;top:50%;transform:translateY(-50%);font:700 calc(var(--ww) * .12)/1 Montserrat,sans-serif;letter-spacing:.1em;color:#f3dca4;opacity:.85;white-space:nowrap}
+/* ---------- the platform: passengers (and luggage) waiting to board ---------- */
+.nt-plat{position:relative;align-self:stretch;padding:8px 10px 10px;border-radius:12px;background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nt-plat h3{margin:0 0 6px;font:600 10.5px/1.2 Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.7);text-align:center}
+.nt-slots{display:flex;gap:var(--wg,8px);justify-content:center}
+.nt-slots+.nt-slots{margin-top:8px}
+.nt-slot{width:var(--cw);height:calc(var(--cw) * 1.3);border-radius:8px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center}
+.nt-slots.tags .nt-slot{height:calc(var(--cw) * .74);width:calc(var(--cw) * .74)}
+.nt-plat .nt-aboard{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 italic 22px Cormorant Garamond,serif;color:#f0d27a;letter-spacing:.04em;pointer-events:none;opacity:0;transition:opacity .4s}
+.nt-plat.all .nt-aboard{opacity:1}
+.nt-plat.all .nt-slot{opacity:.35}
+.nt-plat.over{box-shadow:0 0 0 3px #ffd36b,0 0 14px rgba(255,211,107,.6)}
+/* a passenger's card */
+.nt-card{position:relative;width:var(--cw);height:calc(var(--cw) * 1.3);border-radius:8px;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;align-items:center;overflow:hidden;
+  background:linear-gradient(180deg,#fbf6ea,#eadfc6);box-shadow:0 0 0 1px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);border-top:calc(var(--cw) * .07) solid var(--pc,#7a1f2b)}
+.nt-card .nt-face{width:86%;height:62%;margin-top:4%;border-radius:50% 50% 8px 8px;background:radial-gradient(circle at 50% 70%,#f6c27a,#d98a3d 70%,#a8602a);overflow:hidden;display:flex;align-items:flex-end;justify-content:center;box-shadow:inset 0 0 0 1.5px var(--metal2)}
+.nt-card .nt-face svg{width:100%;height:100%}
+.nt-card .nt-cn{margin-top:auto;padding:0 2px 5%;text-align:center;color:#2a2116;font:600 calc(var(--cw) * .12)/1.05 Montserrat,sans-serif}
+.nt-card .nt-cn b{display:block;font:700 calc(var(--cw) * .155)/1.05 Cormorant Garamond,serif;white-space:nowrap}
+/* a luggage tag */
+.nt-tag{position:relative;width:calc(var(--cw) * .74);height:calc(var(--cw) * .74);cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#f1dfae,#d8be82);clip-path:polygon(22% 0,100% 0,100% 100%,22% 100%,0 72%,0 28%);filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.nt-tag::before{content:"";position:absolute;left:9%;top:50%;width:9%;height:9%;margin-top:-4.5%;border-radius:50%;background:#2b1c0e;box-shadow:0 0 0 2px #b38a3a}
+.nt-tag svg{width:66%;height:66%;margin-left:16%}
+.nt-rack .nt-tag{width:88%;height:88%}
+.nt-card.sel,.nt-tag.sel,.nt-win.sel{outline:3px solid #ffd36b;outline-offset:2px}
+.nt-win.sel{outline-offset:3px}
+.nt-card.lock,.nt-tag.lock{cursor:default}
+.nt-card.lesson,.nt-tag.lesson{animation:nt-cardglow 1.1s ease-in-out infinite}
+@keyframes nt-cardglow{50%{box-shadow:0 0 0 3px #ffd36b,0 0 16px 4px rgba(255,211,107,.85)}}
+.nt-src{opacity:.3}
+.nt-ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;will-change:transform;transition:none}
+.nt-ghost>*{box-shadow:0 14px 24px rgba(0,0,0,.5)!important;transform:rotate(-3deg) scale(1.08)}
+.nt-ghost .nt-tag{filter:drop-shadow(0 10px 10px rgba(0,0,0,.5))}
+.nt-pop{animation:nt-pop .28s ease-out}
+@keyframes nt-pop{0%{transform:scale(.8)}60%{transform:scale(1.06)}100%{transform:none}}
+.nt-bad{animation:nt-bad .5s ease 2}
+@keyframes nt-bad{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.nt-win.badw{box-shadow:0 0 0 2px var(--metal3),0 0 0 4px #e0503c,0 0 14px 4px rgba(224,80,60,.8)}
+.nt-win.ring,.nt-rack.ring{animation:nt-ring 1.1s ease 3}
+@keyframes nt-ring{50%{box-shadow:0 0 0 3px #fff,0 0 0 7px #ffd36b,0 0 24px 8px rgba(255,211,107,.95)}}
+/* the reveal: every window lights up from the engine end; the thief's window rings */
+.nt-win.lit{animation:nt-lit .7s ease-out}
+@keyframes nt-lit{40%{filter:brightness(1.6) saturate(1.2)}}
+.nt-win.thief{box-shadow:0 0 0 2px var(--metal3),0 0 0 4px #ffd36b,0 0 18px 6px rgba(255,211,107,.9);animation:nt-thief 1.6s ease-in-out infinite}
+@keyframes nt-thief{50%{box-shadow:0 0 0 2px var(--metal3),0 0 0 6px #ffe7a0,0 0 26px 10px rgba(255,211,107,1)}}
+.nt-gem{position:absolute;right:6%;top:30%;z-index:4;width:30%;height:30%;opacity:0;transform:scale(.4);transition:opacity .4s,transform .5s cubic-bezier(.3,1.6,.6,1);pointer-events:none}
+.nt-win.thief .nt-gem{opacity:1;transform:none}
+/* ---------- the steward's notes: the clues on cream paper ---------- */
+.nt-notes{position:relative;border-radius:4px;color:#2a2116;
+  background:repeating-linear-gradient(180deg,transparent 0 23px,rgba(70,110,150,.13) 23px 24px),radial-gradient(ellipse at 40% 20%,rgba(255,255,255,.5),transparent 70%),linear-gradient(180deg,#f7f0dd,#ece0c2);
+  box-shadow:0 1px 1px rgba(0,0,0,.2),0 8px 18px rgba(20,10,0,.4)}
+.nt-notes::before{content:"";position:absolute;left:30px;top:0;bottom:0;width:1px;background:rgba(190,70,60,.35)}
+.nt-nhead{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;column-gap:8px;padding:12px 14px 4px 40px}
+.nt-nhead h2{margin:0;font:700 21px/1.1 Cormorant Garamond,serif;color:#3a2614;white-space:nowrap}
+.nt-nhead small{font:600 10.5px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7a5a36;white-space:nowrap}
+.nt-myst{margin:2px 12px 6px 40px;font:600 italic 15.5px/1.35 Cormorant Garamond,serif;color:#8a2a1e}
+.nt-clues{position:relative;margin:0;padding:0 12px 12px 40px;list-style:none;overflow-y:auto;overscroll-behavior:contain;max-height:var(--nt-ch,none);counter-reset:cl}
+.nt-clues li{position:relative;counter-increment:cl;padding:5px 6px 5px 2px;margin:0 0 1px;border-radius:5px;font:500 13.5px/1.42 Montserrat,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,opacity .2s}
+.nt-clues li::before{content:counter(cl);position:absolute;left:-28px;top:5px;width:20px;text-align:right;font:700 15px/1.3 Cormorant Garamond,serif;color:#8a2a1e}
+.nt-clues li b{font-weight:700}
+.nt-clues li .bag{font-weight:700;color:#5a3a12}
+.nt-clues li .bag svg{width:1.25em;height:1.25em;vertical-align:-.3em;margin-right:2px}
+.nt-clues li.x{opacity:.45;text-decoration:line-through;text-decoration-color:#8a2a1e;text-decoration-thickness:2px}
+.nt-clues li.bad{background:rgba(224,80,60,.16);box-shadow:inset 3px 0 0 #c0392b}
+.nt-clues li.ring{animation:nt-cring 1.1s ease 3}
+@keyframes nt-cring{50%{background:rgba(255,211,107,.6);box-shadow:0 0 0 2px #c9962f}}
+.nt-clues li.lesson{background:rgba(255,211,107,.35)}
+.nt-tapnote{margin:-4px 12px 10px 40px;font:500 11px/1.3 Montserrat,sans-serif;color:#8a6a46;font-style:italic}
+.nt-more{position:absolute;left:0;right:0;bottom:0;height:18px;pointer-events:none;opacity:0;transition:opacity .2s;background:linear-gradient(180deg,transparent,#ece0c2)}
+.nt-more span{position:absolute;right:10px;bottom:4px;padding:3px 9px;border-radius:10px;background:#7a1f2b;color:#fbf3e0;font:700 10px/1.2 Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 2px 5px rgba(0,0,0,.25)}
+.nt-more.on{opacity:1}
+.nt-closed{position:absolute;right:8%;top:38%;z-index:4;padding:6px 14px;border:3px solid #8e2f2a;border-radius:6px;color:#8e2f2a;font:700 24px/1 "Special Elite",monospace;letter-spacing:.12em;
+  transform:rotate(-12deg);opacity:0;pointer-events:none;mix-blend-mode:multiply}
+.nt-closed.on{animation:nt-stamp .42s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes nt-stamp{0%{opacity:0;transform:rotate(-10deg) scale(2.2)}100%{opacity:.66;transform:rotate(-10deg) scale(1)}}
+/* ---------- tools ---------- */
+.nt-tools{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.nt-tools .pk-btn{width:auto;margin:0;padding:8px 14px;min-height:0;white-space:nowrap}
+.nt-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.nt-count{display:none}
+.nt-count b{color:#f0d27a}
+.nt-toast{position:absolute;z-index:6;left:50%;top:-4px;transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.9);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.nt-toast.on{opacity:1}
+.nt-ringbtn{animation:nt-ringbtn 1.1s ease 2}
+@keyframes nt-ringbtn{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+.nt-nope{animation:nt-nope .34s ease}
+@keyframes nt-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+/* ---------- the result window ---------- */
+.nt-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.nt-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.nt-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.nt-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.nt-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.nt-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.nt-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(247,240,221,.97),rgba(236,224,194,.97));color:#2a2116;text-align:left}
+.nt-story .nt-mug{flex:none;width:58px;height:66px;border-radius:50% 50% 8px 8px;background:radial-gradient(circle at 50% 70%,#f6c27a,#d98a3d 70%,#a8602a);overflow:hidden;box-shadow:0 0 0 2px #b38a3a}
+.nt-story .nt-mug svg{width:100%;height:100%}
+#ntEnd .nt-story h3{margin:0 0 3px;text-align:left;font:700 19px/1.15 Cormorant Garamond,serif;color:#7a1f2b}
+#ntEnd .nt-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#2a2116;text-align:left}
+#ntEnd .nt-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.nt-story .nt-rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:#7a1f2b;font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.nt-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#ntEnd .pk-row .pk-btn{flex:1 1 40%}
+/* compact: phones (set by fit) */
+.nt-pad.cmp .nt-win{height:calc(var(--ww) * .8)}
+.nt-pad.cmp .nt-plate{height:calc(var(--ww) * .31);font-size:calc(var(--ww) * .11);width:calc(var(--ww) * 1.02)}
+.nt-pad.cmp .nt-plate b{font-size:calc(var(--ww) * .15)}
+.nt-pad.cmp .nt-rack{height:calc(var(--ww) * .46);width:calc(var(--ww) * .58)}
+.nt-pad.cmp .nt-car{padding:calc(var(--ww) * .17) calc(var(--ww) * .2) calc(var(--ww) * .1)}
+.nt-pad.cmp .nt-name{font-size:calc(var(--ww) * .12);margin:0 0 calc(var(--ww) * .03)}
+.nt-pad.cmp .nt-comp{gap:calc(var(--ww) * .04)}
+.nt-pad.cmp .nt-no{height:calc(var(--ww) * .19);font-size:calc(var(--ww) * .15)}
+.nt-pad.cmp .nt-under{height:calc(var(--ww) * .24)}
+.nt-pad.cmp .nt-plinth{height:calc(var(--ww) * .27)}
+.nt-pad.cmp .nt-card,.nt-pad.cmp .nt-slot{height:calc(var(--cw) * 1.12)}
+.nt-pad.cmp .nt-card .nt-face{height:56%;margin-top:3%}
+.nt-pad.cmp .nt-card .nt-cn{padding-bottom:3%}
+.nt-pad.cmp .nt-slots.tags .nt-slot{height:calc(var(--cw) * .74)}
+.nt-pad.cmp .nt-slots+.nt-slots{margin-top:5px}
+.nt-pad.cmp .nt-plat{padding:6px}
+.nt-pad.cmp .nt-plat h3{display:none}
+.nt-pad.cmp .nt-tools{padding:4px;gap:6px}
+.nt-pad.cmp .nt-tools .pk-btn{padding:7px 12px}
+.nt-pad.tight .nt-tapnote{display:none}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .nt-pad{grid-template-columns:1fr;gap:8px;justify-items:center}
+  .nt-right{width:100%;max-width:calc(100vw - 12px)}
+  .nt-left{gap:8px;width:100%}
+  .nt-plat{padding:6px 6px 8px}
+  .nt-plat h3{margin-bottom:4px;font-size:9.5px}
+  .nt-nhead{padding:6px 10px 0 36px}
+  .nt-nhead h2{font-size:17px}
+  .nt-myst{margin:0 10px 3px 36px;font-size:13.5px;line-height:1.3}
+  .nt-clues{padding:0 8px 8px 36px}
+  .nt-clues li{font-size:12.5px;padding:3px 4px 3px 2px}
+  .nt-clues li::before{left:-26px;top:3px}
+  .nt-notes::before{left:27px}
+  .nt-tapnote{margin:-2px 10px 6px 36px}
+  .nt-tools{width:100%;padding:6px;gap:6px}
+  .nt-tools .pk-btn{padding:8px 10px;font-size:12.5px}
+  .nt-count{display:none}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+}
+@media (max-height:760px){
+  #ntEnd .pk-modal{padding:16px 16px 14px}
+  #ntEnd h2{font-size:21px;margin-bottom:2px}
+  #ntEnd .nt-stars{font-size:24px;margin:0 0 2px}
+  #ntEnd .nt-facts b{font-size:15px}
+  #ntEnd .nt-story{margin:8px 0 2px;padding:8px 10px}
+  #ntEnd .nt-story p.clamp{-webkit-line-clamp:2}
+  #ntEnd .nt-facts div{padding:5px 4px}
+  #ntEnd .pk-kick{margin-bottom:2px}
+  #ntEnd .nt-story .nt-mug{width:46px;height:54px}
+  #ntEnd .nt-story h3{font-size:17px}
+  #ntEnd .nt-story p{font-size:12px;line-height:1.4}
+  #ntEnd .nt-story .nt-rm{margin-top:1px}
+  #ntEnd .nt-note{font-size:11.5px;margin-top:4px}
+  #ntEnd .pk-row{margin-top:10px;gap:8px}
+  #ntEnd .pk-row .pk-btn{padding:10px 8px;font-size:13px}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1101a"></script>
+<script id="ntCore">
+/* ===== The Night Train core (rules, solver, daily maker): shared by the page and the tests =====
+   Passengers (and, later in the week, their luggage) go into the sleeping car's compartments, one each.
+   Compartments are numbered from the engine end: 1 is nearest the engine. The clues fix exactly one seating,
+   and every daily puzzle can be worked out step by step from the clues alone (no guessing): the maker checks
+   both with a brute-force count and a step-by-step solver, which also drives the hints. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* the cast: id, full name, two-line plate (title / surname), color, portrait */
+var CAST=[
+  {id:"pryce",   name:"Colonel Pryce",   t:"Colonel",  s:"Pryce",     col:"#5b6b3a", look:{skin:"#e2b48e",hat:"mil",coat:"#56633a",hair:"#8a8a86",mus:1}},
+  {id:"ashworth",name:"Lady Ashworth",   t:"Lady",     s:"Ashworth",  col:"#7a3b6e", look:{skin:"#f0cfb0",hat:"feather",coat:"#6e3561",hair:"#5a3a24",ear:1}},
+  {id:"mabry",   name:"Dr. Mabry",       t:"Dr.",      s:"Mabry",     col:"#2d3f5e", look:{skin:"#8d5a3b",hat:"bowler",coat:"#2b3a55",hair:"#1b1714",gls:1}},
+  {id:"delacroix",name:"Miss Delacroix", t:"Miss",     s:"Delacroix", col:"#a2463c", look:{skin:"#ecc6a4",hat:"cloche",coat:"#9b4239",hair:"#2a1d16",bob:1}},
+  {id:"bellini", name:"Signor Bellini",  t:"Signor",   s:"Bellini",   col:"#6b5640", look:{skin:"#d39e78",hat:"fedora",coat:"#5f4b37",hair:"#2b2119",beard:1}},
+  {id:"orlova",  name:"Madame Orlova",   t:"Madame",   s:"Orlova",    col:"#3d5c63", look:{skin:"#f3d6bd",hat:"toque",coat:"#355259",hair:"#c9a26a"}},
+  {id:"hale",    name:"Professor Hale",  t:"Professor",s:"Hale",      col:"#6e4a2b", look:{skin:"#e7bc98",hat:"bald",coat:"#7a5634",hair:"#cfcac0",gls:1,beard:2}},
+  {id:"whitcombe",name:"Mrs. Whitcombe", t:"Mrs.",     s:"Whitcombe", col:"#4c6b4f", look:{skin:"#b97f57",hat:"bun",coat:"#46624a",hair:"#3b2a20",cameo:1}},
+  {id:"reyes",   name:"Captain Reyes",   t:"Captain",  s:"Reyes",     col:"#24426b", look:{skin:"#c48d64",hat:"captain",coat:"#203a5f",hair:"#1d1713",mus:1}},
+  {id:"finch",   name:"Mr. Finch",       t:"Mr.",      s:"Finch",     col:"#8a6a2a", look:{skin:"#f1cdaa",hat:"flat",coat:"#7c6a4c",hair:"#a0522d"}}
+];
+/* the luggage: id, name ("the hatbox"), where the necklace hid in it */
+var BAGS=[
+  {id:"hatbox", name:"hatbox",        hid:"under the tissue paper in the hatbox"},
+  {id:"violin", name:"violin case",   hid:"in the velvet lining of the violin case"},
+  {id:"trunk",  name:"steamer trunk", hid:"beneath the folded shirts in the steamer trunk"},
+  {id:"carpet", name:"carpetbag",     hid:"at the very bottom of the carpetbag"},
+  {id:"cage",   name:"birdcage",      hid:"under the paper lining the birdcage (the canary saw everything)"},
+  {id:"typer",  name:"typewriter case",hid:"behind the typewriter in its case"},
+  {id:"hamper", name:"picnic hamper", hid:"between the napkins in the picnic hamper"},
+  {id:"golf",   name:"golf bag",      hid:"in the zipped pocket of the golf bag"}
+];
+var OWNERS=["Mrs. Vandermeer","the Duchess of Ellery","Baroness von Ritter","Lady Penhallow","Mrs. Astley-Cole","the Contessa di Marino"];
+var JEWELS=["pearl necklace","emerald necklace","diamond necklace","sapphire necklace","ruby necklace"];
+var SPOTS=["under the seat cushion","inside a folded newspaper","in the toe of a spare shoe","behind the washstand mirror","inside a box of chocolates","in the pocket of a dressing gown"];
+var ENDS=["{owner} has her necklace back, and the guard will be waiting at the next station.","The clues put {who} in Compartment {k}, and the steward did the rest.","By the time the train reached the coast, {who} had a great deal of explaining to do.","{owner} wept with relief, and the dining car sent round champagne."];
+
+/* the week: compartments, luggage or not, which clues, how many seats may be given outright */
+var WEEK={
+  1:{n:4,cats:1,types:["at","notat","end","next","ahead"],maxAt:2,prune:false,min:3,max:6,rounds:1,label:"Monday"},
+  2:{n:4,cats:1,types:["at","notat","end","notend","next","notnext","ahead","just"],maxAt:1,prune:false,min:3,max:6,rounds:2,label:"Tuesday"},
+  3:{n:5,cats:1,types:["at","notat","end","notend","next","notnext","ahead","just","gap"],maxAt:1,prune:true,min:4,max:8,rounds:2,label:"Wednesday"},
+  4:{n:5,cats:1,types:["notat","end","notend","next","notnext","ahead","just","gap"],maxAt:0,prune:true,min:4,max:8,rounds:3,label:"Thursday"},
+  5:{n:4,cats:2,types:["at","notat","end","next","ahead","with","notwith"],maxAt:1,prune:true,min:5,max:9,rounds:2,label:"Friday"},
+  6:{n:5,cats:2,types:["at","notat","end","notend","next","notnext","ahead","just","with","notwith"],maxAt:1,prune:true,min:6,max:11,rounds:3,label:"Saturday"},
+  0:{n:5,cats:2,types:["notat","end","notend","next","notnext","ahead","just","gap","with","notwith"],maxAt:0,prune:true,min:6,max:12,rounds:3,label:"Sunday"}
+};
+
+/* ---------- the rules ---------- */
+/* a clue: {t, a, b, k}; a and b are refs {c:0|1, i}. Positions are 0..n-1 (shown as 1..n). */
+function rel(t,pa,pb,n,k){
+  switch(t){
+    case "at": return pa===k; case "notat": return pa!==k;
+    case "end": return pa===0||pa===n-1; case "notend": return pa!==0&&pa!==n-1;
+    case "with": return pa===pb; case "notwith": return pa!==pb;
+    case "next": return Math.abs(pa-pb)===1; case "notnext": return Math.abs(pa-pb)!==1;
+    case "ahead": return pa<pb; case "just": return pa===pb-1; case "gap": return Math.abs(pa-pb)===2;
+  }
+  return false;
+}
+var UNARY={at:1,notat:1,end:1,notend:1};
+function holds(cl,pos,n){ var pa=pos[cl.a.c][cl.a.i]; if(pa==null||pa<0) return null;
+  if(UNARY[cl.t]) return rel(cl.t,pa,0,n,cl.k);
+  var pb=pos[cl.b.c][cl.b.i]; if(pb==null||pb<0) return null; return rel(cl.t,pa,pb,n,cl.k); }
+
+function perms(n){ var out=[]; (function go(a,used){ if(a.length===n){ out.push(a.slice()); return; } for(var v=0;v<n;v++) if(!used[v]){ used[v]=1; a.push(v); go(a,used); a.pop(); used[v]=0; } })([],{}); return out; }
+var PERMS={};
+/* how many seatings fit all the clues (stops counting at `cap`) */
+function count(P,clues,cap){
+  var n=P.n, ps=PERMS[n]||(PERMS[n]=perms(n)), c0=clues.filter(function(c){ return c.a.c===0&&(!c.b||c.b.c===0); }), rest=clues.filter(function(c){ return c0.indexOf(c)<0; }), got=0, sol=null;
+  for(var x=0;x<ps.length;x++){ var pos=[ps[x],[]];
+    if(!c0.every(function(c){ return holds(c,pos,n); })) continue;
+    if(P.cats<2){ got++; sol=[pos[0]]; if(got>=cap) return {n:got,sol:sol}; continue; }
+    for(var y=0;y<ps.length;y++){ pos[1]=ps[y]; if(rest.every(function(c){ return holds(c,pos,n); })){ got++; sol=[pos[0],ps[y]]; if(got>=cap) return {n:got,sol:sol}; } } }
+  return {n:got,sol:sol};
+}
+
+/* ---------- the step-by-step solver (what a careful reader can work out, with no guessing) ----------
+   Each item keeps the set of compartments it could still be in. Clues rule places out; when an item has one
+   place left, it's settled; a compartment only one item can still take is that item's. Repeats until nothing
+   changes. Returns the settled order (for hints): [{c,i,k,why}] where why is a clue index or -1 (only place left). */
+function solve(P,clues,start){
+  var n=P.n, cats=P.cats, D=[], i, c, order=[], rounds=0, why=[];
+  for(c=0;c<cats;c++){ D.push([]); why.push([]); for(i=0;i<n;i++){ D[c].push((1<<n)-1); why[c].push(-1); } }
+  if(start) start.forEach(function(s){ D[s.c][s.i]=1<<s.k; });
+  function bits(m){ var r=[]; for(var v=0;v<n;v++) if(m&(1<<v)) r.push(v); return r; }
+  function one(m){ return m&&!(m&(m-1)); }
+  function lone(m){ for(var v=0;v<n;v++) if(m===1<<v) return v; return -1; }
+  var settled=[]; for(c=0;c<cats;c++){ settled.push([]); for(i=0;i<n;i++) settled[c].push(false); }
+  function note(){ for(var c2=0;c2<cats;c2++) for(var i2=0;i2<n;i2++) if(!settled[c2][i2]&&one(D[c2][i2])){ settled[c2][i2]=true; order.push({c:c2,i:i2,k:lone(D[c2][i2]),why:why[c2][i2]}); } }
+  var changed=true;
+  while(changed){ changed=false; rounds++;
+    clues.forEach(function(cl,ci){
+      var a=cl.a, Da=D[a.c][a.i];
+      if(UNARY[cl.t]){ var m=0; bits(Da).forEach(function(v){ if(rel(cl.t,v,0,n,cl.k)) m|=1<<v; }); if(m!==Da){ D[a.c][a.i]=m; why[a.c][a.i]=ci; changed=true; } return; }
+      var b=cl.b, Db=D[b.c][b.i], same=a.c===b.c, ma=0, mb=0;
+      bits(Da).forEach(function(va){ bits(Db).forEach(function(vb){ if(same&&va===vb) return; if(rel(cl.t,va,vb,n,cl.k)){ ma|=1<<va; mb|=1<<vb; } }); });
+      if(ma!==Da){ D[a.c][a.i]=ma; why[a.c][a.i]=ci; changed=true; }
+      if(mb!==Db){ D[b.c][b.i]=mb; why[b.c][b.i]=ci; changed=true; }
+    });
+    /* one each: a settled item's place is no one else's; a place only one item can take is theirs */
+    for(c=0;c<cats;c++){
+      for(i=0;i<n;i++) if(one(D[c][i])) for(var j=0;j<n;j++) if(j!==i&&(D[c][j]&D[c][i])){ D[c][j]&=~D[c][i]; if(one(D[c][j])) why[c][j]=-1; changed=true; }
+      for(var v=0;v<n;v++){ var who=[]; for(i=0;i<n;i++) if(D[c][i]&(1<<v)) who.push(i); if(who.length===1&&D[c][who[0]]!==1<<v){ D[c][who[0]]=1<<v; why[c][who[0]]=-1; changed=true; } }
+    }
+    note();
+    if(rounds>60) break;
+  }
+  var ok=true; for(c=0;c<cats;c++) for(i=0;i<n;i++) if(!one(D[c][i])) ok=false;
+  return {ok:ok,order:order,rounds:rounds,D:D};
+}
+
+/* every true clue of the allowed kinds */
+function pool(P,sol,types){
+  var n=P.n, out=[], refs=[], c, i, j;
+  for(c=0;c<P.cats;c++) for(i=0;i<n;i++) refs.push({c:c,i:i});
+  function pa(r){ return sol[r.c][r.i]; }
+  refs.forEach(function(a){
+    var p=pa(a);
+    if(types.indexOf("at")>=0) out.push({t:"at",a:a,k:p});
+    if(types.indexOf("notat")>=0) for(var k=0;k<n;k++) if(k!==p) out.push({t:"notat",a:a,k:k});
+    if(types.indexOf("end")>=0&&(p===0||p===n-1)) out.push({t:"end",a:a});
+    if(types.indexOf("notend")>=0&&p!==0&&p!==n-1) out.push({t:"notend",a:a});
+  });
+  refs.forEach(function(a){ refs.forEach(function(b){
+    if(a===b) return; var x=pa(a), y=pa(b), same=a.c===b.c, once=a.c<b.c||(same&&a.i<b.i);   /* once: for clues that read the same both ways */
+    /* luggage clues name the bag first: "The hatbox travels with Lady Ashworth" */
+    if(a.c===1&&b.c===0){ if(types.indexOf("with")>=0&&x===y) out.push({t:"with",a:a,b:b});
+      if(types.indexOf("notwith")>=0&&x!==y) out.push({t:"notwith",a:a,b:b}); }
+    if(types.indexOf("next")>=0&&Math.abs(x-y)===1&&once) out.push({t:"next",a:a,b:b});
+    if(types.indexOf("notnext")>=0&&same&&Math.abs(x-y)>1&&once) out.push({t:"notnext",a:a,b:b});
+    if(types.indexOf("ahead")>=0&&x<y) out.push({t:"ahead",a:a,b:b});
+    if(types.indexOf("just")>=0&&x===y-1) out.push({t:"just",a:a,b:b});
+    if(types.indexOf("gap")>=0&&Math.abs(x-y)===2&&once) out.push({t:"gap",a:a,b:b});
+  }); });
+  return out;
+}
+
+/* ---------- the daily maker ---------- */
+function make(seed,cfg){
+  var r=rng(seed), tries=0;
+  while(tries++<400){
+    var n=cfg.n, P={n:n,cats:cfg.cats};
+    var cast=shuffle(CAST.slice(),r).slice(0,n), bags=shuffle(BAGS.slice(),r).slice(0,n);
+    var sol=[shuffle(Array.from({length:n},function(_,i){ return i; }),r)];
+    if(cfg.cats>1) sol.push(shuffle(Array.from({length:n},function(_,i){ return i; }),r));
+    var all=shuffle(pool(P,sol,cfg.types),r);
+    /* weight: on gentle days, friendly clue kinds first; later, the roundabout ones */
+    var late=cfg.prune, w={at:cfg.maxAt?3:0,notat:late?1.5:1,end:2,notend:1.3,next:2,notnext:late?1.8:1,ahead:late?1.5:2,just:1.6,gap:late?1.7:1.2,with:2.2,notwith:late?1.8:1};
+    all.forEach(function(c){ c._w=r()*(w[c.t]||1); }); all.sort(function(a,b){ return b._w-a._w; });
+    var clues=[], ats=0;
+    for(var x=0;x<all.length;x++){
+      var c=all[x]; if(c.t==="at"){ if(ats>=cfg.maxAt) continue; }
+      var before=count(P,clues,1e9).n, after=count(P,clues.concat([c]),1e9).n;
+      if(after<before){ clues.push(c); if(c.t==="at") ats++; }
+      if(after===1) break;
+    }
+    if(count(P,clues,2).n!==1) continue;
+    if(!solve(P,clues).ok) continue;
+    if(cfg.prune){ shuffle(clues.slice(),r).forEach(function(c){ var less=clues.filter(function(x){ return x!==c; }); if(count(P,less,2).n===1&&solve(P,less).ok) clues=less; }); }
+    var S=solve(P,clues);
+    if(clues.length<cfg.min||clues.length>cfg.max) continue;
+    if(S.rounds<cfg.rounds) continue;
+    /* the cats line up: a passenger clue first in any cross pair is fine as written */
+    clues=shuffle(clues,r);
+    clues.forEach(function(c){ delete c._w; });
+    /* the mystery: where the necklace turned up, and who that makes the thief */
+    var m={owner:OWNERS[Math.floor(r()*OWNERS.length)],jewel:JEWELS[Math.floor(r()*JEWELS.length)],end:Math.floor(r()*ENDS.length),spot:Math.floor(r()*SPOTS.length)};
+    if(cfg.cats>1){ m.bag=Math.floor(r()*n); m.k=sol[1][m.bag]; } else m.k=Math.floor(r()*n);
+    m.thief=sol[0].indexOf(m.k);
+    return {n:n,cats:cfg.cats,cast:cast,bags:cfg.cats>1?bags:[],sol:sol,clues:clues,m:m,rounds:S.rounds,order:S.order};
+  }
+  return null;
+}
+function forDay(dateKey,weekday){ return make("nt:"+dateKey,WEEK[weekday]); }
+
+var NT={CAST:CAST,BAGS:BAGS,WEEK:WEEK,SPOTS:SPOTS,ENDS:ENDS,rng:rng,rel:rel,holds:holds,count:count,solve:solve,make:make,forDay:forDay};
+if(typeof module!=="undefined"&&module.exports) module.exports=NT; else root.NT=NT;
+})(this);
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+/* ---------- the passengers' portraits (drawn once per person; little 1920s busts) ---------- */
+function portrait(L,id){
+  var s=L.skin, h=L.hair, c=L.coat, o=[];
+  o.push('<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs><radialGradient id="sk'+id+'" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></radialGradient></defs>');
+  /* hair behind the head (bob, bun, long) */
+  if(L.bob) o.push('<path d="M29 44c-2 14 2 26 8 30h26c6-4 10-16 8-30z" fill="'+h+'"/>');
+  if(L.hat==="feather"||L.hat==="toque") o.push('<path d="M31 46c-2 10 0 20 5 25h28c5-5 7-15 5-25z" fill="'+h+'"/>');
+  /* shoulders and coat, with a collar */
+  o.push('<path d="M6 100c2-17 18-27 44-27s42 10 44 27z" fill="'+c+'"/><path d="M6 100c2-17 18-27 44-27s42 10 44 27z" fill="url(#sk'+id+')" opacity=".6"/>');
+  o.push('<path d="M41 74l9 20 9-20c-3-1-6-1.6-9-1.6s-6 .6-9 1.6z" fill="#f6f0e2"/>');
+  if(L.hat==="mil"||L.hat==="captain") o.push('<path d="M43 75l7 14 7-14" fill="none" stroke="#c9a24f" stroke-width="2"/>');
+  else if(/feather|cloche|bun|toque/.test(L.hat)) o.push('<path d="M40 75q10 9 20 0" fill="none" stroke="'+(L.cameo?"#e9dcc0":"#f4e4c4")+'" stroke-width="3"/>');
+  else o.push('<path d="M47 76l3 9 3-9z" fill="'+(L.hat==="flat"?"#5a2b1a":"#7a1f2b")+'"/>');
+  if(L.cameo) o.push('<ellipse cx="50" cy="82" rx="4.4" ry="5.4" fill="#f5e6cf" stroke="#b38a3a" stroke-width="1.6"/>');
+  /* neck, ears, head */
+  o.push('<path d="M43 60h14v15c-4 2-10 2-14 0z" fill="'+s+'"/><path d="M43 66c4 3 10 3 14 0" stroke="#000" stroke-opacity=".15" stroke-width="3" fill="none"/>');
+  o.push('<ellipse cx="31.5" cy="49" rx="3.4" ry="5" fill="'+s+'"/><ellipse cx="68.5" cy="49" rx="3.4" ry="5" fill="'+s+'"/>');
+  o.push('<ellipse cx="50" cy="47" rx="18.5" ry="21.5" fill="'+s+'"/><ellipse cx="50" cy="47" rx="18.5" ry="21.5" fill="url(#sk'+id+')"/>');
+  if(L.ear) o.push('<circle cx="31.5" cy="56" r="2.2" fill="#f2e6c8" stroke="#c9a24f"/><circle cx="68.5" cy="56" r="2.2" fill="#f2e6c8" stroke="#c9a24f"/>');
+  /* hair on top */
+  if(L.hat==="bald") o.push('<path d="M31.5 50c-1-7 0-12 4-15M68.5 50c1-7 0-12-4-15" stroke="'+h+'" stroke-width="6" stroke-linecap="round" fill="none"/><ellipse cx="44" cy="32" rx="6" ry="3" fill="#fff" opacity=".25"/>');
+  else if(L.hat==="bun") o.push('<circle cx="50" cy="24" r="8" fill="'+h+'"/><path d="M31 47c-1-15 7-23 19-23s20 8 19 23c-4-9-11-13-19-13s-15 4-19 13z" fill="'+h+'"/>');
+  else if(L.hat!=="cloche") o.push('<path d="M31.5 46c-1-13 7-20 18.5-20s19.5 7 18.5 20c-3-8-10-11-18.5-11s-15.5 3-18.5 11z" fill="'+h+'"/>');
+  /* the face */
+  o.push('<ellipse cx="43" cy="48" rx="1.9" ry="2.3" fill="#2a1d14"/><ellipse cx="57" cy="48" rx="1.9" ry="2.3" fill="#2a1d14"/>');
+  o.push('<path d="M39.5 43.5q3.5-2 7 0M53.5 43.5q3.5-2 7 0" stroke="'+(L.hat==="bald"?"#9a948a":h)+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>');
+  o.push('<path d="M50 50q-1.6 4 0 6" stroke="#000" stroke-opacity=".28" stroke-width="1.4" fill="none" stroke-linecap="round"/>');
+  o.push('<ellipse cx="41" cy="55" rx="3.4" ry="2" fill="#e0565a" opacity=".16"/><ellipse cx="59" cy="55" rx="3.4" ry="2" fill="#e0565a" opacity=".16"/>');
+  if(/feather|cloche|toque|bun/.test(L.hat)) o.push('<path d="M45.5 59.5q4.5 2.8 9 0q-4.5-1.2-9 0z" fill="#a8383f"/>');
+  else o.push('<path d="M45.5 60q4.5 2.4 9 0" stroke="#5a2d22" stroke-width="1.6" fill="none" stroke-linecap="round"/>');
+  if(L.mus) o.push('<path d="M42 57.5q4-3.4 8-1.2q4-2.2 8 1.2q-4 1-8-.4q-4 1.4-8 .4z" fill="'+(L.hat==="mil"?"#9a958d":h)+'"/>');
+  if(L.beard===1) o.push('<path d="M38 56c1 9 6 13 12 13s11-4 12-13c-3 4-7 5-12 5s-9-1-12-5z" fill="'+h+'"/><path d="M43 57.5q7-3 14 0" stroke="'+h+'" stroke-width="2.6" fill="none"/>');
+  if(L.beard===2) o.push('<path d="M36 53c0 13 7 19 14 19s14-6 14-19c-3 6-8 8-14 8s-11-2-14-8z" fill="'+h+'"/><path d="M45.5 60.5q4.5 1.5 9 0" stroke="#7a6a5a" stroke-width="1.4" fill="none"/>');
+  if(L.gls) o.push('<g fill="none" stroke="#3a2c1c" stroke-width="1.5"><circle cx="43" cy="48" r="4.6"/><circle cx="57" cy="48" r="4.6"/><path d="M47.6 48h4.8M38.4 47l-6-1.5M61.6 47l6-1.5"/></g><circle cx="41.5" cy="46.5" r="1.2" fill="#fff" opacity=".6"/><circle cx="55.5" cy="46.5" r="1.2" fill="#fff" opacity=".6"/>');
+  /* the hats */
+  var hat={
+    mil:'<path d="M29 34c0-12 9-17 21-17s21 5 21 17z" fill="#5b6b3a"/><rect x="29" y="31" width="42" height="6" rx="1.5" fill="#2e351c"/><circle cx="50" cy="26" r="3.6" fill="#e2bd62" stroke="#8f6a22"/><path d="M30 37q20 9 40 0l-3 5q-17 6-34 0z" fill="#1a1612"/>',
+    feather:'<path d="M35 33c0-11 7-16 15-16s15 5 15 16z" fill="#6e3561"/><ellipse cx="50" cy="34" rx="31" ry="6.5" fill="#5a2a50"/><rect x="35" y="28" width="30" height="4.4" fill="#2b1328"/><path d="M62 30c8-6 13-15 11-24c-5 6-9 15-13 22" fill="#f3ead8" stroke="#cdbb98" stroke-width=".8"/>',
+    bowler:'<path d="M32 36c0-15 8-22 18-22s18 7 18 22z" fill="#1f1d1c"/><rect x="32" y="30.5" width="36" height="5" fill="#3b3734"/><ellipse cx="50" cy="36.5" rx="24" ry="4.6" fill="#141312"/><ellipse cx="44" cy="22" rx="5" ry="2.4" fill="#fff" opacity=".14"/>',
+    cloche:'<path d="M28 47c-3-19 8-28 22-28s25 9 22 28c-6-6-14-8-22-8s-16 2-22 8z" fill="#9b4239"/><path d="M29 40c7-5 14-6 21-6s14 1 21 6l1 3c-7-4-15-6-22-6s-15 2-22 6z" fill="#5e1f1a"/><circle cx="66" cy="38" r="3.6" fill="#e9c37a"/>',
+    fedora:'<path d="M33 33c1-12 8-17 17-17s16 5 17 17z" fill="#76726c"/><path d="M45 18q5 5 10 0" stroke="#4d4a46" stroke-width="2" fill="none"/><rect x="33" y="28" width="34" height="5" fill="#1d1b19"/><path d="M20 35q30-9 60 0q-30 7-60 0z" fill="#5f5b56"/>',
+    toque:'<rect x="32" y="13" width="36" height="22" rx="7" fill="#c7b7a0"/><path d="M34 18h32M33 24h34M34 30h32" stroke="#a8977e" stroke-width="1.4" stroke-dasharray="2 2.6"/><ellipse cx="50" cy="14" rx="17" ry="3.4" fill="#ddd0bd"/>',
+    captain:'<path d="M28 31c0-7 10-10 22-10s22 3 22 10l-2 5H30z" fill="#f6f4ef"/><rect x="30" y="31" width="40" height="6" fill="#1d2f52"/><path d="M42 30q8-5 16 0" stroke="#e2bd62" stroke-width="2.2" fill="none"/><circle cx="50" cy="33.6" r="2.2" fill="#e2bd62"/><path d="M31 37q19 8 38 0l-2 5q-17 5-34 0z" fill="#121212"/>',
+    flat:'<path d="M30 38c-1-12 8-19 21-19c12 0 20 6 23 15l7 4q-25 6-51 0z" fill="#8a6a44"/><path d="M33 30q17-5 36 1" stroke="#6b5232" stroke-width="1.4" fill="none" stroke-dasharray="2 2"/><path d="M32 37q22 4 45 0" stroke="#5e4529" stroke-width="2" fill="none"/>'
+  }[L.hat];
+  if(hat) o.push(hat);
+  o.push('</svg>');
+  return o.join("");
+}
+/* the luggage, drawn small */
+var BAGART={
+  hatbox:'<ellipse cx="20" cy="31" rx="15" ry="5" fill="#7a2840"/><path d="M5 17v14a15 5 0 0 0 30 0V17z" fill="#a33b55"/><path d="M5 22h30" stroke="#f1d48a" stroke-width="1.6"/><ellipse cx="20" cy="17" rx="15" ry="5" fill="#c4566f"/><path d="M13 15q7-9 14 0" stroke="#3a2416" stroke-width="2" fill="none"/>',
+  violin:'<path d="M20 4c5 0 7 4 6 8s4 6 4 12c0 7-5 12-10 12S10 31 10 24c0-6 5-8 4-12s1-8 6-8z" fill="#3a2a22"/><path d="M20 7c3 0 4 3 3.4 5.6S27 17 27 24c0 5-3 9-7 9s-7-4-7-9c0-7 4-8.6 3.6-11.4S17 7 20 7z" fill="#5a4334"/><path d="M14 24h12" stroke="#c9a24f" stroke-width="1.6"/>',
+  trunk:'<rect x="4" y="12" width="32" height="22" rx="3" fill="#5a3b22"/><path d="M4 18h32" stroke="#2e1c0e" stroke-width="1.4"/><path d="M11 12v22M29 12v22" stroke="#c9a24f" stroke-width="2.2"/><rect x="17" y="16" width="6" height="5" rx="1" fill="#e2bd62"/><path d="M15 12q5-5 10 0" stroke="#2e1c0e" stroke-width="2" fill="none"/>',
+  carpet:'<path d="M6 16h28l-2 18H8z" fill="#7a3b2a"/><path d="M8 20h24M8 25h24M8 30h24" stroke="#d6a14f" stroke-width="1.4" stroke-dasharray="2 2"/><rect x="5" y="13" width="30" height="4" rx="1.5" fill="#3a2416"/><path d="M13 13q7-11 14 0" stroke="#3a2416" stroke-width="2.2" fill="none"/>',
+  cage:'<path d="M9 34V18a11 11 0 0 1 22 0v16" fill="none" stroke="#c9a24f" stroke-width="1.8"/><path d="M14 34V12M20 34V7M26 34V12" stroke="#c9a24f" stroke-width="1.3"/><rect x="7" y="33" width="26" height="3.5" rx="1.5" fill="#8f6a22"/><circle cx="20" cy="5" r="2.4" fill="none" stroke="#c9a24f" stroke-width="1.6"/><ellipse cx="22" cy="26" rx="4.4" ry="3.4" fill="#f2c94c"/><circle cx="18.6" cy="23.4" r="2.4" fill="#f2c94c"/><path d="M16.4 23.6l-2 .8 2 .4" fill="#e07a2e"/>',
+  typer:'<rect x="5" y="14" width="30" height="20" rx="3" fill="#2f3a3c"/><rect x="5" y="14" width="30" height="5" rx="2" fill="#3f4d50"/><rect x="18" y="20" width="4" height="3" rx="1" fill="#c9a24f"/><path d="M15 14q5-6 10 0" stroke="#1b2223" stroke-width="2.2" fill="none"/>',
+  hamper:'<path d="M5 17h30l-3 17H8z" fill="#c08a4a"/><path d="M7 21h26M8 26h24M9 31h22" stroke="#8a5a2a" stroke-width="1.6"/><path d="M12 17v17M20 17v17M28 17v17" stroke="#8a5a2a" stroke-width="1" opacity=".6"/><rect x="4" y="13" width="32" height="5" rx="2" fill="#a8743a"/><path d="M12 13q8-10 16 0" stroke="#7a4e22" stroke-width="2" fill="none"/>',
+  golf:'<path d="M13 12h14l-2 24h-10z" fill="#2e5a3a"/><path d="M13 18h14" stroke="#e2bd62" stroke-width="1.6"/><path d="M15 12V4M20 12V3M25 12V5" stroke="#9aa1a8" stroke-width="1.6"/><path d="M13 4h4M18 3h4M23 5h4" stroke="#cfd3d6" stroke-width="2.6" stroke-linecap="round"/>'
+};
+function bagSvg(id){ return '<svg viewBox="0 0 40 40" aria-hidden="true">'+(BAGART[id]||"")+'</svg>'; }
+var GEM='<svg class="nt-gem" viewBox="0 0 40 40" aria-hidden="true"><path d="M6 10q14 18 28 0" fill="none" stroke="#f6f0e2" stroke-width="2.4" stroke-dasharray=".1 4.2" stroke-linecap="round"/><path d="M20 27l-5-6 5-6 5 6z" fill="#7fd1ff" stroke="#fff" stroke-width="1"/><path d="M20 15l5 6-5 6" fill="#3fa9e0"/></svg>';
+
+/* ---------- the puzzle ---------- */
+var today=new Date(), todayKey=ymd(today);
+var P=null;          /* the puzzle: {n, cats, cast, bags, sol, clues, m, order} */
+var seat=[[],[]], lock=[[],[]], marks={}, sel=null, hints=0, t0=0, done=false, mode="daily", lessonK=0;
+function itemName(c,i){ return c?"the "+P.bags[i].name:P.cast[i].name; }
+function nm(ref,start){
+  if(ref.c===0){ var p=P.cast[ref.i]; return '<b style="color:'+p.col+'">'+esc(p.name)+'</b>'; }
+  var b=P.bags[ref.i]; return '<span class="bag">'+bagSvg(b.id)+(start?"The ":"the ")+esc(b.name)+'</span>';
+}
+function clueHtml(cl){
+  var A=nm(cl.a,true), B=cl.b?nm(cl.b):"", k=cl.k+1;
+  switch(cl.t){
+    case "at": return cl.a.c?A+" is in Compartment "+k+".":A+" has Compartment "+k+".";
+    case "notat": return A+" is not in Compartment "+k+".";
+    case "end": return A+" is in one of the end compartments.";
+    case "notend": return A+" is not in either end compartment.";
+    case "with": return A+" travels with "+B+".";
+    case "notwith": return A+" doesn't belong to "+B+".";
+    case "next": return A+" and "+B+" are in neighboring compartments.";
+    case "notnext": return A+" and "+B+" are not in neighboring compartments.";
+    case "ahead": return A+" is nearer the engine than "+B+".";
+    case "just": return A+" is just ahead of "+B+", one compartment nearer the engine.";
+    case "gap": return "There's exactly one compartment between "+nm(cl.a)+" and "+B+".";
+  }
+  return "";
+}
+function mysteryHtml(){
+  var m=P.m, lead=cap(m.owner)+"'s "+m.jewel+" is missing! ";
+  if(P.cats>1) return lead+"It turned up in the <b>"+esc(P.bags[m.bag].name)+"</b>. Whose is it?";
+  return lead+"It turned up in <b>Compartment "+(m.k+1)+"</b>. Who was sitting there?";
+}
+function story(){
+  var m=P.m, who=P.cast[m.thief], k=m.k+1;
+  var first=P.cats>1?"The "+m.jewel+" was "+P.bags[m.bag].hid+", and the "+P.bags[m.bag].name+" was "+who.name+"'s, in Compartment "+k+".":
+    "The "+m.jewel+" was "+NT.SPOTS[m.spot]+" in Compartment "+k+", and the clues put "+who.name+" there.";
+  var end=NT.ENDS[m.end].replace("{owner}",cap(m.owner)).replace("{who}",who.name).replace("{k}",k);
+  if(P.cats<2&&m.end===1) end=NT.ENDS[0].replace("{owner}",cap(m.owner));
+  return first+" "+end;
+}
+
+/* ---------- the drawing ---------- */
+var stage=mk("div","nt-pad");
+stage.innerHTML='<div class="nt-left"><div class="nt-model" id="ntModel"><div class="nt-car" id="ntCar"><div class="nt-name">THE NIGHT TRAIN</div><div class="nt-row" id="ntRow"></div></div>'+
+  '<div class="nt-under"><div class="nt-bogie" style="left:6%"><i></i><i></i></div><div class="nt-bogie" style="right:6%"><i></i><i></i></div></div><div class="nt-rail"></div>'+
+  '<div class="nt-plinth"><span class="nt-engine">◂ TO THE ENGINE</span><span class="nt-bw nt-mono" aria-hidden="true">B<i>W</i></span></div><div class="nt-toast" id="ntToast" role="status"></div></div>'+
+  '<div class="nt-plat" id="ntPlat"><h3 id="ntPlatH">Waiting on the Platform</h3><div class="nt-slots" id="ntSlots0"></div><div class="nt-slots tags" id="ntSlots1"></div><div class="nt-aboard">All aboard!</div></div></div>'+
+  '<div class="nt-right"><div class="nt-notes" id="ntNotes"><div class="nt-nhead"><h2>The Steward\'s Notes</h2><small id="ntNo">No. 1</small></div><p class="nt-myst" id="ntMyst"></p>'+
+  '<ol class="nt-clues" id="ntClues" data-bws="off"></ol><p class="nt-tapnote">Tap a clue to cross it off.</p><div class="nt-more" id="ntMore"><span>▾ More Below</span></div><div class="nt-closed" id="ntClosed">CASE CLOSED</div></div>'+
+  '<div class="nt-tools"><span class="nt-count" id="ntCount"></span><button class="pk-btn gold" type="button" id="ntHint">Ask the Conductor</button><button class="pk-btn" type="button" id="ntRestart">Restart</button></div></div>';
+var MODEL=$("#ntModel",stage), ROW=$("#ntRow",stage), PLAT=$("#ntPlat",stage), CLUES=$("#ntClues",stage), TOAST=$("#ntToast",stage), NOTES=$("#ntNotes",stage);
+var WIN=[], RACK=[], PLATE=[], FACE={};
+
+function build(){
+  ROW.textContent=""; WIN=[]; RACK=[]; PLATE=[];
+  for(var k=0;k<P.n;k++){
+    var comp=mk("div","nt-comp"), no=mk("div","nt-no",String(k+1)), w=mk("div","nt-win"), pl=mk("div","nt-plate empty","empty");
+    w.dataset.k=k; w.dataset.drop="0"; w.setAttribute("role","button"); w.setAttribute("aria-label","Compartment "+(k+1));
+    w.innerHTML='<div class="nt-who"></div>'+GEM;
+    comp.appendChild(no); comp.appendChild(w); comp.appendChild(pl);
+    WIN.push(w); PLATE.push(pl);
+    if(P.cats>1){ var r=mk("div","nt-rack"); r.dataset.k=k; r.dataset.drop="1"; r.setAttribute("aria-label","Luggage rack "+(k+1)); comp.appendChild(r); RACK.push(r); }
+    ROW.appendChild(comp);
+  }
+  FACE={}; P.cast.forEach(function(p,i){ FACE[i]=portrait(p.look,p.id); });
+  $("#ntSlots1",stage).style.display=P.cats>1?"":"none";
+  $("#ntPlatH",stage).textContent=P.cats>1?"Waiting on the Platform · Passengers and Luggage":"Waiting on the Platform";
+  CLUES.textContent="";
+  P.clues.forEach(function(cl,ci){ var li=mk("li"); li.innerHTML=clueHtml(cl); li.dataset.ci=ci; if(marks[ci]) li.classList.add("x");
+    li.addEventListener("click",function(){ if(drag) return; marks[ci]=!marks[ci]; li.classList.toggle("x",!!marks[ci]); snd("nt-strike",{back:!marks[ci]}); }); CLUES.appendChild(li); });
+  $("#ntMyst",stage).innerHTML=mysteryHtml();
+  paint();
+}
+function cardEl(c,i){
+  var e;
+  if(c===0){ var p=P.cast[i]; e=mk("div","nt-card"); e.style.setProperty("--pc",p.col);
+    e.innerHTML='<div class="nt-face">'+FACE[i]+'</div><div class="nt-cn">'+esc(p.t)+'<b>'+esc(p.s)+'</b></div>'; e.setAttribute("aria-label",p.name); }
+  else { var b=P.bags[i]; e=mk("div","nt-tag"); e.innerHTML=bagSvg(b.id); e.setAttribute("aria-label",cap(b.name)); e.title=cap(b.name); }
+  e.dataset.c=c; e.dataset.i=i; e.setAttribute("role","button");
+  if(lock[c][i]) e.classList.add("lock");
+  if(sel&&sel.c===c&&sel.i===i) e.classList.add("sel");
+  return e;
+}
+function who(c,k){ for(var i=0;i<P.n;i++) if(seat[c][i]===k) return i; return -1; }
+function paint(pop){
+  if(!P) return;
+  for(var k=0;k<P.n;k++){
+    var w=WIN[k], i=who(0,k), box=w.firstChild;
+    box.innerHTML=i>=0?FACE[i]:"";
+    w.dataset.c=i>=0?0:""; w.dataset.i=i>=0?i:"";
+    w.classList.toggle("sel",!!(sel&&sel.c===0&&i>=0&&sel.i===i));
+    var pl=PLATE[k];
+    if(i>=0){ pl.className="nt-plate"; pl.innerHTML=esc(P.cast[i].t)+"<b>"+esc(P.cast[i].s)+"</b>"; }
+    else { pl.className="nt-plate empty"; pl.textContent="empty"; }
+    if(pop&&pop.c===0&&pop.k===k){ w.classList.remove("nt-pop"); void w.offsetWidth; w.classList.add("nt-pop"); }
+    if(P.cats>1){ var r=RACK[k], j=who(1,k); r.textContent=""; if(j>=0){ var t=cardEl(1,j); r.appendChild(t); if(pop&&pop.c===1&&pop.k===k) t.classList.add("nt-pop"); } }
+  }
+  for(var c=0;c<P.cats;c++){ var S=$("#ntSlots"+c,stage); S.textContent=""; S.style.display=lock[c].slice(0,P.n).every(Boolean)?"none":"";
+    for(var i2=0;i2<P.n;i2++){ var sl=mk("div","nt-slot"); if(seat[c][i2]<0) sl.appendChild(cardEl(c,i2)); S.appendChild(sl); } }
+  PLAT.classList.toggle("all",full());
+  checkClues(); counts(); lessonGlow();
+}
+function placed(c){ return seat[c].filter(function(v){ return v>=0; }).length; }
+function full(){ for(var c=0;c<P.cats;c++) if(placed(c)<P.n) return false; return true; }
+function right(){ for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++) if(seat[c][i]!==P.sol[c][i]) return false; return true; }
+function checkClues(){
+  var isFull=full();
+  [].forEach.call(CLUES.querySelectorAll("li"),function(li,ci){ li.classList.toggle("bad",isFull&&!done&&NT.holds(P.clues[ci],seat,P.n)===false); });
+}
+function counts(){
+  if(!P) return;
+  var got=placed(0)+(P.cats>1?placed(1):0), all=P.n*P.cats;
+  $("#ntCount",stage).innerHTML=(P.cats>1?"Aboard ":"Seated ")+"<b>"+got+"</b> of "+all+(hints?" · "+hints+" hint"+(hints>1?"s":""):"");
+  if(window.Parlor){ Parlor.score([got+"/"+all]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Mystery",got+" of "+all+(P.cats>1?" aboard":" seated")+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+
+/* ---------- sounds (Nov 1): the sleeping car, made in the browser through the kit ----------
+   nt-lift: picking up a card (a soft slide of card stock) · nt-seat: a passenger settles in (a velvet thump and the door latch)
+   nt-tag: a bag onto the rack (a thud on the brass rail and the tag's little ring) · nt-back: back to the platform (a paper swish)
+   nt-no: two dull knocks on the compartment door · nt-strike: a pencil line through a clue · nt-hint: the conductor's ticket punch, twice, and his bell
+   nt-solve: the locomotive's chime whistle, a few chuffs, and a warm chord */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("nt-lift",function(h){ var d=h.out(.05), t=h.t; h.burst(d,t,.07,"bandpass",2600,1.2,.12,.008,.06); h.osc(d,t,"sine",900,1300,.03,.004,.05); });
+  D("nt-seat",function(h){ var d=h.out(.1), t=h.t, p=h.p*(.97+Math.random()*.06);
+    h.osc(d,t,"sine",160*p,80*p,.32,.004,.14,["lowpass",380]); h.burst(d,t,.06,"lowpass",900,1,.18,.002,.05);   /* the velvet thump */
+    h.burst(d,t+.06,.02,"bandpass",3400*p,4,.22,.001,.016); h.bell(d,t+.065,2300*p,.03,.08,[[1,1,1],[1.6,.4,.6]]); });   /* the latch clicks */
+  D("nt-tag",function(h){ var d=h.out(.08), t=h.t; h.osc(d,t,"sine",210,120,.22,.003,.1,["lowpass",500]); h.bell(d,t+.01,1650,.05,.35,[[1,1,1],[2.7,.4,.5],[5.1,.15,.3]]); });
+  D("nt-back",function(h){ var d=h.out(.05), t=h.t; h.burst(d,t,.16,"bandpass",1500,.8,.16,.03,.12); });
+  D("nt-no",function(h){ var d=h.out(.08), t=h.t; [0,.13].forEach(function(s){ h.osc(d,t+s,"sine",190,120,.3,.003,.1,["lowpass",420]); h.burst(d,t+s,.04,"bandpass",800,2,.12,.001,.03); }); });
+  D("nt-strike",function(h,o){ var d=h.out(.03), t=h.t; h.burst(d,t,o.back?.09:.16,"bandpass",o.back?2400:3200,1.4,.12,.01,o.back?.07:.13); });
+  D("nt-hint",function(h){ var d=h.out(.18), t=h.t;
+    [0,.16].forEach(function(s){ h.burst(d,t+s,.03,"bandpass",2900,3,.4,.001,.02); h.osc(d,t+s,"sine",520,300,.08,.002,.04,["lowpass",1400]); });
+    h.bell(d,t+.36,2093,.08,.9,[[1,1,1],[2.4,.45,.55],[4.1,.18,.35]]); });
+  D("nt-solve",function(h,o){ var d=h.out(.45), t=h.t, at=0;
+    if(!o.short){
+      /* the chime whistle: three pipes and their breath, sounded twice */
+      [[0,.5],[.62,.9]].forEach(function(b){ [370,440,554.4].forEach(function(f){ h.osc(d,t+b[0],"sawtooth",f*.99,f,.05,.06,b[1],["lowpass",1500,.8]); h.osc(d,t+b[0],"sine",f*2,f*2,.02,.06,b[1]); });
+        h.burst(d,t+b[0],b[1]+.1,"bandpass",2200,.7,.05,.05,b[1]); });
+      at=1.7;
+      /* chuffs, slowing as she pulls away */
+      [0,.32,.6,.85].forEach(function(s,i){ h.burst(d,t+at-.15+s,.22,"lowpass",900-i*80,.8,.22-i*.03,.01,.2); });
+      at+=.95;
+    }
+    h.bell(d,t+at,1568,.09,1.8,[[1,1,1],[2.41,.5,.6],[3.86,.25,.45]]);
+    [392,493.9,587.3,784].forEach(function(f,i){ h.osc(d,t+at+.04+i*.05,"triangle",f,0,.045,.02,1.7); });
+  });
+})();
+function snd(name,o,old){ if(!window.Parlor) return; if(Parlor.defSfx) Parlor.sfx(name,o||{}); else if(old) Parlor.sfx(old[0],old[1]); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2000); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function nope(){ MODEL.classList.remove("nt-nope"); void MODEL.offsetWidth; MODEL.classList.add("nt-nope"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("nt-ringbtn"); void b.offsetWidth; b.classList.add("nt-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done; }
+/* move an item to compartment k (or the platform, k=-1); whoever was there trades places with it */
+function put(c,i,k,quiet){
+  if(lock[c][i]) return false;
+  var from=seat[c][i];
+  if(k>=0){ var j=who(c,k); if(j===i){ paint(); return false; }
+    if(j>=0){ if(lock[c][j]){ snd("nt-no",{},["tile"]); toast(c?"That bag is already settled in Compartment "+(k+1)+".":P.cast[j].name+" is already settled in Compartment "+(k+1)+".",2200); paint(); return false; }
+      seat[c][j]=from; } }
+  seat[c][i]=k; if(!t0&&mode!=="lesson") t0=Date.now();
+  sel=null;
+  if(!quiet) snd(k<0?"nt-back":c?"nt-tag":"nt-seat");
+  paint(k>=0?{c:c,k:k}:null);
+  after();
+  return true;
+}
+function after(){
+  if(full()){ if(right()) solved(); else wrongFull(); return; }
+  lessonCheck();
+}
+function wrongFull(){
+  snd("nt-no",{},["tile"]); nope();
+  var bad=[]; P.clues.forEach(function(cl,ci){ if(NT.holds(cl,seat,P.n)===false) bad.push(ci+1); });
+  var list=bad.length>1?"clues "+bad.slice(0,-1).join(", ")+" and "+bad[bad.length-1]+" don't":"clue "+bad[0]+" doesn't";
+  toast(bad.length?"Everyone's aboard, but "+list+" hold yet.":"Everyone's aboard, but something doesn't fit yet.",3200);
+  lessonCheck();
+}
+/* ---------- dragging (follows the finger, drawn once per frame) and tapping ---------- */
+var drag=null;
+function itemAt(e){ var t=e.target.closest("[data-c]"); if(!t||t.dataset.c==="") return null; if(!stage.contains(t)) return null; return {c:+t.dataset.c,i:+t.dataset.i,el:t}; }
+function dropAt(x,y,c){
+  var el=document.elementFromPoint(x,y); if(!el) return null;
+  var w=el.closest(".nt-win, .nt-rack, .nt-comp, .nt-plat");
+  if(!w||!stage.contains(w)) return null;
+  if(w.classList.contains("nt-plat")) return {k:-1,el:w};
+  if(w.classList.contains("nt-comp")){ var k0=[].indexOf.call(ROW.children,w); return {k:k0,el:c?RACK[k0]:WIN[k0]}; }
+  if(c===0&&w.classList.contains("nt-rack")) return {k:+w.dataset.k,el:WIN[+w.dataset.k]};
+  if(c===1&&w.classList.contains("nt-win")) return {k:+w.dataset.k,el:RACK[+w.dataset.k]};
+  return {k:+w.dataset.k,el:w};
+}
+stage.addEventListener("pointerdown",function(e){
+  if(e.button>0) return;
+  hideToast();
+  if(!P||drag) return;
+  var it=itemAt(e), slot=e.target.closest(".nt-win, .nt-rack");
+  if(!it&&!slot) return;
+  if(mode==="lesson"&&blocked()) return;
+  if(done) return;
+  if(it&&lock[it.c][it.i]){ if(sel){ tapSlot(it.c,seat[it.c][it.i]); return; } toast(it.c?"That bag is already settled.":P.cast[it.i].name+" is already settled in Compartment "+(seat[0][it.i]+1)+".",2200); return; }
+  if(!it){ tapSlot(+slot.dataset.drop,+slot.dataset.k); return; }
+  e.preventDefault();
+  var src=it.c===0&&it.el.classList.contains("nt-win")?it.el:it.el, r=src.getBoundingClientRect();
+  drag={c:it.c,i:it.i,id:e.pointerId,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,moved:false,src:src,ghost:null,dx:e.clientX-r.left,dy:e.clientY-r.top,over:null,raf:0};
+  try{ stage.setPointerCapture(e.pointerId); }catch(x){}
+});
+stage.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.id) return;
+  drag.x=e.clientX; drag.y=e.clientY;
+  if(!drag.moved){ if(Math.hypot(drag.x-drag.x0,drag.y-drag.y0)<7) return; startGhost(); }
+  if(!drag.raf) drag.raf=requestAnimationFrame(moveGhost);
+});
+function startGhost(){
+  drag.moved=true; var g=mk("div","nt-ghost"), it=cardEl(drag.c,drag.i);
+  it.classList.remove("sel","nt-pop"); g.appendChild(it); document.body.appendChild(g);
+  var cw=parseFloat(getComputedStyle(stage).getPropertyValue("--cw"))||70;
+  g.style.setProperty("--cw",cw+"px");
+  var w=drag.c?cw*.74:cw, h=drag.c?cw*.74:cw*1.3;
+  if(drag.src.classList.contains("nt-win")){ drag.dx=w/2; drag.dy=h*.45; }
+  else { drag.dx=Math.min(drag.dx,w); drag.dy=Math.min(drag.dy,h); }
+  drag.ghost=g; drag.src.classList.add("nt-src"); sel=null; snd("nt-lift");
+  moveGhost();
+}
+function moveGhost(){
+  if(!drag) return; drag.raf=0;
+  drag.ghost.style.transform="translate3d("+(drag.x-drag.dx)+"px,"+(drag.y-drag.dy)+"px,0)";
+  var t=dropAt(drag.x,drag.y,drag.c), el=t?t.el:null;
+  if(el!==drag.over){ if(drag.over) drag.over.classList.remove("over"); drag.over=el; if(el) el.classList.add("over"); }
+}
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var D=drag; drag=null;
+  if(D.raf) cancelAnimationFrame(D.raf);
+  if(D.over) D.over.classList.remove("over");
+  if(D.ghost) D.ghost.remove();
+  D.src.classList.remove("nt-src");
+  if(!D.moved){ tapItem(D.c,D.i); return; }
+  var t=e&&e.type!=="pointercancel"?dropAt(D.x,D.y,D.c):null;
+  if(!t){ if(seat[D.c][D.i]>=0) put(D.c,D.i,-1); else paint(); return; }
+  if(t.k===seat[D.c][D.i]){ paint(); return; }
+  put(D.c,D.i,t.k);
+}
+stage.addEventListener("pointerup",endDrag); stage.addEventListener("pointercancel",endDrag);
+function tapItem(c,i){
+  if(sel&&sel.c===c&&sel.i===i){ sel=null; paint(); return; }
+  if(sel&&sel.c===c&&seat[c][i]>=0){ put(sel.c,sel.i,seat[c][i]); return; }   /* tap a seated one with another chosen: they trade */
+  sel={c:c,i:i}; snd("nt-lift"); paint();
+  toast(seat[c][i]>=0?"Tap another compartment to move "+(c?"it":"them")+", or the platform to send "+(c?"it":"them")+" back.":"Now tap "+(c?"a luggage rack":"a compartment window")+".",1800);
+}
+function tapSlot(c,k){
+  if(!sel){ toast(c?"Drag a bag onto a rack, or tap a bag first.":"Drag a passenger into a window, or tap a passenger first.",2000); return; }
+  if(sel.c!==c){ toast(sel.c?"Luggage goes on the rack under a window.":"Passengers go in the windows.",2000); snd("nt-no",{},["tile"]); return; }
+  put(sel.c,sel.i,k);
+}
+PLAT.addEventListener("click",function(e){ if(e.target.closest("[data-c]")) return; if(sel&&seat[sel.c][sel.i]>=0) put(sel.c,sel.i,-1); });
+
+/* ---------- Ask the Conductor ----------
+   If someone is in the wrong place, the conductor sends them back to the platform. If not, he seats the next one that
+   the clues settle (in the order a careful reader would find them), and points at the clue that does it. */
+function hint(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!P) return;
+  var wrong=[]; for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++) if(seat[c][i]>=0&&seat[c][i]!==P.sol[c][i]&&!lock[c][i]) wrong.push({c:c,i:i});
+  var msg, ring=null, cl=-1;
+  if(wrong.length){
+    var w=sel&&wrong.filter(function(x){ return x.c===sel.c&&x.i===sel.i; })[0]||wrong[0], k=seat[w.c][w.i];
+    var el=w.c?RACK[k]:WIN[k]; el.classList.add("badw"); setTimeout(function(){ el.classList.remove("badw"); },900);
+    msg="The conductor checks his list: "+(w.c?cap(itemName(1,w.i))+" isn't":itemName(0,w.i)+" isn't")+" in Compartment "+(k+1)+".";
+    seat[w.c][w.i]=-1; sel=null; snd("nt-hint"); paint();
+  } else {
+    /* what the clues settle, given who's already correctly in place */
+    var start=[]; for(c=0;c<P.cats;c++) for(i=0;i<P.n;i++) if(seat[c][i]>=0) start.push({c:c,i:i,k:seat[c][i]});
+    var S=NT.solve(P,P.clues,start), next=S.order.filter(function(o){ return seat[o.c][o.i]<0; })[0];
+    if(!next){ for(c=0;c<P.cats&&!next;c++) for(i=0;i<P.n;i++) if(seat[c][i]<0){ next={c:c,i:i,k:P.sol[c][i],why:-1}; break; } }
+    if(!next) return;
+    var occ=who(next.c,next.k); if(occ>=0) seat[next.c][occ]=-1;
+    seat[next.c][next.i]=next.k; cl=next.why; sel=null;
+    msg=(cl>=0?"Clue "+(cl+1)+" settles it: ":"It's the only place left: ")+(next.c?cap(itemName(1,next.i))+" goes in":itemName(0,next.i)+" has")+" Compartment "+(next.k+1)+".";
+    snd("nt-hint"); paint({c:next.c,k:next.k});
+    ring=next.c?RACK[next.k]:WIN[next.k];
+  }
+  hints++; counts();
+  if(ring){ ring.classList.remove("ring"); void ring.offsetWidth; ring.classList.add("ring"); setTimeout(function(){ ring.classList.remove("ring"); },3400); }
+  if(cl>=0){ var li=CLUES.querySelectorAll("li")[cl]; if(li){ li.classList.remove("ring"); void li.offsetWidth; li.classList.add("ring"); setTimeout(function(){ li.classList.remove("ring"); },3400); scrollClue(li); } }
+  toast(msg,3000);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+  if(full()){ if(right()) solved(); else wrongFull(); return; }
+  lessonCheck();
+}
+function scrollClue(li){ var r=li.getBoundingClientRect(), m=CLUES.getBoundingClientRect(); if(r.top<m.top||r.bottom>m.bottom) CLUES.scrollTop+=r.top-m.top-(m.height-r.height)/2; }
+function moreCue(){ $("#ntMore",stage).classList.toggle("on",CLUES.scrollHeight-CLUES.scrollTop-CLUES.clientHeight>4); }
+CLUES.addEventListener("scroll",moreCue,{passive:true});
+function restart(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(!P) return;
+  if(done&&mode==="daily"){ startDaily(true); return; }
+  var any=false; for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++) if(seat[c][i]>=0&&!lock[c][i]){ seat[c][i]=-1; any=true; }
+  if(any) snd("nt-back"); sel=null; done=false; $("#ntClosed",stage).classList.remove("on"); paint();
+}
+/* the keyboard on a computer: choose a passenger by clicking, then press 1-5 to seat them; 0 or Backspace sends them back */
+document.addEventListener("keydown",function(e){
+  if(!document.body.classList.contains("seated")||!P||!sel) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  var d=parseInt(e.key,10);
+  if(d>=1&&d<=P.n){ e.preventDefault(); if(mode==="lesson"&&blocked()) return; put(sel.c,sel.i,d-1); }
+  else if(e.key==="Backspace"||e.key==="0"||e.key==="Delete"){ e.preventDefault(); if(seat[sel.c][sel.i]>=0) put(sel.c,sel.i,-1); }
+  else if(e.key==="Escape"){ sel=null; paint(); }
+});
+
+/* ---------- loading ---------- */
+function load(p,how,locks){
+  P=p; mode=how; hints=0; t0=0; done=false; sel=null; marks={}; hideToast();
+  seat=[[],[]]; lock=[[],[]];
+  for(var c=0;c<2;c++) for(var i=0;i<P.n;i++){ seat[c].push(-1); lock[c].push(false); }
+  (locks||[]).forEach(function(l){ seat[l.c][l.i]=P.sol[l.c][l.i]; lock[l.c][l.i]=true; });
+  $("#ntClosed",stage).classList.remove("on");
+  WIN.forEach(function(w){ w.classList.remove("thief"); });
+  $("#ntNo",stage).textContent=how==="daily"?"No. "+dayNo(today):how==="practice"?"Practice":"Lesson";
+  build(); fit(); CLUES.scrollTop=0; moreCue();
+}
+var DAILY=null;
+function daily(){ if(!DAILY) DAILY=NT.forDay(todayKey,today.getDay()); return DAILY; }
+function rec(){ try{ return JSON.parse(store("bwTrain:"+todayKey)||"null"); }catch(e){ return null; } }
+function startDaily(again){
+  load(daily(),"daily");
+  if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+  var r=rec();
+  if(r&&!again) toast("You solved today's mystery. Play it again for fun; tomorrow brings a new one.",3600);
+  else if(!again) toast("Drag each passenger into a compartment so every clue holds.",3400);
+  if(window.Parlor) Parlor.coach(null);
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwTrainStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function reveal(){
+  /* every window lights up from the engine end, then the thief's window rings, with the necklace in it */
+  if(!window.Parlor||Parlor.smooth()) WIN.forEach(function(w,k){ setTimeout(function(){ w.classList.remove("lit"); void w.offsetWidth; w.classList.add("lit"); },k*110); });
+  if(P.m&&P.m.thief!=null) setTimeout(function(){ WIN[P.m.k].classList.add("thief"); },P.n*110+250);
+}
+function solved(){
+  if(done) return; done=true; sel=null; hideToast(); paint(); checkClues();
+  snd("nt-solve",{short:mode==="lesson"},["win"]);
+  reveal();
+  setTimeout(function(){ $("#ntClosed",stage).classList.add("on"); },mode==="lesson"?300:1000);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },700); return; }
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, st=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:st,h:hints,sec:secs}; store("bwTrain:"+todayKey,JSON.stringify(r));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwTrainStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(st,secs,first,sk,sv); }); },2600);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+function result(st,secs,first,sk,sv){
+  var v=$("#ntEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="ntEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Mystery":"The Night Train · No. "+dayNo(today), thief=P.cast[P.m.thief];
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"Case Closed":"Solved Without Help!")+'</h2>'+
+    '<div class="nt-stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(st)+'</i></div>'+
+    '<div class="nt-facts"><div><b>'+P.clues.length+'</b><small>Clues</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<div class="nt-story"><div class="nt-mug">'+portrait(thief.look,"end")+'</div><div><h3>It was '+esc(thief.name)+'!</h3><p class="clamp">'+esc(story())+'</p></div></div>'+
+    '<p class="nt-note">'+(mode==="daily"?(first?"A new mystery boards every day at midnight.":"You'd already solved today's mystery; your first result is the one kept."):"Practice mysteries don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".nt-story p");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","nt-rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(st,secs,sk); });
+  bt(mode==="practice"?"Another Mystery":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Carriage",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  v.classList.add("on");
+}
+function share(st,secs,sk){
+  var txt="BrainWhim · The Night Train No. "+dayNo(today)+"\n"+"★★★".slice(0,st)+"☆☆☆".slice(st)+" "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/nighttrain.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Start with a clue that names a compartment, or an end of the carriage.","Compartment 1 is nearest the engine. \"Nearer the engine\" means a smaller number.","Tap a clue to cross it off once you've used it.","If someone is nearer the engine than another passenger, they can't be in the last compartment.","Stuck? Ask the Conductor: he sends a wrong passenger back, or seats the next one the clues settle."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, p=NT.make("practice:"+Date.now()+":"+Math.random(),NT.WEEK[wd]);
+  load(p,"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Mystery","<p>Drag each passenger into a compartment (or tap them, then tap a window) so every clue holds.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%4===2&&window.Parlor) Parlor.practiceSay("Practice Mystery","<p>"+TIPS[(Math.floor(tipN/4)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done){ Parlor.lessonDone(); }
+}
+
+/* ---------- Learn to Play ---------- */
+function C(id){ return NT.CAST.filter(function(p){ return p.id===id; })[0]; }
+function B(id){ return NT.BAGS.filter(function(b){ return b.id===id; })[0]; }
+function p0(i){ return {c:0,i:i}; } function b1(i){ return {c:1,i:i}; }
+function LP(cast,sol,clues,o){ o=o||{};
+  return {n:cast.length,cats:o.bags?2:1,cast:cast.map(C),bags:(o.bags||[]).map(B),sol:o.bags?[sol,o.bsol]:[sol],clues:clues,
+    m:{owner:"Mrs. Vandermeer",jewel:"pearl necklace",spot:0,end:0,k:o.k!=null?o.k:0,bag:o.bag,thief:sol.indexOf(o.k!=null?o.k:0)}}; }
+var LESSONS=[
+  {title:"The Night Train",text:"<p>Every evening the sleeping car pulls out with a handful of passengers, and every evening something goes missing: tonight, a <b>pearl necklace</b>.</p><p>The compartments are numbered from the <b>engine end</b>: Compartment 1 is nearest the engine. Seat everyone so <b>every one of the steward's clues holds</b>. Only one seating works, and it shows who took the necklace.</p><p>This first page is just for looking. Tap <b>Next</b> to seat your first passenger.</p>",
+    puz:function(){ return LP(["pryce","ashworth","finch"],[1,0,2],[{t:"at",a:p0(0),k:1},{t:"ahead",a:p0(1),b:p0(2)}],{k:1}); },solvedLook:true},
+  {title:"Seat a Passenger",text:"<p>The first clue says <b>Colonel Pryce has Compartment 2</b>.</p><p><b>Drag</b> him from the platform into window 2. (Or tap him, then tap the window.)</p>",done:"<p>Settled. Passengers can be moved again any time: drag them to another window, or back to the platform.</p>",
+    puz:function(){ return LP(["pryce","mabry","finch"],[1,0,2],[{t:"at",a:p0(0),k:1},{t:"at",a:p0(1),k:0}],{k:1}); },glow:{c:0,i:0,k:1},goal:function(){ return seat[0][0]===1; }},
+  {title:"Next Door",text:"<p>Some clues say who is, or isn't, in <b>neighboring compartments</b>.</p><p>Dr. Mabry has Compartment 1, and Mr. Finch isn't next to him. Seat all three.</p>",done:"<p>Mr. Finch couldn't be in 2, next to Dr. Mabry, so he took 3, and Miss Delacroix had the seat that was left.</p>",
+    puz:function(){ return LP(["mabry","finch","delacroix"],[0,2,1],[{t:"at",a:p0(0),k:0},{t:"notnext",a:p0(1),b:p0(0)}],{k:2}); },goal:function(){ return right(); }},
+  {title:"Nearer the Engine",text:"<p><b>Nearer the engine</b> means a smaller compartment number.</p><p>Use the two clues to seat Lady Ashworth, Madame Orlova and Mrs. Whitcombe.</p>",done:"<p>Lady Ashworth is nearer the engine than both of the others, so she has Compartment 1. Then Madame Orlova comes before Mrs. Whitcombe.</p>",
+    puz:function(){ return LP(["ashworth","orlova","whitcombe"],[0,1,2],[{t:"ahead",a:p0(0),b:p0(1)},{t:"ahead",a:p0(1),b:p0(2)}],{k:2}); },goal:function(){ return right(); }},
+  {title:"The Luggage",text:"<p>From <b>Friday</b>, the luggage comes aboard too, and the clues mention it. Each bag goes on the <b>rack under its owner's window</b>.</p><p>The passengers are seated. Put each bag on its rack.</p>",done:"<p>On a luggage day, the necklace turns up in someone's bag, and the clues tell you whose.</p>",
+    puz:function(){ return LP(["pryce","ashworth","bellini"],[0,1,2],[{t:"with",a:b1(0),b:p0(1)},{t:"at",a:b1(1),k:2},{t:"ahead",a:b1(2),b:b1(0)}],{bags:["hatbox","violin","cage"],bsol:[1,2,0],k:2,bag:1}); },
+    locks:[{c:0,i:0},{c:0,i:1},{c:0,i:2}],goal:function(){ return right(); }},
+  {title:"Ask the Conductor",text:"<p>Stuck? Press <b>Ask the Conductor</b>. If someone is in the wrong place he sends them back to the platform; if not, he seats the next passenger the clues settle, and points to the clue.</p><p>Try it now. Solve with no help for <b>three stars</b>, with one or two for two. A new mystery boards every day: gentle on <b>Monday</b>, with luggage and more to untangle by <b>Sunday</b>.</p>",done:"<p>That's everything. Enjoy the journey!</p>",
+    puz:function(){ return LP(["reyes","hale","orlova","finch"],[2,0,3,1],[{t:"end",a:p0(1)},{t:"just",a:p0(3),b:p0(0)},{t:"ahead",a:p0(0),b:p0(2)},{t:"notat",a:p0(1),k:3}],{k:2}); },goal:function(){ return hints>0; }}
+];
+function lessonGlow(){
+  [].forEach.call(stage.querySelectorAll(".lesson"),function(e){ e.classList.remove("lesson"); });
+  if(mode!=="lesson"||done) return; var Ls=LESSONS[lessonK]; if(!Ls.glow) return; var g=Ls.glow;
+  if(seat[g.c][g.i]===g.k) return;
+  var card=stage.querySelector('.nt-slots [data-c="'+g.c+'"][data-i="'+g.i+'"]'); if(card) card.classList.add("lesson");
+  (g.c?RACK[g.k]:WIN[g.k]).classList.add("lesson");
+  var li=CLUES.querySelector("li"); if(li) li.classList.add("lesson");
+}
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k]; load(Ls.puz(),"lesson",Ls.locks);
+  if(Ls.solvedLook){ for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++){ seat[c][i]=P.sol[c][i]; lock[c][i]=true; } done=true; paint(); WIN[P.m.k].classList.add("thief"); $("#ntClosed",stage).classList.add("on"); }
+}
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  if(!P) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var n=P.n, cats=P.cats, ww, gap, nw, availH;
+  if(wide){
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),980);
+    availH=window.innerHeight-top-22;
+    nw=Math.round(Math.max(260,Math.min(320,availW*.33)));
+    var leftW=availW-nw-16-28;
+    gap=10; ww=Math.floor(Math.min(108,(leftW-gap*(n-1))/(n+.42)));
+    /* not too tall: car + platform must fit the height */
+    var hPer=cats>1?3.55:2.75; ww=Math.max(62,Math.min(ww,Math.floor((availH-40)/hPer)));
+  } else {
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    gap=n>4?5:7; var px=6; ww=Math.floor(Math.min(84,(VW-12-2*px-gap*(n-1))/(n+.42)));
+    nw=0;
+  }
+  var cw=wide?Math.min(ww,96):Math.round(ww*(cats>1?.74:.86));
+  stage.classList.toggle("cmp",!wide); stage.classList.toggle("tight",!wide&&availH<600);
+  stage.style.setProperty("--ww",ww+"px"); stage.style.setProperty("--wg",gap+"px"); stage.style.setProperty("--cw",cw+"px");
+  stage.style.setProperty("--nt-px",(wide?14:6)+"px");
+  if(nw) stage.style.setProperty("--nt-nw",nw+"px"); else stage.style.removeProperty("--nt-nw");
+  /* the clue list scrolls inside the notes when there's no room for all of it */
+  CLUES.style.maxHeight="none";
+  var right2=$(".nt-right",stage), left=$(".nt-left",stage);
+  var notesFixed=NOTES.offsetHeight-CLUES.offsetHeight, toolsH=$(".nt-tools",stage).offsetHeight+10;
+  var room=wide?availH-notesFixed-toolsH-8:availH-left.offsetHeight-8-notesFixed-toolsH;
+  if(CLUES.scrollHeight>room) CLUES.style.maxHeight=Math.max(wide?160:92,Math.floor(room))+"px";
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+  moreCue();
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#ntHint",stage).onclick=hint; $("#ntRestart",stage).onclick=restart; }
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"nighttrain", cat:"puzzles", solo:true, free:true, daily:{key:"bwTrain:",streak:"bwTrainStreak"}, title:"The Night Train", bg:"puzzles-nighttrain.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Mystery",
+  tagline:"Seat the passengers. Find the thief.", invite:"A necklace has gone missing aboard the night train. Seat every passenger so the steward's clues all hold, and you'll know who took it.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Carriages",
+  sets:[
+    {id:"claret",name:"Claret & Gold",need:0,dots:["#7a1f2b","#e2bd62"]},
+    {id:"midnight",name:"Midnight & Silver",club:true,dots:["#21345a","#d9dde6"]},
+    {id:"green",name:"Racing Green & Brass",club:true,dots:["#1f4a33","#e2bd62"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> a necklace has vanished. Seat every passenger in a compartment so <b>every clue</b> in the steward's notes holds. Only one seating works, and it shows who took it.</li><li><b>The compartments</b> are numbered from the <b>engine end</b>: Compartment 1 is nearest the engine. \"Nearer the engine\" means a smaller number; \"just ahead\" means the very next compartment toward the engine.</li><li><b>Seating:</b> drag a passenger from the platform into a window, or tap them and then tap a window. Drag them again to move them; two passengers trade places. Drag one back to the platform to unseat them. On a computer, click a passenger and press 1 to 5.</li><li><b>Luggage</b> (Friday to Sunday): each bag goes on the rack under its owner's window, and the clues mention the bags too.</li><li>Tap a clue to <b>cross it off</b>.</li><li>When everyone is aboard, any clue that doesn't hold turns red.</li><li><b>Ask the Conductor:</b> he sends someone in the wrong place back to the platform; if no one is, he seats the next passenger the clues settle and points to the clue.</li></ol>",
+    score:"<ul><li><b>One mystery a day</b>, the same for everyone. It changes at midnight on your device. Monday's has four compartments and a few clues; Wednesday's has five; from Friday the luggage comes aboard too, and Sunday's is the hardest.</li><li>Every mystery can be worked out from the clues alone, with no guessing.</li><li><b>★★★</b> with no help from the conductor · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice mysteries (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); fit(); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+/* for testing */
+window.NTO={get:function(){ return {P:P,seat:seat,lock:lock,hints:hints,done:done,mode:mode,sel:sel}; },put:put,hint:hint,restart:restart,
+  solve:function(){ for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++) seat[c][i]=P.sol[c][i]; paint(); after(); },
+  load:function(p){ load(p,"daily"); }};
+})();
+</script>
+</body>
+</html>
