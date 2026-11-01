@@ -259,6 +259,14 @@ body[data-set="green"]{--car1:#1f4a33;--car2:#143323;--car3:#0b1f15;--line:#e2bd
 .nt-plat.withtools .nt-tools{grid-column:2;grid-row:1 / span 2;flex-direction:column;flex-wrap:nowrap;width:auto;padding:0;gap:6px;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .nt-plat.withtools .nt-tools .pk-btn{padding:6px 8px;font-size:11.5px;white-space:normal;line-height:1.15;width:76px}
 .nt-plat.withtools .nt-aboard{grid-column:1}
+/* six compartments (Nov 1): the cards take the platform's full width; the buttons stand beside the bags, or in a row under the cards */
+.nt-plat.withtools.w6 #ntSlots0{grid-column:1 / -1;grid-row:1}
+.nt-plat.withtools.w6 #ntSlots1{grid-column:1;grid-row:2}
+.nt-plat.withtools.w6 .nt-tools{grid-column:2;grid-row:2;margin-top:5px;gap:4px}
+.nt-plat.withtools.w6 .nt-tools .pk-btn{width:auto;white-space:nowrap;padding:4px 8px;font-size:11px}
+.nt-plat.withtools.w6.solo #ntSlots1{display:none}
+.nt-plat.withtools.w6.solo .nt-tools{grid-column:1 / -1;flex-direction:row;justify-content:center}
+.nt-plat.withtools.w6.solo .nt-tools .pk-btn{width:auto;white-space:nowrap;padding:6px 14px}
 .nt-pad.tight .nt-myst{margin-top:8px}
 /* ---------- phones held sideways (Nov 1): the carriage and platform fill the left; the notes and buttons stand in a column at the right ---------- */
 @media (max-width:999px) and (orientation:landscape) and (max-height:540px){
@@ -414,146 +422,254 @@ var JEWELS=["pearl necklace","emerald necklace","diamond necklace","sapphire nec
 var SPOTS=["under the seat cushion","inside a folded newspaper","in the toe of a spare shoe","behind the washstand mirror","inside a box of chocolates","in the pocket of a dressing gown"];
 var ENDS=["{owner} has her necklace back, and the guard will be waiting at the next station.","The clues put {who} in Compartment {k}, and the steward did the rest.","By the time the train reached the coast, {who} had a great deal of explaining to do.","{owner} wept with relief, and the dining car sent round champagne."];
 
-/* the week: compartments, luggage or not, which clues, how many seats may be given outright */
+/* the week (Nov 1 rework, after Judy found Sunday too easy): six compartments from Wednesday, luggage from Friday,
+   and each day must reach a difficulty score (see grade below) with the reasoning it's allowed.
+   n: compartments · cats: 2 = luggage too · types: the clue kinds · maxAt/maxEnd/maxWith: caps on the giveaway kinds ·
+   (at most 2 "between", 2 "or" and 3 "not in" clues a day, for variety) ·
+   lvl: the hardest reasoning the day may need (3 = link two clues' people; 4 = a pair narrowed to the same two places;
+   5 = two clues put together) · need: how many steps of level 3+ / 4+ it must use · score: the band its total must land in */
 var WEEK={
-  1:{n:4,cats:1,types:["at","notat","end","next","ahead"],maxAt:2,prune:false,min:3,max:6,rounds:1,label:"Monday"},
-  2:{n:4,cats:1,types:["at","notat","end","notend","next","notnext","ahead","just"],maxAt:1,prune:false,min:3,max:6,rounds:2,label:"Tuesday"},
-  3:{n:5,cats:1,types:["at","notat","end","notend","next","notnext","ahead","just","gap"],maxAt:1,prune:true,min:4,max:8,rounds:2,label:"Wednesday"},
-  4:{n:5,cats:1,types:["notat","end","notend","next","notnext","ahead","just","gap"],maxAt:0,prune:true,min:4,max:8,rounds:3,label:"Thursday"},
-  5:{n:4,cats:2,types:["at","notat","end","next","ahead","with","notwith"],maxAt:1,prune:true,min:5,max:9,rounds:2,label:"Friday"},
-  6:{n:5,cats:2,types:["at","notat","end","notend","next","notnext","ahead","just","with","notwith"],maxAt:1,prune:true,min:6,max:11,rounds:3,label:"Saturday"},
-  0:{n:5,cats:2,types:["notat","end","notend","next","notnext","ahead","just","gap","with","notwith"],maxAt:0,prune:true,min:6,max:12,rounds:3,label:"Sunday"}
+  1:{n:5,cats:1,types:["at","notat","end","notend","next","ahead","just"],maxAt:1,maxEnd:2,maxWith:0,lvl:3,need:[1,0],score:[12,22],label:"Monday"},
+  2:{n:5,cats:1,types:["at","notat","end","notend","next","notnext","ahead","just","gap","or"],maxAt:1,maxEnd:1,maxWith:0,lvl:4,need:[2,0],score:[16,30],label:"Tuesday"},
+  3:{n:6,cats:1,types:["at","notat","end","notend","next","notnext","ahead","just","gap","or"],maxAt:1,maxEnd:1,maxWith:0,lvl:4,need:[4,0],score:[22,38],label:"Wednesday"},
+  4:{n:6,cats:1,types:["notat","end","notend","next","notnext","ahead","just","gap","or","between"],maxAt:0,maxEnd:1,maxWith:0,lvl:5,need:[5,1],score:[30,50],label:"Thursday"},
+  5:{n:5,cats:2,types:["at","notat","end","notend","next","notnext","ahead","just","gap","or","with","notwith"],maxAt:1,maxEnd:1,maxWith:2,lvl:4,need:[5,0],score:[36,56],label:"Friday"},
+  6:{n:6,cats:2,types:["notat","end","notend","next","notnext","ahead","just","gap","or","between","with","notwith"],maxAt:0,maxEnd:1,maxWith:1,lvl:5,need:[8,1],score:[52,74],label:"Saturday"},
+  0:{n:6,cats:2,types:["notat","notend","next","notnext","ahead","just","gap","or","between","with","notwith"],maxAt:0,maxEnd:1,maxWith:1,lvl:5,need:[10,2],score:[66,999],label:"Sunday"}
 };
 
-/* ---------- the rules ---------- */
-/* a clue: {t, a, b, k}; a and b are refs {c:0|1, i}. Positions are 0..n-1 (shown as 1..n). */
-function rel(t,pa,pb,n,k){
+/* ---------- the rules ----------
+   a clue: {t, a, b, d, k, k2}; a, b, d are refs {c:0|1, i} (0 = a passenger, 1 = a bag). Positions are 0..n-1 (shown as 1..n).
+   "or": a is in compartment k or k2 · "between": a is somewhere between b and d (in either order) */
+function rel(t,pa,pb,n,k,pd,k2){
   switch(t){
     case "at": return pa===k; case "notat": return pa!==k;
     case "end": return pa===0||pa===n-1; case "notend": return pa!==0&&pa!==n-1;
+    case "or": return pa===k||pa===k2;
     case "with": return pa===pb; case "notwith": return pa!==pb;
     case "next": return Math.abs(pa-pb)===1; case "notnext": return Math.abs(pa-pb)!==1;
     case "ahead": return pa<pb; case "just": return pa===pb-1; case "gap": return Math.abs(pa-pb)===2;
+    case "between": return pa>Math.min(pb,pd)&&pa<Math.max(pb,pd);
   }
   return false;
 }
-var UNARY={at:1,notat:1,end:1,notend:1};
-function holds(cl,pos,n){ var pa=pos[cl.a.c][cl.a.i]; if(pa==null||pa<0) return null;
-  if(UNARY[cl.t]) return rel(cl.t,pa,0,n,cl.k);
-  var pb=pos[cl.b.c][cl.b.i]; if(pb==null||pb<0) return null; return rel(cl.t,pa,pb,n,cl.k); }
+var UNARY={at:1,notat:1,end:1,notend:1,or:1};
+function refs(cl){ return UNARY[cl.t]?[cl.a]:cl.d?[cl.a,cl.b,cl.d]:[cl.a,cl.b]; }
+function test(cl,v,n){ return rel(cl.t,v[0],v[1],n,cl.k,v[2],cl.k2); }
+function holds(cl,pos,n){ var R=refs(cl), v=[];
+  for(var j=0;j<R.length;j++){ var p=pos[R[j].c]&&pos[R[j].c][R[j].i]; if(p==null||p<0) return null; v.push(p); }
+  return test(cl,v,n); }
 
-function perms(n){ var out=[]; (function go(a,used){ if(a.length===n){ out.push(a.slice()); return; } for(var v=0;v<n;v++) if(!used[v]){ used[v]=1; a.push(v); go(a,used); a.pop(); used[v]=0; } })([],{}); return out; }
-var PERMS={};
-/* how many seatings fit all the clues (stops counting at `cap`) */
+/* how many seatings fit all the clues (stops counting at `cap`): a backtracking search that checks each clue
+   as soon as everyone it names is placed */
 function count(P,clues,cap){
-  var n=P.n, ps=PERMS[n]||(PERMS[n]=perms(n)), c0=clues.filter(function(c){ return c.a.c===0&&(!c.b||c.b.c===0); }), rest=clues.filter(function(c){ return c0.indexOf(c)<0; }), got=0, sol=null;
-  for(var x=0;x<ps.length;x++){ var pos=[ps[x],[]];
-    if(!c0.every(function(c){ return holds(c,pos,n); })) continue;
-    if(P.cats<2){ got++; sol=[pos[0]]; if(got>=cap) return {n:got,sol:sol}; continue; }
-    for(var y=0;y<ps.length;y++){ pos[1]=ps[y]; if(rest.every(function(c){ return holds(c,pos,n); })){ got++; sol=[pos[0],ps[y]]; if(got>=cap) return {n:got,sol:sol}; } } }
+  var n=P.n, cats=P.cats, left=[], items=[], c, i, got=0, sol=null, dom={};
+  for(c=0;c<cats;c++) for(i=0;i<n;i++){ left.push({c:c,i:i}); dom[c+":"+i]=(1<<n)-1; }
+  /* clues about one item alone just narrow its places up front */
+  clues.forEach(function(cl){ if(!UNARY[cl.t]) return; var key=cl.a.c+":"+cl.a.i, m=0; for(var v=0;v<n;v++) if((dom[key]&(1<<v))&&rel(cl.t,v,0,n,cl.k,0,cl.k2)) m|=1<<v; dom[key]=m; });
+  /* place the most tied-down items first: fewest places, then most clues linking them to items already placed */
+  var multi=clues.filter(function(cl){ return !UNARY[cl.t]; }).map(refs), placedK={};
+  function pcnt(m){ var k=0; while(m){ m&=m-1; k++; } return k; }
+  while(left.length){ var bi=0, bs=-1e9;
+    left.forEach(function(it,q){ var key=it.c+":"+it.i, links=0; multi.forEach(function(R){ if(R.some(function(r){ return r.c===it.c&&r.i===it.i; })) R.forEach(function(r){ if(placedK[r.c+":"+r.i]) links++; }); });
+      var sc=links*3+multi.filter(function(R){ return R.some(function(r){ return r.c===it.c&&r.i===it.i; }); }).length-pcnt(dom[key])*2; if(sc>bs){ bs=sc; bi=q; } });
+    var it=left.splice(bi,1)[0]; items.push(it); placedK[it.c+":"+it.i]=1; }
+  var idx={}; items.forEach(function(it,j){ idx[it.c+":"+it.i]=j; });
+  var doms=items.map(function(it){ return dom[it.c+":"+it.i]; });
+  var at=items.map(function(){ return []; });       /* clues to check once item j is placed (their last-placed ref) */
+  clues.forEach(function(cl){ if(UNARY[cl.t]) return; var last=Math.max.apply(null,refs(cl).map(function(r){ return idx[r.c+":"+r.i]; })); at[last].push(cl); });
+  var pos=[]; for(c=0;c<cats;c++){ pos.push([]); for(i=0;i<n;i++) pos[c].push(-1); }
+  var used=[]; for(c=0;c<cats;c++) used.push(0);
+  (function go(j){
+    if(got>=cap) return;
+    if(j===items.length){ got++; sol=pos.map(function(a){ return a.slice(); }); return; }
+    var it=items[j];
+    for(var v=0;v<n;v++){ if((used[it.c]&(1<<v))||!(doms[j]&(1<<v))) continue;
+      pos[it.c][it.i]=v; used[it.c]|=1<<v;
+      var ok=true; for(var q=0;q<at[j].length;q++) if(!holds(at[j][q],pos,n)){ ok=false; break; }
+      if(ok) go(j+1);
+      used[it.c]&=~(1<<v); pos[it.c][it.i]=-1; if(got>=cap) return; }
+  })(0);
   return {n:got,sol:sol};
 }
 
-/* ---------- the step-by-step solver (what a careful reader can work out, with no guessing) ----------
-   Each item keeps the set of compartments it could still be in. Clues rule places out; when an item has one
-   place left, it's settled; a compartment only one item can still take is that item's. Repeats until nothing
-   changes. Returns the settled order (for hints): [{c,i,k,why}] where why is a clue index or -1 (only place left). */
-function solve(P,clues,start){
-  var n=P.n, cats=P.cats, D=[], i, c, order=[], rounds=0, why=[];
-  for(c=0;c<cats;c++){ D.push([]); why.push([]); for(i=0;i<n;i++){ D[c].push((1<<n)-1); why[c].push(-1); } }
+/* ---------- the step-by-step solver and grader (what a careful reader can work out, with no guessing) ----------
+   Each item keeps the set of compartments it could still be in. The solver always uses the simplest step that
+   makes progress, and each kind of step has a cost; the total is the day's difficulty score.
+     0  one each: a settled item's place is no one else's; a place only one item can take is theirs (cost .5)
+     1  a clue about one item alone ("is not in 3", "an end", "2 or 5") (cost 1)
+     2  a clue linking an item to someone already settled (cost 1.5)
+     3  a clue linking items that aren't settled yet, narrowing both (cost 3)
+     4  two (or three) items that can only be in the same two (or three) places: no one else can be there (cost 4)
+     5  two clues put together, about people they share (cost 6)
+   Returns {ok, order:[{c,i,k,why,why2,each}], rounds, D, score, lv:[steps at each level], max}. why is the last clue (or two) that narrowed the item, -1 if none;
+   each: it was finished off by "one each" (the clue left it only one free place). */
+var COST=[.5,1,1.5,3,4,6];
+function solve(P,clues,start,maxLvl){
+  var n=P.n, cats=P.cats, D=[], why=[], why2=[], c, i, j, order=[], rounds=0, score=0, lv=[0,0,0,0,0,0], top=0, FULL=(1<<n)-1;
+  if(maxLvl==null) maxLvl=5;
+  for(c=0;c<cats;c++){ D.push([]); why.push([]); why2.push([]); for(i=0;i<n;i++){ D[c].push(FULL); why[c].push(-1); why2[c].push(-1); } }
   if(start) start.forEach(function(s){ D[s.c][s.i]=1<<s.k; });
-  function bits(m){ var r=[]; for(var v=0;v<n;v++) if(m&(1<<v)) r.push(v); return r; }
   function one(m){ return m&&!(m&(m-1)); }
   function lone(m){ for(var v=0;v<n;v++) if(m===1<<v) return v; return -1; }
-  var settled=[]; for(c=0;c<cats;c++){ settled.push([]); for(i=0;i<n;i++) settled[c].push(false); }
-  function note(){ for(var c2=0;c2<cats;c2++) for(var i2=0;i2<n;i2++) if(!settled[c2][i2]&&one(D[c2][i2])){ settled[c2][i2]=true; order.push({c:c2,i:i2,k:lone(D[c2][i2]),why:why[c2][i2]}); } }
-  var changed=true;
-  while(changed){ changed=false; rounds++;
-    clues.forEach(function(cl,ci){
-      var a=cl.a, Da=D[a.c][a.i];
-      if(UNARY[cl.t]){ var m=0; bits(Da).forEach(function(v){ if(rel(cl.t,v,0,n,cl.k)) m|=1<<v; }); if(m!==Da){ D[a.c][a.i]=m; why[a.c][a.i]=ci; changed=true; } return; }
-      var b=cl.b, Db=D[b.c][b.i], same=a.c===b.c, ma=0, mb=0;
-      bits(Da).forEach(function(va){ bits(Db).forEach(function(vb){ if(same&&va===vb) return; if(rel(cl.t,va,vb,n,cl.k)){ ma|=1<<va; mb|=1<<vb; } }); });
-      if(ma!==Da){ D[a.c][a.i]=ma; why[a.c][a.i]=ci; changed=true; }
-      if(mb!==Db){ D[b.c][b.i]=mb; why[b.c][b.i]=ci; changed=true; }
-    });
-    /* one each: a settled item's place is no one else's; a place only one item can take is theirs */
-    for(c=0;c<cats;c++){
-      for(i=0;i<n;i++) if(one(D[c][i])) for(var j=0;j<n;j++) if(j!==i&&(D[c][j]&D[c][i])){ D[c][j]&=~D[c][i]; if(one(D[c][j])) why[c][j]=-1; changed=true; }
-      for(var v=0;v<n;v++){ var who=[]; for(i=0;i<n;i++) if(D[c][i]&(1<<v)) who.push(i); if(who.length===1&&D[c][who[0]]!==1<<v){ D[c][who[0]]=1<<v; why[c][who[0]]=-1; changed=true; } }
+  function pc(m){ var k=0; while(m){ m&=m-1; k++; } return k; }
+  var settled=[], each=[]; for(c=0;c<cats;c++){ settled.push([]); each.push([]); for(i=0;i<n;i++){ settled[c].push(false); each[c].push(false); } }
+  function note(){ for(var c2=0;c2<cats;c2++) for(var i2=0;i2<n;i2++) if(!settled[c2][i2]&&one(D[c2][i2])){ settled[c2][i2]=true; order.push({c:c2,i:i2,k:lone(D[c2][i2]),why:why[c2][i2],why2:why2[c2][i2],each:each[c2][i2]}); } }
+  function set(r,m,w,w2){ if(m===D[r.c][r.i]) return false; D[r.c][r.i]=m; each[r.c][r.i]=false; why[r.c][r.i]=w; why2[r.c][r.i]=w2==null?-1:w2; return true; }
+  /* which places each ref can keep, given the others' current places (same-kind items can't share a place) */
+  function support(R,tst){
+    var keep=R.map(function(){ return 0; }), v=[];
+    (function go(j){
+      if(j===R.length){ if(tst(v)) for(var q=0;q<R.length;q++) keep[q]|=1<<v[q]; return; }
+      var m=D[R[j].c][R[j].i];
+      for(var x=0;x<n;x++) if(m&(1<<x)){
+        var clash=false; for(var q=0;q<j;q++) if(R[q].c===R[j].c&&(R[q].i===R[j].i?v[q]!==x:v[q]===x)){ clash=true; break; }
+        if(clash) continue; v[j]=x; go(j+1); }
+    })(0);
+    return keep;
+  }
+  function stepOneEach(){
+    var did=false;
+    for(var c2=0;c2<cats;c2++){
+      for(var i2=0;i2<n;i2++) if(one(D[c2][i2])) for(var j2=0;j2<n;j2++) if(j2!==i2&&(D[c2][j2]&D[c2][i2])){ D[c2][j2]&=~D[c2][i2]; if(one(D[c2][j2])) each[c2][j2]=true; did=true; }
+      for(var v=0;v<n;v++){ var who=[]; for(i2=0;i2<n;i2++) if(D[c2][i2]&(1<<v)) who.push(i2); if(who.length===1&&D[c2][who[0]]!==1<<v){ D[c2][who[0]]=1<<v; each[c2][who[0]]=true; did=true; } }
     }
+    return did;
+  }
+  function stepClue(level){
+    var did=false;
+    clues.forEach(function(cl,ci){
+      if(did) return;
+      var R=refs(cl), unset=R.filter(function(r){ return !one(D[r.c][r.i]); }).length;
+      var L=R.length===1?1:unset<=1?2:3; if(L!==level) return;
+      var keep=support(R,function(v){ return test(cl,v,n); });
+      R.forEach(function(r,q){ if(set(r,keep[q],ci)) did=true; });
+    });
+    return did;
+  }
+  function stepSubsets(){
+    for(var c2=0;c2<cats;c2++) for(var size=2;size<=3;size++){
+      var open=[]; for(var i2=0;i2<n;i2++) if(!one(D[c2][i2])&&pc(D[c2][i2])<=size) open.push(i2);
+      var did=false;
+      (function pick(s,set2,m){
+        if(did) return;
+        if(set2.length===size){ if(pc(m)!==size) return;
+          for(var j2=0;j2<n;j2++) if(set2.indexOf(j2)<0&&(D[c2][j2]&m)){ D[c2][j2]&=~m; each[c2][j2]=true; did=true; } return; }
+        for(var q=s;q<open.length;q++) pick(q+1,set2.concat([open[q]]),m|D[c2][open[q]]);
+      })(0,[],0);
+      if(did) return true;
+    }
+    return false;
+  }
+  function stepPairs(){
+    for(var x=0;x<clues.length;x++) for(var y=x+1;y<clues.length;y++){
+      var A=refs(clues[x]), B=refs(clues[y]), R=A.slice(), shared=false;
+      B.forEach(function(r){ var f=R.some(function(s){ return s.c===r.c&&s.i===r.i; }); if(f) shared=true; else R.push(r); });
+      if(!shared||R.length>4) continue;
+      var ia=A.map(function(r){ return R.findIndex(function(s){ return s.c===r.c&&s.i===r.i; }); }), ib=B.map(function(r){ return R.findIndex(function(s){ return s.c===r.c&&s.i===r.i; }); });
+      var cx=clues[x], cy=clues[y];
+      var keep=support(R,function(v){ return test(cx,ia.map(function(q){ return v[q]; }),n)&&test(cy,ib.map(function(q){ return v[q]; }),n); });
+      var did=false; R.forEach(function(r,q){ if(set(r,keep[q],x,y)) did=true; });
+      if(did) return true;
+    }
+    return false;
+  }
+  var steps=[function(){ return stepOneEach(); },function(){ return stepClue(1); },function(){ return stepClue(2); },function(){ return stepClue(3); },stepSubsets,stepPairs];
+  note();
+  while(rounds++<400){
+    var did=false;
+    for(var L=0;L<=maxLvl;L++){ if(steps[L]()){ did=true; score+=COST[L]; lv[L]++; if(L>top) top=L; break; } }
     note();
-    if(rounds>60) break;
+    if(!did) break;
+    var bad=false; for(c=0;c<cats;c++) for(i=0;i<n;i++) if(!D[c][i]) bad=true; if(bad) break;
+    var all=true; for(c=0;c<cats;c++) for(i=0;i<n;i++) if(!one(D[c][i])) all=false; if(all) break;
   }
   var ok=true; for(c=0;c<cats;c++) for(i=0;i<n;i++) if(!one(D[c][i])) ok=false;
-  return {ok:ok,order:order,rounds:rounds,D:D};
+  return {ok:ok,order:order,rounds:rounds,D:D,score:score,lv:lv,max:top};
 }
 
 /* every true clue of the allowed kinds */
-function pool(P,sol,types){
-  var n=P.n, out=[], refs=[], c, i, j;
-  for(c=0;c<P.cats;c++) for(i=0;i<n;i++) refs.push({c:c,i:i});
-  function pa(r){ return sol[r.c][r.i]; }
-  refs.forEach(function(a){
+function pool(P,sol,types,r){
+  var n=P.n, out=[], R=[], c, i;
+  function has(t){ return types.indexOf(t)>=0; }
+  for(c=0;c<P.cats;c++) for(i=0;i<n;i++) R.push({c:c,i:i});
+  function pa(x){ return sol[x.c][x.i]; }
+  R.forEach(function(a){
     var p=pa(a);
-    if(types.indexOf("at")>=0) out.push({t:"at",a:a,k:p});
-    if(types.indexOf("notat")>=0) for(var k=0;k<n;k++) if(k!==p) out.push({t:"notat",a:a,k:k});
-    if(types.indexOf("end")>=0&&(p===0||p===n-1)) out.push({t:"end",a:a});
-    if(types.indexOf("notend")>=0&&p!==0&&p!==n-1) out.push({t:"notend",a:a});
+    if(has("at")) out.push({t:"at",a:a,k:p});
+    if(has("notat")) for(var k=0;k<n;k++) if(k!==p) out.push({t:"notat",a:a,k:k});
+    if(has("end")&&(p===0||p===n-1)) out.push({t:"end",a:a});
+    if(has("notend")&&p!==0&&p!==n-1) out.push({t:"notend",a:a});
+    if(has("or")) for(var t2=0;t2<2;t2++){ var o=Math.floor(r()*(n-1)); if(o>=p) o++; out.push({t:"or",a:a,k:Math.min(p,o),k2:Math.max(p,o)}); }
   });
-  refs.forEach(function(a){ refs.forEach(function(b){
+  R.forEach(function(a){ R.forEach(function(b){
     if(a===b) return; var x=pa(a), y=pa(b), same=a.c===b.c, once=a.c<b.c||(same&&a.i<b.i);   /* once: for clues that read the same both ways */
     /* luggage clues name the bag first: "The hatbox travels with Lady Ashworth" */
-    if(a.c===1&&b.c===0){ if(types.indexOf("with")>=0&&x===y) out.push({t:"with",a:a,b:b});
-      if(types.indexOf("notwith")>=0&&x!==y) out.push({t:"notwith",a:a,b:b}); }
-    if(types.indexOf("next")>=0&&Math.abs(x-y)===1&&once) out.push({t:"next",a:a,b:b});
-    if(types.indexOf("notnext")>=0&&same&&Math.abs(x-y)>1&&once) out.push({t:"notnext",a:a,b:b});
-    if(types.indexOf("ahead")>=0&&x<y) out.push({t:"ahead",a:a,b:b});
-    if(types.indexOf("just")>=0&&x===y-1) out.push({t:"just",a:a,b:b});
-    if(types.indexOf("gap")>=0&&Math.abs(x-y)===2&&once) out.push({t:"gap",a:a,b:b});
+    if(a.c===1&&b.c===0){ if(has("with")&&x===y) out.push({t:"with",a:a,b:b});
+      if(has("notwith")&&x!==y) out.push({t:"notwith",a:a,b:b}); }
+    if(x===y) return;            /* a bag and its own owner: only "travels with" */
+    if(has("next")&&Math.abs(x-y)===1&&once) out.push({t:"next",a:a,b:b});
+    if(has("notnext")&&same&&Math.abs(x-y)>1&&once) out.push({t:"notnext",a:a,b:b});
+    if(has("ahead")&&x<y) out.push({t:"ahead",a:a,b:b});
+    if(has("just")&&x===y-1) out.push({t:"just",a:a,b:b});
+    if(has("gap")&&Math.abs(x-y)===2&&once) out.push({t:"gap",a:a,b:b});
   }); });
+  if(has("between")) R.forEach(function(a){ R.forEach(function(b){ R.forEach(function(d){
+    if(a===b||a===d||b===d||!(b.c<d.c||(b.c===d.c&&b.i<d.i))) return;
+    var x=pa(a), y=pa(b), z=pa(d); if(y===z) return;
+    if(x>Math.min(y,z)&&x<Math.max(y,z)&&r()<.35) out.push({t:"between",a:a,b:b,d:d});
+  }); }); });
   return out;
 }
 
-/* ---------- the daily maker ---------- */
+/* ---------- the daily maker ----------
+   Shuffle every true clue (the gentle kinds weighted up early in the week, the roundabout ones later), add them until
+   only one seating fits, take out every clue that isn't needed, then keep the puzzle only if the solver can finish it
+   with the reasoning the day allows and its score lands in the day's band. */
 function make(seed,cfg){
-  var r=rng(seed), tries=0;
-  while(tries++<400){
+  var r=rng(seed), tries=0, best=null;
+  var hard=cfg.lvl>=5, w={at:3,notat:hard?1.2:1,end:hard?.8:2,notend:1.2,or:hard?1.6:1.2,next:hard?1.3:2,notnext:hard?1.8:1,ahead:hard?1.6:2,just:1.4,gap:hard?1.7:1.2,between:2,with:hard?.7:1.6,notwith:hard?1.6:1};
+  while(tries++<300){
     var n=cfg.n, P={n:n,cats:cfg.cats};
     var cast=shuffle(CAST.slice(),r).slice(0,n), bags=shuffle(BAGS.slice(),r).slice(0,n);
     var sol=[shuffle(Array.from({length:n},function(_,i){ return i; }),r)];
     if(cfg.cats>1) sol.push(shuffle(Array.from({length:n},function(_,i){ return i; }),r));
-    var all=shuffle(pool(P,sol,cfg.types),r);
-    /* weight: on gentle days, friendly clue kinds first; later, the roundabout ones */
-    var late=cfg.prune, w={at:cfg.maxAt?3:0,notat:late?1.5:1,end:2,notend:1.3,next:2,notnext:late?1.8:1,ahead:late?1.5:2,just:1.6,gap:late?1.7:1.2,with:2.2,notwith:late?1.8:1};
+    var all=pool(P,sol,cfg.types,r);
     all.forEach(function(c){ c._w=r()*(w[c.t]||1); }); all.sort(function(a,b){ return b._w-a._w; });
-    var clues=[], ats=0;
-    for(var x=0;x<all.length;x++){
-      var c=all[x]; if(c.t==="at"){ if(ats>=cfg.maxAt) continue; }
-      var before=count(P,clues,1e9).n, after=count(P,clues.concat([c]),1e9).n;
-      if(after<before){ clues.push(c); if(c.t==="at") ats++; }
-      if(after===1) break;
+    var clues=[], cnt=1e9, caps={at:cfg.maxAt,end:cfg.maxEnd,with:cfg.maxWith,between:2,or:2,notat:3}, used={};
+    var BIG=3000;   /* while more than this many seatings still fit, take clues without counting exactly (the extras come out below) */
+    for(var x=0;x<all.length&&cnt>1;x++){
+      var c=all[x]; if(caps[c.t]!=null&&(used[c.t]||0)>=caps[c.t]) continue;
+      var after=count(P,clues.concat([c]),Math.min(cnt,BIG)).n;
+      if(after<cnt||cnt>=BIG){ clues.push(c); used[c.t]=(used[c.t]||0)+1; cnt=after>=BIG?BIG:after; }
     }
-    if(count(P,clues,2).n!==1) continue;
-    if(!solve(P,clues).ok) continue;
-    if(cfg.prune){ shuffle(clues.slice(),r).forEach(function(c){ var less=clues.filter(function(x){ return x!==c; }); if(count(P,less,2).n===1&&solve(P,less).ok) clues=less; }); }
-    var S=solve(P,clues);
-    if(clues.length<cfg.min||clues.length>cfg.max) continue;
-    if(S.rounds<cfg.rounds) continue;
-    /* the cats line up: a passenger clue first in any cross pair is fine as written */
-    clues=shuffle(clues,r);
-    clues.forEach(function(c){ delete c._w; });
-    /* the mystery: where the necklace turned up, and who that makes the thief */
-    var m={owner:OWNERS[Math.floor(r()*OWNERS.length)],jewel:JEWELS[Math.floor(r()*JEWELS.length)],end:Math.floor(r()*ENDS.length),spot:Math.floor(r()*SPOTS.length)};
-    if(cfg.cats>1){ m.bag=Math.floor(r()*n); m.k=sol[1][m.bag]; } else m.k=Math.floor(r()*n);
-    m.thief=sol[0].indexOf(m.k);
-    return {n:n,cats:cfg.cats,cast:cast,bags:cfg.cats>1?bags:[],sol:sol,clues:clues,m:m,rounds:S.rounds,order:S.order};
+    if(cnt!==1) continue;
+    /* take out every clue that isn't needed (in a random order) */
+    shuffle(clues.slice(),r).forEach(function(c){ var less=clues.filter(function(x){ return x!==c; }); if(count(P,less,2).n===1) clues=less; });
+    clues=shuffle(clues,r);   /* the order they're shown in (the grade below is for this order) */
+    var S=solve(P,clues,null,cfg.lvl);
+    if(!S.ok) continue;
+    var deep=S.lv[3]+S.lv[4]+S.lv[5], deeper=S.lv[4]+S.lv[5];
+    var fits=deep>=cfg.need[0]&&deeper>=cfg.need[1]&&S.score>=cfg.score[0]&&S.score<=cfg.score[1];
+    var pick={P:P,cast:cast,bags:bags,sol:sol,clues:clues,S:S};
+    /* if no try lands in the band, keep the closest one */
+    var miss=Math.max(0,cfg.score[0]-S.score)+Math.max(0,S.score-cfg.score[1])+4*Math.max(0,cfg.need[0]-deep)+6*Math.max(0,cfg.need[1]-deeper);
+    if(!best||miss<best.miss){ best=pick; best.miss=miss; }
+    if(fits) break;
   }
-  return null;
+  if(!best) return null;
+  var B2=best; n=B2.P.n;
+  var out=B2.clues; out.forEach(function(c){ delete c._w; });
+  /* the mystery: where the necklace turned up, and who that makes the thief */
+  var m={owner:OWNERS[Math.floor(r()*OWNERS.length)],jewel:JEWELS[Math.floor(r()*JEWELS.length)],end:Math.floor(r()*ENDS.length),spot:Math.floor(r()*SPOTS.length)};
+  if(cfg.cats>1){ m.bag=Math.floor(r()*n); m.k=B2.sol[1][m.bag]; } else m.k=Math.floor(r()*n);
+  m.thief=B2.sol[0].indexOf(m.k);
+  var S2=solve(B2.P,out,null,cfg.lvl);
+  return {n:n,cats:cfg.cats,cast:B2.cast,bags:cfg.cats>1?B2.bags:[],sol:B2.sol,clues:out,m:m,rounds:S2.rounds,order:S2.order,score:S2.score,lv:S2.lv,miss:B2.miss,tries:tries};
 }
 function forDay(dateKey,weekday){ return make("nt:"+dateKey,WEEK[weekday]); }
 
-var NT={CAST:CAST,BAGS:BAGS,WEEK:WEEK,SPOTS:SPOTS,ENDS:ENDS,rng:rng,rel:rel,holds:holds,count:count,solve:solve,make:make,forDay:forDay};
+var NT={CAST:CAST,BAGS:BAGS,WEEK:WEEK,SPOTS:SPOTS,ENDS:ENDS,rng:rng,rel:rel,holds:holds,refs:refs,count:count,solve:solve,make:make,forDay:forDay};
 if(typeof module!=="undefined"&&module.exports) module.exports=NT; else root.NT=NT;
 })(this);
 </script>
@@ -659,6 +775,8 @@ function clueHtml(cl){
     case "ahead": return A+" is nearer the engine than "+B+".";
     case "just": return A+" is just ahead of "+B+", one compartment nearer the engine.";
     case "gap": return "There's exactly one compartment between "+nm(cl.a)+" and "+B+".";
+    case "or": return A+(cl.a.c?" is in Compartment ":" has Compartment ")+k+" or "+(cl.k2+1)+".";
+    case "between": return A+" is somewhere between "+B+" and "+nm(cl.d)+".";
   }
   return "";
 }
@@ -905,7 +1023,7 @@ function hint(){
   if(mode==="lesson"&&blocked()) return;
   if(done||!P) return;
   var wrong=[]; for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++) if(seat[c][i]>=0&&seat[c][i]!==P.sol[c][i]&&!lock[c][i]) wrong.push({c:c,i:i});
-  var msg, ring=null, cl=-1;
+  var msg, ring=null, cl=-1, cl2=-1;
   if(wrong.length){
     var w=sel&&wrong.filter(function(x){ return x.c===sel.c&&x.i===sel.i; })[0]||wrong[0], k=seat[w.c][w.i];
     var el=w.c?RACK[k]:WIN[k]; el.classList.add("badw"); setTimeout(function(){ el.classList.remove("badw"); },900);
@@ -919,13 +1037,15 @@ function hint(){
     if(!next) return;
     var occ=who(next.c,next.k); if(occ>=0) seat[next.c][occ]=-1;
     seat[next.c][next.i]=next.k; cl=next.why; sel=null;
-    msg=(cl>=0?"Clue "+(cl+1)+" settles it: ":"It's the only place left: ")+(next.c?cap(itemName(1,next.i))+" goes in":itemName(0,next.i)+" has")+" Compartment "+(next.k+1)+".";
+    cl2=next.why2!=null?next.why2:-1;
+    var ev=!!next.each, cn=cl>=0&&cl2>=0?"Clues "+(cl+1)+" and "+(cl2+1):cl>=0?"Clue "+(cl+1):"";
+    msg=(cn&&ev?cn+(cl2>=0?" leave":" leaves")+" only one place free: ":cn?cn+(cl2>=0?" together settle it: ":" settles it: "):"It's the only place left: ")+(next.c?cap(itemName(1,next.i))+" goes in":itemName(0,next.i)+" has")+" Compartment "+(next.k+1)+".";
     snd("nt-hint"); paint({c:next.c,k:next.k});
     ring=next.c?RACK[next.k]:WIN[next.k];
   }
   hints++; counts();
   if(ring){ ring.classList.remove("ring"); void ring.offsetWidth; ring.classList.add("ring"); setTimeout(function(){ ring.classList.remove("ring"); },3400); }
-  if(cl>=0){ var li=CLUES.querySelectorAll("li")[cl]; if(li){ li.classList.remove("ring"); void li.offsetWidth; li.classList.add("ring"); setTimeout(function(){ li.classList.remove("ring"); },3400); scrollClue(li); } }
+  [cl,cl2].forEach(function(q,z){ if(q==null||q<0) return; var li=CLUES.querySelectorAll("li")[q]; if(li){ li.classList.remove("ring"); void li.offsetWidth; li.classList.add("ring"); setTimeout(function(){ li.classList.remove("ring"); },3400); if(!z) scrollClue(li); } });
   toast(msg,3000);
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
   if(full()){ if(right()) solved(); else wrongFull(); return; }
@@ -942,7 +1062,7 @@ function restart(){
   var any=false; for(var c=0;c<P.cats;c++) for(var i=0;i<P.n;i++) if(seat[c][i]>=0&&!lock[c][i]){ seat[c][i]=-1; any=true; }
   if(any) snd("nt-back"); sel=null; done=false; $("#ntClosed",stage).classList.remove("on"); paint();
 }
-/* the keyboard on a computer: choose a passenger by clicking, then press 1-5 to seat them; 0 or Backspace sends them back */
+/* the keyboard on a computer: choose a passenger by clicking, then press 1-6 to seat them; 0 or Backspace sends them back */
 document.addEventListener("keydown",function(e){
   if(!document.body.classList.contains("seated")||!P||!sel) return;
   if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -1112,7 +1232,7 @@ function fit(){
   /* short phones: the two buttons move onto the platform, beside the cards or bags, to save a row */
   var TL=$(".nt-tools",stage), tight=!wide&&availH<600;
   if(tight&&TL.parentNode!==PLAT){ PLAT.appendChild(TL); } else if(!tight&&TL.parentNode===PLAT){ $(".nt-right",stage).appendChild(TL); }
-  PLAT.classList.toggle("withtools",tight);
+  PLAT.classList.toggle("withtools",tight); PLAT.classList.toggle("w6",n>=6); PLAT.classList.toggle("solo",cats<2);
   /* phones: shrink the carriage until everything (with at least ~4 lines of clues) fits above the kit's bar; the cards stay readable */
   if(!wide){ var minC=tight?78:96, cmin=tight?44:0; CLUES.style.maxHeight=minC+"px";
     cw=Math.max(cmin,cw); stage.style.setProperty("--cw",cw+"px");
@@ -1165,8 +1285,8 @@ Parlor.init({
     {id:"green",name:"Racing Green & Brass",club:true,dots:["#1f4a33","#e2bd62"]}
   ],
   rules:{
-    play:"<ol><li><b>The goal:</b> a necklace has vanished. Seat every passenger in a compartment so <b>every clue</b> in the steward's notes holds. Only one seating works, and it shows who took it.</li><li><b>The compartments</b> are numbered from the <b>engine end</b>: Compartment 1 is nearest the engine. \"Nearer the engine\" means a smaller number; \"just ahead\" means the very next compartment toward the engine.</li><li><b>Seating:</b> drag a passenger from the platform into a window, or tap them and then tap a window. Drag them again to move them; two passengers trade places. Drag one back to the platform to unseat them. On a computer, click a passenger and press 1 to 5.</li><li><b>Luggage</b> (Friday to Sunday): each bag goes on the rack under its owner's window, and the clues mention the bags too.</li><li>Tap a clue to <b>cross it off</b>.</li><li>When everyone is aboard, any clue that doesn't hold turns red.</li><li><b>Ask the Conductor:</b> he sends someone in the wrong place back to the platform; if no one is, he seats the next passenger the clues settle and points to the clue.</li></ol>",
-    score:"<ul><li><b>One mystery a day</b>, the same for everyone. It changes at midnight on your device. Monday's has four compartments and a few clues; Wednesday's has five; from Friday the luggage comes aboard too, and Sunday's is the hardest.</li><li>Every mystery can be worked out from the clues alone, with no guessing.</li><li><b>★★★</b> with no help from the conductor · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice mysteries (in Learn to Play) are free and don't count.</li></ul>"
+    play:"<ol><li><b>The goal:</b> a necklace has vanished. Seat every passenger in a compartment so <b>every clue</b> in the steward's notes holds. Only one seating works, and it shows who took it.</li><li><b>The compartments</b> are numbered from the <b>engine end</b>: Compartment 1 is nearest the engine. \"Nearer the engine\" means a smaller number; \"just ahead\" means the very next compartment toward the engine.</li><li><b>Seating:</b> drag a passenger from the platform into a window, or tap them and then tap a window. Drag them again to move them; two passengers trade places. Drag one back to the platform to unseat them. On a computer, click a passenger and press the compartment's number.</li><li><b>Luggage</b> (Friday to Sunday): each bag goes on the rack under its owner's window, and the clues mention the bags too.</li><li>Tap a clue to <b>cross it off</b>.</li><li>When everyone is aboard, any clue that doesn't hold turns red.</li><li><b>Ask the Conductor:</b> he sends someone in the wrong place back to the platform; if no one is, he seats the next passenger the clues settle and points to the clue.</li></ol>",
+    score:"<ul><li><b>One mystery a day</b>, the same for everyone. It changes at midnight on your device. Monday and Tuesday have five compartments, and Wednesday and Thursday six. On Friday the luggage comes aboard (five compartments again), and the weekend has six compartments and luggage. Each day takes a little more untangling, and Sunday's is the hardest.</li><li>Every mystery can be worked out from the clues alone, with no guessing.</li><li><b>★★★</b> with no help from the conductor · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice mysteries (in Learn to Play) are free and don't count.</li></ul>"
   },
   onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
   lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
