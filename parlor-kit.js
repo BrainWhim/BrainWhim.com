@@ -517,7 +517,7 @@
      with Hint and Back to the Lesson. */
   var LK = 0;
   /* on every lesson and practice card: leave the lesson and start a real game against The House (Judy, Oct 25) */
-  function houseBtn() { return { label: "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
+  function houseBtn() { return { label: C && C.cat === "puzzles" ? "Today's Puzzle" : "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
   P.houseBtn = houseBtn;
   function lessonSteps() { var L = C.lesson; return typeof L.steps === "function" ? L.steps() : L.steps; }
   P.lessonGo = function (k) {
