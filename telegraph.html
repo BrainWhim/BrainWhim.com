@@ -16,6 +16,14 @@
 body{--tg-paper:#f4ecd6;--tg-paper2:#e9dcbc;--tg-print:#2f5a43;--tg-print2:#7f9a86;--tg-ink:#1d2a4a;--tg-op:#9a3b22;--tg-tape:#fbf7ea;--tg-stamp:#8e2f45}
 body[data-set="blue"]{--tg-paper:#e3ebf2;--tg-paper2:#cbd8e4;--tg-print:#1f3d66;--tg-print2:#7d93b0;--tg-ink:#16213f;--tg-op:#a3332a;--tg-tape:#f8f8f2;--tg-stamp:#1f3d66}
 body[data-set="buff"]{--tg-paper:#efdcb8;--tg-paper2:#dcc398;--tg-print:#6b3d1f;--tg-print2:#a7825f;--tg-ink:#2b1d14;--tg-op:#8f2a1e;--tg-tape:#fbf3e0;--tg-stamp:#7a2b18}
+.tg-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.tg-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+/* the BW monogram: a watermark in the telegram paper, and a brass plate on the counter's front edge */
+.tg-wm{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%) rotate(-8deg);z-index:0;pointer-events:none;color:var(--tg-print);opacity:.07;font-size:var(--tg-wmf,150px);line-height:1}
+.tg-plate{position:absolute;left:50%;bottom:calc(var(--tg-dp,22px) * -.5 - 4px);transform:translateX(-50%);z-index:3;padding:3px 12px 2px;border-radius:3px;font-size:15px;line-height:1.1;color:#4a3410;
+  background:linear-gradient(180deg,#fbe7a6 0%,#d9b25a 45%,#a8802c 100%);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),0 2px 3px rgba(0,0,0,.45);text-shadow:0 1px 0 rgba(255,240,200,.6)}
+.tg-plate::before,.tg-plate::after{content:"";position:absolute;top:50%;width:3px;height:3px;margin-top:-1.5px;border-radius:50%;background:#7a5a1e;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.tg-plate::before{left:4px}.tg-plate::after{right:4px}
+.tg-head,.tg-rule,.tg-msgw,.tg-from{position:relative;z-index:1}
 .tg-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px}
 /* the honey-oak counter */
 .tg-desk{position:relative;flex:none;padding:var(--tg-dp,22px);border-radius:10px;
@@ -206,14 +214,14 @@ function openSyms(){ return T.syms.filter(function(s){ return !locked(s); }); }
 
 /* ---------- the drawing ---------- */
 var stage=mk("div","tg-pad");
-stage.innerHTML='<div class="tg-desk" id="tgDesk"><div class="tg-form" id="tgForm">'+
+stage.innerHTML='<div class="tg-desk" id="tgDesk"><div class="tg-form" id="tgForm"><div class="tg-wm tg-mono" aria-hidden="true">B<i>W</i></div>'+
   '<div class="tg-head"><div class="tg-no">Telegram No.<b id="tgNo">1</b></div><div class="tg-title">TELEGRAM<small>THE TELEGRAPH OFFICE</small></div>'+
   '<svg class="tg-stampd" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="var(--tg-stamp)" stroke-width="3"><circle cx="50" cy="50" r="45"/><circle cx="50" cy="50" r="33" stroke-width="1.5"/></g>'+
   '<text id="tgStM" x="50" y="46" text-anchor="middle" font-family="Special Elite,monospace" font-size="17" fill="var(--tg-stamp)">OCT</text><text id="tgStD" x="50" y="66" text-anchor="middle" font-family="Special Elite,monospace" font-size="19" fill="var(--tg-stamp)">31</text>'+
   '<path id="tgArc" d="M14 50a36 36 0 0 1 72 0" fill="none"/><text font-family="Montserrat,sans-serif" font-weight="700" font-size="8.5" letter-spacing="2" fill="var(--tg-stamp)"><textPath href="#tgArc" startOffset="50%" text-anchor="middle">RECEIVED</textPath></text></svg></div>'+
   '<div class="tg-rule"></div><div class="tg-msgw"><div class="tg-msg" id="tgMsg" data-bws="off"></div><div class="tg-more" id="tgMore"><span>▾ More Below</span></div></div>'+
   '<div class="tg-from">From<i id="tgFrom"></i></div><div class="tg-delivered" id="tgDel">DELIVERED</div></div>'+
-  '<div class="tg-toast" id="tgToast"></div></div>'+
+  '<div class="tg-toast" id="tgToast"></div><div class="tg-plate tg-mono" aria-hidden="true">B<i>W</i></div></div>'+
   '<div class="tg-tools" id="tgTools"><div class="tg-keys" id="tgKeys"></div>'+
   '<div class="tg-row"><span class="tg-count" id="tgCount"></span><button class="pk-btn" type="button" id="tgErase">Erase</button><button class="pk-btn gold tg-op" type="button" id="tgHint">Ask the Operator</button><button class="pk-btn" type="button" id="tgRestart">Restart</button></div></div>';
 var DESK=$("#tgDesk",stage), FORM=$("#tgForm",stage), MSG=$("#tgMsg",stage), TOAST=$("#tgToast",stage), TOOLS=$("#tgTools",stage), KEYS=$("#tgKeys",stage);
@@ -572,6 +580,7 @@ function fit(){
   var room=availH-dp*2-fixed();
   if(FORM.offsetHeight+dp*2>availH&&room>120){ MSG.style.maxHeight=Math.floor(room)+"px"; }
   FORM.style.setProperty("--tg-df",Math.round(best*.85)+"px");
+  FORM.style.setProperty("--tg-wmf",Math.round(Math.min(fw*.32,FORM.offsetHeight*.55))+"px");
   moreCue();
   if(mode==="lesson"&&LESSONS[lessonK].glow&&!done) T.cells.forEach(function(c,i){ if(c.sym===LESSONS[lessonK].glow&&CELLS[i]&&shown(c.sym)!==c.sym) CELLS[i].classList.add("lesson"); });
   TOOLS.style.maxWidth=wide?Math.max(fw+dp*2,560)+"px":"";
