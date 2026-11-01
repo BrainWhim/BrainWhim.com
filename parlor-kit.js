@@ -844,13 +844,20 @@
   P.soundOn = function () { return store("bwSound") !== "off"; };
   P.volume = function () { var v = parseFloat(store("bwVol")); return isNaN(v) ? 0.7 : Math.max(0, Math.min(1, v)); };
   P.smooth = function () { var m = store("bwMotion"); if (m) return m !== "reduced"; return !(window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches); };
+  /* Nov 1: desktop browsers (Safari and Chrome on a Mac) only let sound start inside certain clicks, so the kit
+     listens for all of them, plays a silent blip to unlock WebKit, and remakes the sound engine if it was closed. */
   function audio() {
-    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.connect(AC.destination); } catch (e) { return null; } }
-    if (AC.state !== "running" && AC.resume) { try { AC.resume(); } catch (e) {} }
+    if (!AC || AC.state === "closed") { try { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.connect(AC.destination); } catch (e) { AC = null; return null; } }
+    if (AC.state !== "running" && AC.resume) { try { var pr = AC.resume(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
     master.gain.value = P.volume() * 0.9;
     return AC;
   }
-  ["pointerdown", "touchend", "keydown"].forEach(function (ev) { document.addEventListener(ev, function () { if (P.soundOn()) audio(); }, { passive: true }); });
+  function unlock() {
+    if (!P.soundOn()) return; var ac = audio(); if (!ac || ac.state === "running") return;
+    try { var b = ac.createBuffer(1, 1, ac.sampleRate), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0); } catch (e) {}
+  }
+  ["pointerdown", "pointerup", "mousedown", "mouseup", "click", "touchstart", "touchend", "keydown", "keyup"].forEach(function (ev) { document.addEventListener(ev, unlock, { passive: true, capture: true }); });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && AC && AC.state !== "running" && AC.state !== "closed") { try { var pr = AC.resume(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} } });
   function noise(ac, len) { var b = ac.createBuffer(1, Math.max(1, ac.sampleRate * len), ac.sampleRate), d = b.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.4); var s = ac.createBufferSource(); s.buffer = b; return s; }
   function env(ac, g, t, peak, a, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
   function tone(ac, t, type, f0, f1, peak, a, d, filt) {
@@ -860,7 +867,10 @@
   }
   /* Parlor.sfx(name, {pitch}) : card, deal ({n, gap}), whoosh, land, click (marble into a cup), store (marble into a store), flip, place, dice ({dur}), tile, mill, win, lose, draw */
   P.sfx = function (name, o) {
-    if (!P.soundOn()) return; var ac = audio(); if (!ac) return; o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
+    if (!P.soundOn()) return; var ac = audio(); if (!ac) return;
+    /* still waking up: play it as soon as the engine runs (if that's within a moment), so the first tap isn't silent */
+    if (ac.state !== "running") { var asked = Date.now(); try { var pr = ac.resume(); if (pr && pr.then) pr.then(function () { if (ac.state === "running" && Date.now() - asked < 400) P.sfx(name, o); }, function () {}); } catch (e) {} return; }
+    o = o || {}; var t = ac.currentTime + 0.005, p = o.pitch || 1;
     if (ROOM[name]) { try { roomBus(ac); ROOM[name](roomH(ac, t, p), o); } catch (e) {} return; }
     try {
       if (name === "whoosh") { var n = noise(ac, 0.36), bp = ac.createBiquadFilter(), g = ac.createGain(); bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(1100, t); bp.frequency.exponentialRampToValueAtTime(380, t + 0.34); env(ac, g, t, 0.16, 0.05, 0.3); n.connect(bp); bp.connect(g); g.connect(master); n.start(t); n.stop(t + 0.37); }
