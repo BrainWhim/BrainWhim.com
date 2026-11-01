@@ -404,14 +404,14 @@ function drawLive(){
   globeDefs(d);
   var ringFill=lin(d,"orRingG",[fin.ring[0],fin.ring[1],fin.ring[2],fin.ring[1],fin.ring[0]]), knobF=grad(d,"orKnob",fin.knob);
   var stemF=lin(d,"orStem",[fin.ring[2],fin.ring[0],fin.ring[1],fin.ring[2]],1,0);
-  var glow=sv("filter",{id:"orGlow",x:"-20%",y:"-20%",width:"140%",height:"140%"},d); sv("feGaussianBlur",{stdDeviation:"6"},glow);
   /* on the plate: ring edges (fixed), glows (fixed), then the turning rings with their arms */
   var edges=sv("g",{transform:"translate(0 6)"},LIVE), eplane=sv("g",{transform:PLANE},edges), glows=sv("g",{transform:PLANE},LIVE), turning=sv("g",{transform:PLANE},LIVE);
   GEO.dirs=sv("g",{transform:PLANE},LIVE); STAND=sv("g",{},LIVE);
   P.rings.forEach(function(ring,i){
     var r=GEO.r[i], w=ring.crank?9:5;
     sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.ring[2],"stroke-width":w},eplane);
-    var hiG=sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgba(255,226,140,0)","stroke-width":24,filter:"url(#orGlow)"},glows);
+    /* the glow: a soft halo of three strokes (Nov 1: no blur filter, which made phones redraw slowly while a ring turned) */
+    var hiG=sv("g",{opacity:0},glows); [[26,.22],[16,.38],[8,.6]].forEach(function(h){ sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:"rgb(255,226,140)","stroke-width":h[0],opacity:h[1]},hiG); });
     var g=sv("g",{"class":"or-ring"},turning);
     /* the arms: brass spokes from the centre column out to the ring */
     ring.p.forEach(function(off,j){ var a=ang(off), q=pt(r,a), p0=pt(52,a);
@@ -477,7 +477,7 @@ function paint(anim,from){
 /* chart marks glow when their planet is home */
 function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"6 5"); m.el.setAttribute("stroke-width",home?4:3); m.el.setAttribute("opacity",home?1:.9); }); homeSync(); }
 /* the selected ring glows (and the one under the mouse, faintly) */
-function glowRings(){ RG.forEach(function(R,i){ R.hi.setAttribute("stroke",i===sel?"rgba(255,226,140,.6)":i===hov?"rgba(255,226,140,.26)":"rgba(255,226,140,0)"); }); }
+function glowRings(){ RG.forEach(function(R,i){ R.hi.setAttribute("opacity",i===sel?.75:i===hov?.32:0); }); }
 /* arrows show which way each ring turns for a clockwise turn of the selected crank */
 function showSel(){
   glowRings();
@@ -641,6 +641,10 @@ LIVE.addEventListener("pointermove",function(e){
   }
   if(e.pointerId!==drag.id) return;
   var a=planeAngle(q,drag.lift), da=a-drag.a0; if(da>Math.PI) da-=2*Math.PI; if(da<-Math.PI) da+=2*Math.PI;
+  /* Nov 1: a finger close to the middle sweeps big angles with tiny wobbles, so there the ring moves as if the finger
+     were on the ring itself (same distance along the ring), and right at the middle it ignores the wobble */
+  var pp=unproj([q[0],q[1]+drag.lift]), rp=Math.hypot(pp[0]-500,pp[1]-500), rr=GEO.r[drag.i];
+  if(rp<24) da=0; else if(rp<rr) da*=rp/rr;
   drag.acc+=da; drag.a0=a;                                   /* keep counting past a full half turn */
   var stepA=2*Math.PI/P.S, f=drag.acc/stepA, kmax=drag.fwd.length-1, kmin=-(drag.back.length-1), vis=f;
   /* past a block the ring only gives a little, like a gear against a stop */
@@ -651,11 +655,12 @@ LIVE.addEventListener("pointermove",function(e){
   var push=f>kmax+.45?1:f<kmin-.45?-1:0;
   if(push&&drag.told!==push&&(push>0?kmax:-kmin)<P.S-1){ drag.told=push;
     if(mode==="lesson"&&!lessonQuiet(drag.i,push)) lessonAllows(drag.i,push); else clashSay(drag.i,push); }
-  drag.vis=vis; var e2=P._eff[drag.i];
-  render(drag.from.map(function(v,n){ return v+e2[n]*vis; }));
+  drag.vis=vis;
+  /* Nov 1: draw at most once per screen frame (phones send more finger moves than frames) */
+  if(!drag.raf) drag.raf=requestAnimationFrame(function(){ var D=drag; if(!D) return; D.raf=0; var e2=P._eff[D.i]; render(D.from.map(function(v,n){ return v+e2[n]*D.vis; })); });
 });
 function endDrag(e){
-  if(!drag||(e&&e.pointerId!==drag.id)) return; var D=drag; drag=null; FIT.classList.remove("drag"); LIVE.style.cursor="";
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var D=drag; drag=null; if(D.raf) cancelAnimationFrame(D.raf); FIT.classList.remove("drag"); LIVE.style.cursor="";
   var k=D.k, e2=P._eff[D.i], v0=D.vis;
   /* settle onto the stop */
   var s0=performance.now(), dur=Math.min(220,80+Math.abs(v0-k)*300);
