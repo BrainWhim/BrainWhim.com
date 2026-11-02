@@ -69,6 +69,10 @@ body[data-set="rose"]{--pl1:#ffe2d6;--pl2:#e3a58e;--pl3:#a86a55;--pl4:#6e3f31;--
 .cb-day b{color:#7c2a1e}
 .cb-count{font:700 13px Montserrat,sans-serif;color:#1f2f5c;white-space:nowrap}
 .cb-rule1{display:none;margin:0;font:500 12px/1.35 Montserrat,sans-serif}
+/* numbers in Cormorant Garamond use its lining figures (all the same height, sitting on the line, with a proper 1);
+   its default old-style figures dip below the line and sit off center in a round dial (Judy, Nov 2) */
+.cb-num,.cb-key,.cb-board text,.cb-rules text{font-variant-numeric:lining-nums;-webkit-font-feature-settings:"lnum" 1;font-feature-settings:"lnum" 1}
+.cb-key{line-height:1;padding-top:.06em}
 /* ---------- the dial keys: enamel watch dials in brass bezels ---------- */
 .cb-keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:9px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
 .cb-keys.six{grid-template-columns:repeat(4,1fr)}
@@ -484,7 +488,7 @@ function unitKind(u){ var n=P.n; return u<n?"row":u<2*n?"column":"gear"; }
 var stage=mk("div","cb-pad");
 var ICON={row:'<svg viewBox="0 0 20 20"><rect x="1" y="7" width="18" height="6" rx="3" fill="#f6efdc" stroke="#1f2f5c" stroke-width="1.2"/><text x="10" y="12.2" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="7" fill="#22409c">1 2 3</text></svg>',
   gear:'<svg viewBox="0 0 20 20"><path d="M10 1.5l1.6 2.2 2.6-.8.4 2.7 2.6 1-1.2 2.4 1.7 2.1-2.4 1.3.2 2.7-2.7-.1-1 2.5-2.1-1.7-2.1 1.7-1-2.5-2.7.1.2-2.7-2.4-1.3 1.7-2.1L3 6.6l2.6-1 .4-2.7 2.6.8z" fill="#e3c16f" stroke="#7a5a1e" stroke-width=".9"/><circle cx="10" cy="10" r="3.2" fill="#f6efdc" stroke="#7a5a1e" stroke-width=".8"/></svg>',
-  once:'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.4" fill="#fffdf6" stroke="#c99a3f" stroke-width="1.8"/><text x="10" y="14.6" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="13" fill="#22409c">7</text></svg>'};
+  once:'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.4" fill="#fffdf6" stroke="#c99a3f" stroke-width="1.8"/><text x="10" y="14.6" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="13" fill="#22409c" style="font-variant-numeric:lining-nums;font-feature-settings:\'lnum\' 1">7</text></svg>'};
 stage.innerHTML='<div class="cb-left"><div class="cb-board" id="cbBoard"><svg id="cbBase" aria-hidden="true"></svg><svg id="cbLive" class="cb-live" role="img" aria-label="The watch movement"></svg>'+
   '<div class="cb-sign" id="cbSign">Right on Time!</div><div class="cb-toast" id="cbToast" role="status"></div></div></div>'+
   '<div class="cb-right"><div class="cb-notes" id="cbNotes"><svg class="cb-tag" viewBox="0 0 26 30" aria-hidden="true"><path d="M13 2v10" stroke="#9c7a45" stroke-width="1.6"/><rect x="4" y="11" width="18" height="17" rx="3" fill="#efe2bd" stroke="#9c7a45" stroke-width="1.2"/><circle cx="13" cy="15" r="2" fill="none" stroke="#9c7a45" stroke-width="1.2"/></svg>'+
@@ -626,8 +630,8 @@ function paint(){
   var fs=S*.66, nr=n===6?2:3, nc=3;
   for(i=0;i<n*n;i++){ var x=cx(i), y=cy(i)-(i===sel&&!done?4*K:0);
     if(v[i]){ var col=given[i]?"var(--given)":"var(--blue)";
-      s.push('<g class="'+(fresh[i]?"cb-pop":"")+'"><text x="'+(x+1.4)+'" y="'+(y+fs*.34+1.6)+'" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="'+fs+'" fill="#000" opacity=".12">'+v[i]+'</text>'+
-        '<text x="'+x+'" y="'+(y+fs*.34)+'" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="'+fs+'" style="fill:'+col+'">'+v[i]+'</text></g>'); continue; }
+      s.push('<g class="'+(fresh[i]?"cb-pop":"")+'"><text class="cb-num" x="'+(x+1.4)+'" y="'+(y+fs*.31+1.6)+'" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="'+fs+'" fill="#000" opacity=".12">'+v[i]+'</text>'+
+        '<text class="cb-num" x="'+x+'" y="'+(y+fs*.31)+'" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="'+fs+'" style="fill:'+col+'">'+v[i]+'</text></g>'); continue; }
     if(notes[i]){ for(var d=1;d<=n;d++){ if(!(notes[i]&(1<<(d-1)))) continue; var rr=Math.floor((d-1)/nc), cc=(d-1)%nc, ox=(cc-1)*S*.24, oy=(rr-(nr-1)/2)*S*.24*K;
         s.push('<text x="'+(x+ox)+'" y="'+(y+oy+S*.075)+'" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="700" font-size="'+(S*.2)+'" style="fill:var(--blue2)" opacity=".95">'+d+'</text>'); } }
   }
@@ -929,11 +933,11 @@ function share(sts,secs,sk){
   try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
 }
 
-/* ---------- practice ---------- */
+/* ---------- practice: Monday's pool only, freshly dressed (Judy, Nov 2: practice shouldn't be harder than Monday) ---------- */
 var TIPS=["Start with the gears: find a number that fits in only one dial of a gear.","Then look along the rows and columns for a number with only one dial left.","Turn on Pencil to jot down what a dial might be. Setting a number clears it from the notes along its lines.","Tap a set number to light up every dial with the same number.","Stuck? Ask the Clockmaker: he takes out a wrong number, or sets the next dial and tells you why."];
 var tipN=0;
 function startPractice(){
-  var wd=Math.random()<.5?1:2, list=CB.POOL[wd], base=list[Math.floor(Math.random()*list.length)], g=CB.dress(6,CB.parse(base.g),"practice:"+Date.now()+Math.random());
+  var wd=1, list=CB.POOL[wd], base=list[Math.floor(Math.random()*list.length)], g=CB.dress(6,CB.parse(base.g),"practice:"+Date.now()+Math.random());
   load({n:6,g:g,sol:CB.count(6,g,1).sol},"practice"); tipN=0;
   if(window.Parlor) Parlor.practiceSay("Practice Movement","<p>Tap a dial, then a number. Each number 1–6 goes once in every row, column and gear.</p><p>"+TIPS[0]+"</p>");
 }
