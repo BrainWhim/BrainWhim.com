@@ -156,13 +156,53 @@ var OR = (function () {
      clashing arms must cost compared with the same gears and no clashes (the "go the long way round" part). */
   var DAYS = {
     1: { name: "Monday",    R: 3, S: 8,  links: 1, still: 0, moons: 0, band: [5, 8],   detour: 1 },
-    2: { name: "Tuesday",   R: 3, S: 8,  links: 2, still: 0, moons: 0, band: [7, 10],  detour: 2 },
-    3: { name: "Wednesday", R: 4, S: 8,  links: 2, still: 0, moons: 0, band: [9, 12],  detour: 2 },
-    4: { name: "Thursday",  R: 4, S: 10, links: 2, still: 1, moons: 0, band: [10, 14], detour: 3 },
-    5: { name: "Friday",    R: 4, S: 10, links: 3, still: 1, moons: 1, band: [12, 16], detour: 3 },
-    6: { name: "Saturday",  R: 5, S: 10, links: 3, still: 1, moons: 1, band: [13, 18], detour: 4 },
-    0: { name: "Sunday",    R: 5, S: 12, links: 3, still: 1, moons: 2, band: [15, 22], detour: 4 }
+    2: { name: "Tuesday",   R: 3, S: 8,  links: 2, still: 0, moons: 0, band: [7, 10],  detour: 2, up: 2, nose: .5, noseMin: .2 },
+    3: { name: "Wednesday", R: 4, S: 8,  links: 2, still: 0, moons: 0, band: [9, 12],  detour: 2, up: 2, nose: .4, noseMin: .1 },
+    4: { name: "Thursday",  R: 4, S: 10, links: 2, still: 1, moons: 0, band: [10, 14], detour: 3, up: 3, nose: .3 },
+    5: { name: "Friday",    R: 4, S: 10, links: 3, still: 1, moons: 1, band: [12, 16], detour: 3, up: 4, nose: .2 },
+    6: { name: "Saturday",  R: 5, S: 10, links: 3, still: 1, moons: 1, band: [13, 18], detour: 4, up: 5, nose: .1 },
+    0: { name: "Sunday",    R: 5, S: 12, links: 3, still: 1, moons: 2, band: [15, 22], detour: 4, up: 6, nose: 0 }
   };
+  /* Nov 2: how tricky a start is. "Uphill" turns are turns on the best route that don't bring the planets any closer to
+     their marks (by how far each ring is from home). up = the fewest uphill turns any best route needs. "Following your
+     nose" = always making the turn that brings the planets closest (ties at random, never back to where you were); nose =
+     how often that finds the way within par + 3, out of 20 tries. Days from Tuesday need enough uphill turns, and a
+     nose-follower must mostly fail, more so each day. Monday is unchanged (Judy, Nov 2: Monday is right). */
+  function far(P, t) { var s = 0; for (var i = 0; i < P._R; i++) { var x = mod(t[i] - P.goal[i], P.S); s += Math.min(x, P.S - x); } return s; }
+  function uphill(P, dist) {
+    var N = P._N, U = new Int16Array(N).fill(-1), byD = [], s, mx = 0;
+    for (s = 0; s < N; s++) if (dist[s] >= 0) { (byD[dist[s]] = byD[dist[s]] || []).push(s); if (dist[s] > mx) mx = dist[s]; }
+    U[enc(P, P.goal)] = 0;
+    for (var d = 1; d <= mx; d++) (byD[d] || []).forEach(function (s) {
+      var t = dec(P, s), h = far(P, t), best = 9999;
+      for (var r = 0; r < P._R; r++) { if (!P.rings[r].crank) continue;
+        for (var dd = -1; dd <= 1; dd += 2) { var n = step(P, t, r, dd); if (!n) continue; var e = enc(P, n); if (dist[e] !== d - 1) continue;
+          var c = (far(P, n) >= h ? 1 : 0) + U[e]; if (c < best) best = c; } }
+      U[s] = best;
+    });
+    return U;
+  }
+  function nose(P, start, par, rand, tries) {
+    var ok = 0, g = enc(P, P.goal);
+    for (var k = 0; k < tries; k++) {
+      var t = start.slice(), seen = {}, m = 0; seen[enc(P, t)] = 1;
+      while (m < par + 3 && enc(P, t) !== g) {
+        var c = [], bh = 9999;
+        for (var r = 0; r < P._R; r++) { if (!P.rings[r].crank) continue;
+          for (var dd = -1; dd <= 1; dd += 2) { var n = step(P, t, r, dd); if (!n || seen[enc(P, n)]) continue; var h = far(P, n); if (h < bh) { bh = h; c = [n]; } else if (h === bh) c.push(n); } }
+        if (!c.length) break; t = c[Math.floor(rand() * c.length)]; seen[enc(P, t)] = 1; m++;
+      }
+      if (enc(P, t) === g) ok++;
+    }
+    return ok / tries;
+  }
+  function tricky(P, dist, pick, D, rand) {
+    var U = uphill(P, dist), list = pick.filter(function (s) { return U[s] >= D.up; });
+    for (var i = list.length - 1; i > 0; i--) { var j = Math.floor(rand() * (i + 1)), x = list[i]; list[i] = list[j]; list[j] = x; }
+    var sim = rng(hash("nose:" + list.length));
+    for (var q = 0; q < list.length && q < 40; q++) { var f = nose(P, dec(P, list[q]), dist[list[q]], sim, 20); if (f <= D.nose && f >= (D.noseMin || 0)) return [list[q]]; }
+    return [];
+  }
   function make(seedStr, wd) {
     var D = DAYS[wd], rand = rng(hash("orrery:" + seedStr));
     function ri(n) { return Math.floor(rand() * n); }
@@ -202,6 +242,7 @@ var OR = (function () {
         for (i = 0; i < R; i++) if (t[i] === goal[i]) allMoved = false;
         if (allMoved) pick.push(s);
       }
+      if (D.up) pick = tricky(P, dist, pick, D, rand);
       if (!pick.length) continue;
       P.start = dec(P, pick[ri(pick.length)]);
       P.par = dist[enc(P, P.start)]; P.tries = tries + 1; P.day = D.name; P._dist = dist;
@@ -209,7 +250,7 @@ var OR = (function () {
     }
     return null;
   }
-  return { rng: rng, hash: hash, prep: prep, enc: enc, dec: dec, okState: okState, step: step, solve: solve, bestMoves: bestMoves, make: make, DAYS: DAYS };
+  return { uphill: uphill, nose: nose, far: far, rng: rng, hash: hash, prep: prep, enc: enc, dec: dec, okState: okState, step: step, solve: solve, bestMoves: bestMoves, make: make, DAYS: DAYS };
 })();
 if (typeof module !== "undefined") module.exports = OR;
 

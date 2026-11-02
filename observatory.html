@@ -239,15 +239,45 @@ var OB = (function () {
      Stars = the size of constellation; decoy = extra sight lines per figure line; level 1 = the basic rules alone solve it,
      level 2 = sometimes you have to think "if I drew that, something would break".
      Each constellation belongs to one weekday (by its number of stars), so the same one never comes round within a week. */
+  /* Nov 2 (Judy: Monday a little too easy; the week now climbs steadily): lo-hi = stars; score = the band the graded
+     solver's total must land in (decoys are added until it does); level 2 allows "what if" steps; aim = keep adding decoys until the score reaches this (Mon-Wed, whose small constellations can't always reach it); deep = [at least, at most]
+     "what if" steps. decoy is only used by the lessons' fixed charts. Check with tools/observatory/check-year.js. */
   var DAYS = {
-    1: { name: "Monday",    lo: 5,  hi: 5,  decoy: .45, level: 1 },
-    2: { name: "Tuesday",   lo: 6,  hi: 7,  decoy: .6,  level: 1 },
-    3: { name: "Wednesday", lo: 8,  hi: 9, decoy: .75, level: 1 },
-    4: { name: "Thursday",  lo: 10, hi: 12, decoy: .85, level: 1 },
-    5: { name: "Friday",    lo: 13, hi: 15, decoy: 1,   level: 2 },
-    6: { name: "Saturday",  lo: 16, hi: 18, decoy: 1.1, level: 2 },
-    0: { name: "Sunday",    lo: 19, hi: 27, decoy: 1.25, level: 2 }
+    1: { name: "Monday",    lo: 5,  hi: 6,  decoy: .45, level: 1, aim: 6,  score: [3.5, 9],  deep: [0, 0] },
+    2: { name: "Tuesday",   lo: 7,  hi: 8,  decoy: .6,  level: 1, aim: 9,  score: [6, 14],   deep: [0, 0] },
+    3: { name: "Wednesday", lo: 9,  hi: 10, decoy: .75, level: 2, aim: 12, score: [10, 20],  deep: [0, 1] },
+    4: { name: "Thursday",  lo: 11, hi: 12, decoy: .85, level: 2, score: [18, 30],  deep: [0, 2] },
+    5: { name: "Friday",    lo: 13, hi: 15, decoy: 1,   level: 2, score: [26, 42],  deep: [1, 99] },
+    6: { name: "Saturday",  lo: 16, hi: 18, decoy: 1.1, level: 2, score: [38, 60],  deep: [2, 99] },
+    0: { name: "Sunday",    lo: 19, hi: 27, decoy: 1.25, level: 2, score: [70, 120], deep: [3, 99] }
   };
+  /* the graded solver: one deduction at a time, always the simplest, each with a cost; the total is the chart's score.
+     crossing 0.25 · a star with all its lines 0.5 · a star that needs every sight line left 1 · an island 2 · "what if" 6 */
+  function comps2(P, s) { return comps(P, s); }
+  function gstep(P, s) {
+    var k, x, v, c, j;
+    for (k = 0; k < s.length; k++) if (s[k] === 1) for (j = 0; j < P.X[k].length; j++) { x = P.X[k][j]; if (s[x] < 0) { s[x] = 0; return [0.25, 0]; } }
+    for (v = 0; v < P.N; v++) { c = counts(P, s, v); if (c[1] && c[0] === P.need[v]) { P.inc[v].forEach(function (q) { if (s[q] < 0) s[q] = 0; }); return [0.5, 0]; } }
+    for (v = 0; v < P.N; v++) { c = counts(P, s, v); if (c[1] && c[0] + c[1] === P.need[v]) { P.inc[v].forEach(function (q) { if (s[q] < 0) s[q] = 1; }); return [1, 0]; } }
+    var f = comps2(P, s), size = {}, open = {}, deg = new Array(P.N).fill(0), r;
+    for (k = 0; k < s.length; k++) if (s[k] === 1) { deg[P.cand[k][0]]++; deg[P.cand[k][1]]++; }
+    for (v = 0; v < P.N; v++) { r = f(v); size[r] = (size[r] || 0) + 1; if (deg[v] < P.need[v]) open[r] = (open[r] || 0) + (P.need[v] - deg[v]); }
+    for (k = 0; k < s.length; k++) if (s[k] < 0) {
+      var ra = f(P.cand[k][0]), rb = f(P.cand[k][1]);
+      var left = ra === rb ? (open[ra] || 0) - 2 : (open[ra] || 0) + (open[rb] || 0) - 2, sz = ra === rb ? size[ra] : size[ra] + size[rb];
+      if (left === 0 && sz < P.N) { s[k] = 0; return [2, 0]; }
+    }
+    for (k = 0; k < s.length; k++) if (s[k] < 0) {
+      var A = Int8Array.from(s); if (!setIn(P, A, k) || !propagate(P, A)) { s[k] = 0; return [6, 1]; }
+      var B = Int8Array.from(s); B[k] = 0; if (!propagate(P, B)) { s[k] = 1; return [6, 1]; }
+    }
+    return null;
+  }
+  function grade(P) {
+    var s = blank(P), score = 0, deep = 0, n = 0, st;
+    while (n < 3000 && (st = gstep(P, s))) { score += st[0]; deep += st[1]; n++; }
+    return { ok: done(P, s) && valid(P, s), score: score, deep: deep, steps: n };
+  }
   function bucket(SKY, D) { return SKY.filter(function (c) { return c.n.length >= D.lo && c.n.length <= D.hi; }); }
   /* which constellation: each weekday walks its own shuffled list a week at a time, so repeats are weeks apart */
   function pick(SKY, wd, dayNo) {
@@ -255,11 +285,39 @@ var OB = (function () {
     for (var i = list.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t = list[i]; list[i] = list[j]; list[j] = t; }
     return list[((Math.floor(dayNo / 7) % list.length) + list.length) % list.length];
   }
+  /* the day's chart, graded: decoy sight lines are added (in a seeded order) while the chart keeps one answer, can be
+     solved at the day's level, and stays under the band's top, until its score reaches the band. Up to 12 orders are tried;
+     the first in band is used (else the closest). */
+  function graded(seedStr, D, nodes, fig, pool0, angOK, C) {
+    var best = null, aim = D.aim || D.score[0];
+    /* sight lines in a steady order (figure lines are not first, so the order gives nothing away); graded in that order */
+    function ordered(cand) { return build(nodes, fig, cand.map(function (e) { return { e: e, r: hash(seedStr + ":" + e[0] + "-" + e[1]) }; }).sort(function (x, y) { return x.r - y.r; }).map(function (o) { return o.e; })); }
+    for (var tr = 0; tr < 12; tr++) {
+      var rand = rng(hash("observatory:" + seedStr + (tr ? ":" + tr : ""))), pool = pool0.slice();
+      for (var i = pool.length - 1; i > 0; i--) { var j = Math.floor(rand() * (i + 1)), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+      var cand = fig.slice(), P = ordered(cand), g = grade(P), added = 0;
+      for (var q = 0; q < pool.length && g.score < aim; q++) {
+        var e = pool[q]; if (!angOK(e[0], e[1], cand) || !angOK(e[1], e[0], cand)) continue;
+        var c2 = cand.concat([e]), P2 = ordered(c2);
+        if (countSol(P2, blank(P2), 2) !== 1) continue;
+        if (!logic(P2, D.level).ok) continue;
+        var g2 = grade(P2); if (g2.score > D.score[1] || g2.deep > D.deep[1]) continue;
+        cand = c2; P = P2; g = g2; added++;
+      }
+      var inb = g.score >= D.score[0] && g.score <= D.score[1] && g.deep >= D.deep[0];
+      var off = inb ? Math.max(0, aim - g.score) : 100 + Math.abs(g.score - (D.score[0] + D.score[1]) / 2) + (g.deep < D.deep[0] ? 20 : 0);
+      if (!best || off < best.off) best = { off: off, cand: cand, g: g, added: added, inb: inb };
+      if (!off) break;
+    }
+    var P3 = ordered(best.cand);
+    P3.level = logic(P3, 1).ok ? 1 : 2; P3.decoys = best.added; P3.C = C; P3.day = D.name; P3.score = best.g.score; P3.deep = best.g.deep; P3.off = !best.inb;
+    return P3;
+  }
   function make(seedStr, wd, C, opts) {
     var D = DAYS[wd], rand = rng(hash("observatory:" + seedStr)), nodes = C.n.map(function (s) { return [s[0], s[1]]; }), fig = C.e.map(function (e) { return [e[0], e[1]]; });
     var figKey = {}; fig.forEach(function (e) { figKey[Math.min(e[0], e[1]) + "," + Math.max(e[0], e[1])] = 1; });
     var lens = fig.map(function (e) { return Math.hypot(nodes[e[0]][0] - nodes[e[1]][0], nodes[e[0]][1] - nodes[e[1]][1]); }).sort(function (a, b) { return a - b; });
-    var maxD = Math.max(260, lens[Math.floor(lens.length / 2)] * 2.6);
+    var maxD = Math.max(260, lens[Math.floor(lens.length / 2)] * (!(opts && opts.plain) && D.lo <= 8 ? 3.4 : 2.6));
     function angOK(a, b, list) {   /* no sight line lying almost along another from the same star */
       for (var q = 0; q < list.length; q++) { var e = list[q], o = e[0] === a ? e[1] : e[1] === a ? e[0] : -1; if (o < 0) continue;
         var u = [nodes[b][0] - nodes[a][0], nodes[b][1] - nodes[a][1]], w = [nodes[o][0] - nodes[a][0], nodes[o][1] - nodes[a][1]];
@@ -274,6 +332,7 @@ var OB = (function () {
       if (clear) pool.push([a, b]);
     }
     for (var i = pool.length - 1; i > 0; i--) { var j = Math.floor(rand() * (i + 1)), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    if (!(opts && opts.plain) && D.score) return graded(seedStr, D, nodes, fig, pool, angOK, C);
     var cand = fig.slice(), want = Math.round(fig.length * D.decoy), added = 0, P = build(nodes, fig, cand);
     for (var q = 0; q < pool.length && added < want; q++) {
       var e = pool[q]; if (!angOK(e[0], e[1], cand) || !angOK(e[1], e[0], cand)) continue;
@@ -288,7 +347,7 @@ var OB = (function () {
     P.level = logic(P, 1).ok ? 1 : 2; P.decoys = added; P.C = C; P.day = D.name;
     return P;
   }
-  return { rng: rng, hash: hash, build: build, propagate: propagate, countSol: countSol, logic: logic, hint: hint, valid: valid, blank: blank, pick: pick, make: make, DAYS: DAYS, crosses: crosses, segDist: segDist };
+  return { grade: grade, rng: rng, hash: hash, build: build, propagate: propagate, countSol: countSol, logic: logic, hint: hint, valid: valid, blank: blank, pick: pick, make: make, DAYS: DAYS, crosses: crosses, segDist: segDist };
 })();
 if (typeof module !== "undefined") module.exports = OB;
 
@@ -838,7 +897,7 @@ function startPractice(){
 function L(nodes,fig,cand){ var p=OB.build(nodes,fig,cand); p.C=null; return p; }
 var LESSONS=[
   {title:"Tonight's Chart",text:"<p>Each star shows a <b>number</b>: how many lines it needs. Draw lines along the faint <b>dotted sight lines</b>, and a real <b>constellation</b> appears.</p><p>Just look for now, then tap <b>Next</b>.</p>",
-    puz:function(){ var C=OB_SKY.filter(function(c){ return c.id==="Cas"; })[0]||OB_SKY[0]; var p=OB.make("lesson",1,C); return p; }},
+    puz:function(){ var C=OB_SKY.filter(function(c){ return c.id==="Cas"; })[0]||OB_SKY[0]; var p=OB.make("lesson",1,C,{plain:true}); return p; }},
   {title:"Draw a Line",text:"<p><b>Tap a dotted line</b> to draw it, or <b>tap one star and then the other</b> (easiest on a phone). Tap a line again to rub it out.</p><p>The middle star needs 2 lines; each end star needs 1. Draw both lines.</p>",done:"<p>Lovely. Every number is matched, so the stars glow gold.</p>",
     puz:function(){ return L([[300,520],[500,420],[700,540]],[[0,1],[1,2]],[[0,1],[1,2]]); }},
   {title:"Count the Lines",text:"<p>A star's number is <b>exactly</b> how many lines it needs: not more, not less.</p><p>The middle star needs <b>3</b> and has exactly 3 sight lines, so draw all three. Then finish the rest.</p>",done:"<p>That's the first trick: when a star's number equals its sight lines, draw them all. And when a star is full, its other sight lines are out.</p>",
@@ -848,7 +907,7 @@ var LESSONS=[
   {title:"One Figure",text:"<p>All the stars must join into <b>one figure</b>. The two top stars need 1 line each and could join each other, but then they'd be an <b>island</b>, cut off from the rest.</p><p>Join every star into one figure.</p>",done:"<p>That's the whole of it. Every chart has exactly one answer, and it's always a real constellation.</p>",
     puz:function(){ return L([[200,250],[800,250],[300,600],[700,600],[500,850]],[[0,2],[2,4],[4,3],[3,1]],[[0,2],[2,4],[4,3],[3,1],[0,1],[2,3]]); }},
   {title:"Ruling Out, Hints and Stars",text:"<p>Sure a sight line is wrong? <b>Hold it</b> (or right-click it) to rule it out with a small ✕.</p><p><b>Hint</b> lights up a line you can be sure of. Solve the chart with no hints for <b>★★★</b>, with one or two for ★★.</p><p>A new sky every day: a small constellation on Monday, a big one by Sunday. Keep your streak going!</p>",
-    puz:function(){ var C=OB_SKY.filter(function(c){ return c.id==="Lyr"; })[0]||OB_SKY[0]; return OB.make("lesson6",1,C); }}
+    puz:function(){ var C=OB_SKY.filter(function(c){ return c.id==="Lyr"; })[0]||OB_SKY[0]; return OB.make("lesson6",1,C,{plain:true}); }}
 ];
 var lessonK=0;
 function lessonSetup(k){ lessonK=k; load(LESSONS[k].puz(),"lesson"); if(!LESSONS[k].done) done=true; }

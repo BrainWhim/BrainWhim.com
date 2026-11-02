@@ -280,7 +280,7 @@ function count(n,g,lim){
    score: the band its total must land in. Saturday also needs a triple or quad, or three pair-level steps.
    Set Nov 2 from the graded pool (tools/clockmaker/build-pool.js; check with tools/clockmaker/check-year.js). */
 var WEEK={
-  1:{n:6,lvl:2,need:[1,0,0,0],score:[25,31],label:"Monday"},
+  1:{n:6,lvl:2,need:[0,0,0,0],score:[18,24],extra:4,label:"Monday"},   /* extra: dials given on top of the pool puzzle (Judy, Nov 2: Monday a touch easier) */
   2:{n:6,lvl:4,need:[0,1,0,0],score:[28,60],label:"Tuesday"},
   3:{n:9,lvl:2,need:[1,0,0,0],score:[55,64],label:"Wednesday"},
   4:{n:9,lvl:3,need:[0,2,0,0],score:[65,92],label:"Thursday"},
@@ -420,6 +420,14 @@ var POOL={"0":[{"g":"....5.8..5.27.4..97....9..56......3..95.3.64..2......83..6.
 function parse(s){ return s.split("").map(function(ch){ return ch==="."?0:+ch; }); }
 var EPOCH=Date.UTC(2026,9,1);
 function dayIndex(key){ var p=key.split("-"); return Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-EPOCH)/864e5); }
+/* give k more dials from the answer, in half-turn pairs (keeps the pattern's symmetry) */
+function ease(n,g,sol,k,seed){
+  var G=geom(n), r=rng("ease:"+seed), out=g.slice(), cells=[];
+  for(var i=0;i<G.N;i++) if(!g[i]&&i<=G.N-1-i) cells.push(i);
+  shuffle(cells,r);
+  for(var q=0;q<cells.length&&k>0;q++){ var a=cells[q], b=G.N-1-a; out[a]=sol[a]; k--; if(b!==a&&k>0){ out[b]=sol[b]; k--; } }
+  return out;
+}
 function fits(g,spec){ return g.ok&&g.score>=spec.score[0]&&g.score<=spec.score[1]&&g.max<=spec.lvl&&g.deep.every(function(x,i){ return x>=spec.need[i]; }); }
 function forDay(key,wd){
   /* the week's pool in a fixed shuffled order, one a week; dressed for the date. A different dressing can change the
@@ -429,7 +437,9 @@ function forDay(key,wd){
   var order=shuffle(Array.from({length:list.length},function(_,i){ return i; }),rng("order:"+wd));
   var base=parse(list[order[week%list.length]].g), best=null;
   for(var t=0;t<16;t++){
-    var g=dress(spec.n,base,key+(t?":"+t:"")), gr=grade(spec.n,g,spec.lvl);
+    var g=dress(spec.n,base,key+(t?":"+t:""));
+    if(spec.extra) g=ease(spec.n,g,count(spec.n,g,1).sol,spec.extra,key+":"+t);
+    var gr=grade(spec.n,g,spec.lvl);
     var d=fits(gr,spec)?0:1+Math.abs(gr.score-(spec.score[0]+spec.score[1])/2);
     if(!best||d<best.d) best={g:g,gr:gr,d:d};
     if(!d) break;
@@ -438,7 +448,7 @@ function forDay(key,wd){
   return {n:spec.n,g:best.g,sol:s.sol,score:best.gr.score,max:best.gr.max,deep:best.gr.deep,unique:s.n===1,off:best.d>0,wd:wd};
 }
 
-root.CB={rng:rng,shuffle:shuffle,bits:bits,digs:digs,geom:geom,sees:sees,count:count,WEEK:WEEK,COST:COST,LVL:LVL,solver:solver,grade:grade,dress:dress,symPerm:symPerm,parse:parse,POOL:POOL,forDay:forDay,fits:fits,dayIndex:dayIndex};
+root.CB={ease:ease,rng:rng,shuffle:shuffle,bits:bits,digs:digs,geom:geom,sees:sees,count:count,WEEK:WEEK,COST:COST,LVL:LVL,solver:solver,grade:grade,dress:dress,symPerm:symPerm,parse:parse,POOL:POOL,forDay:forDay,fits:fits,dayIndex:dayIndex};
 })(typeof window!=="undefined"?window:globalThis);
 
 </script>
@@ -937,7 +947,7 @@ function share(sts,secs,sk){
 var TIPS=["Start with the gears: find a number that fits in only one dial of a gear.","Then look along the rows and columns for a number with only one dial left.","Turn on Pencil to jot down what a dial might be. Setting a number clears it from the notes along its lines.","Tap a set number to light up every dial with the same number.","Stuck? Ask the Clockmaker: he takes out a wrong number, or sets the next dial and tells you why."];
 var tipN=0;
 function startPractice(){
-  var wd=1, list=CB.POOL[wd], base=list[Math.floor(Math.random()*list.length)], g=CB.dress(6,CB.parse(base.g),"practice:"+Date.now()+Math.random());
+  var wd=1, list=CB.POOL[wd], base=list[Math.floor(Math.random()*list.length)], g=CB.dress(6,CB.parse(base.g),"practice:"+Date.now()+Math.random()); if(CB.ease&&CB.WEEK[1].extra) g=CB.ease(6,g,CB.count(6,g,1).sol,CB.WEEK[1].extra,"practice:"+Math.random());
   load({n:6,g:g,sol:CB.count(6,g,1).sol},"practice"); tipN=0;
   if(window.Parlor) Parlor.practiceSay("Practice Movement","<p>Tap a dial, then a number. Each number 1–6 goes once in every row, column and gear.</p><p>"+TIPS[0]+"</p>");
 }
