@@ -31,8 +31,9 @@
     { id: "study", name: "The Locked Study", page: "study.html", img: "puzzles-study-sm.jpg", tint: "#2a2a3e",
       about: "Professor Hartwell has locked you in his study. Open his chain of locks, each holding the clue to the next, and escape through the door.",
       daily: { key: "bwStudy:", streak: "bwStudyStreak" }, what: "escape" },
-    { id: "maproom", name: "The Map Room", soon: true, tint: "#14353f",
-      about: "Draw one coastline around the numbered islands. Each number tells how many sides it touches." },
+    { id: "maproom", name: "The Map Room", page: "maproom.html", img: "puzzles-maproom-sm.jpg", tint: "#14353f",
+      about: "Draw one closed coastline between the brass pins. Each number tells how many of its square's sides are coast.",
+      daily: { key: "bwMap:", streak: "bwMapStreak" }, what: "chart" },
     { id: "clockmaker", name: "The Clockmaker's Bench", page: "clockmaker.html", img: "puzzles-clockmaker-sm.jpg", tint: "#3a2616",
       about: "Set the dials on a watch movement so every number appears once in each row, column and gear.",
       daily: { key: "bwClock:", streak: "bwClockStreak" }, what: "movement" }
