@@ -910,13 +910,15 @@ function lessonCheck(){
 
 /* ---------- Learn to Play ----------
    Lesson charts (each worked out by the solver, so each has one answer): a 3 x 3 to draw; a 4 x 4 with three 0s to cross,
-   then to chart; a 5 x 5 for the cartographer; Monday's first pool chart, already charted, to look at. */
+   then to chart; a 5 x 5 for the cartographer; Monday's first pool chart, already charted, to look at (twice: then with its sea numbers ringed). */
 function LP(n,str){ return {n:n,clue:MR.decode(str)}; }
 var LA="1...21023", LB="..1202..011.0.32", LD=".2....01032....131..01.0.";
 function zeroSides(){ var n=4, a=[]; [4,8,12].forEach(function(i){ G.cellE[i].forEach(function(e){ if(a.indexOf(e)<0) a.push(e); }); }); return a; }
 var LESSONS=[
   {title:"The Map Room",text:"<p>Draw <b>one coastline</b>: a single closed loop along the lines between the brass pins. It makes one island.</p><p>Each <b>number</b> tells how many of its square's four sides are coast. Just look for now, then tap <b>Next</b>.</p>",
     puz:function(){ return {n:5,clue:MR.decode(MR_POOL[1][0])}; },solvedLook:true},
+  {title:"Sea and Land",text:"<p>Numbers can sit <b>in the sea</b> or <b>on the land</b>. The coast doesn't have to go around them.</p><p>The <b>ringed</b> numbers are out in the sea. Each still counts how many of its four sides are coast. A <b>0</b> is open water all around. Just look for now, then tap <b>Next</b>.</p>",
+    puz:function(){ return {n:5,clue:MR.decode(MR_POOL[1][0])}; },solvedLook:true,seaRing:true},
   {title:"Draw the Coast",text:"<p>Tap <b>between two pins</b> to draw coast, or <b>drag</b> from pin to pin.</p><p>The <b>3</b> in the corner needs three coast sides. Chart this little island.</p>",done:"<p>Charted. Tap a line again to turn it into a cross, and once more to clear it.</p>",
     puz:function(){ return LP(3,LA); },goal:function(){ return isSolved(); }},
   {title:"Open Sea",text:"<p>A <b>0</b> has no coast at all. Tap a path <b>twice</b> for a <b>cross</b>: a note that it's open sea.</p><p>Cross every glowing side of the three 0s.</p>",done:"<p>Crosses narrow things down: at each pin the coast passes through (two lines) or not at all.</p>",
@@ -928,7 +930,9 @@ var LESSONS=[
 ];
 function lessonSetup(k){
   lessonK=k; var Ls=LESSONS[k]; load(Ls.puz(),"lesson",Ls.locks);
-  if(Ls.solvedLook){ for(var e=0;e<G.E;e++) if(sol[e]===1){ st[e]=1; lockE[e]=true; } done=true; BOARD.classList.add("done"); paint(); }
+  if(Ls.solvedLook){ for(var e=0;e<G.E;e++) if(sol[e]===1){ st[e]=1; lockE[e]=true; } done=true; BOARD.classList.add("done");
+    if(Ls.seaRing){ var inn=insideOf(sol), sea=[]; for(var i=0;i<P.n*P.n;i++) if(P.clue[i]>=0&&!inn[i]) sea.push(i); ring={cells:sea}; }
+    paint(); }
 }
 function lessonHint(){ hint(); }
 
