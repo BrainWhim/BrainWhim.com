@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Print Shop · BrainWhim Puzzles</title>
+<meta name="description" content="The Print Shop: a daily word puzzle at BrainWhim. Trace the day's words through a printer's type case; the headline names the theme.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Alfa+Slab+One&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1101b">
+<style>
+/* ===== The Print Shop (Puzzles & Brain Games, Nov 2): a daily word puzzle in a printer's type case =====
+   A wooden type case lies on the composing table, tilted toward you, one letter block in every compartment.
+   Every block belongs to one of the day's words, spelled along touching blocks. One word, the headline, runs from one side
+   of the case to the other and names the theme. Trace a word: it's set in the composing stick, then inked in the case.
+   Real words that aren't the day's fill the ink pot; a full pot pays for a hint.
+   Cases (the Cases card): Oak & Maple (free); Walnut & Boxwood, Red Lacquer & Holly (Club).
+   Light comes from the top left everywhere: highlights on top and left edges, shade and shadows to the bottom right. */
+body{--case1:#d7a76c;--case2:#b07a41;--case3:#6e4620;--face1:#a8723f;--face2:#7a4c22;--face3:#4c2c10;--well1:#3a2412;--well2:#1e1208;
+  --blk1:#fbebc8;--blk2:#ecd2a0;--blk3:#c9a46c;--side1:#c89a5e;--side2:#8c6234;--ltr:#3b2e24;--ink:#1f3f7a;--inkL:#dfe6f5;--red:#c23a22;--redL:#f8dfd6}
+body[data-set="walnut"]{--case1:#9b6b4a;--case2:#6e4630;--case3:#3c2316;--face1:#77503a;--face2:#4f3224;--face3:#2e1b12;--well1:#2a1a10;--well2:#140b06;
+  --blk1:#fff6cf;--blk2:#f1e0a2;--blk3:#cfb46b;--side1:#d2b56a;--side2:#94783a;--ltr:#3a3220}
+body[data-set="lacquer"]{--case1:#d0573f;--case2:#a5301f;--case3:#5e140b;--face1:#a5301f;--face2:#7a1d12;--face3:#45100a;--well1:#2a1512;--well2:#120807;
+  --blk1:#fffdf6;--blk2:#f1ede2;--blk3:#cfc8b6;--side1:#d8d0bd;--side2:#9c937e;--ltr:#2a2a30;--ink:#123a52;--inkL:#dcecef}
+.ps-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.ps-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.ps-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:18px;align-items:start;justify-content:center}
+.ps-left{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+.ps-right{display:flex;flex-direction:column;gap:10px;width:var(--ps-nw,280px)}
+/* ---------- the type case: the case drawn once; the blocks redrawn as you play ---------- */
+.ps-board{position:relative;width:var(--ps-bw,560px);-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+.ps-board svg{display:block;width:100%;height:auto}
+.ps-board .ps-live{position:absolute;left:0;top:0;cursor:pointer}
+.ps-board.done .ps-live{cursor:default}
+.ps-live .ps-inkin{animation:ps-inkin .42s ease-out both}
+@keyframes ps-inkin{0%{opacity:0}100%{opacity:1}}
+.ps-live .ps-ring{animation:ps-ring 1.1s ease-in-out infinite}
+@keyframes ps-ring{0%,100%{opacity:.35}50%{opacity:1}}
+.ps-live .ps-shine{animation:ps-shine 1.1s ease-out both}
+@keyframes ps-shine{0%{opacity:0}35%{opacity:.85}100%{opacity:0}}
+.ps-nope{animation:ps-nope .34s ease}
+@keyframes ps-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+/* the composing stick: the letters you're tracing, set as metal sorts on a steel stick across the top of the case */
+.ps-stick{position:absolute;left:50%;top:calc(var(--ps-bw,560px) * .006);transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:2px;min-width:44%;max-width:94%;height:calc(var(--ps-bw,560px) * .062);min-height:28px;max-height:42px;padding:0 10px 0 16px;border-radius:5px;pointer-events:none;
+  background:linear-gradient(180deg,#f4f6f8,#c3c9cf 38%,#8d959d 62%,#b7bec5);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -2px 3px rgba(0,0,0,.25),0 1px 1px rgba(0,0,0,.35),2px 5px 10px rgba(0,0,0,.45)}
+.ps-stick::before{content:"";position:absolute;left:5px;top:16%;bottom:16%;width:6px;border-radius:2px;background:linear-gradient(90deg,#7b838b,#e8ecef 50%,#7b838b)}
+.ps-stick .ps-cue{flex:1;text-align:center;font:600 calc(min(13px, var(--ps-bw,560px) * .026))/1 Montserrat,sans-serif;color:#3c444c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
+.ps-sort{flex:none;display:flex;align-items:center;justify-content:center;width:calc(min(30px, var(--ps-bw,560px) * .05));height:82%;border-radius:2px;font:400 calc(min(19px, var(--ps-bw,560px) * .034))/1 "Alfa Slab One",Georgia,serif;color:#2b2f33;
+  background:linear-gradient(180deg,#dfe3e6,#a9b0b6 55%,#8b939a);box-shadow:inset 1px 1px 0 rgba(255,255,255,.75),inset -1px -1px 0 rgba(0,0,0,.25),1px 1px 2px rgba(0,0,0,.35);animation:ps-sortin .16s ease-out}
+@keyframes ps-sortin{0%{transform:translateY(-8px);opacity:0}100%{transform:none;opacity:1}}
+.ps-stick.good .ps-sort{background:linear-gradient(180deg,#e7eefc,#9fb2d8 55%,#7d93c2);color:#132c5c}
+.ps-stick.head .ps-sort{background:linear-gradient(180deg,#ffe9df,#e7a28c 55%,#c97c63);color:#6e1505}
+.ps-stick.bonus .ps-sort{background:linear-gradient(180deg,#fff3cf,#e0c27a 55%,#c4a253);color:#4a3410}
+.ps-stick.bad{animation:ps-nope .34s ease}
+.ps-stick.bad .ps-sort{opacity:.55}
+/* the proof pulled at the end: a sheet printed from the case */
+.ps-proof{position:absolute;left:8%;right:8%;top:12%;z-index:5;padding:5% 6% 6%;border-radius:2px;color:#1d1a18;text-align:center;pointer-events:none;opacity:0;transform:translateY(-30px) rotate(-1.2deg);
+  background:radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.7),transparent 60%),linear-gradient(175deg,#fbf6e8,#efe5cb);box-shadow:0 1px 1px rgba(0,0,0,.2),3px 12px 24px rgba(20,10,0,.5)}
+.ps-proof.on{animation:ps-proof 3.4s ease forwards}
+@keyframes ps-proof{0%{opacity:0;transform:translateY(-40px) rotate(-1.2deg)}14%{opacity:1;transform:translateY(0) rotate(-1.2deg)}78%{opacity:1;transform:translateY(0) rotate(-1.2deg)}100%{opacity:0;transform:translateY(18px) rotate(-1.2deg)}}
+.ps-proof h3{margin:0 0 4%;font:400 clamp(20px,5.4vw,40px)/1 "Alfa Slab One",Georgia,serif;color:var(--red);letter-spacing:.04em;text-shadow:.6px .4px 0 rgba(0,0,0,.18)}
+.ps-proof p{margin:0;font:400 clamp(12px,2.8vw,19px)/1.55 "Alfa Slab One",Georgia,serif;color:var(--ink);letter-spacing:.06em}
+.ps-proof small{display:block;margin-top:5%;font:700 italic clamp(12px,2.6vw,17px) Cormorant Garamond,serif;color:#5a4a36}
+.ps-sign{position:absolute;left:50%;top:46%;z-index:6;transform:translate(-50%,-50%) rotate(-6deg);padding:7px 16px 6px;border-radius:6px;font:700 italic 26px/1 Cormorant Garamond,serif;letter-spacing:.04em;color:#3b2a0c;white-space:nowrap;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),2px 6px 12px rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.ps-sign.on{animation:ps-sign .5s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes ps-sign{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(1.8)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
+.ps-toast{position:absolute;z-index:7;left:50%;bottom:2px;transform:translate(-50%,45%);width:max-content;max-width:94%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.ps-toast.on{opacity:1}
+.ps-wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;font:700 italic 20px Cormorant Garamond,serif;color:#f0d27a;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .3s}
+.ps-wait.on{opacity:1}
+/* ---------- the job ticket: the day's title, the words to set, and the ink pot ---------- */
+.ps-ticket{position:relative;border-radius:3px;color:#2a2116;padding:12px 14px 12px 16px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .36 0 0 0 0 .25 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23p)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 25% 10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(170deg,#f8f2e0,#ede1c0 60%,#e3d3ad);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -12px 16px -12px rgba(110,90,40,.25),0 1px 1px rgba(0,0,0,.25),2px 9px 16px rgba(20,10,0,.42)}
+.ps-ticket::before{content:"";position:absolute;left:8px;right:8px;top:8px;bottom:8px;border:1px solid rgba(160,60,30,.32);border-radius:2px;pointer-events:none}
+.ps-hole{position:absolute;right:14px;top:12px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 60% 60%,#5a3a1c,#1e1208);box-shadow:0 0 0 3px #d9b25a,0 0 0 4px #7a5a1e,inset 1px 1px 2px rgba(0,0,0,.6)}
+.ps-ticket .ps-kick{display:block;margin:0 0 2px;font:700 10.5px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9a3a22}
+.ps-ticket h2{margin:0 0 2px;padding-right:20px;font:700 21px/1.12 Cormorant Garamond,serif;color:#2a2116}
+.ps-theme{display:none;margin:4px 0 2px;font:400 15px/1.1 "Alfa Slab One",Georgia,serif;color:var(--red);letter-spacing:.05em}
+.ps-theme.on{display:block;animation:ps-stamp .45s cubic-bezier(.3,1.6,.6,1)}
+@keyframes ps-stamp{0%{transform:scale(1.8) rotate(-4deg);opacity:0}100%{transform:none;opacity:1}}
+.ps-rules{margin:6px 0 0;padding:0;list-style:none}
+.ps-rules li{position:relative;padding:2px 0 2px 16px;font:500 12.5px/1.38 Montserrat,sans-serif}
+.ps-rules li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:1px;background:#9a3a22;transform:rotate(45deg)}
+.ps-rule1{display:none;margin:2px 0 0;font:500 11.5px/1.35 Montserrat,sans-serif}
+.ps-list{display:flex;flex-wrap:wrap;gap:5px 6px;margin:8px 0 0;padding-top:7px;border-top:1px dashed rgba(160,60,30,.35)}
+.ps-word{display:inline-flex;gap:2px;align-items:center;min-height:20px}
+.ps-word i{display:inline-block;width:12px;height:16px;border-bottom:2px solid rgba(60,40,20,.4);font:400 12px/16px "Alfa Slab One",Georgia,serif;font-style:normal;text-align:center;color:var(--ink)}
+.ps-word.head i{border-bottom-color:rgba(194,58,34,.6)}
+.ps-word.got i{border-bottom-color:transparent}
+.ps-word.head.got i{color:var(--red)}
+.ps-word.plain{font:400 12.5px/20px "Alfa Slab One",Georgia,serif;color:var(--ink);letter-spacing:.04em}
+.ps-word.plain.head{color:var(--red)}
+.ps-word.new{animation:ps-stamp .45s cubic-bezier(.3,1.6,.6,1)}
+.ps-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0 0;font:600 12px Montserrat,sans-serif;color:#5b4a2c}
+.ps-count{font:700 13px Montserrat,sans-serif;color:#2a2116;white-space:nowrap}
+/* the ink pot: three drops fill it; a full pot pays for a hint */
+.ps-pot{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.ps-pot svg{width:26px;height:26px;flex:none}
+.ps-pot b{font:700 12px Montserrat,sans-serif;color:#2a2116}
+.ps-pot.full b{color:var(--ink)}
+.ps-pot.pulse svg{animation:ps-pot .6s ease}
+@keyframes ps-pot{40%{transform:scale(1.25) rotate(-6deg)}}
+/* ---------- tools ---------- */
+.ps-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.ps-tools .pk-btn{width:auto;margin:0;padding:8px 10px;min-height:0;white-space:nowrap}
+.ps-tools .pk-btn.gold{grid-column:1 / -1;border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.ps-tools .pk-btn.gold.paid{border-color:#9fb6ea;color:#dfe8ff;background:rgba(80,110,190,.35);animation:ps-ringbtn 1.1s ease 3}
+.ps-tools .pk-btn:disabled{opacity:.45}
+.ps-ringbtn{animation:ps-ringbtn 1.1s ease 2}
+@keyframes ps-ringbtn{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+/* ---------- the result window ---------- */
+.ps-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.ps-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.ps-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.ps-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.ps-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.ps-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.ps-card{margin:8px 0 2px;padding:8px 12px;border-radius:3px;text-align:center;background:linear-gradient(175deg,#fbf6e8,#efe5cb);color:#1d1a18;box-shadow:0 1px 1px rgba(0,0,0,.2),2px 6px 12px rgba(0,0,0,.35)}
+#psEnd .ps-card h3{margin:0;font:400 19px/1.1 "Alfa Slab One",Georgia,serif;color:var(--red);letter-spacing:.05em;text-align:center}
+#psEnd .ps-card p{margin:2px 0 0;font:400 12px/1.4 "Alfa Slab One",Georgia,serif;color:var(--ink);letter-spacing:.04em;text-align:center}
+#psEnd .ps-card .ps-job{font:700 italic 13px Cormorant Garamond,serif;color:#5a4a36;letter-spacing:0}
+.ps-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(248,242,224,.97),rgba(237,225,192,.97));color:#2a2116;text-align:left}
+.ps-story .ps-mug{flex:none;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff4dc,#e3c896 70%,#b8925a);overflow:hidden;box-shadow:0 0 0 2px #b38a3a,inset 1px 2px 4px rgba(0,0,0,.25)}
+.ps-story .ps-mug svg{width:100%;height:100%}
+#psEnd .ps-story h3{margin:0 0 1px;text-align:left;font:700 18px/1.15 Cormorant Garamond,serif;color:#2a2116}
+#psEnd .ps-story .ps-kind{margin:0 0 3px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9a3a22;text-align:left}
+#psEnd .ps-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#2a2116;text-align:left}
+#psEnd .ps-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ps-story .ps-rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:#9a3a22;font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.ps-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#psEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-height:760px){
+  #psEnd .pk-modal{padding:16px 16px 14px}
+  #psEnd h2{font-size:21px;margin-bottom:2px}
+  #psEnd .ps-stars{font-size:22px;margin:0 0 2px}
+  #psEnd .ps-facts b{font-size:15px}
+  #psEnd .ps-facts div{padding:5px 4px}
+  #psEnd .ps-facts{margin:6px 0 2px}
+  #psEnd .ps-card{margin:6px 0 2px;padding:6px 10px}
+  #psEnd .ps-story{margin:8px 0 2px;padding:8px 10px}
+  #psEnd .ps-story p.clamp{-webkit-line-clamp:2}
+  #psEnd .ps-story .ps-mug{width:46px;height:46px}
+  #psEnd .pk-kick{margin-bottom:2px}
+  #psEnd .ps-note{font-size:11.5px;margin:4px 0 0;line-height:1.4}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+  #psEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
+  #psEnd .pk-streak .pk-btn{padding:9px 12px}
+  #psEnd .pk-modal .pk-streak p{margin:0 0 8px}
+  #psEnd .pk-kick{margin:0}
+  #psEnd h2{font-size:19px;margin:0}
+  #psEnd .ps-stars{font-size:20px;margin:0}
+  #psEnd .ps-facts{margin:4px 0 2px}
+  #psEnd .ps-facts div{padding:3px 2px}
+  #psEnd .ps-facts b{font-size:14px}
+  #psEnd .ps-card{margin:5px 0 0;padding:5px 8px}
+  #psEnd .ps-card h3{font-size:16px}
+  #psEnd .ps-card p{font-size:11px;line-height:1.3}
+  #psEnd .ps-story{margin:6px 0 0;padding:6px 8px}
+  #psEnd .ps-story .ps-mug{width:38px;height:38px}
+  #psEnd .ps-story h3{font-size:15.5px}
+  #psEnd .ps-story p{font-size:12px;line-height:1.38}
+  #psEnd .ps-note{display:none}
+  #psEnd .pk-streak{margin-top:6px;padding:8px 10px}
+  #psEnd .pk-streak p,#psEnd .pk-streak div{font-size:12px;line-height:1.35}
+  #psEnd .pk-row{margin-top:8px;gap:6px}
+  #psEnd .pk-row .pk-btn{padding:8px 6px;font-size:12.5px}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:600px){
+  #psEnd .ps-card .ps-job{display:none}
+  #psEnd .ps-story p.clamp{-webkit-line-clamp:2}
+}
+/* the result window held sideways: two columns, so it fits with no scrolling */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  #psEnd .pk-modal{width:min(780px,calc(100vw - 24px));max-width:none;display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-content:start;padding:12px 16px 12px}
+  #psEnd .ps-endL,#psEnd .ps-endR{min-width:0}
+  #psEnd .ps-endR{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+  #psEnd .pk-kick{margin:0 0 2px}
+  #psEnd h2{font-size:20px;margin:0}
+  #psEnd .ps-stars{font-size:22px;margin:0 0 2px}
+  #psEnd .ps-facts{margin:4px 0 2px}
+  #psEnd .ps-facts div{padding:4px 2px}
+  #psEnd .ps-facts b{font-size:14px}
+  #psEnd .ps-card{margin:5px 0 0;padding:5px 8px}
+  #psEnd .ps-story{margin:6px 0 0;padding:7px 9px}
+  #psEnd .ps-story .ps-mug{width:42px;height:42px}
+  #psEnd .ps-story h3{font-size:16px}
+  #psEnd .ps-story p{font-size:12px;line-height:1.38}
+  #psEnd .ps-note{font-size:11px;margin:4px 0 0}
+  #psEnd .ps-endR .pk-streak{margin:0}
+  #psEnd .ps-endR .pk-row{margin:0;gap:8px}
+  #psEnd .ps-endR .pk-row .pk-btn{padding:9px 6px;font-size:12.5px}
+}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .ps-pad{grid-template-columns:1fr;gap:8px;justify-items:center}
+  .ps-right{width:100%;max-width:calc(100vw - 12px)}
+  .ps-ticket{padding:8px 10px 8px 12px}
+  .ps-ticket::before{left:5px;right:5px;top:5px;bottom:5px}
+  .ps-hole{display:none}
+  .ps-ticket .ps-kick{display:none}
+  .ps-ticket{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .ps-ticket>*{grid-column:1 / -1}
+  .ps-ticket h2{grid-column:1;grid-row:1;font-size:17px;padding-right:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ps-ticket .ps-foot{grid-column:2;grid-row:1;margin:0;gap:10px}
+  .ps-count{font-size:12px}
+  .ps-pot svg{width:22px;height:22px}
+  .ps-theme{display:none!important}
+  .ps-rules{display:none}
+  .ps-rule1{display:block}
+  .ps-ticket.some .ps-rule1{display:none}
+  .ps-list{margin-top:4px;padding-top:4px;gap:3px 6px}
+  .ps-list.plain{flex-wrap:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  .ps-tools{width:100%;padding:6px;gap:6px;grid-template-columns:1.8fr 1fr}
+  .ps-tools .pk-btn{padding:8px 8px;font-size:12.5px}
+  .ps-tools .pk-btn.gold{grid-column:auto}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .ps-toast{font-size:13px;padding:7px 11px}
+}
+.ps-pad.short .ps-rule1{display:none}
+.ps-pad.short .ps-list{display:none}
+.ps-pad.coach .ps-ticket{display:none}
+/* ---------- phones held sideways: the case fills the left; the ticket and buttons stand in a column at the right ---------- */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .ps-pad.land{grid-template-columns:auto;justify-items:center}
+  body.pk-land.seated .ps-pad.land .ps-right{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:8px;max-height:calc(100dvh - 16px);width:var(--pk-landR);max-width:none;gap:6px}
+  body.pk-land.seated.pk-coaching .ps-pad.land .ps-right{top:auto;bottom:8px}
+  body.pk-land.seated.pk-coaching .ps-pad.land .ps-list{display:none}
+  body.pk-land.seated .ps-pad.land .ps-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
+  body.pk-land.seated .ps-pad.land .ps-tools .pk-btn{padding:8px 6px;font-size:12.5px}
+  body.pk-land.seated .ps-pad.land .ps-tools .pk-btn.gold{grid-column:1 / -1}
+  body.pk-land.seated .ps-pad.land .ps-toast{top:2px;bottom:auto;transform:translateX(-50%)}
+}
+@media (min-width:1000px){ .ps-tools .pk-btn{grid-column:1 / -1} }
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1102b"></script>
+<script src="printshop-words.js?v=1102a"></script>
+<script id="psCore">
+/* ===== The Print Shop core (the jobs, the type-case maker, the grader, the day's pick): shared by the page and the tests =====
+   A type case holds one wooden letter block in every compartment. Every block belongs to exactly one of the day's words,
+   spelled along a path of touching blocks (side to side or corner to corner, no block used twice, no two paths crossing).
+   One word, the HEADLINE, names the day's theme and runs from the case's left side to its right side.
+   The grader scores how much searching a tray takes (see grade), and the maker tries layouts until the day's score lands in its band. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* ---------- the jobs (themes) ---------- */
+var JOBS_TXT="# The Print Shop: the jobs (themes). tier | title on the job ticket | HEADLINE (names the theme; runs side to side) | the words it may use\n# tier 1: Monday and Tuesday (plain titles, everyday words) · tier 2: Wednesday and Thursday · tier 3: Friday to Sunday (wordplay)\n1|Fresh from the Oven|BAKERY|bread rolls scone bagel muffin donut cookie crust dough flour pastry loaf\n1|In the Garden Shed|TOOLSHED|rake spade trowel shears hose pruner shovel bucket gloves twine seeds\n1|A Bowl of Fruit|FRUITS|apple pear plum grape peach lemon lime mango cherry melon kiwi banana\n1|A Day by the Sea|SEASIDE|sand shell wave towel bucket kite gull surf tide pier crab dune parasol starfish sunhat\n1|The Forecast|WEATHER|rain snow hail wind storm cloud sleet frost thunder mist drizzle\n1|Down on the Farm|BARNYARD|horse sheep goat goose duck lamb pony calf hens mule rooster\n1|The Paint Box|COLORS|blue green yellow orange purple violet pink black white brown gray indigo\n1|Pots and Pans|KITCHEN|stove sink oven kettle toaster spoon ladle whisk plate bowl fork knife\n1|Tuning Up|ORCHESTRA|violin cello flute oboe harp drum tuba horn piano viola bassoon\n1|Look Up|OVERHEAD|cloud moon star comet plane kite bird rainbow eagle balloon\n1|Good Morning|BREAKFAST|eggs toast bacon cereal juice coffee waffle pancake syrup butter oatmeal\n1|Good Dogs|KENNEL|beagle poodle boxer collie husky terrier spaniel corgi setter hound puppy\n1|Big Cats|BIGCATS|lion tiger puma lynx jaguar cougar leopard cheetah ocelot panther\n1|Birdsong|SONGBIRDS|robin wren finch sparrow lark thrush oriole warbler bluebird cardinal dove\n1|In the Woods|FOREST|maple birch pine cedar willow aspen spruce cherry walnut beech hickory\n1|Say It with Flowers|BOUQUET|rose tulip daisy lily iris orchid poppy aster peony violet pansy lilac\n1|Eat Your Greens|VEGGIES|carrot bean onion potato celery radish turnip squash pepper leek corn kale beet\n1|Game Day|SPORTS|tennis soccer golf hockey rugby boxing rowing skiing cricket bowling polo\n1|Under the Waves|SEALIFE|whale shark squid crab seal clam octopus dolphin starfish shrimp coral\n1|Head to Toe|ANATOMY|head hand foot knee elbow ankle wrist thumb nose chin heart lung\n1|Getting Dressed|WARDROBE|shirt skirt dress coat scarf jeans socks blouse jacket vest gown sweater\n1|Back to School|CLASSROOM|desk chalk ruler pencil eraser book paper globe crayon teacher lesson\n1|Under Canvas|CAMPSITE|tent lantern canoe trail compass hammock cooler logs cabin flashlight\n1|Save Room for It|DESSERTS|cake tart fudge sundae pudding cookie brownie custard mousse sorbet\n1|Say Cheese|CHEESES|brie gouda cheddar feta swiss edam ricotta gruyere colby parmesan\n1|Our Neighbors|PLANETS|mars venus earth saturn jupiter uranus neptune mercury\n1|Get in Shape|SHAPES|circle square oval cube cone star heart diamond triangle sphere oblong arrow\n1|The Jewelry Box|JEWELRY|ring pearl locket brooch bangle chain charm anklet earring tiara cameo\n1|Take a Seat|FURNITURE|chair table sofa couch desk stool bench dresser cabinet ottoman bookcase\n1|Creepy Crawlies|INSECTS|beetle moth wasp cricket ladybug firefly hornet termite flea gnat aphid\n1|Handy to Have|TOOLBOX|hammer drill wrench pliers chisel level clamp file nail screw ruler\n1|A Pinch of This|SPICERACK|salt pepper cumin basil thyme sage clove ginger nutmeg paprika mint oregano\n1|Use Your Noodle|NOODLES|penne ziti orzo fusilli rigatoni lasagna macaroni linguine ravioli rotini\n1|Pocket Change|CURRENCY|dollar penny dime nickel quarter euro pound peso franc rupee\n1|Once upon a Time|FAIRYTALE|castle dragon wizard witch giant prince queen king knight gnome troll\n1|Bundle Up|WINTERTIME|snow sled skate scarf mitten icicle frost blizzard igloo cocoa\n1|School's Out|SUMMERTIME|picnic swim beach pool lemonade sandals shorts heat shades camp\n1|Falling Leaves|AUTUMN|leaves acorn pumpkin harvest apple cider hayride sweater squash maple\n1|April Showers|SPRINGTIME|tulip blossom rain nest robin bloom lamb puddle daffodil sprout\n1|Under the Big Top|CIRCUS|clown acrobat juggler lion tiger trapeze elephant tent popcorn magician\n1|In the Playroom|TOYCHEST|doll ball kite yoyo blocks puzzle teddy marbles robot train wagon\n1|Under the Hood|MOTORCAR|wheel tire engine brake horn mirror trunk seat clutch bumper wiper\n1|Getting Around|TRANSPORT|train plane boat ferry taxi bicycle subway tram truck yacht rocket\n1|Precious Stones|GEMSTONES|ruby opal jade topaz pearl amber garnet emerald diamond sapphire quartz\n1|How Do You Feel|FEELINGS|happy angry calm fear hope worry proud bored eager glad brave\n1|Splish Splash|BATHROOM|soap towel sink bath shower mirror comb brush razor sponge faucet\n1|Nine to Five|OFFICE|stapler paper clip pens folder tape envelope marker desk printer binder\n1|Shall We Dance|DANCES|waltz tango salsa polka rumba samba swing disco ballet foxtrot jive\n1|Deal Me In|CARDGAMES|poker bridge rummy hearts spades euchre canasta pinochle cribbage snap\n1|Out on the Grass|PICNIC|sandwich apple blanket lemonade cookies chips grapes napkin cheese ants\n1|A Day at the Zoo|ZOOKEEPER|zebra lion tiger panda giraffe hippo rhino monkey camel gorilla otter\n1|After Dark|NIGHTTIME|moon stars dream pajamas sleep lamp candle firefly dark owls\n1|Stay Indoors|RAINYDAY|umbrella puddle boots slicker cloud drizzle thunder poncho drops gutter\n1|The High Country|MOUNTAIN|peak cliff ridge summit glacier valley slope canyon rock snow boulder trail\n1|Your Move|CHESSBOARD|king queen rook bishop knight pawn check castle gambit\n1|Hats Off|HATBOX|beret fedora bowler beanie bonnet helmet turban sombrero derby visor\n1|Best Foot Forward|FOOTWEAR|boots sandal loafer slipper sneaker clog pump heels oxford flats moccasin\n1|Furry Friends|HOUSEPETS|puppy kitten hamster parrot goldfish rabbit turtle gerbil ferret canary\n1|Extra Toppings|PIZZERIA|cheese olive onion pepper sausage bacon mushroom basil tomato anchovy\n1|Two Scoops|ICECREAM|vanilla mint coffee cherry peach mango caramel lemon maple fudge\n1|Room by Room|FLOORPLAN|kitchen attic cellar parlor hallway pantry garage porch study bedroom foyer\n1|What's Cooking|COOKING|bake boil roast grill stew steam saute whisk chop slice simmer\n1|Yo Ho Ho|PIRATESHIP|anchor parrot treasure cannon plank flag mast sail chest captain sword island\n1|Blast Off|OUTERSPACE|rocket comet star galaxy orbit nebula planet asteroid meteor alien\n1|Long Ago|MEDIEVAL|knight armor sword shield lance moat castle tower dragon squire banner\n1|Saddle Up|WILDWEST|cowboy horse saddle lasso ranch cactus sheriff wagon spurs boots rodeo canyon\n1|Wash Day|LAUNDRY|socks soap washer dryer iron bleach hamper basket starch lint towels\n1|Curtain Up|THEATER|stage curtain actor script usher ticket scene lights encore drama props\n1|Pins and Needles|SEWING|needle thread button thimble pins zipper fabric pattern yarn scissors stitch\n1|Count Them Up|NUMBERS|three four five seven eight nine eleven twelve twenty fifty\n2|The Composing Room|PRINTSHOP|press type font serif proof paper platen roller chase quoin leading kerning\n2|A Night at the Opera|OPERAHOUSE|aria tenor diva soprano libretto encore chorus overture duet baritone curtain\n2|Whodunit|MYSTERY|clue alibi motive sleuth suspect culprit butler riddle hunch verdict\n2|Daily Bread|BREADBASKET|sourdough bagel baguette brioche ciabatta focaccia pita naan challah biscuit\n2|Connect the Dots|STARGAZING|orion lyra draco cygnus aquila perseus pegasus hydra cetus lupus\n2|Gone Fishing|TACKLEBOX|reel hook bait lure line float sinker bobber waders rod\n2|Anchors Aweigh|SAILING|mast boom keel helm anchor rudder hull deck cleat buoy tiller sails rigging halyard porthole compass\n2|The Periodic Table|ELEMENTS|iron gold neon lead zinc carbon helium oxygen copper silver argon sodium\n2|Feeling Blue|SHADESOFBLUE|navy azure cobalt teal cyan indigo sapphire denim royal\n2|Seeing Red|SHADESOFRED|crimson ruby cherry brick maroon coral rust wine cardinal burgundy\n2|It's All Greek|GREEKLETTERS|alpha beta gamma delta theta omega sigma kappa lambda iota zeta\n2|Straight from the Horse|EQUESTRIAN|mare foal colt filly pony stallion bridle saddle stirrup hoof mane gallop\n2|A Fresh Pot|COFFEEHOUSE|latte mocha espresso decaf roast beans cream sugar barista brew grinder\n2|Tea for Two|TEATIME|kettle teapot scone saucer sugar lemon honey biscuit oolong chai brew\n2|Angles and Curves|GEOMETRY|angle radius chord vertex prism cube cone sphere degree circle tangent polygon\n2|Rolling Along|RIVERS|nile amazon danube volga thames seine yukon ohio rhine hudson congo tigris\n2|Seats of Power|CAPITALS|paris rome oslo cairo lima tokyo berlin madrid ottawa dublin athens vienna\n2|On Mount Olympus|GREEKGODS|zeus hera apollo athena ares hermes poseidon hades artemis demeter\n2|To Be or Not|SHAKESPEARE|hamlet romeo juliet othello macbeth lear puck portia iago ophelia\n2|Old Masters|PAINTERS|monet manet degas renoir goya dali vermeer titian matisse picasso\n2|Sheet Music|COMPOSERS|bach mozart chopin handel haydn liszt brahms verdi elgar ravel vivaldi wagner\n2|Hush, Please|LIBRARY|book shelf atlas novel index stacks reader study loan catalog\n2|Take Me Out|BALLPARK|pitcher batter inning glove dugout bunt homer umpire catcher bullpen\n2|Friday Night Lights|GRIDIRON|huddle punt tackle helmet fumble blitz safety snap kickoff\n2|Nothing but Net|BASKETBALL|hoop dunk dribble rebound guard forward center layup assist foul\n2|On the Green|FAIRWAY|putt birdie bogey eagle caddie iron wedge driver bunker hole links\n2|Love All|CENTERCOURT|serve volley deuce racket rally smash love match fault\n2|Catch of the Day|FISHMONGER|salmon trout tuna halibut bass perch sole carp pike herring sardine\n2|Birds of Prey|RAPTORS|eagle hawk falcon kestrel osprey condor vulture harrier kite buzzard\n2|Solid as a Rock|GEOLOGY|granite marble basalt slate quartz shale flint mica chalk pumice gypsum\n2|By the Yard|MEASURES|inch foot yard mile ounce pound gallon quart pint liter meter acre kilogram teaspoon fathom furlong bushel hectare\n2|Turn the Page|CALENDAR|january february march april june july august october november december\n2|A Little Off the Top|HAIRSALON|braid bangs curls perm pixie updo ponytail mohawk fringe mullet shag\n2|The Sweet Shop|PATISSERIE|eclair crepe tart beignet strudel danish cannoli baklava turnover macaron\n2|Lay of the Land|LANDFORMS|mesa butte delta canyon valley plateau fjord cliff dune basin gorge lagoon\n2|Read the Notes|SHEETMUSIC|note rest clef tempo chord scale sharp flat staff octave forte measure\n2|Verse and Rhyme|POETRY|verse rhyme meter stanza sonnet haiku limerick ballad couplet lyric elegy\n2|By Royal Command|THRONEROOM|king queen prince duke duchess earl baron crown scepter jester herald squire\n2|Something Borrowed|WEDDING|bride groom veil ring cake vows toast bouquet usher aisle gown altar\n2|Make a Wish|CELEBRATION|cake candles balloon gifts confetti cupcake streamer party wish\n2|All Aboard|RAILROAD|caboose track station whistle ticket depot boxcar rails coal steam signal tunnel\n2|Now Boarding|AIRPORT|gate pilot runway luggage terminal tower hangar passport cockpit wing flight\n2|Hot and Dry|DESERT|sand dune cactus camel oasis mirage lizard scorpion heat palm caravan\n2|Deep in the Rain Forest|JUNGLE|vine parrot monkey toucan python canopy fern orchid sloth gorilla leopard banana\n2|Far North|ARCTIC|polar walrus seal igloo glacier iceberg tundra caribou narwhal husky floe\n2|A Tough Nut|NUTCRACKER|almond pecan walnut cashew peanut hazelnut acorn chestnut\n2|Squeeze of Sunshine|CITRUS|lemon lime orange pomelo kumquat yuzu citron mandarin satsuma bergamot\n2|Toss It Together|SALADBAR|lettuce tomato cucumber radish crouton dressing olive spinach arugula feta celery\n2|Return to Sender|MAILROOM|stamp letter parcel postcard envelope mailbox carrier route postage package address\n2|Tick Tock|TIMEPIECE|second minute hour dial chime alarm pendulum gear spring tick tock hands\n2|Now You See It|MAGICIAN|wand rabbit cape cards trick illusion curtain dove mirror coins scarf\n2|Trick or Treat|HALLOWEEN|ghost witch pumpkin candy costume broom spider skeleton cauldron mask goblin lantern\n2|Pass the Gravy|THANKSGIVING|turkey gravy stuffing yams corn feast pilgrim harvest squash rolls pecan\n2|Deck the Halls|CHRISTMAS|tree star wreath holly tinsel sleigh reindeer stocking carol gifts angel bells\n2|Be Mine|VALENTINE|heart roses cupid arrow candy card kiss love lace cherub poem\n2|Finding the Way|CARTOGRAPHY|compass legend scale north south east west border latitude equator globe meridian\n2|On Your Toes|BALLET|tutu pointe barre leotard slipper swan tights recital curtsy stage\n2|Hit the Trail|TRAILHEAD|boots backpack summit canteen blaze ridge lookout poles cairn trek path\n2|Busy as a Bee|BEEHIVE|honey queen drone worker comb pollen nectar buzz swarm sting keeper clover\n2|Read All About It|NEWSPAPER|editor column edition masthead byline comics sports weather reporter deadline scoop\n2|Snow Sports|WINTERGAMES|skiing skating curling luge bobsled biathlon hockey slalom jump\n2|Perfect Pairs|MATCHMAKER|salt pepper bread butter needle thread knife fork cups saucer peanut jelly\n2|The Printer's Tongue|TYPOGRAPHY|serif kern glyph font italic bold ligature ascender leading point pica caps swash\n3|Unlock It|KEYHOLDERS|piano lock door organ diary laptop locket florida answer chest\n3|Have a Ball|ONTHEBALL|foot base basket snow hand meat soft volley dodge fire moth gum\n3|Give Me a Ring|RINGBEARERS|saturn tree circus phone boxing bell wedding onion olympic doorbell\n3|Say Cheese, Again|TOOTHSOME|comb zipper gear shark rake lion dragon piranha cogwheel\n3|Lend a Hand|ALLHANDSONDECK|clock watch poker farm stage second short back free under\n3|Off and Running|ONTHERUN|nose river faucet engine clock fence road paint\n3|Make a Deposit|BANKABLE|river piggy blood snow cloud food data memory seed world central outer savings left west\n3|Out of Your Shell|SHELLGAME|eggs turtle snail taco clam crab oyster walnut peanut lobster coconut\n3|Where the Wild Things Hide|HIDDENZOO|catalog scowl pigment beard towel batch carpet planet shrewd spigot\n3|Crack Up|CRACKSHOT|code joke smile safe whip case window eggs nuts knuckle lobster\n3|Take Flight|WINGSPAN|plane bird angel hospital fairy moth dragon maple stage eagle\n3|Sharp Ones|PINCUSHION|pine compass cactus hedgehog syringe record knitting haystack spruce\n3|Turn Over|NEWLEAF|tree book table lettuce clover cabbage fern maple basil spinach\n3|Piece of Cake|CAKEWALK|cheese sponge fruit short carrot pound coffee layer wedding angel crab rice\n3|Pop Quiz|POPCULTURE|corn bubble balloon cork question ears weasel toaster music soda\n3|Weigh In|TIPTHESCALES|fish piano dragon snake kitchen justice music lizard bathroom pinecone\n3|Inside Job|BODYOFWORK|earnest elegant handsome pharmacy chipmunk flipper whiplash kneel armada harmony shipment scalpel bribe lipid\n3|Shuffle Up|FULLDECK|king queen jack joker spade heart diamond club suit trump deuce\n3|Look Sharp|RAZORSHARP|knife tack cheddar mind note pencil needle thorn blade dresser eagle\n3|Heads or Tails|TAILSPIN|comet kite coin tuxedo monkey horse pony peacock lizard beaver\n3|Keep an Eye Out|EYEWITNESS|needle potato storm camera peacock spider hawk bull\n3|Face Value|ABOUTFACE|clock watch cliff dice cube card poker mountain moon sundial\n3|Neck and Neck|BOTTLENECK|guitar giraffe violin swan turtle shirt vase flask banjo cello goose\n3|Quick on the Draw|DRAWINGROOM|water curtain bath breath sword card blank line straws crowd lots bridge\n3|No Strings Attached|STRINGQUARTET|violin kite puppet yoyo harp guitar racket apron banjo cello balloon lute\n3|Good as Gold|GOLDENAGE|rule gate goose ratio years oldie ticket fleece eagle hour silence\n3|Think Big|BIGPICTURE|apple dipper foot wheel bang shot deal cheese league\n3|Some Like It Hot|HOTTOPICS|potato cake shot sauce spring seat cocoa pepper wings fudge\n3|Going Green|GREENTHUMB|house bean light card back room horn grocer apple peas onion\n3|Something Fishy|FISHBOWL|star sword jelly gold sail cuttle blow monk angel lion parrot cray\n3|Lights Up|LIGHTHOUSE|moon star flash spot head candle lime high torch flood night street search porch traffic stage\n3|Set Sail|SHIPSHAPE|friend battle leader space flag hard owner scholar court\n3|All Aboard, Again|BOARDROOM|card black skate surf snow clip dash bill chalk side\n3|Set in Stone|STONEMASON|mile corner tomb lime sand moon birth cobble hail flag grind\n3|Hard at It|WORKSHOP|home house clock fire team frame needle wood paper guess foot brick\n3|Man of the Hour|MANOFLETTERS|snow fire mail post chair sand door gentle cave sales handy milk\n3|Saved by the Bell|BELLRINGER|blue door dumb jingle sleigh church school liberty wedding dinner\n3|Paper Trail|PAPERWEIGHT|news wall sand tissue term white scratch graph rice tracing crepe\n3|Think Outside|BOXOFFICE|sand mail tool lunch shoe soap match chatter pill music juke letter\n3|Open House|HOUSEWARMING|light green ware court club farm fire play tree opera boat bird\n3|Two of a Kind|PERFECTMATCH|salt pepper bread butter needle thread knife fork lock rock roll\n3|Both Ways|PALINDROMES|level radar civic kayak refer rotor madam racecar noon tenet stats solos redder\n3|Here Comes the Sun|SUNNYSIDEUP|flower burn dial rise glasses shine screen spot beam deck roof\n3|On the Fly|FLYPAPER|butter fire dragon horse house fruit black green stone shoo\n3|Star Turn|STARSTRUCK|rock super lode movie north evening morning gold lucky rising\n3|A Bit Corny|CORNUCOPIA|popcorn unicorn acorn corner cornea cornet scorn corny cornrow\n3|Ant Farm|ANTFARM|giant elephant plant pants antler antique phantom infant chant vacant\n3|Copycats|CATSCRADLE|catalog vacation scatter location educate delicate category catnap catch cattle\n3|Night Owls|WISEOLDOWL|bowl howl growl towel bowling prowler scowl jowl fowl lowly\n3|Let's Roll|ROLLERCOASTER|dice thunder credits eyes sushi drum wheel ball barrel dough spring\n3|Spin Cycle|SPINDOCTOR|wheel globe yarn record dryer planet dancer spider pinwheel skater tornado\n3|Meltdown|MELTINGPOT|butter snow cheese candle heart icicle glacier fondue crayon caramel\n3|Push My Buttons|BUTTONHOLE|shirt coat remote elevator phone jacket cardigan doorbell belly blazer\n3|Hole in One|HOLEPUNCH|donut bagel golf sieve flute sponge colander needle socks swiss button whistle\n3|Earn Your Stripes|PINSTRIPES|zebra tiger flag candy barber sergeant skunk referee tabby awning\n3|Spot On|POLKADOTS|leopard dice ladybug cheetah giraffe fawn dominoes trout jaguar hyena\n3|Toe the Line|BOTTOMLINE|head dead life clothes coast guide punch hair shore waist neck\n3|True Blue|BLUERIBBON|ocean jeans whale moon cheese grass print blood berry bird bell\n3|Every Cloud|SILVERLINING|screen spoon medal ware fish smith bells birch dollar jubilee\n3|Sugar Coated|SWEETNESS|sixteen tooth heart potato dreams talk corn spot bread basil\n3|Give Me a Break|BREAKTHROUGH|news bread record heart dawn promise bank fast silence rules ground even habit\n3|Catch Phrase|CATCHOFTHEDAY|cold fish breath ball train wave fire drift rays flight bouquet\n3|Throw Down|STONESTHROW|party ball shade pitch punch curve dice towel tantrum darts javelin discus\n3|Keep It Up|KEEPSAKE|secret promise time score peace calm cool diary faith count watch quiet pace\n";
+function parseJobs(txt){
+  var out=[];
+  txt.split("\n").forEach(function(line){ line=line.trim(); if(!line||line.charAt(0)==="#") return;
+    var p=line.split("|"); if(p.length<4) return;
+    var words=p[3].trim().split(/\s+/).map(function(w){ return w.toUpperCase(); }).filter(function(w){ return /^[A-Z]{4,8}$/.test(w); });
+    out.push({id:out.length,tier:+p[0],title:p[1].trim(),head:p[2].trim().toUpperCase(),words:words}); });
+  return out;
+}
+var JOBS=parseJobs(JOBS_TXT);
+
+/* ---------- the week ----------
+   R x C: the case (rows x columns) · tier: which jobs it draws from · nw: how many words, counting the headline ·
+   twist: how readily a word turns a corner (0 = runs straight, 1 = winds) · diag: how readily it steps corner to corner ·
+   vert: how often a long headline runs top to bottom instead · rev: how often it starts at the far side (right or bottom) ·
+   many: prefer more, shorter words · slots: the job ticket shows each word's length ·
+   score: the band the day's grade must land in (set Nov 2 from a year of days, tools/printshop/check-year.js). */
+var WEEK={
+  1:{R:6,C:5,tier:1,nw:[4,6],twist:.05,diag:.25,vert:0,slots:true,score:[22,30],label:"Monday"},
+  2:{R:6,C:6,tier:1,nw:[5,7],twist:.25,diag:.45,vert:0,slots:true,score:[29,37],label:"Tuesday"},
+  3:{R:7,C:6,tier:2,nw:[6,8],twist:.45,diag:.6,vert:0,score:[40,52],label:"Wednesday"},
+  4:{R:8,C:6,tier:2,nw:[7,9],twist:.6,diag:.75,vert:0,score:[55,70],label:"Thursday"},
+  5:{R:8,C:6,tier:3,nw:[7,10],twist:.7,diag:.85,vert:.15,score:[72,88],label:"Friday"},
+  6:{R:8,C:6,tier:3,nw:[7,10],many:true,twist:.85,diag:1,vert:.25,rev:.3,score:[86,98],label:"Saturday"},
+  0:{R:8,C:6,tier:3,nw:[7,11],many:true,twist:1,diag:1,vert:.35,rev:.55,score:[98,130],label:"Sunday"}
+};
+
+/* ---------- the dictionary (for extra words and the grader's look-alikes) ---------- */
+var TRIE=null, DICT=null;
+function dict(){
+  if(DICT) return DICT;
+  var src=root.PSWORDS||""; DICT=new Set(); TRIE={};
+  src.split(" ").forEach(function(w){ if(!w) return; w=w.toUpperCase(); DICT.add(w); var n=TRIE; for(var i=0;i<w.length;i++){ var c=w.charAt(i); n=n[c]||(n[c]={}); } n.$=1; });
+  return DICT;
+}
+
+/* ---------- the case's geometry ---------- */
+function nbrs(R,C){ var N=[]; for(var i=0;i<R*C;i++){ var r=(i/C)|0, c=i%C, o=[];
+    for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; var y=r+dr, x=c+dc; if(y>=0&&x>=0&&y<R&&x<C) o.push(y*C+x); } N.push(o); }
+  return N; }
+function adj(a,b,C){ var ra=(a/C)|0, rb=(b/C)|0; return a!==b&&Math.abs(ra-rb)<=1&&Math.abs(a%C-b%C)<=1; }
+
+/* ---------- laying out a tray ----------
+   own[i]: which word owns block i (-1 empty) · link: "a,b" for every step taken, so corner steps never cross another step */
+function Layout(R,C){ this.R=R; this.C=C; this.N=nbrs(R,C); this.own=new Array(R*C).fill(-1); this.link={}; this.budget=0; }
+Layout.prototype.crosses=function(a,b){
+  var C=this.C, ra=(a/C)|0, ca=a%C, rb=(b/C)|0, cb=b%C; if(ra===rb||ca===cb) return false;
+  var x=ra*C+cb, y=rb*C+ca; return !!this.link[x+","+y];
+};
+Layout.prototype.mark=function(path,on){ for(var k=0;k+1<path.length;k++){ var a=path[k], b=path[k+1];
+  if(on){ this.link[a+","+b]=1; this.link[b+","+a]=1; } else { delete this.link[a+","+b]; delete this.link[b+","+a]; } } };
+/* a random path of L empty blocks from `start`; `goal(i,k,L)` (optional) says whether block i may be the k-th; returns up to `want` paths */
+Layout.prototype.paths=function(start,L,spec,r,want,goal){
+  var me=this, out=[], path=[start], used={}; used[start]=1;
+  function dirOf(a,b){ var C=me.C; return (((b/C)|0)-((a/C)|0))+","+((b%C)-(a%C)); }
+  (function go(){
+    if(out.length>=want||me.budget<=0) return;
+    me.budget--;
+    if(path.length===L){ out.push(path.slice()); return; }
+    var a=path[path.length-1], prev=path.length>1?dirOf(path[path.length-2],a):null, cand=[];
+    me.N[a].forEach(function(b){ if(me.own[b]>=0||used[b]) return; if(goal&&!goal(b,path.length,L)) return; if(me.crosses(a,b)) return;
+      /* no crossing its own earlier steps either */
+      var C=me.C, ra=(a/C)|0, ca=a%C, rb=(b/C)|0, cb=b%C;
+      if(ra!==rb&&ca!==cb){ var x=ra*C+cb, y=rb*C+ca, ix=path.indexOf(x), iy=path.indexOf(y); if(ix>=0&&iy>=0&&Math.abs(ix-iy)===1) return; }
+      var d=dirOf(a,b), diagStep=ra!==rb&&ca!==cb, w=(diagStep?spec.diag:1);
+      w*=prev===null?1:(d===prev?1+(1-spec.twist)*5:1+spec.twist*2.2);
+      cand.push([b,w*(.35+r())]); });
+    cand.sort(function(x,y){ return y[1]-x[1]; });
+    for(var q=0;q<cand.length;q++){ var b=cand[q][0]; path.push(b); used[b]=1; go(); path.pop(); delete used[b]; if(out.length>=want||me.budget<=0) return; }
+  })();
+  return out;
+};
+/* can the empty blocks still be shared out among the words left? (each patch of touching empty blocks must take whole words) */
+Layout.prototype.feasible=function(lens){
+  var R=this.R, C=this.C, seen={}, comps=[], i;
+  for(i=0;i<R*C;i++) if(this.own[i]<0&&!seen[i]){ var st=[i], n=0; seen[i]=1;
+    while(st.length){ var x=st.pop(); n++; this.N[x].forEach(function(y){ if(this.own[y]<0&&!seen[y]){ seen[y]=1; st.push(y); } },this); }
+    comps.push(n); }
+  if(!comps.length) return !lens.length;
+  var tot=lens.reduce(function(a,b){ return a+b; },0), sum=comps.reduce(function(a,b){ return a+b; },0); if(tot!==sum) return false;
+  if(comps.some(function(c){ return c<4; })) return false;
+  if(comps.length===1) return true;
+  var L=lens.slice().sort(function(a,b){ return b-a; }), cap=comps.slice();
+  return (function go(k){ if(k===L.length) return cap.every(function(c){ return c===0; });
+    var tried={}; for(var j=0;j<cap.length;j++){ if(cap[j]<L[k]||tried[cap[j]]) continue; tried[cap[j]]=1; cap[j]-=L[k]; if(go(k+1)) return true; cap[j]+=L[k]; } return false; })(0);
+};
+function layoutTray(spec,words,head,r,opt){
+  var R=spec.R, C=spec.C, T=new Layout(R,C), paths=[], i;
+  T.budget=opt&&opt.budget||6000;
+  /* the headline: left side to right side (or, now and then for a long one, top to bottom) */
+  var vert=head.length>=R&&r()<spec.vert, L=head.length;
+  var starts=[]; for(i=0;i<(vert?C:R);i++) starts.push(vert?i:i*C); shuffle(starts,r);
+  var hp=null;
+  for(var s=0;s<starts.length&&!hp;s++){
+    var goal=vert?function(b,k,L){ var row=(b/C)|0; return (R-1-row)<=L-1-k&&(k<L-1||row===R-1); }
+                 :function(b,k,L){ var col=b%C; return (C-1-col)<=L-1-k&&(k<L-1||col===C-1); };
+    var got=T.paths(starts[s],L,spec,r,4,goal);
+    for(var g=0;g<got.length&&!hp;g++){ var p=got[g]; p.forEach(function(x){ T.own[x]=0; }); T.mark(p,true);
+      if(T.feasible(words.map(function(w){ return w.length; }))) hp=p; else { p.forEach(function(x){ T.own[x]=-1; }); T.mark(p,false); } }
+  }
+  if(!hp) return null;
+  var rev=r()<(spec.rev||0); if(rev) hp=hp.slice().reverse();
+  paths[0]=hp;
+  /* the rest: always fill the tightest corner first (the empty block with the fewest empty neighbors) */
+  var left=words.map(function(w,k){ return k; });
+  var ok=(function place(){
+    if(!left.length) return true;
+    if(T.budget<=0) return false;
+    var best=-1, bn=99, ties=[];
+    for(var i=0;i<R*C;i++) if(T.own[i]<0){ var n=0; T.N[i].forEach(function(y){ if(T.own[y]<0) n++; }); if(n<bn){ bn=n; ties=[i]; } else if(n===bn) ties.push(i); }
+    if(best<0) best=ties[Math.floor(r()*ties.length)];
+    if(bn===0) return false;
+    var order=shuffle(left.slice(),r);
+    for(var q=0;q<order.length;q++){ var k=order[q], w=words[k];
+      var got=T.paths(best,w.length,spec,r,3);
+      for(var g=0;g<got.length;g++){ var p=got[g]; if(r()<.5) p=p.slice().reverse();   /* the word may start or end in the corner */
+        p.forEach(function(x){ T.own[x]=k+1; }); T.mark(p,true); left.splice(left.indexOf(k),1);
+        if(T.feasible(left.map(function(j){ return words[j].length; }))&&place()){ paths[k+1]=p; return true; }
+        left.push(k); p.forEach(function(x){ T.own[x]=-1; }); T.mark(p,false); }
+    }
+    return false;
+  })();
+  if(!ok) return null;
+  var all=[head].concat(words), letters=new Array(R*C).fill("");
+  paths.forEach(function(p,k){ p.forEach(function(x,j){ letters[x]=all[k].charAt(j); }); });
+  return {R:R,C:C,words:all,paths:paths,letters:letters,vert:vert,rev:rev};
+}
+
+/* ---------- the grader ----------
+   An estimate of the searching a tray takes, word by word:
+   each word costs 1, plus .3 a letter; each turn in its path 1.1; each corner-to-corner step .35;
+   each false start (another touching pair of blocks with its first two letters) .3.
+   The headline counts 1.3 times (it's long and has to be seen whole), plus 3 when it starts at the right side (or the bottom). Then the job's tier (how sideways the theme is):
+   tier 2 adds .8 a word, tier 3 adds 2 a word. And look-alikes: each real word of 6+ letters that can be traced in the
+   tray but isn't one of the day's adds .04 (counted up to 400), since each one is a trail that leads nowhere. */
+function walk(P,k){ var p=P.paths[k], C=P.C, turns=0, diag=0, prev=null;
+  for(var j=0;j+1<p.length;j++){ var a=p[j], b=p[j+1], d=(((b/C)|0)-((a/C)|0))+","+((b%C)-(a%C)); if(((b/C)|0)!==((a/C)|0)&&b%C!==a%C) diag++; if(prev&&d!==prev) turns++; prev=d; }
+  return {turns:turns,diag:diag}; }
+function lookalikes(P,cap){
+  dict(); if(!TRIE) return 0;
+  var R=P.R, C=P.C, N=nbrs(R,C), L=P.letters, found={}, theme={}, n=0; P.words.forEach(function(w){ theme[w]=1; });
+  var used=new Uint8Array(R*C);
+  function go(i,node,s){ if(n>=cap) return; var ch=L[i], nx=node[ch]; if(!nx) return; s+=ch; if(nx.$&&s.length>=6&&!theme[s]&&!found[s]){ found[s]=1; n++; }
+    if(s.length>=8) return; used[i]=1; for(var q=0;q<N[i].length;q++){ var j=N[i][q]; if(!used[j]) go(j,nx,s); } used[i]=0; }
+  for(var i=0;i<R*C;i++) go(i,TRIE,"");
+  return n;
+}
+function grade(P,tier){
+  var C=P.C, N=nbrs(P.R,C), score=0, parts=[];
+  for(var k=0;k<P.words.length;k++){ var w=P.words[k], m=walk(P,k), fs=0, a=w.charAt(0), b=w.charAt(1);
+    for(var i=0;i<P.letters.length;i++) if(P.letters[i]===a) N[i].forEach(function(j){ if(P.letters[j]===b&&!(P.paths[k][0]===i&&P.paths[k][1]===j)) fs++; });
+    var s=1+.3*w.length+1.1*m.turns+.35*m.diag+.3*fs; if(k===0) s=s*1.3+(P.rev?3:0);
+    score+=s; parts.push({w:w,turns:m.turns,diag:m.diag,fs:fs,s:+s.toFixed(2)}); }
+  var tw=tier===3?2:tier===2?.8:0; score+=tw*P.words.length;
+  var la=lookalikes(P,400); score+=.04*la;
+  return {score:+score.toFixed(2),parts:parts,look:la};
+}
+
+/* ---------- choosing the words ---------- */
+function pickWords(job,spec,r){
+  var target=spec.R*spec.C-job.head.length, pool=shuffle(job.words.filter(function(w){ return w!==job.head&&job.head.indexOf(w)<0; }),r), out=null;
+  var lo=spec.nw[0]-1, hi=spec.nw[1]-1;
+  var found=[], want=spec.many?40:1;
+  (function go(i,sum,pick){ if(found.length>=want) return; if(sum===target&&pick.length>=lo&&pick.length<=hi){ found.push(pick.slice()); return; }
+    if(sum>=target||pick.length>=hi||i>=pool.length) return;
+    pick.push(pool[i]); go(i+1,sum+pool[i].length,pick); pick.pop(); go(i+1,sum,pick); })(0,0,[]);
+  if(!found.length) return null;
+  found.sort(function(a,b){ return b.length-a.length; });
+  return found[0];
+}
+/* a tray for a job and a week-day spec: tries layouts until the grade lands in the day's band (keeps the nearest otherwise) */
+function make(seed,job,spec,opt){
+  opt=opt||{}; var r=rng(seed), best=null, tries=opt.tries||(spec.score&&spec.score[0]>=90?90:60);
+  for(var t=0;t<tries;t++){
+    var words=pickWords(job,spec,r); if(!words) return null;
+    words.sort(function(a,b){ return b.length-a.length; });
+    var P=null; for(var a=0;a<6&&!P;a++) P=layoutTray(spec,words,job.head,r);
+    if(!P) continue;
+    var g=grade(P,job.tier); P.score=g.score; P.look=g.look; P.job=job.id; P.title=job.title; P.tier=job.tier; P.tries=t+1;
+    if(!spec.score||g.score>=spec.score[0]&&g.score<=spec.score[1]) return P;
+    var d=g.score<spec.score[0]?spec.score[0]-g.score:g.score-spec.score[1];
+    if(!best||d<best.d){ P.d=d; best=P; }
+  }
+  if(best) best.off=true;
+  return best;
+}
+
+/* ---------- the day's job ----------
+   Monday and Tuesday share the tier-1 jobs, Wednesday and Thursday the tier-2, Friday to Sunday the tier-3.
+   Each tier's jobs are dealt in a fixed shuffled order, a week at a time, so a job comes back only after the whole tier. */
+function daysFrom(key){ var p=key.split("-").map(Number); return Math.round((Date.UTC(p[0],p[1]-1,p[2])-Date.UTC(2026,9,5))/864e5); }   /* Oct 5, 2026 was a Monday */
+var ORDER={};
+function order(t){ if(ORDER[t]) return ORDER[t]; return ORDER[t]=shuffle(JOBS.filter(function(j){ return j.tier===t; }),rng("ps:order:"+t)); }
+function jobFor(key,wd){
+  var d=daysFrom(key), week=Math.floor(d/7), spec=WEEK[wd], list=order(spec.tier);
+  var slot=spec.tier===1?week*2+(wd===1?0:1):spec.tier===2?week*2+(wd===3?0:1):week*3+(wd===5?0:wd===6?1:2);
+  return list[((slot%list.length)+list.length)%list.length];
+}
+function forDay(key,wd){ var job=jobFor(key,wd), P=make("ps:"+key,job,WEEK[wd]); if(P) P.key=key; return P; }
+
+function dictHas(w){ return dict().has(w); }
+root.PS={rng:rng,shuffle:shuffle,JOBS:JOBS,WEEK:WEEK,dict:dict,dictHas:dictHas,nbrs:nbrs,adj:adj,layoutTray:layoutTray,grade:grade,lookalikes:lookalikes,pickWords:pickWords,make:make,jobFor:jobFor,forDay:forDay,daysFrom:daysFrom};
+})(typeof window!=="undefined"?window:globalThis);
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FEEL=["Hardest","Gentle","Easy","Steady","Moderate","Tricky","Hard"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase(); }
+function nice(w){ return w.charAt(0)+w.slice(1).toLowerCase(); }
+
+/* ---------- the drawing: sizes in drawing units ----------
+   The case's top (frame, dividers and compartment floors) is drawn flat on a plane, S units a compartment, and tilted
+   toward you by squashing it top to bottom (K). Its front face and shadow hang below. The blocks stand up in screen space,
+   drawn back to front: each a maple cube showing its top and a sliver of its front. */
+var S=100, FS=34, FT=62, FB=40, K=.74, TOPM=4, TH=28, SHD=18, BH=15, GAP=7;
+var P=null, W=0, VH=0;
+function PLANE(){ return "matrix(1 0 0 "+K+" 0 "+TOPM+")"; }
+function cx(i){ return FS+(i%P.C+.5)*S; }
+function cy(i){ return TOPM+(FT+(((i/P.C)|0)+.5)*S)*K; }
+
+/* ---------- the stage ---------- */
+var stage=mk("div","ps-pad");
+var POT='<svg viewBox="0 0 26 26" aria-hidden="true"><defs><linearGradient id="psPotG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfe0f5"/><stop offset=".5" stop-color="#7e9cc4"/><stop offset="1" stop-color="#3e5a86"/></linearGradient><clipPath id="psPotC"><path d="M5 9h16v11a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/></clipPath></defs>'+
+  '<ellipse cx="14" cy="24.6" rx="9" ry="1.6" fill="#000" opacity=".25"/><path d="M5 9h16v11a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" fill="url(#psPotG)" opacity=".55"/>'+
+  '<g clip-path="url(#psPotC)"><rect id="psInkLvl" x="4" y="24" width="18" height="0" fill="var(--ink)"/></g>'+
+  '<path d="M5 9h16v11a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" fill="none" stroke="#2c3e5e" stroke-width="1.2"/><rect x="8" y="5" width="10" height="4" rx="1" fill="#2c3e5e"/><path d="M7 12v7" stroke="#fff" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/></svg>';
+stage.innerHTML='<div class="ps-left"><div class="ps-board" id="psBoard"><svg id="psBase" aria-hidden="true"></svg><svg id="psLive" class="ps-live" role="img" aria-label="The type case"></svg>'+
+  '<div class="ps-stick" id="psStick"><span class="ps-cue">Trace touching blocks to spell a word</span></div>'+
+  '<div class="ps-proof" id="psProof"></div><div class="ps-sign" id="psSign">Fresh Off the Press!</div><div class="ps-wait" id="psWait">Setting today\'s type…</div><div class="ps-toast" id="psToast" role="status"></div></div></div>'+
+  '<div class="ps-right"><div class="ps-ticket" id="psTicket"><span class="ps-hole"></span>'+
+  '<span class="ps-kick" id="psNo">Job No. 1</span><h2 id="psTitle">The Print Shop</h2><div class="ps-theme" id="psTheme"></div>'+
+  '<ul class="ps-rules"><li>Every block belongs to one of today\'s words.</li><li>Trace a word through <b>touching</b> blocks, side to side or corner to corner.</li><li>The <b>headline</b> runs from one side of the case to the other and names the theme.</li><li>Other real words fill the <b>ink pot</b>; a full pot pays for a hint.</li></ul>'+
+  '<p class="ps-rule1">Trace words through touching blocks. The <b>headline</b> runs side to side.</p>'+
+  '<div class="ps-list" id="psList"></div>'+
+  '<div class="ps-foot"><span class="ps-count" id="psCount"></span><span class="ps-pot" id="psPot">'+POT+'<b id="psInk">Ink 0/3</b></span></div></div>'+
+  '<div class="ps-tools"><button class="pk-btn gold" type="button" id="psHint">Ask the Printer</button><button class="pk-btn" type="button" id="psClear">Clear</button></div></div>';
+var BOARD=$("#psBoard",stage), BASE=$("#psBase",stage), LIVE=$("#psLive",stage), TOAST=$("#psToast",stage), STICK=$("#psStick",stage);
+
+/* ---------- the case, drawn once per tray ---------- */
+function drawBase(){
+  var R=P.R, C=P.C, i, s=[];
+  W=C*S+2*FS; var PH=FT+R*S+FB; VH=Math.round(TOPM+PH*K+TH+SHD);
+  BASE.setAttribute("viewBox","0 0 "+W+" "+VH); LIVE.setAttribute("viewBox","0 0 "+W+" "+VH);
+  var yb=TOPM+PH*K;
+  s.push('<defs>');
+  s.push('<linearGradient id="psWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--case1)"/><stop offset=".55" style="stop-color:var(--case2)"/><stop offset="1" style="stop-color:var(--case3)"/></linearGradient>');
+  s.push('<linearGradient id="psFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--face1)"/><stop offset=".55" style="stop-color:var(--face2)"/><stop offset="1" style="stop-color:var(--face3)"/></linearGradient>');
+  s.push('<linearGradient id="psFaceX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>');
+  s.push('<pattern id="psGrainH" width="160" height="22" patternUnits="userSpaceOnUse"><path d="M0 4C40 2 80 7 160 4M0 11C50 13 110 8 160 12M0 18C30 16 90 20 160 17" fill="none" stroke="#2a1405" stroke-opacity=".17" stroke-width="1.4"/><ellipse cx="96" cy="11" rx="9" ry="3" fill="none" stroke="#2a1405" stroke-opacity=".14" stroke-width="1.2"/></pattern>');
+  s.push('<pattern id="psGrainV" width="22" height="160" patternUnits="userSpaceOnUse"><path d="M4 0C2 40 7 80 4 160M11 0C13 50 8 110 12 160M18 0C16 30 20 90 17 160" fill="none" stroke="#2a1405" stroke-opacity=".17" stroke-width="1.4"/></pattern>');
+  s.push('<linearGradient id="psBrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a6"/><stop offset=".45" stop-color="#d9b25a"/><stop offset="1" stop-color="#a8802c"/></linearGradient>');
+  s.push('<radialGradient id="psBrassR" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#d9b25a"/><stop offset="1" stop-color="#7a5a1e"/></radialGradient>');
+  s.push('<radialGradient id="psTable" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".6" stop-color="#000" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>');
+  s.push('<linearGradient id="psWell" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--well2)"/><stop offset="1" style="stop-color:var(--well1)"/></linearGradient>');
+  s.push('<linearGradient id="psInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="psInL" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  /* the blocks: maple end grain, lit from the top left; their front a little darker */
+  s.push('<linearGradient id="psTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--blk1)"/><stop offset=".55" style="stop-color:var(--blk2)"/><stop offset="1" style="stop-color:var(--blk3)"/></linearGradient>');
+  s.push('<linearGradient id="psSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--side1)"/><stop offset="1" style="stop-color:var(--side2)"/></linearGradient>');
+  s.push('<pattern id="psEndG" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M-4 30C8 26 14 34 26 30S38 26 44 30M-4 14C6 10 16 18 26 14S40 10 44 14" fill="none" stroke="#7a5428" stroke-opacity=".12" stroke-width="1.2"/></pattern>');
+  s.push('<radialGradient id="psSh" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>');
+  s.push('</defs>');
+  /* the table shadow */
+  s.push('<ellipse cx="'+(W/2+12)+'" cy="'+(yb+TH+4)+'" rx="'+(W*.56)+'" ry="'+(SHD*.95)+'" fill="url(#psTable)"/>');
+  /* the front face of the case: one board, lit from the left, with the brass label holder (the maker's plate) a hair below center */
+  s.push('<rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" rx="4" fill="url(#psFace)"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#psGrainH)"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#psFaceX)"/>');
+  s.push('<path d="M0 '+(yb+1)+'H'+W+'" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>');
+  /* the top: four mitered boards around the compartments */
+  s.push('<g transform="'+PLANE()+'">');
+  var x0=FS, y0=FT, x1=W-FS, y1=FT+R*S, PW=W;
+  var boards=[["M0 0H"+PW+"L"+x1+" "+y0+"H"+x0+"Z","psGrainH",0],["M0 0L"+x0+" "+y0+"V"+y1+"L0 "+PH+"Z","psGrainV",.04],["M"+PW+" 0V"+PH+"L"+x1+" "+y1+"V"+y0+"Z","psGrainV",.2],["M0 "+PH+"H"+PW+"L"+x1+" "+y1+"H"+x0+"Z","psGrainH",.1]];
+  boards.forEach(function(B){ s.push('<path d="'+B[0]+'" fill="url(#psWood)"/><path d="'+B[0]+'" fill="url(#'+B[1]+')"/>'+(B[2]?'<path d="'+B[0]+'" fill="#000" opacity="'+B[2]+'"/>':'')); });
+  s.push('<path d="M0 0L'+x0+' '+y0+'M'+PW+' 0L'+x1+' '+y0+'M0 '+PH+'L'+x0+' '+y1+'M'+PW+' '+PH+'L'+x1+' '+y1+'" stroke="#2a1405" stroke-opacity=".4" stroke-width="2"/>');
+  s.push('<path d="M2 '+(PH-2)+'V2H'+(PW-2)+'" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="3"/>');
+  /* the compartments: a dark floor, the walls shaded on the top and left, a lit lip on the bottom and right */
+  s.push('<rect x="'+x0+'" y="'+y0+'" width="'+(C*S)+'" height="'+(R*S)+'" fill="url(#psWell)"/>');
+  for(i=0;i<R*C;i++){ var qx=x0+(i%C)*S, qy=y0+((i/C)|0)*S;
+    s.push('<rect x="'+(qx+GAP)+'" y="'+(qy+GAP)+'" width="'+(S-2*GAP)+'" height="18" fill="url(#psInT)"/><rect x="'+(qx+GAP)+'" y="'+(qy+GAP)+'" width="14" height="'+(S-2*GAP)+'" fill="url(#psInL)"/>'); }
+  /* the dividers: thin strips of the case's wood */
+  var dv=[]; for(var c=1;c<C;c++) dv.push('M'+(x0+c*S)+' '+y0+'V'+y1); for(var r=1;r<R;r++) dv.push('M'+x0+' '+(y0+r*S)+'H'+x1);
+  s.push('<path d="'+dv.join("")+'" stroke="#120a04" stroke-opacity=".45" stroke-width="'+(2*GAP+2)+'" transform="translate(2 3)"/>');
+  s.push('<path d="'+dv.join("")+'" stroke="url(#psWood)" stroke-width="'+(2*GAP)+'"/>');
+  s.push('<path d="'+dv.join("")+'" stroke="#fff" stroke-opacity=".22" stroke-width="2" transform="translate(-'+(GAP-1)+' -'+(GAP-1)+')"/>');
+  s.push('<rect x="'+x0+'" y="'+y0+'" width="'+(C*S)+'" height="'+(R*S)+'" fill="none" stroke="#120a04" stroke-opacity=".55" stroke-width="4"/>');
+  s.push('</g>');
+  /* the brass label holder on the front, with the BW card in it, and a cup pull either side */
+  var px=W/2, py=yb+TH/2+1.5;
+  s.push('<g transform="translate('+px+' '+py+')"><rect x="-62" y="-13" width="124" height="26" rx="3" fill="#000" opacity=".35" transform="translate(2 3)"/><rect x="-62" y="-13" width="124" height="26" rx="3" fill="url(#psBrass)" stroke="#7a5a1e" stroke-width="1.2"/>'+
+    '<rect x="-52" y="-9" width="104" height="18" rx="1.5" fill="#f4ecd6" stroke="#8a6a2a" stroke-width="1"/><circle cx="-57" cy="0" r="2.4" fill="url(#psBrassR)"/><circle cx="57" cy="0" r="2.4" fill="url(#psBrassR)"/>'+
+    '<text x="0" y="6" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="500" font-size="17" fill="#8a6a1e">B<tspan font-family="Pacifico,cursive" font-weight="400" font-size="13">W</tspan></text></g>');
+  [W*.18,W*.82].forEach(function(x){ s.push('<path d="M'+(x-26)+' '+(yb+8)+'h52l-6 17h-40z" fill="url(#psBrass)" stroke="#6b4c18" stroke-width="1"/><path d="M'+(x-20)+' '+(yb+12)+'h40l-4 9h-32z" fill="#3a2410" opacity=".55"/>'); });
+  BASE.innerHTML=s.join("");
+}
+
+/* ---------- the blocks as you've traced them ---------- */
+var found=[], bonus=[], sel=[], ring=-1, hints=0, inkUsed=0, ink=0, t0=0, done=false, mode="daily", lessonK=0, glow=[], shine={}, fresh={}, secs0=0;
+function owner(){ var o=new Array(P.R*P.C).fill(-1); P.paths.forEach(function(p,k){ if(found[k]) p.forEach(function(x){ o[x]=k; }); }); return o; }
+function paint(){
+  if(!P) return;
+  var s=[], n=P.R*P.C, i, own=owner(), lifted={}, bw=S-2*GAP-6, bd=(S-2*GAP-6)*K;
+  sel.forEach(function(x){ lifted[x]=1; });
+  /* the blocks, back to front: shadow, front, top (inked if its word is set) */
+  for(i=0;i<n;i++){ var x=cx(i), y=cy(i)-BH*.5, up=lifted[i]?9:0, sc=lifted[i]?1.05:1, w=bw*sc, d=bd*sc, k=own[i];
+    var tx=x-w/2, ty=y-d/2-up;
+    s.push('<g>'+'<ellipse cx="'+(x+7)+'" cy="'+(y+d/2+BH*.6)+'" rx="'+(w*.52+(up?6:0))+'" ry="'+(9+(up?5:0))+'" fill="url(#psSh)" opacity="'+(up?.85:.6)+'"/>'+
+      '<path d="M'+tx+' '+(ty+d-6)+'v'+(BH+(up?2:0))+'a6 6 0 0 0 6 6h'+(w-12)+'a6 6 0 0 0 6-6v-'+(BH+(up?2:0))+'z" fill="url(#psSide)"/>'+
+      '<path d="M'+tx+' '+(ty+d-6)+'v'+(BH+(up?2:0))+'a6 6 0 0 0 6 6h'+(w-12)+'a6 6 0 0 0 6-6v-'+(BH+(up?2:0))+'z" fill="#000" opacity=".16"/>'+
+      '<rect x="'+tx+'" y="'+ty+'" width="'+w+'" height="'+d+'" rx="7" fill="url(#psTop)"/><rect x="'+tx+'" y="'+ty+'" width="'+w+'" height="'+d+'" rx="7" fill="url(#psEndG)"/>'+
+      (k>=0?'<rect class="'+(fresh[i]!=null?"ps-inkin":"")+'"'+(fresh[i]!=null?' style="animation-delay:'+fresh[i]+'ms"':'')+' x="'+tx+'" y="'+ty+'" width="'+w+'" height="'+d+'" rx="7" fill="'+(k===0?"var(--redL)":"var(--inkL)")+'" opacity=".92"/>':'')+
+      '<path d="M'+(tx+3)+' '+(ty+d-6)+'V'+(ty+7)+'Q'+(tx+3)+' '+(ty+3)+' '+(tx+8)+' '+(ty+3)+'H'+(tx+w-8)+'" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2.2" stroke-linecap="round"/>'+
+      (lifted[i]?'<rect x="'+(tx-1.5)+'" y="'+(ty-1.5)+'" width="'+(w+3)+'" height="'+(d+3)+'" rx="8" fill="none" stroke="#e7b84a" stroke-width="4"/>':'')+
+      '</g>'); }
+  /* the ink rules joining each set word's blocks, and the gold rule along the word you're tracing */
+  function line(p,col,wd,op,cls){ if(p.length<2) return ''; return '<path class="'+(cls||"")+'" d="'+p.map(function(x,j){ return (j?"L":"M")+cx(x).toFixed(1)+" "+(cy(x)-BH*.5-(lifted[x]?9:0)).toFixed(1); }).join("")+'" fill="none" stroke="'+col+'" stroke-width="'+wd+'" stroke-opacity="'+op+'" stroke-linecap="round" stroke-linejoin="round"/>'; }
+  P.paths.forEach(function(p,k){ if(found[k]) s.push(line(p,k===0?"var(--red)":"var(--ink)",14,.42,"ps-inkin")); });
+  if(sel.length>1) s.push(line(sel,"#c9932a",15,.55));
+  /* the hint's ringed word, and a lesson's glowing blocks */
+  if(ring>=0&&!found[ring]) P.paths[ring].forEach(function(x){ s.push('<rect class="ps-ring" x="'+(cx(x)-bw/2-6)+'" y="'+(cy(x)-BH*.5-bd/2-6)+'" width="'+(bw+12)+'" height="'+(bd+12)+'" rx="11" fill="none" stroke="#ffd36b" stroke-width="6"/>'); });
+  glow.forEach(function(x){ s.push('<rect class="ps-ring" x="'+(cx(x)-bw/2-6)+'" y="'+(cy(x)-BH*.5-bd/2-6)+'" width="'+(bw+12)+'" height="'+(bd+12)+'" rx="11" fill="rgba(255,211,107,.16)" stroke="#ffd36b" stroke-width="6"/>'); });
+  /* the letters, standing on the tops (squashed with the tilt) */
+  for(i=0;i<n;i++){ var k2=own[i], col=k2===0?"var(--red)":k2>0?"var(--ink)":"var(--ltr)", yy=cy(i)-BH*.5-(lifted[i]?9:0);
+    s.push('<text x="'+cx(i)+'" y="'+yy+'" transform="translate(0 '+(yy*(1-K)).toFixed(2)+') scale(1 '+K+')" text-anchor="middle" dominant-baseline="central" font-family="\'Alfa Slab One\',Rockwell,Georgia,serif" font-size="'+(lifted[i]?60:56)+'" fill="'+col+'"'+(k2<0?' fill-opacity=".9"':'')+'>'+P.letters[i]+'</text>');
+    if(shine[i]!=null) s.push('<rect class="ps-shine" style="animation-delay:'+shine[i]+'ms" x="'+(cx(i)-bw/2)+'" y="'+(cy(i)-BH*.5-bd/2)+'" width="'+bw+'" height="'+bd+'" rx="7" fill="#fff6d0"/>'); }
+  LIVE.innerHTML=s.join("");
+  fresh={};
+  counts();
+}
+function words(){ return P.words; }
+function nFound(){ var c=0; for(var k=0;k<found.length;k++) if(found[k]) c++; return c; }
+function counts(){
+  var got=nFound(), all=P.words.length;
+  $("#psCount",stage).textContent=got+" of "+all+(window.innerWidth<1000?"":" words set");
+  var full=ink>=3; $("#psInk",stage).textContent=full?"Ink ready":"Ink "+ink+"/3";
+  $("#psPot",stage).classList.toggle("full",full);
+  var lv=$("#psInkLvl",stage); if(lv){ var h=Math.min(3,ink)/3*12; lv.setAttribute("y",(24-h).toFixed(1)); lv.setAttribute("height",h.toFixed(1)); }
+  var hb=$("#psHint",stage); hb.classList.toggle("paid",full&&!done); hb.textContent=full&&!done?"Ask the Printer (ink ready)":"Ask the Printer"; hb.disabled=done;
+  $("#psClear",stage).disabled=!sel.length||done;
+  if(window.Parlor){ Parlor.score([got+"/"+all]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Job",got+" of "+all+" words"+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+/* the job ticket's list: on easy days a line for each word, showing its length; later only the words you've set */
+function listPaint(newK){
+  var L=$("#psList",stage), spec=P.spec||{}, h=[];
+  var order=P.words.map(function(w,k){ return k; });
+  order.forEach(function(k){ var w=P.words[k], cls="ps-word"+(k===0?" head":"")+(found[k]?" got":"")+(k===newK?" new":"");
+    if(spec.slots){ h.push('<span class="'+cls+'" title="'+(k===0?"The headline":"")+'">'+w.split("").map(function(ch){ return '<i>'+(found[k]?ch:"")+'</i>'; }).join("")+'</span>'); }
+    else if(found[k]) h.push('<span class="'+cls+' plain">'+esc(w)+'</span>'); });
+  if(!spec.slots&&!nFound()) h.push('<span class="ps-word plain" style="color:#7a6a50;font:600 12px Montserrat,sans-serif">'+P.words.length+' words, one of them the headline</span>');
+  L.innerHTML=h.join(""); L.classList.toggle("plain",!spec.slots);
+  $("#psTicket",stage).classList.toggle("some",nFound()>0||!!spec.slots);
+  var th=$("#psTheme",stage); th.textContent=found[0]?"Theme: "+P.words[0]:""; th.classList.toggle("on",!!found[0]);
+}
+function stickPaint(state){
+  STICK.className="ps-stick"+(state?" "+state:"");
+  if(!sel.length&&!state){ STICK.innerHTML='<span class="ps-cue">'+(done?"The job is done":"Trace touching blocks to spell a word")+'</span>'; return; }
+  var letters=state&&STICK._last?STICK._last:sel.map(function(x){ return P.letters[x]; });
+  STICK.innerHTML=letters.map(function(ch){ return '<span class="ps-sort">'+ch+'</span>'; }).join("");
+  STICK._last=letters;
+}
+
+/* ---------- sounds (Nov 2): the print shop, made in the browser through the kit ----------
+   ps-pick: a wooden block lifted (a dry tock) · ps-step: a lighter tick as each block joins, rising as the word grows
+   ps-set: metal sorts dropped into the stick, then the press's thunk · ps-head: a heavier press stroke and the shop bell
+   ps-bonus: a drop of ink · ps-full: the ink pot full · ps-no: the blocks rattle back · ps-hint: the counter bell
+   ps-clear: the stick emptied · ps-solve: the press running, a proof pulled, a bell and a warm chord */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("ps-pick",function(h){ var d=h.out(.04), t=h.t, p=h.p*(.95+Math.random()*.1); h.osc(d,t,"sine",880*p,620*p,.12,.001,.05,["lowpass",2400]); h.burst(d,t,.03,"bandpass",2200*p,2.5,.14,.001,.025); });
+  D("ps-step",function(h){ var d=h.out(.03), t=h.t, p=h.p; h.osc(d,t,"triangle",1250*p,980*p,.06,.001,.035); h.burst(d,t,.02,"bandpass",3600*p,3,.07,.001,.015); });
+  D("ps-set",function(h,o){ var d=h.out(.1), t=h.t, n=Math.min(8,o.n||5);
+    for(var k=0;k<n;k++){ var q=t+k*.045; h.osc(d,q,"square",2400+k*60,1900,.025,.001,.03,["bandpass",3400,4]); h.burst(d,q,.02,"highpass",5200,1,.05,.001,.015); }
+    var e=t+n*.045+.05; h.osc(d,e,"sine",120,62,.34,.004,.2,["lowpass",380]); h.burst(d,e,.12,"lowpass",900,1,.18,.004,.1); h.burst(d,e+.12,.22,"bandpass",3000,.7,.05,.03,.18); });
+  D("ps-head",function(h,o){ var d=h.out(.25), t=h.t, n=Math.min(10,o.n||7);
+    for(var k=0;k<n;k++){ var q=t+k*.04; h.osc(d,q,"square",2300+k*50,1800,.022,.001,.03,["bandpass",3300,4]); }
+    var e=t+n*.04+.06; h.osc(d,e,"sine",96,48,.42,.004,.32,["lowpass",300]); h.burst(d,e,.16,"lowpass",700,1,.22,.004,.14);
+    h.bell(d,e+.25,1568,.09,1.3,[[1,1,1],[2.4,.4,.6],[4.1,.15,.35]]); [523.25,659.25,783.99].forEach(function(f,i){ h.osc(d,e+.3+i*.04,"triangle",f,0,.04,.02,1); }); });
+  D("ps-bonus",function(h){ var d=h.out(.25), t=h.t; h.osc(d,t,"sine",1400,520,.12,.002,.12); h.osc(d,t+.09,"sine",900,1500,.05,.002,.07); });
+  D("ps-full",function(h){ var d=h.out(.3), t=h.t; [0,.1].forEach(function(s,i){ h.osc(d,t+s,"sine",1300+i*200,560,.1,.002,.11); }); h.bell(d,t+.24,2093,.05,.9,[[1,1,1],[2.76,.3,.5]]); });
+  D("ps-no",function(h){ var d=h.out(.06), t=h.t; [[0,520],[.07,430],[.13,470]].forEach(function(k){ h.osc(d,t+k[0],"sine",k[1],k[1]*.8,.11,.001,.06,["lowpass",1400]); h.burst(d,t+k[0],.025,"bandpass",1800,2,.08,.001,.02); }); });
+  D("ps-hint",function(h){ var d=h.out(.2), t=h.t; h.bell(d,t,2093,.08,1,[[1,1,1],[2.4,.45,.55],[4.1,.18,.35]]); h.bell(d,t+.16,2093,.045,.8,[[1,1,1],[2.4,.4,.5]]); });
+  D("ps-clear",function(h){ var d=h.out(.03), t=h.t; h.burst(d,t,.14,"bandpass",2600,1.2,.07,.01,.12); });
+  D("ps-solve",function(h,o){ var d=h.out(.4), t=h.t, at=0;
+    if(!o.short){
+      /* the press: the flywheel winding up, two platen strokes, the sheet pulled */
+      h.osc(d,t,"sawtooth",48,92,.05,.5,.5,["lowpass",400]);
+      [.55,1.0].forEach(function(s){ h.osc(d,t+s,"sine",110,55,.4,.004,.26,["lowpass",320]); h.burst(d,t+s,.1,"lowpass",800,1,.2,.003,.09); h.burst(d,t+s+.02,.05,"bandpass",4200,3,.05,.001,.04); });
+      h.burst(d,t+1.3,.45,"bandpass",2800,.6,.07,.08,.35);
+      at=1.75;
+    }
+    h.bell(d,t+at,1568,.09,1.6,[[1,1,1],[2.4,.4,.6],[4.1,.15,.35]]);
+    [523.25,659.25,783.99,1046.5].forEach(function(f,i){ h.osc(d,t+at+.18+i*.05,"triangle",f,0,.045,.02,1.8); });
+  });
+})();
+function snd(name,o){ if(window.Parlor&&Parlor.defSfx) Parlor.sfx(name,o||{}); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2200); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function nope(){ BOARD.classList.remove("ps-nope"); void BOARD.offsetWidth; BOARD.classList.add("ps-nope"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("ps-ringbtn"); void b.offsetWidth; b.classList.add("ps-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done||!P; }
+function free(i){ var o=owner(); return o[i]<0; }
+function clearSel(sound){ if(!sel.length) return; sel=[]; if(sound) snd("ps-clear"); stickPaint(); paint(); }
+function sameCells(a,b){ if(a.length!==b.length) return false; var x=a.slice().sort(function(p,q){ return p-q; }).join(), y=b.slice().sort(function(p,q){ return p-q; }).join(); return x===y; }
+/* a traced word is checked when you lift your finger (or tap its last block again) */
+function submit(){
+  var cells=sel.slice(), str=cells.map(function(x){ return P.letters[x]; }).join("");
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  if(cells.length<2){ clearSel(); return; }
+  var k=-1; for(var q=0;q<P.words.length;q++) if(!found[q]&&P.words[q]===str&&(cells.join()===P.paths[q].join()||sameCells(cells,P.paths[q]))){ k=q; break; }
+  if(k>=0){ setWord(k,false); return; }
+  STICK._last=cells.map(function(x){ return P.letters[x]; });
+  if(cells.length<4){ reject("Words need at least four letters."); return; }
+  var theme=P.words.indexOf(str);
+  if(theme>=0&&found[theme]){ reject("That word is already set."); return; }
+  if(theme>=0){ reject("That's one of today's words, but its type sits elsewhere in the case."); return; }
+  PS.dict();
+  if(PS.dictHas(str)){
+    if(bonus.indexOf(str)>=0){ reject("You've already inked "+nice(str)+"."); return; }
+    bonus.push(str); var was=ink; ink=Math.min(3,ink+1);
+    sel=[]; stickPaint("bonus"); paint(); save();
+    var pot=$("#psPot",stage); pot.classList.remove("pulse"); void pot.offsetWidth; pot.classList.add("pulse");
+    if(ink>=3&&was<3){ snd("ps-full"); toast(nice(str)+" isn't on today's ticket, but it's a word: the ink pot is full! Your next hint is free.",3600); }
+    else { snd("ps-bonus"); toast(nice(str)+": not on the ticket, but a real word. A drop of ink ("+ink+"/3).",2600); }
+    setTimeout(function(){ if(!sel.length) stickPaint(); },1100);
+    lessonCheck(); return;
+  }
+  reject(nice(str)+" isn't in the printer's dictionary.");
+}
+function reject(msg){ snd("ps-no"); sel=[]; stickPaint("bad"); paint(); toast(msg,2400); setTimeout(function(){ if(!sel.length) stickPaint(); },900); }
+function setWord(k,byHint){
+  found[k]=true; if(ring===k) ring=-1;
+  var p=P.paths[k]; p.forEach(function(x,j){ fresh[x]=j*55; });
+  STICK._last=P.words[k].split(""); sel=[];
+  snd(k===0?"ps-head":"ps-set",{n:p.length});
+  stickPaint(k===0?"head":"good"); paint(); listPaint(k); save();
+  setTimeout(function(){ if(!sel.length) stickPaint(); },1300);
+  if(nFound()===P.words.length){ solved(); return; }
+  if(k===0&&!byHint) toast("The headline! Today's theme: "+P.words[0]+".",3000);
+  else if(!byHint&&mode!=="lesson") toast(nice(P.words[k])+" is set.",1600);
+  lessonCheck();
+}
+
+/* ---------- touching the case: drag through blocks, or tap them one by one (tap the last again to set it) ---------- */
+var drag=null;
+function cellAt(e,strict){
+  var b=LIVE.getBoundingClientRect(), sc=b.width/W, x=(e.clientX-b.left)/sc, y=(e.clientY-b.top)/sc;
+  var px=x, py=(y-TOPM+BH*.5)/K, c=Math.floor((px-FS)/S), r=Math.floor((py-FT)/S);
+  if(c<0&&px>FS-S*.2) c=0; if(r<0&&py>FT-S*.2) r=0; if(c>=P.C&&px<FS+P.C*S+S*.2) c=P.C-1; if(r>=P.R&&py<FT+P.R*S+S*.2) r=P.R-1;
+  if(c<0||r<0||c>=P.C||r>=P.R) return -1;
+  if(strict){ var dx=px-(FS+(c+.5)*S), dy=py-(FT+(r+.5)*S); if(dx*dx+dy*dy>Math.pow(S*.42,2)) return -1; }   /* while dragging: only near a block's middle, so corner steps don't catch a neighbor */
+  return r*P.C+c;
+}
+function grow(i){
+  /* add a block to the word you're tracing, or step back along it */
+  if(!free(i)) return false;
+  var at=sel.indexOf(i);
+  if(at>=0){ if(at===sel.length-2){ sel.pop(); snd("ps-step",{pitch:.8+sel.length*.05}); return true; } return false; }
+  if(sel.length&&!PS.adj(sel[sel.length-1],i,P.C)) return false;
+  sel.push(i); snd(sel.length===1?"ps-pick":"ps-step",{pitch:.85+sel.length*.06}); return true;
+}
+LIVE.addEventListener("pointerdown",function(e){
+  if(!P||e.button>0) return; var i=cellAt(e); if(i<0) return;
+  e.preventDefault(); hideToast();
+  if(blocked()) return;
+  if(!free(i)){ toast("That block's word is already set.",1500); return; }
+  var tapLast=sel.length&&sel[sel.length-1]===i;
+  if(!tapLast){
+    if(sel.length&&sel.indexOf(i)>=0){ sel=sel.slice(0,sel.indexOf(i)+1); snd("ps-step",{pitch:.9}); }
+    else if(!(sel.length&&PS.adj(sel[sel.length-1],i,P.C))){ sel=[]; }
+    if(sel.indexOf(i)<0) grow(i);
+  }
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  drag={id:e.pointerId,moved:false,tapLast:tapLast,start:i};
+  try{ LIVE.setPointerCapture(e.pointerId); }catch(x){}
+  stickPaint(); paint();
+});
+var rafP=0;
+LIVE.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.id) return; var i=cellAt(e,true); if(i<0||i===sel[sel.length-1]) return;
+  if(grow(i)){ drag.moved=true; if(!rafP) rafP=requestAnimationFrame(function(){ rafP=0; stickPaint(); paint(); }); }
+});
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var d=drag; drag=null;
+  if(d.moved){ if(sel.length>=2) submit(); return; }
+  if(d.tapLast) submit();
+}
+LIVE.addEventListener("pointerup",endDrag); LIVE.addEventListener("pointercancel",function(){ drag=null; });
+LIVE.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+/* ---------- Ask the Printer ----------
+   The first time he rings one word's blocks (you still trace it). Ask again while that word is ringed and he sets it.
+   A full ink pot pays for one request: it doesn't count against your stars. */
+function hint(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!P) return;
+  var paid=ink>=3; if(paid){ ink=0; inkUsed++; } else hints++;
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  sel=[]; stickPaint();
+  snd("ps-hint");
+  var how=paid?" (Paid for with ink: no star lost.)":"";
+  if(ring>=0&&!found[ring]){ var k=ring; setWord(k,true); toast("The printer sets "+nice(P.words[k])+" for you."+how,3200); }
+  else {
+    /* the next word to ring: the words first, longest first, and the headline last */
+    var pick=-1; for(var q=1;q<P.words.length;q++) if(!found[q]&&(pick<0||P.words[q].length>P.words[pick].length)) pick=q;
+    if(pick<0) pick=0;
+    ring=pick; paint(); save();
+    toast((pick===0?"The printer rings the headline's blocks.":"The printer rings the blocks of one word.")+" Trace them in order. Ask again and he'll set it."+how,4200);
+  }
+  counts();
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+(ring>=0?"The ringed blocks spell one word. Trace it in order.":"Set.")+"</p>");
+  lessonCheck();
+}
+
+/* ---------- loading ---------- */
+function load(p,how,state){
+  P=p; mode=how; done=false; sel=[]; glow=[]; shine={}; fresh={}; hideToast();
+  found=P.words.map(function(){ return false; }); bonus=[]; ring=-1; hints=0; inkUsed=0; ink=0; t0=0; secs0=0;
+  if(state){ (state.f||[]).forEach(function(k){ found[k]=true; }); bonus=state.b||[]; ring=state.r!=null?state.r:-1; hints=state.h||0; inkUsed=state.u||0; ink=state.i||0; secs0=state.s||0; if(secs0) t0=Date.now(); }
+  BOARD.classList.remove("done"); $("#psSign",stage).classList.remove("on"); $("#psProof",stage).classList.remove("on");
+  $("#psNo",stage).textContent=how==="daily"?"Job No. "+dayNo(today)+" · "+DAYS[today.getDay()]+" · "+FEEL[today.getDay()]:how==="practice"?"Practice Job":"Lesson";
+  $("#psTitle",stage).textContent=P.title||"The Print Shop";
+  drawBase(); stickPaint(); listPaint(); paint(); fit();
+}
+var today=new Date(), todayKey=ymd(today), DAILY=null;
+function rec(){ try{ return JSON.parse(store("bwPrint:"+todayKey)||"null"); }catch(e){ return null; } }
+/* the day's work is kept on the device, so a hard Sunday can be finished later */
+function save(){ if(mode!=="daily"||done) return; var f=[]; found.forEach(function(v,k){ if(v) f.push(k); });
+  store("bwPrintS:"+todayKey,JSON.stringify({f:f,b:bonus,r:ring,h:hints,u:inkUsed,i:ink,s:elapsed()})); }
+function elapsed(){ return t0?Math.round((Date.now()-t0)/1000)+secs0:secs0; }
+function saved(){ try{ return JSON.parse(store("bwPrintS:"+todayKey)||"null"); }catch(e){ return null; } }
+/* today's tray: kept on the device once made (a Sunday can take a moment to set on an older phone) */
+function okTray(c){ return c&&c.R&&c.C&&c.letters&&c.letters.length===c.R*c.C&&c.paths&&c.words&&c.paths.length===c.words.length; }
+function cached(){ try{ var c=JSON.parse(store("bwPrintP:"+todayKey)||"null"); if(okTray(c)) return c; }catch(e){} return null; }
+function makeDaily(cb){
+  if(DAILY){ cb(DAILY); return; }
+  var c=cached(); if(c){ DAILY=c; cb(c); return; }
+  function keep(p){ DAILY=p; try{ for(var k in localStorage) if((k.indexOf("bwPrintP:")===0||k.indexOf("bwPrintS:")===0)&&k.slice(9)!==todayKey) localStorage.removeItem(k); }catch(e){} store("bwPrintP:"+todayKey,JSON.stringify(p)); cb(p); }
+  var src=document.getElementById("psCore").textContent, w=null, wurl=new URL("printshop-words.js?v=1102a",location.href).href;
+  try{ w=new Worker(URL.createObjectURL(new Blob(["importScripts("+JSON.stringify(wurl)+");\n"+src+"\nonmessage=function(e){ postMessage(PS.forDay(e.data[0],e.data[1])); };"],{type:"text/javascript"}))); }catch(e){ w=null; }
+  function here(){ keep(PS.forDay(todayKey,today.getDay())); }
+  if(w){ var gone=false, to=setTimeout(function(){ if(gone) return; gone=true; w.terminate(); here(); },12000);
+    w.onmessage=function(e){ if(gone) return; gone=true; clearTimeout(to); w.terminate(); if(okTray(e.data)) keep(e.data); else here(); };
+    w.onerror=function(){ if(gone) return; gone=true; clearTimeout(to); here(); };
+    w.postMessage([todayKey,today.getDay()]); }
+  else setTimeout(here,30);
+}
+function dress(p,wd){ var q=JSON.parse(JSON.stringify(p)); q.spec=PS.WEEK[wd]; return q; }
+function startDaily(again){
+  if(window.Parlor) Parlor.coach(null);
+  var waitT=setTimeout(function(){ $("#psWait",stage).classList.add("on"); },150);
+  makeDaily(function(p){
+    clearTimeout(waitT); $("#psWait",stage).classList.remove("on");
+    var r=rec(), st=!again&&!r?saved():null;
+    load(dress(p,today.getDay()),"daily",st);
+    if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+    if(r&&!again) toast("You finished today's job. Set it again for fun; tomorrow brings a new one.",3600);
+    else if(st&&st.f&&st.f.length) toast("Welcome back: your type is just as you left it.",3000);
+    else if(!again) toast("Trace a word through touching blocks. Lift your finger to set it.",3600);
+  });
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwPrintStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function reveal(){
+  /* every block shines in turn, row by row; then a proof is pulled from the case */
+  for(var i=0;i<P.R*P.C;i++) shine[i]=((i/P.C)|0)*110+(i%P.C)*30;
+  paint(); shine={};
+  if(window.Parlor&&!Parlor.smooth()) return;
+  var pr=$("#psProof",stage); pr.innerHTML='<h3>'+esc(P.words[0])+'</h3><p>'+P.words.slice(1).map(esc).join(" · ")+'</p><small>'+esc(P.title||"")+'</small>';
+  pr.classList.remove("on"); void pr.offsetWidth; setTimeout(function(){ pr.classList.add("on"); },mode==="lesson"?100:500);
+}
+function solved(){
+  if(done) return; done=true; hideToast(); ring=-1; sel=[]; BOARD.classList.add("done");
+  snd("ps-solve",{short:mode==="lesson"});
+  reveal(); counts(); stickPaint();
+  setTimeout(function(){ $("#psSign",stage).classList.add("on"); },mode==="lesson"?400:3300);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },700); return; }
+  var secs=elapsed(), sts=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:sts,h:hints,sec:secs,b:bonus.length}; store("bwPrint:"+todayKey,JSON.stringify(r)); try{ localStorage.removeItem("bwPrintS:"+todayKey); }catch(e){}
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwPrintStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(sts,secs,first,sk,sv); }); },4300);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+/* from the type drawer: true stories from the history of printing */
+var STORIES=[
+  {name:"Upper and Lower Case",kind:"The type case",t:"Compositors kept their capital letters in one wooden case and the small letters in another, set just below it and nearer to hand. That's why we still call them uppercase and lowercase letters."},
+  {name:"Out of Sorts",kind:"A printer's word",t:"A single piece of type is called a sort. A printer who ran short of a letter couldn't finish setting the page, and was out of sorts: that's the usual story of where the phrase comes from."},
+  {name:"Mind Your P's and Q's",kind:"Mirror letters",t:"Type is cast back to front, so in the case a little p looks like a q, and a b like a d. One old story says apprentices were told to mind their p's and q's. No one knows for sure, but it fits."},
+  {name:"Gutenberg's Bible",kind:"Mainz · the 1450s",t:"Johannes Gutenberg printed his great Bible with movable metal type in the 1450s. About 180 copies were made, some on paper and some on vellum, and fewer than fifty survive today."},
+  {name:"B. Franklin, Printer",kind:"Philadelphia · 1788",t:"Benjamin Franklin was a scientist, an inventor and a statesman, but his will begins: \"I, Benjamin Franklin, of Philadelphia, printer.\" He set type as a boy in his brother's shop in Boston."},
+  {name:"Leading",kind:"Between the lines",t:"Printers spaced lines of type apart with thin strips of lead. The space between lines is still called leading (said \"ledding\"), even on a computer screen."},
+  {name:"Type High",kind:".918 of an inch",t:"Every piece of type in America is cast to the same height, .918 of an inch, called type high. Blocks, rules and pictures are all made type high, so a whole page prints evenly under the press."},
+  {name:"Wood Type",kind:"Two Rivers, Wisconsin",t:"Big letters for posters were cut from end-grain maple, since metal letters that size would be heavy and costly. Hamilton made wood type in Two Rivers, Wisconsin, from 1880; its museum still prints from it."},
+  {name:"Stereotype and Cliché",kind:"Two printers' words",t:"Both began in the print shop, as names for a metal plate cast from a page of set type, so the same words could be printed again and again. Later they came to mean ideas that are repeated too often."},
+  {name:"The Ampersand",kind:"The 27th letter",t:"Children once recited the & at the end of the alphabet as \"and per se and\" (\"and, by itself, and\"). Said quickly, that ran together into ampersand."},
+  {name:"The Linotype",kind:"New York · 1886",t:"Ottmar Mergenthaler's Linotype cast a whole line of type at once from a keyboard. The New York Tribune began using it in 1886, and setting a newspaper by hand soon became a thing of the past."},
+  {name:"Points and Picas",kind:"Measuring type",t:"Type is measured in points: in America a point is just under 1/72 of an inch, and twelve points make a pica. A 12-point letter is the size of the metal body it sits on, not of the letter itself."}
+];
+function story(){ return mode==="daily"?STORIES[dayNo(today)%STORIES.length]:STORIES[Math.floor(Math.random()*STORIES.length)]; }
+var BLOCKART='<svg viewBox="0 0 60 60" aria-hidden="true"><ellipse cx="33" cy="49" rx="17" ry="4" fill="#000" opacity=".22"/><path d="M14 22h26l6-6v26l-6 6H14z" fill="#b88a52"/><path d="M40 22l6-6v26l-6 6z" fill="#8c6234"/><path d="M14 22l6-6h26l-6 6z" fill="#f2dcae"/><rect x="14" y="22" width="26" height="26" fill="#e9cf9c"/><text x="27" y="42" text-anchor="middle" font-family="Alfa Slab One,Georgia,serif" font-size="20" fill="#c23a22">B</text></svg>';
+function result(sts,secs,first,sk,sv){
+  var v=$("#psEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="psEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Job":"The Print Shop · No. "+dayNo(today), R=story();
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"The Job Is Done":"Set Without Help!")+'</h2>'+
+    '<div class="ps-stars">'+"★★★".slice(0,sts)+'<i>'+"★★★".slice(sts)+'</i></div>'+
+    '<div class="ps-facts"><div><b>'+P.words.length+'</b><small>Words</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<div class="ps-card"><h3>'+esc(P.words[0])+'</h3><p>'+P.words.slice(1).map(esc).join(" · ")+'</p><p class="ps-job">'+esc(P.title||"")+(bonus.length?" · "+bonus.length+" extra word"+(bonus.length>1?"s":""):"")+'</p></div>'+
+    '<div class="ps-story"><div class="ps-mug">'+BLOCKART+'</div><div><p class="ps-kind">From the Type Drawer · '+esc(R.kind)+'</p><h3>'+esc(R.name)+'</h3><p class="clamp">'+esc(R.t)+'</p></div></div>'+
+    '<p class="ps-note">'+(mode==="daily"?(first?"A new job comes in every day at midnight.":"You'd already finished today's job; your first result is the one kept."):"Practice jobs don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".ps-story p.clamp");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","ps-rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(sts,secs,sk); });
+  bt(mode==="practice"?"Another Job":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Case",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  var L=mk("div","ps-endL"), R2=mk("div","ps-endR"); [].slice.call(b.children).forEach(function(c){ (c===row||c.classList.contains("pk-streak")?R2:L).appendChild(c); }); b.appendChild(L); b.appendChild(R2);
+  v.classList.add("on");
+}
+function share(sts,secs,sk){
+  var txt="BrainWhim · The Print Shop No. "+dayNo(today)+"\n"+"★★★".slice(0,sts)+"☆☆☆".slice(sts)+" "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(bonus.length?" · "+bonus.length+" extra word"+(bonus.length>1?"s":""):"")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/printshop.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Read the job ticket's title first: every word fits it.","Look for the headline: it runs from the case's left side to its right side.","Corners are a good place to start: a corner block has only three neighbors.","Real words that aren't on the ticket fill the ink pot. Three drops pay for a hint.","Stuck? Ask the Printer: he rings one word's blocks. Ask again and he sets it."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, list=PS.JOBS.filter(function(j){ return j.tier===1; }), job=list[Math.floor(Math.random()*list.length)];
+  var p=PS.make("practice:"+Date.now()+":"+Math.random(),job,PS.WEEK[wd]);
+  if(!p){ startPractice(); return; }
+  load(dress(p,wd),"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Job","<p>Trace words through touching blocks. Every block belongs to one word, and the headline runs side to side.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%3===2&&window.Parlor) Parlor.practiceSay("Practice Job","<p>"+TIPS[(Math.floor(tipN/3)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done){ Parlor.lessonDone(); }
+}
+
+/* ---------- Learn to Play ---------- */
+/* one small case for every page: the job "In the Print Shop", headline PRINTER, words TYPE, PAPER, FONT and PROOF */
+var LTRAY=null;
+function lessonTray(){
+  if(LTRAY) return JSON.parse(JSON.stringify(LTRAY));
+  var spec={R:5,C:5,twist:.05,diag:.25,vert:0};
+  for(var s=0;s<200&&!LTRAY;s++){ var r=PS.rng("lesson:"+s), t=PS.layoutTray(spec,["PAPER","PROOF","TYPE","FONT"],"PRINTER",r); if(t&&lessonOk(t)) LTRAY=t; }
+  LTRAY.title="In the Print Shop"; LTRAY.spec={slots:true};
+  return JSON.parse(JSON.stringify(LTRAY));
+}
+/* the lesson's case must hold a short extra word inside PAPER, PROOF and FONT's blocks (for page 4) */
+function bonusIn(t,ks){ PS.dict(); var cells={}; ks.forEach(function(k){ t.paths[k].forEach(function(x){ cells[x]=1; }); });
+  var best=null; (function go(path,s){ if(best&&best.length<=4) return; if(s.length>=4&&PS.dictHas(s)&&t.words.indexOf(s)<0&&(!best||s.length<best.s.length)) best={s:s,p:path.slice(),length:s.length}; if(s.length>=6) return;
+    var last=path[path.length-1]; Object.keys(cells).forEach(function(k){ var x=+k; if(path.indexOf(x)>=0) return; if(path.length&&!PS.adj(last,x,t.C)) return; path.push(x); go(path,s+t.letters[x]); path.pop(); }); })([],"");
+  return best; }
+function lessonOk(t){ return !!bonusIn(t,[1,2,3,4].filter(function(k){ return t.words[k]!=="TYPE"; })); }
+function kOf(w){ return P.words.indexOf(w); }
+var LESSONS=[
+  {title:"The Print Shop",text:"<p>Every block in the case belongs to one of today's <b>words</b>. The job ticket's title tells you what they have in common.</p><p>Just look for now, then tap <b>Next</b>.</p>",setup:function(){}},
+  {title:"Set a Word",text:"<p><b>Drag</b> through the glowing blocks to spell <b>TYPE</b>, then lift your finger. (Or tap them one by one, and tap the last one again.)</p>",done:"<p>Set! Its letters are inked, and it's printed on the job ticket.</p>",
+    glow:function(){ return P.paths[kOf("TYPE")].filter(function(){ return !found[kOf("TYPE")]; }); },goal:function(){ return found[kOf("TYPE")]; }},
+  {title:"The Headline",text:"<p>One word, the <b>headline</b>, runs from the case's left side to its right side. It names the theme.</p><p>It starts on the glowing block. Find it.</p>",done:"<p>The headline is set in red, and the theme is printed on the ticket.</p>",
+    pre:["TYPE"],glow:function(){ return found[0]?[]:[P.paths[0][0]]; },goal:function(){ return found[0]; }},
+  {title:"Extra Words",text:"<p>Any other real word of four or more letters puts a drop in the <b>ink pot</b>. Three drops pay for a hint.</p><p>Trace the glowing word.</p>",done:"<p>A drop of ink. It isn't one of today's words, so its blocks stay free.</p>",
+    pre:["TYPE","PRINTER"],glow:function(){ return bonus.length?[]:(LB?LB.p:[]); },goal:function(){ return bonus.length>0; }},
+  {title:"Ask the Printer",text:"<p>Stuck? Press <b>Ask the Printer</b>: he rings one word's blocks; ask again and he sets it. Try it now.</p><p>Finish with no hints for <b>three stars</b>. A new job every day, from a small case on Monday to a big, twisty one on Sunday.</p>",done:"<p>That's everything. Happy printing!</p>",
+    pre:["TYPE","PRINTER"],goal:function(){ return hints>0||inkUsed>0; }}
+];
+var LB=null;
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k], t=lessonTray();
+  load(t,"lesson");
+  (Ls.pre||[]).forEach(function(w){ found[kOf(w)]=true; });
+  if(k===0){ /* a look at a case with two words set */ }
+  LB=bonusIn(P,[1,2,3,4].filter(function(q){ return P.words[q]!=="TYPE"; }));
+  glow=Ls.glow?Ls.glow():[]; listPaint(); paint();
+}
+var _paint=paint; paint=function(){ if(mode==="lesson"&&!done){ var Ls=LESSONS[lessonK]; glow=Ls.glow?Ls.glow():[]; } else glow=[]; _paint(); };
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  if(!P||!W) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  stage.classList.toggle("land",land);
+  if(land){ fitLand(VW); return; }
+  document.body.style.removeProperty("--pk-landR"); document.body.style.removeProperty("--pk-landTools");
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var bw, availH, ratio=VH/W;
+  if(wide){
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),1000), nw=Math.round(Math.max(250,Math.min(300,availW*.3)));
+    stage.style.setProperty("--ps-nw",nw+"px");
+    availH=window.innerHeight-top-22;
+    bw=Math.floor(Math.min(availW-nw-18-8,(availH-6)/ratio,640)); bw=Math.max(300,bw);
+    stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+    stage.style.setProperty("--ps-bw",bw+"px");
+  } else {
+    stage.style.removeProperty("--ps-nw");
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    var coach=seatedNow()&&document.body.classList.contains("pk-coaching")&&window.Parlor&&Parlor.coachHeight&&Parlor.coachHeight()>0;
+    stage.classList.toggle("coach",!!coach); stage.style.paddingTop="";
+    if(coach){ var ch=Parlor.coachHeight(), stTop=stage.getBoundingClientRect().top, bar=document.querySelector(".pk-bar");
+      var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
+      if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
+      availH=barTop-8-Math.max(ch,stTop); }
+    stage.classList.toggle("short",availH<470);
+    bw=Math.floor(VW-12); stage.style.setProperty("--ps-bw",bw+"px");
+    var rest=$(".ps-right",stage).offsetHeight+8;
+    var maxB=Math.floor((availH-rest)/ratio);
+    if(bw>maxB){ bw=Math.max(230,maxB); stage.style.setProperty("--ps-bw",bw+"px"); }
+  }
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+}
+function fitLand(VW){
+  var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+  var R=Math.round(Math.max(200,Math.min(270,VW*.3)));
+  document.body.style.setProperty("--pk-landR",R+"px");
+  var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
+  stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+  var bw=Math.floor(Math.min(lw,lh*W/VH)); stage.style.setProperty("--ps-bw",bw+"px");
+  document.body.style.setProperty("--pk-landTools",coaching?($(".ps-right",stage).offsetHeight+8)+"px":"0px");
+  document.body.style.setProperty("--pk-size",bw+"px");
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#psHint",stage).onclick=hint; $("#psClear",stage).onclick=function(){ if(mode==="lesson"&&blocked()) return; clearSel(true); }; }
+/* the keyboard on a computer: type a word's letters isn't offered (tracing is the game); Escape clears, Enter sets, H asks */
+document.addEventListener("keydown",function(e){
+  if(!seatedNow()||!P) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  if(e.key==="Escape"||e.key==="Backspace"){ e.preventDefault(); clearSel(true); }
+  else if(e.key==="Enter"&&sel.length>1){ e.preventDefault(); submit(); }
+});
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"printshop", cat:"puzzles", solo:true, free:true, daily:{key:"bwPrint:",streak:"bwPrintStreak"}, land:true, title:"The Print Shop", bg:"puzzles-printshop.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Job",
+  tagline:"Find the day's words in the type case.", invite:"Trace the day's words through a printer's type case. Every block belongs to one word, and the headline, running side to side, names the theme.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Cases",
+  sets:[
+    {id:"oak",name:"Oak Case & Maple Type",need:0,dots:["#b07a41","#ecd2a0"]},
+    {id:"walnut",name:"Walnut Case & Boxwood Type",club:true,dots:["#6e4630","#f1e0a2"]},
+    {id:"lacquer",name:"Red Lacquer & Holly Type",club:true,dots:["#a5301f","#f1ede2"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> find all of today's words in the type case. Every block belongs to exactly one word, so when you're done, every block is inked.</li><li><b>Tracing:</b> drag through <b>touching</b> blocks (side to side or corner to corner) to spell a word, then lift your finger. Or tap the blocks one by one and tap the last one again. Tap an earlier block to step back; <b>Clear</b> empties the stick.</li><li>The <b>job ticket's</b> title is the clue: every word fits it. One word, the <b>headline</b>, runs from the case's left side to its right side (now and then, top to bottom) and names the theme. It's set in red.</li><li><b>Extra words:</b> any other real word of four or more letters puts a drop in the <b>ink pot</b>. Three drops pay for one hint.</li><li><b>Ask the Printer:</b> he rings the blocks of one word (you trace it). Ask again while it's ringed and he sets it for you.</li></ol>",
+    score:"<ul><li><b>One job a day</b>, the same for everyone. It changes at midnight on your device. Monday's case is 5 × 6 with a line on the ticket for each word; Tuesday's 6 × 6; Wednesday's 6 × 7; Thursday to Sunday 6 × 8. The themes turn sideways from Friday, and the words twist and turn more each day. Sunday's is the hardest.</li><li><b>★★★</b> with no hints · <b>★★</b> with one or two · <b>★</b> with more. Hints paid for with ink don't count. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Your type is kept on this device, so you can come back to a hard one later.</li><li>Practice jobs (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onCoachSize:function(){ setTimeout(fit,0); },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); setTimeout(function(){ PS.dict(); },400); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+window.addEventListener("pagehide",save);
+/* for testing */
+window.PSO={get:function(){ return {P:P,glow:glow,found:found,bonus:bonus,sel:sel,ring:ring,hints:hints,ink:ink,inkUsed:inkUsed,done:done,mode:mode}; },
+  trace:function(cells){ sel=[]; cells.forEach(function(x){ sel.push(x); }); submit(); },hint:hint,
+  solve:function(){ P.words.forEach(function(w,k){ if(!found[k]) setWord(k,true); }); }};
+})();
+</script>
+</body>
+</html>

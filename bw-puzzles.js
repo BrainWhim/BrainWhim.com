@@ -28,8 +28,9 @@
     { id: "harbor", name: "The Harbor", page: "harbor.html", img: "puzzles-harbor-sm.jpg", tint: "#0f2c4a",
       about: "Slide the carved boats around a crowded marina until your red sloop can sail out of the harbor mouth.",
       daily: { key: "bwHarbor:", streak: "bwHarborStreak" }, what: "harbor" },
-    { id: "skyword", name: "The Print Shop", soon: true, tint: "#26262e",
-      about: "A themed word a day, set in type. The theme is revealed when you solve it." },
+    { id: "printshop", name: "The Print Shop", page: "printshop.html", tint: "#3a2418",
+      about: "Trace the day's words through a printer's type case. The headline, running side to side, names the theme.",
+      daily: { key: "bwPrint:", streak: "bwPrintStreak" }, what: "job" },
     { id: "maproom", name: "The Map Room", soon: true, tint: "#14353f",
       about: "Draw one coastline around the numbered islands. Each number tells how many sides it touches." },
     { id: "clockmaker", name: "The Clockmaker's Bench", page: "clockmaker.html", img: "puzzles-clockmaker-sm.jpg", tint: "#3a2616",
@@ -71,8 +72,8 @@
       '<path ' + G + ' d="M228 252h148l-22 26H252z"/><path ' + G + ' d="M302 120l20 8-20 8"/>' +
       '<path ' + THIN + ' d="M170 290c20-10 40-10 60 0s40 10 60 0 40-10 60 0 40 10 60 0 40-10 60 0"/>' +
       '<path ' + THIN + ' d="M196 304c18-8 36-8 54 0s36 8 54 0 36-8 54 0 36 8 54 0"/>',
-    skyword:
-      BLOCK(206, "S") + BLOCK(266, "K") + BLOCK(326, "Y") +
+    printshop:
+      BLOCK(206, "I") + BLOCK(266, "N") + BLOCK(326, "K") +
       '<path ' + THIN + ' d="M196 280h208"/><path ' + THIN + ' d="M210 292h180"/>' +
       '<path ' + G + ' d="M300 108l6 14 15 1-12 9 4 15-13-8-13 8 4-15-12-9 15-1z"/>',
     maproom:
