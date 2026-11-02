@@ -179,6 +179,7 @@ body[data-set="gold"]{--wood1:#c4b49a;--wood2:#968670;--wood3:#5f5243;--face1:#8
 .gp-pad.short .gp-rules{display:none}
 .gp-pad.short .gp-rule1{display:block}
 .gp-pad.short .gp-day{display:none}
+.gp-pad.coach .gp-notes{display:none}
 .gp-pad.short .gp-notes{padding:7px 10px}
 .gp-pad.tight .gp-day{margin-top:3px}
 /* ---------- phones held sideways: the planter fills the left; the notes and buttons stand in a column at the right ---------- */
@@ -490,7 +491,7 @@ var SVGNS="http://www.w3.org/2000/svg";
    The planter's top (frame and soil) is drawn flat on a plane, S units a plot, and tilted toward you by squashing it
    top to bottom (K). Its front face, the legs and its shadow hang below. The pebbles and roses stand up in screen space,
    at the middle of their plot, nearer rows a little larger, drawn back to front. */
-var S=100, F=60, K=.76, TOPM=34, TH=60, LEG=18, SHD=34, WALL=13;
+var S=100, F=60, K=.76, TOPM=4, TH=60, LEG=18, SHD=34, WALL=13;
 var P=null, W=0, VH=0;
 function PLANE(){ return "matrix(1 0 0 "+K+" 0 "+TOPM+")"; }
 function cx(i){ return F+(i%P.n+.5)*S; }
@@ -1027,11 +1028,19 @@ function fit(){
     stage.style.setProperty("--gp-nw",nw+"px");
     availH=window.innerHeight-top-22;
     bw=Math.floor(Math.min(availW-nw-18-8,(availH-6)/ratio,720)); bw=Math.max(300,bw);
-    stage.classList.remove("tight"); stage.classList.remove("short");
+    stage.classList.remove("tight"); stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
     stage.style.setProperty("--gp-bw",bw+"px");
   } else {
     stage.style.removeProperty("--gp-nw");
     availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    /* a lesson or practice card at the top (phones): the garden moves down below it and grows to fill the space
+       down to the kit's bar; the notes step aside (the card says the rules), so even a small lesson garden is big */
+    var coach=seatedNow()&&document.body.classList.contains("pk-coaching")&&window.Parlor&&Parlor.coachHeight&&Parlor.coachHeight()>0;
+    stage.classList.toggle("coach",!!coach); stage.style.paddingTop="";
+    if(coach){ var ch=Parlor.coachHeight(), stTop=stage.getBoundingClientRect().top, bar=document.querySelector(".pk-bar");
+      var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
+      if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
+      availH=barTop-8-Math.max(ch,stTop); }
     stage.classList.toggle("tight",availH<620);
     stage.classList.toggle("short",availH<480);   /* iPhone SE and the like: the rules in one line, so the garden stays big */
     bw=Math.floor(VW-12); stage.style.setProperty("--gp-bw",bw+"px");
@@ -1048,7 +1057,7 @@ function fitLand(VW){
   var R=Math.round(Math.max(200,Math.min(270,VW*.3)));
   document.body.style.setProperty("--pk-landR",R+"px");
   var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
-  stage.classList.remove("tight"); stage.classList.remove("short");
+  stage.classList.remove("tight"); stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
   var bw=Math.floor(Math.min(lw,lh*W/VH)); stage.style.setProperty("--gp-bw",bw+"px");
   document.body.style.setProperty("--pk-landTools",coaching?($(".gp-right",stage).offsetHeight+8)+"px":"0px");
   document.body.style.setProperty("--pk-size",bw+"px");
@@ -1079,6 +1088,7 @@ Parlor.init({
     play:"<ol><li><b>The goal:</b> plant one rose bush in every <b>row</b>, every <b>column</b> and every <b>flowerbed</b> (the beds are edged in brick).</li><li><b>No two roses may touch</b>, not even corner to corner.</li><li><b>Planting:</b> tap a plot once to lay a <b>pebble</b> (a note to yourself that no rose can go there), twice to plant a <b>rose</b>, and again to clear it. Drag across plots to lay pebbles; drag from a pebble to pick them up.</li><li>If two roses break a rule, both turn red and the gardener says why.</li><li><b>Undo</b> takes back your last move (Z or Backspace on a computer). <b>Restart</b> rakes the beds clear (and Undo brings them back).</li><li><b>Ask the Gardener:</b> he lifts out a rose in the wrong place; if none is, he shows the next step (pebbles where no rose can go, or the rose it settles) and tells you why.</li></ol>",
     score:"<ul><li><b>One garden a day</b>, the same for everyone. It changes at midnight on your device. Monday's garden is 6 × 6, Tuesday's and Wednesday's 7 × 7, Thursday's and Friday's 8 × 8, and the weekend's 9 × 9. Each day takes a little more thinking, and Sunday's is the hardest.</li><li>Every garden has exactly one answer, and can be worked out step by step, with no guessing.</li><li><b>★★★</b> with no help from the gardener · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice gardens (in Learn to Play) are free and don't count.</li></ul>"
   },
+  onCoachSize:function(){ setTimeout(fit,0); },
   onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
   lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
 });
