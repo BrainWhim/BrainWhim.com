@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Garden Plots · BrainWhim Puzzles</title>
+<meta name="description" content="The Garden Plots: a daily garden puzzle at BrainWhim. Plant one rose bush in every row, column and flowerbed, with no two touching.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1101b">
+<style>
+/* ===== The Garden Plots (Puzzles & Brain Games, Nov 1): a daily rose-planting puzzle in a raised garden bed =====
+   A cedar planter stands on the garden table, tilted toward you, its soil split into flowerbeds by brick edging.
+   Plant one rose bush in every row, every column and every bed, with no two touching (not even corner to corner).
+   Tap once for a pebble (no rose here), twice for a rose. Only one planting works.
+   Gardens (the Gardens card): Cedar & Red Roses (free); Painted White & Blush Roses, Weathered Oak & Gold Roses (Club).
+   Light comes from the top left everywhere: highlights on top and left edges, shade and shadows to the bottom right. */
+body{--wood1:#d9a06a;--wood2:#b47844;--wood3:#7a4824;--face1:#a8693a;--face2:#6e3d1c;--face3:#4a2610;--r1:#ff9aa4;--r2:#d4233f;--r3:#7c0c20;--brick1:#d0775a;--brick2:#a94c32;--brick3:#6e2c1a;--mortar:#e9dcc7;--metal1:#fff0bf;--metal2:#d9b25a;--metal3:#8f6a22}
+body[data-set="white"]{--wood1:#fbf8f1;--wood2:#e2dccf;--wood3:#a59d8f;--face1:#ece6da;--face2:#bfb6a6;--face3:#8c8373;--r1:#fff4f2;--r2:#f2b2bc;--r3:#b4566a;--brick1:#c9a48c;--brick2:#a27a62;--brick3:#6c4e3c}
+body[data-set="gold"]{--wood1:#c4b49a;--wood2:#968670;--wood3:#5f5243;--face1:#8e7e66;--face2:#5f5243;--face3:#3c3329;--r1:#fff7c2;--r2:#f0bf2a;--r3:#a06d08;--brick1:#b98a6a;--brick2:#8c5f43;--brick3:#5a3a27}
+.gp-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.gp-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.gp-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:18px;align-items:start;justify-content:center}
+.gp-left{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+.gp-right{display:flex;flex-direction:column;gap:10px;width:var(--gp-nw,270px)}
+/* ---------- the planter: two SVG layers (the planter and soil drawn once; the pebbles and roses redrawn as you play) ---------- */
+.gp-board{position:relative;width:var(--gp-bw,560px);-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+.gp-board svg{display:block;width:100%;height:auto}
+.gp-board .gp-live{position:absolute;left:0;top:0;cursor:pointer}
+.gp-board.done .gp-live{cursor:default}
+.gp-live .gp-pop{animation:gp-pop .34s cubic-bezier(.3,1.5,.6,1);transform-box:fill-box;transform-origin:50% 100%}
+@keyframes gp-pop{0%{transform:scale(.4);opacity:.3}100%{transform:none;opacity:1}}
+.gp-live .gp-pebin{animation:gp-pebin .24s ease-out;transform-box:fill-box;transform-origin:50% 60%}
+@keyframes gp-pebin{0%{transform:translateY(-14px) scale(.7);opacity:0}100%{transform:none;opacity:1}}
+.gp-live .gp-bad{animation:gp-bad 1s ease-in-out infinite}
+@keyframes gp-bad{50%{opacity:.35}}
+.gp-live .gp-ring{animation:gp-ring 1.1s ease 3}
+@keyframes gp-ring{0%,100%{opacity:.25}50%{opacity:1}}
+.gp-live .gp-glow{animation:gp-glow 1.1s ease-in-out infinite}
+@keyframes gp-glow{0%,100%{opacity:.35}50%{opacity:1}}
+.gp-live .gp-bloom{animation:gp-bloom .9s cubic-bezier(.3,1.6,.6,1) both;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes gp-bloom{0%{transform:none}35%{transform:scale(1.2) translateY(-3%)}100%{transform:none}}
+.gp-live .gp-flash{animation:gp-flash .9s ease-out forwards}
+@keyframes gp-flash{0%{opacity:.85}100%{opacity:0}}
+.gp-nope{animation:gp-nope .34s ease}
+@keyframes gp-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+/* the reveal: petals drifting down over the garden, and a butterfly */
+.gp-petals{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.gp-petals i{position:absolute;top:-8%;width:11px;height:8px;border-radius:70% 0 70% 0;background:radial-gradient(ellipse at 30% 30%,var(--r1),var(--r2) 70%);opacity:0;animation:gp-fall 3.6s ease-in forwards}
+@keyframes gp-fall{0%{opacity:0;transform:translate(0,0) rotate(0)}12%{opacity:.95}100%{opacity:0;transform:translate(var(--dx,30px),var(--dy,420px)) rotate(var(--rot,320deg))}}
+.gp-fly{position:absolute;left:-12%;top:40%;width:34px;height:30px;z-index:4;pointer-events:none;animation:gp-fly 4.2s ease-in-out forwards}
+.gp-fly svg{width:100%;height:100%}
+.gp-fly .w{transform-origin:50% 50%;animation:gp-flap .18s ease-in-out infinite alternate}
+@keyframes gp-flap{to{transform:scaleX(.35)}}
+@keyframes gp-fly{0%{transform:translate(0,0)}30%{transform:translate(38vw,-60px)}60%{transform:translate(70vw,10px)}100%{transform:translate(120vw,-90px)}}
+.gp-sign{position:absolute;left:50%;top:44%;z-index:5;transform:translate(-50%,-50%) rotate(-6deg);padding:7px 16px 6px;border-radius:6px;font:700 italic 26px/1 Cormorant Garamond,serif;letter-spacing:.04em;color:#3b2a0c;white-space:nowrap;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),2px 6px 12px rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.gp-sign.on{animation:gp-sign .5s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes gp-sign{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(1.8)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
+.gp-toast{position:absolute;z-index:6;left:50%;top:2px;transform:translateX(-50%);width:max-content;max-width:94%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.gp-toast.on{opacity:1}
+.gp-wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;font:700 italic 20px Cormorant Garamond,serif;color:#f0d27a;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .3s}
+.gp-wait.on{opacity:1}
+/* ---------- the head gardener's notes: the rules, on a seed-catalog card ---------- */
+.gp-notes{position:relative;border-radius:4px;color:#2a2116;padding:12px 14px 12px 16px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .38 0 0 0 0 .2 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23p)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 25% 10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(170deg,#f7f3e3,#ece3c6 60%,#e2d6b2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -12px 16px -12px rgba(110,90,40,.25),0 1px 1px rgba(0,0,0,.25),2px 9px 16px rgba(20,10,0,.42)}
+.gp-notes::before{content:"";position:absolute;left:8px;right:8px;top:8px;bottom:8px;border:1px solid rgba(86,120,64,.35);border-radius:3px;pointer-events:none}
+.gp-twine{position:absolute;right:16px;top:-9px;width:30px;height:26px;z-index:2;pointer-events:none}
+.gp-notes h2{margin:2px 0 1px;padding-right:22px;font:700 19.5px/1.12 Cormorant Garamond,serif;color:#2f4a26}
+.gp-notes .gp-no{display:block;margin:0 0 8px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7a6236}
+.gp-rules{margin:0;padding:0;list-style:none}
+.gp-rules li{position:relative;padding:3px 0 3px 26px;font:500 13.5px/1.38 Montserrat,sans-serif}
+.gp-rules li svg{position:absolute;left:0;top:3px;width:19px;height:19px}
+.gp-how{margin:8px 0 0;padding-top:7px;border-top:1px dashed rgba(86,120,64,.4);font:500 12px/1.4 Montserrat,sans-serif;color:#5b4a2c}
+.gp-how b{color:#2f4a26}
+.gp-day{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;margin:8px 0 0;font:600 12px Montserrat,sans-serif;color:#5b4a2c}
+.gp-day b{color:#7c2a1e}
+.gp-count{font:700 13px Montserrat,sans-serif;color:#2f4a26;white-space:nowrap}
+/* ---------- tools ---------- */
+.gp-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.gp-tools .pk-btn{width:auto;margin:0;padding:8px 10px;min-height:0;white-space:nowrap}
+.gp-tools .pk-btn.gold{grid-column:1 / -1}
+.gp-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.gp-tools .pk-btn:disabled{opacity:.45}
+.gp-ringbtn{animation:gp-ringbtn 1.1s ease 2}
+@keyframes gp-ringbtn{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+/* ---------- the result window ---------- */
+.gp-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.gp-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.gp-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.gp-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.gp-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.gp-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.gp-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(247,243,227,.97),rgba(236,227,198,.97));color:#2a2116;text-align:left}
+.gp-story .gp-mug{flex:none;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#eaf3dc,#b9cf9f 70%,#86a46a);overflow:hidden;box-shadow:0 0 0 2px #b38a3a,inset 1px 2px 4px rgba(0,0,0,.25)}
+.gp-story .gp-mug svg{width:100%;height:100%}
+#gpEnd .gp-story h3{margin:0 0 1px;text-align:left;font:700 19px/1.15 Cormorant Garamond,serif;color:#2f4a26}
+#gpEnd .gp-story .gp-kind{margin:0 0 3px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a6236;text-align:left}
+#gpEnd .gp-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#2a2116;text-align:left}
+#gpEnd .gp-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.gp-story .gp-rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:#2f4a26;font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.gp-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#gpEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-height:760px){
+  #gpEnd .pk-modal{padding:16px 16px 14px}
+  #gpEnd h2{font-size:21px;margin-bottom:2px}
+  #gpEnd .gp-stars{font-size:24px;margin:0 0 2px}
+  #gpEnd .gp-facts b{font-size:15px}
+  #gpEnd .gp-facts div{padding:5px 4px}
+  #gpEnd .gp-story{margin:8px 0 2px;padding:8px 10px}
+  #gpEnd .gp-story p.clamp{-webkit-line-clamp:2}
+  #gpEnd .gp-story .gp-mug{width:48px;height:48px}
+  #gpEnd .pk-kick{margin-bottom:2px}
+  #gpEnd .gp-facts{margin:6px 0 2px}
+  #gpEnd .gp-note{font-size:11.5px;margin:4px 0 0;line-height:1.4}
+  #gpEnd .gp-stars{font-size:22px}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:600px){
+  #gpEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
+  #gpEnd .pk-streak .pk-btn{padding:9px 12px}
+  #gpEnd .pk-modal .pk-streak p{margin:0 0 8px}
+  #gpEnd .pk-kick{margin:0}
+  #gpEnd h2{font-size:19px;margin:0}
+  #gpEnd .gp-stars{font-size:20px;margin:0}
+  #gpEnd .gp-facts{margin:4px 0 2px}
+  #gpEnd .gp-facts div{padding:3px 2px}
+  #gpEnd .gp-facts b{font-size:14px}
+  #gpEnd .gp-story{margin:6px 0 0;padding:6px 8px}
+  #gpEnd .gp-story .gp-mug{width:40px;height:40px}
+  #gpEnd .gp-story h3{font-size:15.5px}
+  #gpEnd .gp-note{display:none}
+  #gpEnd .pk-streak{margin-top:8px;padding:8px 10px}
+  #gpEnd .pk-streak p,#gpEnd .pk-streak div{font-size:12px;line-height:1.35}
+  #gpEnd .pk-row{margin-top:8px;gap:6px}
+  #gpEnd .pk-row .pk-btn{padding:8px 6px;font-size:12.5px}
+}
+/* the result window held sideways: two columns, so it fits with no scrolling */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  #gpEnd .pk-modal{width:min(780px,calc(100vw - 24px));max-width:none;display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-content:start;padding:12px 16px 12px}
+  #gpEnd .gp-endL,#gpEnd .gp-endR{min-width:0}
+  #gpEnd .gp-endR{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+  #gpEnd .pk-kick{margin:0 0 2px}
+  #gpEnd h2{font-size:20px;margin:0}
+  #gpEnd .gp-stars{font-size:22px;margin:0 0 2px}
+  #gpEnd .gp-facts{margin:4px 0 2px}
+  #gpEnd .gp-facts div{padding:4px 2px}
+  #gpEnd .gp-facts b{font-size:14px}
+  #gpEnd .gp-story{margin:6px 0 0;padding:7px 9px}
+  #gpEnd .gp-story .gp-mug{width:44px;height:44px}
+  #gpEnd .gp-story h3{font-size:16px}
+  #gpEnd .gp-story p{font-size:12px;line-height:1.38}
+  #gpEnd .gp-note{font-size:11px;margin:4px 0 0}
+  #gpEnd .gp-endR .pk-streak{margin:0}
+  #gpEnd .gp-endR .pk-row{margin:0;gap:8px}
+  #gpEnd .gp-endR .pk-row .pk-btn{padding:9px 6px;font-size:12.5px}
+}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .gp-pad{grid-template-columns:1fr;gap:8px;justify-items:center}
+  .gp-right{width:100%;max-width:calc(100vw - 12px)}
+  .gp-notes{padding:8px 10px 8px 12px}
+  .gp-notes::before{left:5px;right:5px;top:5px;bottom:5px}
+  .gp-notes h2,.gp-notes .gp-no{display:none}
+  .gp-twine{display:none}
+  .gp-rules{display:grid;grid-template-columns:1fr 1fr;column-gap:8px}
+  .gp-rules li{font-size:12px;line-height:1.3;padding:2px 0 2px 22px}
+  .gp-rules li svg{width:16px;height:16px;top:2px}
+  .gp-rules li.wide{grid-column:1 / -1}
+  .gp-how{margin-top:5px;padding-top:5px;font-size:11.5px}
+  .gp-day{margin-top:5px;font-size:11.5px}
+  .gp-tools{width:100%;padding:6px;gap:6px;grid-template-columns:1.6fr 1fr 1fr}
+  .gp-tools .pk-btn{padding:8px 8px;font-size:12.5px}
+  .gp-tools .pk-btn.gold{grid-column:auto}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .gp-toast{font-size:13px;padding:7px 11px}
+}
+.gp-pad.tight .gp-how{display:none}
+.gp-rule1{display:none;margin:0;font:500 12px/1.35 Montserrat,sans-serif}
+.gp-pad.short .gp-rules{display:none}
+.gp-pad.short .gp-rule1{display:block}
+.gp-pad.short .gp-day{display:none}
+.gp-pad.short .gp-notes{padding:7px 10px}
+.gp-pad.tight .gp-day{margin-top:3px}
+/* ---------- phones held sideways: the planter fills the left; the notes and buttons stand in a column at the right ---------- */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .gp-pad.land{grid-template-columns:auto;justify-items:center}
+  body.pk-land.seated .gp-pad.land .gp-right{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:8px;max-height:calc(100dvh - 16px);width:var(--pk-landR);max-width:none;gap:6px}
+  body.pk-land.seated.pk-coaching .gp-pad.land .gp-right{top:auto;bottom:8px}
+  body.pk-land.seated.pk-coaching .gp-pad.land .gp-how{display:none}
+  body.pk-land.seated .gp-pad.land .gp-rules{display:block}
+  body.pk-land.seated .gp-pad.land .gp-rules li{font-size:11.5px}
+  body.pk-land.seated .gp-pad.land .gp-how{font-size:11px}
+  body.pk-land.seated .gp-pad.land .gp-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
+  body.pk-land.seated .gp-pad.land .gp-tools .pk-btn{padding:8px 6px;font-size:12.5px}
+  body.pk-land.seated .gp-pad.land .gp-tools .pk-btn.gold{grid-column:1 / -1}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1101d"></script>
+<script id="gpCore">
+/* ===== The Garden Plots core (rules, graded solver, daily maker): shared by the page and the tests =====
+   An n x n garden is split into n flowerbeds. Plant n rose bushes: one in every row, every column and every bed,
+   and no two touching, not even corner to corner. Every daily garden has exactly one answer (a counting search),
+   and can be worked out step by step with no guessing: a careful-gardener solver does it, scoring each kind of
+   reasoning it needs. The score sets the day's difficulty, and the same solver drives the hints. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* the beds: each is planted with its own ground cover, named for it ("the lavender bed") */
+var BEDS=[
+  {id:"lavender",  name:"lavender",     g:["#b4a6dc","#8f7fc0","#6c5c9e"], f:"#e9e2ff"},
+  {id:"marigold",  name:"marigold",     g:["#f2c35a","#e09a2e","#b0701c"], f:"#fff1c4"},
+  {id:"sage",      name:"sage",         g:["#b9cf9f","#93ad78","#6d8756"], f:"#eef6e2"},
+  {id:"peony",     name:"peony",        g:["#f1b3c0","#dc8799","#b2647a"], f:"#fff0f3"},
+  {id:"forget",    name:"forget-me-not",g:["#a9c8ec","#7ea6d6","#5a80b3"], f:"#eef6ff"},
+  {id:"clover",    name:"clover",       g:["#8fbf73","#679a51","#467536"], f:"#f4fff0"},
+  {id:"poppy",     name:"poppy",        g:["#f19a7d","#d9694c","#a94a33"], f:"#ffe6dc"},
+  {id:"chamomile", name:"chamomile",    g:["#f3eac4","#ddcf98","#b6a66c"], f:"#ffffff"},
+  {id:"heather",   name:"heather",      g:["#c493b9","#a06c96","#784c72"], f:"#fbe9f6"}
+];
+
+/* the week: the garden grows, and each day must reach a difficulty score (see grade) with the reasoning it's allowed.
+   n: the garden's size · lvl: the hardest kind of step it may need (see below) · eq: how evenly the beds grow ·
+   need: how many steps of level 3+ / 4+ it must use · score: the band its total must land in.
+   Bands set Nov 1 from a year of days (tools/gardenplots/check-year.js). */
+var WEEK={
+  1:{n:6,lvl:3,eq:.5,need:[1,0],score:[10,18],label:"Monday"},
+  2:{n:7,lvl:3,eq:.5,need:[2,0],score:[15,24],label:"Tuesday"},
+  3:{n:7,lvl:4,eq:.5,need:[3,1],score:[20,32],label:"Wednesday"},
+  4:{n:8,lvl:4,eq:.5,need:[3,1],score:[25,38],label:"Thursday"},
+  5:{n:8,lvl:5,eq:.5,need:[4,1],score:[32,50],label:"Friday"},
+  6:{n:9,lvl:6,eq:.5,need:[5,2],score:[42,66],label:"Saturday"},
+  0:{n:9,lvl:6,eq:1.5,need:[6,2],score:[64,150],label:"Sunday"}
+};
+/* the kinds of step a careful gardener uses, simplest first; level and cost:
+   single (1, 0.5): a row, column or bed with one spot left
+   line (2, 1.5): a bed that lies all in one row (or column) takes that line's rose, so the rest of the line stays empty;
+     or a row (column) whose spots all lie in one bed, so the rest of the bed stays empty
+   touch (2, 1.5): every spot left in a row, column or bed touches a cell, so that cell can't have a rose
+   kill (3, 3): a rose in a cell would rule out every spot left in a row, column or bed (any mix of reasons)
+   group2 (4, 4): two beds that lie all in two rows (or columns), or the reverse, take both lines' roses
+   group3 / group4 (5, 6 / 8): the same with three or four
+   ahead (6, 10): a rose here, then the only-spot and crowding steps that follow, would leave a row, column or bed empty */
+var COST={single:.5,line:1.5,touch:1.5,kill:3,group2:4,group3:6,group4:8,ahead:10};
+var LVL={single:1,line:2,touch:2,kill:3,group2:4,group3:5,group4:5,ahead:6};
+
+/* ---------- the garden's geometry ---------- */
+function geom(n,reg){
+  var U=[], i, u;   /* units: rows 0..n-1, columns n..2n-1, beds 2n..3n-1 */
+  for(u=0;u<3*n;u++) U.push([]);
+  for(i=0;i<n*n;i++){ var r=(i/n)|0, c=i%n; U[r].push(i); U[n+c].push(i); U[2*n+reg[i]].push(i); }
+  var CU=[], NB=[];
+  for(i=0;i<n*n;i++){ r=(i/n)|0; c=i%n; CU.push([r,n+c,2*n+reg[i]]); var nb=[];
+    for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; var rr=r+dr, cc=c+dc; if(rr>=0&&cc>=0&&rr<n&&cc<n) nb.push(rr*n+cc); } NB.push(nb); }
+  /* what a rose at i rules out: its row, column and bed, and the cells touching it */
+  var OUT=[], mark=new Int32Array(n*n).fill(-1);
+  for(i=0;i<n*n;i++){ var o=[]; mark[i]=i;
+    for(var q=0;q<3;q++){ var L=U[CU[i][q]]; for(var j=0;j<L.length;j++) if(mark[L[j]]!==i){ mark[L[j]]=i; o.push(L[j]); } }
+    var nb2=NB[i]; for(j=0;j<nb2.length;j++) if(mark[nb2[j]]!==i){ mark[nb2[j]]=i; o.push(nb2[j]); }
+    OUT.push(o); }
+  return {n:n,U:U,CU:CU,NB:NB,OUT:OUT};
+}
+
+/* ---------- counting answers (stops at 2) ---------- */
+function count(n,reg,lim){
+  lim=lim||2; var col=new Array(n).fill(0), bed=new Array(n).fill(0), at=new Array(n).fill(-9), found=0, first=null;
+  (function go(r){
+    if(found>=lim) return;
+    if(r===n){ found++; if(!first) first=at.slice(); return; }
+    for(var c=0;c<n;c++){ if(col[c]||bed[reg[r*n+c]]) continue; if(r>0&&Math.abs(at[r-1]-c)<=1) continue;
+      col[c]=1; bed[reg[r*n+c]]=1; at[r]=c; go(r+1); col[c]=0; bed[reg[r*n+c]]=0; at[r]=-9; if(found>=lim) return; }
+  })(0);
+  return {n:found,sol:first};
+}
+var BASE={};
+function base(n){ if(BASE[n]) return BASE[n]; var U=[], NB=[], i;
+  for(i=0;i<2*n;i++) U.push([]);
+  for(i=0;i<n*n;i++){ var r=(i/n)|0, c=i%n; U[r].push(i); U[n+c].push(i); var nb=[];
+    for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; var rr=r+dr, cc=c+dc; if(rr>=0&&cc>=0&&rr<n&&cc<n) nb.push(rr*n+cc); } NB.push(nb); }
+  return BASE[n]={U:U,NB:NB}; }
+function allSols(n,reg,lim){
+  /* branch on the row, column or bed with the fewest spots left (fast enough for the maker's many tries) */
+  var B=base(n), U=B.U.slice(), N=n*n, i;
+  for(i=0;i<n;i++) U.push([]); for(i=0;i<N;i++) U[2*n+reg[i]].push(i);
+  var open=new Uint8Array(N).fill(1), sat=new Uint8Array(3*n), out=[], at=new Array(n).fill(-1);
+  (function go(left){
+    if(out.length>=lim) return;
+    if(!left){ out.push(at.slice()); return; }
+    var best=-1, bc=99, u, j;
+    for(u=0;u<3*n;u++){ if(sat[u]) continue; var L=U[u], c=0; for(j=0;j<L.length;j++) if(open[L[j]]) c++; if(c<bc){ bc=c; best=u; if(!c) return; } }
+    var cells=U[best].filter(function(x){ return open[x]; });
+    for(var q=0;q<cells.length;q++){ var x=cells[q], r=(x/n)|0, cu=[r,n+x%n,2*n+reg[x]], undo=[];
+      for(var k=0;k<3;k++){ var L2=U[cu[k]]; for(j=0;j<L2.length;j++) if(open[L2[j]]){ open[L2[j]]=0; undo.push(L2[j]); } }
+      var nb=B.NB[x]; for(j=0;j<nb.length;j++) if(open[nb[j]]){ open[nb[j]]=0; undo.push(nb[j]); }
+      sat[cu[0]]=sat[cu[1]]=sat[cu[2]]=1; at[r]=x%n;
+      go(left-1);
+      sat[cu[0]]=sat[cu[1]]=sat[cu[2]]=0; at[r]=-1;
+      for(j=0;j<undo.length;j++) open[undo[j]]=1;
+      if(out.length>=lim) return;
+      open[x]=0;   /* x stays ruled out for this unit's next branches */
+    }
+    for(q=0;q<cells.length;q++) open[cells[q]]=1;
+  })(n);
+  return out;
+}
+/* ---------- the careful gardener ----------
+   state: open[i] (a rose could still go here), rose[i]. Each step is the simplest that makes progress.
+   Returns {ok, score, steps:[{k, u, u2, out:[cells], at:cell}], deep:[level>=3 count, level>=4 count], max}. */
+function solver(G,maxLvl){
+  var n=G.n, N=n*n;
+  function unsat(st,u){ var L=G.U[u]; for(var j=0;j<L.length;j++) if(st.rose[L[j]]) return false; return true; }
+  function opens(st,u){ var L=G.U[u], o=[]; for(var j=0;j<L.length;j++) if(st.open[L[j]]) o.push(L[j]); return o; }
+  function place(st,i){ st.rose[i]=1; st.open[i]=0; var O=G.OUT[i]; for(var j=0;j<O.length;j++) st.open[O[j]]=0; }
+  function dead(st){ for(var u=0;u<3*n;u++) if(unsat(st,u)&&!opens(st,u).length) return u; return -1; }
+  function done(st){ for(var i=0,c=0;i<N;i++) c+=st.rose[i]; return c===n; }
+  function sub(a,b){ for(var j=0;j<a.length;j++) if(b.indexOf(a[j])<0) return false; return true; }
+  /* one step, the simplest available; returns the step or null */
+  function step(st,lvl){
+    var u, o, i, j;
+    for(u=0;u<3*n;u++) if(unsat(st,u)){ o=opens(st,u); if(o.length===1) return {k:"single",u:u,at:o[0]}; }
+    if(lvl<2) return null;
+    /* a bed in one line (it takes that row's or column's rose), or a row or column that fits only in one bed */
+    for(u=0;u<3*n;u++) if(unsat(st,u)){ o=opens(st,u); if(o.length<2) continue;
+      var tgt=[]; if(u>=2*n){ tgt.push(G.CU[o[0]][0],G.CU[o[0]][1]); } else tgt.push(G.CU[o[0]][2]);
+      for(var t=0;t<tgt.length;t++){ var v=tgt[t]; if(!o.every(function(x){ return G.CU[x].indexOf(v)>=0; })) continue;
+        var out=opens(st,v).filter(function(x){ return o.indexOf(x)<0; }); if(out.length) return {k:"line",u:u,u2:v,out:out}; } }
+    /* crowding by touch: every spot left in a row, column or bed touches this cell */
+    for(u=0;u<3*n;u++) if(unsat(st,u)){ o=opens(st,u); var kill=[];
+      for(i=0;i<N;i++) if(st.open[i]&&o.indexOf(i)<0&&sub(o,G.NB[i])) kill.push(i);
+      if(kill.length) return {k:"touch",u:u,out:kill}; }
+    if(lvl<3) return null;
+    /* crowding, any way: a rose here would rule out every spot left in a row, column or bed */
+    for(u=0;u<3*n;u++) if(unsat(st,u)){ o=opens(st,u); kill=[];
+      for(i=0;i<N;i++) if(st.open[i]&&o.indexOf(i)<0&&sub(o,G.OUT[i])) kill.push(i);
+      if(kill.length) return {k:"kill",u:u,out:kill}; }
+    if(lvl<4) return null;
+    /* groups: k beds that fit only in k rows (or columns), or k rows (columns) that fit only in k beds */
+    for(var k=2;k<=4;k++){ if(k>2&&lvl<5) break;
+      var s=group(st,k); if(s) return s; }
+    if(lvl<6) return null;
+    /* looking ahead: try a rose, follow the only-spot and crowding steps; if a row, column or bed goes empty, it can't go there */
+    for(i=0;i<N;i++) if(st.open[i]){ var s2=clone(st); place(s2,i);
+      for(var g=0;g<4*n;g++){ if(dead(s2)>=0) break; var q=step(s2,3); if(!q) break; apply(s2,q); }
+      if(dead(s2)>=0) return {k:"ahead",out:[i],u:dead(s2),at:i}; }
+    return null;
+  }
+  function group(st,k){
+    var kinds=[[2*n,3*n,0],[2*n,3*n,1],[0,n,2],[n,2*n,2]];   /* [from units, to type]: beds->rows, beds->cols, rows->beds, cols->beds */
+    for(var q=0;q<kinds.length;q++){
+      var A=[]; for(var u=kinds[q][0];u<kinds[q][1];u++) if(unsat(st,u)&&opens(st,u).length) A.push(u);
+      var res=null;
+      combos(A,k,function(set){
+        var cells=[], lines={}; set.forEach(function(u){ opens(st,u).forEach(function(x){ cells.push(x); lines[G.CU[x][kinds[q][2]]]=1; }); });
+        var L=Object.keys(lines).map(Number); if(L.length!==k) return false;
+        var out=[]; L.forEach(function(v){ opens(st,v).forEach(function(x){ if(cells.indexOf(x)<0) out.push(x); }); });
+        if(out.length){ res={k:"group"+k,us:set,us2:L,out:out}; return true; } return false; });
+      if(res) return res;
+    }
+    return null;
+  }
+  function combos(A,k,fn){ var idx=[]; (function go(s){ if(idx.length===k) return fn(idx.map(function(i){ return A[i]; }));
+      for(var i=s;i<A.length;i++){ idx.push(i); if(go(i+1)) return true; idx.pop(); } return false; })(0); }
+  function clone(st){ return {open:st.open.slice(),rose:st.rose.slice()}; }
+  function apply(st,s){ if(s.k==="single") place(st,s.at); else s.out.forEach(function(x){ st.open[x]=0; }); }
+  function run(start,lvl){
+    var st={open:new Array(N).fill(1),rose:new Array(N).fill(0)};
+    (start.out||[]).forEach(function(x){ st.open[x]=0; });
+    (start.roses||[]).forEach(function(x){ place(st,x); });
+    var steps=[], score=0, deep=[0,0], max=0;
+    for(var g=0;g<6*N&&!done(st);g++){
+      if(dead(st)>=0) return {ok:false,steps:steps,score:score,deep:deep,max:max,st:st,dead:true};
+      var s=step(st,lvl); if(!s) return {ok:false,steps:steps,score:score,deep:deep,max:max,st:st};
+      apply(st,s); steps.push(s); score+=COST[s.k]; var L=LVL[s.k]; if(L>=3) deep[0]++; if(L>=4) deep[1]++; if(L>max) max=L;
+    }
+    return {ok:done(st),steps:steps,score:score,deep:deep,max:max,st:st};
+  }
+  return {run:run,step:step,apply:apply,place:place,dead:dead};
+}
+function grade(P,lvl){ var G=geom(P.n,P.reg); return solver(G,lvl==null?6:lvl).run({},lvl==null?6:lvl); }
+
+/* ---------- making a garden ----------
+   Lay out the answer first (one rose per row and column, none touching), grow a bed around each rose,
+   then reshape the beds until only that answer works. */
+function layout(n,r){
+  for(var tries=0;tries<200;tries++){
+    var at=[], used=new Array(n).fill(0), ok=true;
+    for(var row=0;row<n&&ok;row++){ var c=shuffle(Array.from({length:n},function(_,i){ return i; }),r).filter(function(c){ return !used[c]&&(row===0||Math.abs(at[row-1]-c)>1); });
+      if(!c.length){ ok=false; break; } at.push(c[0]); used[c[0]]=1; }
+    if(ok) return at;
+  }
+  return null;
+}
+function grow(n,at,r,eq){
+  var reg=new Array(n*n).fill(-1), size=new Array(n).fill(1), i;
+  for(i=0;i<n;i++) reg[i*n+at[i]]=i;
+  var left=n*n-n, ex=eq!=null?eq:(r()<.5?.8:.5);
+  while(left>0){
+    /* pick a bed (smaller beds a little more often, so sizes stay mixed but not wild), then a free cell beside it */
+    var w=[], tot=0; for(i=0;i<n;i++){ var x=1/Math.pow(size[i],ex); w.push(x); tot+=x; }
+    var pick=r()*tot, b=0; for(;b<n-1;b++){ pick-=w[b]; if(pick<=0) break; }
+    var fr=[]; for(i=0;i<n*n;i++) if(reg[i]===b){ var rr=(i/n)|0, cc=i%n;
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){ var y=rr+d[0], x=cc+d[1]; if(y>=0&&x>=0&&y<n&&x<n&&reg[y*n+x]<0) fr.push(y*n+x); }); }
+    if(!fr.length){ size[b]+=0; /* boxed in: try another */ var any=false; for(i=0;i<n*n;i++) if(reg[i]<0){ any=true; break; } if(!any) break; continue; }
+    var c2=fr[Math.floor(r()*fr.length)]; reg[c2]=b; size[b]++; left--;
+  }
+  return reg;
+}
+function connected(n,reg,b){
+  var cells=[]; for(var i=0;i<n*n;i++) if(reg[i]===b) cells.push(i); if(!cells.length) return false;
+  var seen={}, st=[cells[0]]; seen[cells[0]]=1;
+  while(st.length){ var x=st.pop(), r=(x/n)|0, c=x%n;
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){ var y=r+d[0], z=c+d[1]; if(y<0||z<0||y>=n||z>=n) return; var j=y*n+z; if(reg[j]===b&&!seen[j]){ seen[j]=1; st.push(j); } }); }
+  return Object.keys(seen).length===cells.length;
+}
+/* reshape until the answer is the only one: move a cell an alternative answer uses into a neighboring bed */
+function unique(n,reg,at,r){
+  var solSet={}; for(var i=0;i<n;i++) solSet[i*n+at[i]]=1;
+  for(var it=0;it<60;it++){
+    var S=allSols(n,reg,2); if(S.length===1) return true;
+    var alt=S[0].join()===at.join()?S[1]:S[0];
+    var cand=[]; for(i=0;i<n;i++){ var x=i*n+alt[i]; if(!solSet[x]) cand.push(x); }
+    shuffle(cand,r); var moved=false;
+    for(var q=0;q<cand.length&&!moved;q++){ var x2=cand[q], rr=(x2/n)|0, cc=x2%n, from=reg[x2];
+      var nbs=shuffle([[1,0],[-1,0],[0,1],[0,-1]].map(function(d){ var y=rr+d[0], z=cc+d[1]; return y>=0&&z>=0&&y<n&&z<n?reg[y*n+z]:-1; }).filter(function(b){ return b>=0&&b!==from; }),r);
+      for(var k=0;k<nbs.length&&!moved;k++){ reg[x2]=nbs[k]; if(connected(n,reg,from)) moved=true; else reg[x2]=from; } }
+    if(!moved) return false;
+  }
+  return allSols(n,reg,2).length===1;
+}
+/* a garden for a week-day spec; tries until one lands in the day's band */
+function make(seed,spec,opt){
+  opt=opt||{}; var r=rng(seed), n=spec.n, best=null;
+  for(var t=0;t<(opt.tries||(n>=9?2500:800));t++){
+    var at=layout(n,r); if(!at) continue;
+    var reg=grow(n,at,r,spec.eq); if(reg.indexOf(-1)>=0) continue;
+    if(!unique(n,reg,at,r)) continue;
+    var g=grade({n:n,reg:reg},spec.lvl);
+    if(!g.ok) continue;
+    var P={n:n,reg:reg,sol:at,score:g.score,deep:g.deep,max:g.max,steps:g.steps.length,tries:t+1};
+    if(g.score>=spec.score[0]&&g.score<=spec.score[1]&&g.deep[0]>=spec.need[0]&&g.deep[1]>=spec.need[1]) return P;
+    /* keep the nearest, in case nothing lands in the band */
+    var d=g.score<spec.score[0]?spec.score[0]-g.score:g.score>spec.score[1]?g.score-spec.score[1]:0;
+    d+=Math.max(0,spec.need[0]-g.deep[0])*3+Math.max(0,spec.need[1]-g.deep[1])*4;
+    if(!best||d<best.d){ P.d=d; best=P; }
+  }
+  if(best) best.off=true;
+  return best;
+}
+function forDay(key,wd){ var p=make("gp:"+key,WEEK[wd]); p.beds=BEDS; return p; }
+
+root.GP={rng:rng,shuffle:shuffle,BEDS:BEDS,WEEK:WEEK,COST:COST,LVL:LVL,geom:geom,count:count,allSols:allSols,solver:solver,grade:grade,make:make,forDay:forDay,unique:unique,connected:connected};
+})(typeof window!=="undefined"?window:globalThis);
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FEEL=["Hardest","Gentle","Easy","Steady","Moderate","Tricky","Hard"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+var ORD=["first","second","third","fourth","fifth","sixth","seventh","eighth","ninth"];
+var SVGNS="http://www.w3.org/2000/svg";
+
+/* ---------- the drawing: sizes in drawing units ----------
+   The planter's top (frame and soil) is drawn flat on a plane, S units a plot, and tilted toward you by squashing it
+   top to bottom (K). Its front face, the legs and its shadow hang below. The pebbles and roses stand up in screen space,
+   at the middle of their plot, nearer rows a little larger, drawn back to front. */
+var S=100, F=60, K=.76, TOPM=34, TH=60, LEG=18, SHD=34, WALL=13;
+var P=null, W=0, VH=0;
+function PLANE(){ return "matrix(1 0 0 "+K+" 0 "+TOPM+")"; }
+function cx(i){ return F+(i%P.n+.5)*S; }
+function cy(i){ return TOPM+(F+(((i/P.n)|0)+.5)*S)*K; }
+function depth(i){ var r=(i/P.n)|0; return 1+.07*(P.n>1?r/(P.n-1)-.5:0); }
+
+/* the flowerbeds' colors: each bed has its own ground cover; beds that sit side by side never get two look-alikes */
+var LIKE={sage:"clover",clover:"sage",marigold:"poppy",poppy:"marigold",lavender:"heather",heather:"lavender,peony",peony:"heather,poppy"};
+function bedColors(n,reg,seed){
+  var adj={}, i, j; for(i=0;i<n*n;i++){ var r=(i/n)|0, c=i%n; [[0,1],[1,0],[1,1],[1,-1]].forEach(function(d){ var y=r+d[0], x=c+d[1]; if(y<n&&x>=0&&x<n){ j=y*n+x; if(reg[i]!==reg[j]){ adj[reg[i]+","+reg[j]]=1; adj[reg[j]+","+reg[i]]=1; } } }); }
+  var pool=GP.BEDS.map(function(b,k){ return k; }), R=GP.rng("beds:"+seed), order=GP.shuffle(pool.slice(),R), out=new Array(n).fill(-1), used={};
+  function like(a,b){ var A=GP.BEDS[a].id, B=GP.BEDS[b].id; return (LIKE[A]||"").split(",").indexOf(B)>=0||(LIKE[B]||"").split(",").indexOf(A)>=0; }
+  (function go(b){ if(b===n) return true;
+    for(var q=0;q<order.length;q++){ var k=order[q]; if(used[k]) continue; var ok=true;
+      for(var o=0;o<b&&ok;o++) if(adj[b+","+o]&&like(k,out[o])) ok=false;
+      if(!ok) continue; out[b]=k; used[k]=1; if(go(b+1)) return true; used[k]=0; out[b]=-1; }
+    return false; })(0);
+  if(out[0]<0) for(i=0;i<n;i++) out[i]=order[i];
+  return out;
+}
+function bedName(b){ return GP.BEDS[P.cols[b]].name; }
+function unitName(u){ var n=P.n; return u<n?"the "+ORD[u]+" row":u<2*n?"the "+ORD[u-n]+" column":"the "+bedName(u-2*n)+" bed"; }
+function unitCells(u){ return P.G.U[u]; }
+
+/* ---------- the rose bush, the pebble and the soil (SVG) ---------- */
+function bloom(x,y,R,id){
+  return '<g transform="translate('+x+' '+y+')"><circle r="'+R+'" fill="url(#'+id+')"/>'+
+    '<circle r="'+(R*.98)+'" fill="none" stroke="var(--r3)" stroke-opacity=".35" stroke-width="'+(R*.08)+'"/>'+
+    '<path d="M'+(-R*.62)+' '+(R*.1)+'A'+(R*.66)+' '+(R*.66)+' 0 0 1 '+(R*.5)+' '+(-R*.42)+'" fill="none" stroke="var(--r3)" stroke-opacity=".55" stroke-width="'+(R*.11)+'" stroke-linecap="round"/>'+
+    '<path d="M'+(R*.6)+' '+(-R*.05)+'A'+(R*.62)+' '+(R*.62)+' 0 0 1 '+(-R*.32)+' '+(R*.55)+'" fill="none" stroke="var(--r3)" stroke-opacity=".45" stroke-width="'+(R*.1)+'" stroke-linecap="round"/>'+
+    '<path d="M'+(-R*.3)+' '+(-R*.2)+'A'+(R*.32)+' '+(R*.32)+' 0 1 1 '+(R*.1)+' '+(R*.25)+'" fill="none" stroke="var(--r3)" stroke-opacity=".7" stroke-width="'+(R*.1)+'" stroke-linecap="round"/>'+
+    '<circle cx="'+(R*.02)+'" cy="'+(R*.02)+'" r="'+(R*.14)+'" fill="var(--r3)" opacity=".7"/>'+
+    '<ellipse cx="'+(-R*.38)+'" cy="'+(-R*.42)+'" rx="'+(R*.3)+'" ry="'+(R*.18)+'" fill="#fff" opacity=".38" transform="rotate(-30 '+(-R*.38)+' '+(-R*.42)+')"/></g>';
+}
+function leaf(x,y,rot,s,g){ return '<path transform="translate('+x+' '+y+') rotate('+rot+') scale('+s+')" d="M0 0C6-7 18-8 26 0C18 8 6 7 0 0Z" fill="url(#'+g+')"/><path transform="translate('+x+' '+y+') rotate('+rot+') scale('+s+')" d="M1 0H22" stroke="#1d4422" stroke-opacity=".5" stroke-width="1"/>'; }
+function roseArt(pre){
+  /* a rose bush: base at (0,0), about 100 wide and 98 tall; lit from the top left */
+  return '<path d="M-42-10C-52-32-40-54-20-58C-26-74-6-88 10-80C26-90 46-74 38-56C52-48 52-24 42-8C28 3-28 3-42-10Z" fill="url(#'+pre+'LeafD)"/>'+
+    leaf(-40,-30,-150,1.1,pre+"Leaf")+leaf(38,-30,-30,1.05,pre+"Leaf")+leaf(-30,-58,-120,.9,pre+"Leaf")+leaf(30,-62,-60,.9,pre+"Leaf")+
+    '<ellipse cx="-22" cy="-24" rx="21" ry="16" fill="url(#'+pre+'Leaf)"/><ellipse cx="22" cy="-22" rx="22" ry="16" fill="url(#'+pre+'Leaf)"/><ellipse cx="0" cy="-12" rx="24" ry="13" fill="url(#'+pre+'Leaf)"/>'+
+    '<ellipse cx="-4" cy="-40" rx="18" ry="12" fill="url(#'+pre+'Leaf)"/>'+
+    bloom(-17,-50,16,pre+"Bloom")+bloom(17,-56,15,pre+"Bloom")+bloom(-1,-76,14,pre+"Bloom")+
+    '<circle cx="-34" cy="-38" r="6" fill="url(#'+pre+'Bloom)"/><path d="M-38-34Q-34-30-29-34" fill="none" stroke="#2f6a2c" stroke-width="2.4"/>'+
+    '<circle cx="35" cy="-36" r="5.5" fill="url(#'+pre+'Bloom)"/><path d="M31-32Q35-28 40-32" fill="none" stroke="#2f6a2c" stroke-width="2.2"/>';
+}
+function roseDefs(pre,c){
+  /* c: optional fixed colors [light, mid, dark] (the result window's rose of the day); otherwise the garden set's */
+  var s=c?['stop-color:'+c[0],'stop-color:'+c[1],'stop-color:'+c[2]]:['stop-color:var(--r1)','stop-color:var(--r2)','stop-color:var(--r3)'];
+  return '<radialGradient id="'+pre+'Bloom" cx="38%" cy="32%" r="72%"><stop offset="0" style="'+s[0]+'"/><stop offset=".55" style="'+s[1]+'"/><stop offset="1" style="'+s[2]+'"/></radialGradient>'+
+    '<radialGradient id="'+pre+'Leaf" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#9fd07c"/><stop offset=".5" stop-color="#4f913f"/><stop offset="1" stop-color="#22512a"/></radialGradient>'+
+    '<radialGradient id="'+pre+'LeafD" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#5f9a48"/><stop offset=".6" stop-color="#2e6630"/><stop offset="1" stop-color="#173a1d"/></radialGradient>';
+}
+var PEB='<ellipse cx="2" cy="5" rx="16" ry="6" fill="#000" opacity=".28"/><ellipse cx="0" cy="0" rx="15" ry="10" fill="url(#gpPeb)"/><ellipse cx="-5" cy="-4" rx="6" ry="3" fill="#fff" opacity=".45"/>';
+
+/* ---------- the stage ---------- */
+var stage=mk("div","gp-pad");
+var ICON={row:'<svg viewBox="0 0 20 20"><rect x="1" y="7" width="18" height="6" rx="2" fill="#c9d9b4" stroke="#2f4a26" stroke-width="1.2"/><circle cx="10" cy="10" r="2.4" fill="#c9283c"/></svg>',
+  bed:'<svg viewBox="0 0 20 20"><path d="M2 2h10v6h6v10H2z" fill="#d9c7ea" stroke="#a94c32" stroke-width="2" stroke-linejoin="round"/><circle cx="7" cy="7" r="2.4" fill="#c9283c"/></svg>',
+  touch:'<svg viewBox="0 0 20 20"><rect x="1" y="1" width="18" height="18" rx="2" fill="#efe5c8" stroke="#2f4a26" stroke-width="1.2"/><path d="M1 10h18M10 1v18" stroke="#2f4a26" stroke-width=".8" opacity=".5"/><circle cx="5.5" cy="5.5" r="2.4" fill="#c9283c"/><circle cx="14.5" cy="14.5" r="2.4" fill="#c9283c"/><path d="M3 17L17 3" stroke="#7c2a1e" stroke-width="1.6"/></svg>'};
+stage.innerHTML='<div class="gp-left"><div class="gp-board" id="gpBoard"><svg id="gpBase" aria-hidden="true"></svg><svg id="gpLive" class="gp-live" role="img" aria-label="The garden"></svg>'+
+  '<div class="gp-petals" id="gpPetals"></div><div class="gp-sign" id="gpSign">In Full Bloom</div><div class="gp-wait" id="gpWait">Planting today\'s garden…</div><div class="gp-toast" id="gpToast" role="status"></div></div></div>'+
+  '<div class="gp-right"><div class="gp-notes" id="gpNotes"><svg class="gp-twine" viewBox="0 0 30 26" aria-hidden="true"><path d="M4 22C8 8 22 6 26 2" fill="none" stroke="#b8925a" stroke-width="2.2" stroke-linecap="round"/><path d="M6 24C12 14 20 14 27 8" fill="none" stroke="#9c7a45" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="13" r="3.4" fill="#c9a46a"/></svg>'+
+  '<h2>The Head Gardener\'s Notes</h2><span class="gp-no" id="gpNo">No. 1</span>'+
+  '<ul class="gp-rules"><li>'+ICON.row+'One rose in every <b>row</b> and every <b>column</b>.</li><li>'+ICON.bed+'One rose in every <b>flowerbed</b>.</li><li class="wide">'+ICON.touch+'No two roses <b>touch</b>, not even corner to corner.</li></ul>'+
+  '<p class="gp-rule1">One rose in every <b>row</b>, <b>column</b> and <b>bed</b>. No two <b>touch</b>, not even at a corner.</p>'+
+  '<p class="gp-how">Tap a plot <b>once</b> for a pebble (no rose here), <b>twice</b> for a rose, again to clear it. Drag across plots to lay pebbles.</p>'+
+  '<div class="gp-day"><span id="gpDay"></span><span class="gp-count" id="gpCount"></span></div></div>'+
+  '<div class="gp-tools"><button class="pk-btn gold" type="button" id="gpHint">Ask the Gardener</button><button class="pk-btn" type="button" id="gpUndo">Undo</button><button class="pk-btn" type="button" id="gpRestart">Restart</button></div></div>';
+var BOARD=$("#gpBoard",stage), BASE=$("#gpBase",stage), LIVE=$("#gpLive",stage), TOAST=$("#gpToast",stage), PETALS=$("#gpPetals",stage), NOTES=$("#gpNotes",stage);
+
+/* ---------- the planter, drawn once per garden ---------- */
+function drawBase(){
+  var n=P.n, i, s=[];
+  W=n*S+2*F; VH=Math.round(TOPM+W*K+TH+LEG+SHD);
+  BASE.setAttribute("viewBox","0 0 "+W+" "+VH); LIVE.setAttribute("viewBox","0 0 "+W+" "+VH);
+  var yb=TOPM+W*K;   /* where the top meets the front face */
+  s.push('<defs>');
+  s.push('<linearGradient id="gpWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--wood1)"/><stop offset=".55" style="stop-color:var(--wood2)"/><stop offset="1" style="stop-color:var(--wood3)"/></linearGradient>');
+  s.push('<linearGradient id="gpFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--face1)"/><stop offset=".55" style="stop-color:var(--face2)"/><stop offset="1" style="stop-color:var(--face3)"/></linearGradient>');
+  s.push('<linearGradient id="gpFaceX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>');
+  s.push('<pattern id="gpGrainH" width="160" height="22" patternUnits="userSpaceOnUse"><path d="M0 4C40 2 80 7 160 4M0 11C50 13 110 8 160 12M0 18C30 16 90 20 160 17" fill="none" stroke="#3a1e0c" stroke-opacity=".16" stroke-width="1.4"/><ellipse cx="96" cy="11" rx="9" ry="3" fill="none" stroke="#3a1e0c" stroke-opacity=".14" stroke-width="1.2"/></pattern>');
+  s.push('<pattern id="gpGrainV" width="22" height="160" patternUnits="userSpaceOnUse"><path d="M4 0C2 40 7 80 4 160M11 0C13 50 8 110 12 160M18 0C16 30 20 90 17 160" fill="none" stroke="#3a1e0c" stroke-opacity=".16" stroke-width="1.4"/><ellipse cx="11" cy="70" rx="3" ry="9" fill="none" stroke="#3a1e0c" stroke-opacity=".14" stroke-width="1.2"/></pattern>');
+  s.push('<linearGradient id="gpBrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a6"/><stop offset=".45" stop-color="#d9b25a"/><stop offset="1" stop-color="#a8802c"/></linearGradient>');
+  s.push('<radialGradient id="gpBrassR" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#d9b25a"/><stop offset="1" stop-color="#7a5a1e"/></radialGradient>');
+  s.push('<radialGradient id="gpMound" cx="38%" cy="34%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#2a1608" stop-opacity=".22"/></radialGradient>');
+  s.push('<radialGradient id="gpTable" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".6" stop-color="#000" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>');
+  s.push('<radialGradient id="gpPeb" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#f2efe8"/><stop offset=".5" stop-color="#a8a399"/><stop offset="1" stop-color="#5c574f"/></radialGradient>');
+  s.push('<radialGradient id="gpSh" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#1a0d04" stop-opacity=".55"/><stop offset="1" stop-color="#1a0d04" stop-opacity="0"/></radialGradient>');
+  s.push('<linearGradient id="gpInL" x1="0" x2="1"><stop offset="0" stop-color="#1a0c03" stop-opacity=".55"/><stop offset="1" stop-color="#1a0c03" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="gpInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0c03" stop-opacity=".6"/><stop offset="1" stop-color="#1a0c03" stop-opacity="0"/></linearGradient>');
+  /* each bed's ground cover: a base color, leaves and little flowers, scattered */
+  for(var b=0;b<n;b++){ var B=GP.BEDS[P.cols[b]], R=GP.rng("tex:"+B.id), dots=[];
+    for(var q=0;q<26;q++){ var x=R()*50, y=R()*50, kind=R(); dots.push(kind<.45?'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(1.6+R()*1.4).toFixed(1)+'" fill="'+B.g[2]+'" opacity=".55"/>':kind<.8?'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(1.2+R()*1.2).toFixed(1)+'" fill="'+B.g[0]+'"/>':'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(.9+R()*.8).toFixed(1)+'" fill="'+B.f+'"/>'); }
+    s.push('<pattern id="gpBed'+b+'" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="50" height="50" fill="'+B.g[1]+'"/>'+dots.join("")+'</pattern>'); }
+  s.push(roseDefs("gp"));
+  s.push('<symbol id="gpRoseS" viewBox="-56 -104 112 112" overflow="visible">'+roseArt("gp")+'</symbol>');
+  s.push('</defs>');
+  /* the table shadow and the legs */
+  s.push('<ellipse cx="'+(W/2+10)+'" cy="'+(yb+TH+LEG+4)+'" rx="'+(W*.56)+'" ry="'+(SHD*.9)+'" fill="url(#gpTable)"/>');
+  [[14,1],[W-14-34,0]].forEach(function(L){ s.push('<rect x="'+L[0]+'" y="'+(yb+TH-4)+'" width="34" height="'+(LEG+4)+'" rx="3" fill="url(#gpFace)"/><rect x="'+L[0]+'" y="'+(yb+TH-4)+'" width="34" height="'+(LEG+4)+'" rx="3" fill="#000" opacity="'+(L[1]?.15:.35)+'"/>'); });
+  /* the front face: two planks, lit from the left, with brass corner brackets and the maker's plate */
+  s.push('<rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" rx="4" fill="url(#gpFace)"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#gpGrainH)"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#gpFaceX)"/>');
+  s.push('<path d="M0 '+(yb+TH/2)+'H'+W+'" stroke="#2a1405" stroke-opacity=".45" stroke-width="2"/><path d="M0 '+(yb+TH/2+2)+'H'+W+'" stroke="#fff" stroke-opacity=".08" stroke-width="1.5"/>');
+  s.push('<path d="M0 '+(yb+1)+'H'+W+'" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>');
+  [[6,1],[W-6,-1]].forEach(function(c){ var x=c[0], d=c[1]; s.push('<path d="M'+x+' '+(yb+4)+'h'+(d*30)+'v8h'+(-d*22)+'v'+(TH-16)+'h'+(-d*8)+'z" fill="url(#gpBrass)" stroke="#6b4c18" stroke-width="1"/>'+
+    '<circle cx="'+(x+d*20)+'" cy="'+(yb+8)+'" r="2.2" fill="url(#gpBrassR)"/><circle cx="'+(x+d*4)+'" cy="'+(yb+TH-12)+'" r="2.2" fill="url(#gpBrassR)"/>'); });
+  var px=W/2, py=yb+TH/2+2;   /* the plate sits on the front face, a hair below dead center */
+  s.push('<g transform="translate('+px+' '+py+')"><rect x="-58" y="-17" width="116" height="34" rx="4" fill="#000" opacity=".35" transform="translate(2 3)"/><rect x="-58" y="-17" width="116" height="34" rx="4" fill="url(#gpBrass)" stroke="#7a5a1e" stroke-width="1.2"/>'+
+    '<rect x="-54" y="-13" width="108" height="26" rx="3" fill="none" stroke="#fff3c8" stroke-opacity=".55" stroke-width="1"/><circle cx="-47" cy="0" r="2.6" fill="url(#gpBrassR)"/><circle cx="47" cy="0" r="2.6" fill="url(#gpBrassR)"/>'+
+    '<text x="0" y="8" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="500" font-size="23" fill="#4a3410">B<tspan font-family="Pacifico,cursive" font-weight="400" font-size="17.5">W</tspan></text></g>');
+  /* the top: four mitered cedar boards around the soil, lit from the top left */
+  s.push('<g transform="'+PLANE()+'">');
+  var I=F, O=W-F;
+  var boards=[["M0 0H"+W+"L"+O+" "+I+"H"+I+"Z","gpGrainH",0],["M0 0L"+I+" "+I+"V"+O+"L0 "+W+"Z","gpGrainV",.04],["M"+W+" 0V"+W+"L"+O+" "+O+"V"+I+"Z","gpGrainV",.2],["M0 "+W+"H"+W+"L"+O+" "+O+"H"+I+"Z","gpGrainH",.12]];
+  boards.forEach(function(B){ s.push('<path d="'+B[0]+'" fill="url(#gpWood)"/><path d="'+B[0]+'" fill="url(#'+B[1]+')"/>'+(B[2]?'<path d="'+B[0]+'" fill="#000" opacity="'+B[2]+'"/>':'')); });
+  s.push('<path d="M0 0L'+I+' '+I+'M'+W+' 0L'+O+' '+I+'M0 '+W+'L'+I+' '+O+'M'+W+' '+W+'L'+O+' '+O+'" stroke="#2a1405" stroke-opacity=".4" stroke-width="2"/>');
+  s.push('<path d="M2 '+(W-2)+'V2H'+(W-2)+'" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>');
+  /* brass corner caps */
+  [[0,0],[W-34,0],[0,W-34],[W-34,W-34]].forEach(function(c){ s.push('<rect x="'+(c[0]+5)+'" y="'+(c[1]+5)+'" width="24" height="24" rx="3" fill="url(#gpBrass)" stroke="#6b4c18" stroke-width="1"/><circle cx="'+(c[0]+17)+'" cy="'+(c[1]+17)+'" r="3.4" fill="url(#gpBrassR)" stroke="#6b4c18" stroke-width=".6"/>'); });
+  /* the soil: each plot in its bed's ground cover, gently mounded */
+  for(i=0;i<n*n;i++){ var x0=F+(i%n)*S, y0=F+((i/n)|0)*S; s.push('<rect x="'+x0+'" y="'+y0+'" width="'+S+'" height="'+S+'" fill="url(#gpBed'+P.reg[i]+')"/><rect x="'+x0+'" y="'+y0+'" width="'+S+'" height="'+S+'" fill="url(#gpMound)"/>'); }
+  /* furrows between plots in the same bed */
+  var fur=[]; for(var r=0;r<n;r++) for(var c=0;c<n;c++){ i=r*n+c;
+    if(c<n-1&&P.reg[i]===P.reg[i+1]) fur.push('M'+(F+(c+1)*S)+' '+(F+r*S+6)+'v'+(S-12));
+    if(r<n-1&&P.reg[i]===P.reg[i+n]) fur.push('M'+(F+c*S+6)+' '+(F+(r+1)*S)+'h'+(S-12)); }
+  s.push('<path d="'+fur.join("")+'" stroke="#3b2310" stroke-opacity=".32" stroke-width="2.2" stroke-linecap="round"/>');
+  s.push('<path d="'+fur.join("")+'" stroke="#fff" stroke-opacity=".12" stroke-width="1.2" stroke-linecap="round" transform="translate(1.5 1.5)"/>');
+  /* the frame's shadow on the soil (top and left inner edges) */
+  s.push('<rect x="'+I+'" y="'+I+'" width="'+(n*S)+'" height="16" fill="url(#gpInT)"/><rect x="'+I+'" y="'+I+'" width="14" height="'+(n*S)+'" fill="url(#gpInL)"/>');
+  /* (the far inner wall is drawn after the plane group, in screen space) */
+  /* brick edging between beds: its shadow, the bricks with mortar joints, and a highlight on the top-left edge */
+  var ed=[]; for(r=0;r<n;r++) for(c=0;c<n;c++){ i=r*n+c;
+    if(c<n-1&&P.reg[i]!==P.reg[i+1]) ed.push([F+(c+1)*S,F+r*S,F+(c+1)*S,F+(r+1)*S]);
+    if(r<n-1&&P.reg[i]!==P.reg[i+n]) ed.push([F+c*S,F+(r+1)*S,F+(c+1)*S,F+(r+1)*S]); }
+  var ep=ed.map(function(e){ return 'M'+e[0]+' '+e[1]+'L'+e[2]+' '+e[3]; }).join("");
+  s.push('<clipPath id="gpSoil"><rect x="'+F+'" y="'+F+'" width="'+(n*S)+'" height="'+(n*S)+'"/></clipPath><g clip-path="url(#gpSoil)">');
+  s.push('<path d="'+ep+'" stroke="#1a0c03" stroke-opacity=".38" stroke-width="15" stroke-linecap="square" transform="translate(3 4)"/>');
+  s.push('<path d="'+ep+'" stroke="var(--mortar)" stroke-width="13" stroke-linecap="square"/>');
+  s.push('<path d="'+ep+'" stroke="var(--brick2)" stroke-width="11" stroke-dasharray="22 3" stroke-linecap="butt"/>');
+  s.push('<path d="'+ep+'" stroke="var(--brick1)" stroke-width="4" stroke-dasharray="22 3" transform="translate(-2.5 -2.5)"/>');
+  s.push('<path d="'+ep+'" stroke="var(--brick3)" stroke-width="2.5" stroke-dasharray="22 3" stroke-opacity=".7" transform="translate(3 3)"/>');
+  s.push('</g>');
+  s.push('</g>');
+  /* the far board's inner wall, facing you: you see it above the far row of soil, lit from the top left */
+  var wy=TOPM+F*K;
+  s.push('<linearGradient id="gpWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wood2)"/><stop offset="1" style="stop-color:var(--wood3)"/></linearGradient>');
+  s.push('<path d="M'+F+' '+wy+'H'+(W-F)+'l-6 '+WALL+'H'+(F+6)+'z" fill="url(#gpWall)"/><path d="M'+F+' '+wy+'H'+(W-F)+'l-6 '+WALL+'H'+(F+6)+'z" fill="url(#gpGrainH)"/>');
+  s.push('<path d="M'+(F+6)+' '+(wy+WALL)+'H'+(W-F-6)+'" stroke="#1a0c03" stroke-opacity=".45" stroke-width="3"/>');
+  s.push('<path d="M'+F+' '+wy+'l6 '+WALL+'" stroke="#1a0c03" stroke-opacity=".3" stroke-width="2"/><path d="M'+(W-F)+' '+wy+'l-6 '+WALL+'" stroke="#fff" stroke-opacity=".15" stroke-width="2"/>');
+  BASE.innerHTML=s.join("");
+}
+
+/* ---------- the garden as you've planted it ---------- */
+var st=[], lock=[], undoS=[], hints=0, t0=0, done=false, mode="daily", lessonK=0, fresh={}, ringU=[], ringSoft=[], flash=[], badSet={};
+function roses(){ var a=[]; for(var i=0;i<st.length;i++) if(st[i]===2) a.push(i); return a; }
+function clash(a,b){ var n=P.n, ra=(a/n)|0, rb=(b/n)|0, ca=a%n, cb=b%n;
+  if(ra===rb) return "row"; if(ca===cb) return "column"; if(P.reg[a]===P.reg[b]) return "bed"; if(Math.abs(ra-rb)<=1&&Math.abs(ca-cb)<=1) return "touch"; return ""; }
+function conflicts(){ var R=roses(), bad={}, why=""; for(var x=0;x<R.length;x++) for(var y=x+1;y<R.length;y++){ var w=clash(R[x],R[y]); if(w){ bad[R[x]]=1; bad[R[y]]=1; if(!why) why=w; } } return {bad:bad,why:why}; }
+function paint(){
+  if(!P) return;
+  var s=[], n=P.n, i;
+  /* highlights on the soil: the hint's rows, columns or beds, and a red flash where a rose was lifted */
+  s.push('<g transform="'+PLANE()+'">');
+  function cellRect(i,fill,stroke,cls,sw){ var x0=F+(i%n)*S, y0=F+((i/n)|0)*S; return '<rect class="'+(cls||"")+'" x="'+(x0+4)+'" y="'+(y0+4)+'" width="'+(S-8)+'" height="'+(S-8)+'" rx="8" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sw||5)+'"/>'; }
+  ringSoft.forEach(function(u){ s.push('<g class="gp-ring">'+unitCells(u).map(function(c){ return cellRect(c,"rgba(255,246,214,.28)","rgba(255,241,190,.85)","",3.5); }).join("")+'</g>'); });
+  ringU.forEach(function(u){ s.push('<g class="gp-ring">'+unitCells(u).map(function(c){ return cellRect(c,"rgba(255,211,107,.32)","#ffd36b","",6); }).join("")+'</g>'); });
+  flash.forEach(function(c){ s.push(cellRect(c,"rgba(224,80,60,.55)","#e0503c","gp-flash")); });
+  if(mode==="lesson"&&!done){ var Ls=LESSONS[lessonK]; if(Ls.glow) Ls.glow().forEach(function(c){ if(Ls.glowWhile&&!Ls.glowWhile(c)) return; s.push(cellRect(c,"rgba(255,211,107,.3)","#ffd36b","gp-glow",6)); }); }
+  s.push('</g>');
+  /* pebbles and roses, back to front */
+  for(i=0;i<n*n;i++){ if(!st[i]) continue; var x=cx(i), y=cy(i), d=depth(i);
+    if(st[i]===1){ s.push('<g transform="translate('+x+' '+(y+4)+') scale('+(d*S/58)+')"><g class="'+(fresh[i]?"gp-pebin":"")+'">'+PEB+'</g></g>'); continue; }
+    var sc=d*S/104, base=y+S*K*.3;
+    s.push('<g transform="translate('+x+' '+base+') scale('+sc+')">'+
+      '<ellipse cx="6" cy="2" rx="46" ry="'+(46*K*.42)+'" fill="url(#gpSh)"/>'+
+      (badSet[i]?'<ellipse class="gp-bad" cx="0" cy="0" rx="50" ry="'+(50*K*.5)+'" fill="rgba(224,80,60,.35)" stroke="#e0503c" stroke-width="6"/>':'')+
+      '<g class="'+(fresh[i]==="bloom"?"gp-bloom":fresh[i]?"gp-pop":"")+'"'+(fresh[i]==="bloom"?' style="animation-delay:'+(fresh.delay[i]||0)+'ms"':"")+'><use href="#gpRoseS" x="-56" y="-104" width="112" height="112"/></g></g>');
+  }
+  LIVE.innerHTML=s.join("");
+  fresh={delay:{}};
+  counts();
+}
+function counts(){
+  var got=roses().length, all=P.n;
+  $("#gpCount",stage).textContent=got+" of "+all+" planted";
+  $("#gpUndo",stage).disabled=!undoS.length||done;
+  if(window.Parlor){ Parlor.score([got+"/"+all]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Garden",got+" of "+all+" planted"+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+
+/* ---------- sounds (Nov 1): the garden, made in the browser through the kit ----------
+   gp-pebble: a little stone set down on the soil · gp-plant: a trowel in the soil, the bush set in, a rustle of leaves
+   gp-lift: a bush lifted out · gp-clear: a pebble picked up · gp-no: two knocks on a clay pot
+   gp-hint: the gardener's handbell, and a robin · gp-rake: the rake across the beds (restart)
+   gp-solve: birdsong, wind chimes and a warm chord (a lesson gets the chimes and the chord) */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("gp-pebble",function(h){ var d=h.out(.04), t=h.t, p=h.p*(.94+Math.random()*.12);
+    h.burst(d,t,.025,"bandpass",3400*p,3,.22,.001,.02); h.osc(d,t,"sine",1700*p,1150*p,.07,.001,.035); h.burst(d,t+.04,.02,"bandpass",2600*p,3,.08,.001,.015); });
+  D("gp-plant",function(h){ var d=h.out(.08), t=h.t, p=h.p*(.96+Math.random()*.08);
+    h.burst(d,t,.16,"lowpass",750,1,.28,.01,.13);                                 /* the trowel in the soil */
+    h.osc(d,t+.06,"sine",150*p,72*p,.28,.004,.16,["lowpass",420]);              /* the bush set in */
+    h.burst(d,t+.1,.16,"bandpass",5200*p,1.2,.07,.02,.13); h.burst(d,t+.17,.1,"bandpass",4300*p,1.4,.05,.01,.08); });   /* leaves */
+  D("gp-lift",function(h){ var d=h.out(.05), t=h.t; h.burst(d,t,.18,"bandpass",4600,1.1,.09,.02,.15); h.burst(d,t,.1,"lowpass",600,1,.12,.005,.08); });
+  D("gp-clear",function(h){ var d=h.out(.03), t=h.t; h.burst(d,t,.05,"bandpass",2400,2,.09,.003,.04); });
+  D("gp-no",function(h){ var d=h.out(.08), t=h.t; [[0,330],[.15,290]].forEach(function(k){ h.osc(d,t+k[0],"sine",k[1],k[1]*.82,.26,.002,.11,["lowpass",900]); h.burst(d,t+k[0],.03,"bandpass",1300,2.2,.1,.001,.025); }); });
+  D("gp-hint",function(h){ var d=h.out(.2), t=h.t;
+    h.bell(d,t,1760,.07,.9,[[1,1,1],[2.4,.45,.55],[4.1,.18,.35]]); h.bell(d,t+.13,1760,.04,.7,[[1,1,1],[2.4,.4,.5]]);
+    [[.42,3300,4700],[.52,4500,3200],[.62,3600,4900]].forEach(function(c){ h.osc(d,t+c[0],"sine",c[1],c[2],.045,.004,.06); }); });
+  D("gp-rake",function(h){ var d=h.out(.06), t=h.t; [0,.34].forEach(function(s){ h.burst(d,t+s,.3,"bandpass",1900,.7,.1,.06,.24); }); });
+  D("gp-solve",function(h,o){ var d=h.out(.45), t=h.t, at=0;
+    if(!o.short){
+      /* a blackbird's phrase, then a robin answering */
+      [[0,2200,2900,.12],[.14,2900,2400,.1],[.27,3100,3600,.08],[.38,3600,2700,.14],[.62,4200,5200,.05],[.69,5200,4300,.05],[.76,4400,5600,.05],[.83,5600,4600,.07]].forEach(function(c){ h.osc(d,t+c[0],"sine",c[1],c[2],.05,.006,c[3]); });
+      at=1.05;
+    }
+    /* wind chimes */
+    [[0,1046.5],[.12,1318.5],[.21,1568],[.36,1174.7],[.47,1760],[.6,1318.5]].forEach(function(c){ h.bell(d,t+at+c[0],c[1],.05,1.6,[[1,1,1],[2.76,.35,.5],[5.4,.12,.3]]); });
+    [523.25,659.25,783.99,1046.5].forEach(function(f,i){ h.osc(d,t+at+.75+i*.05,"triangle",f,0,.045,.02,1.8); });
+  });
+})();
+function snd(name,o){ if(window.Parlor&&Parlor.defSfx) Parlor.sfx(name,o||{}); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2200); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function nope(){ BOARD.classList.remove("gp-nope"); void BOARD.offsetWidth; BOARD.classList.add("gp-nope"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("gp-ringbtn"); void b.offsetWidth; b.classList.add("gp-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done||!P; }
+/* change some plots at once: one undo step */
+function change(list,sound){
+  var ch=[]; list.forEach(function(c){ if(lock[c.i]||st[c.i]===c.to) return; ch.push({i:c.i,from:st[c.i],to:c.to}); st[c.i]=c.to; if(c.to) fresh[c.i]=1; });
+  if(!ch.length) return false;
+  undoS.push(ch); if(!t0&&mode!=="lesson") t0=Date.now();
+  if(sound) snd(sound);
+  ringU=[]; ringSoft=[];
+  after(ch);
+  return true;
+}
+function after(ch){
+  var before=badSet; var C=conflicts(); badSet=C.bad;
+  var newBad=Object.keys(badSet).some(function(k){ return !before[k]; });
+  paint();
+  if(newBad){ snd("gp-no"); nope();
+    toast(C.why==="row"?"Two roses can't share a row.":C.why==="column"?"Two roses can't share a column.":C.why==="bed"?"Two roses can't share a flowerbed.":"Roses can't touch, not even corner to corner.",2600); }
+  var R=roses(); if(R.length===P.n&&!C.why){ solved(); return; }
+  lessonCheck();
+}
+function tapCell(i){
+  if(blocked()) return;
+  if(lock[i]){ toast(st[i]===2?"That rose is already settled.":"That plot is part of the lesson.",1800); return; }
+  hideToast();
+  var to=(st[i]+1)%3;
+  change([{i:i,to:to}],to===1?"gp-pebble":to===2?"gp-plant":"gp-lift");
+}
+function undo(){
+  if(mode==="lesson"&&blocked()) return; if(done||!undoS.length) return;
+  var ch=undoS.pop(); for(var k=ch.length-1;k>=0;k--) st[ch[k].i]=ch[k].from;
+  snd("gp-clear"); ringU=[]; ringSoft=[]; badSet=conflicts().bad; paint(); hideToast();
+}
+function restart(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(!P) return;
+  if(done&&mode==="daily"){ startDaily(true); return; }
+  var list=[]; for(var i=0;i<st.length;i++) if(st[i]&&!lock[i]) list.push({i:i,to:0});
+  if(!list.length) return;
+  var ch=[]; list.forEach(function(c){ ch.push({i:c.i,from:st[c.i],to:0}); st[c.i]=0; }); undoS.push(ch);
+  snd("gp-rake"); ringU=[]; ringSoft=[]; badSet={}; paint();
+  toast("The beds are raked clear. (Undo brings your planting back.)",2600);
+}
+
+/* ---------- touching the garden: tap to cycle a plot; drag to lay (or pick up) pebbles ---------- */
+var drag=null;
+function cellAt(e){
+  var b=LIVE.getBoundingClientRect(), sc=b.width/W, x=(e.clientX-b.left)/sc, y=(e.clientY-b.top)/sc;
+  var px=x, py=(y-TOPM)/K, c=Math.floor((px-F)/S), r=Math.floor((py-F)/S);
+  /* a little slack at the edges, so a tap on the brick edging still counts */
+  if(c<0&&px>F-S*.25) c=0; if(r<0&&py>F-S*.25) r=0; if(c>=P.n&&px<F+P.n*S+S*.25) c=P.n-1; if(r>=P.n&&py<F+P.n*S+S*.25) r=P.n-1;
+  if(c<0||r<0||c>=P.n||r>=P.n) return -1;
+  return r*P.n+c;
+}
+LIVE.addEventListener("pointerdown",function(e){
+  if(!P||e.button>0) return; var i=cellAt(e); if(i<0) return;
+  e.preventDefault();
+  drag={id:e.pointerId,start:i,last:i,moved:false,mode:st[i]===0?1:st[i]===1?0:-1,list:[]};
+  try{ LIVE.setPointerCapture(e.pointerId); }catch(x){}
+});
+LIVE.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.id) return; var i=cellAt(e); if(i<0||i===drag.last) return;
+  if(!drag.moved){ if(blocked()){ drag=null; return; } drag.moved=true; if(drag.mode>=0) paintCell(drag.start); }
+  drag.last=i; if(drag.mode>=0) paintCell(i);
+});
+function paintCell(i){
+  if(lock[i]||st[i]===2) return; var want=drag.mode; if(st[i]===want) return;
+  if(want===1&&st[i]!==0) return;
+  drag.list.push({i:i,from:st[i],to:want}); st[i]=want; if(want) fresh[i]=1;
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  snd(want?"gp-pebble":"gp-clear"); paint();
+}
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var d=drag; drag=null;
+  if(!d.moved){ tapCell(d.start); return; }
+  if(d.list.length){ undoS.push(d.list); ringU=[]; ringSoft=[]; counts(); lessonCheck(); }
+}
+LIVE.addEventListener("pointerup",endDrag); LIVE.addEventListener("pointercancel",function(){ if(drag&&drag.list.length){ undoS.push(drag.list); counts(); } drag=null; });
+LIVE.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+/* ---------- Ask the Gardener ----------
+   If a rose is in the wrong place, the gardener lifts it out. Otherwise he shows the next step a careful gardener would
+   find: pebbles on the plots it rules out, or the rose it settles. He rings the rows, columns or beds involved and says why. */
+function why(s){
+  var n=P.n, k=s.k;
+  function names(us){ var a=us.map(unitName); return a.length>1?a.slice(0,-1).join(", ")+" and "+a[a.length-1]:a[0]; }
+  if(k==="line") return s.u>=2*n?cap(unitName(s.u))+" lies all in "+unitName(s.u2)+", so the rest of that "+(s.u2<n?"row":"column")+" can't have a rose."
+    :cap(unitName(s.u))+" only has room inside "+unitName(s.u2)+", so the rest of that bed can't have a rose.";
+  if(k==="touch") return "Every spot left in "+unitName(s.u)+" touches "+(s.out.length>1?"these plots":"this plot")+", so "+(s.out.length>1?"they":"it")+" can't have a rose.";
+  if(k==="kill") return "A rose "+(s.out.length>1?"in any of these plots":"here")+" would leave "+unitName(s.u)+" with nowhere to go.";
+  if(k.indexOf("group")===0){ var lineKind=s.us2[0]<n?"rows":s.us2[0]<2*n?"columns":"beds";
+    return cap(names(s.us))+" fit only in "+names(s.us2)+", so the rest of those "+lineKind+" can't have a rose."; }
+  if(k==="ahead") return "A rose here would, step by step, leave "+unitName(s.u)+" with nowhere to go.";
+  return "";
+}
+function hint(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!P) return;
+  var n=P.n, i, msg="", solSet={}; for(i=0;i<n;i++) solSet[i*n+P.sol[i]]=1;
+  ringU=[]; ringSoft=[]; flash=[];
+  var wrong=roses().filter(function(c){ return !solSet[c]&&!lock[c]; });
+  if(wrong.length){
+    var w=wrong[0]; undoS.push([{i:w,from:2,to:0}]); st[w]=0; flash=[w];
+    msg="The gardener lifts a rose out: it can't stay in that plot."; snd("gp-hint");
+  } else {
+    var ch=[], movedPeb=false;
+    for(i=0;i<n*n;i++) if(st[i]===1&&solSet[i]){ ch.push({i:i,from:1,to:0}); st[i]=0; movedPeb=true; }
+    var S2=GP.solver(P.G,6), state={open:new Array(n*n).fill(1),rose:new Array(n*n).fill(0)};
+    for(i=0;i<n*n;i++) if(st[i]===1) state.open[i]=0;
+    roses().forEach(function(c){ S2.place(state,c); });
+    /* one step of reasoning per request: pebbles where it rules plots out, or the rose it settles */
+    var s=S2.step(state,6), at=null, laid=0;
+    if(s&&s.k!=="single"){ s.out.forEach(function(c){ if(st[c]===0&&!solSet[c]){ ch.push({i:c,from:0,to:1}); st[c]=1; fresh[c]=1; laid++; } });
+      if(!laid) s=null; }
+    if(!s||s.k==="single"){
+      if(s) at=s.at; else for(i=0;i<n;i++){ var c2=i*n+P.sol[i]; if(st[c2]!==2){ at=c2; break; } }
+      if(at!=null){ ch.push({i:at,from:st[at],to:2}); st[at]=2; fresh[at]=1; }
+    }
+    if(ch.length) undoS.push(ch);
+    if(s&&s.k==="single"){ msg=cap(unitName(s.u))+" has only one spot left, so a rose goes there."; ringU=[s.u]; }
+    else if(s){ msg=why(s)+(laid>1?" The gardener lays pebbles there.":" The gardener lays a pebble there."); ringSoft=s.us?s.us.slice():[s.u]; if(s.u2!=null) ringSoft.push(s.u2); if(s.us2) ringU=s.us2.slice(); }
+    else msg="Here's a rose to get you going.";
+    if(movedPeb) msg="A pebble was in a rose's spot, so the gardener moved it. "+msg;
+    snd("gp-hint");
+  }
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  hints++; badSet=conflicts().bad; paint();
+  setTimeout(function(){ if(flash.length){ flash=[]; } },950);
+  setTimeout(function(){ if(ringU.length||ringSoft.length){ ringU=[]; ringSoft=[]; if(!done) paint(); } },3600);
+  toast(msg,msg.length>110?5600:4200);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+  if(roses().length===n&&!conflicts().why){ solved(); return; }
+  lessonCheck();
+}
+
+/* ---------- loading ---------- */
+function prep(p){ p.G=GP.geom(p.n,p.reg); if(!p.cols) p.cols=bedColors(p.n,p.reg,p.reg.join("")); return p; }
+function load(p,how,locks){
+  P=prep(p); mode=how; hints=0; t0=0; done=false; undoS=[]; ringU=[]; ringSoft=[]; flash=[]; badSet={}; fresh={delay:{}}; hideToast();
+  st=new Array(P.n*P.n).fill(0); lock=new Array(P.n*P.n).fill(false);
+  (locks||[]).forEach(function(l){ st[l.i]=l.s; lock[l.i]=true; });
+  BOARD.classList.remove("done"); $("#gpSign",stage).classList.remove("on"); PETALS.textContent="";
+  $("#gpNo",stage).textContent=how==="daily"?"No. "+dayNo(today):how==="practice"?"Practice":"Lesson";
+  var wd=today.getDay();
+  $("#gpDay",stage).innerHTML=how==="daily"?esc(DAYS[wd])+" · "+P.n+" × "+P.n+" · <b>"+FEEL[wd]+"</b>":how==="practice"?"Practice · "+P.n+" × "+P.n:"Lesson · "+P.n+" × "+P.n;
+  drawBase(); paint(); fit();
+}
+var today=new Date(), todayKey=ymd(today), DAILY=null;
+function rec(){ try{ return JSON.parse(store("bwGarden:"+todayKey)||"null"); }catch(e){ return null; } }
+/* today's garden: kept on the device once made (making a big Sunday garden can take a moment on an older phone) */
+function cached(){ try{ var c=JSON.parse(store("bwGardenP:"+todayKey)||"null"); if(c&&c.n&&c.reg&&c.sol&&GP.count(c.n,c.reg,2).n===1) return c; }catch(e){} return null; }
+function makeDaily(cb){
+  if(DAILY){ cb(DAILY); return; }
+  var c=cached(); if(c){ DAILY=c; cb(c); return; }
+  function keep(p){ DAILY={n:p.n,reg:p.reg,sol:p.sol,score:p.score}; try{ for(var k in localStorage) if(k.indexOf("bwGardenP:")===0&&k!=="bwGardenP:"+todayKey) localStorage.removeItem(k); }catch(e){} store("bwGardenP:"+todayKey,JSON.stringify(DAILY)); cb(DAILY); }
+  var src=document.getElementById("gpCore").textContent, w=null;
+  try{ w=new Worker(URL.createObjectURL(new Blob([src+"\nonmessage=function(e){ postMessage(GP.forDay(e.data[0],e.data[1])); };"],{type:"text/javascript"}))); }catch(e){ w=null; }
+  if(w){ var gone=false, to=setTimeout(function(){ if(gone) return; gone=true; w.terminate(); keep(GP.forDay(todayKey,today.getDay())); },9000);
+    w.onmessage=function(e){ if(gone) return; gone=true; clearTimeout(to); w.terminate(); keep(e.data); };
+    w.onerror=function(){ if(gone) return; gone=true; clearTimeout(to); keep(GP.forDay(todayKey,today.getDay())); };
+    w.postMessage([todayKey,today.getDay()]); }
+  else setTimeout(function(){ keep(GP.forDay(todayKey,today.getDay())); },30);
+}
+function startDaily(again){
+  if(window.Parlor) Parlor.coach(null);
+  var waitT=setTimeout(function(){ $("#gpWait",stage).classList.add("on"); },150);
+  makeDaily(function(p){
+    clearTimeout(waitT); $("#gpWait",stage).classList.remove("on");
+    load(JSON.parse(JSON.stringify(p)),"daily");
+    if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+    var r=rec();
+    if(r&&!again) toast("You solved today's garden. Play it again for fun; tomorrow brings a new one.",3600);
+    else if(!again) toast("Tap a plot once for a pebble, twice for a rose.",3400);
+  });
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwGardenStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function reveal(){
+  /* the pebbles are cleared away, the roses bloom in turn, row by row; petals drift down and a butterfly crosses the garden */
+  for(var q=0;q<st.length;q++) if(st[q]===1&&!lock[q]) st[q]=0;
+  var R=roses(); R.forEach(function(c,k){ fresh[c]="bloom"; fresh.delay[c]=k*130; }); paint();
+  if(window.Parlor&&!Parlor.smooth()) return;
+  PETALS.textContent=""; var Rn=Math.random;
+  for(var k=0;k<16;k++){ var p=mk("i"); p.style.left=(4+Rn()*90)+"%"; p.style.animationDelay=(300+Rn()*1400)+"ms"; p.style.setProperty("--dx",(Rn()*80-30)+"px"); p.style.setProperty("--dy",(BOARD.offsetHeight*(.7+Rn()*.4))+"px"); p.style.setProperty("--rot",(180+Rn()*360)+"deg"); PETALS.appendChild(p); }
+  var f=mk("div","gp-fly"); f.innerHTML='<svg viewBox="0 0 34 30"><g class="w"><path d="M17 15C10 2 1 4 3 12C4 18 12 18 17 15Z" fill="#f2a93b"/><path d="M17 15C24 2 33 4 31 12C30 18 22 18 17 15Z" fill="#f2a93b"/><path d="M17 16C11 20 8 27 13 27C16 27 17 21 17 16ZM17 16C23 20 26 27 21 27C18 27 17 21 17 16Z" fill="#d9822b"/><circle cx="7" cy="9" r="1.6" fill="#fff"/><circle cx="27" cy="9" r="1.6" fill="#fff"/></g><path d="M17 8V24" stroke="#3a2614" stroke-width="2" stroke-linecap="round"/></svg>';
+  PETALS.appendChild(f);
+}
+function solved(){
+  if(done) return; done=true; hideToast(); ringU=[]; ringSoft=[]; BOARD.classList.add("done");
+  snd("gp-solve",{short:mode==="lesson"});
+  reveal(); counts();
+  setTimeout(function(){ $("#gpSign",stage).classList.add("on"); },mode==="lesson"?300:900);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },700); return; }
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, sts=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:sts,h:hints,sec:secs}; store("bwGarden:"+todayKey,JSON.stringify(r));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwGardenStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(sts,secs,first,sk,sv); }); },2700);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+/* the rose of the day: a real variety and a line or two about it */
+var ROSES=[
+  {name:"Peace",kind:"Hybrid tea · 1945",c:["#fff6c8","#f4d36a","#e48a8a"],t:"Bred in France by Francis Meilland and named as the Second World War was ending. Its big yellow blooms are edged in pink."},
+  {name:"Gertrude Jekyll",kind:"English rose · 1986",c:["#ffd3df","#e86a92","#9c2d55"],t:"A David Austin rose named for the great garden designer. Rich pink, and one of the most fragrant roses there is."},
+  {name:"New Dawn",kind:"Climber · 1930",c:["#fff4f0","#f6c9c6","#c97f86"],t:"A climber with pale blush-pink flowers. In 1931 it became the first plant ever to receive a United States plant patent."},
+  {name:"Madame Hardy",kind:"Damask rose · 1832",c:["#ffffff","#f1ece1","#9fb08a"],t:"Raised by the head gardener of the Luxembourg Garden in Paris. Each pure white bloom has a little green eye at its heart."},
+  {name:"Mister Lincoln",kind:"Hybrid tea · 1964",c:["#ff7a86","#c3172f","#5e0614"],t:"A deep velvet red on long stems, with a strong, sweet scent. A favorite for cutting."},
+  {name:"Iceberg",kind:"Floribunda · 1958",c:["#ffffff","#eef0ea","#b7c2b0"],t:"Bred by Kordes in Germany, and one of the most widely planted roses in the world. It flowers in clouds of white."},
+  {name:"Graham Thomas",kind:"English rose · 1983",c:["#fff6b5","#f2c62a","#b8860b"],t:"A David Austin rose named for the plantsman Graham Stuart Thomas. Its cupped blooms are a rich, clear yellow."},
+  {name:"Zéphirine Drouhin",kind:"Bourbon climber · 1868",c:["#ffc2dc","#e2407f","#951d4e"],t:"A climber with bright cerise-pink flowers and almost no thorns, so it's kind to anyone walking past."},
+  {name:"Cécile Brünner",kind:"Polyantha · 1881",c:["#fff0f0","#f7c4c4","#d48a8f"],t:"Known as the sweetheart rose, for its tiny, perfectly shaped pale pink buds."},
+  {name:"Double Delight",kind:"Hybrid tea · 1977",c:["#fff8ee","#f6d6c8","#d1243f"],t:"Creamy petals that blush red at the edges as the sun warms them, with a spicy fragrance."},
+  {name:"Rosa Mundi",kind:"Gallica rose · ancient",c:["#ffe4ec","#e86d93","#a3184a"],t:"One of the oldest striped roses: pink petals splashed with white and crimson."},
+  {name:"Queen Elizabeth",kind:"Grandiflora · 1954",c:["#ffe0e6","#f29bb0","#c25b77"],t:"A tall, clear pink rose named for the young queen. It was the first rose ever called a grandiflora."}
+];
+function roseOfDay(){ return mode==="daily"?ROSES[dayNo(today)%ROSES.length]:ROSES[Math.floor(Math.random()*ROSES.length)]; }
+function roseCard(R){ var id="gpRD"+Math.random().toString(36).slice(2,7); return '<svg viewBox="-60 -100 120 112" aria-hidden="true"><defs>'+roseDefs(id,R.c)+'</defs><ellipse cx="4" cy="2" rx="44" ry="9" fill="#000" opacity=".22"/>'+roseArt(id)+'</svg>'; }
+function result(sts,secs,first,sk,sv){
+  var v=$("#gpEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="gpEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Garden":"The Garden Plots · No. "+dayNo(today), R=roseOfDay();
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"The Garden Is in Bloom":"Planted Without Help!")+'</h2>'+
+    '<div class="gp-stars">'+"★★★".slice(0,sts)+'<i>'+"★★★".slice(sts)+'</i></div>'+
+    '<div class="gp-facts"><div><b>'+P.n+'×'+P.n+'</b><small>Garden</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<div class="gp-story"><div class="gp-mug">'+roseCard(R)+'</div><div><p class="gp-kind">Today\'s Rose · '+esc(R.kind)+'</p><h3>\''+esc(R.name)+'\'</h3><p class="clamp">'+esc(R.t)+'</p></div></div>'+
+    '<p class="gp-note">'+(mode==="daily"?(first?"A new garden is laid out every day at midnight.":"You'd already solved today's garden; your first result is the one kept."):"Practice gardens don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".gp-story p.clamp");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","gp-rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(sts,secs,sk); });
+  bt(mode==="practice"?"Another Garden":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Garden",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  var L=mk("div","gp-endL"), R2=mk("div","gp-endR"); [].slice.call(b.children).forEach(function(c){ (c===row||c.classList.contains("pk-streak")?R2:L).appendChild(c); }); b.appendChild(L); b.appendChild(R2);
+  v.classList.add("on");
+}
+function share(sts,secs,sk){
+  var txt="BrainWhim · The Garden Plots No. "+dayNo(today)+"\n"+"★★★".slice(0,sts)+"☆☆☆".slice(sts)+" "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/gardenplots.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Start with the smallest beds: a bed with one or two plots left settles quickly.","A rose rules out its whole row, column and bed, and the eight plots around it. Lay pebbles there.","If a bed lies all in one row, that row's rose is in the bed, so the rest of the row gets pebbles.","Drag across plots to lay pebbles quickly. Drag from a pebble to pick them up.","Stuck? Ask the Gardener: he lifts a wrong rose, or shows the next step and plants one."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, p=GP.make("practice:"+Date.now()+":"+Math.random(),GP.WEEK[wd]);
+  load({n:p.n,reg:p.reg,sol:p.sol},"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Garden","<p>Tap a plot once for a pebble, twice for a rose. One rose in every row, column and bed, with none touching.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%5===3&&window.Parlor) Parlor.practiceSay("Practice Garden","<p>"+TIPS[(Math.floor(tipN/5)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done){ Parlor.lessonDone(); }
+}
+
+/* ---------- Learn to Play ---------- */
+function LP(reg,sol,cols){ return {n:sol.length,reg:reg,sol:sol,cols:cols}; }
+/* lesson gardens (each checked to have one answer): 4 x 4 with a one-plot bed; 5 x 5 with a bed in a line; a 5 x 5 for the gardener; 6 x 6 to look at */
+var L4=[1,0,2,2, 1,1,2,2, 1,3,3,2, 3,3,3,3], L4S=[1,3,0,2], L4C=[1,2,4,0];   /* bed 0 (one plot) is marigold */
+var L5=[2,0,0,1,1, 2,2,3,1,3, 2,2,3,3,3, 4,4,3,3,3, 4,4,4,4,3], L5S=[1,3,0,4,2], L5C=[0,1,3,2,4];   /* bed 0 (lavender) lies all in the top row */
+var L6=[4,1,0,0,0, 4,1,0,0,2, 4,4,3,2,2, 4,4,3,3,3, 4,4,4,3,3], L6S=[3,1,4,2,0], L6C=[5,6,4,0,1];
+var L1=[1,1,0,0,0,4, 1,1,0,2,2,4, 3,3,2,2,4,4, 5,3,3,2,2,4, 5,3,5,2,4,4, 5,5,5,4,4,4], L1S=[4,0,3,1,5,2], L1C=[3,0,4,1,2,5];
+function nbOf(i,n){ var r=(i/n)|0, c=i%n, o=[]; for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; var y=r+dr, x=c+dc; if(y>=0&&x>=0&&y<n&&x<n) o.push(y*n+x); } return o; }
+var LESSONS=[
+  {title:"The Garden Plots",text:"<p>Plant <b>one rose bush</b> in every <b>row</b>, every <b>column</b> and every <b>flowerbed</b>. The beds are edged in brick.</p><p>No two roses may <b>touch</b>, not even corner to corner. Just look for now, then tap <b>Next</b>.</p>",
+    puz:function(){ return LP(L1,L1S,L1C); },solvedLook:true},
+  {title:"Plant a Rose",text:"<p>Tap a plot <b>twice</b> to plant a rose. (Once lays a pebble; that comes next.)</p><p>The little <b>marigold</b> bed has just one plot, so its rose must go there. Plant it.</p>",done:"<p>Planted. Tap a rose again to lift it out, if you ever change your mind.</p>",
+    puz:function(){ return LP(L4,L4S,L4C); },glow:function(){ return [1]; },glowWhile:function(c){ return st[c]!==2; },goal:function(){ return st[1]===2; }},
+  {title:"Pebbles",text:"<p>A rose rules out its <b>row</b>, its <b>column</b>, its <b>bed</b>, and every plot <b>touching</b> it.</p><p>Lay a <b>pebble</b> (tap once) on each glowing plot touching this rose. Or <b>drag</b> across them.</p>",done:"<p>Pebbles mark the plots where no rose can go. Fill a garden with them and the roses' places start to show.</p>",
+    puz:function(){ return LP(L4,L4S,L4C); },locks:[{i:1,s:2}],glow:function(){ return nbOf(1,4); },glowWhile:function(c){ return st[c]!==1; },goal:function(){ return nbOf(1,4).every(function(c){ return st[c]===1; }); }},
+  {title:"A Bed in a Line",text:"<p>The <b>lavender</b> bed lies all in the <b>top row</b>, so the top row's rose is in the lavender bed. The rest of the top row can't have one.</p><p>Use that to plant the whole garden.</p>",done:"<p>That's the main trick. The same goes for a bed that lies all in one column, and for a row that fits only inside one bed.</p>",
+    puz:function(){ return LP(L5,L5S,L5C); },glow:function(){ return [1,2]; },glowWhile:function(){ return roses().length<1; },goal:function(){ return roses().length===5&&!conflicts().why; }},
+  {title:"Ask the Gardener",text:"<p>Stuck? Press <b>Ask the Gardener</b>. If a rose is in the wrong place he lifts it out. If not, he shows the next step: pebbles where no rose can go, or the rose it settles, and tells you why.</p><p>Try it now. Plant with no help for <b>three stars</b>. A new garden every day: <b>6 × 6</b> on Monday, up to <b>9 × 9</b> by the weekend.</p>",done:"<p>That's everything. Happy planting!</p>",
+    puz:function(){ return LP(L6,L6S,L6C); },goal:function(){ return hints>0; }}
+];
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k]; load(Ls.puz(),"lesson",Ls.locks);
+  if(Ls.solvedLook){ for(var i=0;i<P.n;i++){ var c=i*P.n+P.sol[i]; st[c]=2; lock[c]=true; } done=true; BOARD.classList.add("done"); paint(); }
+}
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  if(!P||!W) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  stage.classList.toggle("land",land);
+  if(land){ fitLand(VW); return; }
+  document.body.style.removeProperty("--pk-landR"); document.body.style.removeProperty("--pk-landTools");
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var bw, availH, ratio=VH/W;
+  if(wide){
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),1000), nw=Math.round(Math.max(240,Math.min(290,availW*.3)));
+    stage.style.setProperty("--gp-nw",nw+"px");
+    availH=window.innerHeight-top-22;
+    bw=Math.floor(Math.min(availW-nw-18-8,(availH-6)/ratio,720)); bw=Math.max(300,bw);
+    stage.classList.remove("tight"); stage.classList.remove("short");
+    stage.style.setProperty("--gp-bw",bw+"px");
+  } else {
+    stage.style.removeProperty("--gp-nw");
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    stage.classList.toggle("tight",availH<620);
+    stage.classList.toggle("short",availH<480);   /* iPhone SE and the like: the rules in one line, so the garden stays big */
+    bw=Math.floor(VW-12); stage.style.setProperty("--gp-bw",bw+"px");
+    /* shrink the planter only as far as needed for the notes and buttons to fit above the kit's bar */
+    var rest=$(".gp-right",stage).offsetHeight+8;
+    var maxB=Math.floor((availH-rest)/ratio);
+    if(bw>maxB){ bw=Math.max(240,maxB); stage.style.setProperty("--gp-bw",bw+"px"); }
+  }
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+}
+/* a phone held sideways: the planter as big as the height allows, the notes and buttons in a column at the right */
+function fitLand(VW){
+  var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+  var R=Math.round(Math.max(200,Math.min(270,VW*.3)));
+  document.body.style.setProperty("--pk-landR",R+"px");
+  var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
+  stage.classList.remove("tight"); stage.classList.remove("short");
+  var bw=Math.floor(Math.min(lw,lh*W/VH)); stage.style.setProperty("--gp-bw",bw+"px");
+  document.body.style.setProperty("--pk-landTools",coaching?($(".gp-right",stage).offsetHeight+8)+"px":"0px");
+  document.body.style.setProperty("--pk-size",bw+"px");
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#gpHint",stage).onclick=hint; $("#gpUndo",stage).onclick=undo; $("#gpRestart",stage).onclick=restart; }
+/* the keyboard on a computer: Z or Backspace to undo, H to ask the gardener */
+document.addEventListener("keydown",function(e){
+  if(!seatedNow()||!P) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  if(e.metaKey&&e.key.toLowerCase()==="z"||e.ctrlKey&&e.key.toLowerCase()==="z"||(!e.metaKey&&!e.ctrlKey&&!e.altKey&&(e.key==="Backspace"||e.key.toLowerCase()==="z"))){ e.preventDefault(); undo(); }
+});
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"gardenplots", cat:"puzzles", solo:true, free:true, daily:{key:"bwGarden:",streak:"bwGardenStreak"}, land:true, title:"The Garden Plots", bg:"puzzles-gardenplots.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Garden",
+  tagline:"One rose in every row, column and bed.", invite:"Plant one rose bush in every row, every column and every flowerbed, with no two touching. Only one planting works.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Gardens",
+  sets:[
+    {id:"cedar",name:"Cedar & Red Roses",need:0,dots:["#b47844","#d4233f"]},
+    {id:"white",name:"Painted White & Blush Roses",club:true,dots:["#e2dccf","#f2b2bc"]},
+    {id:"gold",name:"Weathered Oak & Gold Roses",club:true,dots:["#968670","#f0bf2a"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> plant one rose bush in every <b>row</b>, every <b>column</b> and every <b>flowerbed</b> (the beds are edged in brick).</li><li><b>No two roses may touch</b>, not even corner to corner.</li><li><b>Planting:</b> tap a plot once to lay a <b>pebble</b> (a note to yourself that no rose can go there), twice to plant a <b>rose</b>, and again to clear it. Drag across plots to lay pebbles; drag from a pebble to pick them up.</li><li>If two roses break a rule, both turn red and the gardener says why.</li><li><b>Undo</b> takes back your last move (Z or Backspace on a computer). <b>Restart</b> rakes the beds clear (and Undo brings them back).</li><li><b>Ask the Gardener:</b> he lifts out a rose in the wrong place; if none is, he shows the next step (pebbles where no rose can go, or the rose it settles) and tells you why.</li></ol>",
+    score:"<ul><li><b>One garden a day</b>, the same for everyone. It changes at midnight on your device. Monday's garden is 6 × 6, Tuesday's and Wednesday's 7 × 7, Thursday's and Friday's 8 × 8, and the weekend's 9 × 9. Each day takes a little more thinking, and Sunday's is the hardest.</li><li>Every garden has exactly one answer, and can be worked out step by step, with no guessing.</li><li><b>★★★</b> with no help from the gardener · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice gardens (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+/* for testing */
+window.GPO={get:function(){ return {P:P,st:st,lock:lock,hints:hints,done:done,mode:mode,undo:undoS.length}; },tap:tapCell,hint:hint,undo:undo,restart:restart,
+  solve:function(){ for(var i=0;i<P.n;i++) st[i*P.n+P.sol[i]]=2; badSet={}; paint(); after([]); }};
+})();
+</script>
+</body>
+</html>
