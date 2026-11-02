@@ -28,7 +28,7 @@
     { id: "harbor", name: "The Harbor", page: "harbor.html", img: "puzzles-harbor-sm.jpg", tint: "#0f2c4a",
       about: "Slide the carved boats around a crowded marina until your red sloop can sail out of the harbor mouth.",
       daily: { key: "bwHarbor:", streak: "bwHarborStreak" }, what: "harbor" },
-    { id: "printshop", name: "The Print Shop", page: "printshop.html", tint: "#3a2418",
+    { id: "printshop", name: "The Print Shop", page: "printshop.html", img: "puzzles-printshop-sm.jpg", tint: "#3a2418",
       about: "Trace the day's words through a printer's type case. The headline, running side to side, names the theme.",
       daily: { key: "bwPrint:", streak: "bwPrintStreak" }, what: "job" },
     { id: "maproom", name: "The Map Room", soon: true, tint: "#14353f",
