@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Counting House · BrainWhim Puzzles</title>
+<meta name="description" content="The Counting House: a daily number puzzle at BrainWhim. Six brass weights and an order to fill: add, subtract, multiply and divide your way to it.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1101b">
+<style>
+/* ===== The Counting House (Puzzles & Brain Games, Nov 1): a daily number puzzle on a Victorian merchant's desk =====
+   A brass balance scale stands on a mahogany desk; the order's weight sits in its left pan. Below it, six brass weights
+   rest in a fitted velvet case. Join two weights with + − × ÷ (the brass stamps) to make a new weight; reach the order exactly.
+   Desks (the Desks card): Mahogany & Brass (free); Ebony & Nickel, Oak & Copper (Club).
+   Light comes from the top left everywhere: highlights on top and left edges, shade and shadows to the bottom right. */
+body{--d1:#8a4428;--d2:#5c2716;--d3:#34130a;--df1:#4f2112;--df2:#2a0e06;--b1:#fff3c8;--b2:#f0d48a;--b3:#d4ab52;--b4:#a07a2a;--b5:#5e430f;--bt:#4a3410;
+  --m1:#ffffff;--m2:#e4e8ee;--m3:#b9c0ca;--m4:#858d99;--m5:#4b525c;--mt:#2b3038;--v1:#356b47;--v2:#1e4430;--v3:#10281b;--case1:#b98552;--case2:#8a5a30;--case3:#5a3518}
+body[data-set="ebony"]{--d1:#4a423e;--d2:#2a2421;--d3:#120e0c;--df1:#231d1a;--df2:#0c0907;--b1:#ffffff;--b2:#e6e9ee;--b3:#bcc3cc;--b4:#868e99;--b5:#4a515b;--bt:#262b33;
+  --m1:#fff3c8;--m2:#f0d48a;--m3:#d4ab52;--m4:#a07a2a;--m5:#5e430f;--mt:#4a3410;--v1:#6b2f3a;--v2:#481c25;--v3:#2a0d13;--case1:#5a504a;--case2:#3a322e;--case3:#1e1916}
+body[data-set="copper"]{--d1:#c99a62;--d2:#9c7040;--d3:#6a4824;--df1:#7a5430;--df2:#4c3218;--b1:#ffe0c8;--b2:#f2a878;--b3:#c9764a;--b4:#94502c;--b5:#5a2c12;--bt:#4a200a;
+  --m1:#fff3c8;--m2:#f0d48a;--m3:#d4ab52;--m4:#a07a2a;--m5:#5e430f;--mt:#4a3410;--v1:#2f4f6b;--v2:#1c3348;--v3:#0e1c2a;--case1:#7a5a3c;--case2:#5a4028;--case3:#3a2614}
+.ch-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.ch-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.ch-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:18px;align-items:start;justify-content:center}
+.ch-left{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+.ch-right{display:flex;flex-direction:column;gap:10px;width:var(--ch-nw,270px)}
+/* ---------- the desk: one SVG (the desk, the scale, the weight case), with the weights and stamps laid over it ---------- */
+.ch-board{position:relative;width:var(--ch-bw,600px);aspect-ratio:1000/880;container-type:inline-size;-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+.ch-board>svg{position:absolute;inset:0;display:block;width:100%;height:100%}
+.ch-beam,.ch-panL,.ch-panR{transition:transform .7s cubic-bezier(.34,1.45,.5,1);transform-box:view-box}
+.ch-beam{transform-origin:500px 96px;transform:rotate(calc(var(--ch-a,9) * -1deg))}
+.ch-panL{transform:translateY(calc(var(--ch-dy,47) * 1px))}
+.ch-panR{transform:translateY(calc(var(--ch-dy,47) * -1px))}
+.ch-board.still .ch-beam,.ch-board.still .ch-panL,.ch-board.still .ch-panR{transition:none}
+.ch-panR .ch-rw{transition:opacity .25s}
+/* the weights: brass bell weights standing in the case, lit from the top left */
+.ch-w{position:absolute;z-index:2;transform:translate(-50%,-100%);width:var(--w);height:calc(var(--w) * 1.22);cursor:pointer;transition:left .26s ease-in,top .26s ease-in}
+.ch-w .sh{position:absolute;left:-6%;right:-26%;bottom:-11%;height:26%;border-radius:50%;background:radial-gradient(ellipse at 45% 50%,rgba(10,4,0,.62),rgba(10,4,0,.28) 45%,transparent 70%);transition:transform .2s,opacity .2s}
+.ch-w .lift{position:absolute;inset:0;transition:transform .2s cubic-bezier(.3,1.5,.6,1)}
+.ch-w .kn{position:absolute;left:36%;width:28%;top:0;height:21%;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--b1),var(--b3) 45%,var(--b5) 100%);box-shadow:inset -1px -2px 2px rgba(0,0,0,.25)}
+.ch-w .nk{position:absolute;left:42%;width:16%;top:17%;height:10%;background:linear-gradient(90deg,var(--b5),var(--b2) 30%,var(--b4) 70%,var(--b5))}
+.ch-w .tp{position:absolute;left:0;width:100%;top:22%;height:18%;border-radius:50%;background:radial-gradient(ellipse at 38% 30%,var(--b1),var(--b2) 40%,var(--b4) 100%);z-index:1;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)}
+.ch-w .bd{position:absolute;left:0;width:100%;top:31%;bottom:0;border-radius:0 0 50% 50%/0 0 20% 20%;background:linear-gradient(90deg,var(--b5) 0%,var(--b2) 16%,var(--b1) 26%,var(--b3) 46%,var(--b4) 74%,var(--b5) 100%);
+  display:flex;align-items:center;justify-content:center;padding-top:6%;box-shadow:inset 0 -3px 4px rgba(0,0,0,.22)}
+.ch-w .bd::after{content:"";position:absolute;left:4%;right:4%;bottom:7%;height:7%;border-radius:50%;border-bottom:1.5px solid rgba(0,0,0,.25)}
+.ch-w b{position:relative;z-index:1;font:700 var(--fs,4.4cqw)/1 Montserrat,sans-serif;letter-spacing:-.02em;color:var(--bt);text-shadow:0 1px 0 rgba(255,250,225,.65),0 -1px 0 rgba(0,0,0,.18)}
+.ch-w.made .kn{background:radial-gradient(circle at 35% 30%,var(--m1),var(--m3) 45%,var(--m5) 100%)}
+.ch-w.made .nk{background:linear-gradient(90deg,var(--m5),var(--m2) 30%,var(--m4) 70%,var(--m5))}
+.ch-w.made .tp{background:radial-gradient(ellipse at 38% 30%,var(--m1),var(--m2) 40%,var(--m4) 100%)}
+.ch-w.made .bd{background:linear-gradient(90deg,var(--m5) 0%,var(--m2) 16%,var(--m1) 26%,var(--m3) 46%,var(--m4) 74%,var(--m5) 100%)}
+.ch-w.made b{color:var(--mt);text-shadow:0 1px 0 rgba(255,255,255,.7),0 -1px 0 rgba(0,0,0,.18)}
+.ch-w.up{z-index:4}
+.ch-w.up .lift{transform:translateY(-16%) scale(1.08)}
+.ch-w.up .sh{transform:translate(10%,6%) scale(1.12);opacity:.55}
+.ch-w.up .bd{box-shadow:inset 0 -3px 4px rgba(0,0,0,.22),0 0 0 .5cqw rgba(255,214,110,.9)}
+.ch-w.drag{transition:none;z-index:6}
+.ch-w.drag .lift{transform:translateY(-16%) scale(1.12)}
+.ch-w.drag .sh{transform:translate(18%,12%) scale(1.2);opacity:.45}
+.ch-w.over .bd{box-shadow:inset 0 -3px 4px rgba(0,0,0,.22),0 0 0 .7cqw rgba(140,220,150,.95)}
+.ch-w.pop .lift{animation:ch-pop .4s cubic-bezier(.3,1.6,.6,1)}
+@keyframes ch-pop{0%{transform:scale(.35) translateY(-30%);opacity:.2}100%{transform:none;opacity:1}}
+.ch-w.glow .bd{animation:ch-glow 1.1s ease-in-out infinite}
+@keyframes ch-glow{0%,100%{box-shadow:inset 0 -3px 4px rgba(0,0,0,.22),0 0 0 .3cqw rgba(255,211,107,.4)}50%{box-shadow:inset 0 -3px 4px rgba(0,0,0,.22),0 0 0 1cqw rgba(255,211,107,1)}}
+.ch-w.ring .bd{animation:ch-ringw 1s ease 3}
+@keyframes ch-ringw{50%{box-shadow:inset 0 -3px 4px rgba(0,0,0,.22),0 0 0 1.1cqw rgba(255,211,107,1)}}
+.ch-w.win .lift{animation:ch-win 1s cubic-bezier(.3,1.6,.6,1) both}
+@keyframes ch-win{30%{transform:translateY(-22%) scale(1.15)}100%{transform:none}}
+.ch-w.gone{opacity:0;transition:opacity .15s}
+/* the four stamps: + − × ÷ */
+.ch-stamp{position:absolute;z-index:3;top:var(--sy,88.6%);width:12cqw;height:12cqw;transform:translate(-50%,-50%);border:0;padding:0;border-radius:50%;cursor:pointer;
+  background:radial-gradient(circle at 36% 30%,var(--b1),var(--b2) 28%,var(--b3) 55%,var(--b4) 85%,var(--b5));
+  box-shadow:inset 0 .4cqw .3cqw rgba(255,255,255,.55),inset 0 -.6cqw .8cqw rgba(0,0,0,.35),.6cqw 1.2cqw 1.4cqw rgba(10,4,0,.55),0 0 0 .35cqw var(--b5);transition:transform .12s,box-shadow .12s}
+.ch-stamp::before{content:"";position:absolute;inset:14%;border-radius:50%;box-shadow:inset .3cqw .4cqw .6cqw rgba(0,0,0,.35),0 .25cqw 0 rgba(255,255,255,.35)}
+.ch-stamp span{position:relative;font:700 7.6cqw/1 Montserrat,sans-serif;color:var(--bt);text-shadow:0 .25cqw 0 rgba(255,250,225,.6),0 -.15cqw 0 rgba(0,0,0,.25)}
+.ch-stamp.on{transform:translate(-50%,-46%);box-shadow:inset 0 .4cqw .3cqw rgba(255,255,255,.4),inset 0 -.4cqw .6cqw rgba(0,0,0,.35),.3cqw .5cqw .6cqw rgba(10,4,0,.55),0 0 0 .35cqw var(--b5),0 0 0 1.1cqw rgba(255,214,110,.85)}
+.ch-stamp.glow{animation:ch-sglow 1.1s ease-in-out infinite}
+@keyframes ch-sglow{50%{box-shadow:inset 0 .4cqw .3cqw rgba(255,255,255,.55),inset 0 -.6cqw .8cqw rgba(0,0,0,.35),.6cqw 1.2cqw 1.4cqw rgba(10,4,0,.55),0 0 0 .35cqw var(--b5),0 0 0 1.4cqw rgba(255,211,107,.95)}}
+.ch-board.done .ch-stamp{cursor:default;opacity:.8}
+/* the sign picker that opens over a weight when one is dropped (or tapped) onto it */
+.ch-pick{position:absolute;z-index:7;display:flex;gap:1.6cqw;padding:1.6cqw;border-radius:5cqw;background:rgba(15,23,42,.9);border:1px solid rgba(231,199,122,.6);box-shadow:0 2cqw 4cqw rgba(0,0,0,.5);transform:translate(-50%,-100%);opacity:0;pointer-events:none;transition:opacity .15s}
+.ch-pick.on{opacity:1;pointer-events:auto}
+.ch-pick button{position:relative;width:10.5cqw;height:10.5cqw;border:0;padding:0;border-radius:50%;cursor:pointer;background:radial-gradient(circle at 36% 30%,var(--b1),var(--b2) 28%,var(--b3) 55%,var(--b4) 85%,var(--b5));box-shadow:inset 0 -.5cqw .7cqw rgba(0,0,0,.35),0 0 0 .3cqw var(--b5)}
+.ch-pick button span{font:700 6.6cqw/1 Montserrat,sans-serif;color:var(--bt)}
+/* the reveal: gold coins spill across the desk; a brass sign drops in */
+.ch-coins{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:8}
+.ch-coins i{position:absolute;top:-6%;width:4.4cqw;height:4.4cqw;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6c8,#f0c94e 45%,#a87a12);box-shadow:inset 0 0 0 .5cqw rgba(140,96,10,.55);opacity:0;animation:ch-fall 2.6s cubic-bezier(.45,0,.8,.6) forwards}
+@keyframes ch-fall{0%{opacity:0;transform:translate(0,0) rotateX(0)}10%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(var(--dx,20px),var(--dy,300px)) rotateX(var(--rx,720deg))}}
+.ch-sign{position:absolute;left:50%;top:44%;z-index:9;transform:translate(-50%,-50%) rotate(-5deg);padding:1.2cqw 3.2cqw 1cqw;border-radius:1cqw;font:700 italic 5.6cqw/1 Cormorant Garamond,serif;letter-spacing:.04em;color:#3b2a0c;white-space:nowrap;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),2px 6px 12px rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.ch-sign.on{animation:ch-sign .5s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes ch-sign{0%{opacity:0;transform:translate(-50%,-50%) rotate(-5deg) scale(1.8)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1)}}
+.ch-toast{position:absolute;z-index:10;left:50%;top:2px;transform:translateX(-50%);width:max-content;max-width:94%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.ch-toast.on{opacity:1}
+.ch-nope{animation:ch-nope .34s ease}
+@keyframes ch-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+/* ---------- the day book: the order, the rules and your sums, on a ruled ledger page ---------- */
+.ch-notes{position:relative;border-radius:3px;color:#2a2116;padding:12px 14px 12px 34px;
+  background:repeating-linear-gradient(180deg,transparent 0 21px,rgba(70,110,170,.22) 21px 22px),linear-gradient(90deg,transparent 22px,rgba(196,60,60,.45) 22px 23px,transparent 23px 25px,rgba(196,60,60,.35) 25px 26px,transparent 26px),
+    radial-gradient(ellipse at 25% 10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(170deg,#fbf7e8,#f1e8cc 60%,#e6dab6);
+  background-position:0 6px,0 0,0 0,0 0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -12px 16px -12px rgba(110,90,40,.25),0 1px 1px rgba(0,0,0,.25),2px 9px 16px rgba(20,10,0,.42)}
+.ch-notes h2{margin:0 0 1px;font:700 19.5px/1.12 Cormorant Garamond,serif;color:#3a2410}
+.ch-notes .ch-no{display:block;margin:0 0 6px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7a6236}
+.ch-order{display:flex;align-items:baseline;gap:8px;margin:0 0 6px;font:600 12px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a4a1e}
+.ch-order b{font:700 30px/1 Cormorant Garamond,serif;letter-spacing:0;color:#7c1d14;font-variant-numeric:lining-nums}
+.ch-rules{margin:0;padding:0;list-style:none}
+.ch-rules li{position:relative;padding:2px 0 2px 0;font:500 13px/1.38 Montserrat,sans-serif}
+.ch-rule1{display:none;margin:0;font:500 12px/1.35 Montserrat,sans-serif}
+.ch-lines{margin:6px 0 0;padding:4px 0 0;border-top:1px dashed rgba(122,74,30,.4);list-style:none;min-height:24px;font:700 italic 19px/22px Cormorant Garamond,serif;color:#1f2d5c;font-variant-numeric:lining-nums}
+.ch-lines li.clerk{color:#9c2418}
+.ch-lines li.win{color:#1f5c2d}
+.ch-lines li.empty{font:500 italic 12.5px/22px Montserrat,sans-serif;color:#8a7650}
+.ch-lines li.fresh{animation:ch-ink .5s ease-out}
+@keyframes ch-ink{0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0 0 0)}}
+.ch-stampmark{position:absolute;right:12px;bottom:30px;padding:2px 8px;border:2.5px solid #b0281c;border-radius:4px;color:#b0281c;font:700 15px Montserrat,sans-serif;letter-spacing:.12em;transform:rotate(-12deg) scale(1.6);opacity:0;pointer-events:none;mix-blend-mode:multiply}
+.ch-stampmark.on{animation:ch-stampm .35s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes ch-stampm{100%{opacity:.85;transform:rotate(-12deg) scale(1)}}
+.ch-day{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;margin:6px 0 0;font:600 12px Montserrat,sans-serif;color:#5b4a2c}
+.ch-day b{color:#7c2a1e}
+.ch-count{font:700 12.5px Montserrat,sans-serif;color:#3a2410;white-space:nowrap}
+/* ---------- tools ---------- */
+.ch-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.ch-tools .pk-btn{width:auto;margin:0;padding:8px 10px;min-height:0;white-space:nowrap}
+.ch-tools .pk-btn.gold{grid-column:1 / -1;border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.ch-tools .pk-btn:disabled{opacity:.45}
+.ch-ringbtn{animation:ch-ringbtn 1.1s ease 2}
+@keyframes ch-ringbtn{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+/* ---------- the result window ---------- */
+.ch-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.ch-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.ch-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.ch-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.ch-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.ch-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.ch-neat{margin:6px 0 0;text-align:center;font:600 12.5px/1.4 Montserrat,sans-serif;color:#f0d27a}
+.ch-neat.plain{color:rgba(255,255,255,.75)}
+.ch-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(251,247,232,.97),rgba(241,232,204,.97));color:#2a2116;text-align:left}
+.ch-story .ch-med{flex:none;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 36% 30%,#fff3c8,#f0d48a 30%,#d4ab52 60%,#a07a2a 90%);box-shadow:0 0 0 2px #7a5a1e,inset 0 -3px 5px rgba(0,0,0,.3),inset 0 2px 2px rgba(255,255,255,.6);font:700 22px/1 Montserrat,sans-serif;color:#4a3410;text-shadow:0 1px 0 rgba(255,250,225,.6)}
+.ch-story .ch-med svg{width:62%;height:62%}
+#chEnd .ch-story h3{margin:0 0 1px;text-align:left;font:700 19px/1.15 Cormorant Garamond,serif;color:#3a2410}
+#chEnd .ch-story .ch-kind{margin:0 0 3px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a6236;text-align:left}
+#chEnd .ch-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#2a2116;text-align:left}
+#chEnd .ch-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ch-story .ch-rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:#3a2410;font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.ch-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#chEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-height:760px){
+  #chEnd .pk-modal{padding:16px 16px 14px}
+  #chEnd h2{font-size:21px;margin-bottom:2px}
+  #chEnd .ch-stars{font-size:22px;margin:0 0 2px}
+  #chEnd .ch-facts b{font-size:15px}
+  #chEnd .ch-facts div{padding:5px 4px}
+  #chEnd .ch-facts{margin:6px 0 2px}
+  #chEnd .ch-story{margin:8px 0 2px;padding:8px 10px}
+  #chEnd .ch-story p.clamp{-webkit-line-clamp:2}
+  #chEnd .ch-story .ch-med{width:46px;height:46px;font-size:18px}
+  #chEnd .pk-kick{margin-bottom:2px}
+  #chEnd .ch-note{font-size:11.5px;margin:4px 0 0;line-height:1.4}
+  #chEnd .ch-neat{font-size:12px;margin:4px 0 0}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+  #chEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
+  #chEnd .pk-streak .pk-btn{padding:9px 12px}
+  #chEnd .pk-modal .pk-streak p{margin:0 0 8px}
+  #chEnd .pk-kick{margin:0}
+  #chEnd h2{font-size:19px;margin:0}
+  #chEnd .ch-stars{font-size:20px;margin:0}
+  #chEnd .ch-facts{margin:4px 0 2px}
+  #chEnd .ch-facts div{padding:3px 2px}
+  #chEnd .ch-facts b{font-size:14px}
+  #chEnd .ch-neat{font-size:11.5px;margin:3px 0 0}
+  #chEnd .ch-story{margin:6px 0 0;padding:6px 8px}
+  #chEnd .ch-story .ch-med{width:38px;height:38px;font-size:15px}
+  #chEnd .ch-story h3{font-size:15.5px}
+  #chEnd .ch-note{display:none}
+  #chEnd .pk-streak{margin-top:8px;padding:8px 10px}
+  #chEnd .pk-streak p,#chEnd .pk-streak div{font-size:12px;line-height:1.35}
+  #chEnd .pk-row{margin-top:8px;gap:6px}
+  #chEnd .pk-row .pk-btn{padding:8px 6px;font-size:12.5px}
+}
+/* the result window held sideways: two columns, so it fits with no scrolling */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  #chEnd .pk-modal{width:min(780px,calc(100vw - 24px));max-width:none;display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-content:start;padding:12px 16px 12px}
+  #chEnd .ch-endL,#chEnd .ch-endR{min-width:0}
+  #chEnd .ch-endR{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+  #chEnd .pk-kick{margin:0 0 2px}
+  #chEnd h2{font-size:20px;margin:0}
+  #chEnd .ch-stars{font-size:22px;margin:0 0 2px}
+  #chEnd .ch-facts{margin:4px 0 2px}
+  #chEnd .ch-facts div{padding:4px 2px}
+  #chEnd .ch-facts b{font-size:14px}
+  #chEnd .ch-story{margin:6px 0 0;padding:7px 9px}
+  #chEnd .ch-story .ch-med{width:42px;height:42px;font-size:16px}
+  #chEnd .ch-story h3{font-size:16px}
+  #chEnd .ch-story p{font-size:12px;line-height:1.38}
+  #chEnd .ch-note{font-size:11px;margin:4px 0 0}
+  #chEnd .ch-endR .pk-streak{margin:0}
+  #chEnd .ch-endR .pk-row{margin:0;gap:8px}
+  #chEnd .ch-endR .pk-row .pk-btn{padding:9px 6px;font-size:12.5px}
+}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .ch-pad{grid-template-columns:1fr;gap:8px;justify-items:center}
+  .ch-right{width:100%;max-width:calc(100vw - 12px)}
+  .ch-notes{padding:7px 10px 7px 30px;background-position:0 1px,0 0,0 0,0 0}
+  .ch-notes h2,.ch-notes .ch-no{display:none}
+  .ch-order{margin:0 0 3px;font-size:11px}
+  .ch-order b{font-size:24px}
+  .ch-rules{display:none}
+  .ch-rule1{display:block}
+  .ch-lines{display:flex;flex-wrap:wrap;column-gap:14px;margin-top:4px;padding-top:2px;font-size:17px;line-height:22px}
+  .ch-day{margin-top:3px;font-size:11.5px}
+  .ch-stampmark{bottom:8px;right:8px;font-size:13px}
+  .ch-tools{width:100%;padding:6px;gap:6px;grid-template-columns:1.6fr 1fr 1fr}
+  .ch-tools .pk-btn{padding:8px 8px;font-size:12.5px}
+  .ch-tools .pk-btn.gold{grid-column:auto}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .ch-toast{font-size:13px;padding:7px 11px}
+}
+.ch-pad.short .ch-rules{display:none}
+.ch-pad.short .ch-rule1{display:block}
+.ch-pad.short .ch-day{display:none}
+.ch-pad.coach .ch-notes{display:none}
+/* ---------- phones held sideways: the desk fills the left; the day book and buttons stand in a column at the right ---------- */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .ch-pad.land{grid-template-columns:auto;justify-items:center}
+  body.pk-land.seated .ch-pad.land .ch-right{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:8px;max-height:calc(100dvh - 16px);width:var(--pk-landR);max-width:none;gap:6px}
+  body.pk-land.seated.pk-coaching .ch-pad.land .ch-right{top:auto;bottom:8px}
+  body.pk-land.seated.pk-coaching .ch-pad.land .ch-rules{display:none}
+  body.pk-land.seated .ch-pad.land .ch-rules li{font-size:11.5px}
+  body.pk-land.seated .ch-pad.land .ch-lines{font-size:16px}
+  body.pk-land.seated .ch-pad.land .ch-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
+  body.pk-land.seated .ch-pad.land .ch-tools .pk-btn{padding:8px 6px;font-size:12.5px}
+  body.pk-land.seated .ch-pad.land .ch-tools .pk-btn.gold{grid-column:1 / -1}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1101e"></script>
+<script id="chCore">
+/* ===== The Counting House core (the weights, the clerk's search, the graded daily maker): shared by the page and the tests =====
+   Six brass weights and an order to fill. Join two weights with + − × ÷ to make a new weight; the clerk always takes the
+   smaller from the larger, and a division must come out even. Reach the order's number exactly. Not every weight need be used.
+   The clerk's search (a table of every number each group of weights can make) finds, for every number: the easiest way to
+   make it (each kind of sum has a cost, see opCost), how many different ways there are, and the fewest weights it needs.
+   The day's score comes from the easiest way and how many ways there are; the same search drives the hints. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+var SMALL=[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10], LARGE=[25,50,75,100];
+var CAP=30000;
+
+/* the week. big: how many large weights (25, 50, 75, 100) · t: the order's range · ops: the fewest joins it must need
+   score: the band the day's score must land in · ways: at most this many different ways to make it.
+   Bands set Nov 1 from a year of days (tools/countinghouse/check-year.js). */
+var WEEK={
+  1:{big:[0,0],t:[21,60],  ops:2,score:[3.2,4.6], ways:[1,1e7], label:"Monday"},
+  2:{big:[1,1],t:[61,150], ops:2,score:[4.8,6.6], ways:[1,1e7], label:"Tuesday"},
+  3:{big:[1,1],t:[101,300],ops:3,score:[7,9],     ways:[1,1e7], label:"Wednesday"},
+  4:{big:[2,2],t:[201,500],ops:3,score:[9.2,11.6],ways:[1,1e7], label:"Thursday"},
+  5:{big:[1,2],t:[301,700],ops:3,score:[11.8,14.5],ways:[1,200], label:"Friday"},
+  6:{big:[1,2],t:[501,999],ops:4,score:[14.8,19], ways:[1,60],  label:"Saturday"},
+  0:{big:[1,2],t:[501,999],ops:4,score:[19.5,32], ways:[1,16],  label:"Sunday"}
+};
+
+/* how hard a single join is for a person working it out (x is the larger weight, y the smaller) */
+function opCost(op,x,y,r){
+  if(op===0) return r<=20?1:r<=100?1.2:1.6;                                   /* + */
+  if(op===1) return (x<=20?1.2:x<=100?1.6:2)+(r<10&&x>20?0:0);                 /* − */
+  if(op===2){ if(x<=12&&y<=10) return 1.5;                                     /* × : the times tables */
+    if(y<=10&&x%25===0) return 2; if(y<=10&&x<=100) return 2.6; return 4; }
+  return y<=10?(r<=12?2.6:3.2):4.2;                                            /* ÷ */
+}
+var OPS=["+","−","×","÷"];
+function apply(op,x,y){ /* x >= y; returns the new weight, or 0 when not allowed or no use */
+  if(op===0) return x+y;
+  if(op===1){ var d=x-y; return d>0&&d!==y?d:0; }
+  if(op===2){ if(y===1) return 0; var m=x*y; return m<=CAP?m:0; }
+  if(y===1||x%y) return 0; var q=x/y; return q!==y?q:0;
+}
+
+/* the clerk's table: for every group of weights (a bitmask), every number it can make, with
+   c: the easiest way's cost · w: how many ways (capped) · o: the fewest joins · b: how the easiest way is made */
+function table(nums){
+  var n=nums.length, N=1<<n, T=new Array(N), m, i;
+  for(i=0;i<n;i++){ var s={}; s[nums[i]]={c:0,w:1,o:0,b:null}; T[1<<i]=s; }
+  var order=[]; for(m=1;m<N;m++) order.push(m);
+  order.sort(function(a,b){ return pc(a)-pc(b); });
+  for(var k=0;k<order.length;k++){ m=order[k]; if(pc(m)<2) continue;
+    var M={}, low=m&-m;
+    for(var A=(m-1)&m;A>0;A=(A-1)&m){ if(!(A&low)) continue; var B=m^A; if(!B) continue;
+      var TA=T[A], TB=T[B];
+      for(var ka in TA){ var a=+ka, ra=TA[ka];
+        for(var kb in TB){ var b=+kb, rb=TB[kb], x=a>=b?a:b, y=a>=b?b:a;
+          for(var op=0;op<4;op++){ var r=apply(op,x,y); if(!r) continue;
+            var c=ra.c+rb.c+opCost(op,x,y,r), w=ra.w*rb.w, o=ra.o+rb.o+1, e=M[r];
+            if(!e) M[r]={c:c,w:Math.min(w,1e7),o:o,b:[A,a,B,b,op]};
+            else { e.w=Math.min(e.w+w,1e7); if(o<e.o) e.o=o; if(c<e.c){ e.c=c; e.b=[A,a,B,b,op]; } }
+          } } } }
+    T[m]=M; }
+  return T;
+}
+function pc(m){ var c=0; while(m){ m&=m-1; c++; } return c; }
+/* everything about one number across all groups: the easiest way, all the ways, the fewest joins and weights */
+function about(T,v){
+  var best=null, w=0, o=99, l=99;
+  for(var m=1;m<T.length;m++){ var e=T[m]&&T[m][v]; if(!e) continue; w+=e.w; if(e.o<o) o=e.o; if(pc(m)<l) l=pc(m); if(!best||e.c<best.c) best={m:m,c:e.c}; }
+  return best?{c:best.c,m:best.m,w:Math.min(w,1e7),o:o,l:l}:null;
+}
+/* the easiest way to make v from group m, as a list of joins (deepest first): [{x,y,op,r,a,b}] with a, b the two groups */
+function steps(T,m,v){
+  var out=[]; (function go(m,v){ var e=T[m][v]; if(!e||!e.b) return; var A=e.b[0],a=e.b[1],B=e.b[2],b=e.b[3],op=e.b[4];
+    go(A,a); go(B,b); var x=Math.max(a,b), y=Math.min(a,b); out.push({x:x,y:y,op:op,r:apply(op,x,y),A:A,B:B}); })(m,v);
+  return out;
+}
+function score(info){ return Math.round(info.c*(1+2.4/Math.log2(2+info.w))*10)/10; }
+
+/* a day's weights and order */
+function make(seed,spec){
+  var r=rng(seed), best=null;
+  for(var t=0;t<400;t++){
+    var nb=spec.big[0]+Math.floor(r()*(spec.big[1]-spec.big[0]+1));
+    var L=shuffle(LARGE.slice(),r).slice(0,nb), S=shuffle(SMALL.slice(),r).slice(0,6-nb);
+    var nums=S.concat(L).sort(function(a,b){ return a-b; });
+    var T=table(nums), cand=[];
+    for(var v=spec.t[0];v<=spec.t[1];v++){ if(nums.indexOf(v)>=0) continue; var I=about(T,v); if(!I) continue;
+      if(I.o<spec.ops) continue; if(I.w<spec.ways[0]||I.w>spec.ways[1]) continue;
+      var sc=score(I); I.v=v; I.s=sc;
+      if(sc>=spec.score[0]&&sc<=spec.score[1]) cand.push(I);
+      else { var d=sc<spec.score[0]?spec.score[0]-sc:sc-spec.score[1]; if(!best||d<best.d) best={d:d,nums:nums,I:I}; } }
+    if(cand.length){ var I2=cand[Math.floor(r()*cand.length)];
+      return {nums:shuffle(nums.slice(),r),target:I2.v,score:I2.s,cost:Math.round(I2.c*10)/10,ways:I2.w,ops:I2.o,fewest:I2.l,tries:t+1}; }
+  }
+  return {nums:shuffle(best.nums.slice(),r),target:best.I.v,score:best.I.s,cost:best.I.c,ways:best.I.w,ops:best.I.o,fewest:best.I.l,off:true};
+}
+function forDay(key,wd){ return make("ch:"+key,WEEK[wd]); }
+
+root.CH={rng:rng,shuffle:shuffle,WEEK:WEEK,OPS:OPS,apply:apply,opCost:opCost,table:table,about:about,steps:steps,score:score,make:make,forDay:forDay,pc:pc};
+})(typeof window!=="undefined"?window:globalThis);
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FEEL=["Hardest","Gentle","Easy","Steady","Moderate","Tricky","Hard"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function fmtN(v){ return v>=10000?v.toLocaleString("en-US"):String(v); }
+var SIGN=["+","−","×","÷"];
+
+/* ---------- the desk drawing (drawing units: 1000 wide, 880 tall) ----------
+   The balance scale stands at the back: its beam pivots at (500, 96); the pans hang from the beam's ends at x 200 and 800.
+   The fitted weight case lies in front, its six round seats at y 612; the four stamps stand on the desk's front. */
+var DW=1000, DH=880, SEATY=618, ARM=300;
+var SEATX=[0,1,2,3,4,5].map(function(i){ return 56+(i+.5)*888/6; });
+var STAMPX=[230,410,590,770];
+function pct(x,y){ return "left:"+(x/DW*100)+"%;top:"+(y/DH*100)+"%"; }
+function weightSVG(x,base,v,made,big,label){
+  /* a bell weight standing in a pan (SVG): x its middle, base its foot; brass, or nickel for a made weight */
+  var w=big?168:136, h=w*1.05, y0=base-h, g=made?"chNk":"chBr", t=made?"var(--mt)":"var(--bt)", s=String(fmtN(v)), fs=s.length<=2?66:s.length===3?58:44;
+  return '<ellipse cx="'+(x+14)+'" cy="'+(base+2)+'" rx="'+(w*.56)+'" ry="13" fill="#140800" opacity=".35"/>'+
+    '<circle cx="'+x+'" cy="'+(y0+12)+'" r="15" fill="url(#'+g+'R)"/><rect x="'+(x-9)+'" y="'+(y0+22)+'" width="18" height="12" fill="url(#'+g+'H)"/>'+
+    '<path d="M'+(x-w/2)+' '+(y0+44)+'V'+(base-14)+'Q'+(x-w/2)+' '+base+' '+x+' '+base+'Q'+(x+w/2)+' '+base+' '+(x+w/2)+' '+(base-14)+'V'+(y0+44)+'Z" fill="url(#'+g+'H)"/>'+
+    '<ellipse cx="'+x+'" cy="'+(y0+44)+'" rx="'+(w/2)+'" ry="14" fill="url(#'+g+'T)"/>'+
+    (label?'<text x="'+x+'" y="'+(y0+76)+'" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="700" font-size="17" letter-spacing="3" fill="'+t+'" opacity=".8">'+label+'</text>':'')+
+    '<text x="'+x+'" y="'+(base-(label?20:30))+'" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="700" font-size="'+fs+'" fill="'+t+'" stroke="rgba(255,250,225,.5)" stroke-width="1" paint-order="stroke">'+s+'</text>';
+}
+function deskSVG(){
+  var s=[];
+  s.push('<defs>');
+  s.push('<linearGradient id="chDesk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--d1)"/><stop offset=".55" style="stop-color:var(--d2)"/><stop offset="1" style="stop-color:var(--d3)"/></linearGradient>');
+  s.push('<linearGradient id="chFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--df1)"/><stop offset="1" style="stop-color:var(--df2)"/></linearGradient>');
+  s.push('<radialGradient id="chLight" cx="18%" cy="8%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>');
+  s.push('<pattern id="chGrain" width="420" height="60" patternUnits="userSpaceOnUse"><path d="M0 8C90 4 200 14 420 8M0 22C120 26 260 16 420 23M0 37C80 33 230 42 420 36M0 51C140 55 300 46 420 52" fill="none" stroke="#1a0702" stroke-opacity=".2" stroke-width="2"/><ellipse cx="250" cy="30" rx="26" ry="6" fill="none" stroke="#1a0702" stroke-opacity=".14" stroke-width="2"/><path d="M0 15C150 12 280 19 420 15" fill="none" stroke="#fff" stroke-opacity=".05" stroke-width="3"/></pattern>');
+  s.push('<linearGradient id="chCase" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--case1)"/><stop offset=".6" style="stop-color:var(--case2)"/><stop offset="1" style="stop-color:var(--case3)"/></linearGradient>');
+  s.push('<linearGradient id="chVel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--v1)"/><stop offset="1" style="stop-color:var(--v2)"/></linearGradient>');
+  s.push('<radialGradient id="chSeat" cx="55%" cy="62%" r="60%"><stop offset="0" style="stop-color:var(--v2)"/><stop offset=".75" style="stop-color:var(--v3)"/><stop offset="1" stop-color="#000"/></radialGradient>');
+  s.push('<pattern id="chNap" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r=".9" fill="#fff" opacity=".05"/><circle cx="4.5" cy="4" r=".8" fill="#000" opacity=".12"/></pattern>');
+  /* brass (chBr) and nickel (chNk): H across a cylinder, T a top face, R a knob */
+  [["chBr","--b"],["chNk","--m"]].forEach(function(m){ var v=m[1];
+    s.push('<linearGradient id="'+m[0]+'H" x1="0" x2="1"><stop offset="0" style="stop-color:var('+v+'5)"/><stop offset=".16" style="stop-color:var('+v+'2)"/><stop offset=".27" style="stop-color:var('+v+'1)"/><stop offset=".47" style="stop-color:var('+v+'3)"/><stop offset=".75" style="stop-color:var('+v+'4)"/><stop offset="1" style="stop-color:var('+v+'5)"/></linearGradient>');
+    s.push('<radialGradient id="'+m[0]+'T" cx="38%" cy="30%" r="80%"><stop offset="0" style="stop-color:var('+v+'1)"/><stop offset=".45" style="stop-color:var('+v+'2)"/><stop offset="1" style="stop-color:var('+v+'4)"/></radialGradient>');
+    s.push('<radialGradient id="'+m[0]+'R" cx="35%" cy="30%" r="75%"><stop offset="0" style="stop-color:var('+v+'1)"/><stop offset=".5" style="stop-color:var('+v+'3)"/><stop offset="1" style="stop-color:var('+v+'5)"/></radialGradient>');
+    s.push('<linearGradient id="'+m[0]+'V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var('+v+'1)"/><stop offset=".4" style="stop-color:var('+v+'3)"/><stop offset="1" style="stop-color:var('+v+'5)"/></linearGradient>'); });
+  s.push('<radialGradient id="chShade" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0a0300" stop-opacity=".6"/><stop offset=".6" stop-color="#0a0300" stop-opacity=".25"/><stop offset="1" stop-color="#0a0300" stop-opacity="0"/></radialGradient>');
+  s.push('<linearGradient id="chInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="chInL" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('</defs>');
+  /* the desk top, its grain and the light from the top left; a brass inlay line; the front edge */
+  s.push('<rect x="0" y="0" width="1000" height="840" rx="20" fill="url(#chDesk)"/><rect x="0" y="0" width="1000" height="840" rx="20" fill="url(#chGrain)"/><rect x="0" y="0" width="1000" height="840" rx="20" fill="url(#chLight)"/>');
+  s.push('<rect x="18" y="18" width="964" height="806" rx="12" fill="none" stroke="url(#chBrV)" stroke-width="3" opacity=".55"/>');
+  s.push('<path d="M20 2H980" stroke="#fff" stroke-opacity=".18" stroke-width="3"/>');
+  s.push('<path d="M0 820H1000V862Q1000 880 982 880H18Q0 880 0 862Z" fill="url(#chFace)"/><path d="M0 821H1000" stroke="#fff" stroke-opacity=".22" stroke-width="2"/><path d="M0 850H1000" stroke="#000" stroke-opacity=".25" stroke-width="2"/>');
+  /* the scale: its shadow, the plinth, the pillar and the level dial */
+  s.push('<ellipse cx="528" cy="396" rx="210" ry="26" fill="url(#chShade)"/>');
+  s.push('<path d="M330 352H670V392Q670 400 662 400H338Q330 400 330 392Z" fill="url(#chFace)"/><rect x="330" y="340" width="340" height="14" rx="3" fill="url(#chCase)"/><path d="M332 341H668" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>');
+  s.push('<rect x="330" y="352" width="340" height="6" fill="url(#chBrV)"/>');
+  s.push('<path d="M400 340Q420 314 500 310Q580 314 600 340Z" fill="url(#chBrH)"/>');
+  s.push('<rect x="487" y="96" width="26" height="218" fill="url(#chBrH)"/>');
+  [190,262].forEach(function(y){ s.push('<rect x="480" y="'+y+'" width="40" height="10" rx="3" fill="url(#chBrH)"/>'); });
+  s.push('<path d="M500 96L440 196A120 120 0 0 0 560 196Z" fill="url(#chBrV)" opacity=".9"/><path d="M448 186A112 112 0 0 0 552 186" fill="none" stroke="var(--b5)" stroke-width="2"/>');
+  for(var k=-4;k<=4;k++){ var a=k*7*Math.PI/180, r1=k?100:94, r2=112; s.push('<path d="M'+(500+Math.sin(a)*r1)+' '+(96+Math.cos(a)*r1)+'L'+(500+Math.sin(a)*r2)+' '+(96+Math.cos(a)*r2)+'" stroke="var(--b5)" stroke-width="'+(k?2:4)+'"/>'); }
+  /* the left pan (the order) and the right pan (your weight): they hang from the beam's ends and move with it */
+  [["L",200],["R",800]].forEach(function(p){ var x=p[1];
+    s.push('<g class="ch-pan'+p[0]+'">'+
+      '<path d="M'+x+' 104L'+(x-118)+' 268M'+x+' 104L'+(x+118)+' 268" stroke="url(#chBrH)" stroke-width="3"/><path d="M'+x+' 104L'+x+' 262" stroke="var(--b5)" stroke-width="2.5" stroke-dasharray="5 3"/>'+
+      '<path d="M'+(x-128)+' 268Q'+x+' 340 '+(x+128)+' 268Z" fill="url(#chBrV)"/><path d="M'+(x-128)+' 268Q'+x+' 340 '+(x+128)+' 268" fill="none" stroke="var(--b5)" stroke-width="2"/>'+
+      '<ellipse cx="'+x+'" cy="268" rx="128" ry="20" fill="url(#chBrT)"/><ellipse cx="'+x+'" cy="270" rx="112" ry="14" fill="var(--b4)" opacity=".6"/>'+
+      '<g id="chPan'+p[0]+'"></g></g>'); });
+  /* the beam and its needle, turning about the pivot */
+  s.push('<g class="ch-beam"><path d="M500 100L494 108L500 190L506 108Z" fill="var(--b5)"/><rect x="176" y="88" width="648" height="16" rx="8" fill="url(#chBrV)"/><path d="M184 90H816" stroke="#fff" stroke-opacity=".45" stroke-width="2"/>'+
+    '<circle cx="200" cy="96" r="12" fill="url(#chBrR)"/><circle cx="800" cy="96" r="12" fill="url(#chBrR)"/><circle cx="500" cy="96" r="22" fill="url(#chBrR)"/><circle cx="500" cy="96" r="7" fill="var(--b5)"/></g>');
+  s.push('<path d="M486 74Q500 44 514 74Z" fill="url(#chBrR)"/><circle cx="500" cy="48" r="12" fill="url(#chBrR)"/>');
+  /* the fitted weight case: a walnut frame, green velvet and six round seats */
+  s.push('<rect x="40" y="446" width="940" height="270" rx="16" fill="#0a0300" opacity=".35" transform="translate(12 10)"/>');
+  s.push('<rect x="30" y="436" width="940" height="270" rx="16" fill="url(#chCase)"/><rect x="30" y="436" width="940" height="270" rx="16" fill="url(#chGrain)" opacity=".7"/><path d="M46 438H954" stroke="#fff" stroke-opacity=".35" stroke-width="2.5"/><path d="M32 452V690" stroke="#fff" stroke-opacity=".18" stroke-width="2"/>');
+  s.push('<rect x="56" y="458" width="888" height="214" rx="8" fill="url(#chVel)"/><rect x="56" y="458" width="888" height="214" rx="8" fill="url(#chNap)"/><rect x="56" y="458" width="888" height="22" rx="8" fill="url(#chInT)"/><rect x="56" y="458" width="20" height="214" rx="8" fill="url(#chInL)"/>');
+  SEATX.forEach(function(x){ s.push('<ellipse cx="'+x+'" cy="'+(SEATY-6)+'" rx="64" ry="24" fill="url(#chSeat)"/><path d="M'+(x-64)+' '+(SEATY-6)+'A64 24 0 0 0 '+(x+64)+' '+(SEATY-6)+'" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>'); });
+  /* the maker's plate: on the case's bottom bar, a hair below dead center */
+  s.push('<g transform="translate(500 691)"><rect x="-50" y="-12" width="100" height="25" rx="4" fill="url(#chBrV)" stroke="var(--b5)" stroke-width="1.5"/><circle cx="-42" cy=".5" r="2" fill="var(--b5)"/><circle cx="42" cy=".5" r="2" fill="var(--b5)"/>'+
+    '<text x="-3" y="8" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="500" font-size="19" fill="var(--bt)">B<tspan font-family="Pacifico,cursive" font-size="14.5" font-weight="400">W</tspan></text></g>');
+  /* the stamps' shadows on the desk */
+  STAMPX.forEach(function(x){ s.push('<ellipse cx="'+(x+10)+'" cy="'+(780+40)+'" rx="62" ry="12" fill="url(#chShade)"/>'); });
+  return s.join("");
+}
+
+/* ---------- the stage ---------- */
+var stage=mk("div","ch-pad");
+stage.innerHTML='<div class="ch-left"><div class="ch-board" id="chBoard"><svg id="chBase" viewBox="0 0 1000 880" aria-hidden="true"></svg><div id="chWts"></div>'+
+  STAMPX.map(function(x,i){ return '<button class="ch-stamp" type="button" data-op="'+i+'" style="left:'+(x/DW*100)+'%" aria-label="'+["Add","Subtract","Multiply","Divide"][i]+'"><span>'+SIGN[i]+'</span></button>'; }).join("")+
+  '<div class="ch-pick" id="chPick">'+SIGN.map(function(g,i){ return '<button type="button" data-op="'+i+'"><span>'+g+'</span></button>'; }).join("")+'</div>'+
+  '<div class="ch-coins" id="chCoins"></div><div class="ch-sign" id="chSign">Balanced to the Penny</div><div class="ch-toast" id="chToast" role="status"></div></div></div>'+
+  '<div class="ch-right"><div class="ch-notes" id="chNotes"><h2>The Day Book</h2><span class="ch-no" id="chNo">No. 1</span>'+
+  '<div class="ch-order">Order <b id="chTarget">0</b></div>'+
+  '<ul class="ch-rules"><li>Join two weights with <b>+ − × ÷</b> to make a new one.</li><li>Make the order\'s number <b>exactly</b>. You needn\'t use every weight.</li><li>Tap a weight, a sign, then another weight, or drag one weight onto another.</li></ul>'+
+  '<p class="ch-rule1">Join weights with <b>+ − × ÷</b> to make the order <b>exactly</b>. Tap a weight, a sign, then another weight.</p>'+
+  '<ol class="ch-lines" id="chLines"></ol>'+
+  '<div class="ch-day"><span id="chDay"></span><span class="ch-count" id="chCount"></span></div><div class="ch-stampmark" id="chMark">SETTLED</div></div>'+
+  '<div class="ch-tools"><button class="pk-btn gold" type="button" id="chHint">Ask the Clerk</button><button class="pk-btn" type="button" id="chUndo">Undo</button><button class="pk-btn" type="button" id="chRestart">Restart</button></div></div>';
+var BOARD=$("#chBoard",stage), BASE=$("#chBase",stage), WTS=$("#chWts",stage), PICK=$("#chPick",stage), TOAST=$("#chToast",stage), COINS=$("#chCoins",stage);
+BASE.innerHTML=deskSVG();
+var STAMPS=[].slice.call(stage.querySelectorAll(".ch-stamp"));
+
+/* ---------- state ----------
+   P: the puzzle {nums, target, fewest}. slots: the six seats, each a weight {id, v, made, n (how many first weights it holds)} or null.
+   lines: the day book's sums {t, clerk}. sel: the seat of the lifted weight. op: the chosen sign. */
+var P=null, mode="daily", slots=[], lines=[], sel=-1, op=-1, last=-1, hints=0, t0=0, done=false, undoS=[], busy=false, nid=1, fresh={}, lessonK=0, glowSeats=[], glowOp=-1;
+function snap(){ return {slots:slots.map(function(w){ return w&&{id:w.id,v:w.v,made:w.made,n:w.n}; }),lines:lines.slice(),last:last}; }
+function restore(s){ slots=s.slots.map(function(w){ return w&&{id:w.id,v:w.v,made:w.made,n:w.n}; }); lines=s.lines.slice(); last=s.last; }
+function present(){ var a=[]; slots.forEach(function(w,i){ if(w) a.push(i); }); return a; }
+
+/* ---------- drawing the weights, the pans, the beam and the day book ---------- */
+function wSize(w){ var d=String(w.v).length; return d<=1?118:d===2?(w.v>=25&&!w.made?130:124):d===3?136:146; }
+function render(){
+  var h=[];
+  slots.forEach(function(w,i){ if(!w) return; var sz=wSize(w), d=String(fmtN(w.v)).length, fs=d<=2?46:d===3?40:d===4?31:27;
+    var cls="ch-w"+(w.made?" made":"")+(i===sel?" up":"")+(fresh[w.id]?" pop":"")+(glowSeats.indexOf(i)>=0&&!done?" glow":"")+(done&&w.v===P.target?" win":"");
+    h.push('<div class="'+cls+'" data-seat="'+i+'" style="'+pct(SEATX[i],SEATY)+';--w:'+(sz/10)+'cqw;--fs:'+(fs/10)+'cqw" role="button" aria-label="Weight '+w.v+'"><div class="sh"></div><div class="lift"><div class="kn"></div><div class="nk"></div><div class="tp"></div><div class="bd"><b>'+fmtN(w.v)+'</b></div></div></div>'); });
+  WTS.innerHTML=h.join(""); fresh={};
+  STAMPS.forEach(function(b,i){ b.classList.toggle("on",i===op&&sel>=0); b.classList.toggle("glow",i===glowOp&&!done); });
+  scale(); book(); counts();
+}
+/* the scale: the order in the left pan; the lifted weight (or the newest made one) in the right; the beam leans toward the heavier */
+function shown(){ return sel>=0&&slots[sel]?slots[sel]:last>=0&&slots[last]?slots[last]:null; }
+function scale(){
+  var w=shown(), T=P.target, a;
+  $("#chPanL",BASE).innerHTML=weightSVG(200,272,T,false,true,"ORDER");
+  $("#chPanR",BASE).innerHTML=w?weightSVG(800,272,w.v,w.made,w.v>=100,""):"";
+  if(!w) a=9; else if(w.v===T) a=0; else { var r=(T-w.v)/T; a=Math.max(-9,Math.min(9,(r>0?1:-1)*(1.6+Math.abs(r)*12))); }
+  BOARD.style.setProperty("--ch-a",a.toFixed(2)); BOARD.style.setProperty("--ch-dy",(ARM*Math.sin(a*Math.PI/180)).toFixed(1));
+}
+function book(){
+  $("#chTarget",stage).textContent=fmtN(P.target);
+  var L=$("#chLines",stage);
+  L.innerHTML=lines.length?lines.map(function(l,i){ return '<li class="'+(l.clerk?"clerk":"")+(l.win?" win":"")+(i===lines.length-1&&l.fresh?" fresh":"")+'">'+esc(l.t)+'</li>'; }).join(""):'<li class="empty">Your sums are written here.</li>';
+  lines.forEach(function(l){ l.fresh=false; });
+}
+function counts(){
+  var n=present().length;
+  $("#chCount",stage).textContent=n+" weight"+(n===1?"":"s")+" left";
+  $("#chUndo",stage).disabled=!undoS.length||done;
+  if(window.Parlor){ Parlor.score([fmtN(P.target)]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Order","Make "+fmtN(P.target)+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+
+/* ---------- sounds (Nov 1): the counting house, made in the browser through the kit ----------
+   ch-lift: a brass weight lifted from the velvet · ch-set: set back down · ch-stamp: a brass stamp pressed
+   ch-join: two weights meeting on the scale, the pan's chains, and the pen in the day book · ch-no: two dull knocks on the desk
+   ch-hint: the counter bell · ch-undo: a weight lifted off · ch-restart: the weights rattling back into the case
+   ch-solve: the counter bell twice, coins spilling, and a warm chord (a lesson gets the bell and the chord) */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  function clink(h,d,t,f,g){ h.bell(d,t,f,g,.35,[[1,1,1],[2.92,.5,.6],[5.1,.25,.4],[7.6,.1,.3]]); }
+  D("ch-lift",function(h){ var d=h.out(.08), t=h.t, p=h.p*(.97+Math.random()*.06); clink(h,d,t,2600*p,.05); h.burst(d,t,.05,"bandpass",900,1,.08,.002,.04); });
+  D("ch-set",function(h){ var d=h.out(.06), t=h.t, p=h.p*(.97+Math.random()*.06); h.osc(d,t,"sine",180*p,110*p,.16,.003,.1,["lowpass",500]); h.burst(d,t,.05,"lowpass",900,1,.1,.002,.04); clink(h,d,t+.01,2200*p,.025); });
+  D("ch-stamp",function(h){ var d=h.out(.05), t=h.t; h.osc(d,t,"sine",220,120,.2,.002,.08,["lowpass",700]); h.burst(d,t,.04,"bandpass",1800,1.5,.12,.001,.03); h.burst(d,t+.06,.03,"bandpass",2400,2,.05,.001,.02); });
+  D("ch-join",function(h){ var d=h.out(.12), t=h.t, p=h.p;
+    clink(h,d,t,2100*p,.07); clink(h,d,t+.07,2800*p,.05);                                   /* two weights meeting */
+    for(var k=0;k<5;k++) h.burst(d,t+.12+k*.035,.03,"bandpass",4200+Math.random()*1800,3,.035,.002,.025);   /* the pan's chains */
+    [[.32,3200,4600],[.42,4800,3400],[.5,3600,5000]].forEach(function(c){ h.burst(d,t+c[0],.07,"bandpass",c[1],2.5,.045,.01,.05); });   /* the pen */
+  });
+  D("ch-no",function(h){ var d=h.out(.06), t=h.t; [[0,170],[.14,150]].forEach(function(k){ h.osc(d,t+k[0],"sine",k[1],k[1]*.8,.24,.002,.12,["lowpass",600]); h.burst(d,t+k[0],.04,"lowpass",1200,1,.12,.001,.03); }); });
+  D("ch-hint",function(h){ var d=h.out(.25), t=h.t; h.bell(d,t,2093,.09,1.4,[[1,1,1],[2.4,.45,.6],[3.9,.22,.45],[5.6,.1,.3]]); });
+  D("ch-undo",function(h){ var d=h.out(.05), t=h.t; clink(h,d,t,2400,.04); h.burst(d,t,.08,"bandpass",3800,1.4,.05,.01,.06); });
+  D("ch-restart",function(h){ var d=h.out(.1), t=h.t; for(var k=0;k<7;k++) clink(h,d,t+k*.06+Math.random()*.03,1800+Math.random()*1400,.035); h.burst(d,t+.05,.4,"lowpass",700,1,.06,.05,.3); });
+  D("ch-solve",function(h,o){ var d=h.out(.45), t=h.t, at=0;
+    h.bell(d,t,2093,.08,1.4,[[1,1,1],[2.4,.45,.6],[3.9,.22,.45]]); h.bell(d,t+.22,2093,.07,1.6,[[1,1,1],[2.4,.45,.6],[3.9,.22,.45]]);
+    if(!o.short){ for(var k=0;k<18;k++) clink(h,d,t+.5+k*.055+Math.random()*.04,3000+Math.random()*2600,.03*(1-k/24)); at=.6; }
+    [523.25,659.25,783.99,1046.5].forEach(function(f,i){ h.osc(d,t+.5+at+i*.06,"triangle",f,0,.05,.02,1.8); });
+  });
+})();
+function snd(name,o){ if(window.Parlor&&Parlor.defSfx) Parlor.sfx(name,o||{}); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2200); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function nope(){ BOARD.classList.remove("ch-nope"); void BOARD.offsetWidth; BOARD.classList.add("ch-nope"); snd("ch-no"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("ch-ringbtn"); void b.offsetWidth; b.classList.add("ch-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done||!P||busy; }
+function pickOff(){ PICK.classList.remove("on"); PICK._to=-1; }
+function lift(i){ sel=i; op=-1; snd("ch-lift"); render(); }
+function drop(){ if(sel<0) return; sel=-1; op=-1; snd("ch-set"); render(); }
+/* the result of joining two weights, the clerk's way: the larger first; null with a reason when it can't be done */
+function joinVal(a,b,o){
+  var x=Math.max(a,b), y=Math.min(a,b);
+  if(o===0) return {x:x,y:y,r:x+y};
+  if(o===1) return x===y?{why:"Taking "+y+" from "+x+" leaves nothing for the scale."}:{x:x,y:y,r:x-y};
+  if(o===2) return x*y>999999?{why:"That's too heavy for the scale."}:{x:x,y:y,r:x*y};
+  return x%y?{why:x+" doesn't share evenly by "+y+". A division must come out even."}:{x:x,y:y,r:x/y};
+}
+/* join the weights in seats a and b: the new weight takes b's seat */
+function join(a,b,o,clerk){
+  var A=slots[a], B=slots[b], J=joinVal(A.v,B.v,o);
+  if(J.why){ toast(J.why,2800); nope(); return false; }
+  undoS.push(snap()); if(!t0&&mode!=="lesson") t0=Date.now();
+  var W={id:nid++,v:J.r,made:true,n:A.n+B.n}, txt=fmtN(J.x)+" "+SIGN[o]+" "+fmtN(J.y)+" = "+fmtN(J.r);
+  busy=true; pickOff(); hideToast();
+  var el=WTS.querySelector('[data-seat="'+a+'"]');
+  function fin(){
+    slots[a]=null; slots[b]=W; last=b; sel=-1; op=-1; fresh[W.id]=1;
+    lines.push({t:txt,clerk:!!clerk,fresh:true,win:J.r===P.target}); busy=false;
+    snd("ch-join"); render();
+    if(J.r===P.target){ solved(b); return; }
+    lessonCheck();
+  }
+  if(el&&Parlor.smooth()){ el.classList.remove("drag"); el.style.transform=""; el.style.left=(SEATX[b]/DW*100)+"%"; el.style.top=(SEATY/DH*100-2)+"%"; setTimeout(fin,240); }
+  else fin();
+  return true;
+}
+function tapSeat(i){
+  if(blocked()) return;
+  hideToast();
+  if(sel<0){ lift(i); return; }
+  if(sel===i){ drop(); return; }
+  if(op>=0){ join(sel,i,op); return; }
+  openPick(i);
+}
+function openPick(i){
+  PICK._to=i; var x=Math.max(23,Math.min(77,SEATX[i]/DW*100));
+  PICK.style.left=x+"%"; PICK.style.top=((SEATY-150)/DH*100)+"%"; PICK.classList.add("on");
+  toast("Which sign? "+fmtN(slots[sel].v)+" and "+fmtN(slots[i].v),2400);
+}
+PICK.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b||PICK._to<0||sel<0) return; snd("ch-stamp"); join(sel,PICK._to,+b.dataset.op); });
+STAMPS.forEach(function(b){ b.addEventListener("click",function(){
+  if(blocked()) return; var o=+b.dataset.op;
+  if(sel<0){ toast("Pick up a weight first, then a sign, then another weight.",2600); return; }
+  snd("ch-stamp");
+  if(PICK.classList.contains("on")&&PICK._to>=0){ join(sel,PICK._to,o); return; }
+  op=op===o?-1:o; render();
+  if(op>=0) toast(fmtN(slots[sel].v)+" "+SIGN[op]+" … now tap another weight.",2200);
+}); });
+function undo(){
+  if(mode==="lesson"&&blocked()) return; if(done||busy||!undoS.length) return;
+  restore(undoS.pop()); sel=-1; op=-1; pickOff(); snd("ch-undo"); hideToast(); render();
+}
+function restart(){
+  hideToast(); pickOff();
+  if(mode==="lesson"&&blocked()) return;
+  if(!P||busy) return;
+  if(done&&mode==="daily"){ startDaily(true); return; }
+  if(!lines.length){ if(sel>=0) drop(); return; }
+  undoS.push(snap()); setup(); snd("ch-restart"); render();
+  toast("The weights are back in the case. (Undo brings your sums back.)",2600);
+}
+function setup(){ slots=P.nums.map(function(v){ return {id:nid++,v:v,made:false,n:1}; }); lines=[]; last=-1; sel=-1; op=-1; }
+
+/* ---------- touching the desk: tap a weight to lift it; drag one onto another ---------- */
+var drag=null, raf=0;
+function seatEl(t){ var e=t&&t.closest?t.closest(".ch-w"):null; return e&&WTS.contains(e)?e:null; }
+function seatUnder(x,y,skip){
+  var best=-1, bd=1e9; [].forEach.call(WTS.children,function(e){ var i=+e.dataset.seat; if(i===skip) return; var r=e.getBoundingClientRect();
+    if(x>=r.left-r.width*.15&&x<=r.right+r.width*.15&&y>=r.top-r.height*.2&&y<=r.bottom+r.height*.1){ var d=Math.abs(x-(r.left+r.right)/2); if(d<bd){ bd=d; best=i; } } });
+  return best;
+}
+WTS.addEventListener("pointerdown",function(e){
+  var el=seatEl(e.target); if(!el||e.button>0) return; e.preventDefault();
+  drag={id:e.pointerId,seat:+el.dataset.seat,el:el,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,moved:false,over:-1};
+  try{ WTS.setPointerCapture(e.pointerId); }catch(x){}
+});
+WTS.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.id) return; drag.x=e.clientX; drag.y=e.clientY;
+  if(!drag.moved){ if(Math.hypot(drag.x-drag.x0,drag.y-drag.y0)<8) return; if(blocked()){ drag=null; return; }
+    drag.moved=true; pickOff(); hideToast(); if(sel!==drag.seat){ sel=drag.seat; op=op>=0&&sel>=0?op:-1; snd("ch-lift"); render(); }
+    drag.el=WTS.querySelector('[data-seat="'+drag.seat+'"]'); drag.el.classList.add("drag","up"); }
+  if(!raf) raf=requestAnimationFrame(function(){ raf=0; if(!drag||!drag.moved) return;
+    drag.el.style.transform="translate(calc(-50% + "+(drag.x-drag.x0)+"px),calc(-100% + "+(drag.y-drag.y0)+"px))";
+    var o=seatUnder(drag.x,drag.y,drag.seat); if(o!==drag.over){ if(drag.over>=0){ var p=WTS.querySelector('[data-seat="'+drag.over+'"]'); if(p) p.classList.remove("over"); }
+      drag.over=o; if(o>=0) WTS.querySelector('[data-seat="'+o+'"]').classList.add("over"); } });
+});
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var d=drag; drag=null;
+  if(!d.moved){ tapSeat(d.seat); return; }
+  var o=seatUnder(d.x,d.y,d.seat);
+  if(o>=0){ if(op>=0) join(d.seat,o,op); else { d.el.style.transform=""; d.el.classList.remove("drag"); render(); openPick(o); } }
+  else { d.el.style.transform=""; d.el.classList.remove("drag"); snd("ch-set"); render(); }
+}
+WTS.addEventListener("pointerup",endDrag);
+WTS.addEventListener("pointercancel",function(){ if(drag&&drag.moved){ drag=null; render(); } drag=null; });
+WTS.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+/* a tap on the bare desk puts the lifted weight down and closes the sign picker */
+BOARD.addEventListener("click",function(e){ if(e.target.closest(".ch-w,.ch-stamp,.ch-pick,#chWts")) return; if(PICK.classList.contains("on")){ pickOff(); return; } if(sel>=0&&!busy&&!done) drop(); });
+
+/* ---------- Ask the Clerk ----------
+   If the order can't be made from the weights on the desk, the clerk takes your newest weight apart (as often as needed).
+   Otherwise he does the next sum of the easiest way from here, writes it in red, and says why it helps. */
+function hint(){
+  hideToast(); pickOff();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!P||busy) return;
+  var seats=present(), vals=seats.map(function(i){ return slots[i].v; }), T=CH.table(vals), I=CH.about(T,P.target), msg="";
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  hints++;
+  if(!I){
+    /* take sums back until the order can be made again */
+    var k=0; while(undoS.length){ restore(undoS.pop()); k++; seats=present(); vals=seats.map(function(i){ return slots[i].v; }); if(CH.about(CH.table(vals),P.target)) break; }
+    sel=-1; op=-1; snd("ch-hint"); render();
+    msg=k>1?"From there the order couldn't be made, so the clerk takes back your last "+k+" sums.":"From there the order couldn't be made, so the clerk takes back your last sum.";
+    toast(msg,4200); if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+    lessonCheck(); return;
+  }
+  var S=CH.steps(T,I.m,P.target), s=S[0];
+  /* find the two seats holding the step's weights (each group in the step is one weight on the desk) */
+  var a=seats[Math.log2(s.A&-s.A)|0], b=seats[Math.log2(s.B&-s.B)|0];
+  if(slots[a].v!==Math.max(s.x,s.y)){ var t=a; a=b; b=t; }
+  var why=S.length===1?"and that fills the order!":S.length===2?"one more sum after this fills the order.":(S.length-1)+" more sums after this fill the order.";
+  msg="The clerk joins "+fmtN(s.x)+" and "+fmtN(s.y)+": "+fmtN(s.x)+" "+SIGN[s.op]+" "+fmtN(s.y)+" = "+fmtN(s.r)+", "+why;
+  snd("ch-hint"); sel=-1; op=-1; render();
+  var ea=WTS.querySelector('[data-seat="'+a+'"]'), eb=WTS.querySelector('[data-seat="'+b+'"]'); if(ea) ea.classList.add("ring"); if(eb) eb.classList.add("ring");
+  setTimeout(function(){ join(a,b,s.op,true); },Parlor.smooth()?650:0);
+  toast(msg,msg.length>110?5600:4600);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+}
+
+/* ---------- loading ---------- */
+function load(p,how){
+  P=p; mode=how; hints=0; t0=0; done=false; undoS=[]; busy=false; glowSeats=[]; glowOp=-1; hideToast(); pickOff();
+  if(P.fewest==null){ var I=CH.about(CH.table(P.nums),P.target); P.fewest=I?I.l:6; }
+  setup();
+  BOARD.classList.remove("done"); $("#chSign",stage).classList.remove("on"); $("#chMark",stage).classList.remove("on"); COINS.textContent="";
+  $("#chNo",stage).textContent=how==="daily"?"No. "+dayNo(today):how==="practice"?"Practice":"Lesson";
+  var wd=today.getDay();
+  $("#chDay",stage).innerHTML=how==="daily"?esc(DAYS[wd])+" · <b>"+FEEL[wd]+"</b>":how==="practice"?"Practice":"Lesson";
+  BOARD.classList.add("still"); render(); fit(); setTimeout(function(){ BOARD.classList.remove("still"); },60);
+}
+var today=new Date(), todayKey=ymd(today), DAILY=null;
+function rec(){ try{ return JSON.parse(store("bwCount:"+todayKey)||"null"); }catch(e){ return null; } }
+function makeDaily(){
+  if(DAILY) return DAILY;
+  try{ var c=JSON.parse(store("bwCountP:"+todayKey)||"null"); if(c&&c.nums&&c.nums.length===6&&c.target){ DAILY=c; return c; } }catch(e){}
+  var p=CH.forDay(todayKey,today.getDay()); DAILY={nums:p.nums,target:p.target,fewest:p.fewest,score:p.score};
+  try{ for(var k in localStorage) if(k.indexOf("bwCountP:")===0&&k!=="bwCountP:"+todayKey) localStorage.removeItem(k); }catch(e){}
+  store("bwCountP:"+todayKey,JSON.stringify(DAILY)); return DAILY;
+}
+function startDaily(again){
+  if(window.Parlor) Parlor.coach(null);
+  load(JSON.parse(JSON.stringify(makeDaily())),"daily");
+  if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+  var r=rec();
+  if(r&&!again) toast("You filled today's order. Play it again for fun; tomorrow brings a new one.",3600);
+  else if(!again) toast("Make "+fmtN(P.target)+". Tap a weight to pick it up.",3400);
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwCountStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function reveal(){
+  if(window.Parlor&&!Parlor.smooth()) return;
+  COINS.textContent=""; var Rn=Math.random;
+  for(var k=0;k<22;k++){ var c=mk("i"); c.style.left=(4+Rn()*90)+"%"; c.style.animationDelay=(250+Rn()*1300)+"ms"; c.style.setProperty("--dx",(Rn()*60-30)+"px"); c.style.setProperty("--dy",(BOARD.offsetHeight*(.75+Rn()*.3))+"px"); c.style.setProperty("--rx",(360+Rn()*720)+"deg"); COINS.appendChild(c); }
+}
+function solved(seat){
+  if(done) return; done=true; hideToast(); pickOff(); sel=-1; op=-1; glowSeats=[]; glowOp=-1; BOARD.classList.add("done"); last=seat;
+  var neat=slots[seat].n<=P.fewest;
+  snd("ch-solve",{short:mode==="lesson"});
+  render(); reveal();
+  setTimeout(function(){ $("#chSign",stage).classList.add("on"); $("#chMark",stage).classList.add("on"); },mode==="lesson"?300:900);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },700); return; }
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, sts=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:sts,h:hints,sec:secs,neat:neat?1:0}; store("bwCount:"+todayKey,JSON.stringify(r));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwCountStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  var used=slots[seat].n;
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(sts,secs,first,sk,sv,neat,used); }); },2600);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+/* from the counting house: a true story of sums, signs and money, one a day */
+var NOTES=[
+  {g:"+ −",name:"The Plus and Minus Signs",kind:"Leipzig · 1489",t:"The + and − signs first appeared in print in Johannes Widmann's arithmetic book for merchants, where they marked surplus and shortfall in goods."},
+  {g:"=",name:"The Equals Sign",kind:"Wales · 1557",t:"Robert Recorde invented the equals sign in The Whetstone of Witte, choosing two parallel lines \"bicause noe .2. thynges, can be moare equalle.\""},
+  {g:"×",name:"The Times Sign",kind:"England · 1631",t:"The × for multiplying was introduced by the clergyman and mathematician William Oughtred in his book Clavis Mathematicae."},
+  {g:"÷",name:"The Division Sign",kind:"Switzerland · 1659",t:"The ÷ sign, called the obelus, was first used for dividing by Johann Rahn in his algebra book, Teutsche Algebra."},
+  {g:"0 1",name:"Numbers Come to the Merchants",kind:"Pisa · 1202",t:"Fibonacci's Liber Abaci taught Europe's merchants the Hindu-Arabic numerals, zero included, and showed how much easier they made a ledger's sums."},
+  {g:"Dr",name:"Double-Entry Bookkeeping",kind:"Venice · 1494",t:"Luca Pacioli's Summa de arithmetica gave the first printed account of double-entry bookkeeping: every sum entered twice, once on each side of the ledger."},
+  {g:"£",name:"Pounds, Shillings and Pence",kind:"Britain · until 1971",t:"A pound was 20 shillings and a shilling 12 pence, so 240 pence made a pound. Britain went decimal on February 15, 1971."},
+  {g:"#",name:"The Exchequer",kind:"England · Middle Ages",t:"England's treasury took its name from a checkered cloth spread on a table, on which officials worked out sums by moving counters."},
+  {g:"144",name:"A Gross",kind:"Counting by the dozen",t:"Merchants counted in dozens: a gross is a dozen dozens, 144, and a great gross is a dozen gross, 1,728."},
+  {g:"oz",name:"The Troy Ounce",kind:"Weights for gold",t:"Gold and silver are still weighed in troy ounces, about 31.1 grams each, a little heavier than the everyday ounce of about 28.35 grams."},
+  {g:"●●",name:"A Pebble for Counting",kind:"Ancient Rome",t:"Our word calculate comes from the Latin calculus, a small pebble. Romans reckoned sums by moving pebbles on a counting board."},
+  {g:"⚖",name:"The Bank's Bench",kind:"Italy · Middle Ages",t:"The word bank comes from the Italian banco, the bench or table where money changers did their business in the marketplace."}
+];
+function noteOfDay(){ return mode==="daily"?NOTES[dayNo(today)%NOTES.length]:NOTES[Math.floor(Math.random()*NOTES.length)]; }
+function result(sts,secs,first,sk,sv,neat,used){
+  var v=$("#chEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="chEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Order":"The Counting House · No. "+dayNo(today), N=noteOfDay();
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"The Order Is Filled":"Filled Without Help!")+'</h2>'+
+    '<div class="ch-stars">'+"★★★".slice(0,sts)+'<i>'+"★★★".slice(sts)+'</i></div>'+
+    '<div class="ch-facts"><div><b>'+fmtN(P.target)+'</b><small>Order</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<p class="ch-neat'+(neat?'':' plain')+'">'+(neat?"✦ A neat ledger: "+used+" weights, the fewest possible.":"You used "+used+" weights; it can be done with "+P.fewest+".")+'</p>'+
+    '<div class="ch-story"><div class="ch-med">'+esc(N.g)+'</div><div><p class="ch-kind">'+esc(N.kind)+'</p><h3>'+esc(N.name)+'</h3><p class="clamp">'+esc(N.t)+'</p></div></div>'+
+    '<p class="ch-note">'+(mode==="daily"?(first?"A new order comes in every day at midnight.":"You'd already filled today's order; your first result is the one kept."):"Practice orders don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".ch-story p.clamp");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","ch-rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(sts,secs,sk,neat); });
+  bt(mode==="practice"?"Another Order":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Desk",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  var L=mk("div","ch-endL"), R2=mk("div","ch-endR"); [].slice.call(b.children).forEach(function(c){ (c===row||c.classList.contains("pk-streak")?R2:L).appendChild(c); }); b.appendChild(L); b.appendChild(R2);
+  v.classList.add("on");
+}
+function share(sts,secs,sk,neat){
+  var txt="BrainWhim · The Counting House No. "+dayNo(today)+"\n"+"★★★".slice(0,sts)+"☆☆☆".slice(sts)+" "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(neat?" · neat ledger":"")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/countinghouse.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Look for a big weight near the order first, then make the difference with the small ones.","The scale shows how close you are: the beam leans toward the heavier side.","Tap a weight, then a sign, then another weight. Or drag one weight onto another and choose the sign.","A made weight (silver) can be joined again, just like the brass ones.","Stuck? Ask the Clerk: he does the next sum of an easy way, or takes back a sum that leads nowhere."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, p=CH.make("practice:"+Date.now()+":"+Math.random(),CH.WEEK[wd]);
+  load({nums:p.nums,target:p.target,fewest:p.fewest},"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Order","<p>Make <b>"+fmtN(p.target)+"</b>. Join two weights with + − × ÷ to make a new one; keep going until a weight matches the order.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%3===2&&window.Parlor) Parlor.practiceSay("Practice Order","<p>Make <b>"+fmtN(P.target)+"</b>.</p><p>"+TIPS[(Math.floor(tipN/3)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done){ Parlor.lessonDone(); }
+}
+
+/* ---------- Learn to Play ---------- */
+function seatOf(v){ for(var i=0;i<slots.length;i++) if(slots[i]&&slots[i].v===v&&!slots[i].made) return i; return -1; }
+var LESSONS=[
+  {title:"The Counting House",text:"<p>Six brass <b>weights</b> and an <b>order</b> to fill. The order's number sits in the scale's left pan.</p><p>Join weights with <b>+ − × ÷</b> until one matches it exactly. Just look for now, then tap <b>Next</b>.</p>",
+    puz:{nums:[2,3,5,7,25,100],target:236}},
+  {title:"Join Two Weights",text:"<p>Make <b>12</b>. Tap the <b>3</b>, tap <b>×</b>, then tap the <b>4</b>.</p><p>(Or drag the 3 onto the 4 and choose ×.)</p>",done:"<p>Joined: 3 × 4 = 12, a new silver weight. The scale balances when a weight matches the order.</p>",
+    puz:{nums:[9,3,10,4,25,50],target:12},glow:function(){ return [seatOf(3),seatOf(4)]; },glowOp:2,goal:function(){ return done; }},
+  {title:"Taking Away and Sharing",text:"<p>The clerk always takes the <b>smaller from the larger</b>, and a division must come out <b>even</b>.</p><p>Make <b>5</b> from the 20 and the 4.</p>",done:"<p>20 ÷ 4 = 5. Whichever weight you pick up first, the larger one leads.</p>",
+    puz:{nums:[6,20,9,4,50,75],target:5},glow:function(){ return [seatOf(20),seatOf(4)]; },glowOp:3,goal:function(){ return done; }},
+  {title:"Step by Step",text:"<p>A made weight can be joined again. Make <b>103</b>.</p><p>Try <b>25 × 4</b> first, then add what's missing. Watch the scale come level.</p>",done:"<p>That's the whole trick: build toward the order one sum at a time. You needn't use every weight.</p>",
+    puz:{nums:[25,9,4,7,3,2],target:103},glow:function(){ return lines.length?[]:[seatOf(25),seatOf(4)]; },goal:function(){ return done; }},
+  {title:"Ask the Clerk",text:"<p>Stuck? Press <b>Ask the Clerk</b>. He does the next sum of an easy way, or takes back a sum that leads nowhere.</p><p>Try it now. Fill the order with no help for <b>three stars</b>, with the fewest weights for a <b>neat ledger</b>. Monday's orders are gentle; Sunday's are the hardest.</p>",done:"<p>That's everything. Happy reckoning!</p>",
+    puz:{nums:[2,5,6,8,3,9],target:47},goal:function(){ return hints>0; }}
+];
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k]; load(JSON.parse(JSON.stringify(Ls.puz)),"lesson");
+  glowSeats=Ls.glow?Ls.glow():[]; glowOp=Ls.glowOp!=null?Ls.glowOp:-1;
+  if(k===0){ sel=-1; last=-1; } render();
+}
+function lessonHint(){ hint(); }
+/* the lesson glow follows the play */
+var _render=render; render=function(){ if(mode==="lesson"&&!done){ var Ls=LESSONS[lessonK]; glowSeats=Ls.glow?Ls.glow().filter(function(i){ return i>=0; }):[]; glowOp=Ls.glowOp!=null&&!lines.length?Ls.glowOp:-1; } _render(); };
+
+/* ---------- fit to the space ---------- */
+var RATIO=DH/DW;
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  if(!P) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  stage.classList.toggle("land",land);
+  if(land){ fitLand(VW); return; }
+  document.body.style.removeProperty("--pk-landR"); document.body.style.removeProperty("--pk-landTools");
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var bw, availH;
+  if(wide){
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),1000), nw=Math.round(Math.max(240,Math.min(290,availW*.3)));
+    stage.style.setProperty("--ch-nw",nw+"px");
+    availH=window.innerHeight-top-22;
+    bw=Math.floor(Math.min(availW-nw-18-8,(availH-6)/RATIO,760)); bw=Math.max(300,bw);
+    stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+    stage.style.setProperty("--ch-bw",bw+"px");
+  } else {
+    stage.style.removeProperty("--ch-nw");
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    /* a lesson or practice card at the top (phones): the desk moves down below it and grows to fill the space down to
+       the kit's bar; the day book steps aside (the card says the rules) */
+    var coach=seatedNow()&&document.body.classList.contains("pk-coaching")&&window.Parlor&&Parlor.coachHeight&&Parlor.coachHeight()>0;
+    stage.classList.toggle("coach",!!coach); stage.style.paddingTop="";
+    if(coach){ var ch=Parlor.coachHeight(), stTop=stage.getBoundingClientRect().top, bar=document.querySelector(".pk-bar");
+      var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
+      if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
+      availH=barTop-8-Math.max(ch,stTop); }
+    stage.classList.toggle("short",availH<470);
+    bw=Math.floor(VW-12); stage.style.setProperty("--ch-bw",bw+"px");
+    var rest=$(".ch-right",stage).offsetHeight+8;
+    var maxB=Math.floor((availH-rest)/RATIO);
+    if(bw>maxB){ bw=Math.max(240,maxB); stage.style.setProperty("--ch-bw",bw+"px"); }
+  }
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+}
+/* a phone held sideways: the desk as big as the height allows, the day book and buttons in a column at the right */
+function fitLand(VW){
+  var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+  var R=Math.round(Math.max(200,Math.min(270,VW*.3)));
+  document.body.style.setProperty("--pk-landR",R+"px");
+  var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
+  stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+  var bw=Math.floor(Math.min(lw,lh/RATIO)); stage.style.setProperty("--ch-bw",bw+"px");
+  document.body.style.setProperty("--pk-landTools",coaching?($(".ch-right",stage).offsetHeight+8)+"px":"0px");
+  document.body.style.setProperty("--pk-size",bw+"px");
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#chHint",stage).onclick=hint; $("#chUndo",stage).onclick=undo; $("#chRestart",stage).onclick=restart; }
+/* the keyboard on a computer: Z or Backspace to undo; + - * x / to choose a sign; Escape to put a weight down */
+document.addEventListener("keydown",function(e){
+  if(!seatedNow()||!P) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  var k=e.key;
+  if((e.metaKey||e.ctrlKey)&&k.toLowerCase()==="z"||(!e.metaKey&&!e.ctrlKey&&!e.altKey&&(k==="Backspace"||k.toLowerCase()==="z"))){ e.preventDefault(); undo(); return; }
+  if(k==="Escape"){ pickOff(); drop(); return; }
+  var o={"+":0,"-":1,"*":2,"x":2,"/":3}[k]; if(o!=null&&sel>=0&&!blocked()){ e.preventDefault(); STAMPS[o].click(); }
+});
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"countinghouse", cat:"puzzles", solo:true, free:true, daily:{key:"bwCount:",streak:"bwCountStreak"}, land:true, title:"The Counting House", bg:"puzzles-countinghouse.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Order",
+  tagline:"Six weights and an order to fill.", invite:"Join six brass weights with + − × ÷ to make the day's order exactly. Every order can be filled.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Desks",
+  sets:[
+    {id:"mahogany",name:"Mahogany & Brass",need:0,dots:["#5c2716","#d4ab52"]},
+    {id:"ebony",name:"Ebony & Nickel",club:true,dots:["#2a2421","#bcc3cc"]},
+    {id:"copper",name:"Oak & Copper",club:true,dots:["#9c7040","#c9764a"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> make the <b>order's number</b> (in the scale's left pan) exactly, from the six brass weights.</li><li><b>Join two weights</b> with + − × ÷ to make a new (silver) weight: tap a weight, tap a sign, then tap another weight. Or drag one weight onto another and choose the sign.</li><li>The clerk always takes the <b>smaller from the larger</b>, and a division must come out <b>even</b>.</li><li>Made weights can be joined again. You needn't use every weight.</li><li>The <b>scale</b> shows how close the lifted (or newest) weight is: the beam leans toward the heavier side, and comes level when you've made the order.</li><li><b>Undo</b> takes back your last sum (Z or Backspace on a computer). <b>Restart</b> puts every weight back in the case (and Undo brings your sums back).</li><li><b>Ask the Clerk:</b> he does the next sum of an easy way, or takes back a sum that leads nowhere.</li></ol>",
+    score:"<ul><li><b>One order a day</b>, the same for everyone. It changes at midnight on your device. Monday's order is gentle, with small weights; each day takes a little more thinking, and Sunday's is the hardest.</li><li>Every order can be filled exactly.</li><li><b>★★★</b> with no help from the clerk · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Fill it with the fewest weights it can be done with for a <b>neat ledger</b>.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice orders (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onCoachSize:function(){ setTimeout(fit,0); },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+/* for testing */
+window.CHO={get:function(){ return {P:P,slots:slots.map(function(w){ return w&&w.v; }),lines:lines.map(function(l){ return l.t; }),hints:hints,done:done,mode:mode,sel:sel,op:op}; },tap:tapSeat,stamp:function(o){ STAMPS[o].click(); },hint:hint,undo:undo,restart:restart,join:join};
+})();
+</script>
+</body>
+</html>
