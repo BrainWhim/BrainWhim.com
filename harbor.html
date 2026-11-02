@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Harbor · BrainWhim Puzzles</title>
+<meta name="description" content="The Harbor: a daily sliding puzzle at BrainWhim. Slide the carved boats around a crowded marina until your sailboat can sail out of the harbor mouth.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1101b">
+<style>
+/* ===== The Harbor (Puzzles & Brain Games, Nov 1): a daily sliding puzzle on a harbormaster's chart table =====
+   A pale oak tray of blue water, six berths by six, with the harbor mouth in the right side of the third row.
+   Carved model boats lie in it; each slides only along its own line. Slide them until your red sloop can sail out.
+   Harbors (the Harbors card): Oak & Blue Water (free); Teak & Green Water, White & Navy (Club).
+   Light comes from the top left everywhere: highlights on top and left edges, shade and shadows to the bottom right. */
+body{--f1:#f1dfba;--f2:#d9bd8a;--f3:#b08d58;--f4:#7d5f34;--ff1:#a7834f;--ff2:#6f532c;--w1:#7fc4dc;--w2:#3d8fb4;--w3:#1f5f86;--w4:#123e5c;--b1:#fff3c8;--b2:#f0d48a;--b3:#d4ab52;--b4:#a07a2a;--b5:#5e430f;--bt:#4a3410}
+body[data-set="teak"]{--f1:#d9a878;--f2:#b07a48;--f3:#8a5a30;--f4:#5a3518;--ff1:#7a5030;--ff2:#4a2c14;--w1:#8fd0c0;--w2:#3f9a8c;--w3:#226b62;--w4:#12443e}
+body[data-set="white"]{--f1:#ffffff;--f2:#eef0f2;--f3:#c9ced6;--f4:#8d96a3;--ff1:#c3c9d2;--ff2:#8a929e;--w1:#6f9fd0;--w2:#2f5f9a;--w3:#1b3e70;--w4:#0f2648}
+.hb-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.hb-mono i{font:400 .76em Pacifico,cursive;font-style:normal}
+.hb-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:18px;align-items:start;justify-content:center}
+.hb-left{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+.hb-right{display:flex;flex-direction:column;gap:10px;width:var(--hb-nw,270px)}
+/* ---------- the tray: one SVG (frame, water, mouth), with the boats laid over it ---------- */
+.hb-board{position:relative;overflow:clip;width:var(--hb-bw,600px);aspect-ratio:780/724;container-type:inline-size;-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+.hb-board>svg{position:absolute;inset:0;display:block;width:100%;height:100%}
+.hb-shimmer{position:absolute;left:6.154%;top:6.63%;width:76.92%;height:82.87%;pointer-events:none;opacity:.5;
+  background:repeating-radial-gradient(ellipse 60% 22% at 30% 40%,transparent 0 14px,rgba(255,255,255,.07) 15px 16px,transparent 17px 30px);background-size:180px 120px;animation:hb-sh 14s linear infinite}
+body.pk-still .hb-shimmer,.hb-board.calm .hb-shimmer{animation:none}
+@keyframes hb-sh{to{background-position:180px 60px}}
+/* berths a lifted boat can slide to */
+.hb-path{position:absolute;z-index:1;border-radius:2cqw;background:rgba(255,236,170,.16);box-shadow:inset 0 0 0 .35cqw rgba(255,226,140,.55);pointer-events:none;opacity:0;transition:opacity .15s}
+.hb-path.on{opacity:1;pointer-events:auto;cursor:pointer}
+/* the boats: carved models; the shadow lies on the water to the bottom right, and grows when a boat is lifted */
+.hb-boat{position:absolute;z-index:2;cursor:grab;transition:left .22s cubic-bezier(.3,1.2,.5,1),top .22s cubic-bezier(.3,1.2,.5,1)}
+.hb-boat svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block}
+.hb-boat .sh{transition:transform .2s,opacity .2s}
+.hb-boat .lift{position:absolute;inset:0;transition:transform .2s cubic-bezier(.3,1.5,.6,1)}
+.hb-boat.up{z-index:4}
+.hb-boat.up .lift{transform:translate(-1.5%,-5%) scale(1.05)}
+.hb-boat.up .sh{transform:translate(4%,7%) scale(1.04);opacity:.6}
+.hb-boat.drag{transition:none;z-index:5;cursor:grabbing}
+.hb-boat.snap{transition:transform .2s cubic-bezier(.3,1.25,.5,1)}
+.hb-boat .ring{position:absolute;inset:-1.4cqw;border-radius:3cqw;box-shadow:0 0 0 .6cqw rgba(255,214,110,0);pointer-events:none}
+.hb-boat.glow .ring{animation:hb-glow 1.1s ease-in-out infinite}
+@keyframes hb-glow{0%,100%{box-shadow:0 0 0 .4cqw rgba(255,211,107,.35)}50%{box-shadow:0 0 0 1.1cqw rgba(255,211,107,1)}}
+.hb-boat.hint .ring{animation:hb-hint 1s ease 3}
+@keyframes hb-hint{0%,100%{box-shadow:0 0 0 .3cqw rgba(255,211,107,0)}50%{box-shadow:0 0 0 1.4cqw rgba(255,211,107,1),0 0 3cqw rgba(255,211,107,.7)}}
+.hb-boat.bump .lift{animation:hb-bump .28s ease}
+@keyframes hb-bump{30%{transform:translate(var(--bx,0),var(--by,0))}}
+.hb-boat .sail{transform-origin:var(--mx,60%) 50%;transform:scaleX(0);opacity:0;transition:transform .6s cubic-bezier(.3,1.4,.5,1),opacity .3s}
+.hb-boat.sailing .sail{transform:none;opacity:1}
+.hb-boat.out{transition:left 1.6s cubic-bezier(.5,0,.6,1),opacity .6s 1.1s;opacity:0}
+/* the reveal: gulls cross, the water sparkles, a brass sign drops in */
+.hb-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:8}
+.hb-fx .gull{position:absolute;width:7cqw;height:3cqw;animation:hb-gull 3.4s linear forwards}
+@keyframes hb-gull{0%{transform:translate(0,0)}100%{transform:translate(var(--gx,110cqw),var(--gy,-20cqw))}}
+.hb-fx .gull path{animation:hb-flap .5s ease-in-out infinite alternate;transform-origin:50% 60%}
+@keyframes hb-flap{to{transform:scaleY(.45)}}
+.hb-fx .spark{position:absolute;width:1.6cqw;height:1.6cqw;border-radius:50%;background:radial-gradient(circle,#fff,rgba(255,255,255,0) 70%);opacity:0;animation:hb-spark 1.4s ease-in-out forwards}
+@keyframes hb-spark{30%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(.4)}}
+.hb-sign{position:absolute;left:43%;top:44%;z-index:9;transform:translate(-50%,-50%) rotate(-5deg);padding:1.2cqw 3.2cqw 1cqw;border-radius:1cqw;font:700 italic 6cqw/1 Cormorant Garamond,serif;letter-spacing:.04em;color:#3b2a0c;white-space:nowrap;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),2px 6px 12px rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.hb-sign.on{animation:hb-signin .5s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes hb-signin{0%{opacity:0;transform:translate(-50%,-50%) rotate(-5deg) scale(1.8)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1)}}
+.hb-toast{position:absolute;z-index:10;left:50%;top:2px;transform:translateX(-50%);width:max-content;max-width:94%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.hb-toast.on{opacity:1}
+/* ---------- the Harbor Log: a ship's log page ---------- */
+.hb-notes{position:relative;border-radius:3px;color:#1f2a3a;padding:12px 14px 12px 16px;
+  background:repeating-linear-gradient(180deg,transparent 0 21px,rgba(40,80,140,.16) 21px 22px),radial-gradient(ellipse at 25% 10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(170deg,#fbf8ee,#f0e9d4 60%,#e3dabd);
+  background-position:0 6px,0 0,0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -12px 16px -12px rgba(80,90,110,.25),0 1px 1px rgba(0,0,0,.25),2px 9px 16px rgba(10,20,40,.42)}
+.hb-notes::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:3px 0 0 3px;background:linear-gradient(90deg,#1c3554,#2d5280)}
+.hb-notes h2{margin:0 0 1px;font:700 19.5px/1.12 Cormorant Garamond,serif;color:#1c3554}
+.hb-notes .hb-no{display:block;margin:0 0 6px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#6a7a8e}
+.hb-goal{margin:0 0 6px;font:600 13px/1.35 Montserrat,sans-serif;color:#1c3554}
+.hb-rules{margin:0;padding:0 0 0 16px;font:500 13px/1.42 Montserrat,sans-serif}
+.hb-rules li{padding:1px 0}
+.hb-rule1{display:none;margin:0;font:500 12px/1.35 Montserrat,sans-serif}
+.hb-tally{display:flex;gap:8px;margin:8px 0 0;padding:6px 0 0;border-top:1px dashed rgba(28,53,84,.35)}
+.hb-tally div{flex:1;text-align:center}
+.hb-tally b{display:block;font:700 26px/1 Cormorant Garamond,serif;color:#1c3554;font-variant-numeric:lining-nums}
+.hb-tally small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6a7a8e}
+.hb-tally b.over{color:#9c2418}
+.hb-day{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 8px;margin:6px 0 0;font:600 12px Montserrat,sans-serif;color:#4a5a6e}
+.hb-day b{color:#1c3554}
+.hb-stampmark{position:absolute;right:12px;bottom:34px;padding:2px 8px;border:2.5px solid #1f5c9c;border-radius:4px;color:#1f5c9c;font:700 14px Montserrat,sans-serif;letter-spacing:.12em;transform:rotate(-12deg) scale(1.6);opacity:0;pointer-events:none;mix-blend-mode:multiply}
+.hb-stampmark.on{animation:hb-stampm .35s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes hb-stampm{100%{opacity:.85;transform:rotate(-12deg) scale(1)}}
+/* ---------- tools ---------- */
+.hb-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.hb-tools .pk-btn{width:auto;margin:0;padding:8px 10px;min-height:0;white-space:nowrap}
+.hb-tools .pk-btn.gold{grid-column:1 / -1;border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.hb-tools .pk-btn:disabled{opacity:.45}
+.hb-ringbtn{animation:hb-ringbtn 1.1s ease 2}
+@keyframes hb-ringbtn{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+/* ---------- the result window ---------- */
+.hb-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.hb-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.hb-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.hb-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.hb-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.hb-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.hb-neat{margin:6px 0 0;text-align:center;font:600 12.5px/1.4 Montserrat,sans-serif;color:#f0d27a}
+.hb-neat.plain{color:rgba(255,255,255,.75)}
+.hb-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(251,248,238,.97),rgba(240,233,212,.97));color:#1f2a3a;text-align:left}
+.hb-story .hb-med{flex:none;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 36% 30%,#fff3c8,#f0d48a 30%,#d4ab52 60%,#a07a2a 90%);box-shadow:0 0 0 2px #7a5a1e,inset 0 -3px 5px rgba(0,0,0,.3),inset 0 2px 2px rgba(255,255,255,.6);font:700 20px/1 Montserrat,sans-serif;color:#4a3410;text-shadow:0 1px 0 rgba(255,250,225,.6)}
+#hbEnd .hb-story h3{margin:0 0 1px;text-align:left;font:700 19px/1.15 Cormorant Garamond,serif;color:#1c3554}
+#hbEnd .hb-story .hb-kind{margin:0 0 3px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6a7a8e;text-align:left}
+#hbEnd .hb-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#1f2a3a;text-align:left}
+#hbEnd .hb-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hb-story .hb-rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:#1c3554;font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.hb-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#hbEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-height:760px){
+  #hbEnd .pk-modal{padding:16px 16px 14px}
+  #hbEnd h2{font-size:21px;margin-bottom:2px}
+  #hbEnd .hb-stars{font-size:22px;margin:0 0 2px}
+  #hbEnd .hb-facts b{font-size:15px}
+  #hbEnd .hb-facts div{padding:5px 4px}
+  #hbEnd .hb-facts{margin:6px 0 2px}
+  #hbEnd .hb-story{margin:8px 0 2px;padding:8px 10px}
+  #hbEnd .hb-story p.clamp{-webkit-line-clamp:2}
+  #hbEnd .hb-story .hb-med{width:46px;height:46px;font-size:16px}
+  #hbEnd .pk-kick{margin-bottom:2px}
+  #hbEnd .hb-note{font-size:11.5px;margin:4px 0 0;line-height:1.4}
+  #hbEnd .hb-neat{font-size:12px;margin:4px 0 0}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+  #hbEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
+  #hbEnd .pk-streak .pk-btn{padding:9px 12px}
+  #hbEnd .pk-modal .pk-streak p{margin:0 0 8px}
+  #hbEnd .pk-kick{margin:0}
+  #hbEnd h2{font-size:19px;margin:0}
+  #hbEnd .hb-stars{font-size:20px;margin:0}
+  #hbEnd .hb-facts{margin:4px 0 2px}
+  #hbEnd .hb-facts div{padding:3px 2px}
+  #hbEnd .hb-facts b{font-size:14px}
+  #hbEnd .hb-neat{font-size:11.5px;margin:3px 0 0}
+  #hbEnd .hb-story{margin:6px 0 0;padding:6px 8px}
+  #hbEnd .hb-story .hb-med{width:38px;height:38px;font-size:14px}
+  #hbEnd .hb-story h3{font-size:15.5px}
+  #hbEnd .hb-note{display:none}
+  #hbEnd .pk-streak{margin-top:8px;padding:8px 10px}
+  #hbEnd .pk-streak p,#hbEnd .pk-streak div{font-size:12px;line-height:1.35}
+  #hbEnd .pk-row{margin-top:8px;gap:6px}
+  #hbEnd .pk-row .pk-btn{padding:8px 6px;font-size:12.5px}
+}
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  #hbEnd .pk-modal{width:min(780px,calc(100vw - 24px));max-width:none;display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-content:start;padding:12px 16px 12px}
+  #hbEnd .hb-endL,#hbEnd .hb-endR{min-width:0}
+  #hbEnd .hb-endR{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+  #hbEnd .pk-kick{margin:0 0 2px}
+  #hbEnd h2{font-size:20px;margin:0}
+  #hbEnd .hb-stars{font-size:22px;margin:0 0 2px}
+  #hbEnd .hb-facts{margin:4px 0 2px}
+  #hbEnd .hb-facts div{padding:4px 2px}
+  #hbEnd .hb-facts b{font-size:14px}
+  #hbEnd .hb-story{margin:6px 0 0;padding:7px 9px}
+  #hbEnd .hb-story .hb-med{width:42px;height:42px;font-size:15px}
+  #hbEnd .hb-story h3{font-size:16px}
+  #hbEnd .hb-story p{font-size:12px;line-height:1.38}
+  #hbEnd .hb-note{font-size:11px;margin:4px 0 0}
+  #hbEnd .hb-endR .pk-streak{margin:0}
+  #hbEnd .hb-endR .pk-row{margin:0;gap:8px}
+  #hbEnd .hb-endR .pk-row .pk-btn{padding:9px 6px;font-size:12.5px}
+}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .hb-pad{grid-template-columns:1fr;gap:8px;justify-items:center}
+  .hb-right{width:100%;max-width:calc(100vw - 12px)}
+  .hb-notes{padding:6px 10px 6px 16px;background-position:0 1px,0 0,0 0}
+  .hb-notes h2,.hb-notes .hb-no,.hb-rules,.hb-goal{display:none}
+  .hb-rule1{display:block}
+  .hb-tally{margin-top:4px;padding-top:3px}
+  .hb-tally b{font-size:21px}
+  .hb-day{margin-top:3px;font-size:11.5px}
+  .hb-stampmark{bottom:8px;right:8px;font-size:12px}
+  .hb-tools{width:100%;padding:6px;gap:6px;grid-template-columns:1.6fr 1fr 1fr}
+  .hb-tools .pk-btn{padding:8px 8px;font-size:12.5px}
+  .hb-tools .pk-btn.gold{grid-column:auto}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .hb-toast{font-size:13px;padding:7px 11px}
+}
+.hb-pad.short .hb-rule1{display:none}
+.hb-pad.short .hb-day{display:none}
+.hb-pad.short .hb-tally{margin-top:0;padding-top:0;border-top:0}
+.hb-pad.short .hb-tally b{display:inline;font-size:19px;margin-right:6px}
+.hb-pad.short .hb-notes{padding-top:3px;padding-bottom:3px}
+.hb-pad.coach .hb-notes{display:none}
+/* ---------- phones held sideways: the tray fills the left; the log and buttons stand in a column at the right ---------- */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .hb-pad.land{grid-template-columns:auto;justify-items:center}
+  body.pk-land.seated .hb-pad.land .hb-right{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:8px;max-height:calc(100dvh - 16px);width:var(--pk-landR);max-width:none;gap:6px}
+  body.pk-land.seated.pk-coaching .hb-pad.land .hb-right{top:auto;bottom:8px}
+  body.pk-land.seated.pk-coaching .hb-pad.land .hb-notes{display:none}
+  body.pk-land.seated .hb-pad.land .hb-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
+  body.pk-land.seated .hb-pad.land .hb-tools .pk-btn{padding:8px 6px;font-size:12.5px}
+  body.pk-land.seated .hb-pad.land .hb-tools .pk-btn.gold{grid-column:1 / -1}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1101g"></script>
+<script id="hbCore">
+/* ===== The Harbor core (the marina, the harbormaster's search, the graded daily pool): shared by the page and the tests =====
+   A 6 × 6 marina. Each boat lies along a row (sideways) or a column (up and down) and slides only along that line.
+   Your sailboat (boat 0) lies in the third row; it sails out through the harbor mouth on the right once it reaches
+   the last two berths. One move = one boat slid any distance.
+   The pool: every puzzle was grown offline (tools/harbor/), and graded by the fewest moves that free the sailboat,
+   checked with a full search. Each weekday has its own band of puzzles; the day picks one by week (see pickDay), and the
+   boats' paint changes with the date. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+var N=6, EXIT=2;   /* EXIT: the sloop's row in the pool; a mirrored day puts it in row 3 */
+/* the week: d = the band of fewest moves (set Nov 1 from the pool; tools/harbor/check-year.js checks a year) */
+var WEEK={1:{d:[6,9],label:"Monday"},2:{d:[10,13],label:"Tuesday"},3:{d:[14,17],label:"Wednesday"},4:{d:[18,22],label:"Thursday"},5:{d:[23,27],label:"Friday"},6:{d:[28,33],label:"Saturday"},0:{d:[34,60],label:"Sunday"}};
+/* POOL[weekday] = [{s: 36 letters, row by row ("." water, "A" your sailboat, other letters boats), d: fewest moves, b: boats}] */
+var POOL={"0":[{"s":"..BCDD..BCEFAABGEF...GHHI.JJ.KILLL.K","d":36},
+{"s":"...BCC.DDBE.AAFGE.HHFGIIJKKK.LJ.MM.L","d":49},
+{"s":"BBCC.DE.FF.DE.AAGHEIIIGH..JKLL..JKMM","d":39},
+{"s":"..BBBCDDE.FCAAE.FG..HIIGJ.HKLLJMMK..","d":35},
+{"s":"B.CCCDBEEFGDAA.FGHIIJKGH..JKLL.MMNN.","d":46},
+{"s":"BBC...D.CEEFD.AAGFHH.IGJKKKILJ.MMIL.","d":45},
+{"s":"BCCCDEB.F.DEAAFG....HGIIJJHG.K..LLLK","d":37},
+{"s":"..BCCCDDBEFGHAAEFGH..IIJKKLL.JMMNNNJ","d":39},
+{"s":"BBCCC...DEEEAAD..F..DGHFIJJGHKI.LLLK","d":35},
+{"s":"..BCCCDDB..EFGAAHEFGIIHE..JKLLMMJK..","d":37},
+{"s":".BCCDD.BEEEFAAGH.F..GHIIJ.KKLMJNNNLM","d":37},
+{"s":"..BCCC..BDEEFAAD.GFH..IGFHJJIKLLMMIK","d":38},
+{"s":"...BCCDEEBFGDHAAFGIHJJFKI.LMMKNNL...","d":34},
+{"s":"BBBCD.EEECDFAA.CGFH.IIGJH.KLLJMMK...","d":41},
+{"s":".BBBCC..DEEFAAD..FGHHIIFGJJKL.MM.KL.","d":36},
+{"s":"BBB.C.D.EECFDAAGCFHI.GJJHIKLLMNNK..M","d":38},
+{"s":"BCCDDDB.EFFGAAEH.G...HII.JJJK.LLMMK.","d":35},
+{"s":"BB.CCDEFFGHDEAAGH.IIJG...KJ....KLLMM","d":37},
+{"s":".BCCDD.B.E..AA.EFGHIIIFGH.JKKGLLJ...","d":35},
+{"s":".BBBCC..DEEFAADGHFIJJGHKI.LL.KMMNNNK","d":41},
+{"s":"BBCCCDEEEFGDAAHFGI..H..IJ.H.KKJLLMMM","d":35},
+{"s":"BCC.DEBFG.DEBFGAAHIIJK.H..JKLL.MMNN.","d":44},
+{"s":"BB.C..DE.CFGDEAAFGDHHI.G..JIKK..JLLL","d":38},
+{"s":"BCCDDEB.FGGEAAFH.....HIIJJJHK.LLMMK.","d":37},
+{"s":"BBBCC.DDDE.FAAGE.FH.GIIJH.KKLJMM..L.","d":35},
+{"s":"BBCCDE..F.DEG.FAAEGHHIJJ.KKI..LLMMM.","d":46},
+{"s":"BCCC..BDDD.EAA.FGEHHIFGE..IJKK.LLJ..","d":45},
+{"s":".BBBCDEE.FCDAA.FGHIJJKGHI.LKMMNNL...","d":41},
+{"s":"BCCCDDBEEE.FB.GAAFHHGIJK.L.IJK.LMMJK","d":35},
+{"s":".BC.DD.BC..EAAC..EFGGHHEFIIJK.LLLJK.","d":40},
+{"s":".BCCDE.BFGDEAAFG.EH.IJJJH.IKL.HMMKL.","d":34},
+{"s":"BCDDEEBC..F.BAAGFHIIJGFH..JKKH.LLMM.","d":35},
+{"s":"...BCCD.EB.FD.EAAFGHHHIJGKLLIJ.KMMI.","d":38},
+{"s":"BB..C.D.EEC.DFAACGHFIJJGH.IK.LMMMK.L","d":37},
+{"s":"BBBCDEFGGCDEF.AADEHHI....JIKK..JLLMM","d":49},
+{"s":"BBBC....DCEEAAD..FG.DHHFGIIIJKLLMMJK","d":42},
+{"s":"BCCDEEBFFD..AAGH....GHII..GJJK..LL.K","d":37},
+{"s":"BCCDEEBFFDG.BAAHG.IIJHGK..JLLK.MMNN.","d":34},
+{"s":"..BCCC..BD..EAAD.FEG.DHFEGIIHJKKKLLJ","d":40},
+{"s":"..BCCCDDBEF.GAAEF.G..EHHIIJJ.KLLLMMK","d":34},
+{"s":".BCCD.EBFFD.EAAGD...HGIIJ.HKKLJMMM.L","d":36},
+{"s":"BB..CDE.FFCDEAAGC.HIJGKKHIJLLM..NNNM","d":36},
+{"s":"..BBB.CDDEFGCAAEFGHIJJFKHILMMKNNL...","d":38},
+{"s":"BCCC.DB.EFFDAAEGHI.JJGHI...KLL.MMK..","d":38},
+{"s":"BBBC..DEEC.FDAAGHFIIJGH...JKKL.MMNNL","d":41},
+{"s":"B.CC.DBEEEFDAA.GFHIIJGFH..JKLL...K..","d":35},
+{"s":"BBBC.DEE.CFDAA.GF.HIIGJJH.KLLMNNK..M","d":39},
+{"s":"BCCD..BE.DFGBEAAFGHHIJ.G..IJKKLLLMM.","d":36}],"1":[{"s":".BCCDD.B...EAAFG.E..FG.H.....H......","d":8},
+{"s":"...BCC..DB.E..DAAEF.D..GF.HH.G..II.G","d":9},
+{"s":"BBCC.DE....DE.AA.FEGGHHF..IJJJ..I...","d":9},
+{"s":"BCC...B.D.EFAAD.EF.GHHHI.GJJ.I......","d":7},
+{"s":".BBB....C.D.AACED....EFF.GGG.H.III.H","d":8},
+{"s":"...BCC..DB.E.FDAAE.F...G.....G......","d":7},
+{"s":"....BB...CCDAAEF.D..EFGGHIEJJ.HIKKLL","d":9},
+{"s":"...........B..AA.BCCD..BE.D.FFEGGHHH","d":9},
+{"s":"....B.....BC.DAABC.D.EFF...EGG...HH.","d":9},
+{"s":".....B....CB..AACB..DEEEFGD...FGHHII","d":9},
+{"s":".B.CC..B..DE.AAFDE...FGG..HH........","d":6},
+{"s":"..BCC.D.BEE.DAA.FG.HH.FG....I.....I.","d":9},
+{"s":"..BCC...BD..AABDEFG.HHEFG....F......","d":7},
+{"s":"..BBB...C..DAAC..D..EEEF.GG..F...HHH","d":7},
+{"s":".BCCDD.B...EAAF..E..FGGGH.FI..HJJI..","d":9},
+{"s":"..BBBC....DC.AAEDC.F.EG..F..G..FHHII","d":9},
+{"s":"..........BC.AA.BCDE..B.DEFFGG...HH.","d":9},
+{"s":"...BB....CC.AADE....DEFF..D..G..HHHG","d":8},
+{"s":"..BB......CDAAEFCD..EF.DG...HHG.IIJJ","d":9},
+{"s":".BBCCC..DE..AADE..FGHHIIFG.JJ..KK...","d":8},
+{"s":"........B...AAB.CD.EFFCD.E.G.D.E.GHH","d":9},
+{"s":".BCCDD.BE.FF.BEAAGHHI..G..I..J.KK..J","d":9},
+{"s":".BBCC.DEFFGGDEAAHI...JHI...JKK......","d":9},
+{"s":"....B....CB..AACBD...EED...FFD...GG.","d":7},
+{"s":"...BB......C..AADC...EDC...EFF....GG","d":8},
+{"s":"..BB....CCCDAAE..D..E.FF..G.HH..G...","d":7},
+{"s":"...B...C.BDD.CAAEF....EF.....G.....G","d":7},
+{"s":"..BB....CC..AADEFG..DEFG..H.....H...","d":7},
+{"s":".....B.CCC.B..DAAE..D..E...FGG...F..","d":7},
+{"s":"..B.CC..BDDD.AA..E.FF..E.GHHII.G....","d":7},
+{"s":"....B.....BCAA..DCEE..D.FGGHH.F.....","d":8},
+{"s":"BBCCDDEE..F.G.AAFHGIIJJH...KK.LLL...","d":8},
+{"s":"...........B...AAB..CC.B..D.EE..DFFF","d":6},
+{"s":"...BB.....C..AADCE...DFE....FE.GGHHH","d":7},
+{"s":"B.CCC.B..DE.AA.DE...FFGG..HH........","d":6},
+{"s":"BCCDDDB....EB..AAEF.GGHHF.IIJJ......","d":6},
+{"s":"...BBB...CC.AADEFG..DEFGH.D.I.HJJ.I.","d":9},
+{"s":"......BBCC.DAA.E.DF..EGGFHHH..F.....","d":8},
+{"s":"...BBC....DCAA..DC.EE.FF..GGHH.IIIJJ","d":9},
+{"s":"..BBCC...DEEAA.D.F...D.F.GGG.H...IIH","d":8},
+{"s":"...BCC...B.D.EAA.D.E...F...GGF.....F","d":7},
+{"s":"....B..CC.B..DAABE.D.FFE.G.HHE.GIII.","d":9},
+{"s":"..........B.AAC.B..DC.B..D.....DEEE.","d":6},
+{"s":".BCCC..B..DE.AA.DE..FFF..GGHH.......","d":6},
+{"s":".BB.....C.DDAAC.EF..GGEF.....H.....H","d":6},
+{"s":"..BCC...BDDE.AAFGE.H.FG..HIIJJ......","d":9},
+{"s":"..BCC.D.B.E.DFAAE..FGG.....HII...H..","d":8},
+{"s":"...BCC...B.D..AAED..FFE......G.....G","d":7},
+{"s":".....B.CCC.B.DAA.B.D..EE.F.GGG.FHHII","d":9},
+{"s":"...BCC...BDD..AAEF..GGEF.HHHI.....I.","d":9},
+{"s":"BCCDDDB.EE..B.FAAGHHF..G.IJJKK.I....","d":8},
+{"s":".B.CC..BDDDE.AA.FE....F.....G.....G.","d":7},
+{"s":".............BAA.C.B.D.C...D.C...DEE","d":7},
+{"s":".BB.CCDDDEF.GAAEF.GHHII...JJ..KKK...","d":7},
+{"s":".B.CCD.B.EFD.AAEF.GHHIJJG..I........","d":9},
+{"s":"...BC....BCD..AAED...FE....FGG......","d":7},
+{"s":"BBBC....DC..AADC....EEE...FF........","d":6},
+{"s":"..BCCC..B.DDAAB..E.....E..FF.G..HHHG","d":9},
+{"s":"..B.CC..B.DE..AADE..FGGH..F..H.II...","d":7},
+{"s":"....B.....B..AA.BC.D...C.DEEEC...FF.","d":7},
+{"s":"..BBBC..DD.CAAE...F.E...FGGGHH......","d":9},
+{"s":".BCCDD.B..EE.BAA.F.GGHHF.....I.....I","d":9},
+{"s":"BCCDDDB..EEEAA...F.....F.....G.....G","d":7},
+{"s":"BCC.DDBEEFF.AA..G.HH..G.IIJJKK......","d":9},
+{"s":"..B.....BCCCAAB....DDDEFGH..EFGH.II.","d":9},
+{"s":"..BB.....CC.AADEF...DEF...DG..HHHG..","d":8},
+{"s":"..BBB...CD..AACD....EFF...EGG.......","d":6},
+{"s":".......BBCC..AADEFG..DEFG.HHH.......","d":6},
+{"s":"..BBB....CDD.AACE.....E...FFGG......","d":6},
+{"s":"..BBB...C.DDAAC.EF.GGGEF...HII...H..","d":9},
+{"s":"...B.....B..AACBDE..C.DE.F.....FGGHH","d":7},
+{"s":".....B.....B...AAB.C..DD.CEEFF...GGG","d":7},
+{"s":".BCCDD.B..EE.AAFGH...FGH.....I.....I","d":9},
+{"s":"..BB.C..DD.CAAE..FG.E..FGHHIIIG.....","d":9},
+{"s":".BBBCC....D..AA.DE...FFE...GGE..HHII","d":7},
+{"s":"..BBBC....DC.AA.DC.E..FF.E.GGG....HH","d":7},
+{"s":"B.....BCCDDDAAE.....E.FF..GGGH.....H","d":9},
+{"s":"BCCD..B.EDF.AAE.F.GGHII...H.....JJ..","d":9},
+{"s":"..B.....B...AAB..C..DD.C..EE....FF..","d":6},
+{"s":".....B.....BAA...BC...DDC...EECFFGGG","d":8}],"2":[{"s":"BB..C.DD..CEFAA.GEFHH.G.IJKKLLIJ....","d":12},
+{"s":"..BCDD..BCEFGAAHEFGIIHJ....HJ...KKJ.","d":12},
+{"s":".BBCC.DD.EF.AA.EFGH.IIJGHKKKJGHLLLMM","d":13},
+{"s":".BBB...CDDE..CAAEFG..HEFG..HIIGJJKK.","d":12},
+{"s":".BB.CC..DDDEAAF..E.GF.HH.GIIJJ......","d":11},
+{"s":"B.CCDDBEEEFFG.AA.HG....HIIJJ.KLLL..K","d":11},
+{"s":".....B..C.DBAAC.DB.EFFGG.E.H..II.HJJ","d":11},
+{"s":"BCCCDDBEFFGGHEAAIJHKK.IJLL..IM...NNM","d":13},
+{"s":"BCCCDDBEEFFFAAGHIJ..GHIJ.....K.....K","d":11},
+{"s":".BCCDD.BEEFFAAGHIJ.KGHIJ.K...L.MMM.L","d":13},
+{"s":".BBB....CD.EAACD.E......FGGG.HF....H","d":11},
+{"s":".BCCCD.B.EED.BAAFG.HIIFG.HJ.KKLLJ...","d":12},
+{"s":"..BBBC..D..CAAD.EFGGG.EF..HHH.......","d":11},
+{"s":"BCCDDEB..FFEAAGH....GH....III.......","d":11},
+{"s":".BB..CDDE..CAAE..F.GHH.F.GIIJJ.G....","d":11},
+{"s":"BBCCDE..FFDE.AAG...H.G...H.III......","d":11},
+{"s":"....B.CCC.BDEAA.BDEF..GGHFIII.HJJKK.","d":12},
+{"s":".BCCDD.BE..FAAE..F..GGGH..II.H..JJKK","d":12},
+{"s":".BBCCD..EE.DAA.F.....FGG...FH.IIJJH.","d":10},
+{"s":"..BB.....CD.AA.CD....ED.F..EGGF.HHII","d":10},
+{"s":".BCCDD.BEEFF.BAAGHIIJKGH..JK.L.....L","d":11},
+{"s":"BC.DD.BCEEFFBAA.GHIIJ.GH..JKK...LL..","d":12},
+{"s":"..BCDD.EBCF.GEAAFHGIJJKH.I..K.......","d":11},
+{"s":".B.CCC.B..D..BAAD.EEF.GG..FHHI..JJJI","d":11},
+{"s":"BCCDDEB.FFFEGAA.HIGJJJHI.KLLMM.K....","d":13},
+{"s":"...BCC..DB..AADB...EFFGG.E.HHI.JJ..I","d":13},
+{"s":"........BBBC..AA.CDDE..C.FEGGG.FHHII","d":12},
+{"s":"BCCDEEB..DF.B.AAF...GGHHIIIJJK.....K","d":13},
+{"s":"...B.....BC..AADCE.F.D.E.F.GGE....HH","d":13},
+{"s":"BCCCD.B.EED.FGAAHIFG..HIF..JKKLLLJ..","d":13},
+{"s":".BB.C.....C.DEAACFDEGHHF..GIII...JJ.","d":13},
+{"s":"...BCC..DBEE.FDAAG.F...G.F..HI.JJJHI","d":10},
+{"s":"..BCCC..BD.E.AAD.E.F.GG..FHHI.....I.","d":11},
+{"s":"B....CBDDDECAA.FEC...FE....GHH...G..","d":10},
+{"s":"..BB.C..DDDCAAE..F..E..F..G.HH..G.II","d":12},
+{"s":"BCCDEEBFGDHH.FGAAIJJK..I..K..L.....L","d":13},
+{"s":"BCCDDDBEFFGG.EAAHI.J..HI.JKL.MNNKL.M","d":13},
+{"s":"..BB..CCDDEF.GAAEF.G..EF.G.HII.JJH..","d":12},
+{"s":".......B..CD.BAACD.EFGGD.EFHII...H..","d":10},
+{"s":"BCC.DDBEEFF.AA..GHII..GHJJKKLL......","d":10},
+{"s":".B.CC..BDD.EAAFG.EHHFG..IJJKKKI.....","d":12},
+{"s":".BBB...CCCD.AA.ED.F..ED.FG.HH.FGIIJJ","d":11},
+{"s":"..BCC.DEBFF.DEAAGHIJJ.GHI...K.....K.","d":11},
+{"s":"...BBC...DDCAA..EFGGG.EFHIIJJJH.....","d":10},
+{"s":".BBCC...DEE.AAD..F..DGGFHHIIJ..KK.J.","d":12},
+{"s":"......BCCC.DB.AAEDFF.GED...GHH...GII","d":11},
+{"s":".BBCCD.EEF.DAAGFHD..GIH.JKKIH.J..ILL","d":12},
+{"s":"BCCCDDB.EEFGAA.HFG...HII...HJJ..KK..","d":12},
+{"s":"BBCCD....ED..AAE..FG....FGHHII......","d":10},
+{"s":"BCCD..B.EDFFAAE.GHIJJJGHI..KLL...K..","d":12},
+{"s":"BBCCD.EE.FD.AA.F.GHIII.GH.JJJKH....K","d":12},
+{"s":"..BBBCDDEE.C..AAFC...GF..HHGII..JJKK","d":12},
+{"s":".BBCDDEFFC.GEHIAAGEHI..J.HK..JLLK..J","d":12},
+{"s":"BCCCDDB...EFBAAGEF...GHH..II.J...KKJ","d":10},
+{"s":".BBBCCDDEEFGH.AAFGH...F.I..JJKILLMMK","d":13},
+{"s":".BB..C.....CDAA..ED.FGGE..FHIIJJFH..","d":11},
+{"s":".BBCDDEFFCGGE.HAAIJKHLLIJKM..N..M..N","d":13},
+{"s":"B.CCD.B.E.DFAAEGDF.H.G...HI....HIJJJ","d":11},
+{"s":"BCCD..B..DEEBAA..F.GHIIF.GH.JKLLL.JK","d":13},
+{"s":"..BCDDE.BCFGE.AAFGHHH.I..JJ.I.......","d":11},
+{"s":".BCCDD.B...EAAF..E..FGGGHIF.J.HIKKJ.","d":10},
+{"s":"..BBCCDDEEFGAA.HFGI..H.JI.KKKJI.....","d":12},
+{"s":"..B.....B..CAAB..CDEEFFGDHHIJGKK.IJ.","d":13},
+{"s":".BB.CCDDDE.FAAGE.F..GE....HII...HJJ.","d":13},
+{"s":"BCCDEEB..D.FBGAAHFIGJJHKIG..LK....L.","d":13},
+{"s":".B..C..BDDCE.AA.CE..FGG...FHII...HJJ","d":12},
+{"s":"BCCDDEBFF.GEHIAAGEHIJJKKLL..M..NN.M.","d":12},
+{"s":".BBB..CDDD.ECFAA.EGF...EGF.HIIJJJH..","d":12},
+{"s":"BB....CDE..FCDEAAFCGGHHF..IJ....IJKK","d":12},
+{"s":"BCCC..B..DEEFAADG.F..HG.II.HJJ..KK..","d":11},
+{"s":"..BBB...CCCDAAE..DF.E.GGFHHIII......","d":11},
+{"s":".BBCCDEE..FDG.AAFDGHIIJJKH..LLK..MMM","d":10},
+{"s":"BCDDEEBC....BAAF.....FGGHHIIJ.....J.","d":12},
+{"s":"BBCCDE..F.DEAAFG.HII.G.HJ.KKKHJ.LLMM","d":13},
+{"s":"..B.....BCDD.AACEFGHHIEFG..IJ...KKJ.","d":12},
+{"s":".BBBCCDDEEFG.AA.FGHIIJJKH..LLKMMNN.K","d":11},
+{"s":"..BBB...CDDDAAC.EF.GHHEF.G.IEJ.KKI.J","d":11},
+{"s":"B..CC.BDDE.FAAGE.F..G....HIIJJ.H....","d":12},
+{"s":".BCCD..B.ED.AAFEG...FHG....H........","d":13},
+{"s":"..BBBC..D..CAAD.EFGHH.EFGI..EFGIJJJ.","d":13}],"3":[{"s":"BCDDEEBCFFGGHAA.IJHKKLIJMM.LN.OO..N.","d":15},
+{"s":"BCDDEEBCFGHHAAFGIJKLMMIJKL..N.....N.","d":14},
+{"s":"BBCCDEF.GGDEFAAH..IJ.HKKIJLLMM......","d":16},
+{"s":".BCDDE.BCF.EAACF..GGGHIJ...HIJ......","d":16},
+{"s":"BC.DD.BC.EFFBAAE.GHIJJKGHIL.KMNNL..M","d":15},
+{"s":"...B.....BC..AADCE.FFD.E.G.HHE.G....","d":14},
+{"s":"..B.CC..B..DAAB..DEFGGHHEFIIIJ..KK.J","d":15},
+{"s":"BCCDDDBEEE.FGAA..FGHIIJJGH...KLLMMMK","d":14},
+{"s":"BCCDEEB..DFFGHIAAJGHI..JGHK..LMMK..L","d":14},
+{"s":"..BBBCDDEEFCAAGHFI..GHFI.JK..I.JKLLL","d":17},
+{"s":"BBCC..DDDEEFAA..GFHII.G.H.J.KK..J...","d":15},
+{"s":"B..CC.BD..EFGDAAEFGHHHEI..JKKI..J.LL","d":17},
+{"s":"BBCCCDEEFF.DG.AA.DGHIIJJGHKLLL..KMMM","d":16},
+{"s":".BCCDD.BE.FFAAE..GHIIJJGH.KK.LMMNNNL","d":15},
+{"s":".BCCD..BEFD.AAEF.G..HHHGI.JKK.I.J...","d":15},
+{"s":".BCCD.EB.FDGEAAF.GHIIJJKH.LMMK..L.NN","d":16},
+{"s":".BB.C.DE..CFDEAACF.GHHHI.GJKKI..J...","d":15},
+{"s":".BCCC.DBEEEFDAAGHFIJJGH.I.KLLL..K...","d":16},
+{"s":"..BBBC..DDECFAA.EGF.H.EGFIH.JJ.IKKK.","d":17},
+{"s":".BCCDD.B..EF.AA.EFGGHHE.IJJKK.I.LLMM","d":17},
+{"s":".BBCCD...E.D.AAE..FF.EG..HIIG..HJJKK","d":14},
+{"s":".BB.C.....C..DAACE.DFGGEH.FIIIHJJKK.","d":14},
+{"s":"..BBCDEEFFCDAA.GCDH..GIIHJJKK..LLMM.","d":17},
+{"s":"BCCDD.B..EF.AA.EF.GG.EHHIJJKKLI.MMML","d":17},
+{"s":"BCDDEEBCFGGHAAFIJH..FIJ.....K.LLMMK.","d":15},
+{"s":"BCDDEEBC.FGGBAAFH.I.JJHKILLMMKNNOO..","d":16},
+{"s":"B.CCD.B...D.AAE.DFGHEIIFGHJJKK.HLLMM","d":15},
+{"s":".BCDDDEBC..FEGAAHF.G..H..G.IJ.KKKIJ.","d":14},
+{"s":"BBC.DDE.C.FGEHAAFGIHJKKLI.JM.LINNM..","d":14},
+{"s":"BBC...D.CEEEDAAFGHII.FGHJJ.K..LL.K..","d":16},
+{"s":".BBCCCDDEEFGH.AAFGHII.FJKL.MMJKLNNOO","d":15},
+{"s":"BB..CDEE..CDFAA.GDFHH.G.IJKKLLIJMMNN","d":14},
+{"s":".BBCC...DEFFAADE....DEGGHHIIJK..LLJK","d":16},
+{"s":"..BCDD..BCE.FAA.E.F.GGHHIIIJJK.....K","d":15},
+{"s":"...BB...CDEEAACD.F.GCHHF.GIIJK.LL.JK","d":15},
+{"s":"BB....CCDDE.FAA.E.F.GHE.IJGH..IJGHKK","d":15},
+{"s":"B.CC..BDDE.FAAGE.F..GHII..JH....JKK.","d":16},
+{"s":".BCC...BDDE.AAF.EGHHF..GI.JKKGI.J...","d":15},
+{"s":".B.CC..B..D.EFAADGEFHHDG..IJJ.KKI...","d":14},
+{"s":"BCCCDDB.EEFGHAAIFGH..IJJH.KK.LMMNN.L","d":14},
+{"s":"..BCC...BDEEAABDFG.HHIFG.JJIKL.MMMKL","d":17},
+{"s":".BB.CCDDDE.FAAGE.F..GHHI..J..I..J...","d":14},
+{"s":"BCDDEEBCFGGGAAF.....FHIJKLLHIJKMMNNN","d":17},
+{"s":"BBCCDE..F.DEAAF..G..HIIG..HJKK.LLJ..","d":14},
+{"s":"..BBCCDDEE.F.AA..F.GGHHF..IJKK..IJLL","d":15},
+{"s":"BBCCDE..FGDEAAFG..HHII..J.KKLLJ.....","d":16},
+{"s":".BBCCD.EEFGDAAHFG...HFII..JKKLMMJNNL","d":17},
+{"s":".B.CCC.BD.EEAAD..FG.D.HFG.IIHJ..KKKJ","d":14},
+{"s":".BBCC.DDEEFGHAAIFGH.JI....JKLL...K..","d":15},
+{"s":"BCDDEEBCFFGGAAH..IJJH.KI.LMMK..LNN..","d":15},
+{"s":".BBCCD...E.D.AAE....FEGG..F.HIJJKKHI","d":14},
+{"s":"..BCCCD.BEFFDAAE.GHI..JGHIKKJG.I.LLL","d":15},
+{"s":"BCCDDDBEFFGGHEAAIJHK..IJ.KLM.NOOLM.N","d":14},
+{"s":".BCCDD.BEEFF.AA.GHIII.GHJKKLLMJNNOOM","d":16},
+{"s":"........BCDEAABCDE.FFGGE.H.IJJ.H.IKK","d":17},
+{"s":"..BCCCD.BEEEDAAF..GHHF.IGJKKKI.JLL..","d":16},
+{"s":"BCCDD.B...EF.AA.EFGGHHEF.I.JJ..IKKK.","d":16},
+{"s":"BCCDD.BEEE..AA.FGHII.FGH.J.F...JKKLL","d":17},
+{"s":".BCDDE.BCF.EGAAF..G.H...G.HIIIJJH...","d":17},
+{"s":"BB.CDDEEECFG.HAAFGIHJKKLI.J..L.MMM.L","d":17},
+{"s":"..BB...CCDDE.FAAGE.F..GE.F.HII.JJHKK","d":17},
+{"s":".B.CC..BDDEF.AAGEF...GHI...JHI...J..","d":17},
+{"s":"BCCDDEB..FGEAAHFGE..HIJJ.KHI...K.LL.","d":17},
+{"s":"..BBCC..DD.E..AA.EFFGHHE.IG.JJ.IKKLL","d":16},
+{"s":".BCCDDEB.FGGEAAFHIEJJJHI..KKL...MML.","d":15},
+{"s":"....B...CDB.AACDB.EEEF..G..FHHG.IIJJ","d":15},
+{"s":"..BCCCD.BEFFDAAEGH...IGHJK.I.LJKMMML","d":16},
+{"s":"..BCDD..BC..EFAAGHEFIIGHEFJKLLMMJK..","d":17},
+{"s":".BBBCC..DEEFAAD..FGHHIJFG..IJ.G..IKK","d":16},
+{"s":"....B.CCDDBEF.AABEF..GHHI..GJJI.KKLL","d":17},
+{"s":"BBCCDEFF.GDEHAAG..H.IGJJK.I..LKMMNNL","d":17},
+{"s":"BBCDD..ECFFG.EAA.G.HHI.G...IJJ..KKLL","d":16},
+{"s":"BBCCCD..E..DAAE.FG.H..FG.H.III......","d":14},
+{"s":"..BBCCDEEFFFD.GAAHIIG.JH.K..JL.KMMJL","d":17},
+{"s":".BCCD..BE.D.AAEFGHIJJFGHI..FKK......","d":16},
+{"s":"BBBC.....CDD..EAAFGHEIIFGHE..J.....J","d":14},
+{"s":"..BCDDEFBC.GEFBAAGHIJJJKHI...K......","d":16},
+{"s":"BBC.D...C.DE.AA.DE.FGGG..F.HII.JJH..","d":16},
+{"s":"BBCCDE.FF.DEAAGH.IJJGH.IK.LLLIK.MMNN","d":14},
+{"s":"..BCDDE.BCFGEAA.FGE..HIGJJ.HI....HKK","d":14}],"4":[{"s":"BBCCDEFG..DEFGAADH..IJ.HKLIJ..KLIJMM","d":22},
+{"s":".BBC...D.CEE.DAAFG.HH.FG.II..J.KKLLJ","d":18},
+{"s":"..BCCDEEB.FD.GAAFD.G.HII.J.H...J.KK.","d":20},
+{"s":"BCDDEEBC.FG.HAAFG.HIIIJJKKLL.MNNOO.M","d":19},
+{"s":"BBCCD.EEFFD.G.HAAIG.HJ.IKLHJ.IKL.JMM","d":18},
+{"s":"BCDDEFBCGHEFAAGHIF...JI...KJ....KJLL","d":22},
+{"s":".BBCC...DDEF..AAEFGGHHEFIJJKLLIMMKNN","d":21},
+{"s":"BCDDEEBCFF.GAAH..GIJHKK.IJLLM..NN.M.","d":18},
+{"s":".BCCDD.BEEEF.BGAAFHHG.IJK.LMIJK.LMNN","d":22},
+{"s":"BBCCDEFF.GDEHAAGD.H..IJJK..ILLKMMNN.","d":18},
+{"s":".BCCD..BEFD.AAEF..GG.FHHIJJKKLI..MML","d":21},
+{"s":"..BB..CCDDE.FAA.EGF.HIEGF.HIJJKKLL..","d":19},
+{"s":"....B.CCC.B.DEAAFGDEH.FG..HIIG...JJ.","d":22},
+{"s":"BCCDDDB..EFFBAAE.GHHIJJG..I.KK.LL...","d":18},
+{"s":"BBCCD.EE.FD.AA.FGHIJJJGHI.KK.HI.LL..","d":18},
+{"s":"BBCC.DEEFFGDH.AAGDH.III.JKKLMMJ..LNN","d":22},
+{"s":".BCCDE.B.FDE.AAFG.HHIJG.K.IJ.LKMMNNL","d":22},
+{"s":"BCCD..B.EDFF..EAAGHH..IGJJKKILMMNN.L","d":21},
+{"s":"BBCCDEF..GDEFAAG.HIJKKLHIJM.LHNNM...","d":21},
+{"s":"BCDDEEBCFFGGAAH...I.HJKLIMMJKLNNOO..","d":19},
+{"s":"BCCDEEB.FDGGHIFAAJHIK.LJ.IK.LM.NNNLM","d":18},
+{"s":".BBBCD.EFFCD.EGAAHIIGJ.HK..JLLKMMNN.","d":21},
+{"s":"B..CDDBEECF.AAGHF..IGH.J.IKLLJ..KMM.","d":19},
+{"s":"BCC..DBEEFGDAAHFGI.JH..I.JKKLL......","d":20},
+{"s":".BCC...BDDE.AAF.EGHHFIJGKLLIJ.K..IMM","d":20},
+{"s":"..BCDD..BCE.FAAGE.F..GHHF.IJJKLLI..K","d":22},
+{"s":"BCCDD.B.EFG.AAEFG.HIIFJJH..KKLMM.NNL","d":19},
+{"s":"BBC.DD..C.EEAAF..G..FHHGIIIJ.G.KKJLL","d":22},
+{"s":"B.CDDEB.CFFEGAAH..G..HIIJJ.HK.LLMMK.","d":21},
+{"s":".BCCCD.BEEED.AAFGHIIJFGHK.JLLLKMM...","d":21},
+{"s":".BCCDD.BEFGGAAEF.HI.E.JHI.KKJL..MMML","d":22},
+{"s":".BBCC..DD.EF.AA.EFGGHHE.IJKKLLIJMMNN","d":18},
+{"s":".BCCD..BEFDGAAEF.GHIIIJ.H..KJ....KLL","d":20},
+{"s":"BBCCD.EE.FD.AA.F.GHIIJJGH.KLMMNNKL..","d":20},
+{"s":".B.CC..BDDEFAAGHEF..GHIJ...KIJ...K..","d":18},
+{"s":"..B..CDDB..C.EAA.CFEGGHHFIIJJ..KKLL.","d":21},
+{"s":"...B....CBD.AACEDF.GGEHF.IJJHF.I.KK.","d":19},
+{"s":".BBBCD.EE.CDFGAACHFGI..HFJI.KK.JLLL.","d":21},
+{"s":"..BCC.DDB.E..FAAEG.F.HHG.I.JJG.IKKLL","d":19},
+{"s":".BBCC...DEEEAAD.FGHIJJFGHIK..L.IKMML","d":22},
+{"s":"BBCDEEFFCDGHIJAAGHIJ....IKKLL.MMNN..","d":22},
+{"s":"BBCC....DEEEAAD.FG.HIIFG.H.JKK.LLJ..","d":18},
+{"s":".BBB..CCDDEFGHAAEFGH.IEFJH.IKKJLLMM.","d":21},
+{"s":"...BCCDD.B.EFGAAHEFG..HIJKKKHIJLLMM.","d":18},
+{"s":"BCC.DDB.EEFGAAH.FG.IHJJK.IHL.KMMML..","d":22},
+{"s":"BBBCC.DDDEEFAAG..FH.GIJFHKKIJ...LLMM","d":20},
+{"s":".BBCC..DDEFFAAGE...HGEII.HJJKL.MM.KL","d":19},
+{"s":"B..CCCB..DEFBAADEFGG.HHF.IJJKK.ILLMM","d":18},
+{"s":".....B..CDDBAACEFGHIIEFGHJ.KKKHJ..LL","d":19},
+{"s":"B.CDDDB.CEEFGHAAIFGH..IF.H.JKK.LLJMM","d":19},
+{"s":"BBCCDEF.GGDEF.AAD.H..IJJHKKILL.MM.NN","d":18},
+{"s":"BBCC..D..EFFDAAEGHDIIIGH..JJK.LLMMK.","d":18},
+{"s":"BBCC.DEEFFGDAA..GH..IJJHK.ILMMKNNL..","d":21},
+{"s":"BB.CDDE..CFFEAAC..GHHIIJG.KLLJ..KMM.","d":22},
+{"s":"BBC...D.CEEEDAAFGHII.FGHJJ.FKLMMNNKL","d":22},
+{"s":"BCCDEEBFFDGHB.AAGHII..G...JKK.LLJ...","d":22},
+{"s":"..BCDD..BC..EFAAG.EF..GHEF..IHJJKKIH","d":18},
+{"s":".BCCDD.BEEFGAA.HFGIIIHJKLMMMJKL.NNN.","d":21},
+{"s":".BBCCCDDE..FAAE..FGHHIIFGJ..KK.JLLMM","d":19},
+{"s":".BCDEE.BCD..FBAAGHFIIJGHF.KJLLMMK...","d":18},
+{"s":"B.CC..BDDEFGAAHEFGIIH...JJJKK.LLMM..","d":22},
+{"s":"BBBCCDEEFF.DG.AAHIGJJKHIG.LK.I..LKMM","d":22},
+{"s":"BBCCC.DEEE..DAAF..G.HFIIG.HJJKLLH..K","d":20},
+{"s":"...B....CBDEAACFDEGGGFDH.I.JJH.I.KK.","d":19},
+{"s":"B.CCDDB.EEF.AAGHF..IGHJJ.IKKKL.....L","d":20},
+{"s":".BB..C..DDDCAAE.FG..EHFG..IHJJ..I.KK","d":18},
+{"s":"..BCC...BDDEAABF.EGHHFI.GJ..I.GJ.KKK","d":22},
+{"s":"BBCCCDE.FF.DEAAGHIEJJGHI..KLLIMMK...","d":22},
+{"s":"BB.CCDE..F.DEAAF..G.HFIIG.H.JKLLMMJK","d":19},
+{"s":"BCCD..BEEDFFAA.D.G.HIIJG.HK.JLMMK..L","d":19},
+{"s":".BBCC.DD.EF.AA.EF.GGGEHHIJJKKLI.MMML","d":18},
+{"s":"BBC....DC..E.DFAAE.GFHHE.GFIJJKKKI..","d":21},
+{"s":"BBCCD.EFF.DGE..AAGHHIJJG..IKLLMMMK..","d":21},
+{"s":"BBCCDEF.GGDEFAAH.EIJ.HKKIJLLMM..NNOO","d":19},
+{"s":"BCCDDEB..FGE.AAFG..HIIJJ.HKLL.MMK...","d":21},
+{"s":"BCCCDDBEE.FGBHAAFG.HIJJG..IK..LLLK..","d":21},
+{"s":"BCCDD.BE..F.BEAAF.GGGHII...H.J.KKLLJ","d":19},
+{"s":"B.CCCDBEEFFDAAG.....GHI.JJJHI.......","d":18},
+{"s":"..BCCD.EB.FDGEAAFHG.IIJHGKKLJ.MM.L..","d":22},
+{"s":".BBCC...DEE.AADF..G.DFHHG.IIJKLL..JK","d":18}],"5":[{"s":".BBCC...DEFFAADE.G..D.HGIJKKHGIJLLMM","d":25},
+{"s":"BBCCD.EEEFDGAA.F.GHIIJJKH.LMMKNNL.OO","d":23},
+{"s":"B.CDDDB.CEEFGAAHIFG..HIJG..K.JLLLK..","d":25},
+{"s":"..BBBC..DDECAAF.EGHHFI.GJ.KILLJ.K...","d":23},
+{"s":"B.CCDDB.EFFGAAEH.GIJ.HKKIJLLM..NN.M.","d":27},
+{"s":".BBBCD..E.CDAAE.CF..GHHFIJG.KKIJLLMM","d":26},
+{"s":"..BBBCDDEEECAAF.GHIIF.GHJ.KKLLJ.MMNN","d":24},
+{"s":"BBC..DEEC..DFGAA.DFG.HIIJKKH..JLLMMM","d":25},
+{"s":"..BBBC..D..CAAD..CEFFFGGEHHHIIJJKKK.","d":23},
+{"s":"BBC.DDE.CFFFEAAG..HH.GIIJJKK.LMMNN.L","d":27},
+{"s":"BB.CD.EFFCDGEHAADG.HI..JK.ILLJKMM.NN","d":25},
+{"s":"..BBBCDDE..CAAE..CFGHHIIFGJJKK.LLMM.","d":26},
+{"s":".BBCCD..EF.DAAEF..GHHFIIGJJ.K.LLMMK.","d":24},
+{"s":"B..CDDBE.C..FE.AAGFEHHIGJJK.IL..KMML","d":27},
+{"s":"BCDDEFBCGHEFAAGHIJKKLMIJ..LM...NN...","d":23},
+{"s":".BBBCDEFG.CDEFGAAHIJJK.HI..KLLMMM...","d":24},
+{"s":".BCCDEFB.GDEFAAG.HIJJKLHI.MKL...MNNN","d":26},
+{"s":"BBBC..DDDCEFAAGHEFIIGH..JKKLL.J.MMNN","d":26},
+{"s":"BB.CDEF..CDEFAAGD..HIGJJKHILL.KMMNN.","d":27},
+{"s":"BCCD..B.ED.FAAE..F.GGHHF.IJJKK.ILLMM","d":23},
+{"s":"..BCC.DEBFFFDEAAGH.II.GHJJKKKH..LLL.","d":23},
+{"s":"BCCDE.B.FDE.AAF.EGHHHI.GJJ.I.K.LLMMK","d":25},
+{"s":"BB.CDE...CDEAAFG.E..FG..HIFJJ.HIKKLL","d":24},
+{"s":"..BBBCDDEEFCGAA.FHG.IJFHG.IJKKLLMM..","d":24},
+{"s":"BBC.....CDDEAAF..EGGFHIJKLLHIJK..HMM","d":26},
+{"s":"B.CCC.B.DEEEAADF....GFHH.IGJJK.ILL.K","d":26},
+{"s":"B..CDDBEECFGAAHIFG..HIFJ..K..J..KLLJ","d":25},
+{"s":".BBCC.DDEEFGAA.HFGIIIHJKLMMMJKL.NNN.","d":24},
+{"s":"BCCDEEBFFDGGAAHD.I..HJJI.KH.LM.KNNLM","d":23},
+{"s":".BB.CC.DDDEF.AA.EFGGH.EIJ.HKKIJ.LLMM","d":24},
+{"s":"..BCDD..BCEF.AACEFG...HIGJKKHI.JLLMM","d":25},
+{"s":"BBC..DE.CFGDEAAFGDH..IJJHK.ILLHKMMNN","d":27},
+{"s":".BBCDEFG.CDEFGAADHIIJ..HK.J.LLK.MMM.","d":25},
+{"s":"BBCD..EFCDGGEFAAHIJJK.HI..KLLM.NNOOM","d":25},
+{"s":"BBBCCDEE.F.DAA.FGHIJKKGHIJL.GHI.L.MM","d":23},
+{"s":"BBCCCDEFFF.DE.GAAH..GI.H..GIJJ.KK.LL","d":24},
+{"s":"BBCCDEFGG.DEFHAADI.HJK.ILMJK..LMJKNN","d":23},
+{"s":"..BCCD.EB.FDGEAAFHGIIIJHKK.LJH...LMM","d":25},
+{"s":"BCCDD.B.EFG.AAEFG..HIIJJ.HKKKL.MMM.L","d":27},
+{"s":"B.CCD.B..ED.AAFEGH..FIGH.JKIGH.JKILL","d":23},
+{"s":"BCCD.EBF.D.EBFAAGEHHIJG...IJKK.LLMM.","d":27},
+{"s":"..BBC.DEEEC.DFGAAH.FG..H.IJJJH.IKKLL","d":23},
+{"s":"BB.CDEFGGCDEF.HAAIJJH..I.KLL.I.KMMNN","d":27},
+{"s":"BBCCCDE..FFDE.AAGHEIIJGH..KJLLMMK...","d":24},
+{"s":"BC.DD.BCEEFGAAHIFGJJHIKL..MNKL..MN..","d":23},
+{"s":".BCCDE.BF.DEAAF.GHIJJJGHIKKL..I..LMM","d":26},
+{"s":"BBCDEF..CDEFGAAHE.GIIH...J.KK..J.LL.","d":24},
+{"s":".BBCC....DEEFAADGHFIJJGH.IKLLLMMK...","d":23},
+{"s":"B.CCDDB.EEFFAAG..HIIGJKHLLLJKM..NNNM","d":27},
+{"s":".BCCDDEB.FGGEAAF..HIIJJKH.LMMK..LNN.","d":24},
+{"s":"B.CCDDB.EEFGAAH.FGIIHJJGKKKL.....LMM","d":24},
+{"s":"BBCDDDE.CFGGEAAF.HIIJKKH..J.LL....MM","d":24},
+{"s":"B..CDDBEFC..GEFAAHGE.IIH.JJJKLMMNNKL","d":27},
+{"s":"BB.CDDEEEC.F.GAAHF.GIIHF..JKK.LLJ...","d":27},
+{"s":".BBBCCDEEEFGDHAAFGDHIJJG..IK..LLLK..","d":25},
+{"s":".BBC...DECFF.DEAAGHHH.IGJKK.ILJMMNNL","d":27},
+{"s":".BCCDDEB.F..EAAF.G..HIIGJ.HKKGJLLLMM","d":26},
+{"s":"B.CCCDB...EDBAAFEGHHIFEG..IJJJ..KKK.","d":26},
+{"s":"BBCD...ECDFFGEAAHIGJJ.HI.KK.L..MMML.","d":23},
+{"s":"BB.C.DEF.CGDEFAAGHIJJ.GHI.KLL.MMK...","d":25},
+{"s":"BBBC.....CDDEFGAAHEFGIIHJ.G.KLJMM.KL","d":23},
+{"s":"BCDDEEBCFFG.BCAAGH.IIJGH..KJLLMMK...","d":26},
+{"s":"..B.....BC.DAABC.DEFFGGDEHHIJ....IJ.","d":26},
+{"s":"BBBC..D..CEEDFAAGHIF..GHIJJ.GKILLMMK","d":24},
+{"s":".B.CC..B.DDEAAFGHEI.FGHJI.FK.JILLK..","d":23},
+{"s":"BCDDEEBCFFG..AAHGIJJJHGI..KLL...KMM.","d":26},
+{"s":"BBCD....CDEEF.AAGHF.IIGHJJKKKH..LLMM","d":24},
+{"s":"BBC...D.CEEFDAAGHFIIJGH...JGKK.LLMM.","d":23},
+{"s":"BCCDDEB.FFGEAA..GH.IIIGH..JKLLMMJK..","d":24},
+{"s":".BB.CDEFFFCDE.AACGE.HI.G..HIJJKKKI..","d":25},
+{"s":".BB.C.DEFFC.DEGAAHIJGK.HIJLK.H..LKMM","d":23},
+{"s":"B.CCDDB..EFFAAGE.H..GIIH..JJJK.LLMMK","d":27},
+{"s":"BB.CCDE.FF.DE.AAGHIIIJGH..KJLL..KJMM","d":23},
+{"s":"..BBCCDDDEEFAAG..FH.GIJKHLLIJK..MMNN","d":26},
+{"s":"..BCCCDDB...EAAF..E..FGGHHIIIJ.....J","d":24},
+{"s":"BCCCD.B.EEDFAAGH.F..GHIIJJJH.....KK.","d":23},
+{"s":"BC.DDEBC..FEBAA.FG..HIIG..HJKKLLHJ..","d":24},
+{"s":"B..CC.B...DEFGAADEFGHHD.FGIJJKLLIMMK","d":24},
+{"s":"BBCC.DE..F.DEAAFGDHHI.G..JIKK..JLLMM","d":23},
+{"s":"BCDDEEBCFGGHI.FAAHIJJK.H..LKMMNNL...","d":25}],"6":[{"s":"B.CDDDB.CEEEFAAG.HFI.GJHFIKKJLMMNN.L","d":32},
+{"s":"BB...CDDD.ECAAF.EGHIFJJGHI.KLLHMMK..","d":28},
+{"s":"B.CCDDBEEF.GAAHF.G..HIIJ.KKKLJ..MML.","d":32},
+{"s":".BBCC.DDEEFGHIAAFGHIJ.FKLMJN.KLMJNOO","d":29},
+{"s":"BCCDEEB..DF.AA.GFHIIIGFH..JKKHLLJMM.","d":31},
+{"s":".BBC.DEF.CGDEFAAGDHIIJ..H.KJLL..KMMM","d":30},
+{"s":".BCCDD.BEEEFAAGH.FI.GHJJI.KKLMNN..LM","d":31},
+{"s":"..BBBC.DDEFCAAGEFHI.GJJHI.KKLLMMNN..","d":31},
+{"s":"..BBB..CC.D.AAEFD.GHEFIIGHJKKLMMJ..L","d":32},
+{"s":"BB.CDEFG.CDEFGAADHIIJ..HK.JLLLK.MM..","d":29},
+{"s":".BCCDE.BF.DEAAF.GHIJJJGHI..KLLMM.KNN","d":28},
+{"s":"BCCD..BE.DFFGEAAHIGJJ.HIG.KLLIMMK...","d":28},
+{"s":"BC.DDEBC..FEG.AAFHG.IJJHG.IKLLMMIK..","d":33},
+{"s":"BB.CC.DEEF.GDAAF.GHHIF...JIKK..JLLMM","d":31},
+{"s":"BBC..DEEC..D.FGAADHFGIJJHKKI..LLMMM.","d":31},
+{"s":"BCCDD.B.EFFGAAEH.G...HII.JJJK.LLMMK.","d":33},
+{"s":".BCCDD.B.EFFGAAE.HGII..HJ.KLLHJ.KMMM","d":29},
+{"s":"..BCCDE.BF.DEAAFGHIJJJGHI..KLLMM.K..","d":29},
+{"s":"BCC.DDBEEFFGAA..HG.IJJHG.IKLMMNNKL..","d":29},
+{"s":"BBBC....DCEEAAD...FGDHHIFGJJKILLMMKI","d":29},
+{"s":"BB.CDDEEECFG.HAAFG.HIJJGK.ILL.KMMNN.","d":32},
+{"s":"BC.DEEBC.D.FGC.AAFGHHHIJKKL.IJ..L.MM","d":29},
+{"s":".BB.CDEFG.CDEFGAADHHIJKK..IJLL.MMNN.","d":30},
+{"s":"..BCCCDDBEF.GAAEF.G..EHHIIJJ.KLLMM.K","d":31},
+{"s":".BBCD...ECD.AAEFD...GFHHI.GJJKILL..K","d":33},
+{"s":".BBCCDEEE..DF.AAGHFIIJGH..KJLLMMKJ..","d":29},
+{"s":"BCCC.DB..E.DAA.EFGHIIEFGH.JKKKLLJ...","d":32},
+{"s":"BCDDEEBC.FGGAA.FHI.JJJHI..K.HL..KMML","d":31},
+{"s":"B.CCDDB.EFFGAAE..G.HHIIJKKKL.J.MML..","d":30},
+{"s":"BBCDD.E.CFFFEAAG.HII.GJH.KLLJH.K.MM.","d":29},
+{"s":"BCCD..B..DEE.FAAGH.FIIGHJJK.GLMMKNNL","d":29},
+{"s":"..BBBCDDE..CAAE.FGHIJJFGHIK.LLMMK...","d":31},
+{"s":"BCDDDEBC..FEBCAAFGHHI.FG..IJJJ.KKLL.","d":33},
+{"s":"B.CDEEB.CD.FGAAH.FGIIHJ.KK..JLMMNNNL","d":29},
+{"s":"BBC..DEFC..DEFAA.GH.IJJGH.IKLL.MMKNN","d":28},
+{"s":"BCCCDEBFFFDEAAGHIJ..GHIJ...HKK.LLMM.","d":32},
+{"s":".BB..CDE..FCDEAAFGDHHHFG..IJKKLLIJMM","d":29},
+{"s":"BBBCC.DDDEEFAAG..F..GHIJKLLHIJKMMMNN","d":29},
+{"s":".BBCC...DEFFAADE.GHIJKKGHIJ.LMHNN.LM","d":28},
+{"s":"BBB.C.DEF.CGDEFAAGHIIJ.GH..JKKHLLLMM","d":31},
+{"s":"BCCD..BE.DFFBEGAAHIIG.JHKKK.JLMM...L","d":29},
+{"s":".BCCDE.BFGDEAAFG..HHIJJKL.IM.KLNNM..","d":30},
+{"s":".BBBC.DEE.CFDGAACFHGIJJKHLIMMK.LNNNK","d":31},
+{"s":".BBCC....DEEAAFD..GHFDIIGHJJKL.MMMKL","d":28},
+{"s":"..BB.CDD.EFCGAAEFHG.IJFHK.IJLLKMMM..","d":30},
+{"s":"..B.....BCDEAABCDEFGGHHEFIIJ..KKKJ..","d":30},
+{"s":"BB..C.DEEEC.DAA.FG.HIIFG.HJKKG..JLL.","d":29},
+{"s":".BCC.D.BEE.DFAAG..F.HGIIF.HJJK..HLLK","d":29},
+{"s":"BBCCCDEFFGGDEAA.HI.JKKHI.JLMMMNNL...","d":30},
+{"s":"BCDDEEBCFF.G..HAAGIIHJJG..KLMMNNKL..","d":29},
+{"s":"..BCCCD.BEFFDAAEGH.I..GHJIKKGLJMMNNL","d":33},
+{"s":"BBCDDEFFC.GEHIAAGJHIKKGJ.I.L.....LMM","d":31},
+{"s":"BCCDDDB.EEFGAAH.FG..HIIG.JJK..LLLKMM","d":31},
+{"s":"BCCDEFB.GDEFAAG.HIJKKLHIJM.L..JM.NN.","d":28},
+{"s":"BCDDE.BCFGE.AAFGEHIIJK.H..JK.L.MMNNL","d":30},
+{"s":"BCDDEFBCG.EFH.GAAFHIIJKKLL.J..MM.NN.","d":29},
+{"s":"BBCDEF..CDEFGHAAEIGHJKKI..J.LLMMNN..","d":29},
+{"s":".BCCDD.BE...AAE..FGHHIIFGJJKLMNN.KLM","d":28},
+{"s":"BBBCDDE..CFFE.AA.GEHHH.G..IJJKLLIMMK","d":31},
+{"s":"BBBCDEFGGCDEF.HAAEIIH....J..KK.JLLMM","d":29},
+{"s":".BBCCC..DEFFAADE.GHIIJJGH.K.LLMMK...","d":30},
+{"s":"B..CCCB.DDEEAAF..GHHFIJGKKKIJL..MMML","d":33},
+{"s":"BCCCDEB.F.DEAAFG.....GHHIIIG.JKK.LLJ","d":28},
+{"s":"BC.DD.BCEEFGBAAHFGIIIHFJ..KLLJ..KMM.","d":29},
+{"s":"BCCDEEBF.DGHBFAAGHIIJ.GH..JKKKLLMM..","d":30},
+{"s":"..BCCCDDB.E.AAFGE.H.FGIIHJJG.K..LLLK","d":33},
+{"s":"BCCDEEB..DFFAAGD.H.IGJJH.I..KLMMM.KL","d":28},
+{"s":"BBC.DE..CFDEAAGFD...GHIIJKKH..JLLMM.","d":29},
+{"s":"B...CCB.DEFFAADEGHIIJEGH.KJ..L.KMMML","d":28},
+{"s":"BBCCDEF..GDEFAAG..H.IIIJH.K..JLLK.MM","d":31},
+{"s":".BCCCD.B..EDFBAAEGFHH.EGF.IJJ.KKILL.","d":30},
+{"s":"BBCDEF..CDEFGAAHE.GIJHKK.IJLL..MMNN.","d":29},
+{"s":"BBBC.DEFFC.DEAAC....GHHIJJG.KILLMMK.","d":30},
+{"s":"BB..CDE.FFCDEAA.CGHHIJ.G.KIJLL.KMMNN","d":28},
+{"s":"BCCD..BEFDGG.EFAAHIIJ..HKKJ..L.MMNNL","d":29},
+{"s":"B.CC..BDDEFGAAHEFGIIH..JKKKLLJMMMNN.","d":29},
+{"s":"BBBC.DE..CFDE.AAF.GGH.F..IHJJ..IKKLL","d":28},
+{"s":"BCCDEEB..DF.BAAGF.HHIGFJ..IKKJ.LLMM.","d":33},
+{"s":"BB.C.DE..CFDEGAAFHIGJJFHI.KLLLMMKNN.","d":28},
+{"s":"..BCCCDDBEF..AAEF.G.HEIIG.HJJ...KKK.","d":28}]};
+/* a boat: {r, c, len, h}; its place along its line is kept apart in P (the column for sideways boats, the row otherwise) */
+function decode(s,flip){ var B=[],P=[],seen={}; if(flip) s=s.match(/.{6}/g).reverse().join("");
+  for(var c=0;c<36;c++){ var ch=s[c]; if(ch==="."||seen[ch]) continue; seen[ch]=1;
+    var r=Math.floor(c/6), col=c%6, h=col<5&&s[c+1]===ch, len=1;
+    if(h){ while(col+len<6&&s[c+len]===ch) len++; } else { while(r+len<6&&s[c+len*6]===ch) len++; }
+    var b=h?{r:r,c:0,len:len,h:true}:{r:0,c:col,len:len,h:false};
+    if(ch==="A"){ B.unshift(b); P.unshift(h?col:r); } else { B.push(b); P.push(h?col:r); } }
+  return {B:B,P:P}; }
+function cells(b,pos){ var o=[]; for(var k=0;k<b.len;k++) o.push(b.h?(b.r*N+pos+k):((pos+k)*N+b.c)); return o; }
+function occ(B,P){ var g=new Int8Array(N*N).fill(-1); for(var i=0;i<B.length;i++){ var cs=cells(B[i],P[i]); for(var k=0;k<cs.length;k++){ if(g[cs[k]]>=0) return null; g[cs[k]]=i; } } return g; }
+/* how far boat i can slide each way: [lowest place, highest place] */
+function range(B,P,i,g){ g=g||occ(B,P); var b=B[i], p=P[i], lo=p, hi=p;
+  while(lo>0){ var c=b.h?b.r*N+lo-1:(lo-1)*N+b.c; if(g[c]>=0) break; lo--; }
+  while(hi+b.len<N){ var e=hi+b.len, c2=b.h?b.r*N+e:e*N+b.c; if(g[c2]>=0) break; hi++; }
+  return [lo,hi]; }
+function moves(B,P){ var g=occ(B,P), out=[]; for(var i=0;i<B.length;i++){ var R=range(B,P,i,g); for(var q=R[0];q<=R[1];q++) if(q!==P[i]) out.push([i,q]); } return out; }
+function solved(P){ return P[0]===N-2; }
+/* the harbormaster's search: the fewest moves from P, as a list of [boat, new place] */
+function solve(B,P0){
+  if(solved(P0)) return [];
+  var pow=[], m=1; for(var i=0;i<B.length;i++){ pow.push(m); m*=5; }
+  function enc(P){ var k=0; for(var i=0;i<P.length;i++) k+=P[i]*pow[i]; return k; }
+  var seen=new Map(), list=[P0.slice()], from=[-1], mv=[null]; seen.set(enc(P0),0);
+  for(var h=0;h<list.length;h++){ var P=list[h], ms=moves(B,P);
+    for(var j=0;j<ms.length;j++){ var Q=P.slice(); Q[ms[j][0]]=ms[j][1]; var k=enc(Q); if(seen.has(k)) continue;
+      seen.set(k,list.length); list.push(Q); from.push(h); mv.push(ms[j]);
+      if(solved(Q)){ var path=[]; for(var x=list.length-1;from[x]>=0;x=from[x]) path.unshift(mv[x]); return path; } } }
+  return null;
+}
+/* the boats' looks for a day: your red sloop, then launches, rowboats and dinghies (two berths) and trawlers and
+   ferries (three berths), each with a paint no other boat of its kind shares that day; bows point either way */
+var PAINTS=[["navy","#24406b"],["green","#2f6a4a"],["white","#eef0ea"],["blue","#4f8fc0"],["yellow","#e0b23c"],["teal","#2e8a86"],["gray","#7d8794"],["varnished","#9a5f2c"],["black","#2a2c30"],["cream","#e9dcb8"]];
+var KINDS2=["launch","rowboat","dinghy","launch"], KINDS3=["trawler","ferry"];
+function dress(B,seed){
+  var r=rng("hb-paint:"+seed), used={}, out=[{kind:"sloop",paint:"red",color:"#a8262a",bow:1,name:"your red sloop"}];
+  for(var i=1;i<B.length;i++){ var kinds=B[i].len===3?KINDS3:KINDS2, kind, p, t=0;
+    do{ kind=kinds[Math.floor(r()*kinds.length)]; p=PAINTS[Math.floor(r()*PAINTS.length)]; t++; } while(used[kind+p[0]]&&t<60);
+    used[kind+p[0]]=1;
+    out.push({kind:kind,paint:p[0],color:p[1],bow:r()<.5?1:-1,name:"the "+p[0]+" "+kind}); }
+  return out; }
+/* the day's harbor: the weekday's pool in a fixed shuffled order, one a week; once the pool has gone round, it goes round
+   again mirrored top to bottom (the sloop and the mouth in the fourth row), so no harbor looks the same for 2 × the pool's weeks */
+function pickDay(wd,weekNo){ var list=POOL[wd]||[], n=list.length, order=shuffle(list.map(function(_,i){ return i; }),rng("hb-order:"+wd)), k=((weekNo%(2*n))+2*n)%(2*n), e=list[order[k%n]];
+  return {s:e.s,d:e.d,flip:k>=n}; }
+root.HB={rng:rng,shuffle:shuffle,N:N,EXIT:EXIT,WEEK:WEEK,POOL:POOL,decode:decode,cells:cells,occ:occ,range:range,moves:moves,solved:solved,solve:solve,dress:dress,pickDay:pickDay};
+})(typeof window!=="undefined"?window:globalThis);
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FEEL=["Hardest","Gentle","Easy","Steady","Moderate","Tricky","Hard"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+var NUMW=["no","one","two","three","four","five"];
+
+/* ---------- the tray drawing (units: 780 wide, 724 tall) ----------
+   The frame is 48 wide; the water's top-left berth starts at (48, 48), each berth 100 square. The harbor mouth opens in the
+   right side of the third row (y 248-348); short piers run out from it, with a red buoy to the north and a green one to the
+   south ("red right returning"). The tray's front edge (its thickness) runs along the bottom. */
+var TW=780, TH=724, FR=48, CELL=100, N=6;
+function bx(c){ return FR+c*CELL; }
+function trayPct(x,y,w,h){ return "left:"+(x/TW*100)+"%;top:"+(y/TH*100)+"%;width:"+(w/TW*100)+"%;height:"+(h/TH*100)+"%"; }
+function traySVG(mr){
+  var s=[], my0=FR+mr*CELL, my1=my0+CELL, R=FR+N*CELL;
+  s.push('<defs>');
+  s.push('<linearGradient id="hbOak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--f1)"/><stop offset=".5" style="stop-color:var(--f2)"/><stop offset="1" style="stop-color:var(--f3)"/></linearGradient>');
+  s.push('<linearGradient id="hbFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--ff1)"/><stop offset="1" style="stop-color:var(--ff2)"/></linearGradient>');
+  s.push('<pattern id="hbGrain" width="300" height="40" patternUnits="userSpaceOnUse"><path d="M0 6C70 3 160 10 300 6M0 17C90 20 200 13 300 18M0 29C60 26 170 33 300 28" fill="none" stroke="#5a3a14" stroke-opacity=".16" stroke-width="1.6"/><ellipse cx="190" cy="22" rx="20" ry="4" fill="none" stroke="#5a3a14" stroke-opacity=".1" stroke-width="1.5"/></pattern>');
+  s.push('<pattern id="hbGrainV" width="40" height="300" patternUnits="userSpaceOnUse"><path d="M6 0C3 70 10 160 6 300M17 0C20 90 13 200 18 300M29 0C26 60 33 170 28 300" fill="none" stroke="#5a3a14" stroke-opacity=".16" stroke-width="1.6"/></pattern>');
+  s.push('<linearGradient id="hbSea" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--w1)"/><stop offset=".45" style="stop-color:var(--w2)"/><stop offset="1" style="stop-color:var(--w3)"/></linearGradient>');
+  s.push('<radialGradient id="hbSun" cx="20%" cy="12%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".55" stop-color="#fff" stop-opacity=".03"/><stop offset="1" stop-color="#001" stop-opacity=".2"/></radialGradient>');
+  s.push('<pattern id="hbRip" width="120" height="60" patternUnits="userSpaceOnUse"><path d="M6 14q12-6 24 0t24 0M62 40q12-6 24 0t24 0M30 52q8-4 16 0" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2" stroke-linecap="round"/><path d="M80 10q8-4 16 0M10 34q8-4 16 0" fill="none" stroke="#002" stroke-opacity=".08" stroke-width="2" stroke-linecap="round"/></pattern>');
+  s.push('<linearGradient id="hbInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#001a2a" stop-opacity=".5"/><stop offset="1" stop-color="#001a2a" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="hbInL" x1="0" x2="1"><stop offset="0" stop-color="#001a2a" stop-opacity=".42"/><stop offset="1" stop-color="#001a2a" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="hbBrV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--b1)"/><stop offset=".4" style="stop-color:var(--b3)"/><stop offset="1" style="stop-color:var(--b5)"/></linearGradient>');
+  s.push('<radialGradient id="hbBrR" cx="35%" cy="30%" r="75%"><stop offset="0" style="stop-color:var(--b1)"/><stop offset=".5" style="stop-color:var(--b3)"/><stop offset="1" style="stop-color:var(--b5)"/></radialGradient>');
+  s.push('<radialGradient id="hbBuoyR" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ff9a8a"/><stop offset=".5" stop-color="#c9302a"/><stop offset="1" stop-color="#6a1210"/></radialGradient>');
+  s.push('<radialGradient id="hbBuoyG" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#9ae0a8"/><stop offset=".5" stop-color="#2f8a4a"/><stop offset="1" stop-color="#103a1c"/></radialGradient>');
+  s.push('<radialGradient id="hbShade" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0a1420" stop-opacity=".5"/><stop offset=".6" stop-color="#0a1420" stop-opacity=".2"/><stop offset="1" stop-color="#0a1420" stop-opacity="0"/></radialGradient>');
+  s.push('</defs>');
+  /* the tray's shadow on the table */
+  s.push('<rect x="22" y="30" width="'+(R+FR-6)+'" height="'+(R+FR-4)+'" rx="22" fill="#1a1006" opacity=".28"/><rect x="14" y="20" width="'+(R+FR)+'" height="'+(R+FR)+'" rx="20" fill="#1a1006" opacity=".18"/>');
+  /* the front edge (the tray's thickness) */
+  s.push('<path d="M0 '+(R+FR-20)+'H'+(R+FR)+'V'+(TH-14)+'Q'+(R+FR)+' '+TH+' '+(R+FR-14)+' '+TH+'H14Q0 '+TH+' 0 '+(TH-14)+'Z" fill="url(#hbFace)"/><path d="M0 '+(TH-14)+'H'+(R+FR)+'" stroke="#000" stroke-opacity=".2" stroke-width="2"/>');
+  /* the water, sunlit from the top left, with ripples */
+  s.push('<rect x="'+(FR-4)+'" y="'+(FR-4)+'" width="'+(N*CELL+8)+'" height="'+(N*CELL+8)+'" fill="url(#hbSea)"/>');
+  /* the mouth's channel, running out past the frame */
+  s.push('<rect x="'+(R-4)+'" y="'+my0+'" width="'+(TW-R+4)+'" height="'+CELL+'" fill="url(#hbSea)"/>');
+  s.push('<rect x="'+(FR-4)+'" y="'+(FR-4)+'" width="'+(N*CELL+8)+'" height="'+(N*CELL+8)+'" fill="url(#hbRip)" opacity=".9"/><rect x="'+(R-4)+'" y="'+my0+'" width="'+(TW-R+4)+'" height="'+CELL+'" fill="url(#hbRip)" opacity=".9"/>');
+  s.push('<rect x="'+FR+'" y="'+FR+'" width="'+(N*CELL)+'" height="'+(N*CELL)+'" fill="url(#hbSun)"/>');
+  /* the berths: faint chart lines, and a lighter lane toward the mouth */
+  for(var k=1;k<N;k++){ s.push('<path d="M'+bx(k)+' '+FR+'V'+R+'M'+FR+' '+bx(k)+'H'+R+'" stroke="#fff" stroke-opacity=".13" stroke-width="1.5" stroke-dasharray="5 7"/>'); }
+  s.push('<rect x="'+FR+'" y="'+my0+'" width="'+(TW-FR)+'" height="'+CELL+'" fill="#fff" opacity=".06"/>');
+  s.push('<path d="M'+(R-30)+' '+(my0+50)+'l16 0m-8-8l8 8l-8 8" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>');
+  /* the frame's shadow on the water (top and left inner edges) */
+  s.push('<rect x="'+FR+'" y="'+FR+'" width="'+(N*CELL)+'" height="20" fill="url(#hbInT)"/><rect x="'+FR+'" y="'+FR+'" width="18" height="'+(N*CELL)+'" fill="url(#hbInL)"/>');
+  /* the frame: four mitered oak bars with grain; the right bar has the mouth cut in it */
+  var bars=[
+    ['M0 0H'+(R+FR)+'L'+R+' '+FR+'H'+FR+'Z',"hbGrain"],
+    ['M0 0L'+FR+' '+FR+'V'+R+'L0 '+(R+FR)+'Z',"hbGrainV"],
+    ['M0 '+(R+FR)+'L'+FR+' '+R+'H'+R+'L'+(R+FR)+' '+(R+FR)+'Z',"hbGrain"],
+    ['M'+(R+FR)+' 0V'+my0+'H'+R+'V'+FR+'Z',"hbGrainV"],
+    ['M'+(R+FR)+' '+(R+FR)+'V'+my1+'H'+R+'V'+R+'Z',"hbGrainV"]];
+  bars.forEach(function(b){ s.push('<path d="'+b[0]+'" fill="url(#hbOak)"/><path d="'+b[0]+'" fill="url(#'+b[1]+')"/>'); });
+  /* the frame's lit top-left edges, its shaded inner edges, and the miter lines */
+  s.push('<path d="M2 '+(R+FR-2)+'V2H'+(R+FR-2)+'" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="3"/>');
+  s.push('<path d="M'+FR+' '+R+'V'+FR+'H'+R+'" fill="none" stroke="#3a2408" stroke-opacity=".45" stroke-width="3"/>');
+  s.push('<path d="M'+FR+' '+(R+1)+'H'+R+'V'+my1+'M'+R+' '+my0+'V'+FR+'" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2.5"/>');
+  s.push('<path d="M0 0L'+FR+' '+FR+'M'+(R+FR)+' 0L'+R+' '+FR+'M0 '+(R+FR)+'L'+FR+' '+R+'M'+(R+FR)+' '+(R+FR)+'L'+R+' '+R+'" stroke="#5a3a14" stroke-opacity=".35" stroke-width="1.5"/>');
+  /* brass corner caps */
+  [[0,0],[R+FR,0],[0,R+FR],[R+FR,R+FR]].forEach(function(p){ var sx=p[0]?-1:1, sy=p[1]?-1:1;
+    s.push('<path d="M'+p[0]+' '+p[1]+'h'+(30*sx)+'v'+(6*sy)+'h'+(-24*sx)+'v'+(24*sy)+'h'+(-6*sx)+'Z" fill="url(#hbBrV)" stroke="var(--b5)" stroke-width="1"/>'); });
+  /* the mouth: two short piers of planks running out to sea, a buoy at each */
+  [[my0-16,"N"],[my1,"S"]].forEach(function(q){ var y=q[0];
+    s.push('<rect x="'+(R+FR-2)+'" y="'+(y+6)+'" width="'+(TW-R-FR+2)+'" height="16" fill="#0a1420" opacity=".25"/>');
+    s.push('<rect x="'+(R+FR-6)+'" y="'+y+'" width="'+(TW-R-FR+2)+'" height="16" rx="3" fill="url(#hbOak)"/>');
+    for(var x=R+FR+6;x<TW-4;x+=12) s.push('<path d="M'+x+' '+(y+1)+'V'+(y+15)+'" stroke="#5a3a14" stroke-opacity=".3" stroke-width="1.2"/>');
+    s.push('<path d="M'+(R+FR-4)+' '+(y+1)+'H'+(TW-6)+'" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>'); });
+  s.push('<ellipse cx="'+(TW-14)+'" cy="'+(my0+26)+'" rx="14" ry="6" fill="url(#hbShade)"/><circle cx="'+(TW-20)+'" cy="'+(my0+18)+'" r="11" fill="url(#hbBuoyR)"/><path d="M'+(TW-27)+' '+(my0+15)+'h14" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>');
+  s.push('<ellipse cx="'+(TW-14)+'" cy="'+(my1-8)+'" rx="14" ry="6" fill="url(#hbShade)"/><rect x="'+(TW-30)+'" y="'+(my1-28)+'" width="20" height="20" rx="3" fill="url(#hbBuoyG)"/><path d="M'+(TW-27)+' '+(my1-25)+'h12" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>');
+  /* the maker's plate: on the frame's bottom bar, a hair below dead center */
+  s.push('<g transform="translate('+((R+FR)/2)+' '+(R+FR/2+3)+')"><rect x="-44" y="-11" width="88" height="23" rx="4" fill="url(#hbBrV)" stroke="var(--b5)" stroke-width="1.5"/><circle cx="-37" cy=".5" r="2" fill="var(--b5)"/><circle cx="37" cy=".5" r="2" fill="var(--b5)"/>'+
+    '<text x="-2" y="7.5" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="500" font-size="17" fill="var(--bt)">B<tspan font-family="Pacifico,cursive" font-size="13" font-weight="400">W</tspan></text></g>');
+  return s.join("");
+}
+/* the shared paint gradients for the boats (one hidden SVG; the boats point at these) */
+function boatDefs(){
+  var d=document.createElementNS("http://www.w3.org/2000/svg","svg"); d.setAttribute("width","0"); d.setAttribute("height","0"); d.style.position="absolute";
+  d.innerHTML='<defs>'+
+    '<linearGradient id="hbSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".35" stop-color="#fff" stop-opacity=".08"/><stop offset=".7" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>'+
+    '<linearGradient id="hbDeck" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e2b8"/><stop offset=".5" stop-color="#d9b47a"/><stop offset="1" stop-color="#a87c44"/></linearGradient>'+
+    '<linearGradient id="hbTeak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c88a52"/><stop offset=".55" stop-color="#9a5f2c"/><stop offset="1" stop-color="#6a3a14"/></linearGradient>'+
+    '<linearGradient id="hbWhite" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#eceee8"/><stop offset="1" stop-color="#c3c7c4"/></linearGradient>'+
+    '<linearGradient id="hbSailG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf4"/><stop offset=".6" stop-color="#f1e8d0"/><stop offset="1" stop-color="#cfc2a0"/></linearGradient>'+
+    '<radialGradient id="hbMast" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#d4ab52"/><stop offset="1" stop-color="#5e430f"/></radialGradient>'+
+    '</defs>';
+  document.body.appendChild(d);
+}
+/* one boat, drawn for its own line: u runs along the boat (bow at u = L when bow = 1), v across it.
+   Box: (len × 100 − 12) by 88; the hull is narrower than the berth, with its near side (thickness) showing below. */
+function boatSVG(b,look){
+  var L=b.len*CELL-12, W=88, hw=W*.40, bowL=Math.min(56,L*.3), h=b.h, bow=look.bow;
+  function pt(u,v){ var uu=bow>0?u:L-u; return h?[uu,W/2+v]:[W/2+v,uu]; }
+  function P(u,v){ var p=pt(u,v); return p[0].toFixed(1)+" "+p[1].toFixed(1); }
+  function hull(sc,dx,dy){ var w=hw*sc, a=6, e=L-4, bl=bowL*(sc>.9?1:sc);
+    var path="M"+P(a+4,-w)+"L"+P(e-bl,-w)+"Q"+P(e-bl*.25,-w)+" "+P(e,0)+"Q"+P(e-bl*.25,w)+" "+P(e-bl,w)+"L"+P(a+4,w)+"Q"+P(a,w)+" "+P(a,w-6)+"L"+P(a,-w+6)+"Q"+P(a,-w)+" "+P(a+4,-w)+"Z";
+    if(dx||dy) return '<path d="'+path+'" transform="translate('+dx+' '+dy+')"';
+    return '<path d="'+path+'"'; }
+  function seg(u0,v0,u1,v1){ return "M"+P(u0,v0)+"L"+P(u1,v1); }
+  function rect(u0,v0,u1,v1,rx){ var a=pt(u0,v0), c=pt(u1,v1), x=Math.min(a[0],c[0]), y=Math.min(a[1],c[1]); return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+Math.abs(c[0]-a[0]).toFixed(1)+'" height="'+Math.abs(c[1]-a[1]).toFixed(1)+'" rx="'+(rx||0)+'"'; }
+  function circ(u,v,r){ var p=pt(u,v); return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+r+'"'; }
+  var col=look.color, dark=look.paint==="white"||look.paint==="cream"||look.paint==="yellow";
+  var vb=h?"0 0 "+L+" "+W:"0 0 "+W+" "+L;
+  /* the shadow on the water (two soft layers, no blur filter), in its own layer so it can move when the boat is lifted */
+  var sh='<svg class="sh" viewBox="'+vb+'" preserveAspectRatio="none">'+hull(1.02,6,10)+' fill="#04121e" opacity=".26"/>'+hull(1.12,9,14)+' fill="#04121e" opacity=".12"/></svg>';
+  var o=[];
+  /* the near side of the hull (its thickness), then the hull's top: paint, sheen, a deck inside the gunwale */
+  o.push(hull(1,0,7)+' fill="'+col+'"/>'+hull(1,0,7)+' fill="#000" opacity=".4"/>');
+  o.push(hull(1)+' fill="'+col+'"/>'+hull(1)+' fill="url(#hbSheen)"/>');
+  o.push(hull(1)+' fill="none" stroke="'+(dark?"#7a7466":"#fff")+'" stroke-opacity="'+(dark?.5:.35)+'" stroke-width="1.5"/>');
+  var k=look.kind;
+  if(k==="rowboat"||k==="dinghy"){
+    /* an open boat: the inside planking, thwarts, and oars (rowboat) or a little mast step (dinghy) */
+    o.push(hull(.7)+' fill="url(#hbTeak)"/>');
+    for(var q=-2;q<=2;q++) o.push('<path d="'+seg(16,q*hw*.25,L-bowL*.6,q*hw*.22)+'" stroke="#4a2a0a" stroke-opacity=".28" stroke-width="1.2"/>');
+    [.32,.58].forEach(function(f){ o.push(rect(L*f-6,-hw*.78,L*f+6,hw*.78,2)+' fill="url(#hbDeck)" stroke="#6a4a20" stroke-opacity=".5"/>'); });
+    if(k==="rowboat"){ [-1,1].forEach(function(sv){ o.push('<path d="'+seg(L*.2,sv*hw*.55,L*.78,sv*hw*.62)+'" stroke="#e6d2a4" stroke-width="4" stroke-linecap="round"/><path d="'+seg(L*.2,sv*hw*.55,L*.78,sv*hw*.62)+'" stroke="#6a4a20" stroke-opacity=".35" stroke-width="1"/>'); o.push(rect(L*.14,sv*hw*.55-4,L*.28,sv*hw*.55+4,3)+' fill="#e6d2a4" stroke="#6a4a20" stroke-opacity=".4"/>'); }); }
+    else { o.push(circ(L*.68,0,6)+' fill="url(#hbMast)"/>'); o.push('<path d="'+seg(L*.68,0,L*.16,0)+'" stroke="#d9c79a" stroke-width="5" stroke-linecap="round"/>'); }
+  } else {
+    o.push(hull(.64)+' fill="url(#hbDeck)"/>');
+    for(var q2=-1;q2<=1;q2++) o.push('<path d="'+seg(14,q2*hw*.32,L-bowL*.7,q2*hw*.26)+'" stroke="#6a4a20" stroke-opacity=".25" stroke-width="1.2"/>');
+    if(k==="sloop"){
+      /* your sloop: the cockpit, the brass mast step, the boom with the sail furled along it, a gold pennant at the bow */
+      o.push(rect(14,-hw*.5,L*.34,hw*.5,8)+' fill="#5a2a14" opacity=".8"/>'+rect(18,-hw*.38,L*.3,hw*.38,6)+' fill="#8a4a24"/>');
+      o.push('<path d="'+seg(L*.6,0,L*.16,0)+'" stroke="#e8dcc0" stroke-width="10" stroke-linecap="round"/><path d="'+seg(L*.6,-3,L*.16,-3)+'" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/>');
+      o.push(circ(L*.6,0,9)+' fill="url(#hbMast)" stroke="#5e430f" stroke-width="1"/>');
+      o.push('<path d="M'+P(L-bowL*.7,-4)+'L'+P(L-bowL*.25,0)+'L'+P(L-bowL*.7,4)+'Z" fill="#e7c25a"/>');
+      /* the sail, which unfurls as the sloop sails out */
+      var m=pt(L*.6,0); look.mast=m;
+      o.push('<g class="sail" style="transform-box:view-box;transform-origin:'+m[0].toFixed(1)+'px '+m[1].toFixed(1)+'px"><path d="M'+P(L*.6,0)+'L'+P(L*.08,-hw*1.25)+'Q'+P(L*.3,-hw*.2)+' '+P(L*.6,0)+'Z" fill="url(#hbSailG)" stroke="#bfae84" stroke-width="1"/>'+
+        '<path d="M'+P(L*.6,0)+'L'+P(L*1.02,-hw*1.05)+'Q'+P(L*.86,-hw*.2)+' '+P(L*.6,0)+'Z" fill="url(#hbSailG)" stroke="#bfae84" stroke-width="1" opacity=".95"/></g>');
+    } else if(k==="launch"){
+      /* a motor launch: a white cabin top with a windshield, a little brass horn */
+      o.push(rect(L*.36,-hw*.62,L*.74,hw*.62,8)+' fill="#04121e" opacity=".22" transform="translate(3 4)"/>');
+      o.push(rect(L*.36,-hw*.62,L*.74,hw*.62,8)+' fill="'+(look.paint==="white"?"#24406b":"url(#hbWhite)")+'"/>'+rect(L*.36,-hw*.62,L*.74,hw*.62,8)+' fill="url(#hbSheen)"/>');
+      o.push('<path d="'+seg(L*.71,-hw*.5,L*.71,hw*.5)+'" stroke="#2a4a6a" stroke-width="5" stroke-linecap="round" opacity=".85"/>');
+      o.push(circ(L*.2,0,5)+' fill="url(#hbMast)"/>');
+    } else if(k==="trawler"){
+      /* a fishing trawler: a wheelhouse aft, a hatch, a coil of rope and a life ring */
+      o.push(rect(L*.1,-hw*.62,L*.36,hw*.62,6)+' fill="#04121e" opacity=".22" transform="translate(3 4)"/>');
+      o.push(rect(L*.1,-hw*.62,L*.36,hw*.62,6)+' fill="url(#hbWhite)"/>'+rect(L*.1,-hw*.62,L*.36,hw*.62,6)+' fill="url(#hbSheen)"/>');
+      o.push('<path d="'+seg(L*.33,-hw*.5,L*.33,hw*.5)+'" stroke="#2a4a6a" stroke-width="5" stroke-linecap="round" opacity=".8"/>');
+      o.push(rect(L*.46,-hw*.42,L*.66,hw*.42,3)+' fill="#6a4a20" stroke="#3a2408" stroke-opacity=".5"/>');
+      o.push(circ(L*.76,-hw*.25,8)+' fill="none" stroke="#c9b48a" stroke-width="4"/>'+circ(L*.76,hw*.32,8)+' fill="none" stroke="#e8e8e8" stroke-width="5"/>'+circ(L*.76,hw*.32,8)+' fill="none" stroke="#c9302a" stroke-width="5" stroke-dasharray="6.3 6.3"/>');
+    } else {
+      /* a little harbor ferry: a long cabin with a row of windows and a funnel */
+      o.push(rect(L*.14,-hw*.66,L*.76,hw*.66,10)+' fill="#04121e" opacity=".22" transform="translate(3 4)"/>');
+      o.push(rect(L*.14,-hw*.66,L*.76,hw*.66,10)+' fill="url(#hbWhite)"/>'+rect(L*.14,-hw*.66,L*.76,hw*.66,10)+' fill="url(#hbSheen)"/>');
+      for(var w=0;w<5;w++){ var u=L*.2+w*L*.1; o.push(rect(u,-hw*.66,u+L*.06,-hw*.5,2)+' fill="#2a4a6a" opacity=".8"/>'+rect(u,hw*.5,u+L*.06,hw*.66,2)+' fill="#2a4a6a" opacity=".8"/>'); }
+      o.push(circ(L*.45,0,10)+' fill="'+(look.paint==="black"?"#c9302a":"#2a2c30")+'"/>'+circ(L*.45,0,10)+' fill="url(#hbSheen)"/>');
+    }
+  }
+  return sh+'<div class="lift"><svg viewBox="'+vb+'" preserveAspectRatio="none">'+o.join("")+'</svg><div class="ring"></div></div>';
+}
+
+/* ---------- the stage ---------- */
+var stage=mk("div","hb-pad");
+stage.innerHTML='<div class="hb-left"><div class="hb-board" id="hbBoard"><svg id="hbBase" viewBox="0 0 780 724" aria-hidden="true"></svg><div class="hb-shimmer"></div><div id="hbPaths"></div><div id="hbBoats"></div>'+
+  '<div class="hb-fx" id="hbFx"></div><div class="hb-sign" id="hbSign">Fair Winds!</div><div class="hb-toast" id="hbToast" role="status"></div></div></div>'+
+  '<div class="hb-right"><div class="hb-notes" id="hbNotes"><h2>The Harbor Log</h2><span class="hb-no" id="hbNo">No. 1</span>'+
+  '<p class="hb-goal">Free <b>your red sloop</b>: clear a way to the harbor mouth on the right.</p>'+
+  '<ul class="hb-rules"><li>Each boat slides only <b>along its own line</b>: sideways boats sideways, the others up and down.</li><li>Drag a boat to slide it, or tap it and tap a lit berth.</li><li>One move is one boat slid any distance.</li></ul>'+
+  '<p class="hb-rule1">Slide boats along their lines to clear a way for <b>your red sloop</b> to the mouth on the right.</p>'+
+  '<div class="hb-tally"><div><b id="hbMoves">0</b><small>Moves</small></div><div><b id="hbBest">0</b><small>Fewest</small></div></div>'+
+  '<div class="hb-day"><span id="hbDay"></span><span id="hbBoatsN"></span></div><div class="hb-stampmark" id="hbMark">CLEARED</div></div>'+
+  '<div class="hb-tools"><button class="pk-btn gold" type="button" id="hbHint">Ask the Harbormaster</button><button class="pk-btn" type="button" id="hbUndo">Undo</button><button class="pk-btn" type="button" id="hbRestart">Restart</button></div></div>';
+var BOARD=$("#hbBoard",stage), BASE=$("#hbBase",stage), BOATS=$("#hbBoats",stage), PATHS=$("#hbPaths",stage), TOAST=$("#hbToast",stage), FX=$("#hbFx",stage);
+var mouthRow=-1;
+function tray(r){ if(r!==mouthRow){ mouthRow=r; BASE.innerHTML=traySVG(r); } }
+tray(2);
+
+/* ---------- state ----------
+   PZ: the puzzle {B (boats), P0 (start), d (fewest moves), looks}. P: where each boat is now.
+   hist: the moves made [{i, from, to, hm (the harbormaster's)}]; moving the same boat again in a row is still one move.
+   stash: the position before Restart, so Undo can bring it back. sel: the lifted boat. */
+var PZ=null, P=[], mode="daily", hist=[], stash=null, sel=-1, hints=0, t0=0, done=false, busy=false, lessonK=0, glowBoats=[];
+function moveCount(){ return hist.length; }
+
+/* ---------- drawing ---------- */
+function place(i,pos){ var b=PZ.B[i], c=b.h?pos:b.c, r=b.h?b.r:pos, w=b.h?b.len*CELL-12:88, hh=b.h?88:b.len*CELL-12;
+  return trayPct(bx(c)+6,bx(r)+6,w,hh); }
+function render(){
+  var h=[];
+  PZ.B.forEach(function(b,i){ var cls="hb-boat"+(i===sel?" up":"")+(glowBoats.indexOf(i)>=0&&!done?" glow":"");
+    h.push('<div class="'+cls+'" data-i="'+i+'" style="'+place(i,P[i])+'" role="button" aria-label="'+esc(PZ.looks[i].name)+'">'+boatSVG(b,PZ.looks[i])+'</div>'); });
+  BOATS.innerHTML=h.join("");
+  paths(); tally();
+}
+function boatEl(i){ return BOATS.querySelector('[data-i="'+i+'"]'); }
+/* move one boat's element to its place without redrawing the others */
+function setPos(i){ var e=boatEl(i); if(!e) return; var s=place(i,P[i]).split(";"); s.forEach(function(kv){ var p=kv.split(":"); if(p[0]) e.style[p[0]]=p[1]; }); }
+function tally(){
+  var m=moveCount(); $("#hbMoves",stage).textContent=m; $("#hbBest",stage).textContent=PZ.d;
+  $("#hbMoves",stage).classList.toggle("over",m>PZ.d);
+  $("#hbUndo",stage).disabled=(!hist.length&&!stash)||done;
+  $("#hbBoatsN",stage).textContent=(PZ.B.length-1)+" boats in the way";
+  if(window.Parlor){ Parlor.score([String(m)]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Harbor","Moves "+m+" · fewest "+PZ.d); }
+}
+/* the lit berths a lifted boat can slide to */
+function paths(){
+  var h=[]; if(sel>=0&&!done){ var b=PZ.B[sel], R=HB.range(PZ.B,P,sel);
+    for(var q=R[0];q<=R[1]+b.len-1;q++){ if(q>=P[sel]&&q<P[sel]+b.len) continue; var c=b.h?q:b.c, r=b.h?b.r:q;
+      h.push('<div class="hb-path on" data-q="'+q+'" style="'+trayPct(bx(c)+4,bx(r)+4,CELL-8,CELL-8)+'"></div>'); } }
+  PATHS.innerHTML=h.join("");
+}
+
+/* ---------- sounds (Nov 1): the harbor, made in the browser through the kit ----------
+   hb-lift: a wooden boat lifted from the water (a soft knock and a drip) · hb-slide: the hull through the water
+   hb-bump: a boat nudging another boat or the frame · hb-no: two dull knocks on the oak frame
+   hb-hint: the harbormaster's ship's bell, two strikes · hb-undo: a short swish back · hb-restart: the water stirred
+   hb-solve: the bell, gulls, a little wave, and a warm chord (a lesson gets the bell and the chord) */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  function shipBell(h,d,t,g){ h.bell(d,t,1318,g,1.6,[[1,1,1],[2.02,.5,.7],[2.98,.3,.5],[4.1,.18,.35],[5.4,.08,.25]]); }
+  function gull(h,d,t,f,g){ h.osc(d,t,"triangle",f,f*.62,g,.03,.32,["bandpass",f*1.1,2]); h.osc(d,t+.36,"triangle",f*1.05,f*.7,g*.8,.02,.22,["bandpass",f*1.1,2]); h.osc(d,t+.62,"triangle",f*.98,f*.66,g*.6,.02,.2,["bandpass",f*1.1,2]); }
+  D("hb-lift",function(h){ var d=h.out(.08), t=h.t, p=h.p*(.96+Math.random()*.08); h.osc(d,t,"sine",260*p,170*p,.12,.003,.08,["lowpass",700]); h.burst(d,t,.04,"bandpass",1100*p,1.2,.07,.002,.03); h.osc(d,t+.09,"sine",1500*p,2300*p,.025,.005,.06); });
+  D("hb-slide",function(h,o){ var d=h.out(.12), t=h.t, n=Math.max(1,o.n||1), len=.12+.06*n; h.burst(d,t,len+.05,"bandpass",700+Math.random()*200,.8,.09,.03,len); h.burst(d,t+.02,len,"highpass",2600,.7,.025,.04,len*.8);
+    h.osc(d,t+len,"sine",150,100,.1,.003,.09,["lowpass",500]); });
+  D("hb-bump",function(h){ var d=h.out(.06), t=h.t; h.osc(d,t,"sine",140,95,.13,.002,.1,["lowpass",450]); h.burst(d,t,.03,"lowpass",900,1,.08,.001,.03); });
+  D("hb-no",function(h){ var d=h.out(.06), t=h.t; [[0,190],[.13,165]].forEach(function(k){ h.osc(d,t+k[0],"sine",k[1],k[1]*.8,.22,.002,.11,["lowpass",650]); h.burst(d,t+k[0],.04,"lowpass",1300,1,.12,.001,.03); }); });
+  D("hb-hint",function(h){ var d=h.out(.3), t=h.t; shipBell(h,d,t,.08); shipBell(h,d,t+.32,.07); });
+  D("hb-undo",function(h){ var d=h.out(.08), t=h.t; h.burst(d,t,.16,"bandpass",900,.9,.07,.02,.12); h.osc(d,t+.12,"sine",170,120,.08,.003,.07,["lowpass",500]); });
+  D("hb-restart",function(h){ var d=h.out(.15), t=h.t; h.burst(d,t,.7,"lowpass",600,.7,.12,.12,.5); h.burst(d,t+.1,.5,"bandpass",1800,.8,.03,.1,.35); for(var k=0;k<5;k++) h.osc(d,t+.1+k*.09,"sine",180+Math.random()*60,110,.07,.003,.08,["lowpass",500]); });
+  D("hb-solve",function(h,o){ var d=h.out(.45), t=h.t, at=0;
+    shipBell(h,d,t,.08); shipBell(h,d,t+.3,.07);
+    if(!o.short){ h.burst(d,t+.4,1.4,"lowpass",500,.6,.12,.5,.9); gull(h,d,t+.7,1900,.05); gull(h,d,t+1.5,2200,.035); at=.5; }
+    [523.25,659.25,783.99,1046.5].forEach(function(f,i){ h.osc(d,t+.55+at+i*.07,"triangle",f,0,.05,.02,1.8); });
+  });
+})();
+function snd(name,o){ if(window.Parlor&&Parlor.defSfx) Parlor.sfx(name,o||{}); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2200); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("hb-ringbtn"); void b.offsetWidth; b.classList.add("hb-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done||!PZ||busy; }
+function bump(i,dir){ var e=boatEl(i); if(!e) return; var b=PZ.B[i]; e.style.setProperty("--bx",b.h?(dir*2)+"%":"0"); e.style.setProperty("--by",b.h?"0":(dir*2)+"%"); e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump"); }
+function lift(i){ sel=i; snd("hb-lift",{pitch:PZ.B[i].len===3?.8:1}); BOATS.querySelectorAll(".hb-boat").forEach(function(e){ e.classList.toggle("up",+e.dataset.i===i); }); paths();
+  var R=HB.range(PZ.B,P,i); if(R[0]===R[1]){ toast(cap(PZ.looks[i].name)+" is hemmed in. Move a boat beside it first.",2600); snd("hb-no"); } }
+function drop(){ if(sel<0) return; var e=boatEl(sel); if(e) e.classList.remove("up"); sel=-1; paths(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+/* slide boat i to place q (already checked as free): one move, or part of the last move if the same boat moved last */
+function slide(i,q,hm){
+  var from=P[i]; if(q===from) return;
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  var last=hist[hist.length-1];
+  if(last&&last.i===i){ last.to=q; if(last.to===last.from) hist.pop(); }
+  else hist.push({i:i,from:from,to:q,hm:!!hm});
+  stash=null; P[i]=q; setPos(i);
+  snd("hb-slide",{n:Math.abs(q-from)});
+  tally();
+  if(HB.solved(P)){ solved(); return; }
+  lessonCheck();
+}
+function tapBoat(i){
+  if(blocked()) return; hideToast();
+  if(sel===i){ drop(); return; }
+  if(sel>=0) drop();
+  lift(i);
+}
+PATHS.addEventListener("click",function(e){ var t=e.target.closest(".hb-path"); if(!t||sel<0||blocked()) return;
+  var b=PZ.B[sel], q=+t.dataset.q, to=q<P[sel]?q:q-b.len+1, i=sel; drop(); slide(i,to); });
+function undo(){
+  if(mode==="lesson"&&blocked()) return; if(done||busy) return;
+  if(!hist.length){ if(stash){ P=stash.P.slice(); hist=stash.hist.slice(); stash=null; drop(); render(); snd("hb-undo"); toast("Your moves are back.",1800); } return; }
+  var m=hist.pop(); P[m.i]=m.from; drop(); setPos(m.i); snd("hb-undo"); tally(); hideToast();
+}
+function restart(){
+  hideToast(); if(mode==="lesson"&&blocked()) return; if(!PZ||busy) return;
+  if(done&&mode==="daily"){ startDaily(true); return; }
+  if(!hist.length){ drop(); return; }
+  stash={P:P.slice(),hist:hist.slice()}; P=PZ.P0.slice(); hist=[]; drop(); render(); tally(); snd("hb-restart");
+  toast("The boats are back at their moorings. (Undo brings your moves back.)",2600);
+}
+
+/* ---------- touching the tray: drag a boat along its line; tap to lift it ---------- */
+var drag=null, raf=0;
+BOATS.addEventListener("pointerdown",function(e){
+  var el=e.target.closest(".hb-boat"); if(!el||e.button>0) return; e.preventDefault();
+  var i=+el.dataset.i;
+  drag={id:e.pointerId,i:i,el:el,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,moved:false,R:null,cell:BOARD.clientWidth*CELL/TW,off:0,hit:0};
+  try{ BOATS.setPointerCapture(e.pointerId); }catch(x){}
+});
+BOATS.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.id) return; drag.x=e.clientX; drag.y=e.clientY;
+  if(!drag.moved){ if(Math.hypot(drag.x-drag.x0,drag.y-drag.y0)<7) return; if(blocked()){ drag=null; return; }
+    drag.moved=true; hideToast(); if(sel!==drag.i){ drop(); sel=drag.i; snd("hb-lift",{pitch:PZ.B[drag.i].len===3?.8:1}); }
+    drag.el=boatEl(drag.i); drag.el.classList.add("drag","up"); drag.R=HB.range(PZ.B,P,drag.i); PATHS.innerHTML=""; }
+  if(!raf) raf=requestAnimationFrame(function(){ raf=0; if(!drag||!drag.moved) return;
+    var b=PZ.B[drag.i], raw=(b.h?drag.x-drag.x0:drag.y-drag.y0)/drag.cell, lo=drag.R[0]-P[drag.i], hi=drag.R[1]-P[drag.i];
+    var o=Math.max(lo,Math.min(hi,raw));
+    /* a soft nudge (sound) when the boat meets something */
+    var at=raw<lo-.15?-1:raw>hi+.15?1:0; if(at&&at!==drag.hit){ snd("hb-bump"); } drag.hit=at;
+    /* the sloop at the mouth: let it lean a little way into the channel */
+    if(drag.i===0&&drag.R[1]===N-2&&raw>hi) o=hi+Math.min(.35,(raw-hi)*.4);
+    drag.off=o; drag.el.style.transform=b.h?"translateX("+(o*drag.cell)+"px)":"translateY("+(o*drag.cell)+"px)"; });
+});
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.id)) return; var d=drag; drag=null;
+  if(!d.moved){ tapBoat(d.i); return; }
+  var b=PZ.B[d.i], k=Math.round(Math.max(d.R[0]-P[d.i],Math.min(d.R[1]-P[d.i],d.off))), q=P[d.i]+k;
+  /* settle into the berth: start from where the finger left it and ease the last bit */
+  var el=d.el, resid=(d.off-k)*d.cell;
+  el.classList.remove("drag","up"); sel=-1;
+  var oldP=P[d.i];
+  if(q!==oldP){ P[d.i]=q; setPos(d.i); P[d.i]=oldP; }
+  el.style.transform=b.h?"translateX("+resid+"px)":"translateY("+resid+"px)";
+  el.style.transition="none"; void el.offsetWidth; el.style.transition=""; el.classList.add("snap"); el.style.transform="";
+  setTimeout(function(){ el.classList.remove("snap"); },240);
+  if(q!==oldP) slide(d.i,q); else { paths(); snd("hb-bump"); }
+}
+BOATS.addEventListener("pointerup",endDrag);
+BOATS.addEventListener("pointercancel",function(){ if(drag&&drag.moved){ var el=drag.el; el.classList.remove("drag"); el.style.transform=""; } drag=null; sel=-1; render(); });
+BOATS.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+BOARD.addEventListener("click",function(e){ if(e.target.closest(".hb-boat,.hb-path")) return; if(sel>=0&&!busy&&!done) drop(); });
+
+/* ---------- Ask the Harbormaster ----------
+   He finds the fewest moves from where the boats are now, and makes the first of them himself, saying how many remain. */
+function dist(n){ return (n<=5?NUMW[n]:n)+" berth"+(n===1?"":"s"); }
+function hint(){
+  hideToast(); if(mode==="lesson"&&blocked()) return; if(done||!PZ||busy) return;
+  var path=HB.solve(PZ.B,P); if(!path||!path.length) return;
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  hints++; drop();
+  var m=path[0], i=m[0], b=PZ.B[i], n=Math.abs(m[1]-P[i]), way=b.h?(m[1]>P[i]?"right":"left"):(m[1]>P[i]?"down":"up");
+  var rest=path.length-1, msg;
+  if(i===0) msg="The harbormaster sails your sloop out. Clear passage!";
+  else msg="The harbormaster slides "+PZ.looks[i].name+" "+way+" "+dist(n)+". "+(rest===1?"Then your sloop can sail out.":rest+" more moves after this free your sloop.");
+  snd("hb-hint"); busy=true;
+  var e=boatEl(i); if(e){ e.classList.remove("hint"); void e.offsetWidth; e.classList.add("hint"); }
+  setTimeout(function(){ busy=false; slide(i,m[1],true); },Parlor.smooth()?600:0);
+  toast(msg,msg.length>100?5200:4200);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+}
+
+/* ---------- loading ---------- */
+function load(pz,how){
+  PZ=pz; mode=how; P=pz.P0.slice(); tray(pz.B[0].r); hist=[]; stash=null; sel=-1; hints=0; t0=0; done=false; busy=false; glowBoats=[]; hideToast();
+  BOARD.classList.remove("done"); $("#hbSign",stage).classList.remove("on"); $("#hbMark",stage).classList.remove("on"); FX.textContent="";
+  $("#hbNo",stage).textContent=how==="daily"?"No. "+dayNo(today):how==="practice"?"Practice":"Lesson";
+  var wd=today.getDay();
+  $("#hbDay",stage).innerHTML=how==="daily"?esc(DAYS[wd])+" · <b>"+FEEL[wd]+"</b>":how==="practice"?"Practice":"Lesson";
+  render(); fit();
+}
+/* a puzzle from its 36 letters: the boats, the start, the fewest moves (checked) and the day's paint */
+function fromStr(s,seed,d,flip){ var z=HB.decode(s,flip), pz={B:z.B,P0:z.P,d:d}; if(d==null){ var p=HB.solve(z.B,z.P); pz.d=p?p.length:0; } pz.looks=HB.dress(z.B,seed); return pz; }
+var today=new Date(), todayKey=ymd(today), DAILY=null;
+function rec(){ try{ return JSON.parse(store("bwHarbor:"+todayKey)||"null"); }catch(e){ return null; } }
+function makeDaily(){
+  if(DAILY) return DAILY;
+  var wd=today.getDay(), e=HB.pickDay(wd,Math.floor((dayNo(today)-1)/7));
+  DAILY=fromStr(e.s,todayKey,e.d,e.flip); return DAILY;
+}
+function startDaily(again){
+  if(window.Parlor) Parlor.coach(null);
+  load(makeDaily(),"daily");
+  if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+  var r=rec();
+  if(r&&!again) toast("You cleared today's harbor. Play it again for fun; tomorrow brings a new one.",3600);
+  else if(!again) toast("Free your red sloop. Drag a boat along its line.",3400);
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwHarborStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function reveal(){
+  if(window.Parlor&&!Parlor.smooth()) return;
+  FX.textContent=""; var Rn=Math.random;
+  for(var k=0;k<2;k++){ var g=mk("div","gull"); g.innerHTML='<svg viewBox="0 0 70 30"><path d="M2 18Q18 2 35 16Q52 2 68 18" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M2 20Q18 4 35 18Q52 4 68 20" fill="none" stroke="#3a4a5a" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/></svg>';
+    g.style.left=(-10-k*8)+"%"; g.style.top=(30+k*14)+"%"; g.style.animationDelay=(500+k*500)+"ms"; g.style.setProperty("--gx",(125+k*10)+"cqw"); g.style.setProperty("--gy",(-30+k*8)+"cqw"); FX.appendChild(g); }
+  for(var j=0;j<16;j++){ var s=mk("i","spark"); s.style.left=(8+Rn()*74)+"%"; s.style.top=(8+Rn()*80)+"%"; s.style.animationDelay=(300+Rn()*1600)+"ms"; FX.appendChild(s); }
+}
+function sailOut(){
+  var e=boatEl(0); if(!e) return;
+  e.classList.add("sailing");
+  if(!Parlor.smooth()) return;
+  setTimeout(function(){ e.classList.add("out"); e.style.left=((TW+40)/TW*100)+"%"; },700);
+}
+function solved(){
+  if(done) return; done=true; hideToast(); drop(); glowBoats=[]; BOARD.classList.add("done");
+  var moves=moveCount(), neat=moves<=PZ.d&&hints<=2;
+  snd("hb-solve",{short:mode==="lesson"});
+  sailOut(); reveal();
+  setTimeout(function(){ $("#hbSign",stage).classList.add("on"); $("#hbMark",stage).classList.add("on"); },mode==="lesson"?500:1500);
+  tally();
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },900); return; }
+  var secs=t0?Math.round((Date.now()-t0)/1000):0, sts=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:sts,h:hints,sec:secs,mv:moves,neat:neat?1:0}; store("bwHarbor:"+todayKey,JSON.stringify(r));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwHarborStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(sts,secs,first,sk,sv,neat,moves); }); },3000);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+/* from the harbormaster's log: a true story of the sea, one a day */
+var NOTES=[
+  {g:"⚓",name:"Port and Starboard",kind:"Ships' lights",t:"At night a ship shows a red light on its port (left) side and a green light on its starboard (right) side, so other boats can tell which way it is heading."},
+  {g:"R",name:"Red Right Returning",kind:"Channel buoys",t:"In North and South America, sailors keep the red buoys on their right when returning from sea, just like the red buoy at this harbor's mouth."},
+  {g:"kn",name:"Why Speed Is in Knots",kind:"The chip log",t:"Sailors once measured speed by letting out a line with knots tied at regular spaces, counting the knots that ran out while a small sandglass emptied. One knot is one nautical mile an hour."},
+  {g:"12",name:"The Beaufort Scale",kind:"Royal Navy · 1805",t:"Francis Beaufort devised a scale for describing the wind at sea, from 0 (calm) to 12 (hurricane), judged by its effect on a ship's sails and later on the waves."},
+  {g:"SB",name:"Starboard",kind:"Old English · steorbord",t:"Starboard comes from the old \"steer board\": early ships were steered with an oar over the right side, so boats tied up with their left side to the dock, the side that came to be called port."},
+  {g:"6ft",name:"A Fathom",kind:"Measuring depth",t:"Sailors measure the depth of water in fathoms. A fathom is six feet, about the span of a sailor's outstretched arms, which is where its old name comes from."},
+  {g:"✦",name:"The Lighthouse of Alexandria",kind:"Egypt · about 280 BC",t:"The Pharos of Alexandria, built under the Ptolemies, was one of the Seven Wonders of the Ancient World and stood for well over a thousand years."},
+  {g:"🔔",name:"Eight Bells",kind:"Ship's time",t:"On a ship the bell is struck every half hour of a four-hour watch, one more stroke each time, so eight bells marks the end of the watch."},
+  {g:"SOS",name:"SOS",kind:"Berlin · 1906",t:"SOS was agreed as the international distress signal at the Radiotelegraph Convention in Berlin in 1906. Its letters don't stand for anything; the dots and dashes are simply easy to send and hard to mistake."},
+  {g:"M",name:"Mayday",kind:"London · 1923",t:"Frederick Mockford, a radio officer at Croydon Airport, chose \"Mayday\" as a spoken distress call in 1923, from the French m'aider, \"help me.\""},
+  {g:"⊖",name:"The Plimsoll Line",kind:"Britain · 1876",t:"The circle and line painted on a ship's side shows how deep it may safely sit in the water. Samuel Plimsoll campaigned for it, and Britain made it law in 1876."},
+  {g:"≈",name:"Harbor Pilots",kind:"Local knowledge",t:"Big ships entering many harbors take on a local pilot, a mariner who knows the channel's shoals and currents and guides the ship safely to its berth."}
+];
+function noteOfDay(){ return mode==="daily"?NOTES[dayNo(today)%NOTES.length]:NOTES[Math.floor(Math.random()*NOTES.length)]; }
+function result(sts,secs,first,sk,sv,neat,moves){
+  var v=$("#hbEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="hbEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Harbor":"The Harbor · No. "+dayNo(today), Nn=noteOfDay();
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"Your Sloop Is Free":"Clear Passage, No Help!")+'</h2>'+
+    '<div class="hb-stars">'+"★★★".slice(0,sts)+'<i>'+"★★★".slice(sts)+'</i></div>'+
+    '<div class="hb-facts"><div><b>'+moves+'</b><small>Moves</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<p class="hb-neat'+(neat?'':' plain')+'">'+(neat?"✦ Shipshape: "+moves+" moves, the fewest possible.":moves<=PZ.d?"The harbormaster took the helm. Clear it yourself for shipshape.":"You took "+moves+" moves; it can be done in "+PZ.d+".")+'</p>'+
+    '<div class="hb-story"><div class="hb-med">'+esc(Nn.g)+'</div><div><p class="hb-kind">'+esc(Nn.kind)+'</p><h3>'+esc(Nn.name)+'</h3><p class="clamp">'+esc(Nn.t)+'</p></div></div>'+
+    '<p class="hb-note">'+(mode==="daily"?(first?"A new harbor every day at midnight.":"You'd already cleared today's harbor; your first result is the one kept."):"Practice harbors don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".hb-story p.clamp");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","hb-rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(sts,secs,sk,neat,moves); });
+  bt(mode==="practice"?"Another Harbor":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Harbor",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  var L=mk("div","hb-endL"), R2=mk("div","hb-endR"); [].slice.call(b.children).forEach(function(c){ (c===row||c.classList.contains("pk-streak")?R2:L).appendChild(c); }); b.appendChild(L); b.appendChild(R2);
+  v.classList.add("on");
+}
+function share(sts,secs,sk,neat,moves){
+  var txt="BrainWhim · The Harbor No. "+dayNo(today)+"\n"+"★★★".slice(0,sts)+"☆☆☆".slice(sts)+" "+fmt(secs)+" · "+moves+" moves"+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(neat?" · shipshape":"")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/harbor.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Look at what blocks your sloop's way, then at what blocks those boats.","A boat can only slide along its own line, so sometimes a boat must move away from where you'd think.","Tap a boat to see the berths it can slide to.","Moving the same boat twice in a row still counts as one move.","Stuck? Ask the Harbormaster: he makes the next move of the shortest way out."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, list=HB.POOL[wd], e=list[Math.floor(Math.random()*list.length)];
+  load(fromStr(e.s,"practice:"+Date.now(),e.d,Math.random()<.5),"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Harbor","<p>Free your red sloop. It can be done in <b>"+e.d+"</b> moves.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%3===2&&window.Parlor) Parlor.practiceSay("Practice Harbor","<p>Free your red sloop (fewest moves: <b>"+PZ.d+"</b>).</p><p>"+TIPS[(Math.floor(tipN/3)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done){ Parlor.lessonDone(); }
+}
+
+/* ---------- Learn to Play ---------- */
+var LESSONS=[
+  {title:"The Harbor",text:"<p>The marina is crowded. <b>Your red sloop</b> wants to sail out through the <b>harbor mouth</b> on the right.</p><p>Just look for now, then tap <b>Next</b>.</p>",
+    s:".BCCD..BEFD.AAEF.G..HHHGI.JKK.I.J..."},
+  {title:"Slide a Boat",text:"<p>Boats slide only <b>along their own line</b>. Drag the glowing launch up out of the way, then drag your sloop to the mouth.</p><p>(Or tap a boat, then tap a lit berth.)</p>",done:"<p>Fair winds! Your sloop sailed out as soon as its way was clear.</p>",
+    s:"......" + "...B.." + "AA.B.." + "......" + "......" + "......",glow:function(){ return P[1]>=1?[1]:[0]; },goal:function(){ return done; }},
+  {title:"Make Room First",text:"<p>The long trawler can't move down: a boat lies across its path. Slide that one aside first.</p><p>Free your sloop in <b>three moves</b>.</p>",done:"<p>That's the heart of it: to move one boat, you often have to move another first.</p>",
+    s:"......" + "......" + "AA..B." + "....B." + "....B." + "...CC.",glow:function(){ return hist.length?[]:[2]; },goal:function(){ return done; }},
+  {title:"Count Your Moves",text:"<p>The log counts your <b>moves</b>: one boat slid any distance is one move, however far it goes.</p><p>Free your sloop. Match the <b>fewest</b> for a <b>shipshape</b> finish.</p>",done:"<p>The log shows the fewest moves it can be done in. Match it and you're shipshape.</p>",
+    s:"..........B.AAC.B..DC.B..D.....DEEE.",goal:function(){ return done; }},
+  {title:"Ask the Harbormaster",text:"<p>Stuck? Press <b>Ask the Harbormaster</b>. He makes the next move of the shortest way out.</p><p>Try it now. Clear the harbor with no help for <b>three stars</b>. Monday's harbors are gentle; Sunday's take real planning.</p>",done:"<p>That's everything. Fair winds!</p>",
+    s:".............BAA.C.B.D.C...D.C...DEE",goal:function(){ return hints>0; }}
+];
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k]; load(fromStr(Ls.s,"lesson"+k),"lesson");
+  glowBoats=Ls.glow?Ls.glow():[]; render();
+}
+function lessonHint(){ hint(); }
+var _render=render; render=function(){ if(mode==="lesson"&&!done){ var Ls=LESSONS[lessonK]; glowBoats=Ls.glow?Ls.glow():[]; } _render(); };
+var _tally=tally; tally=function(){ _tally(); if(mode==="lesson"&&!done&&LESSONS[lessonK].glow){ glowBoats=LESSONS[lessonK].glow(); BOATS.querySelectorAll(".hb-boat").forEach(function(e){ e.classList.toggle("glow",glowBoats.indexOf(+e.dataset.i)>=0); }); } };
+
+/* ---------- fit to the space ---------- */
+var RATIO=TH/TW;
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  if(!PZ) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  stage.classList.toggle("land",land);
+  if(land){ fitLand(VW); return; }
+  document.body.style.removeProperty("--pk-landR"); document.body.style.removeProperty("--pk-landTools");
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var bw, availH;
+  if(wide){
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),1000), nw=Math.round(Math.max(240,Math.min(290,availW*.3)));
+    stage.style.setProperty("--hb-nw",nw+"px");
+    availH=window.innerHeight-top-22;
+    bw=Math.floor(Math.min(availW-nw-18-8,(availH-6)/RATIO,760)); bw=Math.max(300,bw);
+    stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+    stage.style.setProperty("--hb-bw",bw+"px");
+  } else {
+    stage.style.removeProperty("--hb-nw");
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    var coach=seatedNow()&&document.body.classList.contains("pk-coaching")&&window.Parlor&&Parlor.coachHeight&&Parlor.coachHeight()>0;
+    stage.classList.toggle("coach",!!coach); stage.style.paddingTop="";
+    if(coach){ var ch=Parlor.coachHeight(), stTop=stage.getBoundingClientRect().top, bar=document.querySelector(".pk-bar");
+      var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
+      if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
+      availH=barTop-8-Math.max(ch,stTop); }
+    stage.classList.toggle("short",availH<470);
+    bw=Math.floor(VW-8); stage.style.setProperty("--hb-bw",bw+"px");
+    var rest=$(".hb-right",stage).offsetHeight+8;
+    var maxB=Math.floor((availH-rest)/RATIO);
+    if(bw>maxB){ bw=Math.max(240,maxB); stage.style.setProperty("--hb-bw",bw+"px"); }
+  }
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+}
+function fitLand(VW){
+  var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+  var R=Math.round(Math.max(200,Math.min(270,VW*.3)));
+  document.body.style.setProperty("--pk-landR",R+"px");
+  var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
+  stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+  var bw=Math.floor(Math.min(lw,lh/RATIO)); stage.style.setProperty("--hb-bw",bw+"px");
+  document.body.style.setProperty("--pk-landTools",coaching?($(".hb-right",stage).offsetHeight+8)+"px":"0px");
+  document.body.style.setProperty("--pk-size",bw+"px");
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#hbHint",stage).onclick=hint; $("#hbUndo",stage).onclick=undo; $("#hbRestart",stage).onclick=restart; }
+/* the keyboard on a computer: Z or Backspace to undo; Tab or N to pick the next boat; arrows slide the lifted boat one berth */
+document.addEventListener("keydown",function(e){
+  if(!seatedNow()||!PZ) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  var k=e.key;
+  if((e.metaKey||e.ctrlKey)&&k.toLowerCase()==="z"||(!e.metaKey&&!e.ctrlKey&&!e.altKey&&(k==="Backspace"||k.toLowerCase()==="z"))){ e.preventDefault(); undo(); return; }
+  if(k==="Escape"){ drop(); return; }
+  if(k.toLowerCase()==="n"){ if(blocked()) return; e.preventDefault(); var nx=(sel+1)%PZ.B.length; drop(); lift(nx); return; }
+  var dir={ArrowLeft:[-1,true],ArrowRight:[1,true],ArrowUp:[-1,false],ArrowDown:[1,false]}[k];
+  if(dir&&sel>=0&&!blocked()){ e.preventDefault(); var b=PZ.B[sel]; if(b.h!==dir[1]){ nopeBump(sel); return; }
+    var R=HB.range(PZ.B,P,sel), q=P[sel]+dir[0]; if(q<R[0]||q>R[1]){ bump(sel,dir[0]); snd("hb-bump"); return; } var i=sel; slide(i,q); if(!done){ sel=i; boatEl(i).classList.add("up"); paths(); } }
+});
+function nopeBump(i){ snd("hb-no"); toast(cap(PZ.looks[i].name)+" slides "+(PZ.B[i].h?"left and right":"up and down")+" only.",2000); }
+
+/* ---------- hook up the kit ---------- */
+boatDefs();
+Parlor.init({
+  game:"harbor", cat:"puzzles", solo:true, free:true, daily:{key:"bwHarbor:",streak:"bwHarborStreak"}, land:true, title:"The Harbor", bg:"puzzles-harbor.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Harbor",
+  tagline:"A crowded marina and one sailboat to free.", invite:"Slide the carved boats along their lines until your red sloop can sail out of the harbor mouth. Every harbor can be cleared.",
+  players:[{name:"You",color:"#a8262a"}],
+  setsLabel:"Harbors",
+  sets:[
+    {id:"oak",name:"Oak & Blue Water",need:0,dots:["#d9bd8a","#3d8fb4"]},
+    {id:"teak",name:"Teak & Green Water",club:true,dots:["#b07a48","#3f9a8c"]},
+    {id:"white",name:"White & Navy",club:true,dots:["#eef0f2","#2f5f9a"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> free <b>your red sloop</b>. Clear a way for it to the <b>harbor mouth</b> on the right side of its row, and it sails out.</li><li>Each boat slides only <b>along its own line</b>: a boat lying sideways slides left and right; one lying up and down slides up and down. Boats can't turn or pass through each other.</li><li><b>Drag</b> a boat to slide it. Or <b>tap</b> a boat to see the berths it can reach, and tap one.</li><li><b>One move</b> is one boat slid any distance. Moving the same boat again straight away still counts as one move.</li><li><b>Undo</b> takes back your last move (Z or Backspace on a computer). <b>Restart</b> puts every boat back at its mooring (and Undo brings your moves back).</li><li><b>Ask the Harbormaster:</b> he makes the next move of the shortest way out.</li><li>On a computer: N picks the next boat, the arrow keys slide it.</li></ol>",
+    score:"<ul><li><b>One harbor a day</b>, the same for everyone. It changes at midnight on your device. Monday's harbor is gentle, a handful of moves; each day takes more planning, and Sunday's is the hardest, often 35 moves or more.</li><li>Every harbor can be cleared.</li><li><b>★★★</b> with no help from the harbormaster · <b>★★</b> with one or two requests · <b>★</b> with more. Your time and moves are shown too.</li><li>Clear it in the fewest moves possible (with no more than two requests) for a <b>shipshape</b> finish.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice harbors (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onCoachSize:function(){ setTimeout(fit,0); },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+/* for testing */
+window.HBO={get:function(){ return {P:P.slice(),d:PZ.d,moves:moveCount(),hints:hints,done:done,mode:mode,sel:sel,boats:PZ.B.length,names:PZ.looks.map(function(l){ return l.name; })}; },slide:slide,hint:hint,undo:undo,restart:restart,tap:tapBoat,solve:function(){ return HB.solve(PZ.B,P); }};
+})();
+</script>
+</body>
+</html>
