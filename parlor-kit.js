@@ -533,8 +533,10 @@
   };
   P.lessonDone = function (extra) {
     var steps = lessonSteps(), st = steps[LK], k = LK; P.lessonWaiting = false;
+    /* the last page has no page after it: its button starts a practice game instead (Nov 1 fix: "Next" did nothing there) */
+    var last = k >= steps.length - 1;
     P.coach({ kick: "Learn to Play · " + (k + 1) + " of " + steps.length, title: st.title, text: (st.done || "") + (extra || ""),
-      buttons: [{ label: "Next", fn: function () { P.lessonGo(k + 1); } }, { label: "Try Again", quiet: true, fn: function () { P.lessonGo(k); } }, houseBtn()] });
+      buttons: [last ? { label: "Start Practice Game", fn: P.startPractice } : { label: "Next", fn: function () { P.lessonGo(k + 1); } }, { label: "Try Again", quiet: true, fn: function () { P.lessonGo(k); } }, houseBtn()] });
     P.status("Well done", "");
   };
   P.startPractice = function () {
