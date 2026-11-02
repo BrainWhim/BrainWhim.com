@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Locked Study · BrainWhim Puzzles</title>
+<meta name="description" content="The Locked Study: a daily escape-room puzzle at BrainWhim. Open the professor's chain of locks, one clue at a time, and find your way out.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1101b">
+<style>
+/* ===== The Locked Study (Puzzles & Brain Games, Nov 2): a daily escape room =====
+   Professor Hartwell has locked you in his study. Each lock you open holds a brass token and the clue to the next; the last lock is the door.
+   The board is a fixed-shape box measured in units (--u = the board's width / 1000): the room is a drawing, and each lock is a close-up.
+   Wide boards (desktop, sideways phones) are 1000 x 760 units; tall ones (phones upright) 1000 x 1180, with the professor's letter under the room.
+   Studies (the Studies card): Green Study (free); Oxblood Library, Blue Drawing Room (Club).
+   Light comes from the top left everywhere: highlights on top and left edges, shade and shadows to the bottom right. */
+body{--wall1:#3d5c47;--wall2:#22382b;--dam:#cfe3c8;--wood1:#a5603a;--wood2:#6e3519;--wood3:#3a1a0b;--rug1:#8e2b25;--rug2:#4e1210;--paper1:#fbf5e4;--paper2:#ecdfbd;--ink:#2a2116;--red:#9c2b1c}
+body[data-set="oxblood"]{--wall1:#6e2a2a;--wall2:#3e1416;--dam:#f0cfc0;--wood1:#8d5a3a;--wood2:#55301b;--wood3:#2a150a;--rug1:#2f4a6e;--rug2:#152640}
+body[data-set="blue"]{--wall1:#4b6480;--wall2:#27384d;--dam:#d6e4f2;--wood1:#b88a5a;--wood2:#7a522c;--wood3:#3e2810;--rug1:#7a5a22;--rug2:#3e2c0c}
+.st-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.st-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.st-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:18px;align-items:start;justify-content:center}
+.st-left{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+.st-right{display:flex;flex-direction:column;gap:10px;width:var(--st-nw,280px)}
+.num,.st-dial b,.st-dial span,.st-plq,.st-tile,.st-coin b,.st-eq .v{font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+/* ---------- the board ---------- */
+.st-board{position:relative;width:var(--st-bw,600px);height:calc(var(--st-bw,600px) * .76);--u:calc(var(--st-bw,600px) / 1000);border-radius:calc(var(--u) * 16);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+  background:#1a120c;box-shadow:0 0 0 1px rgba(0,0,0,.5),inset 0 0 0 calc(var(--u) * 3) rgba(231,199,122,.28),0 14px 34px rgba(0,0,0,.55)}
+.st-board.tall{height:calc(var(--st-bw,600px) * var(--tr,1.18))}
+.st-notes{display:none;position:absolute;right:calc(var(--u) * 18);top:calc(var(--u) * 16);z-index:3;height:calc(var(--u) * 58);padding:0 calc(var(--u) * 22);border:calc(var(--u) * 2) solid #e7c77a;border-radius:calc(var(--u) * 29);cursor:pointer;font:700 calc(var(--u) * 27)/1 Montserrat,sans-serif;color:#f6e3a8;background:rgba(20,12,4,.55);box-shadow:0 calc(var(--u) * 3) calc(var(--u) * 6) rgba(0,0,0,.45)}
+.st-pad.slim .st-notes{display:block}
+.st-pad.slim .st-right{display:none}
+.st-pad.slim .st-head{justify-content:flex-start;padding-left:calc(var(--u) * 210);font-size:calc(var(--u) * 36)}
+.st-pad.slim .st-head small{display:none}
+.st-view{position:absolute;inset:0;display:none}
+.st-view.on{display:block}
+.st-room svg{position:absolute;left:0;top:0;width:100%;height:calc(var(--u) * 760);display:block;cursor:pointer;touch-action:manipulation}
+.st-room .st-mk{animation:st-pulse 1.3s ease-in-out infinite}
+@keyframes st-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+.st-room .st-leaf{transform-box:fill-box;transform-origin:0 50%;transition:transform 1.6s cubic-bezier(.4,.1,.3,1)}
+.st-room.free .st-leaf{transform:scaleX(.14) skewY(-9deg)}
+.st-room .st-sun{opacity:0;transition:opacity 1.4s ease .3s}
+.st-room.free .st-sun{opacity:1}
+/* the professor's letter under the room (tall boards only) */
+.st-blot{display:none;position:absolute;left:calc(var(--u) * 24);right:calc(var(--u) * 24);top:calc(var(--u) * 784);bottom:calc(var(--u) * 24);padding:calc(var(--u) * 30) calc(var(--u) * 38);border-radius:calc(var(--u) * 6);color:var(--ink);
+  background:radial-gradient(ellipse at 20% 0%,rgba(255,255,255,.65),transparent 60%),linear-gradient(172deg,var(--paper1),var(--paper2));box-shadow:inset 0 calc(var(--u) * 2) 0 rgba(255,255,255,.7),0 calc(var(--u) * 3) calc(var(--u) * 3) rgba(0,0,0,.3),calc(var(--u) * 6) calc(var(--u) * 16) calc(var(--u) * 30) rgba(0,0,0,.5)}
+.st-board.tall .st-blot{display:block}
+.st-board.tall.noblot .st-blot{display:none}
+.st-blot h3{margin:0 0 calc(var(--u) * 10);font:700 italic calc(var(--u) * 50)/1.05 Cormorant Garamond,serif}
+.st-blot p{margin:0 0 calc(var(--u) * 12);font:500 calc(var(--u) * 33)/1.42 Montserrat,sans-serif}
+.st-blot .nx{font-weight:700;color:var(--red)}
+/* ---------- a lock, close up ---------- */
+.st-lock{background:radial-gradient(ellipse at 22% 0%,rgba(255,240,200,.16),transparent 55%),linear-gradient(160deg,var(--wood1),var(--wood2) 55%,var(--wood3))}
+.st-lock::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='60'%3E%3Cpath d='M0 10C60 6 120 14 260 9M0 26C80 30 160 22 260 27M0 44C50 40 150 48 260 43' fill='none' stroke='%23000' stroke-opacity='.16' stroke-width='1.6'/%3E%3C/svg%3E")}
+.st-head{position:absolute;left:0;right:0;top:0;height:calc(var(--u) * 78);display:flex;align-items:center;justify-content:center;gap:calc(var(--u) * 14);color:#f6e3a8;font:700 italic calc(var(--u) * 40)/1 Cormorant Garamond,serif;text-shadow:0 2px 3px rgba(0,0,0,.55)}
+.st-head small{font:600 calc(var(--u) * 22)/1 Montserrat,sans-serif;font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:rgba(246,227,168,.75)}
+.st-back{position:absolute;left:calc(var(--u) * 18);top:calc(var(--u) * 16);z-index:3;height:calc(var(--u) * 48);padding:0 calc(var(--u) * 20);border:0;border-radius:calc(var(--u) * 24);cursor:pointer;font:700 calc(var(--u) * 22)/1 Montserrat,sans-serif;color:#3b2a0c;
+  background:linear-gradient(180deg,#fbe7a6,#d9b25a 50%,#a8802c);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 calc(var(--u) * 3) calc(var(--u) * 6) rgba(0,0,0,.45)}
+.st-board.tall .st-back{height:calc(var(--u) * 58);font-size:calc(var(--u) * 28)}
+.st-body{position:absolute;left:calc(var(--u) * 26);right:calc(var(--u) * 26);top:calc(var(--u) * 82);bottom:calc(var(--u) * 26);display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,1fr);gap:calc(var(--u) * 24)}
+.st-board.tall .st-body{grid-template-columns:1fr;grid-template-rows:minmax(0,var(--nr,1.15fr)) minmax(0,1fr)}
+.st-lock.k-light .st-body,.st-lock.k-shelf .st-body,.st-lock.k-door .st-body{grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr)}
+.st-lock.k-door .st-body{grid-template-columns:minmax(0,.78fr) minmax(0,1.45fr)}
+.st-board.tall .st-lock.k-light .st-body,.st-board.tall .st-lock.k-shelf .st-body,.st-board.tall .st-lock.k-door .st-body{grid-template-columns:1fr;--nr:.8fr}
+.st-board.tall .st-lock.k-code .st-body{--nr:1.28fr}
+.st-board.tall .st-lock.k-sum .st-body{--nr:1.15fr}
+.st-board.tall .st-lock.k-seq .st-body{--nr:.85fr}
+/* the note: cream paper with a pin, a little curl and a soft shadow */
+.st-note{position:relative;min-height:0;overflow:hidden;padding:calc(var(--u) * 26) calc(var(--u) * 30);border-radius:calc(var(--u) * 4);color:var(--ink);transform:rotate(-.5deg);
+  background:radial-gradient(ellipse at 15% 0%,rgba(255,255,255,.7),transparent 55%),linear-gradient(172deg,var(--paper1),var(--paper2));
+  box-shadow:inset 0 calc(var(--u) * 2) 0 rgba(255,255,255,.75),inset 0 calc(var(--u) * -18) calc(var(--u) * 22) calc(var(--u) * -18) rgba(110,80,30,.3),0 calc(var(--u) * 2) calc(var(--u) * 2) rgba(0,0,0,.3),calc(var(--u) * 8) calc(var(--u) * 16) calc(var(--u) * 26) rgba(0,0,0,.5)}
+.st-note::after{content:"";position:absolute;left:50%;top:calc(var(--u) * 8);width:calc(var(--u) * 20);height:calc(var(--u) * 20);margin-left:calc(var(--u) * -10);border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#c8962c 55%,#6b4a12);box-shadow:calc(var(--u) * 3) calc(var(--u) * 4) calc(var(--u) * 4) rgba(0,0,0,.35)}
+.st-note .lead{margin:calc(var(--u) * 6) 0 calc(var(--u) * 14);font:700 italic calc(var(--u) * 33)/1.2 Cormorant Garamond,serif;color:#4a3a22}
+.st-board.tall .st-note .lead{font-size:calc(var(--u) * 40)}
+.st-note .rule{margin:calc(var(--u) * 14) 0 0;padding:calc(var(--u) * 8) calc(var(--u) * 12);border-left:calc(var(--u) * 5) solid var(--red);font:700 italic calc(var(--u) * 30)/1.3 Cormorant Garamond,serif;color:var(--red);animation:st-inkin .5s ease}
+.st-board.tall .st-note .rule{font-size:calc(var(--u) * 37)}
+@keyframes st-inkin{0%{opacity:0;transform:translateY(calc(var(--u) * -6))}100%{opacity:1;transform:none}}
+.st-plqs{display:flex;flex-wrap:wrap;gap:calc(var(--u) * 12);justify-content:center;margin-top:calc(var(--u) * 18)}
+.st-plq{min-width:calc(var(--u) * 78);height:calc(var(--u) * 78);padding:0 calc(var(--u) * 10);display:flex;align-items:center;justify-content:center;border-radius:50%;font:700 calc(var(--u) * 36)/1 Cormorant Garamond,serif;color:#2a2116;
+  background:radial-gradient(circle at 35% 30%,#fffdf6,#efe8d8 60%,#cfc4a8);box-shadow:0 0 0 calc(var(--u) * 4) #c9a24f,0 0 0 calc(var(--u) * 6) #6b4c18,calc(var(--u) * 3) calc(var(--u) * 6) calc(var(--u) * 8) rgba(0,0,0,.35)}
+.st-plq.q{color:var(--red);font-style:italic;background:radial-gradient(circle at 35% 30%,#fff6e0,#f3dfc0 60%,#d8b88a)}
+.st-board.tall .st-plq{min-width:calc(var(--u) * 104);height:calc(var(--u) * 104);font-size:calc(var(--u) * 46)}
+/* picture sums */
+.st-eqs{display:flex;flex-direction:column;gap:calc(var(--u) * 10)}
+.st-eq{display:flex;align-items:center;gap:calc(var(--u) * 6);flex-wrap:nowrap;font:700 calc(var(--u) * 34)/1 Cormorant Garamond,serif;color:#2a2116}
+.st-eq svg{width:calc(var(--u) * 58);height:calc(var(--u) * 58);flex:none;filter:drop-shadow(calc(var(--u) * 2) calc(var(--u) * 3) calc(var(--u) * 2) rgba(0,0,0,.3))}
+.st-eq .op{min-width:calc(var(--u) * 20);text-align:center;color:#6b5636}
+.st-eq .v{margin-left:calc(var(--u) * 4)}
+.st-eq.ask{margin-top:calc(var(--u) * 6);padding:calc(var(--u) * 8) calc(var(--u) * 12);border-radius:calc(var(--u) * 10);background:rgba(156,43,28,.09);box-shadow:inset 0 0 0 calc(var(--u) * 3) rgba(156,43,28,.35)}
+.st-eq.ask .v{color:var(--red);font-style:italic}
+.st-board.tall .st-eq{font-size:calc(var(--u) * 46)}
+.st-board.tall .st-eq svg{width:calc(var(--u) * 74);height:calc(var(--u) * 74)}
+.st-pencil{margin:calc(var(--u) * 6) 0 0;font:600 italic calc(var(--u) * 28)/1.3 Cormorant Garamond,serif;color:#5b5e66;animation:st-inkin .5s ease}
+.st-board.tall .st-pencil{font-size:calc(var(--u) * 35)}
+/* the padlock's clue lines */
+.st-clues{display:flex;flex-direction:column;gap:calc(var(--u) * 11)}
+.st-cl{display:flex;align-items:center;gap:calc(var(--u) * 14)}
+.st-cl .g{display:flex;gap:calc(var(--u) * 5);flex:none}
+.st-tile{width:calc(var(--u) * 44);height:calc(var(--u) * 52);display:flex;align-items:center;justify-content:center;border-radius:calc(var(--u) * 6);font:700 calc(var(--u) * 36)/1 Cormorant Garamond,serif;color:#2a1e0e;
+  background:linear-gradient(180deg,#fbe7a6,#d9b25a 52%,#a8802c);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(0,0,0,.25),calc(var(--u) * 2) calc(var(--u) * 3) calc(var(--u) * 4) rgba(0,0,0,.35)}
+.st-cl p{margin:0;font:500 calc(var(--u) * 25)/1.25 Montserrat,sans-serif;color:#2a2116}
+.st-board.tall .st-tile{width:calc(var(--u) * 56);height:calc(var(--u) * 64);font-size:calc(var(--u) * 44)}
+.st-board.tall .st-cl p{font-size:calc(var(--u) * 31)}
+.st-board.tall .st-clues{gap:calc(var(--u) * 13)}
+/* the order clue lines (shelf and door) and the safe's rules */
+.st-lines{margin:0;padding:0;list-style:none}
+.st-lines li{position:relative;padding:calc(var(--u) * 5) 0 calc(var(--u) * 5) calc(var(--u) * 26);font:500 calc(var(--u) * 26)/1.32 Montserrat,sans-serif}
+.st-lines li::before{content:"";position:absolute;left:calc(var(--u) * 4);top:calc(var(--u) * 16);width:calc(var(--u) * 11);height:calc(var(--u) * 11);border-radius:calc(var(--u) * 2);background:var(--red);transform:rotate(45deg)}
+.st-board.tall .st-lines li{font-size:calc(var(--u) * 32);padding-left:calc(var(--u) * 30)}
+/* ---------- the mechanisms ---------- */
+.st-mech{position:relative;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u) * 18)}
+/* the dial lock: a brass padlock with number wheels */
+.st-padlock{position:relative;display:flex;flex-direction:column;align-items:center}
+.st-shackle{width:calc(var(--u) * var(--sw,230));height:calc(var(--u) * 120);margin-bottom:calc(var(--u) * -26);border:calc(var(--u) * 26) solid transparent;border-bottom:0;border-radius:calc(var(--u) * 130) calc(var(--u) * 130) 0 0;
+  background:linear-gradient(90deg,#8d959d,#eef1f3 35%,#9aa2a9 70%,#5b636a) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);transition:transform .5s cubic-bezier(.3,1.5,.6,1);transform-origin:85% 100%}
+.st-padlock.open .st-shackle{transform:translateY(calc(var(--u) * -34)) rotate(-24deg)}
+.st-pbody{position:relative;display:flex;gap:calc(var(--u) * 10);padding:calc(var(--u) * 30) calc(var(--u) * 26) calc(var(--u) * 26);border-radius:calc(var(--u) * 24);
+  background:radial-gradient(ellipse at 25% 15%,rgba(255,255,255,.55),transparent 45%),linear-gradient(160deg,#f6dc8e,#d1a648 45%,#9a7024 85%,#7a5418);box-shadow:inset 0 calc(var(--u) * 3) 0 rgba(255,255,255,.6),inset 0 calc(var(--u) * -6) calc(var(--u) * 10) rgba(60,40,0,.35),calc(var(--u) * 8) calc(var(--u) * 16) calc(var(--u) * 24) rgba(0,0,0,.55)}
+.st-padlock.bad .st-pbody{animation:st-nope .4s ease}
+@keyframes st-nope{20%{transform:translateX(calc(var(--u) * -10)) rotate(-2deg)}50%{transform:translateX(calc(var(--u) * 10)) rotate(2deg)}80%{transform:translateX(calc(var(--u) * -5))}}
+.st-dial{position:relative;width:calc(var(--u) * 78);display:flex;flex-direction:column;align-items:center;touch-action:none;cursor:ns-resize}
+.st-dial .ar{width:100%;height:calc(var(--u) * 46);border:0;padding:0;background:none;color:#4a3410;font:700 calc(var(--u) * 26)/1 Montserrat,sans-serif;cursor:pointer;opacity:.85}
+.st-dial .drum{position:relative;width:100%;height:calc(var(--u) * 150);border-radius:calc(var(--u) * 10);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#2a2015,#5a4630 18%,#efe6d0 44%,#fffaf0 50%,#efe6d0 56%,#5a4630 82%,#2a2015);box-shadow:inset 0 0 0 calc(var(--u) * 3) #6b4c18,inset 0 calc(var(--u) * 4) calc(var(--u) * 8) rgba(0,0,0,.55)}
+.st-dial .drum span{font:700 calc(var(--u) * 34)/1 Cormorant Garamond,serif;color:rgba(40,30,15,.45);height:calc(var(--u) * 40);display:flex;align-items:center}
+.st-dial .drum b{font:700 calc(var(--u) * 62)/1 Cormorant Garamond,serif;color:#1d1408;height:calc(var(--u) * 66);display:flex;align-items:center}
+.st-dial.cur .drum{box-shadow:inset 0 0 0 calc(var(--u) * 4) #ffd36b,inset 0 calc(var(--u) * 4) calc(var(--u) * 8) rgba(0,0,0,.55)}
+.st-dial.fix .drum{box-shadow:inset 0 0 0 calc(var(--u) * 5) #3f7a4a,inset 0 calc(var(--u) * 4) calc(var(--u) * 8) rgba(0,0,0,.55)}
+.st-dial.fix .ar{visibility:hidden}
+.st-dial.roll .drum b{animation:st-roll .14s ease-out}
+@keyframes st-roll{0%{transform:translateY(calc(var(--u) * var(--rd,20)));opacity:.4}100%{transform:none;opacity:1}}
+.st-board.tall .st-dial{width:calc(var(--u) * 112)}
+.st-board.tall .st-dial .drum{height:calc(var(--u) * 160)}
+.st-board.tall .st-dial .drum b{font-size:calc(var(--u) * 78);height:calc(var(--u) * 80)}
+.st-board.tall .st-dial .drum span{font-size:calc(var(--u) * 34);height:calc(var(--u) * 40)}
+.st-board.tall .st-dial .ar{height:calc(var(--u) * 46);font-size:calc(var(--u) * 32)}
+.st-board.tall .st-shackle{height:calc(var(--u) * 92);margin-bottom:calc(var(--u) * -22);border-width:calc(var(--u) * 22)}
+.st-board.tall .st-pbody{padding:calc(var(--u) * 22) calc(var(--u) * 22) calc(var(--u) * 18)}
+.st-board.tall .st-mech{gap:calc(var(--u) * 14)}
+.st-try{min-width:calc(var(--u) * 300);height:calc(var(--u) * 66);padding:0 calc(var(--u) * 26);border:0;border-radius:calc(var(--u) * 33);cursor:pointer;font:700 calc(var(--u) * 26)/1 Montserrat,sans-serif;letter-spacing:.03em;color:#3b2a0c;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 calc(var(--u) * 2) #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),calc(var(--u) * 3) calc(var(--u) * 7) calc(var(--u) * 12) rgba(0,0,0,.45)}
+.st-try:active{transform:translateY(calc(var(--u) * 2))}
+.st-try:disabled{opacity:.5}
+.st-board.tall .st-try{height:calc(var(--u) * 76);font-size:calc(var(--u) * 32);min-width:calc(var(--u) * 400)}
+.st-try.ring{animation:st-ringbtn 1.1s ease 2}
+@keyframes st-ringbtn{50%{box-shadow:0 0 0 calc(var(--u) * 10) rgba(255,211,107,.7)}}
+/* the safe: a steel door with a panel of jeweled buttons */
+.st-safe{position:relative;padding:calc(var(--u) * 34);border-radius:calc(var(--u) * 18);
+  background:radial-gradient(ellipse at 25% 15%,rgba(255,255,255,.35),transparent 50%),linear-gradient(155deg,#6d7680,#3c434b 55%,#1f2429);box-shadow:inset 0 calc(var(--u) * 3) 0 rgba(255,255,255,.35),inset 0 0 0 calc(var(--u) * 6) #2a3036,calc(var(--u) * 8) calc(var(--u) * 16) calc(var(--u) * 26) rgba(0,0,0,.6)}
+.st-safe::before,.st-safe::after{content:"";position:absolute;width:calc(var(--u) * 16);height:calc(var(--u) * 16);border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8ecef,#7b838b 60%,#3a4046);top:calc(var(--u) * 10);left:calc(var(--u) * 10);box-shadow:calc(var(--u) * var(--rv,400)) 0 0 0 #6b737b}
+.st-safe::after{top:auto;bottom:calc(var(--u) * 10)}
+.st-jewels{display:grid;gap:calc(var(--u) * 16)}
+.st-jw{width:calc(var(--u) * var(--jw,110));height:calc(var(--u) * var(--jw,110));border:0;padding:0;border-radius:50%;cursor:pointer;position:relative;
+  background:radial-gradient(circle at 35% 30%,#ffffff 0 6%,transparent 18%),radial-gradient(circle at 50% 55%,#3a2c40,#16101c 70%);box-shadow:0 0 0 calc(var(--u) * 7) #b8902e,0 0 0 calc(var(--u) * 10) #5a4210,inset 0 calc(var(--u) * -6) calc(var(--u) * 10) rgba(0,0,0,.6),calc(var(--u) * 4) calc(var(--u) * 8) calc(var(--u) * 10) rgba(0,0,0,.5);transition:background .18s,box-shadow .18s,transform .08s}
+.st-jw.on{background:radial-gradient(circle at 35% 30%,#ffffff 0 8%,transparent 22%),radial-gradient(circle at 50% 55%,#ffe59a,#f2a72c 55%,#a65a08);
+  box-shadow:0 0 0 calc(var(--u) * 7) #e3c25c,0 0 0 calc(var(--u) * 10) #6b4c18,0 0 calc(var(--u) * 26) calc(var(--u) * 8) rgba(255,190,70,.7),calc(var(--u) * 4) calc(var(--u) * 8) calc(var(--u) * 10) rgba(0,0,0,.5)}
+.st-jw:active{transform:scale(.94)}
+.st-jw.ring::after{content:"";position:absolute;inset:calc(var(--u) * -20);border-radius:50%;border:calc(var(--u) * 7) solid #ffd36b;animation:st-pulse 1s ease-in-out infinite}
+.st-mrow{display:flex;gap:calc(var(--u) * 14);align-items:center;justify-content:center}
+.st-small{height:calc(var(--u) * 54);padding:0 calc(var(--u) * 22);border:1px solid rgba(246,227,168,.55);border-radius:calc(var(--u) * 27);background:rgba(15,10,4,.35);color:#f6e3a8;cursor:pointer;font:700 calc(var(--u) * 22)/1 Montserrat,sans-serif}
+.st-board.tall .st-small{height:calc(var(--u) * 70);font-size:calc(var(--u) * 28);padding:0 calc(var(--u) * 28)}
+.st-count{font:600 calc(var(--u) * 24)/1 Montserrat,sans-serif;color:#f6e3a8}
+.st-board.tall .st-count{font-size:calc(var(--u) * 30)}
+/* the bookcase: books standing on a shelf */
+.st-shelf{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:calc(var(--u) * 8);padding:calc(var(--u) * 26) calc(var(--u) * 24) 0;min-width:calc(var(--u) * 360);
+  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.2));border-radius:calc(var(--u) * 6) calc(var(--u) * 6) 0 0;box-shadow:inset 0 calc(var(--u) * 10) calc(var(--u) * 20) rgba(0,0,0,.6)}
+.st-shelf::after{content:"";position:absolute;left:calc(var(--u) * -14);right:calc(var(--u) * -14);bottom:calc(var(--u) * -30);height:calc(var(--u) * 30);border-radius:calc(var(--u) * 3);background:linear-gradient(180deg,var(--wood1),var(--wood2) 60%,var(--wood3));box-shadow:inset 0 calc(var(--u) * 2) 0 rgba(255,255,255,.3),0 calc(var(--u) * 10) calc(var(--u) * 16) rgba(0,0,0,.5)}
+.st-book{position:relative;width:calc(var(--u) * var(--bkw,104));height:calc(var(--u) * var(--bkh,330));border:0;padding:0;cursor:pointer;border-radius:calc(var(--u) * 6) calc(var(--u) * 6) calc(var(--u) * 2) calc(var(--u) * 2);transition:transform .16s,box-shadow .16s;
+  background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(255,255,255,.22) 22%,rgba(255,255,255,.05) 45%,rgba(0,0,0,.25) 80%,rgba(0,0,0,.45)),linear-gradient(180deg,var(--bk1),var(--bk2));box-shadow:calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 8) rgba(0,0,0,.45)}
+.st-book::before,.st-book::after{content:"";position:absolute;left:0;right:0;height:calc(var(--u) * 10);background:linear-gradient(180deg,#f6dc8e,#a8802c);opacity:.9}
+.st-book::before{top:12%}.st-book::after{bottom:12%}
+.st-book span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);white-space:nowrap;font:700 calc(var(--u) * 30)/1 Cormorant Garamond,serif;letter-spacing:.14em;text-transform:uppercase;color:#f6dc8e;text-shadow:0 1px 1px rgba(0,0,0,.6)}
+.st-book.up{transform:translateY(calc(var(--u) * -28)) scale(1.04);box-shadow:0 0 0 calc(var(--u) * 5) #ffd36b,calc(var(--u) * 8) calc(var(--u) * 18) calc(var(--u) * 18) rgba(0,0,0,.5)}
+.st-book.fix{box-shadow:0 0 0 calc(var(--u) * 4) #6fbf7f,calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 8) rgba(0,0,0,.45);cursor:default}
+.st-shelfwrap.bad{animation:st-nope .4s ease}
+/* the door: a brass plate with slots, and the tokens you found */
+.st-plate{position:relative;display:flex;gap:calc(var(--u) * 14);padding:calc(var(--u) * 30) calc(var(--u) * 26);border-radius:calc(var(--u) * 20);
+  background:radial-gradient(ellipse at 25% 15%,rgba(255,255,255,.55),transparent 45%),linear-gradient(160deg,#f6dc8e,#d1a648 45%,#9a7024 85%,#7a5418);box-shadow:inset 0 calc(var(--u) * 3) 0 rgba(255,255,255,.6),inset 0 calc(var(--u) * -6) calc(var(--u) * 10) rgba(60,40,0,.35),calc(var(--u) * 8) calc(var(--u) * 16) calc(var(--u) * 24) rgba(0,0,0,.55)}
+.st-plate.bad{animation:st-nope .4s ease}
+.st-slot{position:relative;width:calc(var(--u) * var(--cw,108));height:calc(var(--u) * var(--cw,108));border:0;padding:0;border-radius:50%;cursor:pointer;background:radial-gradient(circle at 50% 40%,#2a1d08,#4a3410 70%,#6b4c18);box-shadow:inset calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 10) rgba(0,0,0,.7),0 calc(var(--u) * 2) 0 rgba(255,255,255,.45)}
+.st-slot em{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:calc(var(--u) * 4);font:700 calc(var(--u) * 20)/1 Montserrat,sans-serif;font-style:normal;color:#4a3410;letter-spacing:.04em;white-space:nowrap;text-transform:uppercase}
+.st-slot.sel{box-shadow:inset calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 10) rgba(0,0,0,.7),0 0 0 calc(var(--u) * 6) #ffd36b}
+.st-coin{position:relative;width:calc(var(--u) * var(--cw,108));height:calc(var(--u) * var(--cw,108));border:0;padding:0;border-radius:50%;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#3b2a0c;
+  background:radial-gradient(circle at 34% 28%,#fff3c8,#e7c66a 40%,#b38a2e 75%,#7a5a1e);box-shadow:inset 0 0 0 calc(var(--u) * 5) rgba(122,90,30,.6),inset calc(var(--u) * -3) calc(var(--u) * -4) calc(var(--u) * 6) rgba(0,0,0,.25),calc(var(--u) * 3) calc(var(--u) * 6) calc(var(--u) * 8) rgba(0,0,0,.45);transition:transform .15s}
+.st-coin b{font:700 calc(var(--u) * 46)/1 Cormorant Garamond,serif}
+.st-coin small{font:700 calc(var(--u) * 14)/1 Montserrat,sans-serif;letter-spacing:0;text-transform:uppercase;margin-top:calc(var(--u) * 2)}
+.st-coin.up{transform:translateY(calc(var(--u) * -12)) scale(1.08);box-shadow:0 0 0 calc(var(--u) * 5) #ffd36b,calc(var(--u) * 6) calc(var(--u) * 14) calc(var(--u) * 14) rgba(0,0,0,.5)}
+.st-coin.fix{box-shadow:0 0 0 calc(var(--u) * 4) #6fbf7f,calc(var(--u) * 3) calc(var(--u) * 6) calc(var(--u) * 8) rgba(0,0,0,.45)}
+.st-slot .st-coin{position:absolute;inset:0;width:auto;height:auto}
+.st-board.tall .st-coin small{font-size:calc(var(--u) * 20);letter-spacing:0}
+.st-board.tall .st-coin b{font-size:calc(var(--u) * 58)}
+.st-board.tall .st-slot em{font-size:calc(var(--u) * 26)}
+.st-tray{display:flex;gap:calc(var(--u) * 14);flex-wrap:wrap;justify-content:center;min-height:calc(var(--u) * var(--cw,108))}
+/* what you find inside an opened lock */
+.st-found{position:absolute;inset:0;z-index:4;display:none;align-items:center;justify-content:center;background:rgba(10,6,2,.55)}
+.st-found.on{display:flex;animation:st-inkin .4s ease}
+.st-fcard{max-width:86%;padding:calc(var(--u) * 30) calc(var(--u) * 36);border-radius:calc(var(--u) * 10);text-align:center;color:var(--ink);background:linear-gradient(172deg,var(--paper1),var(--paper2));box-shadow:calc(var(--u) * 8) calc(var(--u) * 18) calc(var(--u) * 30) rgba(0,0,0,.6)}
+.st-fcard h3{margin:0 0 calc(var(--u) * 8);font:700 italic calc(var(--u) * 50)/1 Cormorant Garamond,serif;color:#2a2116}
+.st-fcard p{margin:0 0 calc(var(--u) * 18);font:500 calc(var(--u) * 27)/1.4 Montserrat,sans-serif}
+.st-fcard .st-coin{margin:0 auto calc(var(--u) * 16);animation:st-coin .7s cubic-bezier(.3,1.6,.6,1)}
+@keyframes st-coin{0%{transform:scale(.2) rotateY(180deg)}100%{transform:none}}
+.st-board.tall .st-fcard h3{font-size:calc(var(--u) * 62)}
+.st-board.tall .st-fcard p{font-size:calc(var(--u) * 34)}
+/* messages, the wait and the sign */
+.st-toast{position:absolute;z-index:8;left:50%;top:calc(var(--u) * 10);transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.93);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.st-toast.on{opacity:1}
+.st-wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;font:700 italic 20px Cormorant Garamond,serif;color:#f0d27a;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .3s}
+.st-wait.on{opacity:1}
+.st-sign{position:absolute;left:50%;top:44%;z-index:7;transform:translate(-50%,-50%) rotate(-5deg);padding:8px 18px 7px;border-radius:6px;font:700 italic 28px/1 Cormorant Garamond,serif;letter-spacing:.04em;color:#3b2a0c;white-space:nowrap;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),2px 6px 12px rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.st-sign.on{animation:st-sign .5s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes st-sign{0%{opacity:0;transform:translate(-50%,-50%) rotate(-5deg) scale(1.8)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-5deg) scale(1)}}
+/* ---------- the professor's letter (the side card) ---------- */
+.st-letter{position:relative;border-radius:3px;color:var(--ink);padding:12px 14px 12px 16px;
+  background:radial-gradient(ellipse at 25% 10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(170deg,#f8f2e0,#ede1c0 60%,#e3d3ad);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -12px 16px -12px rgba(110,90,40,.25),0 1px 1px rgba(0,0,0,.25),2px 9px 16px rgba(20,10,0,.42)}
+.st-letter::before{content:"";position:absolute;left:8px;right:8px;top:8px;bottom:8px;border:1px solid rgba(156,43,28,.3);border-radius:2px;pointer-events:none}
+.st-letter .kick{display:block;margin:0 0 2px;font:700 10.5px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+.st-letter h2{margin:0 0 4px;font:700 22px/1.1 Cormorant Garamond,serif}
+.st-letter .intro{margin:0 0 8px;font:500 12.5px/1.45 Montserrat,sans-serif}
+.st-chain{display:flex;flex-direction:column;gap:4px;margin:6px 0 0;padding-top:8px;border-top:1px dashed rgba(156,43,28,.35)}
+.st-chip{display:flex;align-items:center;gap:8px;padding:3px 6px;border:0;border-radius:8px;background:none;text-align:left;cursor:pointer;font:600 12.5px/1.2 Montserrat,sans-serif;color:#7a6a50}
+.st-chip svg{width:20px;height:20px;flex:none}
+.st-chip b{margin-left:auto;font:700 16px/1 Cormorant Garamond,serif;color:#3b2a0c;min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 34% 28%,#fff3c8,#e7c66a 45%,#b38a2e);box-shadow:inset 0 0 0 2px rgba(122,90,30,.55)}
+.st-chip.done{color:#2a2116}
+.st-chip.cur{color:#2a2116;background:rgba(201,160,58,.22);box-shadow:inset 0 0 0 2px rgba(201,160,58,.75)}
+.st-chip.later b{visibility:hidden}
+.st-chip.pulse{animation:st-ringbtn 1.1s ease 2}
+.st-tools{display:grid;grid-template-columns:1fr;gap:8px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.st-tools .pk-btn{width:auto;margin:0;padding:8px 10px;min-height:0;white-space:nowrap}
+.st-tools .pk-btn.gold{border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.st-tools .pk-btn:disabled{opacity:.45}
+.st-ringbtn{animation:st-ringbtn2 1.1s ease 2}
+@keyframes st-ringbtn2{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+/* ---------- the result window ---------- */
+.st-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.st-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.st-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.st-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.st-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.st-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.st-card{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 0 2px;padding:8px 12px;border-radius:6px;background:linear-gradient(175deg,#fbf6e8,#efe5cb);color:#1d1a18;box-shadow:0 1px 1px rgba(0,0,0,.2),2px 6px 12px rgba(0,0,0,.35)}
+#stEnd .st-card p{margin:0;font:700 italic 15px/1.2 Cormorant Garamond,serif;color:#4a3a22;text-align:center}
+#stEnd .st-card .coins{display:flex;gap:4px}
+#stEnd .st-card .coins span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 17px/1 Cormorant Garamond,serif;color:#3b2a0c;background:radial-gradient(circle at 34% 28%,#fff3c8,#e7c66a 45%,#b38a2e);box-shadow:inset 0 0 0 2px rgba(122,90,30,.55);font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+.st-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(248,242,224,.97),rgba(237,225,192,.97));color:#2a2116;text-align:left}
+.st-story .mug{flex:none;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff4dc,#e3c896 70%,#b8925a);overflow:hidden;box-shadow:0 0 0 2px #b38a3a,inset 1px 2px 4px rgba(0,0,0,.25)}
+.st-story .mug svg{width:100%;height:100%}
+#stEnd .st-story h3{margin:0 0 1px;text-align:left;font:700 18px/1.15 Cormorant Garamond,serif;color:#2a2116}
+#stEnd .st-story .kind{margin:0 0 3px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--red);text-align:left}
+#stEnd .st-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#2a2116;text-align:left}
+#stEnd .st-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.st-story .rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:var(--red);font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.st-endnote{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#stEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-height:760px){
+  #stEnd .pk-modal{padding:16px 16px 14px}
+  #stEnd h2{font-size:21px;margin-bottom:2px}
+  #stEnd .st-stars{font-size:22px;margin:0 0 2px}
+  #stEnd .st-facts b{font-size:15px}
+  #stEnd .st-facts div{padding:5px 4px}
+  #stEnd .st-story{margin:8px 0 2px;padding:8px 10px}
+  #stEnd .st-story p.clamp{-webkit-line-clamp:2}
+  #stEnd .st-story .mug{width:46px;height:46px}
+  #stEnd .st-endnote{display:none}
+  #stEnd .st-facts{margin:6px 0 2px}
+  #stEnd .st-card{margin:6px 0 0;padding:5px 10px}
+  #stEnd .pk-streak{margin-top:8px;padding:9px 12px}
+  #stEnd .pk-streak p,#stEnd .pk-streak div{font-size:12.5px;line-height:1.4}
+  #stEnd .pk-row{margin-top:10px}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+  #stEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
+  #stEnd .pk-streak .pk-btn{padding:9px 12px}
+  #stEnd .pk-modal .pk-streak p{margin:0 0 8px}
+  #stEnd .pk-kick{margin:0}
+  #stEnd h2{font-size:19px;margin:0}
+  #stEnd .st-stars{font-size:20px;margin:0}
+  #stEnd .st-facts{margin:4px 0 2px}
+  #stEnd .st-facts div{padding:3px 2px}
+  #stEnd .st-facts b{font-size:14px}
+  #stEnd .st-card{margin:5px 0 0;padding:5px 8px}
+  #stEnd .st-story{margin:6px 0 0;padding:6px 8px}
+  #stEnd .st-story .mug{width:38px;height:38px}
+  #stEnd .st-story h3{font-size:15.5px}
+  #stEnd .st-story p{font-size:12px;line-height:1.38}
+  #stEnd .st-endnote{display:none}
+  #stEnd .pk-streak{margin-top:6px;padding:8px 10px}
+  #stEnd .pk-streak p,#stEnd .pk-streak div{font-size:12px;line-height:1.35}
+  #stEnd .pk-row{margin-top:8px;gap:6px}
+  #stEnd .pk-row .pk-btn{padding:8px 6px;font-size:12.5px}
+}
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  #stEnd .pk-modal{width:min(780px,calc(100vw - 24px));max-width:none;display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-content:start;padding:12px 16px 12px}
+  #stEnd .st-endL,#stEnd .st-endR{min-width:0}
+  #stEnd .st-endR{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+  #stEnd .pk-kick{margin:0 0 2px}
+  #stEnd h2{font-size:20px;margin:0}
+  #stEnd .st-stars{font-size:22px;margin:0 0 2px}
+  #stEnd .st-facts{margin:4px 0 2px}
+  #stEnd .st-facts div{padding:4px 2px}
+  #stEnd .st-facts b{font-size:14px}
+  #stEnd .st-card{margin:5px 0 0;padding:5px 8px}
+  #stEnd .st-story{margin:6px 0 0;padding:7px 9px}
+  #stEnd .st-story .mug{width:42px;height:42px}
+  #stEnd .st-story h3{font-size:16px}
+  #stEnd .st-story p{font-size:12px;line-height:1.38}
+  #stEnd .st-endnote{font-size:11px;margin:4px 0 0}
+  #stEnd .st-endR .pk-streak{margin:0}
+  #stEnd .st-endR .pk-row{margin:0;gap:8px}
+  #stEnd .st-endR .pk-row .pk-btn{padding:9px 6px;font-size:12.5px}
+}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .st-pad{grid-template-columns:1fr;gap:8px;justify-items:center}
+  .st-right{width:100%;max-width:calc(100vw - 12px);flex-direction:row;align-items:stretch;gap:6px}
+  .st-letter{flex:1;min-width:0;padding:7px 9px}
+  .st-letter::before{left:4px;right:4px;top:4px;bottom:4px}
+  .st-letter .kick,.st-letter h2,.st-letter .intro{display:none}
+  .st-chain{flex-direction:row;flex-wrap:nowrap;justify-content:space-between;gap:2px;margin:0;padding:0;border:0}
+  .st-chip{flex-direction:column;gap:2px;padding:3px 2px;font-size:10px;min-width:0;flex:1;justify-content:center;text-align:center}
+  .st-chip svg{width:18px;height:18px}
+  .st-chip b{display:none}
+  .st-chip.done span{color:#2a2116}
+  .st-tools{flex:none;width:auto;padding:5px;gap:5px;grid-template-columns:1fr}
+  .st-tools .pk-btn{padding:7px 9px;font-size:12px}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .st-toast{font-size:13px;padding:7px 11px}
+}
+.st-pad.coach .st-right{display:none}
+/* narrow computer screens: the letter and buttons stand under the board, as on a phone */
+.st-pad.stack{grid-template-columns:1fr;gap:8px;justify-items:center}
+.st-pad.stack .st-right{width:var(--st-bw);flex-direction:row;align-items:stretch;gap:8px}
+.st-pad.stack .st-letter{flex:1;min-width:0;padding:8px 10px}
+.st-pad.stack .st-letter .intro,.st-pad.stack .st-letter h2{display:none}
+.st-pad.stack .st-chain{flex-direction:row;flex-wrap:nowrap;justify-content:space-between;gap:2px;margin:2px 0 0;padding-top:4px}
+.st-pad.stack .st-chip{flex:1;min-width:0;flex-direction:column;gap:2px;justify-content:center;text-align:center;padding:4px 2px;font-size:11.5px}
+.st-pad.stack .st-chip b{display:none}
+.st-pad.stack .st-tools{flex:none;width:200px}
+/* ---------- phones held sideways: the board fills the left; the letter and buttons stand in a column at the right ---------- */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .st-pad.land{grid-template-columns:auto;justify-items:center}
+  body.pk-land.seated .st-pad.land .st-right{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:8px;max-height:calc(100dvh - 16px);width:var(--pk-landR);max-width:none;flex-direction:column;gap:6px}
+  body.pk-land.seated.pk-coaching .st-pad.land .st-right{top:auto;bottom:8px}
+  body.pk-land.seated .st-pad.land .st-chain{flex-wrap:wrap}
+  body.pk-land.seated .st-pad.land .st-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
+  body.pk-land.seated .st-pad.land .st-tools .pk-btn{padding:8px 6px;font-size:12px}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=KITV"></script>
+<script id="stCore">
+/*CORE*/
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function $$(s,r){ return [].slice.call((r||document).querySelectorAll(s)); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FEEL=["Hardest","Gentle","Easy","Steady","Moderate","Tricky","Hard"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+var OBJ=ST.OBJ;
+
+/* ---------- little pictures: the things in the picture sums, and the padlock for the chain ---------- */
+var ICON={
+  key:'<svg viewBox="0 0 60 60"><defs><linearGradient id="stIk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".5" stop-color="#d9b25a"/><stop offset="1" stop-color="#7a5a1e"/></linearGradient></defs><circle cx="18" cy="30" r="12" fill="none" stroke="url(#stIk)" stroke-width="7"/><path d="M29 30h25M46 30v9M53 30v7" stroke="url(#stIk)" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M11 25a8 8 0 0 1 6-4" stroke="#fff" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+  candle:'<svg viewBox="0 0 60 60"><defs><linearGradient id="stIc" x1="0" x2="1"><stop offset="0" stop-color="#fffdf4"/><stop offset=".6" stop-color="#efe4c6"/><stop offset="1" stop-color="#c9b88e"/></linearGradient><radialGradient id="stIf" cx="50%" cy="70%" r="60%"><stop offset="0" stop-color="#fff7c8"/><stop offset=".5" stop-color="#ffc24a"/><stop offset="1" stop-color="#e2620e" stop-opacity="0"/></radialGradient></defs><ellipse cx="30" cy="54" rx="16" ry="4" fill="#b38a2e"/><rect x="22" y="22" width="16" height="31" rx="2" fill="url(#stIc)"/><path d="M30 22v-5" stroke="#3a2a14" stroke-width="1.6"/><path d="M30 4c6 7 6 12 0 14-6-2-6-7 0-14z" fill="url(#stIf)"/></svg>',
+  quill:'<svg viewBox="0 0 60 60"><defs><linearGradient id="stIq" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#e6e0d4"/><stop offset="1" stop-color="#a69c88"/></linearGradient></defs><path d="M50 6C30 8 16 24 12 46l5-2c4-12 14-24 33-38z" fill="url(#stIq)"/><path d="M50 6C36 16 22 30 12 50" stroke="#7a6c54" stroke-width="2" fill="none"/><path d="M12 50l-3 6" stroke="#2a2116" stroke-width="3" stroke-linecap="round"/></svg>',
+  cup:'<svg viewBox="0 0 60 60"><defs><linearGradient id="stIu" x1="0" x2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e9eef4"/><stop offset="1" stop-color="#aab6c4"/></linearGradient></defs><ellipse cx="28" cy="50" rx="22" ry="5" fill="#c9d3de"/><path d="M10 22h36l-4 22c-1 4-4 6-8 6H22c-4 0-7-2-8-6z" fill="url(#stIu)"/><path d="M46 27c9 0 9 12-2 12" fill="none" stroke="#aab6c4" stroke-width="4"/><path d="M16 30c2 6 6 9 12 9" stroke="#2a4a7c" stroke-width="2.5" fill="none"/><ellipse cx="28" cy="22" rx="18" ry="3.5" fill="#7a4a28"/></svg>',
+  book:'<svg viewBox="0 0 60 60"><path d="M10 14l26-6 14 6-26 6z" fill="#f4ecd6"/><path d="M10 14v32l14 6V20z" fill="#7a1f17"/><path d="M24 20v32l26-8V14z" fill="#9e2a22"/><path d="M24 20l26-6" stroke="#f6dc8e" stroke-width="2"/><path d="M30 26l14-4M30 40l14-4" stroke="#f6dc8e" stroke-width="2"/></svg>',
+  globe:'<svg viewBox="0 0 60 60"><defs><radialGradient id="stIg" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#d9ecf5"/><stop offset=".55" stop-color="#5e8fae"/><stop offset="1" stop-color="#1f3f5a"/></radialGradient></defs><path d="M18 54h24" stroke="#7a4a28" stroke-width="4" stroke-linecap="round"/><path d="M30 46v8" stroke="#7a4a28" stroke-width="4"/><circle cx="30" cy="26" r="19" fill="url(#stIg)"/><path d="M20 18c5-2 8 2 6 6s-6 3-7 8M34 12c4 3 9 2 9 8s-6 6-6 11" fill="none" stroke="#c9b27a" stroke-width="3" stroke-linecap="round"/><path d="M11 26a19 19 0 0 0 38 0" fill="none" stroke="#d9b25a" stroke-width="2.4"/></svg>'
+};
+function padIcon(open){ return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(open?"M7 11V7a5 5 0 0 1 9.6-2":"M7 11V7a5 5 0 0 1 10 0v4")+'" fill="none" stroke="'+(open?"#3f7a4a":"#8d959d")+'" stroke-width="2.6" stroke-linecap="round"/><rect x="4" y="10" width="16" height="12" rx="3" fill="'+(open?"#d9b25a":"#b9a37a")+'" stroke="#7a5a1e" stroke-width="1.2"/><circle cx="12" cy="16" r="1.8" fill="#3b2a0c"/></svg>'; }
+
+/* ---------- the study, drawn once (1000 x 760 units) ----------
+   Hotspots: each lock's object. The marks layer shows the lock to open next (a pulsing gold ring) and the ones you've opened (a brass seal). */
+var HOT={clock:[425,214,122,124],safe:[372,52,228,172],books:[18,64,236,500],desk:[332,548,236,96],box:[262,446,134,78],globe:[684,424,156,300],door:[722,82,190,486]};
+function sceneSVG(){
+  var s=[], i;
+  s.push('<defs>');
+  s.push('<linearGradient id="stWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wall1)"/><stop offset="1" style="stop-color:var(--wall2)"/></linearGradient>');
+  s.push('<pattern id="stDam" width="70" height="90" patternUnits="userSpaceOnUse"><path d="M35 12c10 10 10 22 0 30-10-8-10-20 0-30zM35 42v20M27 54c4 4 12 4 16 0M0 80c10-6 20-6 30 0M40 80c10-6 20-6 30 0" fill="none" style="stroke:var(--dam)" stroke-opacity=".09" stroke-width="2.2"/></pattern>');
+  s.push('<linearGradient id="stWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--wood1)"/><stop offset=".55" style="stop-color:var(--wood2)"/><stop offset="1" style="stop-color:var(--wood3)"/></linearGradient>');
+  s.push('<linearGradient id="stWoodV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wood1)"/><stop offset="1" style="stop-color:var(--wood3)"/></linearGradient>');
+  s.push('<pattern id="stGrain" width="180" height="26" patternUnits="userSpaceOnUse"><path d="M0 5C50 2 100 9 180 5M0 14C60 17 120 10 180 15M0 22C40 19 110 24 180 21" fill="none" stroke="#1a0a02" stroke-opacity=".2" stroke-width="1.5"/></pattern>');
+  s.push('<linearGradient id="stBrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a6"/><stop offset=".45" stop-color="#d9b25a"/><stop offset="1" stop-color="#8a6420"/></linearGradient>');
+  s.push('<radialGradient id="stBrassR" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#d9b25a"/><stop offset="1" stop-color="#6b4c18"/></radialGradient>');
+  s.push('<linearGradient id="stMarble" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f2e8"/><stop offset=".6" stop-color="#e2d8c6"/><stop offset="1" stop-color="#b8ab92"/></linearGradient>');
+  s.push('<radialGradient id="stFire" cx="50%" cy="85%" r="60%"><stop offset="0" stop-color="#ffb347"/><stop offset=".35" stop-color="#b8380f"/><stop offset="1" stop-color="#140806"/></radialGradient>');
+  s.push('<linearGradient id="stSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fc0d8"/><stop offset=".6" stop-color="#f1dfb8"/><stop offset="1" stop-color="#d8b483"/></linearGradient>');
+  s.push('<radialGradient id="stGlobe" cx="38%" cy="32%" r="72%"><stop offset="0" stop-color="#e3f0f6"/><stop offset=".5" stop-color="#6d9cb8"/><stop offset="1" stop-color="#1c3a52"/></radialGradient>');
+  s.push('<radialGradient id="stEnamel" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#f0ead8"/><stop offset="1" stop-color="#c8bb98"/></radialGradient>');
+  s.push('<linearGradient id="stRug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--rug1)"/><stop offset="1" style="stop-color:var(--rug2)"/></linearGradient>');
+  s.push('<radialGradient id="stShadow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>');
+  s.push('<linearGradient id="stLight" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6dc" stop-opacity=".26"/><stop offset=".5" stop-color="#fff6dc" stop-opacity=".06"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="stSun" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#ffe39a"/></linearGradient>');
+  s.push('<linearGradient id="stLamp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fa07a"/><stop offset="1" stop-color="#1f4a32"/></linearGradient>');
+  s.push('</defs>');
+  /* the wall, the picture rail, the wainscot and the floor */
+  s.push('<rect width="1000" height="560" fill="url(#stWall)"/><rect width="1000" height="560" fill="url(#stDam)"/>');
+  s.push('<rect y="0" width="1000" height="26" fill="url(#stWoodV)"/><rect y="26" width="1000" height="5" fill="#000" opacity=".3"/>');
+  s.push('<rect y="430" width="1000" height="130" fill="url(#stWood)"/><rect y="430" width="1000" height="130" fill="url(#stGrain)"/><rect y="430" width="1000" height="10" fill="url(#stBrass)" opacity=".55"/>');
+  for(i=0;i<9;i++) s.push('<rect x="'+(14+i*110)+'" y="456" width="94" height="84" rx="3" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="3"/><path d="M'+(16+i*110)+' 540V458H'+(106+i*110)+'" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2"/>');
+  s.push('<rect y="560" width="1000" height="200" fill="#3a2010"/>');
+  for(i=0;i<8;i++){ var fy=560+i*i*3.6+i*12; s.push('<path d="M0 '+fy.toFixed(1)+'H1000" stroke="#000" stroke-opacity=".28" stroke-width="2"/>'); }
+  s.push('<rect y="560" width="1000" height="200" fill="url(#stGrain)" opacity=".7"/>');
+  s.push('<path d="M150 600H870L960 760H60Z" fill="url(#stRug)"/><path d="M172 612H848L926 748H94Z" fill="none" stroke="#e7c66a" stroke-opacity=".45" stroke-width="4"/><path d="M196 626H824L890 736H130Z" fill="none" stroke="#e7c66a" stroke-opacity=".22" stroke-width="2"/>');
+  /* the bookcase */
+  s.push('<ellipse cx="146" cy="566" rx="140" ry="10" fill="url(#stShadow)"/>');
+  s.push('<rect x="18" y="64" width="236" height="500" rx="4" fill="url(#stWood)"/><rect x="18" y="64" width="236" height="500" fill="url(#stGrain)"/><rect x="10" y="56" width="252" height="22" rx="3" fill="url(#stWoodV)"/><path d="M12 58H260" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>');
+  var COLS=["#7a1f17","#24402c","#2a3e63","#6a4a14","#3a2418","#5a2448","#8a5a2a","#1e2a3a"], R=ST.rng("shelves");
+  for(var sh=0;sh<4;sh++){ var y0=90+sh*116, y1=y0+100;
+    s.push('<rect x="34" y="'+y0+'" width="204" height="100" fill="#140a04"/>');
+    var x=36; while(x<230){ var w=12+Math.floor(R()*12), h=64+Math.floor(R()*32), lean=x>200&&R()<.5; if(x+w>236) break;
+      var c=COLS[Math.floor(R()*COLS.length)];
+      s.push('<rect x="'+x+'" y="'+(y1-h)+'" width="'+w+'" height="'+h+'" fill="'+c+'"/><rect x="'+x+'" y="'+(y1-h)+'" width="'+(w*.35)+'" height="'+h+'" fill="#fff" opacity=".12"/><rect x="'+x+'" y="'+(y1-h+10)+'" width="'+w+'" height="3" fill="#d9b25a" opacity=".7"/><rect x="'+x+'" y="'+(y1-16)+'" width="'+w+'" height="3" fill="#d9b25a" opacity=".6"/>');
+      x+=w+1; if(R()<.08) x+=10; }
+    s.push('<rect x="30" y="'+y1+'" width="212" height="14" fill="url(#stWoodV)"/><path d="M30 '+(y1+1)+'H242" stroke="#fff" stroke-opacity=".28" stroke-width="2"/><rect x="34" y="'+(y1+14)+'" width="204" height="4" fill="#000" opacity=".4"/>'); }
+  s.push('<path d="M20 66V562" stroke="#fff" stroke-opacity=".2" stroke-width="3"/><path d="M252 66V562" stroke="#000" stroke-opacity=".35" stroke-width="4"/>');
+  /* the painting above the mantel (the safe hides behind it) */
+  s.push('<rect x="380" y="62" width="214" height="156" fill="#000" opacity=".35" transform="translate(6 8)"/>');
+  s.push('<rect x="372" y="52" width="228" height="172" rx="3" fill="url(#stBrass)"/><rect x="388" y="68" width="196" height="140" fill="url(#stSky)"/>');
+  s.push('<path d="M388 170C430 140 470 160 510 138S570 150 584 142V208H388Z" fill="#5f7a4a"/><path d="M388 186C440 168 500 190 584 172V208H388Z" fill="#3e5a34"/><circle cx="540" cy="102" r="14" fill="#fff4cc" opacity=".85"/>');
+  s.push('<rect x="388" y="68" width="196" height="140" fill="none" stroke="#6b4c18" stroke-width="3"/><path d="M374 54H598" stroke="#fff" stroke-opacity=".6" stroke-width="2"/>');
+  /* the fireplace and the mantel */
+  s.push('<path d="M340 344H632V560H340Z" fill="url(#stMarble)"/><path d="M400 560V420a86 70 0 0 1 172 0V560Z" fill="url(#stFire)"/>');
+  s.push('<path d="M418 556c20-20 50-24 68-6 18-18 50-14 68 6" fill="#ff9b3a" opacity=".45"/><rect x="410" y="544" width="152" height="12" rx="3" fill="#2a1a10"/>');
+  s.push('<rect x="344" y="348" width="10" height="212" fill="#fff" opacity=".35"/><rect x="618" y="348" width="14" height="212" fill="#000" opacity=".15"/>');
+  s.push('<rect x="316" y="326" width="340" height="22" rx="3" fill="url(#stMarble)"/><path d="M318 328H654" stroke="#fff" stroke-width="2.4"/><rect x="322" y="348" width="330" height="8" fill="#000" opacity=".3"/>');
+  /* the mantel clock */
+  s.push('<ellipse cx="490" cy="330" rx="68" ry="6" fill="url(#stShadow)"/>');
+  s.push('<path d="M436 326V262Q436 222 486 216Q536 222 536 262V326Z" fill="url(#stWood)"/><path d="M436 326V262Q436 222 486 216Q536 222 536 262V326Z" fill="url(#stGrain)"/>');
+  s.push('<path d="M440 322V264Q440 228 486 222" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2.5"/>');
+  s.push('<circle cx="486" cy="270" r="36" fill="url(#stBrassR)"/><circle cx="486" cy="270" r="29" fill="url(#stEnamel)"/>');
+  for(i=0;i<12;i++){ var a=i/12*Math.PI*2; s.push('<path d="M'+(486+Math.sin(a)*24).toFixed(1)+' '+(270-Math.cos(a)*24).toFixed(1)+'L'+(486+Math.sin(a)*27).toFixed(1)+' '+(270-Math.cos(a)*27).toFixed(1)+'" stroke="#2a2116" stroke-width="'+(i%3?1.4:2.6)+'"/>'); }
+  s.push('<path d="M486 270L475 256M486 270L499 278" stroke="#1d1408" stroke-width="2.6" stroke-linecap="round"/><circle cx="486" cy="270" r="2.4" fill="#1d1408"/>');
+  s.push('<rect x="452" y="310" width="68" height="10" rx="2" fill="url(#stBrass)"/><circle cx="486" cy="212" r="6" fill="url(#stBrassR)"/>');
+  /* candlesticks either side */
+  [356,616].forEach(function(cx0){ s.push('<rect x="'+(cx0-4)+'" y="276" width="8" height="48" fill="url(#stBrass)"/><ellipse cx="'+cx0+'" cy="324" rx="14" ry="4" fill="url(#stBrass)"/><rect x="'+(cx0-5)+'" y="246" width="10" height="30" rx="2" fill="#f6efdc"/><path d="M'+cx0+' 232c5 6 5 10 0 12-5-2-5-6 0-12z" fill="#ffd36b"/>'); });
+  /* the door, with the sunlit hall behind it */
+  s.push('<rect x="722" y="82" width="190" height="486" fill="url(#stWoodV)"/><rect x="738" y="98" width="158" height="462" fill="#1a100a"/>');
+  s.push('<g class="st-sun"><rect x="738" y="98" width="158" height="462" fill="url(#stSun)"/><path d="M738 560L896 560L1000 760L650 760Z" fill="#fff3c8" opacity=".35"/></g>');
+  s.push('<g class="st-leaf"><rect x="738" y="98" width="158" height="462" fill="url(#stWood)"/><rect x="738" y="98" width="158" height="462" fill="url(#stGrain)"/>');
+  [[756,118,54,150],[824,118,54,150],[756,292,54,240],[824,292,54,240]].forEach(function(p){ s.push('<rect x="'+p[0]+'" y="'+p[1]+'" width="'+p[2]+'" height="'+p[3]+'" rx="3" fill="#000" opacity=".22"/><path d="M'+p[0]+' '+(p[1]+p[3])+'V'+p[1]+'H'+(p[0]+p[2])+'" fill="none" stroke="#000" stroke-opacity=".4" stroke-width="3"/><path d="M'+(p[0]+p[2])+' '+p[1]+'V'+(p[1]+p[3])+'H'+p[0]+'" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="2"/>'); });
+  s.push('<rect x="862" y="322" width="22" height="58" rx="5" fill="url(#stBrass)" stroke="#6b4c18"/><circle cx="873" cy="338" r="9" fill="url(#stBrassR)"/><path d="M873 352v14" stroke="#1d1408" stroke-width="4" stroke-linecap="round"/><circle cx="873" cy="352" r="3.4" fill="#1d1408"/>');
+  s.push('<path d="M740 100V558" stroke="#fff" stroke-opacity=".22" stroke-width="3"/></g>');
+  s.push('<path d="M724 84H910" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>');
+  /* the globe on its stand */
+  s.push('<ellipse cx="764" cy="724" rx="86" ry="12" fill="url(#stShadow)"/>');
+  s.push('<path d="M712 720L746 600M816 720L782 600M764 724V600" stroke="url(#stWoodV)" stroke-width="12" stroke-linecap="round"/><rect x="726" y="586" width="76" height="16" rx="6" fill="url(#stWood)"/>');
+  s.push('<circle cx="764" cy="512" r="66" fill="url(#stGlobe)"/>');
+  s.push('<path d="M716 488c16-10 30 0 26 14s-22 10-18 28c4 14 22 10 24 24M770 452c12 8 28 4 34 18s-10 22-8 36 16 18 10 30" fill="none" stroke="#d8c58e" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>');
+  s.push('<ellipse cx="764" cy="512" rx="78" ry="78" fill="none" stroke="url(#stBrass)" stroke-width="6" transform="rotate(-20 764 512)" stroke-dasharray="380 110"/>');
+  s.push('<path d="M716 470a66 66 0 0 1 40-24" stroke="#fff" stroke-opacity=".55" stroke-width="5" fill="none" stroke-linecap="round"/>');
+  /* the desk: top, apron with its drawer and padlock, legs; the writing box, a lamp and an inkwell on top */
+  s.push('<ellipse cx="450" cy="742" rx="240" ry="14" fill="url(#stShadow)"/>');
+  s.push('<path d="M262 650V738h22V650ZM612 650V738h22V650Z" fill="url(#stWoodV)"/>');
+  s.push('<path d="M250 512H650L668 534H232Z" fill="url(#stWood)"/><path d="M250 512H650L668 534H232Z" fill="url(#stGrain)"/><path d="M252 513H648" stroke="#fff" stroke-opacity=".35" stroke-width="2"/>');
+  s.push('<rect x="232" y="534" width="436" height="18" fill="url(#stWoodV)"/><rect x="244" y="552" width="412" height="104" fill="url(#stWood)"/><rect x="244" y="552" width="412" height="104" fill="url(#stGrain)"/><rect x="244" y="552" width="412" height="8" fill="#000" opacity=".35"/>');
+  s.push('<rect x="350" y="566" width="200" height="62" rx="3" fill="url(#stWood)" stroke="#1a0a02" stroke-opacity=".6" stroke-width="3"/><path d="M352 626V568H548" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2"/>');
+  s.push('<path d="M430 596h40" stroke="url(#stBrass)" stroke-width="8" stroke-linecap="round"/><rect x="438" y="604" width="24" height="20" rx="4" fill="url(#stBrass)" stroke="#6b4c18"/><path d="M442 606v-8a8 8 0 0 1 16 0v8" fill="none" stroke="#9aa2a9" stroke-width="3.5"/>');
+  /* the maker's plate with the BW monogram, on the desk's bottom rail, a hair below center */
+  s.push('<rect x="244" y="636" width="412" height="20" fill="#000" opacity=".18"/><g transform="translate(450 648)"><rect x="-38" y="-9" width="76" height="18" rx="3" fill="#000" opacity=".35" transform="translate(2 2)"/><rect x="-38" y="-9" width="76" height="18" rx="3" fill="url(#stBrass)" stroke="#6b4c18" stroke-width="1"/><text x="0" y="5" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="500" font-size="13" fill="#5a3e10">B<tspan font-family="Pacifico,cursive" font-weight="400" font-size="10">W</tspan></text></g>');
+  /* the writing box on the desk */
+  s.push('<ellipse cx="332" cy="518" rx="70" ry="6" fill="url(#stShadow)"/><path d="M270 470H392L384 456H278Z" fill="url(#stWoodV)"/><rect x="270" y="470" width="122" height="46" rx="2" fill="url(#stWood)"/><rect x="270" y="470" width="122" height="46" fill="url(#stGrain)"/><path d="M272 471H390" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><rect x="321" y="482" width="20" height="16" rx="3" fill="url(#stBrass)"/><circle cx="331" cy="490" r="3" fill="#2a1d08"/>');
+  /* the banker's lamp and the inkwell */
+  s.push('<ellipse cx="600" cy="514" rx="40" ry="5" fill="url(#stShadow)"/><path d="M600 512V470" stroke="url(#stBrass)" stroke-width="6"/><ellipse cx="600" cy="512" rx="24" ry="5" fill="url(#stBrass)"/><path d="M560 470Q600 438 640 470Z" fill="url(#stLamp)"/><path d="M566 466Q600 444 634 466" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/><path d="M566 470H634" stroke="#ffe9a8" stroke-width="3" opacity=".8"/>');
+  s.push('<path d="M436 512h34l-4-16h-26z" fill="#1e2a3a"/><path d="M446 496l18-36" stroke="#f4ecd6" stroke-width="4" stroke-linecap="round"/><path d="M462 462c6-8 14-12 20-12" stroke="#f4ecd6" stroke-width="7" stroke-linecap="round"/>');
+  /* the morning light from the top left over everything */
+  s.push('<path d="M0 0H640L260 760H0Z" fill="url(#stLight)" pointer-events="none"/>');
+  s.push('<g id="stMarks"></g>');
+  return s.join("");
+}
+
+/* ---------- the stage ---------- */
+var stage=mk("div","st-pad");
+stage.innerHTML='<div class="st-left"><div class="st-board" id="stBoard">'+
+  '<div class="st-view st-room on" id="stRoom"><svg id="stScene" viewBox="0 0 1000 760" role="img" aria-label="Professor Hartwell\'s study"></svg><div class="st-blot" id="stBlot"></div></div>'+
+  '<div class="st-view st-lock" id="stLock"></div>'+
+  '<div class="st-sign" id="stSign">You\'re Free!</div><div class="st-wait" id="stWait">Locking the study…</div><div class="st-toast" id="stToast" role="status"></div></div></div>'+
+  '<div class="st-right"><div class="st-letter" id="stLetter"><span class="kick" id="stNo">Escape No. 1</span><h2>The Locked Study</h2>'+
+  '<p class="intro">Professor Hartwell has locked you in his study. Each lock holds a brass token and the clue to the next. The last lock is the door.</p>'+
+  '<div class="st-chain" id="stChain"></div></div>'+
+  '<div class="st-tools"><button class="pk-btn gold" type="button" id="stHint">Read His Notes</button><button class="pk-btn" type="button" id="stNav">Look Closer</button></div></div>';
+var BOARD=$("#stBoard",stage), ROOM=$("#stRoom",stage), SCENE=$("#stScene",stage), LOCK=$("#stLock",stage), TOAST=$("#stToast",stage);
+SCENE.innerHTML=sceneSVG();
+
+/* ---------- state ---------- */
+var D=null, mode="daily", cur=0, view="room", hints=0, tries=0, HS=[], t0=0, secs0=0, done=false, lessonK=0;
+var dial=[], dialAt=0, lit=0, presses=0, order=[], pickI=-1, placed=[], ringJ=-1;
+function L(){ return D.locks[cur]; }
+function nLocks(){ return D.locks.length; }
+
+/* ---------- sounds (Nov 2): the study, made in the browser through the kit ----------
+   st-tick: a number wheel clicks round · st-no: the padlock rattles and holds · st-open: the shackle snaps open, then a clunk
+   st-token: a brass token rings on the desk · st-jewel: a safe button pressed, its jewels chiming · st-book: a book slid along the shelf
+   st-panel: the bookcase's hidden panel swings · st-hint: a page of notes turned · st-step: footsteps across the rug
+   st-solve: the key turns, the door creaks open, and a warm chord */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var Df=Parlor.defSfx;
+  Df("st-tick",function(h){ var d=h.out(.03), t=h.t, p=h.p*(.96+Math.random()*.08); h.osc(d,t,"square",3100*p,2600*p,.03,.001,.018,["bandpass",3200,5]); h.burst(d,t,.015,"highpass",5000,1,.06,.001,.01); });
+  Df("st-no",function(h){ var d=h.out(.08), t=h.t; [0,.07,.15].forEach(function(s,i){ h.osc(d,t+s,"square",420-i*30,300,.05,.001,.05,["lowpass",1600]); h.burst(d,t+s,.04,"bandpass",2400,2,.12,.001,.03); }); h.osc(d,t+.2,"sine",150,90,.12,.002,.12,["lowpass",500]); });
+  Df("st-open",function(h){ var d=h.out(.12), t=h.t; h.burst(d,t,.03,"bandpass",4200,3,.18,.001,.02); h.osc(d,t,"triangle",2600,1800,.08,.001,.05); h.osc(d,t+.06,"sine",180,90,.28,.003,.16,["lowpass",500]); h.burst(d,t+.06,.08,"lowpass",900,1,.2,.003,.06);
+    [783.99,1046.5].forEach(function(f,i){ h.osc(d,t+.18+i*.07,"triangle",f,0,.05,.01,.6); }); });
+  Df("st-token",function(h){ var d=h.out(.25), t=h.t; h.bell(d,t,2637,.07,.9,[[1,1,1],[2.76,.45,.55],[5.4,.2,.35]]); h.bell(d,t+.11,2794,.04,.6,[[1,1,1],[2.76,.3,.5]]); });
+  Df("st-jewel",function(h,o){ var d=h.out(.22), t=h.t, f=o.on?1568:1175; h.osc(d,t,"sine",160,80,.18,.002,.08,["lowpass",400]); h.burst(d,t,.02,"bandpass",2000,2,.08,.001,.015); h.bell(d,t+.02,f,.05,.7,[[1,1,1],[3.01,.3,.4]]); });
+  Df("st-book",function(h){ var d=h.out(.05), t=h.t; h.burst(d,t,.16,"bandpass",900,1.2,.12,.02,.13); h.osc(d,t+.15,"sine",140,90,.14,.002,.07,["lowpass",500]); });
+  Df("st-panel",function(h){ var d=h.out(.2), t=h.t; h.osc(d,t,"sine",120,60,.3,.003,.2,["lowpass",400]); h.osc(d,t+.12,"sawtooth",190,120,.03,.15,.6,["bandpass",700,6]); h.burst(d,t+.12,.7,"bandpass",500,3,.05,.2,.4); });
+  Df("st-hint",function(h){ var d=h.out(.1), t=h.t; h.burst(d,t,.22,"bandpass",3000,.8,.1,.02,.18); h.burst(d,t+.12,.12,"highpass",4500,1,.05,.01,.1); });
+  Df("st-step",function(h){ var d=h.out(.04), t=h.t; [0,.22,.44].forEach(function(s){ h.burst(d,t+s,.08,"lowpass",420,1,.18,.004,.07); h.osc(d,t+s,"sine",90,60,.12,.003,.06); }); });
+  Df("st-solve",function(h,o){ var d=h.out(.4), t=h.t, at=0;
+    if(!o.short){
+      h.burst(d,t,.03,"bandpass",3800,3,.2,.001,.02); h.osc(d,t+.03,"sine",220,110,.3,.003,.14,["lowpass",600]);
+      h.osc(d,t+.3,"sawtooth",210,150,.035,.2,1.1,["bandpass",820,9]); h.osc(d,t+.4,"sawtooth",260,190,.02,.3,.9,["bandpass",1100,9]); h.burst(d,t+.3,1.2,"bandpass",600,2,.04,.3,.8);
+      at=1.5;
+    }
+    h.bell(d,t+at,1568,.08,1.6,[[1,1,1],[2.4,.4,.6],[4.1,.15,.35]]);
+    [392,523.25,659.25,783.99].forEach(function(f,i){ h.osc(d,t+at+.16+i*.06,"triangle",f,0,.05,.02,1.9); });
+  });
+})();
+function snd(name,o){ if(window.Parlor&&Parlor.defSfx) Parlor.sfx(name,o||{}); }
+
+/* ---------- messages ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2400); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  $$(".pk-coach button, .pk-coach .pk-btn").forEach(function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("st-ringbtn"); void b.offsetWidth; b.classList.add("st-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done||!D; }
+function startClock(){ if(!t0&&mode!=="lesson") t0=Date.now(); }
+
+/* ---------- the room view ---------- */
+function marks(){
+  var s=[];
+  D.locks.forEach(function(Lk,i){ var h=HOT[Lk.obj==="books"?"books":Lk.obj]; if(!h) return;
+    if(i<cur){ s.push('<g transform="translate('+(h[0]+h[2]-14)+' '+(h[1]+14)+')"><circle r="17" fill="#000" opacity=".3" transform="translate(2 3)"/><circle r="17" fill="url(#stBrassR)" stroke="#6b4c18" stroke-width="1.5"/><path d="M-7 0l5 5 9-10" fill="none" stroke="#2f5a34" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></g>'); }
+    else if(i===cur&&!done){ s.push('<rect class="st-mk" x="'+(h[0]-6)+'" y="'+(h[1]-6)+'" width="'+(h[2]+12)+'" height="'+(h[3]+12)+'" rx="16" fill="rgba(255,211,107,.10)" stroke="#ffd36b" stroke-width="6"/>');
+      var ly=h[1]>70?h[1]-22:h[1]+h[3]+30, lx=h[0]+h[2]/2, tw=OBJ[Lk.obj].short.length*13+44;
+      s.push('<g transform="translate('+lx+' '+ly+')"><rect x="'+(-tw/2)+'" y="-20" width="'+tw+'" height="36" rx="18" fill="#000" opacity=".35" transform="translate(2 3)"/><rect x="'+(-tw/2)+'" y="-20" width="'+tw+'" height="36" rx="18" fill="url(#stBrass)" stroke="#6b4c18"/><text x="0" y="5" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="700" font-size="20" fill="#3b2a0c">'+esc(OBJ[Lk.obj].short)+'</text></g>'); }
+  });
+  $("#stMarks",SCENE).innerHTML=s.join("");
+  ROOM.classList.toggle("free",done&&mode!=="lesson"||done&&mode==="lesson");
+}
+function blot(){
+  var b=$("#stBlot",stage);
+  if(done){ b.innerHTML='<div class="in"><h3>You\'re free!</h3><p>The door swings open onto the sunny hall. The professor will be impressed.</p></div>'; return; }
+  var Lk=L(), first=cur===0;
+  b.innerHTML='<div class="in"><h3>'+(first?"Locked in!":"Lock "+(cur+1)+" of "+nLocks())+'</h3>'+
+    '<p>'+(first?"Professor Hartwell has locked you in his study. Each lock holds a brass token and the clue to the next. The last lock is the door.":"You have "+cur+" token"+(cur>1?"s":"")+". The next clue points to "+OBJ[Lk.obj].name+".")+'</p>'+
+    '<p class="nx">Next: '+esc(cap(OBJ[Lk.obj].name))+'. Tap it to look closer.</p></div>';
+}
+function chain(){
+  var c=$("#stChain",stage), h=[];
+  D.locks.forEach(function(Lk,i){ var st=i<cur||done?"done":i===cur?"cur":"later";
+    h.push('<button type="button" class="st-chip '+st+'" data-i="'+i+'">'+padIcon(st==="done")+'<span>'+esc(OBJ[Lk.obj].tag)+'</span>'+(Lk.kind!=="door"?'<b>'+(st==="done"?Lk.token:"")+'</b>':'')+'</button>'); });
+  c.innerHTML=h.join("");
+  $$(".st-chip",c).forEach(function(b){ b.onclick=function(){ chipTap(+b.getAttribute("data-i")); }; });
+}
+function chipTap(i){
+  if(!D) return; hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(i===cur&&!done){ openLock(); return; }
+  if(i<cur||done){ var Lk=D.locks[i]; toast(Lk.kind==="door"?"The door is open.":cap(OBJ[Lk.obj].name)+" is open. Its token is stamped "+Lk.token+".",2200); return; }
+  toast(cap(OBJ[D.locks[i].obj].name)+" is locked fast. You haven't found its clue yet.",2400);
+}
+function navBtn(){
+  var b=$("#stNav",stage);
+  if(done){ b.textContent="See the Study"; b.disabled=view==="room"; return; }
+  b.disabled=false;
+  b.textContent=view==="room"?"Go to the "+OBJ[L().obj].short:"Back to the Study";
+  $("#stHint",stage).disabled=done;
+}
+function showRoom(){ view="room"; ROOM.classList.add("on"); LOCK.classList.remove("on"); marks(); blot(); chain(); navBtn(); status(); setTimeout(fitLock,0); }
+SCENE.addEventListener("click",function(e){
+  if(!D) return; hideToast();
+  var b=SCENE.getBoundingClientRect(), x=(e.clientX-b.left)/b.width*1000, y=(e.clientY-b.top)/b.height*760;
+  if(mode==="lesson"&&blocked()) return;
+  if(done) return;
+  /* the nearest object under the finger (the globe stands in front of the door, the drawer and box on the desk) */
+  var hits=[];
+  Object.keys(HOT).forEach(function(k){ var h=HOT[k], pad=18; if(x>=h[0]-pad&&x<=h[0]+h[2]+pad&&y>=h[1]-pad&&y<=h[1]+h[3]+pad){ var cxh=h[0]+h[2]/2, cyh=h[1]+h[3]/2; hits.push([k,Math.hypot((x-cxh)/h[2],(y-cyh)/h[3])]); } });
+  hits.sort(function(a,b){ return a[1]-b[1]; });
+  if(!hits.length) return;
+  var obj=hits[0][0], i=-1; D.locks.forEach(function(Lk,j){ if(Lk.obj===obj) i=j; });
+  if(i<0){ toast(({clock:"The mantel clock ticks along. Nothing to open there today.",safe:"Just a painting today. The safe behind it isn't part of today's escape.",books:"Rows of old books. No hidden panel today.",desk:"The drawer slides open: only pens and paper today.",box:"The writing box holds paper and ink today, nothing more.",globe:"The globe spins. Nothing inside it today.",door:"Locked, of course."})[obj],2600); return; }
+  chipTap(i);
+});
+
+/* ---------- a lock, close up ---------- */
+function openLock(){
+  if(!D||done) return;
+  view="lock"; ROOM.classList.remove("on"); LOCK.classList.add("on"); hideToast();
+  snd("st-step");
+  var Lk=L(); pickI=-1; ringJ=-1;
+  LOCK.className="st-view st-lock on k-"+Lk.kind;
+  var title='<div class="st-head"><small>Lock '+(cur+1)+' of '+nLocks()+'</small>'+esc(OBJ[Lk.obj].Name)+'</div>';
+  LOCK.innerHTML='<button type="button" class="st-back" id="stBack">‹ The Study</button><button type="button" class="st-notes" id="stNotes">Read His Notes</button>'+title+'<div class="st-body"><div class="st-note" id="stNote"></div><div class="st-mech" id="stMech"></div></div><div class="st-found" id="stFound"></div>';
+  $("#stNotes",LOCK).onclick=hint;
+  $("#stBack",LOCK).onclick=function(){ if(mode==="lesson"&&lessonK>0&&Parlor.lessonWaiting){ toast("Open this lock first, then you can step back into the study.",2200); return; } showRoom(); snd("st-step"); };
+  if(Lk.kind==="seq"||Lk.kind==="sum"||Lk.kind==="code") setupDial(Lk);
+  else if(Lk.kind==="light") setupLight(Lk);
+  else setupOrder(Lk);
+  noteFill(); mechFill(); navBtn(); chain(); status();
+  setTimeout(fitLock,0);
+}
+function where(){ var p=cur>0?D.locks[cur-1]:null; return p?"Found "+OBJ[p.obj].held+":":(mode==="lesson"?"On the desk blotter:":"Tucked under the desk blotter:"); }
+function eqHTML(t,op,val,ask){
+  var parts=t.map(function(s){ return ICON[s]; }), sep=op==="+"?"+":op==="-"?"−":"×";
+  return '<div class="st-eq'+(ask?" ask":"")+'">'+parts.join('<span class="op">'+sep+'</span>')+'<span class="op">=</span><span class="v">'+(ask?"?":val)+'</span></div>';
+}
+function eqWords(t,op,val){ var sep=op==="+"?" + ":op==="-"?" − ":" × "; return t.join(sep)+" = "+val; }
+function noteFill(){
+  var Lk=L(), n=$("#stNote",LOCK), h=[], k=HS[cur]||0;
+  h.push('<p class="lead">'+esc(where())+'</p>');
+  if(Lk.kind==="seq"){
+    h.push('<p class="lead" style="font-style:normal;font-weight:600;margin-top:0">The clock\'s dial is ringed with numbers, and one is missing. The missing number opens the clock.</p>');
+    h.push('<div class="st-plqs">'+Lk.terms.map(function(x){ return '<span class="st-plq'+(x==null?" q":"")+'">'+(x==null?"?":x)+'</span>'; }).join("")+'</div>');
+    if(k>=1) h.push('<p class="rule">'+esc(Lk.rule)+'</p>');
+  } else if(Lk.kind==="sum"){
+    h.push('<div class="st-eqs">'+Lk.eqs.map(function(e){ return eqHTML(e.t,e.op,e.val); }).join("")+eqHTML(Lk.q,"+",Lk.ans,true)+'</div>');
+    var sh=Lk.steps.slice(0,k); if(sh.length) h.push('<div>'+sh.map(function(s){ return '<p class="st-pencil">'+esc(s.how==="take"?"Take line "+(s.a+1)+" from line "+(s.b+1)+": "+eqWords(s.eq.t,"+",s.eq.val):cap(s.s)+" = "+s.v)+'</p>'; }).join("")+'</div>');
+  } else if(Lk.kind==="code"){
+    h.push('<div class="st-clues">'+Lk.clues.map(function(c){ return '<div class="st-cl"><div class="g">'+c.g.map(function(d){ return '<span class="st-tile">'+d+'</span>'; }).join("")+'</div><p>'+esc(c.text)+'</p></div>'; }).join("")+'</div>');
+  } else if(Lk.kind==="light"){
+    h.push('<p class="lead" style="font-style:normal;font-weight:600;margin-top:0">Engraved on the safe door:</p><ul class="st-lines"><li><b>Light every jewel</b> and the safe will open.</li><li>Pressing a jewel flips it, and the jewels just above, below, left and right of it.</li><li>'+(Lk.N===3?"It can be done in "+Lk.min+" presses.":"The fewest presses it takes: "+Lk.min+".")+'</li></ul>');
+  } else if(Lk.kind==="shelf"){
+    h.push('<p class="lead" style="font-style:normal;font-weight:600;margin-top:0">Put the books in this order, and the bookcase will open:</p><ul class="st-lines">'+Lk.clues.map(function(c){ return '<li>'+esc(c.text)+'</li>'; }).join("")+'</ul>');
+  } else {
+    if(Lk.shown) h.push('<p class="lead" style="font-style:normal;font-weight:600;margin-top:0">The last lock. The brass plate shows where each of your tokens goes. Set them all, then turn the key.</p>');
+    else h.push('<p class="lead" style="font-style:normal;font-weight:600;margin-top:0">The last lock. Set your tokens in the plate in this order, left to right, then turn the key:</p><ul class="st-lines">'+Lk.clues.map(function(c){ return '<li>'+esc(c.text)+'</li>'; }).join("")+'</ul>');
+  }
+  n.innerHTML=h.join("");
+}
+
+/* -- the dial lock -- */
+function setupDial(Lk){
+  var n=Lk.kind==="code"?Lk.n:Lk.digits; dial=[]; for(var i=0;i<n;i++) dial.push(0); dialAt=0;
+  if(Lk.kind==="code"){ var k=HS[cur]||0; for(var j=0;j<Math.min(k,n);j++) dial[j]=+Lk.ans.charAt(j); }
+  if(Lk.kind!=="code"&&(HS[cur]||0)>=(Lk.kind==="seq"?2:Lk.steps.length+1)){ var a=String(Lk.ans).padStart(n,"0"); for(var q=0;q<n;q++) dial[q]=+a.charAt(q); }
+}
+function fixedW(i){ var Lk=L(); if(Lk.kind==="code") return i<(HS[cur]||0); var full=(HS[cur]||0)>=(Lk.kind==="seq"?2:Lk.steps.length+1); return full; }
+function mechFill(){
+  var Lk=L(), m=$("#stMech",LOCK);
+  if(Lk.kind==="seq"||Lk.kind==="sum"||Lk.kind==="code"){
+    var n=dial.length, h=['<div class="st-padlock" id="stPad" style="--sw:'+(n*88+30)+'"><div class="st-shackle"></div><div class="st-pbody">'];
+    for(var i=0;i<n;i++) h.push('<div class="st-dial" data-w="'+i+'"><button type="button" class="ar up" aria-label="Up">▲</button><div class="drum"><span></span><b></b><span></span></div><button type="button" class="ar dn" aria-label="Down">▼</button></div>');
+    h.push('</div></div><button type="button" class="st-try" id="stTry">Try the Lock</button>');
+    m.innerHTML=h.join("");
+    $$(".st-dial",m).forEach(function(w){ var i=+w.getAttribute("data-w");
+      $(".up",w).onclick=function(){ spin(i,1); }; $(".dn",w).onclick=function(){ spin(i,-1); };
+      dragDial(w,i); });
+    $("#stTry",m).onclick=tryDial;
+    paintDial();
+  } else if(Lk.kind==="light") paintLight();
+  else paintOrder();
+}
+function paintDial(){
+  $$(".st-dial",LOCK).forEach(function(w){ var i=+w.getAttribute("data-w"), v=dial[i], s=w.querySelectorAll(".drum span");
+    s[0].textContent=(v+1)%10; w.querySelector(".drum b").textContent=v; s[1].textContent=(v+9)%10;
+    w.classList.toggle("fix",fixedW(i)); w.classList.toggle("cur",i===dialAt&&!fixedW(i)&&dial.length>1&&kbd); });
+}
+var kbd=false;
+function spin(i,d){
+  if(blocked()) return; if(fixedW(i)) return; hideToast(); startClock();
+  dial[i]=(dial[i]+d+10)%10; dialAt=i; snd("st-tick",{pitch:d>0?1.04:.96});
+  var w=$('.st-dial[data-w="'+i+'"]',LOCK); w.style.setProperty("--rd",d>0?20:-20); w.classList.remove("roll"); void w.offsetWidth; w.classList.add("roll");
+  paintDial();
+}
+function dragDial(w,i){
+  var drum=w.querySelector(".drum"), y0=0, acc=0, id=null, moved=false;
+  drum.addEventListener("pointerdown",function(e){ if(blocked()) return; id=e.pointerId; y0=e.clientY; acc=0; moved=false; try{ drum.setPointerCapture(id); }catch(x){} e.preventDefault(); });
+  drum.addEventListener("pointermove",function(e){ if(e.pointerId!==id) return; var step=Math.max(18,drum.offsetHeight/5), dy=e.clientY-y0;
+    while(dy-acc<=-step){ acc-=step; spin(i,1); moved=true; } while(dy-acc>=step){ acc+=step; spin(i,-1); moved=true; } });
+  function up(e){ if(e.pointerId!==id) return; id=null;
+    if(!moved){ var b=drum.getBoundingClientRect(); spin(i,e.clientY<b.top+b.height/2?1:-1); } }
+  drum.addEventListener("pointerup",up); drum.addEventListener("pointercancel",function(){ id=null; });
+}
+function tryDial(){
+  if(blocked()) return; hideToast(); startClock();
+  var Lk=L(), got=dial.join(""), want=String(Lk.ans).padStart(dial.length,"0");
+  if(got===want){ opened(); return; }
+  tries++; snd("st-no"); var p=$("#stPad",LOCK); p.classList.remove("bad"); void p.offsetWidth; p.classList.add("bad");
+  toast(Lk.kind==="code"?"The padlock holds. Check each clue line against your numbers.":"The lock holds. That isn't the number.",2400);
+  save(); status();
+}
+
+/* -- the safe -- */
+function setupLight(Lk){ lit=Lk.start; presses=0; }
+function paintLight(){
+  var Lk=L(), m=$("#stMech",LOCK), N=Lk.N, jw=N===3?118:92, h=['<div class="st-safe" style="--rv:'+(N*(jw+16)+34)+'"><div class="st-jewels" style="grid-template-columns:repeat('+N+',auto);--jw:'+jw+'">'];
+  for(var i=0;i<N*N;i++) h.push('<button type="button" class="st-jw'+(lit>>i&1?" on":"")+(i===ringJ?" ring":"")+'" data-j="'+i+'" aria-label="Jewel '+(i+1)+'"></button>');
+  h.push('</div></div><div class="st-mrow"><span class="st-count">Presses: '+presses+'</span><button type="button" class="st-small" id="stReset">Start Over</button></div>');
+  m.innerHTML=h.join("");
+  $$(".st-jw",m).forEach(function(b){ b.onclick=function(){ press(+b.getAttribute("data-j")); }; });
+  $("#stReset",m).onclick=function(){ if(blocked()) return; lit=L().start; presses=0; ringJ=-1; snd("st-book"); paintLight(); };
+}
+function press(j){
+  if(blocked()) return; hideToast(); startClock();
+  var Lk=L(); lit^=ST.flipMask(Lk.N,j); presses++; if(ringJ===j) ringJ=-1;
+  snd("st-jewel",{on:!!(lit>>j&1)}); paintLight();
+  if(lit===(1<<(Lk.N*Lk.N))-1) setTimeout(opened,350);
+}
+
+/* -- the bookcase and the door: put things in order -- */
+function setupOrder(Lk){
+  var n=Lk.n; placed=[];
+  if(Lk.kind==="shelf"){ /* the books start out of order */
+    var r=ST.rng("start:"+cur+":"+Lk.order.join()); do{ order=ST.shuffle(Lk.order.slice(),r); }while(order.join()===Lk.order.join());
+  } else { order=[]; for(var i=0;i<n;i++) order.push(-1); }
+  applyFixes();
+}
+function applyFixes(){
+  var Lk=L(), k=Math.min(HS[cur]||0,Lk.n);
+  for(var p=0;p<k;p++){ var want=Lk.order[p];
+    if(Lk.kind==="shelf"){ var at=order.indexOf(want); order[at]=order[p]; order[p]=want; }
+    else { var was=order.indexOf(want); if(was>=0) order[was]=-1; order[p]=want; } }
+}
+function fixedP(p){ return p<Math.min(HS[cur]||0,L().n); }
+function paintOrder(){
+  var Lk=L(), m=$("#stMech",LOCK), n=Lk.n, h=[];
+  if(Lk.kind==="shelf"){
+    var bw=n<=4?118:n===5?104:88, bh=n<=4?330:310;
+    h.push('<div class="st-shelfwrap" id="stSW"><div class="st-shelf" style="--bkw:'+bw+';--bkh:'+bh+'">');
+    order.forEach(function(b,p){ var B=Lk.books[b]; h.push('<button type="button" class="st-book'+(pickI===p?" up":"")+(fixedP(p)?" fix":"")+'" data-p="'+p+'" style="--bk1:'+B[1]+';--bk2:'+B[2]+'" aria-label="The '+B[0]+' book"><span>'+B[0]+'</span></button>'); });
+    h.push('</div></div><button type="button" class="st-try" id="stTry" style="margin-top:calc(var(--u) * 30)">Try the Bookcase</button>');
+    m.innerHTML=h.join("");
+    $$(".st-book",m).forEach(function(b){ b.onclick=function(){ bookTap(+b.getAttribute("data-p")); }; });
+    $("#stTry",m).onclick=tryOrder;
+    return;
+  }
+  /* the door: slots on the plate, and the tokens you found */
+  var tall=BOARD.classList.contains("tall"), cw=tall?(n<=4?150:n===5?140:126):(n<=3?118:n===4?108:n===5?96:82);
+  h.push('<div class="st-plate" id="stPlate" style="--cw:'+cw+'">');
+  for(var p=0;p<n;p++){ var it=order[p];
+    h.push('<button type="button" class="st-slot'+(pickI===100+p?" sel":"")+'" data-p="'+p+'">'+(Lk.shown?'<em>'+esc(OBJ[D.locks[Lk.order[p]].obj].tag)+'</em>':'')+
+      (it>=0?coinHTML(it,fixedP(p)):'')+'</button>'); }
+  h.push('</div><div class="st-tray" style="--cw:'+cw+';margin-top:calc(var(--u) * 26)">');
+  for(var i=0;i<n;i++) if(order.indexOf(i)<0) h.push('<button type="button" class="st-coin'+(pickI===i?" up":"")+'" data-t="'+i+'">'+'<b>'+D.locks[i].token+'</b><small>'+esc(OBJ[D.locks[i].obj].tag)+'</small></button>');
+  h.push('</div><button type="button" class="st-try" id="stTry"'+(order.indexOf(-1)>=0?" disabled":"")+'>Turn the Key</button>');
+  m.innerHTML=h.join("");
+  $$(".st-slot",m).forEach(function(b){ b.onclick=function(){ slotTap(+b.getAttribute("data-p")); }; });
+  $$(".st-tray .st-coin",m).forEach(function(b){ b.onclick=function(){ coinTap(+b.getAttribute("data-t")); }; });
+  $("#stTry",m).onclick=tryOrder;
+}
+function coinHTML(i,fix){ return '<span class="st-coin'+(fix?" fix":"")+'"><b>'+D.locks[i].token+'</b><small>'+esc(OBJ[D.locks[i].obj].tag)+'</small></span>'; }
+function bookTap(p){
+  if(blocked()) return; hideToast(); startClock();
+  if(fixedP(p)){ toast("The professor's note fixed that book in place.",1800); return; }
+  if(pickI<0){ pickI=p; snd("st-book"); paintOrder(); return; }
+  if(pickI===p){ pickI=-1; paintOrder(); return; }
+  var t=order[p]; order[p]=order[pickI]; order[pickI]=t; pickI=-1; snd("st-book"); paintOrder();
+}
+function coinTap(i){
+  if(blocked()) return; hideToast(); startClock();
+  if(pickI>=100){ var p=pickI-100; order[p]=i; pickI=-1; snd("st-token"); paintOrder(); return; }
+  pickI=pickI===i?-1:i; snd("st-tick"); paintOrder();
+}
+function slotTap(p){
+  if(blocked()) return; hideToast(); startClock();
+  if(fixedP(p)){ toast("The professor's note fixed that token in place.",1800); return; }
+  if(order[p]>=0){ if(pickI>=0&&pickI<100){ order[p]=pickI; pickI=-1; snd("st-token"); paintOrder(); return; } order[p]=-1; pickI=-1; snd("st-tick"); paintOrder(); return; }
+  if(pickI>=0&&pickI<100){ order[p]=pickI; pickI=-1; snd("st-token"); paintOrder(); return; }
+  pickI=pickI===100+p?-1:100+p; paintOrder();
+}
+function tryOrder(){
+  if(blocked()) return; hideToast(); startClock();
+  var Lk=L();
+  if(order.indexOf(-1)>=0){ toast("Set every token in the plate first.",2000); return; }
+  if(order.join()===Lk.order.join()){ opened(); return; }
+  tries++; snd("st-no"); var el=$(Lk.kind==="shelf"?"#stSW":"#stPlate",LOCK); el.classList.remove("bad"); void el.offsetWidth; el.classList.add("bad");
+  var bad=Lk.clues.filter(function(c){ return !ST.CT[c.k].ok(order,c.a,c.b,c.c); }).length;
+  toast(Lk.kind==="shelf"?(bad?"Nothing happens. "+(bad===1?"One line":cap(["","one","two","three","four","five","six"][bad])+" lines")+" of the note don't hold yet.":"Nothing happens."):(Lk.shown?"The key won't turn. Match each token to its name on the plate.":bad?"The key won't turn. "+(bad===1?"One line":cap(["","one","two","three","four","five","six"][bad])+" lines")+" of the note don't hold yet.":"The key won't turn."),2800);
+  save(); status();
+}
+
+/* ---------- a lock opens ---------- */
+function opened(){
+  var Lk=L(), last=cur===nLocks()-1;
+  if(Lk.kind==="seq"||Lk.kind==="sum"||Lk.kind==="code"){ var p=$("#stPad",LOCK); if(p) p.classList.add("open"); }
+  snd(Lk.kind==="shelf"?"st-panel":"st-open");
+  if(last){ cur++; escaped(); return; }
+  cur++; save();
+  var f=$("#stFound",LOCK), nx=D.locks[cur];
+  setTimeout(function(){
+    f.innerHTML='<div class="st-fcard"><h3>'+(Lk.kind==="shelf"?"A hidden panel!":Lk.kind==="light"?"The safe swings open!":"It opens!")+'</h3><span class="st-coin" style="--cw:120"><b>'+Lk.token+'</b><small>'+esc(OBJ[Lk.obj].tag)+'</small></span>'+
+      '<p>Inside: a brass token stamped <b>'+Lk.token+'</b>, and a note that points to <b>'+esc(OBJ[nx.obj].name)+'</b>.</p><button type="button" class="st-try" id="stOn">'+(nx.kind==="door"?"Go to the Door":"Go to the "+esc(OBJ[nx.obj].short))+'</button></div>';
+    f.classList.add("on"); snd("st-token");
+    $("#stOn",f).onclick=function(){ f.classList.remove("on"); if(mode==="lesson"){ showRoom(); return; } openLock(); };
+    chain(); var ch=$('.st-chip[data-i="'+(cur-1)+'"]',stage); if(ch){ ch.classList.remove("pulse"); void ch.offsetWidth; ch.classList.add("pulse"); }
+    status(); lessonCheck();
+  },420);
+}
+function escaped(){
+  done=true; hideToast();
+  setTimeout(function(){ showRoom(); setTimeout(function(){ snd("st-solve",{short:mode==="lesson"}); ROOM.classList.add("free"); },150); },500);
+  setTimeout(function(){ $("#stSign",stage).classList.add("on"); },mode==="lesson"?900:2600);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },1000); return; }
+  var secs=elapsed(), sts=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:sts,h:hints,sec:secs,t:tries}; store("bwStudy:"+todayKey,JSON.stringify(r)); try{ localStorage.removeItem("bwStudyS:"+todayKey); }catch(e){}
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwStudyStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  status();
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(sts,secs,first,sk,sv); }); },4400);
+}
+
+/* ---------- Read His Notes: help for the lock in front of you ----------
+   seq: first his margin note (the rule), then the number set on the wheels · sum: one pencilled step at a time, then the answer
+   code: one wheel set and fixed at a time · safe: one jewel to press, ringed · bookcase and door: the next place from the left set and fixed */
+function hint(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!D) return;
+  /* the "It opens!" card is up: step on to the next lock first; no note is used */
+  var fo=$("#stFound.on",LOCK); if(fo){ fo.classList.remove("on"); if(mode==="lesson") showRoom(); else openLock(); return; }
+  startClock();
+  if(view!=="lock") openLock();
+  var Lk=L(); hints++; HS[cur]=(HS[cur]||0)+1; snd("st-hint");
+  var k=HS[cur], msg="";
+  if(Lk.kind==="seq"){ if(k===1) msg="His margin note says how the numbers go."; else { setupDial(Lk); msg="He's written the missing number: "+Lk.ans+". Try the lock."; } }
+  else if(Lk.kind==="sum"){ if(k<=Lk.steps.length){ var s=Lk.steps[k-1]; msg=s.how==="take"?"Take one line away from another: what's left is a new, shorter line.":"He's pencilled in what the "+s.s+" is worth."; } else { setupDial(Lk); msg="He's set the answer on the wheels: "+Lk.ans+". Try the lock."; } }
+  else if(Lk.kind==="code"){ var n=Lk.n; if(k>n){ HS[cur]=n; hints--; msg="Every wheel is set. Try the lock."; } else { dial[k-1]=+Lk.ans.charAt(k-1); msg=k===n?"He's set the last wheel. Try the lock.":"He's set the "+["first","second","third","fourth"][k-1]+" wheel for you."; } }
+  else if(Lk.kind==="light"){ ringJ=ST.lightNext(Lk.N,lit); msg=ringJ>=0?"Press the ringed jewel.":"Every jewel is lit."; }
+  else { if(k>Lk.n){ HS[cur]=Lk.n; hints--; msg="Everything is in place. "+(Lk.kind==="shelf"?"Try the bookcase.":"Turn the key."); } else { applyFixes(); pickI=-1; msg="He's set the "+ORD[k-1]+" place from the left for you."; } }
+  noteFill(); mechFill(); save(); status();
+  toast(msg,3000);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+  lessonCheck();
+}
+var ORD=["first","second","third","fourth","fifth","sixth"];
+function status(){ if(!D||!window.Parlor) return; var n=Math.min(cur,nLocks()); Parlor.score([n+"/"+nLocks()]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Escape",n+" of "+nLocks()+" locks open"+(hints?" · "+hints+" note"+(hints>1?"s":""):"")); navBtn(); }
+
+/* ---------- loading ---------- */
+function load(p,how,state){
+  D=p; mode=how; done=false; cur=0; hints=0; tries=0; HS=[]; t0=0; secs0=0; pickI=-1; ringJ=-1; hideToast();
+  if(state){ cur=Math.min(state.n||0,nLocks()-1); hints=state.h||0; tries=state.tr||0; HS=state.hs||[]; secs0=state.s||0; if(secs0) t0=Date.now(); }
+  ROOM.classList.remove("free"); $("#stSign",stage).classList.remove("on");
+  $("#stNo",stage).textContent=how==="daily"?"Escape No. "+dayNo(today)+" · "+DAYS[today.getDay()]+" · "+FEEL[today.getDay()]:how==="practice"?"Practice Escape":"Lesson";
+  showRoom(); fit();
+}
+var today=new Date(), todayKey=ymd(today), DAILY=null;
+function rec(){ try{ return JSON.parse(store("bwStudy:"+todayKey)||"null"); }catch(e){ return null; } }
+function save(){ if(mode!=="daily"||done) return; store("bwStudyS:"+todayKey,JSON.stringify({n:cur,h:hints,tr:tries,hs:HS,s:elapsed()})); }
+function elapsed(){ return t0?Math.round((Date.now()-t0)/1000)+secs0:secs0; }
+function saved(){ try{ return JSON.parse(store("bwStudyS:"+todayKey)||"null"); }catch(e){ return null; } }
+function okDay(c){ return c&&c.locks&&c.locks.length>=3&&c.locks[c.locks.length-1].kind==="door"; }
+function makeDaily(cb){
+  if(DAILY){ cb(DAILY); return; }
+  try{ var c=JSON.parse(store("bwStudyP:"+todayKey)||"null"); if(okDay(c)){ DAILY=c; cb(c); return; } }catch(e){}
+  setTimeout(function(){ var p=ST.forDay(todayKey,today.getDay()); DAILY=p;
+    try{ for(var k in localStorage) if((k.indexOf("bwStudyP:")===0||k.indexOf("bwStudyS:")===0)&&k.slice(9)!==todayKey) localStorage.removeItem(k); }catch(e){}
+    store("bwStudyP:"+todayKey,JSON.stringify(p)); cb(p); },30);
+}
+function startDaily(again){
+  if(window.Parlor) Parlor.coach(null);
+  var waitT=setTimeout(function(){ $("#stWait",stage).classList.add("on"); },150);
+  makeDaily(function(p){
+    clearTimeout(waitT); $("#stWait",stage).classList.remove("on");
+    var r=rec(), st=!again&&!r?saved():null;
+    load(JSON.parse(JSON.stringify(p)),"daily",st);
+    if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+    if(r&&!again) toast("You escaped today. Try it again for fun; tomorrow brings a new study.",3600);
+    else if(st&&st.n) toast("Welcome back: the locks you opened are still open.",3000);
+    else if(!again) toast("Tap the glowing "+OBJ[L().obj].short.toLowerCase()+" to look closer.",3200);
+  });
+}
+
+/* ---------- the result ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwStudyStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+/* from the professor's library: true stories about locks, codes and escapes */
+var STORIES=[
+  {name:"The Bramah Challenge",kind:"London · 1790",t:"Joseph Bramah put one of his locks in his shop window with a notice offering 200 guineas to anyone who could pick it. It held for over sixty years, until the American locksmith Alfred C. Hobbs opened it in 1851, after 51 hours of work spread over 16 days."},
+  {name:"The Pin Tumbler",kind:"Linus Yale Jr. · the 1860s",t:"Linus Yale Jr. patented his pin-tumbler cylinder lock in the 1860s, building on his father's design. A row of spring-loaded pins must be lifted to just the right heights by the key, and the same idea is inside most front-door locks today."},
+  {name:"The Detector Lock",kind:"Portsmouth · 1818",t:"After a burglary at the Portsmouth dockyard, the British government offered a reward for a lock that couldn't be opened without its key. Jeremiah Chubb's detector lock, patented in 1818, jammed if anyone tried to pick it, and showed its owner it had been tampered with."},
+  {name:"The Oldest Locks",kind:"Ancient Egypt and Assyria",t:"Some of the first locks were wooden: pins dropped into holes in a sliding bolt, and a long key lifted them clear. A lock of this kind found in the ruins of the Assyrian palace at Khorsabad is about 2,700 years old."},
+  {name:"The Mirror Handcuffs",kind:"London · 1904",t:"In March 1904, London's Daily Mirror challenged Harry Houdini to escape from a pair of handcuffs said to have taken a locksmith years to make. Before a packed crowd at the Hippodrome, it took him more than an hour."},
+  {name:"Priest Holes",kind:"England · about 1600",t:"Nicholas Owen, a carpenter, built hiding places for Catholic priests in English country houses: behind fireplaces, under stairs and inside walls. Some were so well made that they weren't found for centuries."},
+  {name:"The First Escape Rooms",kind:"Kyoto · 2007",t:"A Japanese company called SCRAP ran one of the first live escape games, its Real Escape Game, in Kyoto in 2007: a group of players shut in a room, solving puzzles to get out. Within ten years there were escape rooms around the world."},
+  {name:"Mastermind",kind:"The drawer's padlock · 1970",t:"The clue lines on the padlock work like Mastermind, the code-breaking game invented in 1970 by Mordecai Meirowitz, an Israeli postmaster. One player hides a code; the other guesses and is told how many pegs are right, and how many are in the right place."},
+  {name:"Lights Out",kind:"The safe's jewels · 1995",t:"The safe's jewels follow the rules of Lights Out, a handheld game sold by Tiger Electronics in 1995. On its 5 × 5 board some patterns can't be solved at all. On a 3 × 3 panel every pattern can be, in exactly one fewest-press way."},
+  {name:"Fibonacci's Rabbits",kind:"Pisa · 1202",t:"In his 1202 book Liber Abaci, Leonardo of Pisa, known as Fibonacci, asked how many pairs of rabbits one pair would lead to in a year. The answer runs 1, 1, 2, 3, 5, 8, and so on, each number the two before it added together."}
+];
+function story(){ return mode==="daily"?STORIES[dayNo(today)%STORIES.length]:STORIES[Math.floor(Math.random()*STORIES.length)]; }
+var KEYART='<svg viewBox="0 0 60 60" aria-hidden="true"><ellipse cx="32" cy="48" rx="18" ry="4" fill="#000" opacity=".2"/>'+ICON.key.replace(/^<svg[^>]*>/,"").replace(/<\/svg>$/,"").replace(/stIk/g,"stIk2")+'</svg>';
+function result(sts,secs,first,sk,sv){
+  var v=$("#stEnd"); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id="stEnd"; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v); }
+  var b=v.firstChild, head=mode==="practice"?"Practice Escape":"The Locked Study · No. "+dayNo(today), R=story(), dr=D.locks[D.locks.length-1];
+  var coins=dr.order.map(function(i){ return '<span>'+D.locks[i].token+'</span>'; }).join("");
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"You Escaped!":"Escaped Without Help!")+'</h2>'+
+    '<div class="st-stars">'+"★★★".slice(0,sts)+'<i>'+"★★★".slice(sts)+'</i></div>'+
+    '<div class="st-facts"><div><b>'+nLocks()+'</b><small>Locks</small></div><div><b>'+hints+'</b><small>Notes</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<div class="st-card"><p>The door\'s code</p><div class="coins">'+coins+'</div><p>'+(tries?tries+" wrong tr"+(tries>1?"ies":"y"):"no wrong tries")+'</p></div>'+
+    '<div class="st-story"><div class="mug">'+KEYART+'</div><div><p class="kind">From the Professor\'s Library · '+esc(R.kind)+'</p><h3>'+esc(R.name)+'</h3><p class="clamp">'+esc(R.t)+'</p></div></div>'+
+    '<p class="st-endnote">'+(mode==="daily"?(first?"A new study is locked every night at midnight.":"You'd already escaped today; your first result is the one kept."):"Practice escapes don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".st-story p.clamp");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(sts,secs,sk); });
+  bt(mode==="practice"?"Another Escape":"Play It Again",function(){ v.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true); });
+  bt("See the Study",function(){ v.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  var Lc=mk("div","st-endL"), R2=mk("div","st-endR"); [].slice.call(b.children).forEach(function(c){ (c===row||c.classList.contains("pk-streak")?R2:Lc).appendChild(c); }); b.appendChild(Lc); b.appendChild(R2);
+  v.classList.add("on");
+}
+function share(sts,secs,sk){
+  var txt="BrainWhim · The Locked Study No. "+dayNo(today)+"\n"+"★★★".slice(0,sts)+"☆☆☆".slice(sts)+" "+fmt(secs)+" · "+nLocks()+" locks"+(hints?" · "+hints+" note"+(hints>1?"s":""):" · no help")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/study.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Each lock you open holds the clue to the next one. The glowing object is the one to look at.","On the padlock, start with a line that says nothing is correct: those numbers are out.","In the picture sums, look for a line with only one kind of thing in it, or two lines that differ by one thing.","On the safe, the order of presses doesn't matter, and pressing a jewel twice undoes it.","Stuck? Read His Notes: each note helps with the lock in front of you."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, p=ST.make("practice:"+Date.now()+":"+Math.random(),ST.WEEK[wd]);
+  if(!p){ startPractice(); return; }
+  load(p,"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Escape","<p>Open each lock in turn; each one holds the clue to the next, and the last is the door.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%2===1&&window.Parlor) Parlor.practiceSay("Practice Escape","<p>"+TIPS[(Math.floor(tipN/2)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done) Parlor.lessonDone();
+}
+
+/* ---------- Learn to Play ----------
+   One small study for every page: the clock (2, 4, 6, 8, 10, 12, ?), the globe (two picture sums), the bookcase (three books), then the door. */
+function lessonDay(){
+  var sum={kind:"sum",syms:["key","candle"],eqs:[{t:["key","key"],op:"+",val:6},{t:["key","candle"],op:"+",val:8}],q:["candle"],ans:5,digits:1,v:{key:3,candle:5}};
+  sum.steps=ST.solveSums(sum.eqs,2).steps;
+  var shelf={kind:"shelf",n:3,order:[1,0,2],books:[ST.BOOKS[0],ST.BOOKS[1],ST.BOOKS[2]],labels:["the red book","the green book","the blue book"],
+    clues:[{k:"pos",a:1,b:0,text:"The green book is at the far left."},{k:"imm",a:0,b:2,text:"The red book is directly left of the blue book."}]};
+  var locks=[{kind:"seq",terms:[2,4,6,8,10,12,null],ans:14,digits:2,rule:"Each number is 2 more than the one before.",obj:"clock",token:3},
+    Object.assign(sum,{obj:"globe",token:7}),Object.assign(shelf,{obj:"books",token:4})];
+  locks.push({kind:"door",n:3,order:[2,0,1],clues:[],shown:true,obj:"door"});
+  return {locks:locks};
+}
+var LESSONS=[
+  {title:"The Locked Study",text:"<p>Professor Hartwell has locked you in his study. Each lock you open holds a brass <b>token</b> and the <b>clue</b> to the next. The last lock is the door.</p><p>Just look for now, then tap <b>Next</b>.</p>",at:0,room:true},
+  {title:"Open a Lock",text:"<p>Read the note, then turn the wheels to the answer: tap ▲ or ▼, or drag a wheel. Then press <b>Try the Lock</b>.</p>",done:"<p>It opens! Inside: a token, and the clue to the next lock.</p>",at:0,goal:function(){ return cur>=1; }},
+  {title:"Picture Sums",text:"<p>Each thing stands for a number. Two keys make 6, so a key is 3. Work out the candle and set it on the lock.</p>",done:"<p>The globe opens. Sums get longer later in the week.</p>",at:1,goal:function(){ return cur>=2; }},
+  {title:"Put Them in Order",text:"<p>Tap a book, then tap another to swap them. Make the note true, then press <b>Try the Bookcase</b>.</p>",done:"<p>A hidden panel! The bookcase and the door use clues like these.</p>",at:2,goal:function(){ return cur>=3; }},
+  {title:"The Door, and Help",text:"<p>Stuck? Press <b>Read His Notes</b> for help with the lock in front of you. A note costs a star. Try it now.</p>",done:"<p>That's everything. A new study every day, from three locks on Monday to seven on Sunday.</p>",at:3,goal:function(){ return hints>0; }}
+];
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k];
+  load(lessonDay(),"lesson"); cur=Ls.at;
+  if(Ls.room) showRoom(); else openLock();
+}
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function shrink(el,min){ if(!el) return; el.style.zoom=""; var inner=el.scrollHeight, h=el.clientHeight; if(h>0&&inner>h+2) el.style.zoom=Math.max(min,h/inner); }
+function fitLock(){ /* shrink a note, a lock or the letter that doesn't fit (a long Sunday padlock on a small phone) */
+  shrink($("#stNote",LOCK),.7);
+  var m=$("#stMech",LOCK); if(m){ m.style.zoom=""; var kids=[].slice.call(m.children), need=kids.reduce(function(t,k){ var cs=getComputedStyle(k); return t+k.offsetHeight+Math.max(0,parseFloat(cs.marginTop))+Math.max(0,parseFloat(cs.marginBottom)); },0)+(kids.length-1)*parseFloat(getComputedStyle(m).rowGap||0)+10, h=m.clientHeight; if(h>0&&need>h+2) m.style.zoom=Math.max(.7,h/need); }
+  var bl=$("#stBlot",stage), bi=bl&&bl.firstChild; if(bi&&bi.style){ bi.style.zoom=""; var cs=getComputedStyle(bl), room=bl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom); if(room>0&&bi.offsetHeight>room+1) bi.style.zoom=Math.max(.62,room/bi.offsetHeight); }
+}
+function fit(){
+  if(!D) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  stage.classList.toggle("land",land);
+  if(land){ fitLand(VW); return; }
+  document.body.style.removeProperty("--pk-landR"); document.body.style.removeProperty("--pk-landTools");
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185, bw, availH;
+  if(wide){
+    BOARD.classList.remove("tall"); stage.classList.remove("slim");
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),1060), nw=Math.round(Math.max(250,Math.min(290,availW*.3)));
+    stage.style.setProperty("--st-nw",nw+"px");
+    availH=window.innerHeight-top-22;
+    var side=Math.min(availW-nw-18-8,(availH-6)/.76,860), under=Math.min(availW-8,(availH-6-112)/.76,860);
+    stage.classList.toggle("stack",under>side+40);
+    bw=Math.floor(under>side+40?under:side); bw=Math.max(420,bw);
+    stage.classList.remove("coach"); stage.style.paddingTop="";
+  } else {
+    BOARD.classList.add("tall"); stage.classList.remove("stack");
+    stage.style.removeProperty("--st-nw");
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    var coach=seatedNow()&&document.body.classList.contains("pk-coaching")&&window.Parlor&&Parlor.coachHeight&&Parlor.coachHeight()>0;
+    stage.classList.toggle("coach",!!coach); stage.style.paddingTop="";
+    if(coach){ var ch=Parlor.coachHeight(), stTop=stage.getBoundingClientRect().top, bar=document.querySelector(".pk-bar");
+      var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
+      if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
+      availH=barTop-8-Math.max(ch,stTop); }
+    var slim=window.innerHeight<700; stage.classList.toggle("slim",slim);
+    var rest=coach||slim?0:$(".st-right",stage).offsetHeight+8;
+    /* as tall as fits, between 1 and 1.18 times the width; then the width that fits */
+    var tr=Math.max(coach?.78:1,Math.min(1.18,(availH-rest)/(VW-12))); BOARD.style.setProperty("--tr",tr.toFixed(3)); BOARD.classList.toggle("noblot",tr<1);
+    bw=Math.floor(Math.min(VW-12,(availH-rest)/tr)); bw=Math.max(240,bw);
+  }
+  stage.style.setProperty("--st-bw",bw+"px");
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+  setTimeout(fitLock,0);
+}
+function fitLand(VW){
+  var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+  BOARD.classList.remove("tall"); stage.classList.remove("slim"); stage.classList.remove("stack");
+  var R=Math.round(Math.max(200,Math.min(260,VW*.3)));
+  document.body.style.setProperty("--pk-landR",R+"px");
+  var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
+  stage.classList.remove("coach"); stage.style.paddingTop="";
+  var bw=Math.floor(Math.min(lw,lh/.76)); stage.style.setProperty("--st-bw",bw+"px");
+  document.body.style.setProperty("--pk-landTools",coaching?($(".st-right",stage).offsetHeight+8)+"px":"0px");
+  document.body.style.setProperty("--pk-size",bw+"px");
+  setTimeout(fitLock,0);
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){
+  $("#stHint",stage).onclick=hint;
+  $("#stNav",stage).onclick=function(){ if(!D) return; if(mode==="lesson"&&blocked()) return; if(done){ showRoom(); return; } var fo=$("#stFound.on",LOCK); if(fo){ fo.classList.remove("on"); showRoom(); snd("st-step"); return; } if(view==="room") openLock(); else { showRoom(); snd("st-step"); } };
+}
+/* the keyboard on a computer: digits set the wheels left to right, arrows move and turn them, Enter tries the lock, Escape steps back */
+document.addEventListener("keydown",function(e){
+  if(!seatedNow()||!D||done) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  if(view!=="lock"){ if(e.key==="Enter"){ e.preventDefault(); if(!(mode==="lesson"&&blocked())) openLock(); } return; }
+  if(e.key==="Escape"){ e.preventDefault(); if(!(mode==="lesson"&&Parlor.lessonWaiting)) showRoom(); return; }
+  var Lk=L(); if(!(Lk.kind==="seq"||Lk.kind==="sum"||Lk.kind==="code")) { if(e.key==="Enter"&&$("#stTry",LOCK)){ e.preventDefault(); $("#stTry",LOCK).click(); } return; }
+  if(/^[0-9]$/.test(e.key)){ e.preventDefault(); if(blocked()) return; kbd=true; while(dialAt<dial.length&&fixedW(dialAt)) dialAt++; if(dialAt>=dial.length) dialAt=0; if(fixedW(dialAt)) return; startClock(); dial[dialAt]=+e.key; snd("st-tick"); dialAt=(dialAt+1)%dial.length; paintDial(); }
+  else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){ e.preventDefault(); kbd=true; dialAt=(dialAt+(e.key==="ArrowLeft"?dial.length-1:1))%dial.length; paintDial(); }
+  else if(e.key==="ArrowUp"||e.key==="ArrowDown"){ e.preventDefault(); kbd=true; spin(dialAt,e.key==="ArrowUp"?1:-1); }
+  else if(e.key==="Enter"){ e.preventDefault(); tryDial(); }
+});
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"study", cat:"puzzles", solo:true, free:true, daily:{key:"bwStudy:",streak:"bwStudyStreak"}, land:true, title:"The Locked Study", bg:"puzzles-study.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Escape",
+  tagline:"Find your way out of the professor's study.", invite:"Professor Hartwell has locked you in his study. Open his chain of locks, each holding the clue to the next, and the last one is the door.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Studies",
+  sets:[
+    {id:"green",name:"The Green Study",need:0,dots:["#3d5c47","#a5603a"]},
+    {id:"oxblood",name:"The Oxblood Library",club:true,dots:["#6e2a2a","#8d5a3a"]},
+    {id:"blue",name:"The Blue Drawing Room",club:true,dots:["#4b6480","#b88a5a"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> get out of Professor Hartwell's study. Its locks open one after another: each holds a brass <b>token</b> and the clue to the next lock, and the last lock is the <b>door</b>.</li><li>The glowing object in the room is the next lock. Tap it to look closer; the clue is on the note beside it.</li><li><b>Dial locks</b> (the clock, the globe, the desk drawer, the writing box): work out the number and turn the wheels to it. The clock's clue is a number pattern; the globe's, picture sums; the padlock's, lines like \"one number is correct but wrongly placed\".</li><li><b>The safe:</b> pressing a jewel flips it and its neighbors. Light them all. <b>The bookcase:</b> swap the books into the order the note gives. <b>The door:</b> set your tokens in the plate in the right order.</li><li><b>Read His Notes:</b> help with the lock in front of you, one step at a time.</li></ol>",
+    score:"<ul><li><b>One escape a day</b>, the same for everyone. It changes at midnight on your device. Monday has three locks, Thursday five, and Sunday seven, and each kind of lock gets harder through the week. Sunday's is the hardest.</li><li><b>★★★</b> with no notes · <b>★★</b> with one or two · <b>★</b> with more. Your time and wrong tries are shown too.</li><li>Your first escape of the day is the one kept, with your <b>streak</b> of days in a row. The locks you've opened stay open on this device, so you can come back to a hard one later.</li><li>Practice escapes (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onCoachSize:function(){ setTimeout(fit,0); },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+window.addEventListener("pagehide",save);
+/* for testing */
+window.STO={get:function(){ return {D:D,cur:cur,view:view,hints:hints,tries:tries,HS:HS,done:done,mode:mode,dial:dial,lit:lit,order:order}; },
+  open:openLock, room:showRoom, hint:hint,
+  solveOne:function(){ var Lk=L(); if(view!=="lock") openLock(); if(Lk.kind==="light"){ lit=(1<<(Lk.N*Lk.N))-1; opened(); } else if(Lk.kind==="shelf"||Lk.kind==="door"){ order=Lk.order.slice(); opened(); } else { opened(); } },
+  setDial:function(a){ dial=a.slice(); paintDial(); }, tryDial:tryDial};
+})();
+</script>
+</body>
+</html>

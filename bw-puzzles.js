@@ -28,9 +28,9 @@
     { id: "harbor", name: "The Harbor", page: "harbor.html", img: "puzzles-harbor-sm.jpg", tint: "#0f2c4a",
       about: "Slide the carved boats around a crowded marina until your red sloop can sail out of the harbor mouth.",
       daily: { key: "bwHarbor:", streak: "bwHarborStreak" }, what: "harbor" },
-    { id: "printshop", name: "The Print Shop", page: "printshop.html", img: "puzzles-printshop-sm.jpg", tint: "#3a2418",
-      about: "Trace the day's words through a printer's type case. The headline, running side to side, names the theme.",
-      daily: { key: "bwPrint:", streak: "bwPrintStreak" }, what: "job" },
+    { id: "study", name: "The Locked Study", page: "study.html", img: "puzzles-study-sm.jpg", tint: "#2a2a3e",
+      about: "Professor Hartwell has locked you in his study. Open his chain of locks, each holding the clue to the next, and escape through the door.",
+      daily: { key: "bwStudy:", streak: "bwStudyStreak" }, what: "escape" },
     { id: "maproom", name: "The Map Room", soon: true, tint: "#14353f",
       about: "Draw one coastline around the numbered islands. Each number tells how many sides it touches." },
     { id: "clockmaker", name: "The Clockmaker's Bench", page: "clockmaker.html", img: "puzzles-clockmaker-sm.jpg", tint: "#3a2616",
@@ -72,6 +72,10 @@
       '<path ' + G + ' d="M228 252h148l-22 26H252z"/><path ' + G + ' d="M302 120l20 8-20 8"/>' +
       '<path ' + THIN + ' d="M170 290c20-10 40-10 60 0s40 10 60 0 40-10 60 0 40 10 60 0 40-10 60 0"/>' +
       '<path ' + THIN + ' d="M196 304c18-8 36-8 54 0s36 8 54 0 36-8 54 0 36 8 54 0"/>',
+    study:
+      '<rect ' + G + ' x="250" y="112" width="100" height="150" rx="12"/><rect ' + THIN + ' x="260" y="122" width="80" height="130" rx="8"/>' +
+      '<circle ' + G + ' cx="300" cy="168" r="16"/><path ' + G + ' d="M292 182l-8 44h32l-8-44"/>' +
+      '<circle ' + G + ' cx="196" cy="290" r="18"/><circle ' + THIN + ' cx="196" cy="290" r="8"/><path ' + G + ' d="M214 290h176M352 290v18M372 290v14M390 290v20"/>',
     printshop:
       BLOCK(206, "I") + BLOCK(266, "N") + BLOCK(326, "K") +
       '<path ' + THIN + ' d="M196 280h208"/><path ' + THIN + ' d="M210 292h180"/>' +
