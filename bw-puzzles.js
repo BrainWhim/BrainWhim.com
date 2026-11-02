@@ -32,8 +32,9 @@
       about: "A themed word a day, set in type. The theme is revealed when you solve it." },
     { id: "maproom", name: "The Map Room", soon: true, tint: "#14353f",
       about: "Draw one coastline around the numbered islands. Each number tells how many sides it touches." },
-    { id: "clockmaker", name: "The Clockmaker's Bench", soon: true, tint: "#3a2616",
-      about: "Fill the watch gears so every digit appears once in each row, column and gear." }
+    { id: "clockmaker", name: "The Clockmaker's Bench", page: "clockmaker.html", img: "puzzles-clockmaker-sm.jpg", tint: "#3a2616",
+      about: "Set the dials on a watch movement so every number appears once in each row, column and gear.",
+      daily: { key: "bwClock:", streak: "bwClockStreak" }, what: "movement" }
   ];
 
   /* ---------- drawn posters (600 x 400, gold line art) ---------- */

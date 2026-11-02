@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Clockmaker's Bench · BrainWhim Puzzles</title>
+<meta name="description" content="The Clockmaker's Bench: a daily watch-gear number puzzle at BrainWhim. Set every dial so each number appears once in every row, column and gear.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1101b">
+<style>
+/* ===== The Clockmaker's Bench (Puzzles & Brain Games, Nov 2): a daily number puzzle on a watch movement =====
+   A gilt watch plate lies on the beechwood bench, tilted toward you. Square windows are cut through it, one for each
+   gear; under each window turns a gear, and on the gear sit the enamel dials. Set every dial so each number appears once
+   in every row, every column and every gear. 6 x 6 early in the week, 9 x 9 from Wednesday.
+   Movements (the Movements card): Gilt & Blued Steel (free); Rhodium & Gold, Rose Gold & Black Enamel (Club).
+   Light comes from the top left everywhere: highlights on top and left edges, shade and shadows to the bottom right. */
+body{--pl1:#fbe9b0;--pl2:#dcb867;--pl3:#9c7630;--pl4:#6a4c18;--edge1:#c9a04e;--edge2:#7d5a1e;--gA1:#fff2c6;--gA2:#d9b25a;--gA3:#8a661f;--gB1:#f4f6f8;--gB2:#b9c0c8;--gB3:#6e7781;--floor1:#4a4d52;--floor2:#2c2e33;--en1:#fffdf6;--en2:#f6efdc;--en3:#e3d6b4;--bez1:#fff0bf;--bez2:#c99a3f;--bez3:#7a5a1e;--blue:#22409c;--blue2:#4a6fd0;--given:#1c160e}
+body[data-set="rhodium"]{--pl1:#f6f8fa;--pl2:#c9d0d7;--pl3:#8b949e;--pl4:#59616b;--edge1:#aab2bb;--edge2:#5f6872;--gA1:#fff2c6;--gA2:#e0bb63;--gA3:#94701f;--gB1:#ffffff;--gB2:#d3d8de;--gB3:#7d8691;--floor1:#3d4148;--floor2:#22252a;--blue:#9a6a12;--blue2:#d9a53c}
+body[data-set="rose"]{--pl1:#ffe2d6;--pl2:#e3a58e;--pl3:#a86a55;--pl4:#6e3f31;--edge1:#c98a72;--edge2:#7a4a3a;--gA1:#ffe2d6;--gA2:#d99a82;--gA3:#8e5644;--gB1:#5a5e66;--gB2:#2e3138;--gB3:#141518;--floor1:#2a2a2e;--floor2:#141416;--en1:#2c2c30;--en2:#1d1d21;--en3:#0f0f11;--given:#f4e6c8;--blue:#f0b79f;--blue2:#ffd9c8}
+.cb-mono{font:500 1em Montserrat,sans-serif;white-space:nowrap}.cb-mono i{font:400 .76em Pacifico,cursive;font-style:normal;margin-left:.05em;padding-right:.15em}
+.cb-pad{position:relative;flex:none;display:grid;grid-template-columns:auto auto;gap:18px;align-items:start;justify-content:center}
+.cb-left{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+.cb-right{display:flex;flex-direction:column;gap:10px;width:var(--cb-nw,280px)}
+/* ---------- the movement: two SVG layers (the plate, gears and dials drawn once; the numbers and marks redrawn as you play) ---------- */
+.cb-board{position:relative;width:var(--cb-bw,560px);-webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cb-board svg{display:block;width:100%;height:auto}
+.cb-board .cb-live{position:absolute;left:0;top:0;cursor:pointer}
+.cb-board.done .cb-live{cursor:default}
+.cb-gear{transform-box:fill-box;transform-origin:50% 50%}
+.cb-board.turn .cb-gear{animation:cb-turn 3.2s cubic-bezier(.45,0,.3,1) forwards}
+.cb-board.turn .cb-gear.ccw{animation-name:cb-turnb}
+@keyframes cb-turn{to{transform:rotate(360deg)}}
+@keyframes cb-turnb{to{transform:rotate(-360deg)}}
+.cb-live .cb-pop{animation:cb-pop .3s cubic-bezier(.3,1.6,.6,1);transform-box:fill-box;transform-origin:50% 50%}
+@keyframes cb-pop{0%{transform:scale(.5);opacity:.2}100%{transform:none;opacity:1}}
+.cb-live .cb-bad{animation:cb-bad 1s ease-in-out infinite}
+@keyframes cb-bad{50%{opacity:.3}}
+.cb-live .cb-ring{animation:cb-ring 1.1s ease 3}
+@keyframes cb-ring{0%,100%{opacity:.25}50%{opacity:1}}
+.cb-live .cb-glow{animation:cb-glow 1.1s ease-in-out infinite}
+@keyframes cb-glow{0%,100%{opacity:.35}50%{opacity:1}}
+.cb-live .cb-flash{animation:cb-flash .9s ease-out forwards}
+@keyframes cb-flash{0%{opacity:.85}100%{opacity:0}}
+.cb-live .cb-shine{animation:cb-shine .9s ease-out forwards}
+@keyframes cb-shine{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+.cb-nope{animation:cb-nope .34s ease}
+@keyframes cb-nope{20%{transform:translateX(-7px)}60%{transform:translateX(7px)}}
+.cb-sign{position:absolute;left:50%;top:44%;z-index:5;transform:translate(-50%,-50%) rotate(-6deg);padding:7px 16px 6px;border-radius:6px;font:700 italic 26px/1 Cormorant Garamond,serif;letter-spacing:.04em;color:#3b2a0c;white-space:nowrap;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.55),transparent 50%),linear-gradient(180deg,#fbe7a6,#d9b25a 45%,#a8802c);box-shadow:0 0 0 1px #7a5a1e,inset 0 1px 0 rgba(255,255,255,.7),2px 6px 12px rgba(0,0,0,.45);opacity:0;pointer-events:none}
+.cb-sign.on{animation:cb-sign .5s cubic-bezier(.3,1.6,.6,1) forwards}
+@keyframes cb-sign{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(1.8)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
+.cb-toast{position:absolute;z-index:6;left:50%;top:2px;transform:translateX(-50%);width:max-content;max-width:94%;padding:8px 14px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(231,199,122,.6);color:#fff;font:600 14px/1.4 Montserrat,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.cb-toast.on{opacity:1}
+/* ---------- the clockmaker's notes: the rules, on a repair ticket ---------- */
+.cb-notes{position:relative;border-radius:4px;color:#2a2116;padding:12px 14px 12px 16px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .36 0 0 0 0 .25 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23p)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 25% 10%,rgba(255,255,255,.6),transparent 60%),linear-gradient(170deg,#f8f4e6,#eee4c9 60%,#e3d7b6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -12px 16px -12px rgba(110,90,40,.25),0 1px 1px rgba(0,0,0,.25),2px 9px 16px rgba(20,10,0,.42)}
+.cb-notes::before{content:"";position:absolute;left:8px;right:8px;top:8px;bottom:8px;border:1px solid rgba(60,70,110,.3);border-radius:3px;pointer-events:none}
+.cb-tag{position:absolute;right:14px;top:-10px;width:26px;height:30px;z-index:2;pointer-events:none}
+.cb-notes h2{margin:2px 0 1px;padding-right:22px;font:700 19.5px/1.12 Cormorant Garamond,serif;color:#1f2f5c}
+.cb-notes .cb-no{display:block;margin:0 0 8px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7a6236}
+.cb-rules{margin:0;padding:0;list-style:none}
+.cb-rules li{position:relative;padding:3px 0 3px 26px;font:500 13.5px/1.38 Montserrat,sans-serif}
+.cb-rules li svg{position:absolute;left:0;top:3px;width:19px;height:19px}
+.cb-how{margin:8px 0 0;padding-top:7px;border-top:1px dashed rgba(60,70,110,.35);font:500 12px/1.4 Montserrat,sans-serif;color:#5b4a2c}
+.cb-how b{color:#1f2f5c}
+.cb-day{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;margin:8px 0 0;font:600 12px Montserrat,sans-serif;color:#5b4a2c}
+.cb-day b{color:#7c2a1e}
+.cb-count{font:700 13px Montserrat,sans-serif;color:#1f2f5c;white-space:nowrap}
+.cb-rule1{display:none;margin:0;font:500 12px/1.35 Montserrat,sans-serif}
+/* ---------- the dial keys: enamel watch dials in brass bezels ---------- */
+.cb-keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:9px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.cb-keys.six{grid-template-columns:repeat(4,1fr)}
+.cb-key{position:relative;aspect-ratio:1;min-height:0;min-width:0;overflow:hidden;padding:0;border:0;border-radius:50%;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  background:radial-gradient(circle at 36% 30%,#fff 0,#fffaf0 30%,#efe5c9 72%,#d9c99c 100%);
+  box-shadow:0 0 0 3px #d9b25a,0 0 0 4px #7a5a1e,inset 0 1px 1px rgba(255,255,255,.9),inset -2px -3px 5px rgba(120,90,30,.25),3px 5px 8px rgba(0,0,0,.45);
+  font:700 28px/1 Cormorant Garamond,serif;color:#1c160e;transition:transform .12s ease,box-shadow .12s ease}
+.cb-key::before{content:"";position:absolute;inset:5px;border-radius:50%;border:1px dashed rgba(90,70,30,.28);pointer-events:none}
+.cb-key:active{transform:translateY(2px) scale(.96);box-shadow:0 0 0 3px #d9b25a,0 0 0 4px #7a5a1e,inset 0 1px 1px rgba(255,255,255,.9),1px 2px 3px rgba(0,0,0,.45)}
+.cb-key:disabled{cursor:default}
+.cb-key.full{opacity:.4}
+.cb-key small{position:absolute;right:16%;bottom:12%;font:700 9px Montserrat,sans-serif;color:#8a6a2c}
+body.cb-pen .cb-key{color:#4a6fd0;font-size:22px;font-family:Montserrat,sans-serif;font-weight:700}
+.cb-key.erase{display:flex;align-items:center;justify-content:center}
+/* ---------- tools ---------- */
+.cb-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:7px;border-radius:12px;background:rgba(15,23,42,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.cb-tools .pk-btn{width:auto;margin:0;padding:8px 10px;min-height:0;white-space:nowrap}
+.cb-tools .pk-btn.gold{grid-column:1 / -1;border-color:rgba(231,199,122,.75);color:#f0d27a;background:rgba(212,175,55,.16)}
+.cb-tools .pk-btn:disabled{opacity:.45}
+.cb-tools .pk-btn.on{border-color:#8fb0ff;color:#fff;background:rgba(74,111,208,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.cb-ringbtn{animation:cb-ringbtn 1.1s ease 2}
+@keyframes cb-ringbtn{50%{box-shadow:0 0 0 5px rgba(240,210,122,.6)}}
+.cb-tools .pk-btn.cb-sm{display:none}
+/* ---------- the result window ---------- */
+.cb-stars{font-size:30px;letter-spacing:6px;color:#f0d27a;text-shadow:0 2px 10px rgba(240,210,122,.45);margin:2px 0 6px;text-align:center}
+.cb-stars i{font-style:normal;color:rgba(255,255,255,.22);text-shadow:none}
+.cb-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
+.cb-facts div{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 4px;text-align:center;background:rgba(255,255,255,.04)}
+.cb-facts b{display:block;font:700 17px Montserrat,sans-serif;color:#fff}
+.cb-facts small{font:600 10px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.cb-story{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:11px 13px;border-radius:10px;background:linear-gradient(180deg,rgba(248,244,230,.97),rgba(238,228,201,.97));color:#2a2116;text-align:left}
+.cb-story .cb-mug{flex:none;width:60px;height:60px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px #b38a3a,1px 2px 4px rgba(0,0,0,.3)}
+.cb-story .cb-mug svg{width:100%;height:100%}
+#cbEnd .cb-story h3{margin:0 0 1px;text-align:left;font:700 19px/1.15 Cormorant Garamond,serif;color:#1f2f5c}
+#cbEnd .cb-story .cb-kind{margin:0 0 3px;font:600 10.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a6236;text-align:left}
+#cbEnd .cb-story p{margin:0;font:500 13px/1.45 Montserrat,sans-serif;color:#2a2116;text-align:left}
+#cbEnd .cb-story p.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cb-story .cb-rm{display:inline-block;margin-top:3px;padding:0;border:0;background:none;color:#1f2f5c;font:700 12px Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+.cb-note{font:500 12.5px/1.5 Montserrat,sans-serif;color:rgba(255,255,255,.78);text-align:center;margin:6px 0 0}
+#cbEnd .pk-row .pk-btn{flex:1 1 40%}
+@media (max-height:760px){
+  #cbEnd .pk-modal{padding:16px 16px 14px}
+  #cbEnd h2{font-size:21px;margin-bottom:2px}
+  #cbEnd .cb-stars{font-size:22px;margin:0 0 2px}
+  #cbEnd .cb-facts b{font-size:15px}
+  #cbEnd .cb-facts div{padding:5px 4px}
+  #cbEnd .cb-story{margin:8px 0 2px;padding:8px 10px}
+  #cbEnd .cb-story p.clamp{-webkit-line-clamp:2}
+  #cbEnd .cb-story .cb-mug{width:48px;height:48px}
+  #cbEnd .pk-kick{margin-bottom:2px}
+  #cbEnd .cb-facts{margin:6px 0 2px}
+  #cbEnd .cb-note{font-size:11.5px;margin:4px 0 0;line-height:1.4}
+}
+@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+  #cbEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
+  #cbEnd .pk-streak .pk-btn{padding:9px 12px}
+  #cbEnd .pk-modal .pk-streak p{margin:0 0 8px}
+  #cbEnd .pk-kick{margin:0}
+  #cbEnd h2{font-size:19px;margin:0}
+  #cbEnd .cb-stars{font-size:20px;margin:0}
+  #cbEnd .cb-facts{margin:4px 0 2px}
+  #cbEnd .cb-facts div{padding:3px 2px}
+  #cbEnd .cb-facts b{font-size:14px}
+  #cbEnd .cb-story{margin:6px 0 0;padding:6px 8px}
+  #cbEnd .cb-story .cb-mug{width:40px;height:40px}
+  #cbEnd .cb-story h3{font-size:15.5px}
+  #cbEnd .cb-note{display:none}
+  #cbEnd .pk-streak{margin-top:8px;padding:8px 10px}
+  #cbEnd .pk-streak p,#cbEnd .pk-streak div{font-size:12px;line-height:1.35}
+  #cbEnd .pk-row{margin-top:8px;gap:6px}
+  #cbEnd .pk-row .pk-btn{padding:8px 6px;font-size:12.5px}
+}
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  #cbEnd .pk-modal{width:min(780px,calc(100vw - 24px));max-width:none;display:grid;grid-template-columns:1.15fr 1fr;column-gap:16px;align-content:start;padding:12px 16px 12px}
+  #cbEnd .cb-endL,#cbEnd .cb-endR{min-width:0}
+  #cbEnd .cb-endR{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+  #cbEnd .pk-kick{margin:0 0 2px}
+  #cbEnd h2{font-size:20px;margin:0}
+  #cbEnd .cb-stars{font-size:22px;margin:0 0 2px}
+  #cbEnd .cb-facts{margin:4px 0 2px}
+  #cbEnd .cb-facts div{padding:4px 2px}
+  #cbEnd .cb-facts b{font-size:14px}
+  #cbEnd .cb-story{margin:6px 0 0;padding:7px 9px}
+  #cbEnd .cb-story .cb-mug{width:44px;height:44px}
+  #cbEnd .cb-story h3{font-size:16px}
+  #cbEnd .cb-story p{font-size:12px;line-height:1.38}
+  #cbEnd .cb-note{font-size:11px;margin:4px 0 0}
+  #cbEnd .cb-endR .pk-streak{margin:0}
+  #cbEnd .cb-endR .pk-row{margin:0;gap:8px}
+  #cbEnd .cb-endR .pk-row .pk-btn{padding:9px 6px;font-size:12.5px}
+}
+/* ---------- phones ---------- */
+@media (max-width:999px){
+  .cb-pad{grid-template-columns:1fr;gap:6px;justify-items:center}
+  .cb-right{width:100%;max-width:calc(100vw - 12px);gap:6px}
+  .cb-notes{padding:7px 10px}
+  .cb-notes::before{left:4px;right:4px;top:4px;bottom:4px}
+  .cb-notes h2,.cb-notes .cb-no,.cb-tag,.cb-rules,.cb-how{display:none}
+  .cb-rule1{display:block}
+  .cb-day{margin-top:3px;font-size:11.5px}
+  .cb-keys,.cb-keys.six{grid-template-columns:repeat(var(--cb-kn,10),1fr);gap:5px;padding:6px 6px}
+  .cb-key{aspect-ratio:auto;height:var(--cb-kh,42px);border-radius:12px;font-size:26px;
+    box-shadow:0 0 0 2px #d9b25a,0 0 0 3px #7a5a1e,inset 0 1px 1px rgba(255,255,255,.9),inset -2px -3px 5px rgba(120,90,30,.25),2px 3px 5px rgba(0,0,0,.45)}
+  .cb-key::before{inset:3px;border-radius:9px}
+  .cb-key:active{box-shadow:0 0 0 2px #d9b25a,0 0 0 3px #7a5a1e,1px 1px 2px rgba(0,0,0,.45)}
+  .cb-key small{right:5px;bottom:3px;font-size:8px}
+  body.cb-pen .cb-key{font-size:18px}
+  .cb-tools{width:100%;padding:6px;gap:6px;grid-template-columns:1.7fr 1fr 1fr 1fr}
+  .cb-tools .pk-btn{padding:8px 6px;font-size:12.5px}
+  .cb-tools .pk-btn.gold{grid-column:auto}
+  .cb-tools .pk-btn.cb-lg{display:none}
+  .cb-tools .pk-btn.cb-sm{display:block}
+  body.pk.seated .pk-stage{justify-content:flex-start}
+  .cb-toast{font-size:13px;padding:7px 11px}
+}
+.cb-pad.coach .cb-notes{display:none}
+.cb-pad.short .cb-notes{display:none}
+.cb-pad.dshort .cb-how,.cb-pad.dshort .cb-no{display:none}
+.cb-pad.dshort .cb-notes h2{margin-bottom:6px}
+.cb-pad.dshort .cb-rules li{padding:2px 0 2px 26px;font-size:13px}
+.cb-pad.short .cb-notes{padding:5px 9px}
+.cb-pad.short .cb-rule1{font-size:11.5px}
+/* ---------- phones held sideways: the movement fills the left; the notes, keys and buttons stand in a column at the right ---------- */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk-land.seated .cb-pad.land{grid-template-columns:auto;justify-items:center}
+  body.pk-land.seated .cb-pad.land .cb-right{position:fixed;z-index:20;right:calc(8px + env(safe-area-inset-right));top:8px;max-height:calc(100dvh - 16px);width:var(--pk-landR);max-width:none;gap:6px}
+  body.pk-land.seated.pk-coaching .cb-pad.land .cb-right{top:auto;bottom:8px}
+  body.pk-land.seated .cb-pad.land .cb-keys{grid-template-columns:repeat(5,1fr);gap:5px;padding:5px}
+  body.pk-land.seated .cb-pad.land .cb-key{height:36px;font-size:22px}
+  body.pk-land.seated .cb-pad.land .cb-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
+  body.pk-land.seated .cb-pad.land .cb-tools .pk-btn{padding:7px 6px;font-size:12px}
+  body.pk-land.seated .cb-pad.land .cb-tools .pk-btn.gold{grid-column:1 / -1}
+  body.pk-land.seated .cb-pad.land .cb-tools .pk-btn.cb-lg{display:block}
+  body.pk-land.seated .cb-pad.land .cb-tools .pk-btn.cb-sm{display:none}
+  body.pk-land.seated.pk-coaching .cb-pad.land .cb-notes{display:none}
+}
+</style>
+<script src="bw-auth.js?v=1031a"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html"><img src="logo-image.png" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="lobby.html">Lobby</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="index.html">Home</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1031a"></script>
+<script src="bw-avatars.js?v=1031a"></script>
+<script src="parlor-kit.js?v=1102a"></script>
+<script id="cbCore">
+/* ===== The Clockmaker's Bench core (rules, graded solver, daily pick): shared by the page and the tests =====
+   An n x n grid of watch dials (6 x 6 or 9 x 9) is split into n gears (2 x 3 or 3 x 3 dials each).
+   Fill every dial so each number 1..n appears once in every row, every column and every gear.
+   Every puzzle has exactly one answer, and can be worked out step by step with no guessing: a careful-clockmaker
+   solver does it, scoring each kind of reasoning it needs. The score sets the day's difficulty, and the same solver
+   drives the hints. The daily puzzles come from a graded pool (made offline, tools/clockmaker), each one dressed
+   differently every time it comes round: its numbers renamed and its rows and columns shuffled (keeping the
+   pattern's symmetry), which never changes the reasoning it needs. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function bits(m){ var c=0; while(m){ m&=m-1; c++; } return c; }
+function digs(m){ var o=[]; for(var d=1;m;d++,m>>=1) if(m&1) o.push(d); return o; }
+
+/* ---------- geometry: units 0..n-1 rows, n..2n-1 columns, 2n..3n-1 gears ---------- */
+var GEO={};
+function geom(n){
+  if(GEO[n]) return GEO[n];
+  var br=n===6?2:3, bc=3, N=n*n, U=[], CU=[], PE=[], i, u;
+  for(u=0;u<3*n;u++) U.push([]);
+  for(i=0;i<N;i++){ var r=(i/n)|0, c=i%n, b=((r/br)|0)*(n/bc)+((c/bc)|0); U[r].push(i); U[n+c].push(i); U[2*n+b].push(i); CU.push([r,n+c,2*n+b]); }
+  for(i=0;i<N;i++){ var seen={}, p=[]; for(var q=0;q<3;q++) U[CU[i][q]].forEach(function(x){ if(x!==i&&!seen[x]){ seen[x]=1; p.push(x); } }); PE.push(p); }
+  return GEO[n]={n:n,N:N,br:br,bc:bc,U:U,CU:CU,PE:PE,ALL:(1<<n)-1};
+}
+function sees(G,a,b){ return a!==b&&(G.CU[a][0]===G.CU[b][0]||G.CU[a][1]===G.CU[b][1]||G.CU[a][2]===G.CU[b][2]); }
+
+/* ---------- counting answers (stops at lim) ---------- */
+function count(n,g,lim){
+  var G=geom(n), N=G.N, a=g.slice(), rm=new Int32Array(n), cm=new Int32Array(n), bm=new Int32Array(n), found=0, first=null, i;
+  for(i=0;i<N;i++) if(a[i]){ var m=1<<(a[i]-1), cu=G.CU[i]; if(rm[cu[0]]&m||cm[cu[1]-n]&m||bm[cu[2]-2*n]&m) return {n:0,sol:null}; rm[cu[0]]|=m; cm[cu[1]-n]|=m; bm[cu[2]-2*n]|=m; }
+  lim=lim||2;
+  (function go(){
+    if(found>=lim) return;
+    var best=-1, bm2=0, bc=99;
+    for(var i=0;i<N;i++) if(!a[i]){ var cu=G.CU[i], f=G.ALL&~(rm[cu[0]]|cm[cu[1]-n]|bm[cu[2]-2*n]), c=bits(f); if(c<bc){ bc=c; best=i; bm2=f; if(c<2) break; } }
+    if(best<0){ found++; if(!first) first=a.slice(); return; }
+    if(!bc) return;
+    var cu=G.CU[best];
+    for(var d=1;d<=n;d++){ var m=1<<(d-1); if(!(bm2&m)) continue;
+      a[best]=d; rm[cu[0]]|=m; cm[cu[1]-n]|=m; bm[cu[2]-2*n]|=m;
+      go();
+      a[best]=0; rm[cu[0]]&=~m; cm[cu[1]-n]&=~m; bm[cu[2]-2*n]&=~m;
+      if(found>=lim) return; }
+  })();
+  return {n:found,sol:first};
+}
+
+/* ---------- the week ----------
+   n: the grid · lvl: the hardest kind of step allowed · need: how many steps it must use of [level 2, level 3+, level 4+, level 6] ·
+   score: the band its total must land in. Saturday also needs a triple or quad, or three pair-level steps.
+   Set Nov 2 from the graded pool (tools/clockmaker/build-pool.js; check with tools/clockmaker/check-year.js). */
+var WEEK={
+  1:{n:6,lvl:2,need:[1,0,0,0],score:[25,31],label:"Monday"},
+  2:{n:6,lvl:4,need:[0,1,0,0],score:[28,60],label:"Tuesday"},
+  3:{n:9,lvl:2,need:[1,0,0,0],score:[55,64],label:"Wednesday"},
+  4:{n:9,lvl:3,need:[0,2,0,0],score:[65,92],label:"Thursday"},
+  5:{n:9,lvl:4,need:[0,1,1,0],score:[78,110],label:"Friday"},
+  6:{n:9,lvl:5,need:[0,1,1,0],score:[98,140],label:"Saturday"},
+  0:{n:9,lvl:6,need:[0,1,1,1],score:[115,220],label:"Sunday"}
+};
+/* the kinds of step a careful clockmaker uses, simplest first; level and cost:
+   hidden (1): in a row, column or gear, a number fits in only one dial (1 in a gear, 1.5 in a row or column)
+   naked (2, 2.5): a dial with only one number left that it can be
+   pointing / claiming (3, 5): a number that, inside a gear, fits only along one row or column (so the rest of that
+     line can't have it); or that, inside a row or column, fits only in one gear (so the rest of the gear can't)
+   npair / hpair (4, 8 / 10): two dials in a unit that can only be the same two numbers; two numbers that fit only in
+     the same two dials of a unit
+   ntriple / htriple / nquad / hquad (5, 14 / 16 / 20 / 22): the same with three or four
+   xwing (6, 20), xywing (6, 22), xyzwing (6, 26), swordfish (6, 30) */
+var COST={hiddenG:1,hiddenL:1.5,naked:2.5,pointing:5,claiming:5,npair:8,hpair:10,ntriple:14,htriple:16,nquad:20,hquad:22,xwing:20,xywing:22,xyzwing:26,swordfish:30};
+var LVL={hiddenG:1,hiddenL:1,naked:2,pointing:3,claiming:3,npair:4,hpair:4,ntriple:5,htriple:5,nquad:5,hquad:5,xwing:6,xywing:6,xyzwing:6,swordfish:6};
+
+/* ---------- the careful clockmaker ----------
+   state: v[i] (the number in a dial, 0 if empty), c[i] (a bitmask of the numbers it could still be).
+   step(state,lvl) returns the simplest step that makes progress, or null:
+     a placement {k, at, d, u} or an elimination {k, out:[[cell,mask]], ...details}. */
+function solver(n){
+  var G=geom(n), N=G.N, U=G.U;
+  function init(g){ var st={v:g.slice(),c:new Array(N).fill(0)}, i;
+    for(i=0;i<N;i++) if(!st.v[i]) st.c[i]=G.ALL;
+    for(i=0;i<N;i++) if(st.v[i]){ var m=1<<(st.v[i]-1); G.PE[i].forEach(function(p){ st.c[p]&=~m; }); }
+    return st; }
+  function place(st,i,d){ st.v[i]=d; st.c[i]=0; var m=1<<(d-1); G.PE[i].forEach(function(p){ st.c[p]&=~m; }); }
+  function empties(st,u){ return U[u].filter(function(x){ return !st.v[x]; }); }
+  function where(st,u,d){ var m=1<<(d-1); return U[u].filter(function(x){ return !st.v[x]&&(st.c[x]&m); }); }
+  function has(st,u,d){ for(var j=0;j<U[u].length;j++) if(st.v[U[u][j]]===d) return true; return false; }
+  function dead(st){ for(var i=0;i<N;i++) if(!st.v[i]&&!st.c[i]) return true;
+    for(var u=0;u<3*n;u++) for(var d=1;d<=n;d++) if(!has(st,u,d)&&!where(st,u,d).length) return true; return false; }
+  function done(st){ for(var i=0;i<N;i++) if(!st.v[i]) return false; return true; }
+  function combos(A,k,fn){ var idx=[]; return (function go(s){ if(idx.length===k) return fn(idx.map(function(i){ return A[i]; }));
+      for(var i=s;i<A.length;i++){ idx.push(i); if(go(i+1)) return true; idx.pop(); } return false; })(0); }
+  var GU=[]; for(var u0=2*n;u0<3*n;u0++) GU.push(u0); for(u0=0;u0<2*n;u0++) GU.push(u0);   /* gears first, then rows and columns */
+  function step(st,lvl){
+    var u, d, i, j, q, res=null;
+    /* hidden single: gears first (easiest to spot), then rows and columns */
+    for(q=0;q<GU.length;q++){ u=GU[q]; for(d=1;d<=n;d++){ if(has(st,u,d)) continue; var w=where(st,u,d); if(w.length===1) return {k:u>=2*n?"hiddenG":"hiddenL",u:u,at:w[0],d:d}; } }
+    if(lvl<2) return null;
+    for(i=0;i<N;i++) if(!st.v[i]&&bits(st.c[i])===1) return {k:"naked",at:i,d:digs(st.c[i])[0]};
+    if(lvl<3) return null;
+    /* pointing: in a gear, a number fits only along one row (column) */
+    for(u=2*n;u<3*n;u++) for(d=1;d<=n;d++){ if(has(st,u,d)) continue; var w2=where(st,u,d); if(w2.length<2) continue;
+      for(q=0;q<2;q++){ var L=G.CU[w2[0]][q]; if(!w2.every(function(x){ return G.CU[x][q]===L; })) continue;
+        var m=1<<(d-1), out=U[L].filter(function(x){ return G.CU[x][2]!==u&&!st.v[x]&&(st.c[x]&m); });
+        if(out.length) return {k:"pointing",u:u,u2:L,d:d,cells:w2,out:out.map(function(x){ return [x,m]; })}; } }
+    /* claiming: in a row (column), a number fits only in one gear */
+    for(u=0;u<2*n;u++) for(d=1;d<=n;d++){ if(has(st,u,d)) continue; var w3=where(st,u,d); if(w3.length<2) continue;
+      var B=G.CU[w3[0]][2]; if(!w3.every(function(x){ return G.CU[x][2]===B; })) continue;
+      var m2=1<<(d-1), out2=U[B].filter(function(x){ return G.CU[x][u<n?0:1]!==u&&!st.v[x]&&(st.c[x]&m2); });
+      if(out2.length) return {k:"claiming",u:u,u2:B,d:d,cells:w3,out:out2.map(function(x){ return [x,m2]; })}; }
+    if(lvl<4) return null;
+    var sizes=lvl>=5?[2,3,4]:[2];
+    for(var si=0;si<sizes.length;si++){ var k=sizes[si], nk=k===2?"npair":k===3?"ntriple":"nquad", hk=k===2?"hpair":k===3?"htriple":"hquad";
+      /* naked: k dials in a unit that between them can only be k numbers */
+      for(q=0;q<GU.length&&!res;q++){ u=GU[q]; var E=empties(st,u).filter(function(x){ return bits(st.c[x])<=k; }); if(E.length<k) continue;
+        combos(E,k,function(set){ var M=0; set.forEach(function(x){ M|=st.c[x]; }); if(bits(M)!==k) return false;
+          var out=[]; empties(st,u).forEach(function(x){ if(set.indexOf(x)<0&&(st.c[x]&M)) out.push([x,st.c[x]&M]); });
+          if(out.length){ res={k:nk,u:u,cells:set,ds:M,out:out}; return true; } return false; }); }
+      if(res) return res;
+      /* hidden: k numbers in a unit that fit only in the same k dials */
+      for(q=0;q<GU.length&&!res;q++){ u=GU[q]; var D=[]; for(d=1;d<=n;d++){ if(has(st,u,d)) continue; var wd=where(st,u,d); if(wd.length>=1&&wd.length<=k) D.push(d); }
+        if(D.length<k) continue;
+        combos(D,k,function(set){ var cells={}; set.forEach(function(d){ where(st,u,d).forEach(function(x){ cells[x]=1; }); }); var C=Object.keys(cells).map(Number); if(C.length!==k) return false;
+          var M=0; set.forEach(function(d){ M|=1<<(d-1); }); var out=[]; C.forEach(function(x){ if(st.c[x]&~M) out.push([x,st.c[x]&~M]); });
+          if(out.length){ res={k:hk,u:u,cells:C,ds:M,out:out}; return true; } return false; }); }
+      if(res) return res;
+    }
+    if(lvl<6) return null;
+    /* x-wing (2) and swordfish (3): a number that, in k rows, fits only in the same k columns (or the reverse) */
+    function fish(k){
+      for(d=1;d<=n;d++){ var m=1<<(d-1);
+        for(var dir=0;dir<2;dir++){ var base=[], off=dir?n:0, cov=dir?0:1;
+          for(u=off;u<off+n;u++){ if(has(st,u,d)) continue; var w=where(st,u,d); if(w.length>=2&&w.length<=k) base.push(u); }
+          if(base.length<k) continue; var r2=null;
+          combos(base,k,function(set){ var C={}; set.forEach(function(u){ where(st,u,d).forEach(function(x){ C[G.CU[x][cov]]=1; }); }); var CL=Object.keys(C).map(Number); if(CL.length!==k) return false;
+            var out=[]; CL.forEach(function(L){ U[L].forEach(function(x){ if(!st.v[x]&&(st.c[x]&m)&&set.indexOf(G.CU[x][dir])<0) out.push([x,m]); }); });
+            if(out.length){ r2={k:k===2?"xwing":"swordfish",d:d,us:set,us2:CL,out:out}; return true; } return false; });
+          if(r2) return r2; } }
+      return null; }
+    res=fish(2); if(res) return res;
+    /* xy-wing: a pivot that can be a or b, a wing it sees that can be a or c, another that can be b or c: c goes from anything seeing both wings */
+    var bi=[]; for(i=0;i<N;i++) if(!st.v[i]&&bits(st.c[i])===2) bi.push(i);
+    for(var p=0;p<bi.length;p++){ var P=bi[p], pc=st.c[P], W=bi.filter(function(x){ return sees(G,P,x)&&bits(st.c[x]&pc)===1; });
+      for(i=0;i<W.length;i++) for(j=i+1;j<W.length;j++){ var A=W[i], Bw=W[j], ca=st.c[A], cb=st.c[Bw];
+        if((ca&pc)===(cb&pc)) continue; var z=ca&cb&~pc; if(bits(z)!==1||((ca|cb)&~(pc|z))) continue;
+        var out=[]; for(var x=0;x<N;x++) if(!st.v[x]&&x!==A&&x!==Bw&&x!==P&&(st.c[x]&z)&&sees(G,x,A)&&sees(G,x,Bw)) out.push([x,z]);
+        if(out.length) return {k:"xywing",piv:P,w1:A,w2:Bw,d:digs(z)[0],out:out}; } }
+    /* xyz-wing: a pivot that can be a, b or c; wings a/c and b/c it sees: c goes from anything seeing all three */
+    for(i=0;i<N;i++){ if(st.v[i]||bits(st.c[i])!==3) continue; var pc3=st.c[i], W3=bi.filter(function(x){ return sees(G,i,x)&&(st.c[x]&~pc3)===0; });
+      for(var a=0;a<W3.length;a++) for(var b=a+1;b<W3.length;b++){ var A3=W3[a], B3=W3[b]; if(st.c[A3]===st.c[B3]) continue; var z3=st.c[A3]&st.c[B3]; if(bits(z3)!==1) continue;
+        var out3=[]; for(var x3=0;x3<N;x3++) if(!st.v[x3]&&x3!==i&&x3!==A3&&x3!==B3&&(st.c[x3]&z3)&&sees(G,x3,i)&&sees(G,x3,A3)&&sees(G,x3,B3)) out3.push([x3,z3]);
+        if(out3.length) return {k:"xyzwing",piv:i,w1:A3,w2:B3,d:digs(z3)[0],out:out3}; } }
+    res=fish(3); if(res) return res;
+    return null;
+  }
+  function apply(st,s){ if(s.at!=null&&s.d) place(st,s.at,s.d); else s.out.forEach(function(o){ st.c[o[0]]&=~o[1]; }); }
+  function run(g,lvl){
+    var st=init(g), steps=[], score=0, deep=[0,0,0,0], max=0;
+    for(var t=0;t<4*N*n&&!done(st);t++){
+      if(dead(st)) return {ok:false,dead:true,steps:steps,score:score,deep:deep,max:max,st:st};
+      var s=step(st,lvl); if(!s) return {ok:false,steps:steps,score:score,deep:deep,max:max,st:st};
+      apply(st,s); steps.push(s); score+=COST[s.k]; var L=LVL[s.k]; if(L===2) deep[0]++; if(L>=3) deep[1]++; if(L>=4) deep[2]++; if(L>=6) deep[3]++; if(L>max) max=L;
+    }
+    return {ok:done(st),steps:steps,score:Math.round(score*10)/10,deep:deep,max:max,st:st};
+  }
+  return {G:G,init:init,place:place,step:step,apply:apply,run:run,dead:dead,where:where,has:has};
+}
+function grade(n,g,lvl){ return solver(n).run(g,lvl==null?6:lvl); }
+
+/* ---------- dressing a pool puzzle for its day: rename the numbers, shuffle rows and columns within their bands
+   (keeping the clue pattern's half-turn symmetry), and maybe flip it ---------- */
+function symPerm(n,size,r){
+  /* a permutation of 0..n-1 that keeps groups of `size` together and commutes with i -> n-1-i */
+  for(var t=0;t<500;t++){
+    var groups=n/size, gp=shuffle(Array.from({length:groups},function(_,i){ return i; }),r), p=[];
+    for(var g=0;g<groups;g++){ var inner=shuffle(Array.from({length:size},function(_,i){ return i; }),r); for(var k=0;k<size;k++) p[g*size+k]=gp[g]*size+inner[k]; }
+    var ok=true; for(var i=0;i<n&&ok;i++) if(p[n-1-i]!==n-1-p[i]) ok=false;
+    if(ok) return p;
+  }
+  return Array.from({length:n},function(_,i){ return i; });
+}
+function dress(n,g,seed){
+  var G=geom(n), r=rng("dress:"+seed), rel=shuffle(Array.from({length:n},function(_,i){ return i+1; }),r);
+  var rp=symPerm(n,G.br,r), cp=symPerm(n,G.bc,r), tr=n===9&&r()<.5, out=new Array(G.N).fill(0);
+  for(var i=0;i<G.N;i++){ if(!g[i]) continue; var R=rp[(i/n)|0], C=cp[i%n]; if(tr){ var t=R; R=C; C=t; } out[R*n+C]=rel[g[i]-1]; }
+  return out;
+}
+
+/* ---------- the pool (made offline; see tools/clockmaker) and the day's pick ---------- */
+var POOL={"0":[{"g":"....5.8..5.27.4..97....9..56......3..95.3.64..2......83..6....12..5.39.6..6.9....","s":127,"m":6},{"g":"49...6..7.........5..4..2...87..5.32.2..7..5.34.1..87...8..4..9.........1..7...63","s":122.5,"m":6},{"g":".64.9..2...836.....3.1..........3..58.5...4.37..4..........9.3.....486...4..3.21.","s":129.5,"m":6},{"g":"..4..231...591..6.........7..314..2..8.....5..2..739..1.........6..912...523..1..","s":166,"m":6},{"g":"1.7..9..3.25..8..9.....6...3.2....9..5.....7..1....6.4...9.....2..5..48.6..4..9.7","s":120,"m":6},{"g":"5............93.6...2..4.5767...23..8...7...1..48...7615.3..4...6.24............8","s":124,"m":6},{"g":"6...7..8...5.41.97...83..6....2..9.5.5.....1.9.2..3....7..59...53.16.7...6..2...1","s":120,"m":6},{"g":"....7.4..4....97.2.....1.83....47.28..8...3..91.53....65.1.....8.17....6..4.6....","s":137.5,"m":6},{"g":"69....74.2..9.4....43.6........31.....46.83.....49........8.67....5.9..4.71....59","s":148,"m":6},{"g":".982.1...5.4.3..........8..8...5...3..67.29..2...1...7..2..........8.2.9...4.935.","s":134,"m":6},{"g":"...8.59.7..9.....4....36.2..975..4.6.........8.3..257..3.41....9.....2..7.42.9...","s":120.5,"m":6},{"g":".52...9...1.82...3.3......73..4.2.7.....8.....2.6.3..52......4.1...49.5...4...38.","s":123,"m":6},{"g":"..89.7..1.............8.496.9.2.67...5.....6...18.4.2.735.2.............9..7.82..","s":141.5,"m":6},{"g":"3.....6....68...1...437.....5.9.8.7.1.......4.9.4.1.2.....824...3...41....8.....5","s":120.5,"m":6},{"g":"..3.4...7....926..9....5...8....94.1..6...7..4.96....3...7....4..451....7...6.8..","s":135,"m":6},{"g":"...8...9...6.2..4..9..1.23...12.....92.....53.....17...32.8..7..6..7.9...1...4...","s":168.5,"m":6},{"g":"...8.....3.6..4...4...9...8.3..857...753.198...476..5.1...3...4...5..6.9.....2...","s":125.5,"m":6},{"g":".68..........7....7..159..857.3..2...2.....5...3..1.672..734..1....1..........78.","s":137,"m":6},{"g":".734.......17...9..4..3.....68..7.5...5...3...1.5..24.....6..3..9...35.......812.","s":146.5,"m":6},{"g":"......62..24..95...9.3.8.1....5.2.4.....7.....3.6.1....7.4.6.8...92..17..83......","s":127,"m":6},{"g":".5...21.....53....9.3...5..1.89....3.2.....1.6....89.5..7...6.8....47.....12...4.","s":128.5,"m":6},{"g":"3....4...5..2.13.7.12.......4.7......39.8.26......2.5.......59.1.65.3..8...4....2","s":131.5,"m":6},{"g":"..4..69.8.6......4...4...5612..9.3......2......3.7..8981...9...3......9.6.93..5..","s":122.5,"m":6},{"g":"..87....6...1....2.63...51..7.2.5..9.3..9..7.1..4.7.5..51...82.3....8...7....49..","s":119.5,"m":6},{"g":"8....162...19....3....4...9....23.61.45...39.26.19....5...1....3....85...183....6","s":124.5,"m":6},{"g":".....32.7.7...6.1...5..23.81..52......91.45......97..15.62..8...8.6...5.9.34.....","s":147.5,"m":6},{"g":".2...4.385.3.98....862.........6...5..9...4..7...8.........369....51.8.229.7...1.","s":120.5,"m":6},{"g":".632....7...3...4...74...9.82....4.1.........3.1....69.3...15...5...7...9....421.","s":120,"m":6},{"g":".8.1.5.3.....238....3...6.58.9.1.56...........64.5.7.14.7...3....587.....1.4.2.5.","s":127,"m":6},{"g":"...31...6.7.4...5...1..97....5.96...3..2.1..4...74.6....81..4...5...4.2.6...32...","s":120,"m":6},{"g":"1.....2...4...63...8..9..6..2.54.9...6.....8...9.63.7..1..5..2...81...9...4.....7","s":163,"m":6},{"g":".........37924......4.18...9...72.45..7...3..26.43...1...32.6......61473.........","s":132,"m":6},{"g":"..934...1..65...9.7....6....8...56..54.....87..28...4....1....2.2...48..3...984..","s":183.5,"m":6},{"g":"9.5..86.34...218......3...15......8....4.9....3......46...9......917...82.13..9.5","s":170.5,"m":6},{"g":"2......5....96........73.18..4...19.78.....34.93...6..86.73........16....4......9","s":153.5,"m":6},{"g":"5..8.1..73.165..........1..2..1...7..4.....6..9...3..1..8..........463.57..5.9..2","s":157,"m":6},{"g":"8...7.......4..29.16.5.......1..57..39.....52..86..4.......4.27.87..1.......2...1","s":191,"m":6},{"g":".863........1....93....4.5..1..7...89.38.51.45...4..7..5.4....61....6........829.","s":189,"m":6},{"g":"95..2.6.43....78...71........63.....4.......6.....62........18...38....95.7.9..23","s":150.5,"m":6},{"g":"9...7.8..58.1.....2....8..4.5..3.19...........98.6..2.3..4....1.....1.69..6.9...3","s":155.5,"m":6},{"g":"2.84..5..........37.9.83.2......2.91....4....97.1......1.39.2.65..........7..19.5","s":149,"m":6},{"g":"....8......9...6...8612..79....9.41.31.7.6.58.94.5....64..1289...5...2......6....","s":163,"m":6},{"g":"..3....9..874....6...8.31.7..263.................256..8.65.4...1....987..3....4..","s":140.5,"m":6},{"g":"4.65.9.7..5...7..4..2...........682...8...5...193...........2..8..9...3..4.6.17.5","s":122,"m":6},{"g":".....3.84.9......73..42..56...7.6..1.2..5..4.1..9.2...93..14..26......1.25.3.....","s":158,"m":6},{"g":"....26..44.231...6..8....3.....8.5..9.61.74.3..1.4.....3....2..1...347.98..79....","s":124,"m":6},{"g":"....24..5.425...3..1..39.2..69.......7.2.6.4.......68..2.46..9..8...275.1..79....","s":131,"m":6},{"g":"...3.5..28.54.6.........65.......4.94..9.2..87.1.......13.........6.82.12..5.7...","s":139.5,"m":6},{"g":".1......69..2..5....5346....3.8..9.7.........1.7..5.3....4698....4..3..27......6.","s":175,"m":6},{"g":"...9.....5...6...724...8.95.7..4.6..69..3..48..8.9..3.82.1...569...2...4.....9...","s":129,"m":6},{"g":".5........3.15...4692.83...1.62......7.....4......81.9...67.4139...31.2........8.","s":129.5,"m":6},{"g":"..3..8..22.7.9.3...84.....7.2...1.....98.37.....4...9.7.....65...8.3.2.99..6..4..","s":139.5,"m":6},{"g":"45..89.....6....8.1....746...19...7....521....2...43...187....6.9....8.....39..51","s":129.5,"m":6},{"g":"...59.2.8..........15.7.63..5...7..2.78...54.1..3...9..42.8.75..........5.7.39...","s":136,"m":6},{"g":".63.8..9.1....92...8.2..3.....4..9..4.8.9.1.3..6..1.....4..3.1...71....9.3..5.87.","s":142,"m":6},{"g":".967..........13....38...5.2...5.93.8...9...4.35.8...7.2...64....92..........861.","s":134.5,"m":6},{"g":"..9.3..41.835.4.9..........5..2..1...9.4.8.5...8..7..4..........3.6.241.86..1.5..","s":122.5,"m":6},{"g":"3..2...6..8....9...17..9..5.4......7..37.86..1......2.9..5..17...1....4..3...1..2","s":156,"m":6},{"g":".1.....9...8.3...79....4.164...8..2....2.7....3..9...534.6....91...7.6...7.....8.","s":131.5,"m":6},{"g":"4.36.5.....82..6..9.........5...1..4..9.7.5..7..5...1.........2..6..39.....4.63.1","s":147.5,"m":6},{"g":".9.....6....5.2..1..5.39...1.....924.3.....7.247.....3...29.7..9..4.5....7.....3.","s":121.5,"m":6},{"g":".....17....65.7..481..9..6.13.......9.......1.......37.8..7..257..1.58....43.....","s":154,"m":6},{"g":"7..42..9...4..97.......8..6.5..8.231.........318.4..7.1..8.......73..5...9..57..8","s":140,"m":6},{"g":"..8..5...46...2..3.12........7.8..6.6..739..5.2..5.4........78.7..9...16...6..5..","s":132.5,"m":6},{"g":"...3.2...71.....393..96..8...5.41...4.......2...63.7...2..76..894.....75...4.9...","s":121,"m":6},{"g":"....92.5.98...1.2.3.2..8..4...13....1.3...4.2....27...2..9..1.6.4.2...83.3.87....","s":170,"m":6},{"g":"...5.2.78.......2...2.4.1.95...64.....3.1.8.....27...57.4.2.6...3.......68.4.1...","s":183.5,"m":6},{"g":"4..1..6....9....8..1.2.8.5....9.74.5....8....3.24.5....6.5.4.3..3....5....4..1..7","s":120.5,"m":6},{"g":"....9.6..8....54.9..9...53......37.8....2....5.26......25...3..7.34....5..1.5....","s":119,"m":6},{"g":"......5...5.1...7.4..83..1.2....9.83..6.7.2..78.2....6.9..46..5.7...1.2...8......","s":126.5,"m":6},{"g":"56....8...37.6..4....3..6....18....342.....898....92....2..5....8..7.42...5....76","s":121.5,"m":6},{"g":"16..7.........5.71..7....2.......4.8..82.46..9.4.......9....2..28.5.........9..37","s":121.5,"m":6},{"g":"39..5...6.....45.95..2...1...5.7...1.6.4.1.7.7...6.3...7...5..36.27.....8...4..52","s":130,"m":6},{"g":"2...7.1..3..1.2.....7...5..4.97...6..8..2..4..5...49.2..4...2.....4.5..8..1.8...7","s":135.5,"m":6},{"g":"..51.....2..38.....9...7..2359...8..6.7...2.3..8...7519..4...2.....68..5.....26..","s":132.5,"m":6},{"g":"....2......53...21...5..48.6...8..5..2.7.5.1..5..4...9.74..9...23...78......1....","s":122.5,"m":6},{"g":".....7..2.8.4..16..59..3........86.4....7....9.72........8..45..32..4.8.8..7.....","s":190.5,"m":6},{"g":"3.6..19....5.....8....7.6.3..4.97.8.7.......5.3.65.4..6.7.3....4.....8....14..3.7","s":125,"m":6},{"g":"4..39.........2.38..3.8...49....7...5.18.49.3...9....17...2.4..12.6.........59..2","s":118,"m":6},{"g":"......8...5.36..4....8.1.6.5.9...7..4...7...2..1...4.8.4.5.6....2..37.1...6......","s":128,"m":6},{"g":".....1..8..235....9.....35..4..15.6...67924...7.64..1..25.....6....741..1..5.....","s":124,"m":6},{"g":".......5..5.9..4....64.37.9.45.....36...8...73.....91.9.12.53....8..6.9..7.......","s":161,"m":6},{"g":"..34.6...8.6...9......95..2......32...96578...81......9..76......8...4.6...1.87..","s":128,"m":6},{"g":".96..48.......3...78....6.....49.5.6.4.....8.5.3.18.....2....61...2.......46..25.","s":156.5,"m":6},{"g":"....6...24..2.1....17....9.6.1..758....8.9....896..1.7.3....92....1.6..58...3....","s":127,"m":6},{"g":"7.84..6...39.652...6.9......47.....8.........9.....74......1.7...159.32...2..79.1","s":152.5,"m":6},{"g":".2.9.4.8.8..2.6.7.7.....4...3..68..4.........2..41..6...2.....8.7.8.1..5.4.5.9.1.","s":137.5,"m":6},{"g":".3...6...8714....29..2...7..8.7..26.....6.....27..1.4..9...5..31....3725...8...9.","s":130.5,"m":6},{"g":"...916.24.....8..1..42.....46....31.5.......9.82....67.....27..8..4.....32.675...","s":145.5,"m":6},{"g":"4..5....1.....6....9..3.27.2.....4898...9...3971.....2.54.2..9....3.....3....8..6","s":144.5,"m":6}],"1":[{"g":"4.61........5.3..62..3.5........26.1","s":27,"m":2},{"g":".5....6...1...4..33..6...2...5....2.","s":27.5,"m":2},{"g":"..4......52.2...1..1...6.32......3..","s":28,"m":2},{"g":".2....41...5....3..4....1...26....5.","s":29.5,"m":2},{"g":"..526.....5...1.4..6.1...5.....325..","s":25.5,"m":2},{"g":"....56...4...135....563...1...23....","s":26,"m":2},{"g":".3..6......5..4..35..1..2......5..2.","s":28.5,"m":2},{"g":"...2....2.31.6.3....3.5.21.4....6...","s":27,"m":2},{"g":"..5...16....25...13...56....42...3..","s":25.5,"m":2},{"g":".....3.....43.21.61.62.56.....2.....","s":27.5,"m":2},{"g":"..2..11.....54.6....3.45.....43..5..","s":26,"m":2},{"g":"..12...6..5.6..1....4..2.3..2...63..","s":26,"m":2},{"g":"65...3..3...2.6......4.2...1..1...54","s":25.5,"m":2},{"g":"4......35....2..6..6..5....12......6","s":29,"m":2},{"g":".6.....3....4..15..16..2....4.....1.","s":29.5,"m":2},{"g":"...2.....54.3...1..6...5.12.....4...","s":28,"m":2},{"g":"3...54........1..26..3........45...6","s":28.5,"m":2},{"g":"5......34....2.45..65.1....16......2","s":25.5,"m":2},{"g":"......6.3..1..6.4..3.5..1..2.5......","s":28.5,"m":2},{"g":"36..1...1......46..46......2...5..43","s":25.5,"m":2},{"g":"...6.....3.2.35..42..53.1.3.....2...","s":26.5,"m":2},{"g":".5....4.3..5.41......46.2..1.6....2.","s":25.5,"m":2},{"g":"53....6.4...3...1..6...2...2.5....43","s":25.5,"m":2},{"g":"...6.3..3.2.42........62.5.1..1.4...","s":26.5,"m":2},{"g":"..364..4.....6.3....1.6.....2..541..","s":27.5,"m":2},{"g":"4.1....3....6.24....32.1....2....6.5","s":25.5,"m":2},{"g":"3..2.1....3.....1656.....4....6.5..3","s":25.5,"m":2},{"g":"1.4..2.2....4..6....1..5....5.5..3.6","s":26.5,"m":2},{"g":"1......32.....1.4646.2.....56......3","s":25.5,"m":2},{"g":"2..4.....3....5.2..3.6....1.....4..6","s":28,"m":2},{"g":"...51..4...3.5.1....6.4.3...5..25...","s":25.5,"m":2},{"g":"..14.34...1.6..........5.2...63.62..","s":26,"m":2},{"g":".5......32..1..6....5..2..41......4.","s":28,"m":2},{"g":"..4...25...4...6.15.1...3...26...3..","s":25.5,"m":2},{"g":"...6.2....3..54..11..42..1....4.5...","s":25.5,"m":2},{"g":"......256....41..33..14....354......","s":27,"m":2},{"g":"...5....4.26..3.1..1.3..63.2....2...","s":27,"m":2},{"g":".3..1...26....4..12..4....51...2..5.","s":27,"m":2},{"g":"..1..2....3...6..51..6...4....5..4..","s":28.5,"m":2},{"g":"..3..5....4...6.1..3.6...2....6..2..","s":30,"m":2},{"g":"....54...2...516....351...6...31....","s":25.5,"m":2},{"g":"3.5.2..4.......1.56.1.......4..2.6.3","s":25.5,"m":2},{"g":"....26...4...1..4262..1...5...34....","s":25.5,"m":2},{"g":"3......14....6.1....3.4....52......6","s":29,"m":2},{"g":"........35.6.35..42..35.5.14........","s":25.5,"m":2},{"g":"..2...35....12..5..4..21....46...1..","s":27,"m":2},{"g":"...1...5..4.56........62.1..3...4...","s":28,"m":2},{"g":"..1.6..4....3..1....5..3....2..6.4..","s":27.5,"m":2},{"g":"4...3..1....5..4....6..5....2..2...1","s":27.5,"m":2},{"g":"...5.3....4.31.2....4.31.2....1.5...","s":25.5,"m":2},{"g":".........1435...6..2...5461.........","s":29,"m":2},{"g":"1..3...2..1...5..64..5...4..5...2..3","s":26,"m":2},{"g":".34...1......263....324......3...56.","s":26,"m":2},{"g":"56..1.1......5...63...4......2.4..61","s":26.5,"m":2},{"g":"...3..3.2...5...1..4...5...2.6..6...","s":27.5,"m":2},{"g":".6.3..5....6...41..34...3....2..2.3.","s":25.5,"m":2},{"g":".5.4..4......6...23...6......5..3.1.","s":28,"m":2},{"g":"3.5..1.......1...26...4.......1..2.3","s":28,"m":2},{"g":".54......5..1...6..6...2..3......34.","s":27.5,"m":2},{"g":".........615.1.3.44.3.2.621.........","s":25.5,"m":2},{"g":"3..2.4....3.....4665.....1....5.6..3","s":25.5,"m":2},{"g":"42....1.3....1...22...5....3.5....64","s":27,"m":2},{"g":"..6..3.3......4..55..6......2.4..1..","s":28.5,"m":2},{"g":"...516.......4...26...3.......451...","s":28,"m":2},{"g":"..6...4...6123........3215...3...1..","s":26.5,"m":2},{"g":"..1..3..3..4....1..4....6..5..5..2..","s":29,"m":2},{"g":".3....5..3...4...66...2...4..1....5.","s":28,"m":2},{"g":".4.1.......63...2..2...55.......1.3.","s":27.5,"m":2},{"g":"....5...52...3...41...3...36...6....","s":28.5,"m":2},{"g":"..5.4...4.1.3..........6.2.3...6.2..","s":29,"m":2},{"g":"......2.3.5.4..3....1..4.5.2.6......","s":27.5,"m":2},{"g":"...6.2....3.2.5..46..5.1.5....1.4...","s":25.5,"m":2},{"g":"..1.26...1....6..44..6....5...12.3..","s":27,"m":2},{"g":"..5.32...5...6.1....1.4...6...12.3..","s":26,"m":2},{"g":"...3.4....62.5...31...4.31....5.2...","s":26,"m":2},{"g":"....21...4..14...26...45..6...53....","s":25.5,"m":2},{"g":".2..6...6..12..3....4..25..1...4..5.","s":26.5,"m":2},{"g":".5.3...3...6.2...11...3.3...2...2.4.","s":27,"m":2},{"g":".3..2......32..6....1..24......5..4.","s":29,"m":2},{"g":".213..3......1.6....3.4......6..625.","s":26,"m":2},{"g":"....21...4..5...1616...5..5...63....","s":27.5,"m":2},{"g":"...1.45.....4...2..2...6.....36.4...","s":28,"m":2},{"g":"...4.14.......3.2..5.3.......61.6...","s":27.5,"m":2},{"g":"6....1..1.5..23......32..4.5..3....4","s":25.5,"m":2},{"g":"2...3..6...4.5........1.4...2..2...3","s":28,"m":2},{"g":".64...15........6262........31...52.","s":27,"m":2},{"g":".412..2.......2.3..3.6.......1..534.","s":25.5,"m":2},{"g":"54......1..4....3565....2..1......26","s":27,"m":2},{"g":"....6...54.2..6.4..4.2..6.31...1....","s":26,"m":2},{"g":"......3.5.6.1..5....2..4.5.3.1......","s":27.5,"m":2}],"2":[{"g":"....62...5..56...14...56..5...21....","s":33.5,"m":4},{"g":"54....2......6.5.11.5.6......6....35","s":30.5,"m":3},{"g":".3.4.1....3....2.33.2....4....6.3.5.","s":31,"m":3},{"g":"..61..51....2..........4....35..36..","s":32.5,"m":3},{"g":".63..1.......1...25...1.......4..12.","s":50,"m":3},{"g":"...2....3..5.5...61...2.2..3....4...","s":33,"m":3},{"g":".4.2..2.3....1...66...5....3.1..1.4.","s":31,"m":3},{"g":".2...15...3....61..16....5...21...5.","s":29.5,"m":3},{"g":"2..5...6...3.4........5.4...1...6..4","s":38.5,"m":3},{"g":"...1.5....4..31..42..63..2....5.6...","s":30.5,"m":3},{"g":".2..13...5.....4....6.....3...64..3.","s":37,"m":3},{"g":"..3.6....3.1.3.1....4.3.3.5....4.2..","s":31.5,"m":3},{"g":".1....3.2....5...16...4....1.4....6.","s":31.5,"m":3},{"g":".4..6....1..4..6....3..5..1....6..2.","s":33,"m":3},{"g":"5...3...6...2...4..4...2...1...1...5","s":38,"m":4},{"g":"..1..22..4..6..........1..5..34..1..","s":32,"m":3},{"g":"..43.2....6...2..51..2...4....3.54..","s":30.5,"m":3},{"g":"..15......1..5...42...5..4......63..","s":33,"m":3},{"g":"..25...6......4.3..5.4......5...32..","s":41.5,"m":3},{"g":".1....2.4.1.1..2....6..1.3.1.6....2.","s":30,"m":3},{"g":"....64...2...1...55...4...3...62....","s":35.5,"m":4},{"g":"4.2..56.......4......2.......13..6.4","s":37.5,"m":3},{"g":"...5....1.6..5.6....6.3..3.4....2...","s":36.5,"m":3},{"g":"..1..6...4....6.1331.6....2...6..1..","s":30,"m":3},{"g":".2......36....5..34..5....61......3.","s":37,"m":3},{"g":"...5......24..2.4..1.6..45......3...","s":32.5,"m":3},{"g":"...1...1..63..6......3..14..2...5...","s":32,"m":3},{"g":"..53..43....25........52....16..14..","s":30.5,"m":3},{"g":"..5.1.1....6..3.2..1.3..4....2.5.1..","s":31,"m":3},{"g":".......3..24.52..33..25.12..6.......","s":31.5,"m":3},{"g":"3...1...62......5..6......24...4...1","s":33,"m":3},{"g":"2..5.1....2.....5..1.....3....4.2..6","s":32,"m":3},{"g":".5...63.....6...4..2...3.....21...6.","s":31.5,"m":3},{"g":"..256....4..5..6....6..4..5....643..","s":30,"m":3},{"g":"3..2.......6.2.5....4.6.2.......1..3","s":31.5,"m":3},{"g":"6..1...4....5..2....2..5....3...3..6","s":38,"m":4},{"g":"2......5..23..2.3..3.4..34..6......4","s":30,"m":3},{"g":"2....4...52...3.1..1.2...62...4....2","s":30,"m":3},{"g":".2...66...1......34......1...53...6.","s":33,"m":3},{"g":"...1......52..6.2..1.5..13......2...","s":31.5,"m":3},{"g":"...25.....1...4.3553.4...1.....56...","s":35,"m":3},{"g":"....4....6.3..4.6..2.3..4.1....3....","s":31.5,"m":3},{"g":"...41..2...5..3.2..1.6..1...3..32...","s":30.5,"m":3},{"g":"..3..2.2...3...4....5...6...1.5..3..","s":37.5,"m":3},{"g":"62.1......6...2..44..5...5......6.53","s":37.5,"m":3},{"g":"..1.3..2.1....5......4....4.1..3.6..","s":33,"m":3},{"g":"..2..3...26.5..........1.36...2..6..","s":37,"m":3},{"g":"..3..115......6......2......655..1..","s":32.5,"m":3},{"g":"4......6...5.35..66..53.5...2......1","s":31.5,"m":3},{"g":"..6...1....2.3.4....1.3.2....1...5..","s":37.5,"m":3},{"g":".....6...23..2...45...2..14...2.....","s":32,"m":3},{"g":".52...3......1.3....6.1......4...15.","s":40.5,"m":4},{"g":".21..5.......3..6..5..2.......4..35.","s":38,"m":3},{"g":"5.1....3..5.6..4....3..2.2..4....2.3","s":30,"m":3},{"g":"...2....35.46...2..3...61.56....6...","s":32,"m":3},{"g":"1.......5.1...2..44..3...4.6.......2","s":31.5,"m":3},{"g":"..6.2....3....2.1..3.2....3....1.5..","s":38,"m":3},{"g":"4......6.5...5..2..3..4...6.5......1","s":32.5,"m":3},{"g":"2...3......4.5.1....3.6.3......1...2","s":33,"m":3},{"g":"...5.1...3...2...56...2...1...4.2...","s":32,"m":3},{"g":"....2....4.55...6..1...43.6....4....","s":32,"m":3},{"g":".2....3...6.6...2..5...1.6...2....4.","s":38.5,"m":3},{"g":"..1.2..6.1.....3....2.....4.1..2.6..","s":32,"m":3},{"g":"14......2..42..6....1..25..4......56","s":34,"m":4},{"g":".4...1...4...1.2....5.1...6...3...6.","s":39.5,"m":4},{"g":".6.3..3.4....2.6....3.4....4.6..6.1.","s":30,"m":3},{"g":"...6......1236...51...3623......6...","s":33.5,"m":4},{"g":"...154.......4...15...2.......136...","s":38.5,"m":3},{"g":".4....1.6.4..2.4....4.6..5.6.4....5.","s":30.5,"m":3},{"g":"6..45.........4..13..6.........36..2","s":45,"m":3},{"g":"526..........1...63...2..........231","s":33.5,"m":3},{"g":"......352...63..5..2..63...624......","s":36.5,"m":3},{"g":"..1..636......2......4......651..3..","s":32,"m":3},{"g":"..5.3..2.....1.3....6.2.....6..3.4..","s":41.5,"m":3},{"g":"1.5....4.....3.4....4.1.....6....2.4","s":32,"m":3},{"g":"..3..62..5..3..........1..6..44..3..","s":36.5,"m":3},{"g":"1.3....5.1...3.5....5.4...2.1....4.2","s":34,"m":4},{"g":"....3...2..66...4..4...13..5...6....","s":43,"m":3},{"g":"4..6...5..42....1..2....24..6...5..3","s":37.5,"m":4},{"g":".4...2....3.5...1..1...6.6....2...6.","s":33,"m":3},{"g":"...1....1.35..6.5..5.3..43.5....5...","s":35.5,"m":3},{"g":".1.4......2...6.3..2.1...5......2.1.","s":38.5,"m":3},{"g":"....62....4...6.2323.6...1....52....","s":44.5,"m":3},{"g":"5..1....1.353..........214.6....3..4","s":31,"m":3},{"g":"..1...4..3...1.2....2.6...5..4...6..","s":34.5,"m":3},{"g":"24......1....2...35...6....2......36","s":34.5,"m":4},{"g":"..2...3.45..6..........4..14.6...3..","s":37.5,"m":3},{"g":"..2..4....2..3.5....5.6..1....5..1..","s":39.5,"m":4},{"g":"62.5..........2.6..6.4..........6.31","s":50,"m":3},{"g":".....6..6.5...4.1..5.4...1.2..3.....","s":38,"m":4}],"3":[{"g":"3...89..2.....53...4.6....768..2.....2.8.4.9.....6..785....6.4...64.....7..19...5","s":56,"m":2},{"g":"1....834...5......28..9...16..2..734.........718..3..28...3..16......4...621....7","s":56.5,"m":2},{"g":"....7...8...5.62......2.45.1...6...7.234.756.9...3...2.79.4......67.9...3...5....","s":55,"m":2},{"g":"...4..5..64.3....88..126..3......932.........916......3..697..55....3.76..8..5...","s":63,"m":2},{"g":".8...327.7.....9......51..86..4.71...9.....6...38.6..94..51......6.....7.186...2.","s":55.5,"m":2},{"g":"...21..45.3..8.6.......67.9.19.....7.........7.....95.5.16.......7.2..1.69..48...","s":61.5,"m":2},{"g":"5..2..8..2...6........3.2.7.5...7..987.9.5.244..6...8.7.1.5........4...1..3..2..8","s":55.5,"m":2},{"g":"..1.495..4.93........6...7.9.72..3.............5..46.2.4...5........61.8..683.9..","s":62,"m":2},{"g":"...3.61....7.....3.53..1...4.92..5..8.......2..1..86.4...5..93.2.....8....89.4...","s":63.5,"m":2},{"g":"89.5.....1...4..2.2.3..7..69.1.3......4...7......9.2.44..8..3.2.6..1...8.....2.47","s":63,"m":2},{"g":"6..7.5...4...9.85...2.1....7..3...8...1...5...9...7..2....6.7...63.7...5...5.9..3","s":59,"m":2},{"g":"..9..785.5.26....9..7.4..6.....9....8.1...6.5....1.....5..7.9..9....45.8.681..2..","s":58,"m":2},{"g":".8........3.1..6.....5.74..9..72..54..8.5.3..45..18..9..23.1.....6..9.3........2.","s":59.5,"m":2},{"g":"...17....14.5..29......2..7.237.58.............19.857.8..6......56..1.24....97...","s":55,"m":2},{"g":"..973...5..1....8......81..9.63...1.1.4.9.5.7.3...56.2..51......7....3..4...679..","s":56,"m":2},{"g":"...5..1.......1932.6.82....7.8...5...4.....9...9...8.3....36.5.4139.......2..4...","s":61.5,"m":2},{"g":".61..75..8..93...........1.2...561.4.........7.481...6.4...........85..3..24..98.","s":59.5,"m":2},{"g":".68.54..3.2....5...547...1.29..........6.1..........96.4...792...2....8.7..12.46.","s":56,"m":2},{"g":"1....5.3.6........4.5.96..1..9.47.....4.6.9.....53.8..7..98.2.6........8.6.2....4","s":58,"m":2},{"g":"7.8.1.....523....1...4......6.2..1.7.8.....6.4.3..6.5......3...1....837.....5.8.2","s":62.5,"m":2},{"g":".6...85......2..1.9.731.4....4....39...7.1...53....7....3.548.7.4..7......51...9.","s":57.5,"m":2},{"g":"7...5..424...26.7..5.8.............424.5.7.631.............5.8..7.69...163..8...7","s":60,"m":2},{"g":".9...5..3...16.8..6...7..41..5....6..26...93..4....1..36..5...7..7.31...8..6...9.","s":56.5,"m":2},{"g":"..92..4.8..1.4..7..8........5..72.4..16...35..9.53..1........9..3..2.1..6.8..35..","s":58.5,"m":2},{"g":"1..9..2...6....5.....4.8.7..2.5..3..7.......1..8..3.4..8.3.5.....1....8...3..7..2","s":61.5,"m":2},{"g":".1284.3..........7....79....65.27..3...9.5...2..61.54....39....4..........9.6217.","s":55,"m":2},{"g":"96.....7...2.5...3...7.........67.8575.9.4.2682.51.........9...4...3.7...9.....34","s":55.5,"m":2},{"g":".....4.1..9..78...7..6...936....2...8.59.71.4...8....648...5..2...78..5..6.2.....","s":57,"m":2},{"g":"6473....1..2.47..9........353...91.............18...629........2..57.8..4....6215","s":62,"m":2},{"g":".5.93..4..73....29......1....61....4.1..5..9.9....83....5......12....67..9..76.5.","s":56.5,"m":2},{"g":"2..7.83.9.8...9..69..5....2.3.........4.2.6.........5.6....2..74..1...9.7.89.4..5","s":57,"m":2},{"g":".47.5..1..6.1..7...23..........8..42.8.5.4.6.41..2..........63...8..7.5..5..3.17.","s":58,"m":2},{"g":"7.6..95.4......9....2..7.6...497...6....4....6...132...1.8..7....3......8.72..6.3","s":60.5,"m":2},{"g":"........29..45....48...2.7134..1..2.....7.....5..3..8679.8...65....67..98........","s":60.5,"m":2},{"g":"7.4.......98.4.6.2.5...7.....7..1.53..1.5.2..43.8..7.....1...2.3.9.2.51.......3.9","s":55,"m":2},{"g":".5..8..96.23..9.....91....4....35.1...........9.74....7....45.....3..16.18..6..4.","s":58.5,"m":2},{"g":"...75......91.6...4....2.85.13.....98.......79.....35.24.9....1...6.19......45...","s":59,"m":2},{"g":".3.9.68......1.7..8......6314.8.....7..2.9..4.....7.2551......6..6.9......96.5.1.","s":57,"m":2},{"g":"..42.7....7..5....25....9...6.3...7.8.96.45.3.4...5.1...6....58....9..3....5.81..","s":57,"m":2},{"g":".2.1..8.6..5.9..17.....5...976....4...........1....293...2.....78..4.3..6.1..7.2.","s":60,"m":2},{"g":"8.4...1.26..75......52...9....8.6...3...1...7...4.3....1...82......25..32.8...6.1","s":57.5,"m":2},{"g":"....9.......6.43...1.....9754....7.37.......88.1....2642.....8...92.6.......1....","s":63.5,"m":2},{"g":"...2..9.....184..7...5...31..2.....971..9..523.....8..23...8...8..643.....7..2...","s":56,"m":2},{"g":"...4.5.1.43..62..9....7....5...2637..7.....6..8394...1....8....7..61..95.2.7.4...","s":55,"m":2},{"g":".4.9.......9....6.6...25.7.2...9..359.......835..4...1.7.53...9.1....4.......4.8.","s":59,"m":2},{"g":".4168....2.71......985...1.....1..9.5..9.3..1.1..7.....2...917......14.3....4826.","s":56,"m":2},{"g":".789.2..4...7....9.......7695.8.42.............12.9.4531.......5....3...6..5.749.","s":63,"m":2},{"g":".9..14.57..12.....53...6....56.....18.......47.....26....6...23.....94..92.53..1.","s":58.5,"m":2},{"g":"7.........318..9.66..3...1....7.14...6..5..7...34.2....1...5..25.6..473.........5","s":61.5,"m":2},{"g":".6..5..74...3..5..72..8.3..614..........4..........643..8.9..32..7..8...59..3..1.","s":58,"m":2},{"g":"9.5.274..........5.62.48.....4...689.........617...3.....26.73.4..........678.1.4","s":60.5,"m":2},{"g":"..6..4..898..351....7...2.....328....3.....2....516.....2...6....319..425..8..9..","s":56.5,"m":2},{"g":"..8..4..2..4..96.7..9..5.1..65...47.....9.....93...18..3.2..5..5.26..3..8..9..7..","s":55,"m":2},{"g":"..9..2....4..813..251.......6.2.7....9.....8....5.8.7.......136..264..9....1..8..","s":60.5,"m":2},{"g":"...9....6.9.....2...68231.....2...17..9.1.5..83...7.....73814...1.....3.5....4...","s":57.5,"m":2},{"g":"....1..2....8..4.5..64..9..8.5..9...74..6..89...3..2.7..8..75..9.7..8....3..4....","s":58,"m":2},{"g":"3.7.4...6...6.....9...8.1..7...25.8..65...34..9.76...5..1.9...2.....4...6...3.9.1","s":57,"m":2},{"g":"..4..5..1.9.....847..8..69.8...61.2...........4.73...6.68..3..292.....6.1..5..9..","s":59,"m":2},{"g":"1....3.75......8...58.473..5....89......7......26....8..476.52...6......79.4....1","s":61.5,"m":2},{"g":"...4....53.4.8....7...6...2.9...1.5.4.69.82.3.8.2...9.6...2...1....7.5.89....4...","s":60,"m":2},{"g":"5.7..1..6......8....6..82....1.3...84..6.5..33...2.5....51..6....2......1..9..3.7","s":62,"m":2},{"g":".4..9...6.6...3...3.7...42...19.8....3.6.1.4....5.28...12...3.4...2...6.9...5..8.","s":58.5,"m":2},{"g":".79..54.....8.3...2.5......1....75.3..2...8..4.81....9......7.6...9.1.....76..19.","s":59,"m":2},{"g":".1.7..4.3......1..3.5.4.....86.7..1..4..9..7..5..3.98.....8.6.1..2......1.4..5.9.","s":59.5,"m":2},{"g":"..7.5...3.......6.6.2498.5..9...13..75.....18..68...9..6.7248.9.8.......2...8.6..","s":57,"m":2},{"g":"492......3.....15.5..6....31...56.3...37.48...5.32...16....7..4.39.....7......598","s":58.5,"m":2},{"g":"31..8....2....4......51.4.95..6..1...8.....2...1..5..71.2.36......4....3....9..41","s":58,"m":2},{"g":".7...9.2.1.5...9..2....8.43...2...3....571....4...3...32.1....6..8...2.7.1.6...9.","s":57.5,"m":2},{"g":"..2..1......86...7..6..74..1.7.....56..7.4..18.....2.3..34..7..2...15......2..5..","s":59.5,"m":2},{"g":".529...........316..3..19.5.....857...........476.....9.58..6..678...........385.","s":59,"m":2},{"g":"6......5....7......1.84......5..1.8.7.24.63.9.4.3..7......97.3......3....5......8","s":61.5,"m":2},{"g":"..67..4....5.9.71.1......2.....4.5.7.5.8.3.9.2.4.7.....6......5.82.3.1....3..69..","s":55.5,"m":2},{"g":".5.6..7......4..3.86..15...71...4...5..1.2..9...5...47...93..75.7..2......6..7.9.","s":55.5,"m":2},{"g":".....48.3...7.1....426....7.58...9..9.......1..6...32.2....374....2.7...5.31.....","s":60,"m":2},{"g":"....6....7.4...63.2.9.7..851...82.....7...5.....34...148..3.2.6.52...9.3....2....","s":60,"m":2},{"g":".........4.8.3...59..6.2.3...3.482.16.......97.491.5...5.8.4..23...5.8.7.........","s":56,"m":2},{"g":".3.......4....136.6.....7.8...2.96..82.5.4.79..41.6...7.9.....5.856....7.......9.","s":58,"m":2},{"g":"..23..64.....2.7..3.78...9....16...7...9.2...5...83....9...85.3..4.7.....51..64..","s":56.5,"m":2},{"g":".4..83..5.....574...9......9.7.61...5..9.2..8...35.9.1......2...251.....6..42..3.","s":56,"m":2},{"g":"..459.2..217.........6...4..2...975...5.7.9...391...8..7...8.........817..3.164..","s":56.5,"m":2},{"g":"61..3.5.9...7.5....9......79..5.136...........436.9..17......4....8.3...2.9.7..36","s":57.5,"m":2},{"g":"1..7..49....124.6.7....5...6.....1....3...9....8.....4...5....8.7.643....24..9..7","s":58,"m":2},{"g":"..65......47.9...5.8..7..1.35.4.......1...4.......7.69.7..5..3.4...2.65......17..","s":58.5,"m":2},{"g":"....1.593.......4...473.....79..16..8.......2..26..78.....971...8.......167.5....","s":59,"m":2},{"g":"...4..9..29..51...47...6..8..32...16.........96...58..6..5...84...92..53..4..7...","s":58,"m":2},{"g":"8..6...7.47.3.1.9...9...8.2...4....9....5....1....6...5.6...7...9.5.2.83.2...8..6","s":58.5,"m":2},{"g":"4.6.3......2.41..535......2.4....67.5.......4.68....1.7......568..46.2......2.9.1","s":59,"m":2},{"g":"...51..72...9.6.13...3..4..59.1....6.........7....4.39..4..9...27.4.1...31..25...","s":60.5,"m":2},{"g":"..932..7...3.486...2.....3.3..4.5....1..8..4....1.3..6.5.....9...853.2...3..768..","s":58.5,"m":2},{"g":".67.9.....4..82...98.......6.4..8.75..1.7.9..57.4..6.2.......43...34..5.....1.26.","s":57.5,"m":2}],"4":[{"g":".5....2....1.23...2..8.....1...8..4.9.31.48.6.8..5...7.....1..8...93.1....8....6.","s":79.5,"m":3},{"g":"..12......6.....5..8.4..2.7..4..9.6...8...1...1.8..4..1.2..7.9..9.....3......58..","s":70.5,"m":3},{"g":"..8.4....4537....9...9.5...73.5..2...2.....3...4..2.85...4.7...2....3764....9.3..","s":68.5,"m":3},{"g":"678.....99..7....2.4.....5.8...3....5..967..3....1...6.8.....6.3....2..47.....128","s":83.5,"m":3},{"g":"...3.....523.....848...1..217.9........8.4........3.163..6...519.....867.....7...","s":77,"m":3},{"g":"...3...9.....4.375....71..4..4..598.8...2...3.634..2..2..51....458.6.....1...8...","s":78.5,"m":3},{"g":".21.......73......9....253..82..5....6.7.1.4....9..87..965....3......48.......65.","s":73,"m":3},{"g":"..832....45...1...19...7..87...6.15...........64.1...29..2...86...8...71....462..","s":74.5,"m":3},{"g":"6....4..1.8.7.1.5..1..2.3.8..419..3...........7..489..1.8.7..6..5.8.9.4.7..5....9","s":89.5,"m":3},{"g":".831........4.....7...5..48..9...2.6...297...1.2...4..93..8...1.....3........263.","s":75.5,"m":3},{"g":".....936.....6....9..35.4.18....6273.6.....5.7235....64.1.28..7....7.....379.....","s":65.5,"m":3},{"g":"4.59.........725..8.....1..9..1.68..6.......5..13.9..6..7.....8..872.........43.2","s":85,"m":3},{"g":".5.17.......9.86.1.8...4...4.5..3..93.......79..5..4.6...8...9.8.47.9.......41.8.","s":72.5,"m":3},{"g":".2....3....3..695......4..7.....15..87.5.3.12..67.....7..4......316..7....5....3.","s":69,"m":3},{"g":"2..7.6....6.5..7.8.......6..2...49.537..9..264.62...8..3.......7.4..9.5....8.3..4","s":66.5,"m":3},{"g":"..129..6..2......1..9.17.8.3......9...2.5.7...7......4.6.48.3..1......4..8..392..","s":75.5,"m":3},{"g":"3......25..2..87..71..2.......5..67...84.62...67..9.......5..16..19..8..69......2","s":76.5,"m":3},{"g":".51.6..........1.3....52..77..6..5...3..2..9...5..9..81..83....6.8..........9.48.","s":82,"m":3},{"g":".4....9..3.9...2.......213659.23.......5.7.......89.527251.......6...4.7..4....2.","s":89.5,"m":3},{"g":"...2..1.99.56...3....4..8.6....3.78...9...3...87.5....4.3..9....1...89.38.6..2...","s":68.5,"m":3},{"g":"..7...5.1.9..2..6..5.3.1..71.2.......845.217.......3.27..4.6.2..4..8..1.6.8...7..","s":77,"m":3},{"g":"....67..5..3....9.2...3.4..3.6..4.....7.5.8.....2..7.4..4.1...9.9....5..6..52....","s":76,"m":3},{"g":"..9......7.16.2....2..1..67..2.675..1.......6..713.4..57..9..4....5.43.2......1..","s":72.5,"m":3},{"g":".....45.3...8..47..147....9.5...2.3...8...7...6.5...9.5....724..41..5...9.61.....","s":66,"m":3},{"g":"..4.3..2..2...8...6...724.......53..29.....15..69.......265...7...2...5..1..4.9..","s":78.5,"m":3},{"g":"7...........2...43.3.8..9259.5.8....2..5.6..8....9.2.4472..5.3.68...4...........7","s":73,"m":3},{"g":"..3...8....231.96.9........8....174.....9.....517....6........4.79.451....8...5..","s":79,"m":3},{"g":".......1.72..6..5.5....74...356.....6..972..5.....318...31....7.9..5..34.5.......","s":69.5,"m":3},{"g":"9....3.....3..1.8.81.74.2.....1543....7...5....1327.....9.16.54.8.9..1.....4....6","s":65,"m":3},{"g":"..4.35..61....9..5.......42371...4......7......6...38721.......9..7....86..12.9..","s":67.5,"m":3},{"g":".9...3.6......19..3.5..7..4.....5..1.43.9.67.8..7.....4..5..1.8..23......3.4...2.","s":72.5,"m":3},{"g":"..45.....8.2.......1...9.48.39..4..6...7.6...7..3..21.56.4...9.......8.1.....36..","s":70,"m":3},{"g":"..6..987....673..1.1.......9....1..21..754..94..8....6.......3.2..435....732..9..","s":65.5,"m":3},{"g":"63....9.....9..32...75...4.5....8..7..2.6.1..3..7....4.6...45...43..2.....5....63","s":76,"m":3},{"g":".5.6....9.69...287..4..8.....5.3....6..9.2..8....4.7.....4..3..537...61.4....5.7.","s":73,"m":3},{"g":"3......9.9.5...4.1.7.56.8.......421....1.8....486.......7.43.8.2.4...3.7.5......4","s":82.5,"m":3},{"g":"..2..3...1.9.5....7.8.462..98...5.....3...4.....3...67..721.3.6....3.8.4...5..7..","s":85.5,"m":3},{"g":"47...96....653..9........54..2.7....3.4...5.8....1.4..16........2..418....38...12","s":87.5,"m":3},{"g":"8....5.7.42...6..5.......2.9.1..48...8.....4...71..5.9.9.......7..3...86.6.7....4","s":81.5,"m":3},{"g":"...6.7....3...41.6.8.......1...6..5...82736...2..9...8.......2.5.18...9....3.1...","s":75.5,"m":3},{"g":"16......5.4.3...8.....4.93.7..56.................97..1.94.8.....3...4.6.8......27","s":79,"m":3},{"g":"4.......76....82...5.61....1.4.7..2..8..5..7..6..3.1.4....61.3...54....27.......1","s":72,"m":3},{"g":"7...953.1....4..5.....32.6..12......8..2.4..3......24..3.85.....7..6....5.142...7","s":68,"m":3},{"g":"3..9.....9.78...6.....7..95......8.2.4.....5.6.9......43..2.....2...14.9.....4..8","s":89.5,"m":3},{"g":"..462.8139.....27....78......8.3..9..6.....3..3..1.4......61....13.....2697.543..","s":77.5,"m":3},{"g":".1..8..7..56....1....1.26....3...4..52..4..87..8...1....59.4....4....26..8..6..5.","s":90,"m":3},{"g":".8..6.2...15..3...3..4.96.......4..3..2...4..5..1.......49.2..8...3..52...1.8..9.","s":68,"m":3},{"g":"....9....9.3421....873..2.........92.96...57.52.........2..314....6153.7....4....","s":78.5,"m":3},{"g":"68..3...7...8...13.....76..3.4.1.....5..6..9.....2.1.5..72.....16...9...5...4..89","s":72.5,"m":3},{"g":"91.3....5...1.8..2.72....3......1..9..57324..2..5......2....58.6..8.5...5....3.16","s":75,"m":3},{"g":"...6......93..2...786..592.3.1..94.............57..6.8.795..146...4..59......6...","s":71.5,"m":3},{"g":"..5..8.646.8...5.7...7......7...53.....182.....23...5......3...4.9...6.556.2..8..","s":86,"m":3},{"g":"......134........67...1.58....1769...3.....4...9345....84.3...13........612......","s":71.5,"m":3},{"g":".6.....3752...4......1...5...194.3.....7.8.....7.251...4...1......6...9337.....6.","s":69,"m":3},{"g":"7.1..3....8..9..5.9..6.43..2.....69..9.....7..16.....2..74.9..8.2..8..3....3..9.5","s":76,"m":3},{"g":".38.47.....1.....7.4...5.......8.6..76.....98..4.2.......9...1.8.....5.....17.38.","s":72.5,"m":3},{"g":"7....5...21...8.5969....3......9.5..46..5..81..8.1......2....6754.7...92...4....5","s":73,"m":3},{"g":".8.3...7..5....1.99..6.5.....92...8....5.7....3...82.....7.6..47.8....2..4...1.9.","s":68,"m":3},{"g":"..925.......3....632.4..75....8..1.5.9.....8.4.1..3....63..4.919....8.......654..","s":79.5,"m":3},{"g":".37......6.8.51......6....88...7.6....3.2.9....5.3...24....7......46.5.3......79.","s":73,"m":3},{"g":"9.21..7.47...39........5...5.......14.7.6.3.23.......6...6........42...71.4..32.9","s":73.5,"m":3},{"g":"8..4....3.6..........8736.9.27.1..3...8.6.7...1..8.59.2.5948..........5.4....5..7","s":88,"m":3},{"g":".2..59......26.8....3....29..13..956.........974..61..14....5....5.42......91..4.","s":70,"m":3},{"g":".3..54.1.........8..63......8.5...9..439.285..1...6.2......92..3.........2.87..4.","s":86.5,"m":3},{"g":".1.5.6..2.4..32.9..851...........62....4.7....54...........198..9.78..6.3..6.9.5.","s":80.5,"m":3},{"g":".92.54......7.....835.......296..7....3...2....4..213.......541.....9......14.98.","s":87.5,"m":3},{"g":"..4..53.......9.8..7...61.....6...579.......226...1.....91...6..5.4.......12..4..","s":74,"m":3},{"g":"..2......7...59.....1.8.47.5.7.....92..5.1..48.....6.7.78.9.2.....23...6......7..","s":85.5,"m":3},{"g":".......5..3..7..4...41..6.8..9..21...1.4.3.6...35..7..9.2..74...8..6..9..7.......","s":72,"m":3},{"g":"4...6..23............8..56..1873.2.5.7.....3.3.4.1279..89..1............13..2...4","s":87,"m":3},{"g":"....4...7..86.....93...51.....3..2..76.....41..5..1.....42...79.....96..6...1....","s":91,"m":3},{"g":"...1.5...35...4.....67...1.93....8....8.5.2....2....65.8...63.....2...94...4.3...","s":71,"m":3},{"g":"9.63..1.23..28......2..1...8..73..5...........6..25..8...6..4......78..16.8..25.9","s":72.5,"m":3},{"g":".6.8....1.3..7...5.2..3..6...76.21..9.......6..35.19...5..1..9.3...5..4.2....8.1.","s":83.5,"m":3},{"g":"....1.5.21..6...7....4.71...17...6..4.......1..6...35...57.1....2...5..38.4.9....","s":84.5,"m":3},{"g":".........4..1.6.95.....746.38...49.7..6...5..1.49...82.613.....93.7.5..1.........","s":71.5,"m":3},{"g":"7....8.59..1.4...8.89....2....9.7..5.7.....4.8..4.2....4....58.6...8.1..59.6....4","s":73.5,"m":3},{"g":".......51....15.6...1..9..365....9..8..9.4..2..2....471..7..2...6.39....48.......","s":82.5,"m":3},{"g":"....3..79.6.1....2..8..26....742.3......6......2.185....19..7..4....3.9.37..4....","s":77,"m":3},{"g":"2...9..8.....3..2...1752..369.1...................9.719..6478...3..2.....7..1...4","s":76,"m":3},{"g":".6.97....1....3.9...3...2...1...4..9.42...78.3..8...6...6...5...2.3....7....98.2.","s":71.5,"m":3},{"g":".24......3..4....61.7.3...9.3..751...9.....8...819..6.6...4.9.37....3..8......51.","s":73.5,"m":3},{"g":"....9..4..5...8.9.87....5.....7.5.8.3.12.97.6.8.3.6.....5....71.2.4...6..1..7....","s":67,"m":3},{"g":"..8..1.395.6..81.4..3..........7..5...52.63...7..1..........9..4.91..2.828.6..5..","s":70,"m":3},{"g":".....58.98.9.36...2..9..3.6...1.8....3..7..1....6.3...3.4..2..7...49.5.39.83.....","s":81,"m":3},{"g":"....8.......6.2....241..8.62.....7.1.19...54.4.6.....25.3..728....2.4.......5....","s":67.5,"m":3},{"g":"..63....7.74.8....53..6...2...8......58...41......6...7...4..39....1.27.2....85..","s":78.5,"m":3},{"g":"5..7..42.7.8......4..581.....7....8.1..4.8..5.8....7.....937..2......3.9.96..5..4","s":75,"m":3},{"g":"..5..8.2.....1...7.1.6..53....8.3.4.....6.....2.7.9....93..1.6.4...7.....7.2..1..","s":87,"m":3},{"g":"8...4..2..4...2...2.5.7.6..6.....48..8..9..7..34.....6..6.5.1.2...1...9..7..2...3","s":71.5,"m":3}],"5":[{"g":".86...3..2..1..5.9.....8..73..9...2.....3.....7...1..51..6.....5.4..9..2..2...95.","s":93,"m":4},{"g":"4.6.3...9...4.7.1...1.2.....42.8..3...3...7...5..1.68.....9.1...3.2.1...2...7.4.8","s":85.5,"m":4},{"g":"67...1.283.2.6...5...7....9...4....3..8...4..4....6...7....5...2...8.5.486.1...72","s":83,"m":4},{"g":"..3975....5.2..9.....8..5....1.....7.8..5..3.4.....2....9..3.....4..6.2....5496..","s":105.5,"m":4},{"g":".....58....623..51.5...7....8.76.92.7.......6.39.24.7....3...4.12..463....49.....","s":82.5,"m":4},{"g":"...175.....6...8..42.........96..7..7..4.3..8..5..14.........27..3...6.....538...","s":93,"m":4},{"g":"..8.6.....4...7..19....475...36...2....7.2....8...39...368....94..2...8.....7.4..","s":97,"m":4},{"g":"..2...1..7.563....3..2...5..3..6...5..79.52..5...7..6..8...7..1....985.6..3...8..","s":82,"m":4},{"g":"...9....1.7..4..35.....2.4.7...38..4.13...86.5..19...3.3.4.....15..6..8.4....9...","s":81.5,"m":4},{"g":".3.5...69..8......756.9.3.258...2.....7.1.2.....8...371.5.3.896......5..36...5.2.","s":79,"m":4},{"g":"..6.32..9....981...8.1....63.89...7...........5...19.25....3.1...321....7..46.8..","s":83,"m":4},{"g":"..9..81...42..17...7...9..6.8.4.7...............5.6.2.9..8...1...39..58...67..3..","s":85,"m":4},{"g":"2.5..31.......8..4.......275..2...6.7...6...3.8...4..114.......8..6.......31..8.9","s":85,"m":4},{"g":"9..2.3...3.2...87....5...2.4..91.7.............7.84..6.2...5....38...9.4...6.9..2","s":80,"m":4},{"g":"........1...7..29..2..8.3..41.9..8.....4.3.....5..8.17..1.5..8..32..1...7........","s":92,"m":4},{"g":".14..8..7.8..2....7....5..4.....3..64.7...8.56..2.....8..3....9....4..1.5..7..64.","s":90,"m":4},{"g":"..3.5...68...7.....5.....17.6.92.1..7.......3..5.36.4.13.....5.....4...95...6.8..","s":89,"m":4},{"g":"8.75.3..9..9..6.8.....2....2.....5..16.....93..8.....2....1.....7.4..1..5..3.29.4","s":87.5,"m":4},{"g":".4...8.9.7.......3.863..1..5.31......1.....6......73.9..7..985.6.......2.5.8...3.","s":98,"m":4},{"g":"98..1.........9.6....32...1.3...14.8.4.....7.5.86...3.7...34....2.9.........5..94","s":83.5,"m":4},{"g":"....39...6...2.89.....7.4.6..5....3.81.....49.3....5..1.2.4.....74.8...5...26....","s":93,"m":4},{"g":"48.71....7.......2.3..96...5......2..96.5.74..2......6...32..7.6.......8....75.94","s":83.5,"m":4},{"g":".7...4.....12...93.....9.7..83......79.....54......96..6.1.....95...76.....6...2.","s":84.5,"m":4},{"g":"...6...541....28...8..41.7.69..........7.8..........13.1.89..2...41....883...6...","s":91.5,"m":4},{"g":"..73...1..8.7..6.9.....2.7387..9......3...2......4..6846.8.....2.8..6.5..3...54..","s":91,"m":4},{"g":"......49..8.26.3..7....9..6.1.3.8...6...1...8...9.6.1.5..6....7..8.41.3..76......","s":97.5,"m":4},{"g":"6..9...15....2..8....4..2.75.........961.852.........41.8..7....6..3....95...4..1","s":83.5,"m":4},{"g":".8...45....4...3.....37..981....9.8.6.......5.9.6....743..68.....9...8....75...4.","s":89,"m":4},{"g":".............15694..4.695....5.....647.1.6.592.....4....985.3..31897.............","s":98.5,"m":4},{"g":"8..13..57..7......14..6....6....1.2...14.89...2.3....8....8..79......8..58..49..6","s":83,"m":4},{"g":"....9.268..68..5.1..........45..8..7...2.4...6..3..98..........9.7..18..418.7....","s":101.5,"m":4},{"g":"8.......2.459.......761..3.3..4......54...87......1..4.8..461.......928.9.......3","s":82,"m":4},{"g":"..9..1..7.....76....25.91.3..59..3..3..2.8..6..4..38..5.38.67....67.....4..1..2..","s":78.5,"m":4},{"g":".......6.6..8.5.......1.5381.9.83..4.........8..54.2.3493.7.......1.2..7.2.......","s":86,"m":4},{"g":".3.........23.89.4....7.1.5...9.6..3.6.135.8.2..4.7...9.5.1....1.87.34.........1.","s":88.5,"m":4},{"g":".1....2.3.5...78...9.4...6...46....5....3....8....16...6...2.8...13...9.3.9....5.","s":93,"m":4},{"g":"....3.6.9.7..8..1....165.....4....6.81..9..37.6....1.....943....3..1..4.2.6.7....","s":94.5,"m":4},{"g":"6....2..4....8.1.2.....6.3..3.2..6...9.....5...7..3.1..8.9.....1.3.7....5..8....6","s":101,"m":4},{"g":".....79..7..8...4...1.3.5...2.....39..69.48..59.....2...8.4.3...5...2..6..93.....","s":102.5,"m":4},{"g":"..9.4...........1.5..9.12764....2.8..3..9..2..2.8....77425.3..1.6...........6.7..","s":86.5,"m":4},{"g":"...4.69...2...531...1.3..6.89.......4..8.1..3.......76.3..4.1...193...2...41.9...","s":99.5,"m":4},{"g":"7.6.5....23......6.....921.....76..9.4.....5.9..41.....986.....1......85....8.1.2","s":81,"m":4},{"g":"..4.8.1....94...7.2....78....5..9...876.4.539...5..6....87....5.3...59....1.9.3..","s":85,"m":4},{"g":"67.5.9....23.78..4.....4.7.......13.3.......7.62.......8.7.....2..19.75....8.5.46","s":83.5,"m":4},{"g":"3.8..16..9.13....86..85......5....87.6.....9.19....5......43..55....28.1..96..2.3","s":87,"m":4},{"g":"....93..4.8..4...54..2..9.39.6.78...............53.6.15.1..4..67...1..3.6..35....","s":87.5,"m":4},{"g":"...9..6.3.36.....7....5..4.4...8..6...74.12...1..6...4.7..1....9.....32.6.5..9...","s":91.5,"m":4},{"g":"..4..8.3....7.2.9.....3.5..915...4......2......2...186..1.4.....3.8.1....4.6..7..","s":92,"m":4},{"g":"9.4....2....9..6.5..5..2.3..7.35.................19.7..9.4..5..8.1..7....6....8.3","s":98,"m":4},{"g":".56.......19.678.4.4..5..1...12.....4.8...5.1.....49...6..4..8.3.712.49.......17.","s":80,"m":4},{"g":"9...6...5.....83.43..5.42...5.....4.4.9...1.2.1.....9...14.9..78.76.....5...7...8","s":105.5,"m":4},{"g":"25...3.61.8.1..5.37...........31...5.3.....1.1...26...........44.9..8.7.57.4...38","s":90,"m":4},{"g":"..4.7.3..5.......8.8..9.1.2....89.....81.56.....23....4.9.5..7.7.......1..5.2.4..","s":91.5,"m":4},{"g":".264....8.587....6...6..47..6.2....1...9.1...8....6.3..34..2...6....428.2....715.","s":89,"m":4},{"g":"9.6..3....8..........5.9.7...7..46.28.5...4.71.47..3...3.4.1..........4....2..5.9","s":98,"m":4},{"g":".8..3...5..4..1..3..7....6..4.58.1..5.......9..8.23.4..2....6..9..7..3..4...6..2.","s":96,"m":4},{"g":".8...6.1...2.7...9...52.3...4..5.2..9.7...1.4..8.1..3...1.95...4...3.6...2.1...9.","s":91.5,"m":4},{"g":".....9.7...83..1..6.....832.....849....7.5....791.....932.....6..1..65...6.2.....","s":98,"m":4},{"g":".95......3..5..7.1..7...38.96...85......5......83...72.39...6..7.6..9..3......42.","s":82.5,"m":4},{"g":".372.9...1.4...3..6.9.3....5..4....6..1...7..9....3..4....7.6.3..5...1.2...8.194.","s":84,"m":4},{"g":".....751.8..6..2.4.7.23......7.1....6.......5....2.6......54.3.1.8..3..2.358.....","s":82.5,"m":4},{"g":".5.4....31.....27..28.9........5.8...9.....3...7.3........4.51..32.....85....7.2.","s":85.5,"m":4},{"g":"...1....8...7..6.548.96...........4.3.6.8.5.1.9...........96.535.2..3...9....7...","s":102.5,"m":4},{"g":"...6..14..8.3.......71..2.8.7.4...298.......462...3.1.1.6..97.......5.9..98..6...","s":82.5,"m":4},{"g":"2..17..8..8....4.64..36........8....67.5.2.18....3........56..28.4....6..6..29..7","s":95,"m":4},{"g":"..3.27..82...6.....465.....9.5..68.1.6.....2.4.82..3.6.....395.....8...77..41.6..","s":94.5,"m":4},{"g":"1.4.6.7.......2..862.98....56......4..1...8..7......19....96.454..7.......6.2.1.7","s":84,"m":4},{"g":".1..5...7.......3..8.2139....28.15...4.....1...95.47....8149.7..7.......2...8..4.","s":86.5,"m":4},{"g":"4..2....5....9.28..3.....4.1..6.......29.53.......8..6.4.....9..86.7....9....1..3","s":84,"m":4},{"g":".....4..1.1....879.2...164.78..95...............13..28.593...1.864....9.3..4.....","s":79.5,"m":4},{"g":".1..4.6.94...9.7.2...6...4....15.2..7.......5..1.79....6...4...5.2.1...31.7.8..6.","s":81.5,"m":4},{"g":".3..2...4.1.9...2.2..7..98.......6.5.6.....7.7.2.......54..3..2.2...6.4.6...1..3.","s":102.5,"m":4},{"g":"84.95.....6....5.3..12.....5..8..3..79.....25..4..6..1.....27..1.9....5.....95.36","s":89,"m":4},{"g":".46.....88..9..........1.343..5.......52746.......8..297.4..........9..12.....54.","s":109.5,"m":4},{"g":".1...93..3...7.45..7.3.8..21.9.......6.....4.......6.15..2.1.7..26.8...4..19...2.","s":82,"m":4},{"g":"1....6.5.2..8...13..5..2.4.6...8.......5.4.......9...7.1.3..8..87...1..4.4.7....9","s":82.5,"m":4},{"g":".9...1....63.9...15..2....7..46.89......3......69.27..8....5..33...2.14....3...8.","s":78.5,"m":4},{"g":".....8.64..435....1....6.3.9..5..7.....839.....2..4..9.9.7....5....956..35.1.....","s":86.5,"m":4},{"g":"..5.....1.4..71..62..5..43..289.........4.........362..92..5..33..79..8.5.....7..","s":98.5,"m":4},{"g":"..8.........8.14.6...349....64.2..8.8.1...7.5.5..1.62....984...6.32.5.........2..","s":84,"m":4},{"g":".....64926....21.....8......5.1..64.39.2.4.17.41..7.2......3.....36....41829.....","s":85.5,"m":4},{"g":".87...6..6......5......6.49..351.42.1...2...7.24.375..31.2......7......2..2...86.","s":80.5,"m":4},{"g":"..9.6.7.....4...587..9...3...5.3..1..7.....8..4..9.6...3...5..785...9.....2.8.5..","s":93,"m":4},{"g":".46....9.81.62.4..3.......1.2.41....1.......9....38.5.5.......3..7.93.14.3....57.","s":84.5,"m":4},{"g":"..6.........6..1..24..1...6..75..3.2..58.97..9.2..38..5...8..71..3..5.........9..","s":94.5,"m":4},{"g":".2..31.9.73.5.......97.61..95.24........5........13.59..41.92.......2.81.1.38..4.","s":94.5,"m":4},{"g":"6....3..55.3261....9....1....4.....1.65...82.3.....4....8....1....8195.41..5....7","s":84.5,"m":4},{"g":"..5.4.....7...2...2..8615..6.94....5.2.....7.5....63.9..6984..2...2...4.....1.8..","s":99,"m":4},{"g":".3...57......6.5...2.83..4.7....6.25..3...9..58.3....7.7..18.5...2.5......12...7.","s":89.5,"m":4},{"g":"...2..918...1....2.....635.3194..5....2...4....8..9231.358.....2....1...861..2...","s":82,"m":4}],"6":[{"g":"4....16....146..8..2..8...3...6.259...........769.3...8...9..3..6..358....28....9","s":107.5,"m":5},{"g":"4....2.1...6.4....912.6....87.6........5.9........7.62....9.437....7.6...5.3....9","s":126,"m":4},{"g":"..926...54.........5.74...6.1....793.........375....6.5...98.3.........98...541..","s":122,"m":4},{"g":"2...8.....4871..32..7..2.....6.....951.....638.....7.....8..3..35..4128.....5...1","s":99,"m":4},{"g":"....7.3.6..8..4.7.9......2.1..5...3....237....5...1..7.2......8.3.7..1..5.9.8....","s":106.5,"m":4},{"g":".6.3...1.4.8........1.64.2.9...1...6...4.6...3...8...1.2.69.3........8.9.4...5.6.","s":111.5,"m":4},{"g":"6.3..9..8..4.8......5..3..7...37..1.3.......2.6..42...4..6..1......2.9..2..9..7.3","s":103.5,"m":4},{"g":"5....3....7....53.18.54...6.2.4.1..9....9....9..2.5.8.8...29.14.61....9....6....5","s":118.5,"m":4},{"g":".......4.4...2...8.8..97.2.3....64..2...8...5..89....3.6.35..7.5...6...9.1.......","s":107,"m":4},{"g":"7.39..5.....8.5.4..25......6..1..8...1.....7...8..9..1......92..3.5.7.....9..84.7","s":125.5,"m":4},{"g":".6..4.51.5..18.....3...5...3....8...2.7...8.6...4....3...8...7.....94..2.42.1..6.","s":114.5,"m":4},{"g":".5..4.19.41...9.3...8.........56...3.8.937.4.5...84.........9...9.7...68.62.9..7.","s":118.5,"m":4},{"g":"8....96.4..4..89.3.6.....5....7..5.1.1.4.3.6.5.2..6....5.....3.2.78..4..4.16....5","s":99.5,"m":4},{"g":".5...9.4....24.8....8...6...6...8.3.7.3...5.4.9.3...1...5...3....7.56....1.7...9.","s":108,"m":4},{"g":".....5..765...2.8.92.7.....57.3.4..8..8...3..3..2.9.15.....7.92.8.4...737..8.....","s":98.5,"m":5},{"g":"3...52.8.4..3......68........3..1....1.765.2....2..7........46......9..1.5.62...9","s":119,"m":5},{"g":"8.......1..2.8.64...6..4.8....31..7.9.......5.7..26....9.6..8...17.3.4..2.......7","s":125,"m":4},{"g":".....2..91..73.4.8..6.....5..1...2.....163.....3...9..7.....8..3.2.48..16..5.....","s":106,"m":5},{"g":"8..5..4.1....2...8..6.1..7....7..12...........45..8....9..7.2..3...9....4.2..3..5","s":119.5,"m":4},{"g":".87..4..96.2..9....9..5..6....5..7.6..3.9.8..8.1..3....4..3..1....9..6.49..6..27.","s":102,"m":4},{"g":"..7..89.......9.3..1..2...6.4.8...9..81...67..9...1.8.2...4..6..7.3.......52..1..","s":110.5,"m":4},{"g":"....7..3...3.....62..3.18..9....8675.5.....8.8276....3..24.3..86.....1...4..6....","s":106.5,"m":4},{"g":"87..3.5..9...48...2....9.1.64.........9...2.........45.3.8....9...51...4..2.6..51","s":116,"m":5},{"g":".....17..5....9...8...3..6..27....46...7.2...39....57..4..8...3...6....4..61.....","s":133,"m":4},{"g":"2.....7..678..12....125.8.....96.....85...69.....85.....7.189....64..178..9.....4","s":104,"m":4},{"g":"1.....6.......72..2..5.6..1.527.48......5......86.294.8..2.3..9..78.......4.....8","s":111,"m":5},{"g":"41..........7...23..7.8...1...5..2.9.8.3.2.4.2.6..4...9...5.7..52...7..........16","s":114.5,"m":4},{"g":".5.....2.26...385...8..4..94...6...5...3.7...6...5...18..7..3...431...96.9.....8.","s":120.5,"m":4},{"g":".5...3..449......1...49.25.....42...5.2...3.8...37.....81.54...6......193..9...6.","s":113.5,"m":5},{"g":"..79...542......395.4...8...7...3..8.5..9..7.1..4...6...1...7.374......292...75..","s":138.5,"m":4},{"g":"5.4.....9...53.1...2......6...6..7...4..1..8...7..9...6......4...3.87...9.....5.2","s":122,"m":4},{"g":"..5....2..2648....3....9.....36..752.5.....3.962..31.....9....7....7841..8....2..","s":101.5,"m":5},{"g":".148...5.....7...2..79....3..6..2.4..9.....3..4.3..8..5....93..9...1.....2...679.","s":106,"m":5},{"g":"3....4..2.183..........96..8.2.4....73.....21....5.8.4..16..........819.9..4....8","s":134,"m":4},{"g":"...3.2.45.12....6.......2.8.642.7....7.....8....5.147.9.6.......2....39.73.1.4...","s":103,"m":5},{"g":"..5..6...27..9.3...4......2...17.6.4...6.5...1.7.24...3......1...4.6..87...5..2..","s":106.5,"m":4},{"g":"..7...3.6.2.3........7152....1....8...45.27...8....4....2964........7.3.5.8...6..","s":101.5,"m":5},{"g":"....953.....7....5.9.2..1....1.5..398.......474..1.8....2..3.4.9....7.....694....","s":130.5,"m":5},{"g":".36......7.8.1.....2..37......8..3.1.65...48.8.2..3......52..6.....8.1.4......93.","s":123,"m":4},{"g":"..41.....63.......5..6...2....579.6.8.......9.6.218....4...6..3.......78.....42..","s":119.5,"m":5},{"g":"9.8.....17..5......62..4.7.....16..52.14.58.66..93.....7.3..26......7..88.....7.9","s":98,"m":5},{"g":"4215....66....7..3....2.8....6..4...14.....65...7..3....9.5....8..3....23....1589","s":119.5,"m":4},{"g":"....841.93.......4...3..5...6..52....5.1.3.2....97..4...6..5...9.......74.721....","s":118,"m":4},{"g":"....24..9.2...63.46...1..2..5.......1..6.9..5.......3..9..5...35.31...7.8..76....","s":133.5,"m":5},{"g":"...54..78..83.1..5.......6.8..1.95.7.........3.18.4..9.7.......1..2.57..24..87...","s":102,"m":4},{"g":"..9....6.24.7.3...3.64........8..72...........35..9........41.6...6.7.82.5....9..","s":138.5,"m":4},{"g":"4...3.1.....25.....39.....4..7...8219.......3658...9..2.....39.....79.....4.2...8","s":120,"m":4},{"g":"36.29......1.5.....9.........6..372..3.9.1.4..148..5.........7.....8.4......79.58","s":106,"m":4},{"g":".4..8....5....6..8...5..73.18..92.5.4.......2.2.15..94.91..3...2..8....1....1..2.","s":118.5,"m":5},{"g":"69.35....5....6.....31.9..2..943.71..7.....9..56.174..9..8.32.....6....9....91.47","s":106.5,"m":4},{"g":".692....7....65..32..7..6....83....9.1.....4.4....75....2..9..43..52....7....128.","s":100.5,"m":4},{"g":"9...2......53...6.4....57...39.....287.....942.....81...15....7.4...31......7...8","s":103,"m":4},{"g":".......3..4.19.8.....36.5..1..94..5.7...8...4.2..76..3..1.59.....7.34.1..5.......","s":102,"m":4},{"g":"4....35.......9.4.1....73.25..1..9.3.........7.9..5..13.86....4.5.8.......67....5","s":133.5,"m":4},{"g":".81..6..26....2.4.3...5..6.....47.....9...8.....81.....6..2...5.4.7....12..5..37.","s":117,"m":5},{"g":"9..78...65.6.4....2..3..49..59.....46.......58.....31..98..3..1....9.5.33...18..2","s":130,"m":4},{"g":"8...9.63......49..9..2...5...8..721...3...5...964..8...2...8..5..73......89.4...2","s":110,"m":4},{"g":"....9.2..7..3...84...7.2.535.79...4..3.....2..4...61.538.5.9...47...8..2..6.4....","s":105,"m":4},{"g":".3.5.6.4.........7...23...86..85...9..9...2..5...97..62...85...7.........5.1.9.6.","s":127.5,"m":4},{"g":"...192...6......37...3..8.925.....6....641....6.....937.8..3...19......5...219...","s":139,"m":4},{"g":"9....4....7..2.3...8...5.42..5...873.........738...6..64.3...8...7.1..9....6....5","s":120,"m":4},{"g":"..69....7.5..7.94.....4....2.5...879.........187...2.3....6.....14.3..8.8....53..","s":118.5,"m":4},{"g":".74.....63.58.6.......9.....6.58..9...31.97...1..72.6.....2.......7.86.57.....13.","s":114,"m":4},{"g":".6.....2.2.15.......8.7...31..3....6.7..4..8.9....6..43...5.1.......42.7.2.....6.","s":117,"m":4},{"g":"..1.8..4....7...5.47...68..9.8.......3.5.1.6.......5.7..63...92.9...8....4..9.1..","s":98,"m":5},{"g":"4...7.1...76.....2.832.1...6.8........76.43........6.9...3.275.7.....98...5.1...4","s":108,"m":5},{"g":".5.......1...94.6.4..1.8....28...4.16...7...33.9...68....9.7..6.4.31...2.......3.","s":98,"m":5},{"g":"..18..42..2....8.....2...71..412...6...648...9...372..17...5.....5....3..69..15..","s":109.5,"m":5},{"g":"...4....14..3...2576..5......8..29..1.......2..57..8......3..7954...9..32....7...","s":112.5,"m":5},{"g":"9...1...7.38......16...2...6.31.5.7..8.2.7.5..5.3.89.4...6...49......73.3...8...1","s":109,"m":4},{"g":"..58..9...49.72........1.5.7..63...4.........2...89..1.8.7........21.36...2..31..","s":115.5,"m":4},{"g":".6..295....96......1..38.7.9..3....2..6...7..2....5..4.7.91..3......34....327..8.","s":115.5,"m":4},{"g":"..27..94.74..9...5...8....159..28.....4...3.....46..523....2...4...8..13.79..35..","s":133,"m":4},{"g":".3..9...51..2.3..89...8.6....2....5....9.5....1....4....4.3...27..4.8..68...6..7.","s":115,"m":4},{"g":".......94.124.6......3..1..45..83...23.....48...24..35..1..4......1.928.56.......","s":127,"m":4},{"g":".8.........2....3.16..3...465..19..741..7..927..64..588...6..13.3....5.........7.","s":102.5,"m":4},{"g":"...29.4387....42...4..1....5....876...........869....4....3..5...15....3359.41...","s":127.5,"m":5},{"g":"....41.78.1...86...8......23..1.9...6...8...4...4.5..71......4...29...3.43.71....","s":129,"m":4},{"g":"....84.9223...9...8.......746..981.............517..435.......6...9...1434.52....","s":112.5,"m":4},{"g":"49.6.8....3.......2.7.9...5..276...1.7.....2.5...413..1...2.7.3.......5....8.6.14","s":121,"m":5},{"g":"4982....6.1......4..27......23..6...94.....61...8..32......84..2......9.5....9672","s":100,"m":5},{"g":"...2.1.6.15..8...2.2..45...4......95..53.41..76......8...95..8.6...2..54.7.4.6...","s":119,"m":4},{"g":".6435...7..79......1..7......2...8.637.....546.8...9......9..3......76..8...1374.","s":114,"m":4},{"g":"..37..6...2...8..1....4..2.8.6.7..1....9.2....3..1.4.7.9..5....7..6...9...4..78..","s":104.5,"m":5},{"g":"8...2....76.853.....36.9...4....12...1.5.2.9...87....1...3.86.....215.43....6...2","s":102.5,"m":4},{"g":"4..5..32......86.....3..4.9..94..862..4...5..523..79..3.2..5.....51......46..2..8","s":137,"m":4},{"g":"6.8......3...49....95.....87..3...4.18..9..73.6...1..28.....39....13...6......7.5","s":112,"m":4},{"g":"...5....1.57.9.4....2.36.....4...7.6.........7.5...2.....64.9....1.2.53.9....7...","s":120.5,"m":5},{"g":"..5.4.....8.1.2...3.79........5...21.5.8.9.4.29...4........56.8...2.1.3.....3.7..","s":113.5,"m":4},{"g":".4.........8.463.72...8.6..5....2....7..9..2....4....8..5.1...91.763.2.........1.","s":112,"m":4}]};
+function parse(s){ return s.split("").map(function(ch){ return ch==="."?0:+ch; }); }
+var EPOCH=Date.UTC(2026,9,1);
+function dayIndex(key){ var p=key.split("-"); return Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-EPOCH)/864e5); }
+function fits(g,spec){ return g.ok&&g.score>=spec.score[0]&&g.score<=spec.score[1]&&g.max<=spec.lvl&&g.deep.every(function(x,i){ return x>=spec.need[i]; }); }
+function forDay(key,wd){
+  /* the week's pool in a fixed shuffled order, one a week; dressed for the date. A different dressing can change the
+     order the clockmaker meets his steps (and so the score a little), so each dressing is graded, and the first that
+     lands in the day's band is used */
+  var spec=WEEK[wd], list=POOL[wd]||[], idx=dayIndex(key), week=Math.floor((idx+70000)/7);
+  var order=shuffle(Array.from({length:list.length},function(_,i){ return i; }),rng("order:"+wd));
+  var base=parse(list[order[week%list.length]].g), best=null;
+  for(var t=0;t<16;t++){
+    var g=dress(spec.n,base,key+(t?":"+t:"")), gr=grade(spec.n,g,spec.lvl);
+    var d=fits(gr,spec)?0:1+Math.abs(gr.score-(spec.score[0]+spec.score[1])/2);
+    if(!best||d<best.d) best={g:g,gr:gr,d:d};
+    if(!d) break;
+  }
+  var s=count(spec.n,best.g,2);
+  return {n:spec.n,g:best.g,sol:s.sol,score:best.gr.score,max:best.gr.max,deep:best.gr.deep,unique:s.n===1,off:best.d>0,wd:wd};
+}
+
+root.CB={rng:rng,shuffle:shuffle,bits:bits,digs:digs,geom:geom,sees:sees,count:count,WEEK:WEEK,COST:COST,LVL:LVL,solver:solver,grade:grade,dress:dress,symPerm:symPerm,parse:parse,POOL:POOL,forDay:forDay,fits:fits,dayIndex:dayIndex};
+})(typeof window!=="undefined"?window:globalThis);
+
+</script>
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+function $(s,r){ return (r||document).querySelector(s); }
+function mk(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,9,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FEEL=["Hardest","Gentle","Easy","Steady","Moderate","Tricky","Hard"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+var ORD=["first","second","third","fourth","fifth","sixth","seventh","eighth","ninth"];
+var NUMW=["","1","2","3","4","5","6","7","8","9"];
+function plural(d){ return d+"s"; }
+
+/* ---------- the drawing: sizes in drawing units ----------
+   The plate's top is drawn flat on a plane, S units a dial, and tilted toward you by squashing it top to bottom (K).
+   Its front edge and its shadow hang below. Gears sit in windows (GAP: the plate's bar between windows; F: the rim).
+   The numbers stand upright at the middle of their dials, so they read cleanly. */
+var S=100, F=52, GAP=18, K=.9, TOPM=4, TH=26, SHD=26, DR=43;
+var P=null, W=0, PH=0, VH=0;
+function PLANE(){ return "matrix(1 0 0 "+K+" 0 "+TOPM+")"; }
+function colX(c){ return F+c*S+Math.floor(c/P.G.bc)*GAP; }
+function rowY(r){ return F+r*S+Math.floor(r/P.G.br)*GAP; }
+function pcx(i){ return colX(i%P.n)+S/2; }
+function pcy(i){ return rowY((i/P.n)|0)+S/2; }
+function cx(i){ return pcx(i); }
+function cy(i){ return TOPM+pcy(i)*K; }
+
+/* names for the gears, rows and columns in the clockmaker's notes */
+function gearName(b){ var G=P.G, per=P.n/G.bc, gr=Math.floor(b/per), gc=b%per, rows=P.n/G.br;
+  var v=rows===3?["top","middle","bottom"][gr]:["top","middle","bottom"][gr];
+  if(per===3){ var h=["left","",'right'][gc]; if(gr===1&&gc===1) return "the middle gear"; if(gc===1) return "the "+v+" gear"; if(gr===1) return "the "+h+" gear"; return "the "+v+"-"+h+" gear"; }
+  return "the "+v+"-"+(gc?"right":"left")+" gear"; }
+function unitName(u){ var n=P.n; return u<n?"the "+ORD[u]+" row":u<2*n?"the "+ORD[u-n]+" column":gearName(u-2*n); }
+function unitKind(u){ var n=P.n; return u<n?"row":u<2*n?"column":"gear"; }
+
+/* ---------- the stage ---------- */
+var stage=mk("div","cb-pad");
+var ICON={row:'<svg viewBox="0 0 20 20"><rect x="1" y="7" width="18" height="6" rx="3" fill="#f6efdc" stroke="#1f2f5c" stroke-width="1.2"/><text x="10" y="12.2" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="7" fill="#22409c">1 2 3</text></svg>',
+  gear:'<svg viewBox="0 0 20 20"><path d="M10 1.5l1.6 2.2 2.6-.8.4 2.7 2.6 1-1.2 2.4 1.7 2.1-2.4 1.3.2 2.7-2.7-.1-1 2.5-2.1-1.7-2.1 1.7-1-2.5-2.7.1.2-2.7-2.4-1.3 1.7-2.1L3 6.6l2.6-1 .4-2.7 2.6.8z" fill="#e3c16f" stroke="#7a5a1e" stroke-width=".9"/><circle cx="10" cy="10" r="3.2" fill="#f6efdc" stroke="#7a5a1e" stroke-width=".8"/></svg>',
+  once:'<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.4" fill="#fffdf6" stroke="#c99a3f" stroke-width="1.8"/><text x="10" y="14.6" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="13" fill="#22409c">7</text></svg>'};
+stage.innerHTML='<div class="cb-left"><div class="cb-board" id="cbBoard"><svg id="cbBase" aria-hidden="true"></svg><svg id="cbLive" class="cb-live" role="img" aria-label="The watch movement"></svg>'+
+  '<div class="cb-sign" id="cbSign">Right on Time!</div><div class="cb-toast" id="cbToast" role="status"></div></div></div>'+
+  '<div class="cb-right"><div class="cb-notes" id="cbNotes"><svg class="cb-tag" viewBox="0 0 26 30" aria-hidden="true"><path d="M13 2v10" stroke="#9c7a45" stroke-width="1.6"/><rect x="4" y="11" width="18" height="17" rx="3" fill="#efe2bd" stroke="#9c7a45" stroke-width="1.2"/><circle cx="13" cy="15" r="2" fill="none" stroke="#9c7a45" stroke-width="1.2"/></svg>'+
+  '<h2>The Clockmaker\'s Notes</h2><span class="cb-no" id="cbNo">No. 1</span>'+
+  '<ul class="cb-rules"><li>'+ICON.once+'Set every <b>dial</b> to a number.</li><li>'+ICON.row+'Each number once in every <b>row</b> and every <b>column</b>.</li><li>'+ICON.gear+'Each number once in every <b>gear</b>.</li></ul>'+
+  '<p class="cb-rule1" id="cbRule1">Each number once in every <b>row</b>, <b>column</b> and <b>gear</b>.</p>'+
+  '<p class="cb-how">Tap a <b>dial</b>, then a <b>number</b>. Turn on <b>Pencil</b> to jot the numbers a dial might be.</p>'+
+  '<div class="cb-day"><span id="cbDay"></span><span class="cb-count" id="cbCount"></span></div></div>'+
+  '<div class="cb-keys" id="cbKeys"></div>'+
+  '<div class="cb-tools"><button class="pk-btn gold" type="button" id="cbHint">Ask the Clockmaker</button><button class="pk-btn" type="button" id="cbPen" aria-pressed="false">Pencil</button><button class="pk-btn" type="button" id="cbUndo">Undo</button><button class="pk-btn cb-lg" type="button" id="cbErase">Erase</button><button class="pk-btn cb-lg" type="button" id="cbRestart">Restart</button><button class="pk-btn cb-sm" type="button" id="cbErase2">Erase</button></div></div>';
+var BOARD=$("#cbBoard",stage), BASE=$("#cbBase",stage), LIVE=$("#cbLive",stage), TOAST=$("#cbToast",stage), KEYS=$("#cbKeys",stage);
+
+/* ---------- the movement, drawn once per puzzle ---------- */
+function gearPath(R,teeth,depth){
+  var p=[], t=teeth*4;
+  for(var k=0;k<t;k++){ var a=(k/t)*Math.PI*2, r=(k%4<2)?R:R-depth, a2=a+(Math.PI*2/t)*(k%4===0||k%4===2?.15:0);
+    p.push((k?"L":"M")+(r*Math.cos(a2)).toFixed(1)+" "+(r*Math.sin(a2)).toFixed(1)); }
+  return p.join("")+"Z";
+}
+function drawBase(){
+  var n=P.n, G=P.G, i, s=[], per=n/G.bc, rows=n/G.br;
+  W=2*F+n*S+(per-1)*GAP; PH=2*F+n*S+(rows-1)*GAP; VH=Math.round(TOPM+PH*K+TH+SHD);
+  BASE.setAttribute("viewBox","0 0 "+W+" "+VH); LIVE.setAttribute("viewBox","0 0 "+W+" "+VH);
+  var yb=TOPM+PH*K;
+  s.push('<defs>');
+  s.push('<linearGradient id="cbPl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--pl1)"/><stop offset=".45" style="stop-color:var(--pl2)"/><stop offset="1" style="stop-color:var(--pl3)"/></linearGradient>');
+  s.push('<linearGradient id="cbEdge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--edge1)"/><stop offset=".5" style="stop-color:var(--edge2)"/><stop offset="1" style="stop-color:var(--pl4)"/></linearGradient>');
+  s.push('<linearGradient id="cbEdgeX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>');
+  /* Geneva stripes on the plate: broad soft bands of light, as on a fine movement */
+  s.push('<pattern id="cbStripe" width="64" height="64" patternUnits="userSpaceOnUse" patternTransform="rotate(-28)"><rect width="64" height="64" fill="url(#cbStripeG)"/></pattern>');
+  s.push('<linearGradient id="cbStripeG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#fff" stop-opacity=".05"/><stop offset=".9" stop-color="#3a2a08" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>');
+  /* perlage on the window floors: overlapping little swirls */
+  s.push('<radialGradient id="cbPerlG"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".7" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".12"/></radialGradient>');
+  s.push('<pattern id="cbPerl" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" style="fill:var(--floor2)"/><circle cx="0" cy="0" r="16" fill="url(#cbPerlG)"/><circle cx="28" cy="0" r="16" fill="url(#cbPerlG)"/><circle cx="14" cy="14" r="16" fill="url(#cbPerlG)"/><circle cx="0" cy="28" r="16" fill="url(#cbPerlG)"/><circle cx="28" cy="28" r="16" fill="url(#cbPerlG)"/></pattern>');
+  s.push('<radialGradient id="cbFloor" cx="30%" cy="25%" r="90%"><stop offset="0" style="stop-color:var(--floor1)" stop-opacity=".0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient>');
+  ["A","B"].forEach(function(k){ s.push('<linearGradient id="cbG'+k+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--g'+k+'1)"/><stop offset=".5" style="stop-color:var(--g'+k+'2)"/><stop offset="1" style="stop-color:var(--g'+k+'3)"/></linearGradient>'); });
+  s.push('<radialGradient id="cbSheen" cx="30%" cy="25%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient>');
+  s.push('<radialGradient id="cbEn" cx="38%" cy="32%" r="75%"><stop offset="0" style="stop-color:var(--en1)"/><stop offset=".6" style="stop-color:var(--en2)"/><stop offset="1" style="stop-color:var(--en3)"/></radialGradient>');
+  s.push('<linearGradient id="cbBez" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--bez1)"/><stop offset=".5" style="stop-color:var(--bez2)"/><stop offset="1" style="stop-color:var(--bez3)"/></linearGradient>');
+  s.push('<radialGradient id="cbScrew" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#a9c2ff"/><stop offset=".45" stop-color="#3a5cc0"/><stop offset="1" stop-color="#14245a"/></radialGradient>');
+  s.push('<radialGradient id="cbRuby" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffd0d6"/><stop offset=".35" stop-color="#e0283f"/><stop offset="1" stop-color="#6e0715"/></radialGradient>');
+  s.push('<linearGradient id="cbBrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe7a6"/><stop offset=".45" stop-color="#d9b25a"/><stop offset="1" stop-color="#a8802c"/></linearGradient>');
+  s.push('<radialGradient id="cbBrassR" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#d9b25a"/><stop offset="1" stop-color="#7a5a1e"/></radialGradient>');
+  s.push('<radialGradient id="cbTable" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".6" stop-color="#000" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>');
+  s.push('<linearGradient id="cbInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="cbInL" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  /* the gear windows: clips */
+  for(var b=0;b<n;b++){ var gr=Math.floor(b/per), gc=b%per, x0=colX(gc*G.bc)-6, y0=rowY(gr*G.br)-6, ww=G.bc*S+12, hh=G.br*S+12;
+    s.push('<clipPath id="cbWin'+b+'"><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" rx="16"/></clipPath>'); }
+  s.push('</defs>');
+  /* the shadow on the bench, and the plate's front edge (its thickness), lit from the left */
+  s.push('<ellipse cx="'+(W/2+12)+'" cy="'+(yb+TH+6)+'" rx="'+(W*.55)+'" ry="'+(SHD*.9)+'" fill="url(#cbTable)"/>');
+  s.push('<path d="M0 '+(yb-16)+'Q0 '+yb+' 16 '+yb+'H'+(W-16)+'Q'+W+' '+yb+' '+W+' '+(yb-16)+'V'+(yb+TH-14)+'Q'+W+' '+(yb+TH)+' '+(W-16)+' '+(yb+TH)+'H16Q0 '+(yb+TH)+' 0 '+(yb+TH-14)+'Z" fill="url(#cbEdge)"/>');
+  s.push('<path d="M0 '+(yb-16)+'Q0 '+yb+' 16 '+yb+'H'+(W-16)+'Q'+W+' '+yb+' '+W+' '+(yb-16)+'V'+(yb+TH-14)+'Q'+W+' '+(yb+TH)+' '+(W-16)+' '+(yb+TH)+'H16Q0 '+(yb+TH)+' 0 '+(yb+TH-14)+'Z" fill="url(#cbEdgeX)"/>');
+  for(var ln=0;ln<3;ln++) s.push('<path d="M14 '+(yb+6+ln*6)+'H'+(W-14)+'" stroke="#fff" stroke-opacity=".09" stroke-width="1"/>');
+  /* the plate's top */
+  s.push('<g transform="'+PLANE()+'">');
+  s.push('<rect x="0" y="0" width="'+W+'" height="'+PH+'" rx="18" fill="url(#cbPl)"/><rect x="0" y="0" width="'+W+'" height="'+PH+'" rx="18" fill="url(#cbStripe)"/>');
+  s.push('<rect x="1.5" y="1.5" width="'+(W-3)+'" height="'+(PH-3)+'" rx="17" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3"/>');
+  s.push('<path d="M18 '+(PH-1.5)+'H'+(W-18)+'Q'+(W-1.5)+' '+(PH-1.5)+' '+(W-1.5)+' '+(PH-18)+'V18" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="3"/>');
+  /* a fine engraved line around the rim */
+  s.push('<rect x="16" y="16" width="'+(W-32)+'" height="'+(PH-32)+'" rx="10" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.6"/><rect x="17.5" y="17.5" width="'+(W-32)+'" height="'+(PH-32)+'" rx="10" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>');
+  /* each gear window: the floor, the gear turning under it, the walls' shade, and the dials on top */
+  for(b=0;b<n;b++){ gr=Math.floor(b/per); gc=b%per; x0=colX(gc*G.bc)-6; y0=rowY(gr*G.br)-6; ww=G.bc*S+12; hh=G.br*S+12;
+    var gx=x0+ww/2, gy=y0+hh/2, Rg=Math.min(ww,hh)*.5+Math.abs(ww-hh)*.32+8, teeth=Math.round(Rg/9), ccw=(gr+gc)%2, kind=(gr+gc)%2?"B":"A";
+    s.push('<g clip-path="url(#cbWin'+b+')"><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" fill="url(#cbPerl)"/><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" fill="url(#cbFloor)"/>');
+    /* the gear's shadow on the floor, then the gear: toothed rim, five spokes and a jeweled hub */
+    var gp=gearPath(Rg,teeth,12), spokes=[];
+    for(var k=0;k<5;k++){ var a=k*Math.PI*2/5-Math.PI/2; spokes.push('M0 0L'+(Math.cos(a)*(Rg-24)).toFixed(1)+' '+(Math.sin(a)*(Rg-24)).toFixed(1)); }
+    s.push('<g transform="translate('+(gx+7)+' '+(gy+9)+')" opacity=".45"><path d="'+gp+'" fill="#000"/></g>');
+    s.push('<g transform="translate('+gx+' '+gy+')"><g class="cb-gear'+(ccw?" ccw":"")+'" data-g="'+b+'">'+
+      '<path d="'+gp+'" fill="url(#cbG'+kind+')"/>'+
+      '<circle r="'+(Rg-24)+'" fill="url(#cbPerl)"/>'+
+      '<path d="'+spokes.join("")+'" stroke="url(#cbG'+kind+')" stroke-width="16" stroke-linecap="round"/>'+
+      '<circle r="'+(Rg-24)+'" fill="none" stroke="#000" stroke-opacity=".3" stroke-width="2"/>'+
+      '<circle r="'+(Rg-4)+'" fill="url(#cbSheen)"/>'+
+      '<circle r="18" fill="url(#cbG'+kind+')" stroke="#000" stroke-opacity=".3" stroke-width="1.5"/><circle r="8" fill="url(#cbRuby)"/></g></g>');
+    /* the window's walls in shade: top and left (light from the top left), a bright lip on the bottom and right */
+    s.push('<rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="18" fill="url(#cbInT)"/><rect x="'+x0+'" y="'+y0+'" width="16" height="'+hh+'" fill="url(#cbInL)"/></g>');
+    s.push('<rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" rx="16" fill="none" stroke="#000" stroke-opacity=".45" stroke-width="2.5"/>');
+    s.push('<path d="M'+(x0+16)+' '+(y0+hh+1.5)+'H'+(x0+ww-16)+'Q'+(x0+ww+1.5)+' '+(y0+hh+1.5)+' '+(x0+ww+1.5)+' '+(y0+hh-16)+'V'+(y0+16)+'" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2.2"/>');
+  }
+  /* the dials: enamel discs in gold bezels, each with a soft shadow on its gear */
+  for(i=0;i<n*n;i++){ var X=pcx(i), Y=pcy(i);
+    s.push('<circle cx="'+(X+4)+'" cy="'+(Y+6)+'" r="'+(DR+2)+'" fill="#000" opacity=".4"/>'+
+      '<circle cx="'+X+'" cy="'+Y+'" r="'+(DR+3)+'" fill="url(#cbBez)"/>'+
+      '<circle cx="'+X+'" cy="'+Y+'" r="'+(DR-1.5)+'" fill="url(#cbEn)"/>'+
+      '<circle cx="'+X+'" cy="'+Y+'" r="'+(DR-6)+'" fill="none" stroke="#7a5a1e" stroke-opacity=".22" stroke-width="1.2" stroke-dasharray="1.4 5.4"/>'+
+      '<ellipse cx="'+(X-DR*.38)+'" cy="'+(Y-DR*.45)+'" rx="'+(DR*.34)+'" ry="'+(DR*.16)+'" fill="#fff" opacity=".35" transform="rotate(-32 '+(X-DR*.38)+' '+(Y-DR*.45)+')"/>'); }
+  /* blued screws where the bars cross, and at the rim's corners; rubies set at the middle of the rim's sides */
+  function screw(x,y,r,rot){ return '<g transform="translate('+x+' '+y+')"><circle r="'+(r+2.5)+'" fill="#000" opacity=".35" transform="translate(1.5 2)"/><circle r="'+(r+2.5)+'" fill="url(#cbBrassR)"/><circle r="'+r+'" fill="url(#cbScrew)"/><path d="M'+(-r*.8)+' 0H'+(r*.8)+'" stroke="#0c1638" stroke-width="'+(r*.28)+'" stroke-linecap="round" transform="rotate('+rot+')"/><circle cx="'+(-r*.35)+'" cy="'+(-r*.4)+'" r="'+(r*.25)+'" fill="#fff" opacity=".5"/></g>'; }
+  function ruby(x,y){ return '<g transform="translate('+x+' '+y+')"><circle r="9" fill="url(#cbBrassR)"/><circle r="5.5" fill="url(#cbRuby)"/><circle cx="-1.8" cy="-2" r="1.6" fill="#fff" opacity=".7"/></g>'; }
+  var R2=GP2();
+  for(var gi=1;gi<rows;gi++) for(var gj=1;gj<per;gj++) s.push(screw(colX(gj*G.bc)-GAP/2,rowY(gi*G.br)-GAP/2,7,R2()*180));
+  [[26,26],[W-26,26],[26,PH-26],[W-26,PH-26]].forEach(function(c){ s.push(screw(c[0],c[1],8,R2()*180)); });
+  s.push(ruby(W/2,F/2)+ruby(F/2,PH/2)+ruby(W-F/2,PH/2));
+  /* the maker's plate: on the rim's bottom bar, a hair below dead center */
+  var px=W/2, py=PH-F/2+2;
+  s.push('<g transform="translate('+px+' '+py+')"><rect x="-50" y="-15" width="100" height="30" rx="4" fill="#000" opacity=".35" transform="translate(2 3)"/><rect x="-50" y="-15" width="100" height="30" rx="4" fill="url(#cbBrass)" stroke="#7a5a1e" stroke-width="1.2"/>'+
+    '<rect x="-46" y="-11" width="92" height="22" rx="3" fill="none" stroke="#fff3c8" stroke-opacity=".55" stroke-width="1"/><circle cx="-40" cy="0" r="2.4" fill="url(#cbBrassR)"/><circle cx="40" cy="0" r="2.4" fill="url(#cbBrassR)"/>'+
+    '<text x="0" y="7.5" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="500" font-size="21" fill="#4a3410">B<tspan font-family="Pacifico,cursive" font-weight="400" font-size="16">W</tspan></text></g>');
+  s.push('</g>');
+  BASE.innerHTML=s.join("");
+}
+function GP2(){ return CB.rng("screws"); }
+
+/* ---------- the movement as you've set it ---------- */
+var ringC=[], v=[], notes=[], given=[], undoS=[], hints=0, t0=0, spent=0, done=false, mode="daily", lessonK=0, sel=-1, pen=false, fresh={}, ringU=[], ringSoft=[], flash=[], shine=[], badSet={}, hinted={};
+function conflicts(){ var G=P.G, bad={}, why="", d0=0;
+  for(var u=0;u<3*P.n;u++){ var seen={}; G.U[u].forEach(function(x){ var d=v[x]; if(!d) return; if(seen[d]!=null){ bad[x]=1; bad[seen[d]]=1; if(!why){ why=unitKind(u); d0=d; } } else seen[d]=x; }); }
+  return {bad:bad,why:why,d:d0}; }
+function filled(){ var c=0; for(var i=0;i<v.length;i++) if(v[i]) c++; return c; }
+function paint(){
+  if(!P) return;
+  var s=[], n=P.n, G=P.G, i;
+  s.push('<g transform="'+PLANE()+'">');
+  function disc(i,fill,stroke,cls,sw,r){ return '<circle class="'+(cls||"")+'" cx="'+pcx(i)+'" cy="'+pcy(i)+'" r="'+(r||DR+2)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sw||4)+'"/>'; }
+  /* the selected dial's row, column and gear, warmly lit; dials with the same number ringed in blue */
+  if(sel>=0&&!done){ var peers={}; G.CU[sel].forEach(function(u){ G.U[u].forEach(function(x){ peers[x]=1; }); });
+    for(var x in peers) if(+x!==sel) s.push(disc(+x,"rgba(255,200,90,.34)","rgba(201,154,63,.55)","",2.5));
+    if(v[sel]) for(i=0;i<n*n;i++) if(i!==sel&&v[i]===v[sel]) s.push(disc(i,"rgba(74,111,208,.2)","rgba(74,111,208,.9)","",5)); }
+  /* the clockmaker's rows, columns or gears, a red flash where a number was taken out, and a shine across a finished line */
+  function unitRing(u,fill,stroke,sw){ var cells=G.U[u], xs=cells.map(pcx), ys=cells.map(pcy), x0=Math.min.apply(0,xs)-S/2+3, y0=Math.min.apply(0,ys)-S/2+3, x1=Math.max.apply(0,xs)+S/2-3, y1=Math.max.apply(0,ys)+S/2-3;
+    return '<rect x="'+x0+'" y="'+y0+'" width="'+(x1-x0)+'" height="'+(y1-y0)+'" rx="22" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>'; }
+  ringSoft.forEach(function(u){ s.push('<g class="cb-ring">'+unitRing(u,"rgba(255,246,214,.12)","rgba(255,241,190,.9)",4)+'</g>'); });
+  ringU.forEach(function(u){ s.push('<g class="cb-ring">'+unitRing(u,"rgba(255,211,107,.16)","#ffd36b",7)+'</g>'); });
+  shine.forEach(function(u){ s.push('<g class="cb-shine">'+unitRing(u,"rgba(255,236,170,.32)","#fff1c0",5)+'</g>'); });
+  ringC.forEach(function(c){ s.push(disc(c,"rgba(255,211,107,.28)","#ffd36b","cb-ring",6,DR+7)); });
+  flash.forEach(function(c){ s.push(disc(c,"rgba(224,80,60,.55)","#e0503c","cb-flash")); });
+  if(mode==="lesson"&&!done){ var Ls=LESSONS[lessonK]; if(Ls.glow) Ls.glow().forEach(function(c){ if(Ls.glowWhile&&!Ls.glowWhile(c)) return; s.push(disc(c,"rgba(255,211,107,.3)","#ffd36b","cb-glow",6,DR+6)); }); }
+  for(var b in badSet) s.push(disc(+b,"rgba(224,80,60,.22)","#e0503c","cb-bad",5,DR+4));
+  /* the selected dial lifts: a deeper shadow, a little bigger, and a gold ring */
+  if(sel>=0&&!done){ var X=pcx(sel), Y=pcy(sel);
+    s.push('<circle cx="'+(X+9)+'" cy="'+(Y+13)+'" r="'+(DR+4)+'" fill="#000" opacity=".35"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+6)+'" fill="url(#cbBez)"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+.5)+'" fill="url(#cbEn)"/>'+
+      '<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+9)+'" fill="none" stroke="#ffd36b" stroke-width="4"/>'+
+      '<ellipse cx="'+(X-DR*.38)+'" cy="'+(Y-4-DR*.45)+'" rx="'+(DR*.34)+'" ry="'+(DR*.16)+'" fill="#fff" opacity=".4" transform="rotate(-32 '+(X-DR*.38)+' '+(Y-4-DR*.45)+')"/>'); }
+  s.push('</g>');
+  /* the numbers, upright: printed black on the fixed dials, blued steel on yours; pencil notes small in a grid */
+  var fs=S*.66, nr=n===6?2:3, nc=3;
+  for(i=0;i<n*n;i++){ var x=cx(i), y=cy(i)-(i===sel&&!done?4*K:0);
+    if(v[i]){ var col=given[i]?"var(--given)":"var(--blue)";
+      s.push('<g class="'+(fresh[i]?"cb-pop":"")+'"><text x="'+(x+1.4)+'" y="'+(y+fs*.34+1.6)+'" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="'+fs+'" fill="#000" opacity=".12">'+v[i]+'</text>'+
+        '<text x="'+x+'" y="'+(y+fs*.34)+'" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="700" font-size="'+fs+'" style="fill:'+col+'">'+v[i]+'</text></g>'); continue; }
+    if(notes[i]){ for(var d=1;d<=n;d++){ if(!(notes[i]&(1<<(d-1)))) continue; var rr=Math.floor((d-1)/nc), cc=(d-1)%nc, ox=(cc-1)*S*.24, oy=(rr-(nr-1)/2)*S*.24*K;
+        s.push('<text x="'+(x+ox)+'" y="'+(y+oy+S*.075)+'" text-anchor="middle" font-family="Montserrat,sans-serif" font-weight="700" font-size="'+(S*.2)+'" style="fill:var(--blue2)" opacity=".95">'+d+'</text>'); } }
+  }
+  LIVE.innerHTML=s.join("");
+  fresh={};
+  counts();
+}
+function counts(){
+  var got=filled(), all=P.n*P.n;
+  $("#cbCount",stage).textContent=got+" of "+all+" set";
+  $("#cbUndo",stage).disabled=!undoS.length||done;
+  /* each number's key shows how many are still to set, and dims once all are in */
+  var left=new Array(P.n+1).fill(P.n); for(var i=0;i<v.length;i++) if(v[i]) left[v[i]]--;
+  [].forEach.call(KEYS.querySelectorAll(".cb-key[data-d]"),function(k){ var d=+k.dataset.d; k.classList.toggle("full",left[d]<=0); var sm=k.querySelector("small"); if(sm) sm.textContent=left[d]>0?left[d]:""; });
+  if(window.Parlor){ Parlor.score([got+"/"+all]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Movement",got+" of "+all+" set"+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+}
+function buildKeys(){
+  var n=P.n, h="";
+  for(var d=1;d<=n;d++) h+='<button class="cb-key" type="button" data-d="'+d+'" aria-label="'+d+'">'+d+'<small></small></button>';
+  if(n===9||true) h+='<button class="cb-key erase cb-kerase" type="button" data-d="0" aria-label="Erase"><svg viewBox="0 0 24 24" width="58%" height="58%" aria-hidden="true"><path d="M3 15.5l8.5-8.5a2 2 0 012.8 0l4.2 4.2a2 2 0 010 2.8L13 19.5H7z" fill="#f0b9b2" stroke="#7a3a2c" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.2 10.3l6.9 6.9" stroke="#7a3a2c" stroke-width="1.5"/><path d="M13 19.5h8" stroke="#7a5a1e" stroke-width="1.5" stroke-linecap="round"/></svg></button>';
+  KEYS.innerHTML=h; KEYS.classList.toggle("six",n===6);
+  stage.style.setProperty("--cb-kn",n+1);
+  [].forEach.call(KEYS.querySelectorAll(".cb-key"),function(k){ k.onclick=function(){ key(+k.dataset.d); }; });
+}
+
+/* ---------- sounds (Nov 2): the bench, made in the browser through the kit ----------
+   cb-pick: a dial picked out (a tiny tick) · cb-set: a number set (a crisp click with a little ring of steel)
+   cb-pencil: a fine pencil note · cb-erase: a number lifted off · cb-no: two dull knocks on the bench
+   cb-hint: the shop bell and two ticks · cb-line: a row, column or gear finished (a small chime, rising as you go)
+   cb-wind: the crown wound (restart) · cb-solve: ticking, the quarter chime and a warm chord (a lesson gets the chime) */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  function tick(h,d,t,f,g){ h.burst(d,t,.012,"bandpass",f,6,g,.0005,.01); h.osc(d,t,"sine",f*.5,0,g*.4,.0005,.02); }
+  D("cb-pick",function(h){ var d=h.out(.03), t=h.t; tick(h,d,t,5200*h.p,.14); });
+  D("cb-set",function(h){ var d=h.out(.08), t=h.t, p=h.p*(.97+Math.random()*.06);
+    tick(h,d,t,4200*p,.26); h.burst(d,t+.012,.02,"bandpass",2300*p,3,.12,.001,.016);
+    h.bell(d,t+.01,2637*p,.035,.22,[[1,1,1],[2.7,.35,.5]]); });
+  D("cb-pencil",function(h){ var d=h.out(.02), t=h.t; h.burst(d,t,.07,"bandpass",6200,1.6,.07,.006,.06); h.burst(d,t+.08,.05,"bandpass",5400,1.6,.05,.004,.04); });
+  D("cb-erase",function(h){ var d=h.out(.03), t=h.t; h.burst(d,t,.06,"bandpass",3000,2,.09,.003,.05); h.osc(d,t,"sine",1800,1100,.04,.002,.05); });
+  D("cb-no",function(h){ var d=h.out(.08), t=h.t; [[0,210],[.15,180]].forEach(function(k){ h.osc(d,t+k[0],"sine",k[1],k[1]*.8,.28,.002,.12,["lowpass",700]); h.burst(d,t+k[0],.03,"lowpass",900,1,.14,.001,.025); }); });
+  D("cb-hint",function(h){ var d=h.out(.22), t=h.t;
+    h.bell(d,t,2093,.07,1.1,[[1,1,1],[2.6,.4,.5],[4.2,.15,.3]]); h.bell(d,t+.12,2637,.05,.9,[[1,1,1],[2.6,.35,.5]]);
+    tick(h,d,t+.55,4600,.16); tick(h,d,t+.85,3700,.14); });
+  D("cb-line",function(h,o){ var d=h.out(.3), t=h.t, f=[1318.5,1568,1760,2093,2349][Math.min(4,o.k||0)];
+    h.bell(d,t,f,.05,1.2,[[1,1,1],[2.76,.3,.45],[5.4,.1,.3]]); });
+  D("cb-wind",function(h){ var d=h.out(.04), t=h.t; for(var k=0;k<9;k++) tick(h,d,t+k*.045,3000+((k%2)*700),.12); });
+  D("cb-solve",function(h,o){ var d=h.out(.45), t=h.t, at=0;
+    if(!o.short){
+      /* the escapement ticking, a touch faster each beat, then the quarter chime */
+      for(var k=0;k<8;k++){ var tt=t+k*.2-k*k*.006; tick(h,d,tt,k%2?3400:4300,.16); }
+      at=1.45;
+    }
+    [659.25,830.6,739.99,493.88].forEach(function(f,i){ h.bell(d,t+at+i*.42,f,.08,2.2,[[1,1,1],[2.0,.25,.6],[3.01,.18,.4],[4.17,.08,.3]]); });
+    [523.25,659.25,783.99,1046.5].forEach(function(f,i){ h.osc(d,t+at+1.85+i*.05,"triangle",f,0,.045,.02,1.8); });
+    if(!o.short) h.bell(d,t+at+2.3,164.8,.12,3,[[1,1,1],[2.0,.5,.7],[2.76,.3,.5],[5.4,.1,.3]]);
+  });
+})();
+function snd(name,o){ if(window.Parlor&&Parlor.defSfx) Parlor.sfx(name,o||{}); }
+
+/* ---------- playing ---------- */
+function toast(msg,ms){ TOAST.textContent=msg; TOAST.classList.add("on"); clearTimeout(TOAST._h); TOAST._h=setTimeout(hideToast,ms||2200); }
+function hideToast(){ clearTimeout(TOAST._h); TOAST.classList.remove("on"); }
+function nope(){ BOARD.classList.remove("cb-nope"); void BOARD.offsetWidth; BOARD.classList.add("cb-nope"); }
+function lookOnly(){ var Ls=LESSONS[lessonK]; toast(Ls.goal?"Nicely done. Tap Next to keep going.":"This page is just for looking. Tap Next to keep going.",2400);
+  [].forEach.call(document.querySelectorAll(".pk-coach button, .pk-coach .pk-btn"),function(b){ if(/^(Next|Start Practice Game)$/.test(b.textContent.trim())){ b.classList.remove("cb-ringbtn"); void b.offsetWidth; b.classList.add("cb-ringbtn"); } }); }
+function blocked(){ if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return true; } } return done||!P; }
+function unitDone(u){ var L=P.G.U[u], seen=0; for(var j=0;j<L.length;j++){ var d=v[L[j]]; if(!d) return false; var m=1<<(d-1); if(seen&m) return false; seen|=m; } return true; }
+/* change some dials at once: one undo step. list: [{i, v, n}] (the new number and notes) */
+function change(list,sound){
+  var ch=[], before=[];
+  list.forEach(function(c){ if(given[c.i]) return; var nv=c.v!=null?c.v:v[c.i], nn=c.n!=null?c.n:notes[c.i]; if(nv===v[c.i]&&nn===notes[c.i]) return;
+    ch.push({i:c.i,v0:v[c.i],n0:notes[c.i],v1:nv,n1:nn}); if(nv&&nv!==v[c.i]) fresh[c.i]=1; v[c.i]=nv; notes[c.i]=nn; });
+  if(!ch.length) return false;
+  var doneU=[]; ch.forEach(function(c){ if(c.v1&&c.v1!==c.v0) P.G.CU[c.i].forEach(function(u){ doneU.push(u); }); });
+  undoS.push(ch); if(!t0&&mode!=="lesson") t0=Date.now();
+  if(sound) snd(sound);
+  ringU=[]; ringSoft=[];
+  after(doneU.filter(function(u,k,a){ return a.indexOf(u)===k&&unitDone(u); }));
+  save();
+  return true;
+}
+function after(finishedU){
+  var before=badSet, C=conflicts(); badSet=C.bad;
+  var newBad=Object.keys(badSet).some(function(k){ return !before[k]; });
+  if(finishedU&&finishedU.length&&!newBad&&filled()<P.n*P.n){ shine=finishedU; setTimeout(function(){ shine=[]; },950); var k=finishedU.length-1; setTimeout(function(){ snd("cb-line",{k:Math.min(4,k+Math.floor(filled()/(P.n*P.n)*3))}); },90); }
+  paint();
+  if(newBad){ snd("cb-no"); nope(); toast("Two "+plural(C.d)+" can't share a "+C.why+".",2600); }
+  if(filled()===P.n*P.n&&!C.why){ solved(); return; }
+  lessonCheck();
+}
+function setDigit(i,d){
+  /* a number set: it clears that number from the pencil notes along its row, column and gear (one undo step) */
+  var list=[{i:i,v:d,n:0}], m=1<<(d-1);
+  P.G.PE[i].forEach(function(p){ if(!v[p]&&(notes[p]&m)) list.push({i:p,n:notes[p]&~m}); });
+  return change(list,"cb-set");
+}
+function key(d){
+  if(blocked()) return;
+  if(sel<0){ toast("Tap a dial first, then a number.",2000); return; }
+  if(given[sel]){ toast("That dial came set from the maker.",1800); return; }
+  hideToast();
+  if(!d){ if(v[sel]) change([{i:sel,v:0}],"cb-erase"); else if(notes[sel]) change([{i:sel,n:0}],"cb-erase"); return; }
+  if(pen){ if(v[sel]){ toast("Erase the number first to jot notes here.",2000); return; } change([{i:sel,n:notes[sel]^(1<<(d-1))}],"cb-pencil"); return; }
+  if(v[sel]===d){ change([{i:sel,v:0}],"cb-erase"); return; }
+  setDigit(sel,d);
+}
+function pick(i){
+  if(mode==="lesson"){ var Ls=LESSONS[lessonK]; if(!Ls.goal||!Parlor.lessonWaiting){ lookOnly(); return; } }
+  if(done||!P) return;
+  sel=i; snd("cb-pick"); hideToast(); paint(); lessonCheck();
+}
+function erase(){ key(0); }
+function togglePen(){ pen=!pen; document.body.classList.toggle("cb-pen",pen); var b=$("#cbPen",stage); b.classList.toggle("on",pen); b.setAttribute("aria-pressed",pen?"true":"false"); b.textContent=pen?"Pencil On":"Pencil"; snd("cb-pencil"); lessonCheck(); }
+function undo(){
+  if(mode==="lesson"&&blocked()) return; if(done||!undoS.length) return;
+  var ch=undoS.pop(); for(var k=ch.length-1;k>=0;k--){ v[ch[k].i]=ch[k].v0; notes[ch[k].i]=ch[k].n0; }
+  snd("cb-erase"); ringU=[]; ringSoft=[]; badSet=conflicts().bad; paint(); hideToast(); save();
+}
+function restart(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(!P) return;
+  if(done&&mode==="daily"){ startDaily(true,true); return; }
+  var ch=[]; for(var i=0;i<v.length;i++) if(!given[i]&&(v[i]||notes[i])){ ch.push({i:i,v0:v[i],n0:notes[i],v1:0,n1:0}); v[i]=0; notes[i]=0; }
+  if(!ch.length) return;
+  undoS.push(ch); snd("cb-wind"); ringU=[]; ringSoft=[]; badSet={}; paint(); save();
+  toast("The dials are wound back. (Undo brings your numbers back.)",2600);
+}
+
+/* ---------- touching the movement: tap a dial to pick it ---------- */
+function cellAt(e){
+  var b=LIVE.getBoundingClientRect(), sc=b.width/W, x=(e.clientX-b.left)/sc, y=(e.clientY-b.top)/sc;
+  var px=x, py=(y-TOPM)/K, best=-1, bd=1e9;
+  for(var i=0;i<P.n*P.n;i++){ var dx=px-pcx(i), dy=py-pcy(i), dd=dx*dx+dy*dy; if(dd<bd){ bd=dd; best=i; } }
+  return bd<=Math.pow(S*.72,2)?best:-1;
+}
+LIVE.addEventListener("click",function(e){ if(!P) return; var i=cellAt(e); if(i<0) return; pick(i); });
+LIVE.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+
+/* ---------- Ask the Clockmaker ----------
+   If a number is in the wrong dial, the clockmaker takes it out. Otherwise he works out the next dial a careful
+   clockmaker would set, sets it (in blue), rings the rows, columns or gears involved and says why. Along the way he
+   crosses off any of your pencil notes his reasoning rules out. */
+function list(a){ return a.length>1?a.slice(0,-1).join(", ")+" and "+a[a.length-1]:a[0]; }
+function orList(a){ return a.length>1?a.slice(0,-1).join(", ")+" or "+a[a.length-1]:a[0]; }
+function why(s){
+  var k=s.k, n=P.n, ds=s.ds?CB.digs(s.ds):[];
+  if(k==="pointing") return "In "+unitName(s.u)+", the "+plural(s.d)+" can only go along "+unitName(s.u2)+", so no other dial in that "+unitKind(s.u2)+" can be "+s.d+".";
+  if(k==="claiming") return "In "+unitName(s.u)+", the "+plural(s.d)+" can only go inside "+unitName(s.u2)+", so no other dial in that gear can be "+s.d+".";
+  if(k==="npair"||k==="ntriple"||k==="nquad") return (s.cells.length===2?"Two":s.cells.length===3?"Three":"Four")+" dials in "+unitName(s.u)+" can only be "+orList(ds)+" between them, so no other dial there can be "+orList(ds)+".";
+  if(k==="hpair"||k==="htriple"||k==="hquad") return "In "+unitName(s.u)+", "+list(ds)+" fit only in the same "+(s.cells.length===2?"two":s.cells.length===3?"three":"four")+" dials, so those dials can't be anything else.";
+  if(k==="xwing"||k==="swordfish"){ var base=s.us.map(unitName), cov=s.us2.map(unitName); return "The "+plural(s.d)+" in "+list(base)+" fit only in "+list(cov)+", so no other dial in those "+unitKind(s.us2[0])+"s can be "+s.d+"."; }
+  if(k==="xywing"||k==="xyzwing") return "Look at the three ringed dials: whichever way they're set, one of them is a "+s.d+", so a dial that shares a line or gear with all of them can't be "+s.d+".";
+  return "";
+}
+function hint(){
+  hideToast();
+  if(mode==="lesson"&&blocked()) return;
+  if(done||!P) return;
+  var n=P.n, N=n*n, i, msg="", ch=[];
+  ringU=[]; ringSoft=[]; ringC=[]; flash=[];
+  var wrong=[]; for(i=0;i<N;i++) if(v[i]&&!given[i]&&v[i]!==P.sol[i]) wrong.push(i);
+  if(wrong.length){
+    var w=wrong.indexOf(sel)>=0?sel:wrong[0]; ch.push({i:w,v0:v[w],n0:notes[w],v1:0,n1:0}); msg="The clockmaker takes the "+v[w]+" out of that dial: it doesn't belong there."; v[w]=0; flash=[w]; sel=w;
+  } else {
+    var S2=CB.solver(n), stt=S2.init(v), used=[], s=null, at=-1, d=0;
+    for(var g=0;g<200;g++){ s=S2.step(stt,6); if(!s) break; if(s.at!=null&&s.d){ at=s.at; d=s.d; break; } used.push(s); S2.apply(stt,s); }
+    if(at<0){ for(i=0;i<N;i++) if(!v[i]){ at=i; d=P.sol[i]; break; } s=null; }
+    /* cross off pencil notes the reasoning rules out */
+    var crossed=0; used.forEach(function(u){ u.out.forEach(function(o){ var x=o[0]; if(notes[x]&o[1]){ var old=ch.filter(function(c){ return c.i===x; })[0]; if(!old){ old={i:x,v0:v[x],n0:notes[x],v1:v[x],n1:notes[x]}; ch.push(old); } old.n1&=~o[1]; notes[x]=old.n1; crossed++; } }); });
+    if(at>=0){ var m=1<<(d-1), old2=ch.filter(function(c){ return c.i===at; })[0]; if(old2){ old2.v1=d; old2.n1=0; } else ch.push({i:at,v0:v[at],n0:notes[at],v1:d,n1:0}); v[at]=d; notes[at]=0; fresh[at]=1; hinted[at]=1; sel=at;
+      P.G.PE[at].forEach(function(p){ if(!v[p]&&(notes[p]&m)){ var o3=ch.filter(function(c){ return c.i===p; })[0]; if(!o3){ o3={i:p,v0:v[p],n0:notes[p],v1:v[p],n1:notes[p]}; ch.push(o3); } o3.n1&=~m; notes[p]=o3.n1; } }); }
+    /* the reason: the hardest trick it took, then the dial it settles */
+    var hard=null; used.forEach(function(u){ if(!hard||CB.LVL[u.k]>=CB.LVL[hard.k]) hard=u; });
+    var place=s&&s.at!=null?(s.k==="naked"?"That dial can only be "+d+": every other number is already in its row, column or gear"+(hard?", or ruled out above":"")+".":"In "+unitName(s.u)+", the "+d+" fits only in that dial."):"Here's a dial to get you going.";
+    msg=(hard?why(hard)+" ":"")+place;
+    if(s&&s.u!=null) ringU=[s.u]; else if(s&&s.k==="naked") ringSoft=P.G.CU[at].slice();
+    if(hard){ var rs=[]; if(hard.u!=null) rs.push(hard.u); if(hard.u2!=null&&hard.u2!==hard.u) rs.push(hard.u2); if(hard.us) rs=rs.concat(hard.us,hard.us2);
+      if(hard.piv!=null){ ringC=[hard.piv,hard.w1,hard.w2]; } ringSoft=ringSoft.concat(rs.filter(function(u){ return ringU.indexOf(u)<0; })); }
+  }
+  if(ch.length) undoS.push(ch);
+  snd("cb-hint");
+  if(!t0&&mode!=="lesson") t0=Date.now();
+  hints++; badSet=conflicts().bad; paint(); save();
+  setTimeout(function(){ if(flash.length){ flash=[]; } },950);
+  setTimeout(function(){ if(ringU.length||ringSoft.length||ringC.length){ ringU=[]; ringSoft=[]; ringC=[]; if(!done) paint(); } },msg.length>120?6200:4200);
+  toast(msg,msg.length>150?7600:msg.length>90?5600:4200);
+  if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
+  if(filled()===N&&!conflicts().why){ solved(); return; }
+  lessonCheck();
+}
+
+/* ---------- saving the day's work on the device, so a long Sunday can be finished later ---------- */
+function save(){ if(mode!=="daily"||done) return; var sec=spent+(t0?Math.round((Date.now()-t0)/1000):0);
+  store("bwClockS:"+todayKey,JSON.stringify({v:v.map(function(x,i){ return given[i]?0:x; }),n:notes,h:hints,sec:sec,hd:Object.keys(hinted)})); }
+function loadSave(){ try{ var s=JSON.parse(store("bwClockS:"+todayKey)||"null"); if(s&&s.v&&s.v.length===P.n*P.n) return s; }catch(e){} return null; }
+function clearOldSaves(){ try{ for(var k in localStorage) if(k.indexOf("bwClockS:")===0&&k!=="bwClockS:"+todayKey) localStorage.removeItem(k); }catch(e){} }
+
+/* ---------- loading ---------- */
+function load(p,how){
+  P=p; P.G=CB.geom(P.n); mode=how; hints=0; t0=0; spent=0; done=false; undoS=[]; ringU=[]; ringSoft=[]; flash=[]; shine=[]; badSet={}; fresh={}; hinted={}; sel=-1; hideToast();
+  v=P.g.slice(); notes=new Array(P.n*P.n).fill(0); given=P.g.map(function(x){ return !!x; });
+  BOARD.classList.remove("done"); BOARD.classList.remove("turn"); $("#cbSign",stage).classList.remove("on");
+  $("#cbNo",stage).textContent=how==="daily"?"No. "+dayNo(today):how==="practice"?"Practice":"Lesson";
+  var wd=today.getDay();
+  $("#cbDay",stage).innerHTML=how==="daily"?esc(DAYS[wd])+" · "+P.n+" × "+P.n+" · <b>"+FEEL[wd]+"</b>":how==="practice"?"Practice · "+P.n+" × "+P.n:"Lesson · "+P.n+" × "+P.n;
+  $("#cbRule1",stage).innerHTML="Each number 1–"+P.n+" once in every <b>row</b>, <b>column</b> and <b>gear</b>.";
+  drawBase(); buildKeys(); paint(); fit();
+}
+var today=new Date(), todayKey=ymd(today), DAILY=null;
+function rec(){ try{ return JSON.parse(store("bwClock:"+todayKey)||"null"); }catch(e){ return null; } }
+function startDaily(again,fresh2){
+  if(window.Parlor) Parlor.coach(null);
+  if(!DAILY) DAILY=CB.forDay(todayKey,today.getDay());
+  load({n:DAILY.n,g:DAILY.g.slice(),sol:DAILY.sol},"daily");
+  clearOldSaves();
+  var sv=!fresh2&&!rec()?loadSave():null;
+  if(sv){ for(var i=0;i<v.length;i++){ if(!given[i]&&sv.v[i]) v[i]=sv.v[i]; notes[i]=given[i]?0:(sv.n[i]||0); } hints=sv.h||0; spent=sv.sec||0; (sv.hd||[]).forEach(function(x){ hinted[x]=1; }); badSet=conflicts().bad; paint(); }
+  if(fresh2) store("bwClockS:"+todayKey,"null");
+  if(window.Parlor) Parlor.info("No. "+dayNo(today)+" · "+niceDate(today));
+  if(rec()&&!again) toast("You solved today's movement. Play it again for fun; tomorrow brings a new one.",3600);
+  else if(sv&&filled()>P.g.filter(function(x){ return x; }).length) toast("Welcome back: your dials are just as you left them.",3000);
+  else if(!again) toast("Tap a dial, then a number.",3000);
+}
+
+/* ---------- solved ---------- */
+function stars(h){ return h===0?3:h<=2?2:1; }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function streak(){ try{ return JSON.parse(store("bwClockStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function reveal(){
+  /* the gears turn under the dials (neighbors in opposite directions), and every row shines in turn */
+  sel=-1; paint();
+  if(window.Parlor&&!Parlor.smooth()) return;
+  BOARD.classList.add("turn");
+  for(var u=0;u<P.n;u++)(function(u){ setTimeout(function(){ shine=[u]; paint(); },120*u); })(u);
+  setTimeout(function(){ shine=[]; paint(); },120*P.n+900);
+}
+function solved(){
+  if(done) return; done=true; hideToast(); ringU=[]; ringSoft=[]; BOARD.classList.add("done");
+  snd("cb-solve",{short:mode==="lesson"});
+  reveal(); counts();
+  setTimeout(function(){ $("#cbSign",stage).classList.add("on"); },mode==="lesson"?300:1500);
+  if(mode==="lesson"){ setTimeout(function(){ Parlor.lessonDone(); },700); return; }
+  var secs=spent+(t0?Math.round((Date.now()-t0)/1000):0), sts=stars(hints), first=false, sk=streak(), srv=null;
+  if(mode==="daily"){ store("bwClockS:"+todayKey,"null"); }
+  if(mode==="daily"&&!rec()){
+    first=true; var r={s:sts,h:hints,sec:secs}; store("bwClock:"+todayKey,JSON.stringify(r));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwClockStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r):null;
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(sts,secs,first,sk,sv); }); },3300);
+}
+function withServer(srv,go){ if(!srv){ go(null); return; } var t=setTimeout(function(){ t=0; go(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go(sv); } },function(){ if(t){ clearTimeout(t); go(null); } }); }
+/* from the clockmaker's notebook: a true story of timekeeping */
+var NOTEBOOK=[
+  {t:"Harrison's Sea Watch",k:"The longitude · 1761",p:"John Harrison's fourth timekeeper, H4, sailed to Jamaica in 1761 and lost only about five seconds in 81 days at sea, close enough for a ship to work out its longitude."},
+  {t:"Jewels in a Watch",k:"Jewel bearings · 1704",p:"The rubies in a fine watch aren't for show. Since a patent in London in 1704, tiny polished jewels have held the turning gears' pivots, because they wear far less than brass."},
+  {t:"The Tourbillon",k:"Breguet · 1801",p:"Abraham-Louis Breguet patented the tourbillon in Paris in 1801: the heart of the watch turns slowly in a little cage, so gravity's pull evens out as it goes round."},
+  {t:"The First Pendulum Clock",k:"Christiaan Huygens · 1656",p:"The Dutch scientist Christiaan Huygens built the first pendulum clock in 1656. Clocks went from losing many minutes a day to losing seconds."},
+  {t:"Pennies on Big Ben",k:"Westminster",p:"The Great Clock at Westminster is fine-tuned with old pennies stacked on its pendulum. Adding one makes the clock gain about two-fifths of a second a day."},
+  {t:"The Day of Two Noons",k:"Railway time · 1883",p:"On November 18, 1883, the railroads of the United States and Canada switched to standard time zones. Many towns heard noon twice that day as their clocks were reset."},
+  {t:"The Greenwich Time Ball",k:"Greenwich · 1833",p:"Since 1833 a red ball has dropped down the mast of the Royal Observatory at Greenwich at one o'clock, so ships on the Thames could check their chronometers."},
+  {t:"The Quartz Watch",k:"Seiko Astron · 1969",p:"The first quartz wristwatch, the Seiko Astron, went on sale on Christmas Day, 1969. A tiny quartz crystal vibrates 32,768 times a second to keep the time."},
+  {t:"Why Clockwise?",k:"The sundial",p:"Clock hands most likely turn the way they do because a sundial's shadow moves that way in the northern half of the world, where the first mechanical clocks were made."},
+  {t:"The Tick and the Tock",k:"The escapement",p:"A watch's tick is its escapement at work: a little anchor rocks to and fro, letting the gears move on one tooth at a time, so the spring's power is let out evenly."},
+  {t:"The Watchmaker's Four",k:"On the dial",p:"Many clock dials show the four as IIII rather than IV. Nobody is quite sure why; one idea is that it balances the VIII across the dial."}
+];
+function noteOfDay(){ return mode==="daily"?NOTEBOOK[dayNo(today)%NOTEBOOK.length]:NOTEBOOK[Math.floor(Math.random()*NOTEBOOK.length)]; }
+function watchArt(){ return '<svg viewBox="-50 -50 100 100" aria-hidden="true"><defs><radialGradient id="cbWa" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3c8"/><stop offset=".55" stop-color="#d9b25a"/><stop offset="1" stop-color="#7a5a1e"/></radialGradient><radialGradient id="cbWe" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#e8dcbc"/></radialGradient></defs>'+
+  '<rect x="-50" y="-50" width="100" height="100" fill="#efe6cc"/><circle r="40" fill="url(#cbWa)"/><circle r="33" fill="url(#cbWe)"/>'+
+  Array.from({length:12},function(_,k){ var a=k*Math.PI/6; return '<path d="M'+(Math.sin(a)*28).toFixed(1)+' '+(-Math.cos(a)*28).toFixed(1)+'L'+(Math.sin(a)*31).toFixed(1)+' '+(-Math.cos(a)*31).toFixed(1)+'" stroke="#1c160e" stroke-width="'+(k%3?1.2:2.4)+'"/>'; }).join("")+
+  '<path d="M0 0L-12 -14" stroke="#22409c" stroke-width="3" stroke-linecap="round"/><path d="M0 0L16 -20" stroke="#22409c" stroke-width="2" stroke-linecap="round"/><circle r="2.8" fill="#22409c"/><rect x="-5" y="-50" width="10" height="9" rx="2" fill="url(#cbWa)"/><ellipse cx="-14" cy="-16" rx="10" ry="5" fill="#fff" opacity=".35" transform="rotate(-35 -14 -16)"/></svg>'; }
+function result(sts,secs,first,sk,sv){
+  var vv=$("#cbEnd"); if(!vv){ vv=document.createElement("div"); vv.className="pk-veil"; vv.id="cbEnd"; vv.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(vv); }
+  var b=vv.firstChild, head=mode==="practice"?"Practice Movement":"The Clockmaker's Bench · No. "+dayNo(today), N=noteOfDay();
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(hints?"The Movement Runs True":"Set Without Help!")+'</h2>'+
+    '<div class="cb-stars">'+"★★★".slice(0,sts)+'<i>'+"★★★".slice(sts)+'</i></div>'+
+    '<div class="cb-facts"><div><b>'+P.n+'×'+P.n+'</b><small>Dials</small></div><div><b>'+hints+'</b><small>Hints</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<div class="cb-story"><div class="cb-mug">'+watchArt()+'</div><div><p class="cb-kind">The Clockmaker\'s Notebook · '+esc(N.k)+'</p><h3>'+esc(N.t)+'</h3><p class="clamp">'+esc(N.p)+'</p></div></div>'+
+    '<p class="cb-note">'+(mode==="daily"?(first?"A new movement comes to the bench every day at midnight.":"You'd already solved today's movement; your first result is the one kept."):"Practice movements don't count toward your streak.")+'</p>'+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var p=b.querySelector(".cb-story p.clamp");
+  setTimeout(function(){ if(p.scrollHeight>p.clientHeight+2){ var rm=mk("button","cb-rm","Read More"); rm.type="button"; rm.onclick=function(){ p.classList.remove("clamp"); rm.remove(); }; p.parentNode.appendChild(rm); } },0);
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"; x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result",function(){ share(sts,secs,sk); });
+  bt(mode==="practice"?"Another Movement":"Play It Again",function(){ vv.classList.remove("on"); if(mode==="practice") startPractice(); else startDaily(true,true); });
+  bt("See the Movement",function(){ vv.classList.remove("on"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="puzzles.html"; a.textContent="Back to the Puzzles"; row.appendChild(a);
+  var L=mk("div","cb-endL"), R2=mk("div","cb-endR"); [].slice.call(b.children).forEach(function(c){ (c===row||c.classList.contains("pk-streak")?R2:L).appendChild(c); }); b.appendChild(L); b.appendChild(R2);
+  vv.classList.add("on");
+}
+function share(sts,secs,sk){
+  var txt="BrainWhim · The Clockmaker's Bench No. "+dayNo(today)+"\n"+"★★★".slice(0,sts)+"☆☆☆".slice(sts)+" "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):" · no hints")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/clockmaker.html";
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- practice ---------- */
+var TIPS=["Start with the gears: find a number that fits in only one dial of a gear.","Then look along the rows and columns for a number with only one dial left.","Turn on Pencil to jot down what a dial might be. Setting a number clears it from the notes along its lines.","Tap a set number to light up every dial with the same number.","Stuck? Ask the Clockmaker: he takes out a wrong number, or sets the next dial and tells you why."];
+var tipN=0;
+function startPractice(){
+  var wd=Math.random()<.5?1:2, list=CB.POOL[wd], base=list[Math.floor(Math.random()*list.length)], g=CB.dress(6,CB.parse(base.g),"practice:"+Date.now()+Math.random());
+  load({n:6,g:g,sol:CB.count(6,g,1).sol},"practice"); tipN=0;
+  if(window.Parlor) Parlor.practiceSay("Practice Movement","<p>Tap a dial, then a number. Each number 1–6 goes once in every row, column and gear.</p><p>"+TIPS[0]+"</p>");
+}
+function lessonCheck(){
+  if(mode==="practice"){ if(++tipN%6===4&&window.Parlor) Parlor.practiceSay("Practice Movement","<p>"+TIPS[(Math.floor(tipN/6)+1)%TIPS.length]+"</p>"); return; }
+  if(mode!=="lesson"||!window.Parlor||!Parlor.lessonWaiting) return;
+  var Ls=LESSONS[lessonK]; if(Ls.goal&&Ls.goal()&&!done){ Parlor.lessonDone(); }
+}
+
+/* ---------- Learn to Play ---------- */
+/* lesson movements (each checked to have one answer), all on one 6 x 6 answer */
+var LSOL=[1,3,5,2,6,4,6,2,4,1,3,5,2,1,6,5,4,3,5,4,3,6,2,1,3,5,2,4,1,6,4,6,1,3,5,2];
+var L2G=[1,3,5,2,6,4,6,0,4,1,3,5,2,1,0,5,4,0,5,4,3,6,0,1,3,5,2,0,1,6,0,6,1,0,5,2];
+var L3G=[0,0,5,0,6,0,6,0,0,1,3,5,2,1,0,0,0,3,5,0,3,6,2,0,0,5,0,4,1,6,0,0,0,3,5,2];
+var L4G=[1,0,0,0,0,4,6,2,4,1,0,5,0,1,6,5,0,0,5,0,0,6,2,0,0,5,0,0,1,0,0,6,0,3,0,2];
+var L5G=[1,0,5,0,0,4,6,0,0,0,3,5,0,1,6,5,0,3,5,4,3,0,2,1,0,5,2,4,0,6,4,6,0,0,0,2];
+function LP(g){ return {n:6,g:g.slice(),sol:LSOL.slice()}; }
+var LESSONS=[
+  {title:"The Clockmaker's Bench",text:"<p>Set every <b>dial</b> so each number 1–6 appears <b>once</b> in every <b>row</b>, every <b>column</b> and every <b>gear</b> (each window in the plate).</p><p>Just look for now, then tap <b>Next</b>.</p>",
+    puz:function(){ return LP(LSOL); },solvedLook:true},
+  {title:"Set a Dial",text:"<p>Tap a <b>dial</b>, then tap a <b>number</b> below.</p><p>The top-left gear has 1, 3, 4, 5 and 6. Set its <b>glowing</b> dial to the one it's missing.</p>",done:"<p>Set. Black numbers came from the maker; yours are in blued steel.</p>",
+    puz:function(){ return LP(L2G); },glow:function(){ return [7]; },glowWhile:function(c){ return v[c]!==2; },goal:function(){ return v[7]===2; }},
+  {title:"Only One Place",text:"<p>The top-left gear needs a <b>1</b>. The second row already has a 1, and so does the second column.</p><p>So the 1 fits in only one dial of that gear. Set it.</p>",done:"<p>That's the main trick: pick a gear, row or column and a number, and see where it can still go.</p>",
+    puz:function(){ return LP(L3G); },glow:function(){ return [0,9,13]; },glowWhile:function(c){ return v[0]!==1; },goal:function(){ return v[0]===1; }},
+  {title:"Pencil Notes",text:"<p>Look at the <b>glowing</b> dial. Its row, column and gear already hold every number but one.</p><p>Turn on <b>Pencil</b> to jot what it could be, if you like. Then set it with Pencil off.</p>",done:"<p>Pencil notes help on harder days. Setting a number clears it from the notes along its lines.</p>",
+    puz:function(){ return LP(L4G); },glow:function(){ return [17]; },glowWhile:function(c){ return v[c]!==3; },goal:function(){ return v[17]===3; }},
+  {title:"Ask the Clockmaker",text:"<p>Stuck? Press <b>Ask the Clockmaker</b>. He takes out a wrong number, or sets the next dial and tells you why.</p><p>Try it now. Solve with no help for <b>three stars</b>. A new movement every day: <b>6 × 6</b> Monday and Tuesday, <b>9 × 9</b> from Wednesday.</p>",done:"<p>That's everything. Happy clockmaking!</p>",
+    puz:function(){ return LP(L5G); },goal:function(){ return hints>0; }}
+];
+
+function lessonSetup(k){
+  lessonK=k; var Ls=LESSONS[k]; var p=Ls.puz(); load(p,"lesson");
+  if(pen) togglePen();
+  if(Ls.solvedLook){ v=p.sol.slice(); done=true; BOARD.classList.add("done"); paint(); }
+}
+function lessonHint(){ hint(); }
+
+/* ---------- fit to the space ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  if(!P||!W) return;
+  var VW=Math.min(window.innerWidth,document.documentElement.clientWidth||1e9), wide=VW>=1000;
+  var land=!!(window.Parlor&&Parlor.land&&Parlor.land());
+  stage.classList.toggle("land",land);
+  if(land){ fitLand(VW); return; }
+  document.body.style.removeProperty("--pk-landR"); document.body.style.removeProperty("--pk-landTools");
+  var st2=document.querySelector(".pk-stage"), top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var bw, availH, ratio=VH/W;
+  if(wide){
+    var availW=Math.min((st2&&st2.clientWidth)||(VW-560),1000), nw=Math.round(Math.max(240,Math.min(290,availW*.3)));
+    stage.style.setProperty("--cb-nw",nw+"px");
+    availH=window.innerHeight-top-22;
+    bw=Math.floor(Math.min(availW-nw-18-8,(availH-6)/ratio,720)); bw=Math.max(300,bw);
+    stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+    stage.classList.toggle("dshort",availH<640);
+    stage.style.setProperty("--cb-bw",bw+"px");
+  } else {
+    stage.style.removeProperty("--cb-nw");
+    availH=window.innerHeight-(seatedNow()?top:56)-(64+24)-6;
+    var bar0=document.querySelector(".pk-bar"); if(seatedNow()&&bar0&&getComputedStyle(bar0).display!=="none"){ var bt=bar0.getBoundingClientRect().top; if(bt>200) availH=bt-8-(top-window.scrollY); }
+    var coach=seatedNow()&&document.body.classList.contains("pk-coaching")&&window.Parlor&&Parlor.coachHeight&&Parlor.coachHeight()>0;
+    stage.classList.toggle("coach",!!coach); stage.style.paddingTop="";
+    if(coach){ var ch=Parlor.coachHeight(), stTop=stage.getBoundingClientRect().top, bar=document.querySelector(".pk-bar");
+      var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
+      if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
+      availH=barTop-8-Math.max(ch,stTop); }
+    stage.classList.remove("dshort"); stage.classList.toggle("short",availH<500);
+    stage.style.setProperty("--cb-kh",(availH<470?36:availH<540?40:44)+"px");
+    bw=Math.floor(VW-12); stage.style.setProperty("--cb-bw",bw+"px");
+    var rest=$(".cb-right",stage).offsetHeight+6;
+    var maxB=Math.floor((availH-rest)/ratio);
+    if(bw>maxB){ bw=Math.max(220,maxB); stage.style.setProperty("--cb-bw",bw+"px"); }
+  }
+  document.body.style.setProperty("--pk-size",Math.round(stage.offsetWidth||VW)+"px");
+}
+function fitLand(VW){
+  var ins=Parlor.insets(), coaching=document.body.classList.contains("pk-coaching");
+  var R=Math.round(Math.max(220,Math.min(290,VW*.32)));
+  document.body.style.setProperty("--pk-landR",R+"px");
+  var lw=VW-ins.l-ins.r-(100+16)-8-(R+8)-6, lh=window.innerHeight-16;
+  stage.classList.remove("short"); stage.classList.remove("coach"); stage.style.paddingTop="";
+  var bw=Math.floor(Math.min(lw,lh*W/VH)); stage.style.setProperty("--cb-bw",bw+"px");
+  document.body.style.setProperty("--pk-landTools",coaching?($(".cb-right",stage).offsetHeight+8)+"px":"0px");
+  document.body.style.setProperty("--pk-size",bw+"px");
+}
+var rz=0; window.addEventListener("resize",function(){ clearTimeout(rz); rz=setTimeout(fit,60); });
+function tools(){ $("#cbHint",stage).onclick=hint; $("#cbUndo",stage).onclick=undo; $("#cbRestart",stage).onclick=restart; $("#cbErase",stage).onclick=erase; $("#cbErase2",stage).onclick=erase; $("#cbPen",stage).onclick=togglePen; }
+/* the keyboard on a computer: numbers to set, arrows to move, Backspace or Delete to erase, P for pencil, Z to undo, H to ask */
+document.addEventListener("keydown",function(e){
+  if(!seatedNow()||!P) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if(document.querySelector(".pk-veil.on")) return;
+  var k=e.key, n=P.n;
+  if((e.metaKey||e.ctrlKey)&&k.toLowerCase()==="z"){ e.preventDefault(); undo(); return; }
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if(/^[1-9]$/.test(k)&&+k<=n){ e.preventDefault(); key(+k); return; }
+  if(k==="Backspace"||k==="Delete"||k==="0"){ e.preventDefault(); key(0); return; }
+  if(k.toLowerCase()==="z"){ e.preventDefault(); undo(); return; }
+  if(k.toLowerCase()==="p"||k.toLowerCase()==="n"){ e.preventDefault(); togglePen(); return; }
+  if(k.toLowerCase()==="h"){ e.preventDefault(); hint(); return; }
+  var mv={ArrowUp:-n,ArrowDown:n,ArrowLeft:-1,ArrowRight:1}[k];
+  if(mv){ e.preventDefault(); if(blocked()) return; if(sel<0){ pick(0); return; } var r=(sel/n)|0, c=sel%n;
+    if(k==="ArrowUp") r=(r+n-1)%n; if(k==="ArrowDown") r=(r+1)%n; if(k==="ArrowLeft") c=(c+n-1)%n; if(k==="ArrowRight") c=(c+1)%n; pick(r*n+c); }
+});
+
+/* ---------- hook up the kit ---------- */
+Parlor.init({
+  game:"clockmaker", cat:"puzzles", solo:true, free:true, daily:{key:"bwClock:",streak:"bwClockStreak"}, land:true, title:"The Clockmaker's Bench", bg:"puzzles-clockmaker.jpg", home:"puzzles.html", stage:stage,
+  soloLabel:"Today's puzzle", dealLabel:"Today's Movement",
+  tagline:"Each number once in every row, column and gear.", invite:"Set every dial on the watch movement so each number appears once in every row, every column and every gear. Only one setting works.",
+  players:[{name:"You",color:"#c9a24f"}],
+  setsLabel:"Movements",
+  sets:[
+    {id:"gilt",name:"Gilt & Blued Steel",need:0,dots:["#dcb867","#22409c"]},
+    {id:"rhodium",name:"Rhodium & Gold",club:true,dots:["#c9d0d7","#d9a53c"]},
+    {id:"rose",name:"Rose Gold & Black Enamel",club:true,dots:["#e3a58e","#1d1d21"]}
+  ],
+  rules:{
+    play:"<ol><li><b>The goal:</b> set every dial to a number so that each number appears <b>once</b> in every <b>row</b>, every <b>column</b> and every <b>gear</b> (the windows cut in the plate).</li><li>The dials printed in black came set from the maker. Yours are set in blued steel.</li><li><b>Setting:</b> tap a dial, then tap a number. Tap the same number again (or <b>Erase</b>) to clear it.</li><li><b>Pencil:</b> turn it on to jot the numbers a dial might be; tap a number again to rub it out. Setting a number clears it from the notes along its row, column and gear.</li><li>If two of the same number share a line or gear, both turn red.</li><li><b>Undo</b> takes back your last change; <b>Restart</b> winds every dial back (Undo brings them back).</li><li><b>Ask the Clockmaker:</b> he takes out a number in the wrong dial; if none is, he sets the next dial a careful clockmaker would and tells you why.</li><li>On a computer: type the numbers, use the arrow keys to move, Backspace to erase, P for pencil, Z to undo.</li></ol>",
+    score:"<ul><li><b>One movement a day</b>, the same for everyone. It changes at midnight on your device. Monday's and Tuesday's are 6 × 6 with numbers 1–6; from Wednesday they are 9 × 9 with numbers 1–9. Each day takes a little more thinking, and Sunday's is the hardest.</li><li>Every movement has exactly one answer, and can be worked out step by step, with no guessing.</li><li>Your dials are kept on this device, so you can finish later.</li><li><b>★★★</b> with no help from the clockmaker · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice movements (in Learn to Play) are free and don't count.</li></ul>"
+  },
+  onCoachSize:function(){ setTimeout(fit,0); },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
+});
+var wasSeated=false, wasCoach=false;
+new MutationObserver(function(){ var now=seatedNow(), co=document.body.classList.contains("pk-coaching"); if(now===wasSeated&&co===wasCoach) return; wasSeated=now; wasCoach=co; setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+document.addEventListener("DOMContentLoaded",function(){ tools(); startDaily(false); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+window.addEventListener("pagehide",save);
+/* for testing */
+window.__cbpos=function(i){ return [cx(i),cy(i)]; };
+window.CBO={get:function(){ return {P:P,v:v,notes:notes,hints:hints,done:done,mode:mode,undo:undoS.length,sel:sel,pen:pen}; },pick:pick,key:key,hint:hint,undo:undo,restart:restart,pen:togglePen,
+  solve:function(){ for(var i=0;i<v.length;i++) v[i]=P.sol[i]; badSet={}; paint(); after([]); }};
+})();
+</script>
+</body>
+</html>
