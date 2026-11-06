@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Captain Zayden's Map · The Outpost · BrainWhim</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="kids.css?v=1106a">
+<style>
+/* Captain Zayden's Map (The Outpost · The Telescope). Kids' kit only: no Google Fonts, no outside files, nothing sent anywhere. */
+:root{--tm-ink:#3b2412;--tm-teal:#169e9a;--tm-gold:#e9c46a}
+body{overflow:hidden;touch-action:manipulation}
+.bg{position:fixed;inset:-24px;z-index:0;background:#0b1630 url("kids-outpost-sm.jpg") 77% 38%/cover no-repeat;filter:blur(7px) brightness(.42) saturate(1.1)}
+.bg2{position:fixed;inset:0;z-index:0;background:radial-gradient(120% 90% at 22% 8%,rgba(255,200,120,.16),transparent 55%),linear-gradient(180deg,rgba(5,11,28,.2),rgba(5,11,28,.55))}
+#app{position:fixed;inset:0;z-index:1;padding:calc(76px + var(--k-safe-t)) 12px calc(10px + var(--k-safe-b))}
+@media (max-width:420px){#app{padding-top:calc(70px + var(--k-safe-t))}}
+.scr{display:none;height:100%}
+body.m-menu #menu{display:flex}
+body.m-play #play{display:flex}
+
+/* ---------- menu ---------- */
+#menu{align-items:center;justify-content:center}
+.mcard{width:min(470px,100%);max-height:100%;overflow:auto;border-radius:28px;padding:22px 22px 20px;text-align:center;
+  background:linear-gradient(180deg,rgba(27,45,87,.94),rgba(14,26,56,.94));border:1px solid rgba(95,209,193,.35);
+  box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14);animation:kRise .45s cubic-bezier(.2,.9,.3,1.2)}
+.emb{width:120px;height:92px;margin:0 auto 4px;display:block}
+.emb .ndl{transform-origin:94px 66px;animation:quiver 3.2s ease-in-out infinite}
+@keyframes quiver{0%,100%{transform:rotate(-6deg)}20%{transform:rotate(5deg)}45%{transform:rotate(-2deg)}70%{transform:rotate(3deg)}}
+.mcard h1{margin:0 0 4px;font-size:30px;line-height:1.1;color:var(--k-warm)}
+.mcard .lead{margin:0 auto 12px;max-width:380px;font-size:16.5px;line-height:1.4;color:#d5e2f0}
+.week{display:flex;justify-content:center;gap:6px;margin:4px 0 14px}
+.wd{width:40px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#9fb3cc}
+.wd i{width:34px;height:34px;border-radius:50%;border:2px dashed rgba(232,241,248,.25);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:15px;color:#b9c9dc;background:rgba(255,255,255,.03)}
+.wd.today b{color:var(--k-warm)}
+.wd.today i{border-style:solid;border-color:var(--k-gold)}
+.wd.done i{border:2px solid #c9a24a;background:radial-gradient(circle at 35% 30%,#f6e7c1,#d9bf85);color:#b03a22;font-weight:700}
+.mbtns{display:flex;flex-direction:column;gap:10px;align-items:stretch;max-width:340px;margin:0 auto}
+.mbtns .k-btn{width:100%}
+.k-btn small{font-size:13px;font-weight:400;opacity:.85;margin-left:4px}
+.pulse{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 4px 0 #3f7499,0 8px 18px rgba(0,0,0,.35),0 0 0 0 rgba(126,182,217,.55)}50%{box-shadow:0 4px 0 #3f7499,0 8px 18px rgba(0,0,0,.35),0 0 0 10px rgba(126,182,217,0)}}
+.mfoot{margin:12px 0 0;font-size:14px;color:#a9bad0}
+@media (max-height:700px) and (orientation:portrait){.mcard{padding:14px 18px 12px}.emb{width:84px;height:64px}.mcard h1{font-size:25px}.mcard .lead{font-size:15px;margin-bottom:8px}.week{margin:2px 0 10px}.wd i{width:30px;height:30px}.mbtns{gap:8px}.mbtns .k-btn{min-height:46px;font-size:17px}.mfoot{margin-top:8px;font-size:13px}}
+@media (max-height:580px) and (orientation:portrait){.emb{display:none}.mcard .lead{font-size:14px}}
+
+/* ---------- play ---------- */
+#play{flex-direction:column;gap:8px;align-items:center}
+.side{display:contents}
+.bar{order:1;display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;font-weight:700;font-size:17px;color:var(--k-warm);text-shadow:0 2px 6px rgba(0,0,0,.6);min-height:24px}
+.bar span{font-weight:400;font-size:15px;color:#cfe0f0}
+.coach{order:2;display:none;width:min(560px,100%);border-radius:20px;padding:12px 14px;background:linear-gradient(180deg,rgba(27,45,87,.95),rgba(14,26,56,.95));
+  border:1px solid rgba(233,196,106,.38);box-shadow:0 10px 26px rgba(0,0,0,.45);animation:kRise .3s ease}
+.coach.on{display:block}
+.coach .ct{font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--k-teal);margin-bottom:3px}
+.coach p{margin:0;font-size:16px;line-height:1.38;color:#e3ecf6}
+.coach p b{color:var(--k-warm)}
+.coach .cr{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap}
+.coach .k-btn{min-height:44px;font-size:16px;padding:0 18px}
+.coach.hint{border-color:rgba(95,209,193,.6)}
+.wrap{order:3;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+.paper{position:relative;flex:none;border-radius:6px;
+  background:radial-gradient(130% 100% at 30% 20%,#f8ecc9 0%,#efdcae 55%,#d9bc83 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 0 0 1px rgba(120,80,30,.35),0 0 40px rgba(150,100,40,.35) inset,0 18px 34px rgba(0,0,0,.55),0 4px 8px rgba(0,0,0,.45)}
+.paper::after{content:"";position:absolute;inset:0;border-radius:6px;pointer-events:none;
+  background:radial-gradient(90% 80% at 12% 6%,rgba(255,226,160,.30),transparent 60%);animation:flick 4.5s infinite}
+@keyframes flick{0%,100%{opacity:1}12%{opacity:.82}16%{opacity:.97}41%{opacity:.88}58%{opacity:1}77%{opacity:.86}83%{opacity:.98}}
+.roll{position:absolute;left:-3.5%;width:107%;height:5.2%;border-radius:999px;pointer-events:none;
+  background:linear-gradient(180deg,#d7a868 0%,#a66b32 35%,#6e4019 75%,#4a2a10 100%);box-shadow:0 6px 10px rgba(0,0,0,.45)}
+.roll::before,.roll::after{content:"";position:absolute;top:-12%;width:3.2%;height:124%;border-radius:40%;background:linear-gradient(180deg,#ffe7a3,#c79a3c 50%,#7c5a1a)}
+.roll::before{left:-1%}.roll::after{right:-1%}
+.roll.t{top:-3.6%}.roll.b{bottom:-3.6%}
+#bd{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+#bd text{font-family:var(--k-font);font-weight:700;pointer-events:none}
+.tools{order:4;display:flex;gap:8px;justify-content:center;width:min(560px,100%)}
+.tb{appearance:none;flex:1;max-width:130px;min-height:60px;border-radius:18px;border:1px solid var(--k-line);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13.5px;font-weight:700;color:#e3ecf6;
+  background:linear-gradient(180deg,rgba(30,50,94,.92),rgba(14,26,56,.92));box-shadow:0 4px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .12s}
+.tb svg{width:26px;height:26px}
+.tb:active{transform:translateY(2px)}
+.tb.hint{color:var(--k-warm);border-color:rgba(233,196,106,.45)}
+.tb[disabled]{opacity:.4}
+/* phone sideways and other short wide screens: notes and buttons at the left, map at the right */
+@media (orientation:landscape) and (max-height:560px){
+  #app{padding-top:calc(72px + var(--k-safe-t));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px))}
+  #play{flex-direction:row;gap:14px;align-items:stretch}
+  .side{display:flex;flex-direction:column;gap:8px;width:min(330px,42%);height:100%;justify-content:center}
+  .bar,.coach,.tools{width:100%}
+  .tools{flex-wrap:wrap}.tb{flex:1 1 40%;max-width:none;min-height:52px}
+  .coach p{font-size:15px}
+  .mcard{padding:14px 18px}.emb{display:none}.mcard h1{font-size:24px}.mcard .lead{font-size:14.5px;margin-bottom:6px}
+  .week{margin:2px 0 8px}.mbtns{max-width:none;display:grid;grid-template-columns:1fr 1fr}.mbtns .k-btn{min-height:46px;font-size:16px}.k-btn small,.mfoot{display:none}.wd i{width:28px;height:28px}
+}
+/* lines, crosses, pins, numbers */
+.gl{stroke:rgba(90,60,25,.38);stroke-width:.03;stroke-dasharray:.045 .085;stroke-linecap:round}
+.ln{stroke:var(--tm-ink);stroke-width:.13;stroke-linecap:round;opacity:0}
+.ln.on{opacity:1}
+.ln.new{stroke-dasharray:1;animation:ink .22s ease-out}
+@keyframes ink{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.xx{stroke:#a8402a;stroke-width:.055;stroke-linecap:round;opacity:0}
+.xx.on{opacity:.9}
+.pin{fill:url(#tmPinG);stroke:rgba(60,35,10,.55);stroke-width:.018}
+.pin.bad{fill:#d9452f}
+.num{font-size:.56px;fill:var(--tm-ink);transition:fill .2s}
+.num.met{fill:#14776d}
+.num.over{fill:#c0392b}
+#bd.won .num{opacity:.3;transition:opacity .8s}
+.ring{fill:none;stroke:#ffb020;stroke-width:.07;animation:ringP 1s ease-in-out infinite}
+@keyframes ringP{0%,100%{stroke-opacity:1;stroke-width:.07}50%{stroke-opacity:.45;stroke-width:.12}}
+.land{animation:landIn .9s ease both}
+@keyframes landIn{from{opacity:0}to{opacity:1}}
+.palm{transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes grow{from{transform:scale(0)}to{transform:scale(1)}}
+.chest{transform-box:fill-box;transform-origin:50% 100%;animation:pop .55s 1s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{transform:translateY(-1px) scale(0);opacity:0}to{transform:none;opacity:1}}
+.coin{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;z-index:3;
+  background:radial-gradient(circle at 35% 30%,#fff3b8,#f0c341 45%,#b8860b);box-shadow:0 0 0 1px #8a6408 inset;animation:coin 1.4s ease-out forwards}
+@keyframes coin{0%{transform:translate(0,0) scale(.4);opacity:0}15%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
+/* result sheet */
+.patch{display:flex;align-items:center;gap:12px;margin:6px 0 10px;padding:10px 12px;border-radius:16px;background:rgba(22,158,154,.14);border:1px solid rgba(95,209,193,.4)}
+.patch svg{width:58px;height:58px;flex:none}
+.patch p{margin:0;font-size:15.5px}
+.fact{margin:8px 0 4px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--k-line)}
+.fact b{display:block;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--k-teal);margin-bottom:2px}
+.fact span{font-size:15px;line-height:1.4;color:#dbe6f3}
+.rb{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.rb .k-btn{min-height:50px;font-size:16px;padding:0 10px}
+.rb .wide{grid-column:1/-1}
+@media (max-height:700px){.k-sheet{padding:20px 18px 16px}.k-sheet h2{font-size:23px}.fact span{font-size:14px}.patch svg{width:48px;height:48px}}
+</style>
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 120 92" aria-hidden="true">
+        <defs><linearGradient id="tmEmbP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8ecc9"/><stop offset="1" stop-color="#d9bc83"/></linearGradient>
+        <linearGradient id="tmEmbR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7a868"/><stop offset="1" stop-color="#5a3414"/></linearGradient>
+        <radialGradient id="tmEmbB" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".6" stop-color="#c79a3c"/><stop offset="1" stop-color="#7c5a1a"/></radialGradient></defs>
+        <rect x="10" y="12" width="78" height="64" rx="3" fill="url(#tmEmbP)" stroke="#8a5a26" stroke-width="1"/>
+        <rect x="6" y="8" width="86" height="8" rx="4" fill="url(#tmEmbR)"/><rect x="6" y="72" width="86" height="8" rx="4" fill="url(#tmEmbR)"/>
+        <path d="M28 52c-4-8 2-16 10-17 4-7 14-8 19-3 8-2 15 4 13 12 4 6-1 13-8 13-6 5-15 5-20 1-8 2-15-1-14-6z" fill="#e8cf8f" stroke="#3b2412" stroke-width="2.2"/>
+        <path d="M36 50c-2-5 3-9 7-9 3-4 9-4 12-1 5-1 9 3 8 7 2 4-1 7-5 7-4 3-9 3-12 0-5 1-10-1-10-4z" fill="#8cbf6b"/>
+        <path d="M46 44l8 8M54 44l-8 8" stroke="#c0392b" stroke-width="3.2" stroke-linecap="round"/>
+        <circle cx="94" cy="66" r="18" fill="url(#tmEmbB)" stroke="#5a3e10" stroke-width="1.2"/><circle cx="94" cy="66" r="13.5" fill="#f4ead0" stroke="#7c5a1a" stroke-width="1"/>
+        <g class="ndl"><path d="M94 55l3 11h-6z" fill="#c0392b"/><path d="M94 77l3-11h-6z" fill="#2c3e50"/><circle cx="94" cy="66" r="1.8" fill="#7c5a1a"/></g>
+      </svg>
+      <h1>Captain Zayden's Map</h1>
+      <p class="lead">A storm washed the coastlines off Captain Zayden's island maps! Can you draw them back and find the treasure?</p>
+      <div class="week" id="week"></div>
+      <div class="mbtns">
+        <button class="k-btn" id="bToday">Today's Map</button>
+        <button class="k-btn k-cool" id="bLearn">Learn to Play</button>
+        <button class="k-btn k-ghost" id="bPractice">Practice Map</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="side">
+      <div class="bar" id="bar"></div>
+      <div class="coach" id="coach" aria-live="polite"></div>
+      <div class="tools">
+        <button class="tb hint" id="tHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 14 12-7 2.5 4.3-12 7z"/><path d="m15 7 3.5-2 2.5 4.3-3.5 2"/><path d="M9 17.5 7.5 22M11 16.5l2 5"/></svg>Hint</button>
+        <button class="tb" id="tUndo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
+        <button class="tb" id="tRestart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Start over</button>
+        <button class="tb" id="tMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"><div class="paper" id="paper"><div class="roll t"></div><div class="roll b"></div><svg id="bd" aria-label="Treasure map"></svg></div></div>
+  </section>
+</main>
+
+<script id="tmCore">
+/* ===== The Map Room core (rules, graded solver, daily picker): shared by the page and the tools =====
+   An n x n chart of the sea, with a brass pin at every grid corner. Draw ONE closed coastline along the lines between
+   the pins: no branches, no crossings, no loose ends. A number tells how many of its square's four sides the coast
+   runs along. Every daily chart is worked out step by step with no guessing by a careful-cartographer solver that
+   scores each kind of reasoning it needs (so every chart has exactly one answer). The score sets the day; the same
+   solver drives the hints. The daily charts come from a graded pool grown offline (tools/maproom/grow.js) and are
+   "dressed" for the date by turning or flipping the chart, which never changes the reasoning needed. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* ---------- geometry: edges, the pins (vertices) they join, the squares beside them ---------- */
+var GEO={};
+function geom(n){
+  if(GEO[n]) return GEO[n];
+  var HN=(n+1)*n, E=2*HN, V=(n+1)*(n+1), i, r, c;
+  function H(r,c){ return r*n+c; } function Vt(r,c){ return HN+r*(n+1)+c; } function P(r,c){ return r*(n+1)+c; }
+  var cellE=[], vertE=[], edgeV=[], edgeC=[], corner=[];
+  for(i=0;i<V;i++) vertE.push([]);
+  for(i=0;i<E;i++) edgeC.push([]);
+  for(r=0;r<=n;r++) for(c=0;c<n;c++){ var e=H(r,c); edgeV[e]=[P(r,c),P(r,c+1)]; vertE[P(r,c)].push(e); vertE[P(r,c+1)].push(e); }
+  for(r=0;r<n;r++) for(c=0;c<=n;c++){ var e2=Vt(r,c); edgeV[e2]=[P(r,c),P(r+1,c)]; vertE[P(r,c)].push(e2); vertE[P(r+1,c)].push(e2); }
+  for(r=0;r<n;r++) for(c=0;c<n;c++){ var ci=r*n+c, L=[H(r,c),H(r+1,c),Vt(r,c),Vt(r,c+1)]; cellE.push(L); L.forEach(function(x){ edgeC[x].push(ci); });
+    /* its four corners: the pin, the square's two sides at that pin, and the pin's other paths (outward) */
+    var cs=[[P(r,c),H(r,c),Vt(r,c)],[P(r,c+1),H(r,c),Vt(r,c+1)],[P(r+1,c),H(r+1,c),Vt(r,c)],[P(r+1,c+1),H(r+1,c),Vt(r,c+1)]];
+    corner.push(cs.map(function(k){ return {v:k[0],a:k[1],b:k[2],out:vertE[k[0]].filter(function(x){ return x!==k[1]&&x!==k[2]; })}; })); }
+  return (GEO[n]={n:n,HN:HN,E:E,V:V,cellE:cellE,vertE:vertE,edgeV:edgeV,edgeC:edgeC,corner:corner,H:H,Vt:Vt,P:P});
+}
+
+/* ---------- the careful cartographer ----------
+   Edge states: 0 not yet known, 1 coast, -1 sea (a cross). Each rule finds one step; LVL is the hardest rule allowed.
+   1 count:  a number with all its coast, or needing every side it has left; a pin with the coast through it, or one way on
+   2 loop:   a line that would close a small loop while other coast is left out
+   3 corner: a 1 or 3 tucked into a corner the coast can't leave by
+   4 ahead:  try a line (or a cross) and follow the simple steps until the coast breaks */
+var COST={count:1,loop:3,corner:4,ahead:14};
+function solver(G,clue){
+  var n=G.n, E=G.E;
+  function bad(){ return {k:"bad"}; }
+  function cellStep(s,i){
+    var q=clue[i]; if(q<0) return null; var L=G.cellE[i], on=0, un=[];
+    for(var j=0;j<4;j++){ var x=s[L[j]]; if(x===1) on++; else if(x===0) un.push(L[j]); }
+    if(on>q||on+un.length<q) return bad();
+    if(!un.length) return null;
+    if(on===q) return {k:"full",lvl:1,cell:i,set:un.map(function(e){ return [e,-1]; })};
+    if(on+un.length===q) return {k:"need",lvl:1,cell:i,set:un.map(function(e){ return [e,1]; })};
+    return null;
+  }
+  function vertStep(s,v){
+    var L=G.vertE[v], on=0, un=[];
+    for(var j=0;j<L.length;j++){ var x=s[L[j]]; if(x===1) on++; else if(x===0) un.push(L[j]); }
+    if(on>2||(on===1&&!un.length)) return bad();
+    if(!un.length) return null;
+    if(on===2) return {k:"vfull",lvl:1,v:v,set:un.map(function(e){ return [e,-1]; })};
+    if(on===1&&un.length===1) return {k:"vgo",lvl:1,v:v,set:[[un[0],1]]};
+    if(on===0&&un.length===1) return {k:"vdead",lvl:1,v:v,set:[[un[0],-1]]};
+    return null;
+  }
+  /* path pieces: which pins the coast lines join (union-find), and how many lines in each piece */
+  function pieces(s){
+    var par=new Int32Array(G.V), cnt=new Int32Array(G.V), i;
+    for(i=0;i<G.V;i++) par[i]=i;
+    function f(x){ while(par[x]!==x){ par[x]=par[par[x]]; x=par[x]; } return x; }
+    var cyc=0;
+    for(i=0;i<E;i++) if(s[i]===1){ var a=f(G.edgeV[i][0]), b=f(G.edgeV[i][1]); if(a===b){ cyc++; cnt[a]++; } else { par[a]=b; cnt[b]+=cnt[a]+1; } }
+    return {f:f,cnt:cnt,cyc:cyc};
+  }
+  function total(s){ var t=0; for(var i=0;i<E;i++) if(s[i]===1) t++; return t; }
+  function cluesMetIf(s,e){ /* would every number be satisfied with e drawn too? */
+    s[e]=1; var ok=true; for(var i=0;i<n*n&&ok;i++){ if(clue[i]<0) continue; var L=G.cellE[i], on=0; for(var j=0;j<4;j++) if(s[L[j]]===1) on++; if(on!==clue[i]) ok=false; } s[e]=0; return ok; }
+  function loopStep(s){
+    var p=pieces(s), t=total(s);
+    if(p.cyc){ /* a closed loop: only fine if it is the whole coast and every number is met */
+      if(p.cyc>1) return bad();
+      for(var i=0;i<E;i++) if(s[i]===1){ var root=p.f(G.edgeV[i][0]); if(p.cnt[root]!==t) return bad(); break; }
+      var un=[]; for(var k=0;k<E;k++) if(s[k]===0) un.push(k);
+      for(var c=0;c<n*n;c++){ if(clue[c]<0) continue; var on=0; G.cellE[c].forEach(function(x){ if(s[x]===1) on++; }); if(on!==clue[c]) return bad(); }
+      return un.length?{k:"done",lvl:2,set:un.map(function(e){ return [e,-1]; })}:null;
+    }
+    for(var e=0;e<E;e++){ if(s[e]!==0) continue; var a=p.f(G.edgeV[e][0]), b=p.f(G.edgeV[e][1]);
+      if(a!==b) continue;
+      /* same piece: drawing it closes a loop */
+      if(p.cnt[a]===t&&cluesMetIf(s,e)) return {k:"close",lvl:2,e:e,set:[[e,1]]};
+      return {k:"loop",lvl:2,e:e,set:[[e,-1]]};
+    }
+    return null;
+  }
+  function cornerStep(s){
+    for(var i=0;i<n*n;i++){ var q=clue[i]; if(q!==1&&q!==3) continue;
+      var C=G.corner[i];
+      for(var j=0;j<4;j++){ var k=C[j]; if(s[k.a]!==0||s[k.b]!==0) continue;
+        var shut=k.out.every(function(x){ return s[x]===-1; }); if(!shut) continue;
+        return {k:q===1?"c1":"c3",lvl:3,cell:i,v:k.v,set:[[k.a,q===1?-1:1],[k.b,q===1?-1:1]]}; }
+    }
+    return null;
+  }
+  function apply(s,st){ for(var j=0;j<st.set.length;j++) s[st.set[j][0]]=st.set[j][1]; }
+  /* the simple steps, in batches, until nothing more follows; false if the coast breaks */
+  function prop(s,lvl){
+    for(var guard=0;guard<4000;guard++){
+      var any=false, i, st;
+      for(i=0;i<n*n;i++){ st=cellStep(s,i); if(st){ if(st.k==="bad") return false; apply(s,st); any=true; } }
+      for(i=0;i<G.V;i++){ st=vertStep(s,i); if(st){ if(st.k==="bad") return false; apply(s,st); any=true; } }
+      if(any) continue;
+      if(lvl>=2){ st=loopStep(s); if(st){ if(st.k==="bad") return false; apply(s,st); continue; } }
+      if(lvl>=3){ st=cornerStep(s); if(st){ apply(s,st); continue; } }
+      return true;
+    }
+    return true;
+  }
+  function aheadStep(s,lvl){
+    for(var e=0;e<E;e++){ if(s[e]!==0) continue;
+      for(var t=0;t<2;t++){ var v=t?-1:1, c=Int8Array.from(s); c[e]=v;
+        if(!prop(c,Math.min(lvl,3))) return {k:"ahead",lvl:4,e:e,tried:v,set:[[e,-v]]}; }
+    }
+    return null;
+  }
+  /* one step: the easiest the chart allows */
+  function step(s,lvl){
+    var i, st;
+    for(i=0;i<n*n;i++){ st=cellStep(s,i); if(st) return st; }
+    for(i=0;i<G.V;i++){ st=vertStep(s,i); if(st) return st; }
+    if(lvl>=2){ st=loopStep(s); if(st) return st; }
+    if(lvl>=3){ st=cornerStep(s); if(st) return st; }
+    if(lvl>=4){ st=aheadStep(s,lvl); if(st) return st; }
+    return null;
+  }
+  /* solve and score: every rule use costs its price */
+  function run(lvl,start){
+    var s=start?Int8Array.from(start):new Int8Array(E), score=0, used={}, steps=0, top=0;
+    for(var g=0;g<5000;g++){
+      var st=step(s,lvl); if(!st) break; if(st.k==="bad") return {ok:false,score:score,bad:true};
+      var key=st.lvl===1?"count":st.lvl===2?"loop":st.lvl===3?"corner":"ahead";
+      score+=COST[key]; used[key]=(used[key]||0)+1; steps++; if(st.lvl>top) top=st.lvl; apply(s,st);
+    }
+    for(var e=0;e<E;e++) if(s[e]===0) return {ok:false,score:score,used:used,s:s};
+    var p=pieces(s); if(p.cyc!==1) return {ok:false,score:score,used:used,s:s};
+    return {ok:true,score:Math.round(score),used:used,steps:steps,top:top,s:s};
+  }
+  return {step:step,run:run,prop:prop,apply:apply,pieces:pieces};
+}
+function grade(p,lvl){ return solver(geom(p.n),p.clue).run(lvl==null?4:lvl); }
+
+/* ---------- making a chart (used offline by the grower, and for practice) ----------
+   Grow one island square by square (it stays in one piece, the sea stays open to the edge, and no two squares meet only
+   at a corner), number every square by its coast, then take numbers away while the chart can still be worked out. */
+function island(n,r,frac){
+  var N=n*n, inn=new Uint8Array(N), size=0;
+  function at(R,C){ return R<0||C<0||R>=n||C>=n?0:inn[R*n+C]; }
+  function pinchFree(i){ var R=(i/n)|0, C=i%n;
+    for(var dr=0;dr<=1;dr++) for(var dc=0;dc<=1;dc++){ var r0=R-1+dr, c0=C-1+dc;
+      var a=at(r0,c0), b=at(r0,c0+1), c=at(r0+1,c0), d=at(r0+1,c0+1);
+      if(a===d&&b===c&&a!==b) return false; }
+    return true; }
+  function seaOpen(){ var seen=new Uint8Array(N), q=[], i, k=0, out=0;
+    for(i=0;i<N;i++){ var R=(i/n)|0, C=i%n; if(!inn[i]){ out++; if(R===0||C===0||R===n-1||C===n-1){ seen[i]=1; q.push(i); } } }
+    while(q.length){ var x=q.pop(); k++; var R2=(x/n)|0, C2=x%n; [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){ var y=R2+d[0], z=C2+d[1]; if(y<0||z<0||y>=n||z>=n) return; var j=y*n+z; if(!inn[j]&&!seen[j]){ seen[j]=1; q.push(j); } }); }
+    return k===out; }
+  var s0=Math.floor(r()*N); inn[s0]=1; size=1;
+  var goal=Math.round(N*frac), tries=0;
+  while(size<goal&&tries<N*40){ tries++;
+    var fr=[]; for(var i=0;i<N;i++){ if(inn[i]) continue; var R=(i/n)|0, C=i%n; if(at(R-1,C)||at(R+1,C)||at(R,C-1)||at(R,C+1)) fr.push(i); }
+    if(!fr.length) break; var c=fr[Math.floor(r()*fr.length)];
+    inn[c]=1; if(!pinchFree(c)||!seaOpen()){ inn[c]=0; continue; } size++;
+  }
+  return inn;
+}
+function numbers(n,inn){ var cl=[]; for(var R=0;R<n;R++) for(var C=0;C<n;C++){ var me=inn[R*n+C], k=0;
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){ var y=R+d[0], z=C+d[1], o=y<0||z<0||y>=n||z>=n?0:inn[y*n+z]; if(o!==me) k++; }); cl.push(k); } return cl; }
+function make(seed,spec){
+  var r=rng(seed), n=spec.n;
+  var inn=island(n,r,spec.frac||(.42+r()*.16)), clue=numbers(n,inn), G=geom(n), S=solver(G,clue);
+  var order=shuffle(Array.from({length:n*n},function(_,i){ return i; }),r);
+  var keep=spec.keep||0;   /* a floor on how many numbers stay: more numbers, gentler chart */
+  for(var k=0;k<order.length;k++){ var i=order[k], was=clue[i];
+    var left=clue.filter(function(x){ return x>=0; }).length; if(left<=keep) break;
+    clue[i]=-1; if(!solver(G,clue).run(spec.lvl).ok) clue[i]=was; }
+  var g=grade({n:n,clue:clue},spec.lvl);
+  return {n:n,clue:clue,score:g.score,used:g.used,top:g.top,inn:Array.from(inn)};
+}
+
+/* ---------- dressing a pool chart for the day: one of eight turns and flips ---------- */
+function dress(n,clue,k){
+  var out=new Array(n*n);
+  for(var R=0;R<n;R++) for(var C=0;C<n;C++){ var y=R, x=C, t;
+    if(k&1){ x=n-1-x; } if(k&2){ y=n-1-y; } if(k&4){ t=x; x=y; y=t; }
+    out[y*n+x]=clue[R*n+C]; }
+  return out;
+}
+function decode(str){ return str.split("").map(function(ch){ return ch==="."?-1:+ch; }); }
+function encode(cl){ return cl.map(function(x){ return x<0?".":String(x); }).join(""); }
+/* the week: Monday's chart is small and needs only counting; each day asks a little more, Sunday needs looking ahead */
+var WEEK=[
+  {label:"Sunday",n:8,lvl:4},
+  {label:"Monday",n:5,lvl:2},
+  {label:"Tuesday",n:6,lvl:2},
+  {label:"Wednesday",n:6,lvl:3},
+  {label:"Thursday",n:7,lvl:3},
+  {label:"Friday",n:7,lvl:4},
+  {label:"Saturday",n:8,lvl:4}
+];
+var EPOCH=Date.UTC(2026,9,1);
+function forDay(key,wd,POOL){
+  var pool=POOL[wd], parts=key.split("-"), day=Math.round((Date.UTC(+parts[0],+parts[1]-1,+parts[2])-EPOCH)/864e5);
+  var wk=Math.floor((day+700)/7), m=pool.length;
+  var pick=wk%m, k=Math.floor(wk/m)%8;   /* a new pool chart each week; a new turn once the pool comes round again */
+  var n=WEEK[wd].n, p={n:n,clue:dress(n,decode(pool[pick]),k),pick:pick,dress:k};
+  return p;
+}
+root.MR={rng:rng,shuffle:shuffle,geom:geom,solver:solver,grade:grade,island:island,numbers:numbers,make:make,dress:dress,decode:decode,encode:encode,WEEK:WEEK,COST:COST,forDay:forDay};
+})(typeof window!=="undefined"?window:globalThis);
+var TM_WEEK={"0":{"n":6,"lvl":4},"1":{"n":4,"lvl":2,"keep":10},"2":{"n":4,"lvl":2},"3":{"n":5,"lvl":2,"keep":14},"4":{"n":5,"lvl":2},"5":{"n":5,"lvl":3},"6":{"n":6,"lvl":3}};
+var TM_BAND={"0":[86,124,1,99],"1":[14,30,0,99],"2":[28,38,0,9],"3":[36,48,0,99],"4":[44,54,0,12],"5":[52,66,1,99],"6":[66,84,2,99]};
+var TM_POOL={"0":["0.......21.0..01..1..1.0.01....2..0.","..........0..2.213.0.......0..221..3","..11...2...102...1.0..3.....0.......","02.1.......1...00..30.......2.....01","02...1...0....1.11.....1..3...0.110.",".0.1..10.......2.....12..0002..1.22.",".1210.......0.....2.......02...1.1.3","..1...1.0.10.0.1...0.....13....3..0.","3.22..1.0...1..1..2.0.......10.0.1..","...1....3..101.00..2..0.......0..02.",".....01.0.3.2.2.1......320..0..2..3.",".221001...2....11..2....011.......01",".11.1....12.2...0302..1.0..2.1...2..","..0.0.0.2...2.....3...022....1.1..1.","..1221.0..2..0.....3....2..1...33.1.","..0...0............00112.1.001..1...","......0....102.1.212..02...0....21.1",".0..........01..2.2..00.....0..1.11.",".....0101.0...0...1.0...202.0.......","022...1...03..0.1..22.....2.3...0...","11..20.1.....0...321...12.......0...","1..22.0.1..12...11.10.....12.0..2...","...0..0....01.0..12....0...0...221..",".0.......3...1.0...1..1.0...0..01.1.","..0....0....1....2..0101..0...0...12","..2.3.1.231202.....1..1.........0.01",".2....11.01.1..002.1....0..222...01.",".1.21....0...21..1....01..2....00.3.",".0......1.120...0.0.1.0...0...1...11",".....1.200...0...31111.......0...0.."],"1":["02.2..02.022.32.",".22..202.23.0.10",".10...20202..121","312...13.22..100","2.12.3...23210.0","0..30..102.2.322",".32130.322..01..",".21..202...20010","..0.1220.13.321.","00001..1.112.1..","00..11.021.2..13","000...23.111.1.2","22201.2.1.21..1.",".0.30.2.1.01022.","222130...12.1..0","..0...332122322.",".1...2..20212220","...3.2111.01022.","..2.0.111.1201.1","..1.120102.10..3","11..31132..20..1",".32202..022...21","012.1.210.3..1.2",".1.223320.1.0.1.",".21221..322...00","3332.10..212.2..","121.12.302...02.","1..01.202..2311.","...01222110..21.","0.2.1.1.0.11012."],"2":["21.1.2.0........",".3...1...110.210","32..2...2.2.1320","..0.22..103.....","..0.1...1..02210","..3.2.0..32..0..","..0..20...20.1..",".21..20202..0...","..3...1...211320",".0..0...2.01..1.","..11...2223..10.",".1..212..1..000.",".23..12.1130....","..2...21.33...0.","0..00..2..12...2",".....302..11....","...00...2....112",".1...21..20.022.","0...221321..2...",".0...2.01..2....",".....22..10...3.","..0032212..21...",".1...3..20...112","..2.2.21.22...01","...20..11.12011.",".1.1..20..1.2310",".22.21..2....20.","1.2.0.1.1.1.01..","....111...32.1.0","10.0.21.1.2.21.."],"3":["..1....3..31013310.33.1.3",".210...210.0.1..021.23.0.","0..00.3.1.301..31013..2..","0.0000.0.0..3.2201.2..1..","3200..2.0010...1.0312....","1.2..03..21.002.200..2.2.",".1...31..33.313232..0..10","0..131.0.21...0.2...02213","...2.10.11.1133.2...00.00",".2.3.1301.0..11.023.01...","..0.1..223201.12..0.02.2.",".0..20.111.02...12010..1.","3111....020..22.2.20.3.0.","..0..1.2.02.2.0200.221.1.","211.31.1211.....3..0.010.","..122..21.1.10.0220..0.2.",".0...01.1..1.01.120.0022.","0010..1.1..3....101.22.12",".11.3...21.3200.231.3...0","0001.1.22.222022........0",".0.2.0121.1.1130.1.20....","22...10.10101..10....2.10","....0233101..2010....11.1",".0.00.2.11..1.2.1101..32.",".0123.0...01...221113.1..","12.1.1.10.0.21..01...012.","...1.102....31031..1.2210",".0..0.210.1.22.210....212",".0.1..132.0..32011.10...2","131120.111...3..2..100..."],"4":["...3.2..1.1..1.1.3.02220.",".131.01...0.1..2.0....121","1..2.023..2...23..3....0.",".0..0..10....2.3.012311..","...2..2.2.03.1...0020..1.","..0.....1022.2.20.0..1.1.",".1.2..0.21.2.10..0.....0.",".0.3.012122.....1.02...2.",".....10..1.1300..3...21..",".0....1.....3.01.0.1....1",".21...12..101.....30..2..","..1.1.1..0..30.10....1.10","...0....2.11..11..30211..","....2..1.230002..12.0....",".2....02.0....1..331231.0","211....1011..1.0...2....0","..12201..1...01..00...22.",".2110.......00...12.1111.",".20......0..2.1.0022.1...","0..12.03.2...120....1.1..","..1.110.20.....12.10.0.0.",".211....01.12.10.0.....01","..113.3...10.12.0..1....2","..11.2..2.32...12...001..",".2.10.0..1.1.10102.......","0232.1.1...102..2....1...","10.0..1......201...22....","..2.2..0.31...2..2.1.1010","10131.2......0.1.1010....","...01.......131.....21..."],"5":["...1.02.01.1.1..1.2.0....",".0....022..2..3.10...2.12","3..0......21.00.0..1.11..","...0021....01.11.120.....",".3.0.1......03.111.......",".21.331..21...3.1..2.0..0","....0.111.21.20....12233.",".1...02..0....11....1213.",".12...21.12013321..1...10","1.310......02.....00.21..","3.10.3..0....0.1.21....31","..2133..1.12.120.22...0..","3.2.3..1.13.110......3.0.","..0..0..3.02.1....1.3.1..","..3.10...2..1.1..00...21.","1...1..0.1201..22...11...","01221....1.....2.3.10....","..1..20.2....2...200..3..",".2.0..13....2101.121....1","....31...1....110..00.0..","12.12.....133.30..2......","..2.1.1..1.20......30.31.",".012...1.1.12....1....212","122..3.02.2....1.20.1....","1.10........1101.1.1.1..3","1.11.2...1...2....20.11.1",".2..03...1.1.20.1.31.1.1.",".22121.0.2.1.1.....1..0..","3.1....1.1.0.2111.1.....0","0..0...1131.2....0...1..3"],"6":["0..0..0..12...1..102.00.0....1.122..","..1...3.012.3111....1..2.0..110..0.0","..0....310..222...2.12..1...3.2.11..",".1232..01.1...3....2.320.1...00..0..","1..2.0..11..02.03......1...2.......1","0.0.0..1....12.01....0.101..01.1....","......01..3...1.0212...10....11...1.","....000.2.2...0.22...0.2.3..12..13..",".11...1..02132..3.........1100...0..","...22..2.02.110.0..1...1..2.230.0...",".1..201......32.2..1...3.02..1.0....","0...3..121..0.1.1..0..13...01.0..3..",".2..0.3.1...30...22....1...21.1..20.","..1.3...3...1201....0120.3.1...2...0",".....01..2.011.0..10...01..3...11.2.","011.0.1....32..2.....10.221...0.122.",".31......0.0..31.....2.0100..2......",".3..1..223...21.0.12.01..1.3210.....",".0..0.0.2310.1.......1...3.02...111.","0.13.30.223.....1...1..10..0.1..22.2","..2.....10.11.3..1....0.112....013.0",".....1101...1..0.2...2.02..1..1.0.0.","0.1..0..13...3...33.1...1.211..013..",".0.02..0.12.1.1.1.2...1221.0...2..1.","..0.0....1..11...01.0...10..3...3..0","....1.0121..1..0..0.1..11.2.1.0..12.","01..1....0.1.21.1.......11010..0..0.",".21.1.20..0.2..2....1222.1...1.001.1","01...01..0..121..03....2..1...1...21","3.0...2.2.1.1..2.110..231.1...2....1"]};
+/* the day's map: a new pool map each week, a new turn or flip once the pool comes round again */
+var TM_EPOCH=Date.UTC(2026,9,1);
+function tmDayNum(key){ var p=key.split("-"); return Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-TM_EPOCH)/864e5); }
+function tmForDay(key,wd){ var pool=TM_POOL[wd], wk=Math.floor((tmDayNum(key)+700)/7), m=pool.length, pick=wk%m, k=Math.floor(wk/m)%8, sp=TM_WEEK[wd];
+  return {n:sp.n,lvl:sp.lvl,clue:MR.dress(sp.n,MR.decode(pool[pick]),k),pick:pick,dress:k}; }
+</script>
+<script src="kids.js?v=1106a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, NS="http://www.w3.org/2000/svg";
+var WDN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var ISLES=["Parrot Point","Coconut Cove","Seashell Isle","Turtle Rock","Mango Key","Lantern Island","Starfish Reef","Pelican Bay","Driftwood Isle","Whale Tail Island","Moonbeam Key","Thunder Cove","Pirate's Pocket","Crab Claw Island","Sunset Shoals","Banana Bend","Octopus Atoll","Comet Island","Sandcastle Key","Dolphin Rock"];
+var FACTS=[
+ "Real pirates almost never buried treasure. They usually spent it fast! Buried treasure got famous from the book Treasure Island, written in 1883.",
+ "In 1507, a mapmaker named Martin Waldseemüller made the first map to use the name America.",
+ "Greenland looks huge on many maps, but Africa is really about 14 times bigger.",
+ "A compass needle points north because the Earth acts like a giant magnet.",
+ "Old sailors' maps sometimes had sea monsters drawn in the empty parts of the ocean.",
+ "Canada has the longest coastline of any country in the world.",
+ "Marie Tharp mapped the bottom of the Atlantic Ocean and found a giant chain of mountains under the sea.",
+ "The word map comes from the Latin word mappa, which means a cloth or a napkin.",
+ "Indonesia is made of more than 17,000 islands.",
+ "The lines that run east and west across a globe are called lines of latitude. The equator is one of them.",
+ "Some maps from the 1600s showed California as an island!",
+ "Greenland is the biggest island in the world. Australia is even bigger, but it counts as a continent.",
+ "Your family's phone finds its place on a map by listening to satellites high above the Earth. That's called GPS.",
+ "The Hawaiian Islands were made by volcanoes, and the Big Island is still growing."
+];
+var LS=BWK.store, ST=LS.get("tmap",{}); if(!ST||typeof ST!=="object") ST={};
+if(!ST.done) ST.done={};
+function save(){ LS.set("tmap",ST); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var today=new Date(), todayKey=ymd(today), todayWd=today.getDay();
+function foundCount(){ return Object.keys(ST.done).length; }
+
+/* ---------------- sounds of its own (Web Audio; wakes on the first tap) ---------------- */
+var AC=null;
+function wake(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return; AC=new C(); } if(AC.state==="suspended") AC.resume(); }
+document.addEventListener("pointerdown",wake,{capture:true,passive:true});
+function tone(f,t,d,v,ty){ var o=AC.createOscillator(), g=AC.createGain(); o.type=ty||"sine"; o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+d+.05); }
+function hiss(t,d,v,ty,f0,f1,q){ var n=Math.max(1,Math.floor(AC.sampleRate*d)), b=AC.createBuffer(1,n,AC.sampleRate), x=b.getChannelData(0);
+  for(var i=0;i<n;i++) x[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);
+  var s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; f.type=ty; f.Q.value=q||1;
+  f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f1,t+d); g.gain.value=v; s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t); }
+function bell(t,v){ tone(880,t,1.5,v||.05); tone(880*2.76,t,.7,(v||.05)*.35); tone(880*5.4,t,.35,(v||.05)*.15); }
+var SND={
+  line:function(t){ hiss(t,.09,.22,"bandpass",2400,4400,1.4); hiss(t+.04,.05,.10,"highpass",5000,6000); },
+  cross:function(t){ hiss(t,.03,.25,"bandpass",3200,3000,3); hiss(t+.07,.03,.22,"bandpass",2800,2600,3); },
+  clear:function(t){ hiss(t,.16,.18,"bandpass",900,600,.8); },
+  nope:function(t){ tone(150,t,.12,.12,"triangle"); tone(138,t+.13,.12,.1,"triangle"); },
+  met:function(t){ tone(1568,t,.25,.025); tone(2093,t+.05,.3,.018); },
+  hint:function(t){ bell(t,.045); bell(t+.42,.035); },
+  unroll:function(t){ hiss(t,.5,.16,"bandpass",500,2400,.9); hiss(t+.32,.25,.08,"bandpass",2200,900,.9); },
+  next:function(t){ tone(659,t,.16,.04,"triangle"); tone(880,t+.07,.2,.035,"triangle"); },
+  solve:function(t){ hiss(t,1.3,.14,"lowpass",300,1400,.7); hiss(t+.9,1.1,.09,"lowpass",1200,300,.7); bell(t+.25,.05);
+    for(var i=0;i<10;i++) tone(2100+Math.random()*1900,t+.95+i*.065,.2,.03);
+    [523,659,784,1047].forEach(function(f,i){ tone(f,t+1.35+i*.09,.6,.045,"triangle"); }); },
+  lesson:function(t){ bell(t,.04); [523,659,784].forEach(function(f,i){ tone(f,t+.3+i*.08,.45,.04,"triangle"); }); }
+};
+function sfx(k){ if(!LS.get("sound",true)||!AC||AC.state!=="running"||!SND[k]) return; SND[k](AC.currentTime+.01); }
+
+/* ---------------- the board ---------------- */
+var P=null;   /* {n, clue, sol, lvl, mode:"daily"|"practice"|"lesson"} */
+var G, st, undo=[], el={}, solved=false, locked=false, ring=null, pend=null, PAD=.45;
+var svg=$("#bd");
+function mk(tag,at,par){ var e=document.createElementNS(NS,tag); for(var k in at) e.setAttribute(k,at[k]); if(par) par.appendChild(e); return e; }
+function eXY(e){ var a=G.edgeV[e], n=G.n; return [a[0]%(n+1),(a[0]/(n+1))|0,a[1]%(n+1),(a[1]/(n+1))|0]; }
+function build(){
+  var n=P.n; G=MR.geom(n); svg.innerHTML=""; el={ln:[],xx:[],num:[],pin:[]};
+  svg.setAttribute("viewBox",(-PAD)+" "+(-PAD)+" "+(n+2*PAD)+" "+(n+2*PAD));
+  var d=mk("defs",{},svg);
+  d.innerHTML='<pattern id="tmSeaP" width="1" height=".5" patternUnits="userSpaceOnUse"><path d="M.05 .3q.2-.1.4 0t.4 0" fill="none" stroke="rgba(40,100,130,.22)" stroke-width=".025" stroke-linecap="round"/></pattern>'+
+    '<radialGradient id="tmPinG" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff0b8"/><stop offset=".55" stop-color="#c99a3a"/><stop offset="1" stop-color="#6e4c12"/></radialGradient>'+
+    '<linearGradient id="tmSandG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3dc9e"/><stop offset="1" stop-color="#ddbb72"/></linearGradient>'+
+    '<linearGradient id="tmGrassG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9ccc72"/><stop offset="1" stop-color="#5f9a48"/></linearGradient>';
+  mk("rect",{x:0,y:0,width:n,height:n,fill:"rgba(110,165,185,.20)"},svg);
+  mk("rect",{x:0,y:0,width:n,height:n,fill:"url(#tmSeaP)"},svg);
+  el.land=mk("g",{},svg);
+  var gg=mk("g",{},svg), ge=mk("g",{},svg), gn=mk("g",{},svg), gp=mk("g",{},svg); el.ring=mk("g",{},svg);
+  for(var e=0;e<G.E;e++){ var c=eXY(e);
+    mk("line",{x1:c[0],y1:c[1],x2:c[2],y2:c[3],"class":"gl"},gg);
+    el.ln[e]=mk("line",{x1:c[0],y1:c[1],x2:c[2],y2:c[3],"class":"ln",pathLength:1},ge);
+    var mx=(c[0]+c[2])/2, my=(c[1]+c[3])/2, s=.09;
+    el.xx[e]=mk("path",{d:"M"+(mx-s)+" "+(my-s)+"L"+(mx+s)+" "+(my+s)+"M"+(mx+s)+" "+(my-s)+"L"+(mx-s)+" "+(my+s),"class":"xx"},ge); }
+  for(var i=0;i<n*n;i++){ if(P.clue[i]<0&&!P.showAll){ el.num[i]=null; continue; }
+    var q=P.showAll?P.all[i]:P.clue[i]; var t=mk("text",{x:i%n+.5,y:((i/n)|0)+.53,"text-anchor":"middle","dominant-baseline":"central","class":"num"},gn); t.textContent=q; el.num[i]=t; }
+  for(var v=0;v<G.V;v++) el.pin[v]=mk("circle",{cx:v%(n+1),cy:(v/(n+1))|0,r:.075,"class":"pin"},gp);
+  fit();
+}
+function cluesNow(){ return P.showAll?P.all:P.clue; }
+function draw(fresh){
+  var n=P.n, cl=cluesNow(), e, i;
+  for(e=0;e<G.E;e++){ el.ln[e].classList.toggle("on",st[e]===1); el.xx[e].classList.toggle("on",st[e]===-1);
+    if(fresh&&fresh.indexOf(e)>=0&&st[e]===1){ var L=el.ln[e]; L.classList.remove("new"); void L.getBoundingClientRect(); L.classList.add("new"); } }
+  for(i=0;i<n*n;i++){ if(!el.num[i]) continue; var on=0, xs=0; G.cellE[i].forEach(function(x){ if(st[x]===1) on++; else if(st[x]===-1) xs++; });
+    el.num[i].classList.toggle("met",on===cl[i]&&(cl[i]>0||xs===4)); el.num[i].classList.toggle("over",on>cl[i]); }
+  for(var v=0;v<G.V;v++){ var k=0; G.vertE[v].forEach(function(x){ if(st[x]===1) k++; }); el.pin[v].classList.toggle("bad",k>2); }
+}
+function metCount(){ var cl=cluesNow(), m=0; for(var i=0;i<P.n*P.n;i++){ if(cl[i]<0||!el.num[i]) continue; var on=0, xs=0; G.cellE[i].forEach(function(x){ if(st[x]===1) on++; else if(st[x]===-1) xs++; }); if(on===cl[i]&&(cl[i]>0||xs===4)) m++; } return m; }
+/* solved = one closed coast, and every number on the map has exactly its count */
+function isSolved(){
+  var cl=cluesNow(), n=P.n, i, any=-1;
+  for(i=0;i<n*n;i++){ if(cl[i]<0) continue; var on=0; G.cellE[i].forEach(function(x){ if(st[x]===1) on++; }); if(on!==cl[i]) return false; }
+  for(var v=0;v<G.V;v++){ var k=0; G.vertE[v].forEach(function(x){ if(st[x]===1) k++; }); if(k!==0&&k!==2) return false; }
+  var tot=0; for(i=0;i<G.E;i++) if(st[i]===1){ tot++; if(any<0) any=i; } if(!tot) return false;
+  var seen={}, stack=[G.edgeV[any][0]], cnt=0, vs={}; vs[stack[0]]=1;
+  while(stack.length){ var p=stack.pop(); G.vertE[p].forEach(function(x){ if(st[x]!==1||seen[x]) return; seen[x]=1; cnt++; var o=G.edgeV[x][0]===p?G.edgeV[x][1]:G.edgeV[x][0]; if(!vs[o]){ vs[o]=1; stack.push(o); } }); }
+  return cnt===tot;
+}
+function inside(s){ var n=P.n, out=[]; for(var r=0;r<n;r++){ var par=0; for(var c=0;c<n;c++){ if(s[G.Vt(r,c)]===1) par^=1; out.push(par); } } return out; }
+
+/* the island appears: sand, grass, palm trees, and X marks the spot with the treasure chest */
+function showLand(s,withChest){
+  var n=P.n, inn=inside(s), g=el.land; g.innerHTML=""; var L=mk("g",{"class":"land"},g);
+  function at(r,c){ return r<0||c<0||r>=n||c>=n?0:inn[r*n+c]; }
+  for(var i=0;i<n*n;i++) if(inn[i]){ var r=(i/n)|0, c=i%n; mk("rect",{x:c-.005,y:r-.005,width:1.01,height:1.01,fill:"url(#tmSandG)"},L); }
+  for(i=0;i<n*n;i++) if(inn[i]){ var r2=(i/n)|0, c2=i%n, k=.17;
+    var x0=c2+(at(r2,c2-1)?0:k), x1=c2+1-(at(r2,c2+1)?0:k), y0=r2+(at(r2-1,c2)?0:k), y1=r2+1-(at(r2+1,c2)?0:k);
+    mk("rect",{x:x0,y:y0,width:x1-x0,height:y1-y0,rx:.12,fill:"url(#tmGrassG)"},L); }
+  /* the X goes on the square deepest in the island; palms on two others */
+  var best=-1, bd=-1, cand=[];
+  for(i=0;i<n*n;i++) if(inn[i]){ var rr=(i/n)|0, cc=i%n, dd=99;
+    for(var j=0;j<n*n;j++) if(!inn[j]){ var d2=Math.abs(((j/n)|0)-rr)+Math.abs(j%n-cc); if(d2<dd) dd=d2; }
+    dd=Math.min(dd,rr+1,cc+1,n-rr,n-cc); if(dd>bd){ bd=dd; best=i; } cand.push(i); }
+  if(!withChest) return;
+  var palms=cand.filter(function(x){ return x!==best; }); palms=palms.filter(function(_,ix){ return ix%Math.max(1,Math.floor(palms.length/2))===0; }).slice(0,2);
+  palms.forEach(function(x){ var px=x%n+.5, py=((x/n)|0)+.86, p=mk("g",{"class":"palm"},g);
+    mk("path",{d:"M"+px+" "+py+"q.06-.25-.02-.52",fill:"none",stroke:"#7a4a1e","stroke-width":.07,"stroke-linecap":"round"},p);
+    var tx=px-.02, ty=py-.52;
+    ["q.16-.12.3.02","q-.16-.12-.3.02","q.12-.2.24-.18","q-.12-.2-.24-.18"].forEach(function(q){ mk("path",{d:"M"+tx+" "+ty+q,fill:"none",stroke:"#2f7d32","stroke-width":.08,"stroke-linecap":"round"},p); });
+    mk("circle",{cx:tx+.02,cy:ty+.05,r:.04,fill:"#6b3f16"},p); });
+  var bx=best%n+.5, by=((best/n)|0)+.5, X=mk("g",{"class":"palm"},g);
+  mk("path",{d:"M"+(bx-.2)+" "+(by-.2)+"L"+(bx+.2)+" "+(by+.2)+"M"+(bx+.2)+" "+(by-.2)+"L"+(bx-.2)+" "+(by+.2),stroke:"#c0392b","stroke-width":.09,"stroke-linecap":"round"},X);
+  var C=mk("g",{"class":"chest"},g);
+  mk("rect",{x:bx-.2,y:by-.02,width:.4,height:.22,rx:.03,fill:"#8a4f1f",stroke:"#4a2a10","stroke-width":.02},C);
+  mk("path",{d:"M"+(bx-.21)+" "+(by-.01)+"q.21-.2.42 0z",fill:"#a7652a",stroke:"#4a2a10","stroke-width":.02},C);
+  mk("rect",{x:bx-.21,y:by+.03,width:.42,height:.04,fill:"#e9c46a"},C);
+  mk("rect",{x:bx-.035,y:by+.01,width:.07,height:.09,rx:.01,fill:"#f6d77a",stroke:"#8a6408","stroke-width":.012},C);
+  mk("ellipse",{cx:bx,cy:by-.06,rx:.12,ry:.035,fill:"#ffe27a",opacity:.9},C);
+}
+function coins(){ var pr=$("#paper"), w=pr.clientWidth, h=pr.clientHeight;
+  for(var i=0;i<16;i++){ var c=document.createElement("span"); c.className="coin"; c.style.left=(w/2)+"px"; c.style.top=(h/2)+"px";
+    var a=Math.random()*Math.PI*2, d=w*(.25+Math.random()*.3); c.style.setProperty("--dx",Math.cos(a)*d+"px"); c.style.setProperty("--dy",(Math.sin(a)*d-h*.1)+"px");
+    c.style.animationDelay=(1+Math.random()*.4)+"s"; pr.appendChild(c); setTimeout(function(x){ return function(){ x.remove(); }; }(c),2900); } }
+
+/* ---------------- fitting the map ---------------- */
+function fit(){ var w=$("#wrap"), pr=$("#paper"); if(!w.clientWidth) return; var s=Math.floor(Math.min(w.clientWidth*.94,w.clientHeight*.89,900)); pr.style.width=s+"px"; pr.style.height=s+"px"; }
+if(window.ResizeObserver) new ResizeObserver(fit).observe($("#wrap")); addEventListener("resize",fit);
+
+/* ---------------- drawing: tap a side (line, then X, then clear), or drag from pin to pin ---------------- */
+function setE(e,v,group){ if(st[e]===v) return false; group.push([e,st[e]]); st[e]=v; return true; }
+function gpt(ev){ var r=svg.getBoundingClientRect(), k=(P.n+2*PAD); return [(ev.clientX-r.left)/r.width*k-PAD,(ev.clientY-r.top)/r.height*k-PAD]; }
+function nearEdge(x,y){ var n=P.n, best=null, bd=.42;
+  var r=Math.round(y), c=Math.floor(x); if(r>=0&&r<=n&&c>=0&&c<n){ var d=Math.abs(y-r); if(d<bd){ bd=d; best=G.H(r,c); } }
+  var c2=Math.round(x), r2=Math.floor(y); if(c2>=0&&c2<=n&&r2>=0&&r2<n){ var d2=Math.abs(x-c2); if(d2<bd){ bd=d2; best=G.Vt(r2,c2); } }
+  return best; }
+function nearPin(x,y,lim){ var n=P.n, c=Math.round(x), r=Math.round(y); if(c<0||r<0||c>n||r>n) return -1; return Math.hypot(x-c,y-r)<lim?G.P(r,c):-1; }
+function edgeBetween(a,b){ var L=G.vertE[a]; for(var i=0;i<L.length;i++){ var v=G.edgeV[L[i]]; if(v[0]===b||v[1]===b) return L[i]; } return -1; }
+var drag=null;
+svg.addEventListener("pointerdown",function(ev){ if(!P||locked) return; ev.preventDefault(); try{ svg.setPointerCapture(ev.pointerId); }catch(_){}
+  var p=gpt(ev); drag={x:p[0],y:p[1],moved:false,pin:-1,last:-1,group:[],fresh:[]}; });
+svg.addEventListener("pointermove",function(ev){ if(!drag) return; var p=gpt(ev);
+  if(!drag.moved){ if(Math.hypot(p[0]-drag.x,p[1]-drag.y)<.3) return; drag.moved=true; var s=nearPin(drag.x,drag.y,.5); if(s<0){ drag.pin=G.P(Math.max(0,Math.min(P.n,Math.round(drag.y))),Math.max(0,Math.min(P.n,Math.round(drag.x)))); } else drag.pin=s; }
+  var q=nearPin(p[0],p[1],.36); if(q<0||q===drag.pin) return;
+  var n1=P.n+1, ar=(drag.pin/n1)|0, ac=drag.pin%n1, br=(q/n1)|0, bc=q%n1;
+  if(ar!==br&&ac!==bc) return;
+  var steps=Math.abs(br-ar)+Math.abs(bc-ac), dr=Math.sign(br-ar), dc=Math.sign(bc-ac), ch=false;
+  for(var s2=0;s2<steps;s2++){ var a=drag.pin, b=G.P(((a/n1)|0)+dr,a%n1+dc), e=edgeBetween(a,b);
+    if(e===drag.last&&st[e]===1){ if(setE(e,0,drag.group)){ ch=true; sfx("clear"); } }
+    else if(setE(e,1,drag.group)){ ch=true; drag.fresh.push(e); sfx("line"); }
+    drag.last=e; drag.pin=b; }
+  if(ch){ draw(drag.fresh); after(false); }
+});
+function endDrag(ev){ if(!drag) return; var d=drag; drag=null;
+  if(!d.moved){ var e=nearEdge(d.x,d.y); if(e==null) return; var v=st[e]===0?1:st[e]===1?-1:0; setE(e,v,d.group); sfx(v===1?"line":v===-1?"cross":"clear"); draw(v===1?[e]:null); }
+  if(d.group.length){ undo.push(d.group); clearRing(); after(true); } }
+svg.addEventListener("pointerup",endDrag); svg.addEventListener("pointercancel",endDrag);
+
+var lastMet=0;
+function after(final){
+  var m=metCount(); if(final&&m>lastMet) setTimeout(function(){ sfx("met"); },90); lastMet=m;
+  $("#tUndo").disabled=!undo.length;
+  if(P.mode==="daily"){ ST.now={key:todayKey,st:Array.from(st)}; save(); }
+  if(P.mode==="lesson") lessonCheck();
+  if(final&&isSolved()) win();
+}
+
+/* ---------------- hints: the captain's spyglass ---------------- */
+function clearRing(){ if(!pend) return; el.ring.innerHTML=""; pend=null; coach(null); }
+function ringEdge(e){ var c=eXY(e), h=c[1]===c[3]; mk("rect",{x:(h?c[0]:c[0]-.2)-.04,y:(h?c[1]-.2:c[1])-.04,width:(h?1:.4)+.08,height:(h?.4:1)+.08,rx:.2,"class":"ring"},el.ring); }
+function ringCell(i){ mk("circle",{cx:i%P.n+.5,cy:((i/P.n)|0)+.5,r:.4,"class":"ring"},el.ring); }
+function ringPin(v){ mk("circle",{cx:v%(P.n+1),cy:(v/(P.n+1))|0,r:.2,"class":"ring"},el.ring); }
+function plural(q,w){ return q+" "+w+(q===1?"":"s"); }
+function hintText(s,on,cl){
+  var q=s.cell!=null?cl[s.cell]:0;
+  switch(s.k){
+    case "full": return q===0?"A <b>0</b> means no coast touches this square. Put an <b>X</b> on every side that's still open.":"This <b>"+q+"</b> already has "+plural(q,"coast line")+". Its other sides are sea, so put <b>X</b>'s there.";
+    case "need": return "This <b>"+q+"</b> needs "+plural(q,"coast line")+", and that's exactly how many sides are left open. Draw lines on all of them!";
+    case "vfull": return "Two lines already meet at this pin. The coast can't branch, so the other paths from it are sea.";
+    case "vgo": return "The coast comes into this pin, and there's only <b>one way</b> to go on. Keep drawing!";
+    case "vdead": return "Only one path is left at this pin. A coast can't stop at a dead end, so that path is sea.";
+    case "loop": return "Careful! A line here would close a <b>little loop</b> and leave the rest of the coast out. Put an <b>X</b> here.";
+    case "close": return "This line closes the coast into <b>one big loop</b>. Draw it!";
+    case "done": return "The coast is all drawn! Every other side is sea.";
+    case "c1": return "This <b>1</b> sits in a corner the coast can't get out of. So its two corner sides are sea.";
+    case "c3": return "This <b>3</b> sits in a corner the coast can't get out of, so both of its corner sides must be coast.";
+    case "ahead": return "Let's think ahead! If this side were "+(s.tried===1?"coast":"sea")+", the coast would break somewhere. So it must be <b>"+(s.tried===1?"sea (an X)":"coast (a line)")+"</b>!";
+  }
+  return "Look here!";
+}
+function hint(){
+  if(!P||solved||locked) return; clearRing(); sfx("hint");
+  var wrong=-1, e;
+  for(e=0;e<G.E;e++){ if(st[e]===1&&P.sol[e]!==1){ wrong=e; break; } if(st[e]===-1&&P.sol[e]===1){ wrong=e; break; } }
+  if(wrong>=0){ ringEdge(wrong); var was=st[wrong];
+    pend={hint:true,set:[[wrong,was===1?0:1]]};
+    coach({t:"Spyglass",h:true,txt:was===1?"Oops! This line isn't part of the coast. Tap it until it's clear.":"Oops! This side is really coast, so it needs a <b>line</b>, not an X.",btn:"Fix it for me"}); return; }
+  var s=MR.solver(G,cluesNow()).step(Int8Array.from(st),4);
+  if(!s||s.k==="bad"){ pend={hint:true,set:[]}; coach({t:"Spyglass",h:true,txt:"Everything you've drawn is right! Keep going.",btn:null}); return; }
+  s.set.forEach(function(x){ ringEdge(x[0]); }); if(s.cell!=null) ringCell(s.cell); if(s.v!=null) ringPin(s.v);
+  pend={hint:true,set:s.set};
+  var tx=hintText(s,0,cluesNow()); coach({t:"Spyglass",h:true,txt:tx,btn:"Do it for me"}); BWK.say(tx.replace(/<[^>]+>/g,""));
+}
+function doHint(){ if(!pend) return; var g=[], fresh=[]; pend.set.forEach(function(x){ if(setE(x[0],x[1],g)&&x[1]===1) fresh.push(x[0]); });
+  pend=null; el.ring.innerHTML=""; coach(null); if(g.length){ undo.push(g); sfx(g.some(function(x){ return st[x[0]]===1; })?"line":"cross"); } draw(fresh); after(true); }
+
+/* ---------------- coach card (lessons and hints) ---------------- */
+function coach(o){ var c=$("#coach");
+  if(!o){ if(P&&P.mode==="lesson"){ lessonCard(); return; } c.className="coach"; c.innerHTML=""; return; }
+  c.className="coach on"+(o.h?" hint":"");
+  c.innerHTML='<div class="ct">'+o.t+'</div><p>'+o.txt+'</p>'+(o.btn||o.btn2?'<div class="cr">'+(o.btn2?'<button class="k-btn k-ghost" id="cB2">'+o.btn2+'</button>':'')+(o.btn?'<button class="k-btn" id="cB">'+o.btn+'</button>':'')+'</div>':'');
+  var b=$("#cB"); if(b) b.onclick=o.go||doHint; var b2=$("#cB2"); if(b2) b2.onclick=o.go2;
+}
+
+/* ---------------- loading a map ---------------- */
+function load(p,mode,saved){
+  P=p; P.mode=mode; solved=false; locked=false; undo=[]; pend=null; svg.classList.remove("won");
+  if(!P.sol){ var g=MR.solver(MR.geom(P.n),P.showAll?P.all:P.clue).run(4); P.sol=g.s; }
+  document.body.className="m-play"; build();
+  st=saved&&saved.length===G.E?Int8Array.from(saved):new Int8Array(G.E);
+  draw(); lastMet=metCount(); $("#tUndo").disabled=true; $("#tHint").disabled=false;
+  var b=$("#bar");
+  if(mode==="daily") b.innerHTML=WDN[todayWd]+"'s Map <span>· "+P.isle+" · "+P.n+" × "+P.n+"</span>";
+  else if(mode==="practice") b.innerHTML="Practice Map <span>· "+P.n+" × "+P.n+"</span>";
+  else b.innerHTML="Learn to Play";
+  coach(null); requestAnimationFrame(fit);
+  if(saved&&isSolved()){ solved=true; locked=true; showLand(st,true); if(mode!=="lesson") svg.classList.add("won"); }
+}
+function loadToday(){
+  var p=tmForDay(todayKey,todayWd), dn=tmDayNum(todayKey); p.isle=ISLES[((dn%ISLES.length)+ISLES.length)%ISLES.length];
+  var sv=ST.now&&ST.now.key===todayKey?ST.now.st:null;
+  sfx("unroll"); load(p,"daily",sv);
+  if(!sv) BWK.say(WDN[todayWd]+"'s map. "+p.isle+". Draw the coast all the way around the island.");
+}
+function loadPractice(){
+  var n=Math.random()<.5?4:5, p=MR.make("practice"+Date.now(),{n:n,lvl:2,keep:n===4?9:12}); sfx("unroll"); load({n:n,clue:p.clue,lvl:2},"practice");
+}
+
+/* ---------------- treasure found ---------------- */
+var PATCH='<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="27" fill="#169e9a" stroke="#0c5f5c" stroke-width="3"/><circle cx="30" cy="30" r="23" fill="none" stroke="#bff3ea" stroke-width="1.5" stroke-dasharray="3 3"/><path d="m15 33 22-10 3 6-22 10z" fill="#e9c46a"/><path d="m37 23 5-2 3 6-5 2z" fill="#f6dd96"/><path d="M26 38l-3 9M28 37l4 9" stroke="#e9c46a" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="18" r="2" fill="#fff"/><circle cx="44" cy="40" r="1.5" fill="#fff"/></svg>';
+function win(){
+  solved=true; locked=true; clearRing(); $("#tHint").disabled=true; svg.classList.add("won");
+  if(P.mode==="lesson"){ sfx("lesson"); showLand(st,true); coins(); lessonDone(); return; }
+  sfx("solve"); showLand(st,true); coins();
+  var fresh=false, first=false;
+  if(P.mode==="daily"){ if(!ST.done[todayKey]){ ST.done[todayKey]=1; first=true; } save();
+    var bd=LS.get("badges",{}); if(!bd||typeof bd!=="object") bd={}; if(!bd.tele){ bd.tele=true; LS.set("badges",bd); fresh=true; } }
+  var s=BWK.seat(), who=s&&s.name?s.name:"Captain";
+  var dn=tmDayNum(todayKey)+(P.mode==="practice"?Math.floor(Math.random()*7):0), fact=FACTS[((dn%FACTS.length)+FACTS.length)%FACTS.length];
+  setTimeout(function(){
+    var box=BWK.sheet('<h2>Treasure found!</h2><p>Great job, '+who.replace(/</g,"")+'! '+(P.mode==="daily"?'You drew the whole coast of <b>'+P.isle+'</b>.':'You drew the whole coast.')+'</p>'+
+      (fresh?'<div class="patch">'+PATCH+'<p><b style="color:var(--k-warm)">New patch!</b> The Telescope patch is on your badge wall.</p></div>':'')+
+      '<div class="fact"><b>Map fact</b><span>'+fact+'</span></div>'+
+      (P.mode==="daily"?'<p class="k-small" style="margin:8px 0 0">Maps found: '+foundCount()+'. '+(todayWd===0?'A brand-new week of maps starts tomorrow!':'A new map washes up tomorrow.')+'</p>':'')+
+      '<div class="rb"><button class="k-btn wide" id="rOut">Back to The Outpost</button><button class="k-btn k-cool" id="rPr">Practice Map</button><button class="k-btn k-ghost" id="rLook">See my map</button></div>');
+    box.querySelector("#rOut").onclick=goOutpost;
+    box.querySelector("#rPr").onclick=function(){ BWK.closeSheet(true); loadPractice(); };
+    box.querySelector("#rLook").onclick=function(){ BWK.closeSheet(true); coach({t:"Treasure found",txt:"What a map! Tap <b>Menu</b> when you're ready.",btn:null}); };
+    BWK.say("Treasure found! Great job, "+who+"!"+(fresh?" New patch! The Telescope patch is on your badge wall.":"")+" Map fact: "+fact);
+  },2300);
+}
+
+/* ---------------- Learn to Play ---------------- */
+var LISL=[0,0,0,0, 0,1,1,0, 0,1,1,1, 0,0,1,0];
+var LP=[
+  {look:true,nums:false,txt:"A storm washed the coastline off Captain Zayden's map! Your job: draw <b>one path</b> along the dotted lines, all the way around the island. It must join up into <b>one loop</b>: no branches and no loose ends."},
+  {look:true,nums:true,ring:[4,5],txt:"Numbers are clues. A number tells how many sides of its square are coast. <b>Numbers can be out in the sea, too!</b> This sea 1 touches the coast on one side. This land 2 touches it on two sides."},
+  {try:"zero",ring:[0],txt:"A <b>0</b> means no coast touches that square. Tap a side once to draw a line. Tap it again for an <b>X</b>, which means sea. Put an <b>X</b> on all four sides of this 0."},
+  {try:"solve",txt:"Now draw the whole coast! Tip: a brass pin has <b>no lines or two lines</b>, never one or three. You can also drag your finger from pin to pin."},
+  {end:true,look:true,txt:"You're ready, Captain! If you get stuck, tap <b>Hint</b>: the spyglass shows the next step. A new map washes up every day. Monday's map is small, and by Sunday they're big and tricky!"}
+];
+var lpage=0, lessonSt=null;
+function lessonSolution(){ var g=MR.geom(4), s=new Int8Array(g.E); for(var e=0;e<g.E;e++){ var cs=g.edgeC[e], a=cs[0]!=null?LISL[cs[0]]:0, b=cs.length>1?LISL[cs[1]]:0; s[e]=a!==b?1:-1; } return s; }
+function startLesson(){ lpage=0; lessonSt=null; showLesson(); }
+function showLesson(){
+  var pg=LP[lpage], all=MR.numbers(4,LISL), sol=lessonSolution();
+  var hidden=all.map(function(){ return -1; });
+  load({n:4,clue:pg.nums===false?hidden:all,all:all,showAll:false,sol:sol},"lesson", pg.look?Array.from(sol).map(function(v){ return v===1?1:0; }):(lpage===3&&lessonSt?lessonSt:null));
+  if(pg.look){ locked=true; showLand(sol,!!pg.end); $("#tHint").disabled=true; $("#tUndo").disabled=true; }
+  if(pg.ring) pg.ring.forEach(ringCell);
+  lessonCard(); BWK.say(pg.txt.replace(/<[^>]+>/g,"")+(pg.look&&!pg.end?" Just look for now, then tap Next.":""));
+}
+function lessonCard(){
+  var pg=LP[lpage], c=$("#coach"), t="Learn to Play · "+(lpage+1)+" of "+LP.length;
+  var txt=pg.txt+(pg.look&&!pg.end?" Just look for now, then tap <b>Next</b>.":"");
+  if(pg.end){ coach2({t:t,txt:txt,btn:"Today's Map",go:function(){ ST.lesson=1; save(); loadToday(); },btn2:"Menu",go2:function(){ ST.lesson=1; save(); toMenu(); }}); return; }
+  coach2({t:t,txt:txt,btn:pg.look||pg.doneNow?"Next":null,go:nextPage});
+}
+function coach2(o){ var keepP=P; coach(o); }
+function nextPage(){ sfx("next"); if(lpage===2) lessonSt=Array.from(st); LP[lpage].doneNow=false; lpage++; showLesson(); }
+function lessonCheck(){
+  var pg=LP[lpage]; if(pg.try==="zero"){ var ok=G.cellE[0].every(function(e){ return st[e]===-1; });
+    if(ok&&!pg.doneNow){ pg.doneNow=true; el.ring.innerHTML=""; sfx("lesson"); coach2({t:"Learn to Play · 3 of 5",txt:"Nice! Those X's mean sea. No coast can touch a 0. Tap <b>Next</b>.",btn:"Next",go:nextPage}); BWK.say("Nice! Those X's mean sea. Tap Next."); } }
+}
+function lessonDone(){ var pg=LP[lpage]; pg.doneNow=true; coach2({t:"Learn to Play · 4 of 5",txt:"You found the treasure! That's the whole game. Tap <b>Next</b>.",btn:"Next",go:nextPage}); BWK.say("You found the treasure! Tap Next."); }
+
+/* ---------------- menu ---------------- */
+function weekRow(){
+  var w=$("#week"), d=new Date(today); d.setDate(d.getDate()-((d.getDay()+6)%7)); var h="";
+  for(var i=0;i<7;i++){ var k=ymd(d), wd=d.getDay(), done=!!ST.done[k], cls="wd"+(k===todayKey?" today":"")+(done?" done":"");
+    h+='<div class="'+cls+'"><b>'+"SMTWTFS"[wd]+'</b><i>'+(done?"✕":TM_WEEK[wd].n)+'</i></div>'; d.setDate(d.getDate()+1); }
+  w.innerHTML=h;
+}
+function toMenu(){
+  document.body.className="m-menu"; P=null; weekRow();
+  var done=!!ST.done[todayKey], sp=TM_WEEK[todayWd];
+  $("#bToday").innerHTML=(done?"Today's Map ✓":"Today's Map")+'<small>'+WDN[todayWd]+' · '+sp.n+' × '+sp.n+'</small>';
+  $("#bLearn").classList.toggle("pulse",!ST.lesson);
+  var n=foundCount(); $("#mfoot").textContent=n?("Maps found: "+n+". Each map is a little harder than the day before, all week long."):"Each day's map is a little harder than the day before, all week long.";
+}
+function goOutpost(){ BWK.closeSheet(true); BWK.sfx("whoosh"); setTimeout(function(){ location.href="outpost.html"; },200); }
+$("#bToday").onclick=function(){ loadToday(); };
+$("#bLearn").onclick=function(){ sfx("next"); startLesson(); };
+$("#bPractice").onclick=function(){ loadPractice(); };
+$("#bBack").onclick=goOutpost;
+$("#tHint").onclick=hint;
+$("#tUndo").onclick=function(){ var g=undo.pop(); if(!g||locked) { if(g) undo.push(g); return; } for(var i=g.length-1;i>=0;i--) st[g[i][0]]=g[i][1]; sfx("clear"); clearRing(); draw(); after(false); };
+$("#tRestart").onclick=function(){ if(!P) return; if(P.mode==="lesson"){ if(LP[lpage].look) return; LP[lpage].doneNow=false; lessonSt=null; showLesson(); sfx("unroll"); return; }
+  if(solved&&P.mode==="daily"){ coach({t:"Treasure found",txt:"You already found today's treasure! Try a <b>Practice Map</b> from the menu.",btn:null}); return; }
+  var g=[]; for(var e=0;e<G.E;e++) setE(e,0,g); if(g.length) undo.push(g); solved=false; locked=false; el.land.innerHTML=""; clearRing(); sfx("unroll"); draw(); after(false); };
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); clearRing(); toMenu(); };
+
+toMenu();
+BWK.init({here:"tmap", helloWord:"Ahoy, ",
+  intro:"Captain Zayden's Map. A storm washed the coastlines off the captain's island maps. Draw each coast back to find the treasure. Tap Learn to Play to see how."});
+/* test hook */
+window.TMO={load:load,today:loadToday,lesson:startLesson,practice:loadPractice,st:function(){ return st; },P:function(){ return P; },sol:function(){ return P&&P.sol; },
+  set:function(a){ for(var i=0;i<a.length;i++) st[i]=a[i]; draw(); after(true); }};
+})();
+</script>
+</body>
+</html>
