@@ -14,6 +14,7 @@
 
   /* ---------------- icons ---------------- */
   var I = {
+    back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>',
     home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/></svg>',
     sound:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="k-w" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
     mute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/></svg>',
@@ -204,7 +205,8 @@
   function head(){
     var h=document.createElement("nav"); h.className="k-head"; h.setAttribute("aria-label","Kids' Corner");
     h.innerHTML=
-      '<button class="k-hb'+(cfg.here==="home"?" k-here":"")+'" data-k="home">'+I.home+'<span>Home</span></button>'+
+      (cfg.here==="home"?'<a class="k-hb k-leave" href="index.html" data-k="leave" aria-label="Back to the BrainWhim home page">'+I.back+'<span>BrainWhim</span></a>':
+      '<button class="k-hb" data-k="home">'+I.home+'<span>Home</span></button>')+
       '<button class="k-hb" data-k="sound" aria-pressed="'+soundOn+'">'+(soundOn?I.sound:I.mute)+'<span>Sound</span></button>'+
       '<button class="k-hb" data-k="read" aria-pressed="'+readOn+'">'+I.read+'<span>Read to me</span></button>'+
       '<button class="k-hb" data-k="stuff">'+I.stuff+'<span>My stuff</span></button>'+
@@ -213,7 +215,8 @@
     var hi=document.createElement("div"); hi.className="k-hello"; hi.setAttribute("aria-live","polite"); document.body.appendChild(hi);
     h.addEventListener("click",function(e){
       var b=e.target.closest(".k-hb"); if(!b) return; var k=b.getAttribute("data-k");
-      if(k==="home"){ if(cfg.here==="home"){ sfx("tap"); say(cfg.intro); } else { sfx("whoosh"); setTimeout(function(){location.href="kids.html";},180); } }
+      if(k==="leave"){ e.preventDefault(); sfx("whoosh"); setTimeout(function(){location.href="index.html";},180); }
+      else if(k==="home"){ sfx("whoosh"); setTimeout(function(){location.href="kids.html";},180); }
       else if(k==="sound"){ soundOn=!soundOn; LS.set("sound",soundOn); b.setAttribute("aria-pressed",soundOn); b.innerHTML=(soundOn?I.sound:I.mute)+'<span>Sound</span>'; wake(); sfx("tap"); }
       else if(k==="read"){
         if(!voice){ voice=pickVoice(); }
