@@ -3,6 +3,7 @@
    The kids' header (Home · Sound · Read to me · My stuff · Grown-ups), the grown-ups gate,
    device-only name, read-aloud with on-device voices only, little sounds, the break reminder.
    Safety: nothing here talks to a server. Everything is kept in this browser (localStorage).
+   Nov 7: Finn's voice and speech bubble (BWK.finn); voices ranked best-first (Premium/Enhanced).
    ========================================================================== */
 (function(){
   "use strict";
@@ -54,7 +55,8 @@
     sleepy:function(t){tone(523,t,.5,.04,"triangle");tone(440,t+.28,.55,.035,"triangle");tone(392,t+.6,.8,.03,"triangle");},
     nope:function(t){tone(330,t,.18,.05,"triangle");tone(262,t+.12,.25,.045,"triangle");},
     yay:function(t){[523,659,784,1047].forEach(function(f,i){tone(f,t+i*.07,.3,.05,"triangle");});},
-    tick:function(t){tone(1500,t,.04,.025,"square");}
+    tick:function(t){tone(1500,t,.04,.025,"square");},
+    sparkle:function(t){ noise(t,.32,.05,3000,9000); [1568,2093,2637,3136,2637].forEach(function(f,i){tone(f,t+i*.045,.32,.022);tone(f*1.5,t+i*.045+.02,.18,.008);}); }
   };
   function sfx(name){
     if(!soundOn || !SFX[name]) return;
@@ -64,13 +66,21 @@
 
   /* ---------------- read to me (on-device voices only) ---------------- */
   var readOn = LS.get("read", false), voice = null;
-  function pickVoice(){
-    if(!("speechSynthesis" in window)) return null;
-    var vs = speechSynthesis.getVoices().filter(function(v){return v.localService && /^en(-|_|$)/i.test(v.lang);});
-    var pref = ["Samantha","Karen","Moira","Tessa","Daniel","Serena","Microsoft Aria","Microsoft Jenny","Microsoft Zira"];
-    for(var i=0;i<pref.length;i++){ for(var j=0;j<vs.length;j++){ if(vs[j].name.indexOf(pref[i])===0) return vs[j]; } }
-    return vs.filter(function(v){return /en-US/i.test(v.lang);})[0] || vs[0] || null;
+  // On-device English voices only, best first: downloaded Premium/Enhanced voices, then the gentle standard ones.
+  // Novelty voices (Bubbles, Zarvox, Whisper...) are never used.
+  var ODD = /bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|fred|junior|ralph|kathy|princess|deranged|hysterical|pipe organ|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/i;
+  var PREF = ["Ava","Zoe","Samantha","Allison","Nicky","Susan","Evan","Microsoft Aria","Microsoft Jenny","Microsoft Ana","Google US English","Karen","Tessa","Moira","Serena","Daniel","Microsoft Zira"];
+  function rankVoices(){
+    if(!("speechSynthesis" in window)) return [];
+    return speechSynthesis.getVoices().filter(function(v){return v.localService && /^en(-|_|$)/i.test(v.lang) && !ODD.test(v.name);})
+      .map(function(v){ var s=0, n=v.name;
+        if(/premium/i.test(n)) s+=60; else if(/enhanced|neural|natural/i.test(n)) s+=45;
+        for(var i=0;i<PREF.length;i++){ if(n.indexOf(PREF[i])===0){ s+=30-i; break; } }
+        if(/en[-_]US/i.test(v.lang)) s+=4;
+        return {v:v,s:s}; })
+      .sort(function(a,b){return b.s-a.s;}).map(function(o){return o.v;});
   }
+  function pickVoice(){ return rankVoices()[0] || null; }
   if("speechSynthesis" in window){ voice=pickVoice(); speechSynthesis.onvoiceschanged=function(){voice=pickVoice();}; }
   function say(text, force){
     if(!(readOn||force) || !voice || !text) return false;
@@ -78,6 +88,88 @@
       u.voice=voice; u.lang=voice.lang; u.rate=LS.get("rate",0.95); u.pitch=1.05; speechSynthesis.speak(u); }catch(e){return false;}
     return true;
   }
+
+  /* ---------------- Finn, the Moonlets guide moon (Nov 7) ----------------
+     BWK.finn(text, {into:el}) : a sparkle, then Finn talks in a speech bubble while a ball of stardust
+     hops along the words (karaoke style). {name} in the text becomes the child's name (or "friend").
+     Finn is unisex: a gentle voice, a little higher and quicker than Read to me. Finn talks out loud
+     whenever Sound is on (always after a tap); the bubble shows either way. Tap Finn to hear it again.
+     Without {into}, the bubble floats at the bottom of the screen and fades after Finn is done. */
+  var FINN_PITCH = 1.22, finnN = 0, finnRun = null;
+  function finnSvg(){
+    var id="kFinn"+(++finnN);
+    return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+      '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+      '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+      '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+      '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+      '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+      '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+      '<path class="k-fmouth" d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<g class="k-fdust"><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/>'+
+      '<path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+      '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/><circle cx="84" cy="52" r="1.1" fill="#fff"/></g></svg>';
+  }
+  function finnText(t){ var s=seat(); return String(t||"").replace(/\{name\}/g, s&&s.name?s.name:"friend"); }
+  function finnStop(){ var r=finnRun; finnRun=null; if(!r) return; r.dead=true; clearTimeout(r.t); clearTimeout(r.t2);
+    if(r.box){ r.box.classList.remove("talk"); r.home(); }
+    if(r.box && r.float){ var b=r.box; b.classList.add("bye"); setTimeout(function(){ if(b.parentNode) b.parentNode.removeChild(b); },400); } }
+  function finn(text, o){
+    o=o||{}; text=finnText(text);
+    finnStop(); if("speechSynthesis" in window) speechSynthesis.cancel();
+    var box=document.createElement("div"), host=o.into||null;
+    box.className="k-finn "+(host?"k-finn-in":"k-finn-float");
+    box.setAttribute("role","status");
+    box.innerHTML=finnSvg()+'<p class="k-fb"></p><i class="k-dust" aria-hidden="true"></i>';
+    var p=box.querySelector(".k-fb"), dust=box.querySelector(".k-dust"), words=[], pos=0;
+    text.split(/(\s+)/).forEach(function(w){
+      if(!w) return;
+      if(/^\s+$/.test(w)){ p.appendChild(document.createTextNode(w)); pos+=w.length; return; }
+      var sp=document.createElement("span"); sp.textContent=w; sp._i=pos; pos+=w.length; p.appendChild(sp); words.push(sp);
+    });
+    if(host){ host.innerHTML=""; host.appendChild(box); } else { document.body.appendChild(box); }
+    var run={box:box, float:!host, dead:false, cur:-1, hop:0};
+    finnRun=run;
+    function rel(el){ var a=el.getBoundingClientRect(), b=box.getBoundingClientRect(); return {x:a.left-b.left, y:a.top-b.top, w:a.width, h:a.height}; }
+    run.home=function(){ var m=rel(box.querySelector(".k-fm")); dust.style.transform="translate("+(m.x+m.w*.72)+"px,"+(m.y+m.h*.5)+"px)";
+      words.forEach(function(w){w.classList.remove("on");}); run.cur=-1; };
+    function lite(i){
+      if(run.dead || i===run.cur || !words[i]) return;
+      if(run.cur>=0 && words[run.cur]) words[run.cur].classList.remove("on");
+      run.cur=i; var w=words[i], r=rel(w); w.classList.add("on");
+      dust.style.transform="translate("+(r.x+r.w/2)+"px,"+(r.y-5)+"px)";
+      run.hop=1-run.hop; dust.className="k-dust "+(run.hop?"hopA":"hopB");
+    }
+    run.home();
+    // timing when the voice gives no word marks (or there is no voice): a rough pace per word
+    function paced(i, slow){
+      if(run.dead) return; if(i>=words.length){ done(); return; }
+      lite(i); var len=words[i].textContent.length, end=/[.!?,]$/.test(words[i].textContent);
+      run.t=setTimeout(function(){ paced(i+1, slow); }, ((150+52*len)+(end?260:0))*(slow?1.35:1)/finnRate());
+    }
+    function done(){ if(run.dead) return; box.classList.remove("talk");
+      run.t2=setTimeout(function(){ if(run.dead) return; run.home(); if(run.float) finnStop(); }, run.float?2600:700); }
+    var fv = pickVoice(), useVoice = soundOn && fv && ("speechSynthesis" in window);
+    sfx("sparkle");
+    run.t=setTimeout(function(){
+      if(run.dead) return; box.classList.add("talk");
+      if(!useVoice){ paced(0,true); return; }
+      var u=new SpeechSynthesisUtterance(text), marks=false;
+      u.voice=fv; u.lang=fv.lang; u.rate=finnRate(); u.pitch=FINN_PITCH;
+      u.onboundary=function(e){ if(e.name && e.name!=="word") return; marks=true; clearTimeout(run.t);
+        var ci=e.charIndex, k=0; for(var j=0;j<words.length;j++){ if(words[j]._i<=ci) k=j; else break; } lite(k); };
+      u.onstart=function(){ lite(0); run.t=setTimeout(function(){ if(!marks) paced(1,false); }, 700); };
+      u.onend=function(){ if(run===finnRun){ clearTimeout(run.t); if(run.cur<words.length-1) lite(words.length-1); done(); } };
+      u.onerror=function(){ if(run===finnRun && !marks){ clearTimeout(run.t); paced(Math.max(0,run.cur),true); } };
+      try{ speechSynthesis.speak(u); }catch(e){ paced(0,true); }
+    }, 420);
+    box.querySelector(".k-fm").addEventListener("click",function(){ finn(o.raw||text, o); });
+    return {stop:finnStop};
+  }
+  function finnRate(){ return LS.get("finnRate",1.05); }
+  // iPhones and iPads only let a page talk after a tap: say nothing, quietly, on the first tap.
+  document.addEventListener("pointerdown",function un(){ document.removeEventListener("pointerdown",un,true);
+    try{ if("speechSynthesis" in window){ var u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); } }catch(e){} }, true);
 
   /* ---------------- the seat (name kept on this device only) ---------------- */
   var CALLSIGNS = ["Comet","Rocket","Nova","Pixel","Captain Sprout","Star Scout","Moonbeam","Rover","Astro","Sparky","Orbit","Captain Cosmo"];
@@ -105,6 +197,7 @@
     if(!veil || !veil.classList.contains("on")) return;
     veil.classList.remove("on"); if(silent!==true) sfx("close");
     if("speechSynthesis" in window) speechSynthesis.cancel();
+    if(finnRun && !finnRun.float) finnStop();
     var f=veil._onClose; veil._onClose=null; if(f) f();
   }
   document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
@@ -164,6 +257,8 @@
       '<p>The Kids\' Corner is BrainWhim\'s wing for children: <b>Moonlets</b> (about 3 to 7) and <b>The Outpost</b> (about 8 to 12).</p>'+
       '<p class="k-small">Our promise: no accounts for children, no chat, no ads, no trackers, no links out, no uploads, no camera or microphone. A child\'s name and progress stay in this browser only. Read to me uses this device\'s own voices.</p>'+
       '<p style="margin:14px 0 6px;font-weight:700">Break reminder</p><div class="k-chips" id="kBrk"></div>'+
+      '<p style="margin:16px 0 6px;font-weight:700">Finn\'s voice <span class="k-small" style="font-weight:400">(the Moonlets guide moon)</span></p><div class="k-chips" id="kFr"></div>'+
+      '<p class="k-small" style="margin-top:8px">Finn and Read to me use the best voice already on this device. For a more natural voice, download an enhanced English voice: on iPhone, iPad or Mac, Settings, then Accessibility, then Spoken Content, then Voices.</p>'+
       '<p class="k-small" style="margin-top:12px">Coming soon here: settings, progress at a glance, printables and play-together ideas.</p>'+
       '<div class="k-row"><a class="k-btn k-ghost" href="index.html">Leave for BrainWhim home</a></div>');
     var row=$("#kBrk",box);
@@ -171,6 +266,13 @@
       var b=document.createElement("button"); b.className="k-chip"+(o[0]===mins?" on":""); b.textContent=o[1];
       b.onclick=function(){ LS.set("break",o[0]); [].forEach.call(row.children,function(x){x.classList.toggle("on",x===b);}); sfx("tap"); };
       row.appendChild(b); });
+    var fr=$("#kFr",box), cur=finnRate();
+    [[0.9,"Slower"],[1.05,"Just right"],[1.2,"Faster"]].forEach(function(o){
+      var b=document.createElement("button"); b.className="k-chip"+(Math.abs(o[0]-cur)<.01?" on":""); b.textContent=o[1];
+      b.onclick=function(){ LS.set("finnRate",o[0]); [].forEach.call(fr.children,function(x){x.classList.toggle("on",x===b);}); finn("Hi! I'm Finn. Is this a good speed?"); };
+      fr.appendChild(b); });
+    var hear=document.createElement("button"); hear.className="k-chip"; hear.textContent="▶ Hear Finn";
+    hear.onclick=function(){ finn("Hi, {name}! I'm Finn, the guide moon. Let's play!"); }; fr.appendChild(hear);
   }
 
   /* ---------------- break reminder (active, visible time on kids' pages) ---------------- */
@@ -233,7 +335,7 @@
 
   window.BWK = {
     init:function(o){ cfg=o||{}; head(); breakClock(); setTimeout(function(){hello(false);},700); },
-    sfx:sfx, say:say, sheet:sheet, closeSheet:closeSheet, seat:seat, store:LS,
+    sfx:sfx, say:say, finn:finn, finnStop:finnStop, sheet:sheet, closeSheet:closeSheet, seat:seat, store:LS,
     reading:function(){return readOn;}
   };
 })();
