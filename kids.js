@@ -95,7 +95,7 @@
      Finn is unisex: a gentle voice, a little higher and quicker than Read to me. Finn talks out loud
      whenever Sound is on (always after a tap); the bubble shows either way. Tap Finn to hear it again.
      Without {into}, the bubble floats at the bottom of the screen and fades after Finn is done. */
-  var FINN_PITCH = 1.22, finnN = 0, finnRun = null;
+  var FINN_PITCH = 1.0, finnN = 0, finnRun = null;
   function finnSvg(){
     var id="kFinn"+(++finnN);
     return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
@@ -112,6 +112,7 @@
   }
   function finnText(t){ var s=seat(); return String(t||"").replace(/\{name\}/g, s&&s.name?s.name:"friend"); }
   function finnStop(){ var r=finnRun; finnRun=null; if(!r) return; r.dead=true; clearTimeout(r.t); clearTimeout(r.t2);
+    if(r.audio){ try{ r.audio.pause(); }catch(e){} }
     if(r.box){ r.box.classList.remove("talk"); r.home(); }
     if(r.box && r.float){ var b=r.box; b.classList.add("bye"); setTimeout(function(){ if(b.parentNode) b.parentNode.removeChild(b); },400); } }
   function finn(text, o){
@@ -153,6 +154,29 @@
     sfx("sparkle");
     run.t=setTimeout(function(){
       if(run.dead) return; box.classList.add("talk");
+      if(o.clip && soundOn){ playClip(); return; }
+      speak();
+    }, 420);
+    // a recorded clip (finn/<name>.mp3): the stardust is spread over the clip by word length and pauses;
+    // if the file is missing or won't play, Finn falls back to the device voice.
+    function playClip(){
+      var a=new Audio("finn/"+o.clip+".mp3"), raf=0, starts=null, fell=false;
+      run.audio=a; a.preload="auto"; try{ a.playbackRate=finnRate()/0.95; }catch(e){}
+      function fall(){ if(fell||run.dead||run!==finnRun) return; fell=true; cancelAnimationFrame(raf); speak(); }
+      a.onloadedmetadata=function(){
+        var wts=words.map(function(w){ var t=w.textContent; return t.length+2+(/[.!?]$/.test(t)?5:(/[,;:]$/.test(t)?3:0)); }), tot=0, acc=0;
+        wts.forEach(function(x){tot+=x;}); var d=a.duration*0.9;
+        starts=wts.map(function(x){ var st=acc/tot*d; acc+=x; return st; }); };
+      function tick(){ if(run.dead||fell) return;
+        if(starts){ var t=a.currentTime, k=0; for(var j=0;j<starts.length;j++){ if(starts[j]<=t) k=j; } lite(k); }
+        raf=requestAnimationFrame(tick); }
+      a.onplay=function(){ cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); };
+      a.onended=function(){ cancelAnimationFrame(raf); if(run===finnRun && !fell){ lite(words.length-1); done(); } };
+      a.onerror=fall;
+      var pr=a.play(); if(pr&&pr.catch) pr.catch(fall);
+    }
+    function speak(){
+      if(run.dead) return;
       if(!useVoice){ paced(0,true); return; }
       var u=new SpeechSynthesisUtterance(text), marks=false;
       u.voice=fv; u.lang=fv.lang; u.rate=finnRate(); u.pitch=FINN_PITCH;
@@ -162,11 +186,11 @@
       u.onend=function(){ if(run===finnRun){ clearTimeout(run.t); if(run.cur<words.length-1) lite(words.length-1); done(); } };
       u.onerror=function(){ if(run===finnRun && !marks){ clearTimeout(run.t); paced(Math.max(0,run.cur),true); } };
       try{ speechSynthesis.speak(u); }catch(e){ paced(0,true); }
-    }, 420);
+    }
     box.querySelector(".k-fm").addEventListener("click",function(){ finn(o.raw||text, o); });
     return {stop:finnStop};
   }
-  function finnRate(){ return LS.get("finnRate",1.05); }
+  function finnRate(){ return LS.get("finnRate2",0.95); }
   // iPhones and iPads only let a page talk after a tap: say nothing, quietly, on the first tap.
   document.addEventListener("pointerdown",function un(){ document.removeEventListener("pointerdown",un,true);
     try{ if("speechSynthesis" in window){ var u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); } }catch(e){} }, true);
@@ -253,11 +277,12 @@
   function grownups(){
     closeSheet(true);
     var mins=LS.get("break",30);
-    var box=sheet('<h2>For Grown-ups</h2>'+
+    var box=sheet('<h2>For Grown-ups</h2><div id="kFinnGu"></div>'+
       '<p>The Kids\' Corner is BrainWhim\'s wing for children: <b>Moonlets</b> (about 3 to 7) and <b>The Outpost</b> (about 8 to 12).</p>'+
       '<p class="k-small">Our promise: no accounts for children, no chat, no ads, no trackers, no links out, no uploads, no camera or microphone. A child\'s name and progress stay in this browser only. Read to me uses this device\'s own voices.</p>'+
       '<p style="margin:14px 0 6px;font-weight:700">Break reminder</p><div class="k-chips" id="kBrk"></div>'+
       '<p style="margin:16px 0 6px;font-weight:700">Finn\'s voice <span class="k-small" style="font-weight:400">(the Moonlets guide moon)</span></p><div class="k-chips" id="kFr"></div>'+
+      '<p style="margin:14px 0 6px;font-weight:700">What should Finn call you?</p><div class="k-chips" id="kMon"></div>'+
       '<p class="k-small" style="margin-top:8px">Finn and Read to me use the best voice already on this device. For a more natural voice, download an enhanced English voice: on iPhone, iPad or Mac, Settings, then Accessibility, then Spoken Content, then Voices.</p>'+
       '<p class="k-small" style="margin-top:12px">Coming soon here: settings, progress at a glance, printables and play-together ideas.</p>'+
       '<div class="k-row"><a class="k-btn k-ghost" href="index.html">Leave for BrainWhim home</a></div>');
@@ -267,12 +292,21 @@
       b.onclick=function(){ LS.set("break",o[0]); [].forEach.call(row.children,function(x){x.classList.toggle("on",x===b);}); sfx("tap"); };
       row.appendChild(b); });
     var fr=$("#kFr",box), cur=finnRate();
-    [[0.9,"Slower"],[1.05,"Just right"],[1.2,"Faster"]].forEach(function(o){
+    [[0.85,"Slower"],[0.95,"Just right"],[1.05,"Faster"]].forEach(function(o){
       var b=document.createElement("button"); b.className="k-chip"+(Math.abs(o[0]-cur)<.01?" on":""); b.textContent=o[1];
-      b.onclick=function(){ LS.set("finnRate",o[0]); [].forEach.call(fr.children,function(x){x.classList.toggle("on",x===b);}); finn("Hi! I'm Finn. Is this a good speed?"); };
+      b.onclick=function(){ LS.set("finnRate2",o[0]); [].forEach.call(fr.children,function(x){x.classList.toggle("on",x===b);}); finn("Hi! I'm Finn. Is this a good speed?", {into:$("#kFinnGu",box), clip:"speed-check"}); };
       fr.appendChild(b); });
     var hear=document.createElement("button"); hear.className="k-chip"; hear.textContent="▶ Hear Finn";
-    hear.onclick=function(){ finn("Hi, {name}! I'm Finn, the guide moon. Let's play!"); }; fr.appendChild(hear);
+    hear.onclick=function(){ finn("Hi! I'm Finn, the guide moon. Let's play!", {into:$("#kFinnGu",box), clip:"hear-finn"}); }; fr.appendChild(hear);
+    // Finn greets the grown-up by the name they pick (each has its own recorded clip: finn/gu-hi-<key>.mp3)
+    var MON=[["mom","Mom"],["dad","Dad"],["grandma","Grandma"],["grandpa","Grandpa"],["nana","Nana"],["papa","Papa"],["grownup","Grown-up"]];
+    function guHi(){ var m=LS.get("gu","grownup"), nm=(MON.filter(function(x){return x[0]===m;})[0]||MON[6])[1];
+      finn((m==="grownup"?"Hi there, grown-up!":"Hi, "+nm+"!")+" Thanks for stopping by. Here's where you can set things up.", {into:$("#kFinnGu",box), clip:"gu-hi-"+m}); }
+    var mr=$("#kMon",box), mc=LS.get("gu","grownup");
+    MON.forEach(function(o){ var b=document.createElement("button"); b.className="k-chip"+(o[0]===mc?" on":""); b.textContent=o[1];
+      b.onclick=function(){ LS.set("gu",o[0]); [].forEach.call(mr.children,function(x){x.classList.toggle("on",x===b);}); guHi(); };
+      mr.appendChild(b); });
+    guHi();
   }
 
   /* ---------------- break reminder (active, visible time on kids' pages) ---------------- */
