@@ -1,6 +1,6 @@
 /* The Map Room: grow the graded pool (node grow.js > pool.txt). Each weekday's band: score range and the least use of its top rule. */
 require("./core.js") /* run from tools/maproom */; var MR=globalThis.MR;
-var BAND={1:[38,52,"loop",0],2:[55,68,"loop",1],3:[70,92,"corner",3],4:[94,124,"corner",4],5:[118,168,"ahead",2,5],6:[172,262,"ahead",5],0:[268,440,"ahead",10]};
+var BAND={0:[190,290,"ahead",4],1:[38,52,"loop",0],2:[48,58,"loop",1],3:[60,76,"corner",2],4:[74,92,"corner",3],5:[96,130,"ahead",1,4],6:[130,185,"ahead",1]};  /* eased Nov 6 (Judy: Tue-Fri too hard): Mon 44.6, Tue ~54, Wed ~69, Thu ~86, Fri ~116, Sat ~160, Sun ~243 */
 var WANT=+(process.argv[2]||20), out={};
 [1,2,3,4,5,6,0].forEach(function(wd){ var sp=MR.WEEK[wd], b=BAND[wd], got=[], seen={}, t=0;
   while(got.length<WANT&&t<20000){ t++;
