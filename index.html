@@ -253,7 +253,18 @@ footer a{color:rgba(255,255,255,.75);margin:0 8px}
   .win{left:0;right:0;top:auto;bottom:0;transform:none;width:auto;max-height:78vh;border-radius:18px 18px 0 0;padding:14px 8px calc(16px + env(safe-area-inset-bottom))}
   .win::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.3);margin:0 auto 4px}
 }
-@media (prefers-reduced-motion:reduce){ .cue span,.core,.core::before,.kmoon .sp{animation:none} }
+@media (prefers-reduced-motion:reduce){ .cue span,.core,.core::before,.kmoon .sp,.korb .body,.korb .sp{animation:none} }
+
+/* the Kids' Corner orb: still, breathing, wrapped in the moon door */
+.korb{border:0;padding:0;cursor:pointer;text-decoration:none;color:#fff;border-radius:50%;background:none}
+.korb .shade{display:none}
+.korb .body{position:absolute;inset:0;border-radius:50%;animation:kbreathe 5s ease-in-out infinite;
+  background-image:radial-gradient(circle at 30% 24%,rgba(255,255,255,.3),transparent 30%),url('kids-orb.jpg');background-size:cover;
+  box-shadow:0 0 24px rgba(214,190,255,.55),0 0 60px rgba(200,170,255,.35),inset -10px -12px 18px rgba(0,0,0,.55),inset 6px 6px 12px rgba(255,255,255,.15)}
+.korb:hover .body,.korb:focus-visible .body{box-shadow:0 0 0 2px rgba(229,193,88,.85),0 0 34px rgba(214,190,255,.8),0 0 80px rgba(200,170,255,.5),inset -10px -12px 18px rgba(0,0,0,.55)}
+@keyframes kbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+.korb .word{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;z-index:3;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.05;pointer-events:none;color:#fff;text-shadow:0 1px 3px #000,0 0 10px rgba(0,0,0,.9)}
+.korb .sp{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff6d6;box-shadow:0 0 6px #fff3c4;animation:tw 2.8s ease-in-out infinite;z-index:4}
 </style>
 <script src="bw-auth.js?v=1031a"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -502,8 +513,8 @@ var CATS=[
   {name:"Create", sub:"The Studio · opening soon", href:"create.html", img:"planet-create.jpg", glow:"rgba(220,150,255,.45)", at:[137,79,-3], atP:[211,109,5],
    moons:[["The Writing Desk",null,null,"Opening soon","✒️","#6a4a9e"],["The Mood Board",null,null,"Opening soon","🎨","#9e4a7a"]]}
 ];
-var G_DESK ={bw:900,bh:630,core:168,r:[150,228,306,384],k:.66,tilt:-14,orb:90,moon:74,back:.72,font:11.5, kid:{x:-318,y:-240,r:46,size:84}};
-var G_PHONE={bw:460,bh:336,core:72, r:[76,114,152,190],  k:.66,tilt:-14,orb:58,moon:44,back:.74,font:9,    kid:{x:-158,y:-124,r:24,size:54}};
+var G_DESK ={bw:900,bh:630,core:168,r:[150,228,306,384],k:.66,tilt:-14,orb:90,moon:74,back:.72,font:11.5, kid:{x:-324,y:-230,size:92}};
+var G_PHONE={bw:460,bh:336,core:72, r:[76,114,152,190],  k:.66,tilt:-14,orb:58,moon:44,back:.74,font:9,    kid:{x:-162,y:-120,size:62}};
 var G, items=[], hold=0, LAP=60000;
 
 function build(){
@@ -516,7 +527,7 @@ function build(){
   function ell(x,y,r,cls){ var e='cx="'+x+'" cy="'+y+'" rx="'+r+'" ry="'+(r*G.k).toFixed(1)+'" transform="rotate('+G.tilt+' '+x+' '+y+')"';
     return '<ellipse class="halo'+cls+'" '+e+'/><ellipse class="core-line'+cls+'" '+e+' style="stroke-width:'+(ph?.6:.8)+'"/>'; }
   $("rings").innerHTML='<defs><filter id="hRingGlow" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="'+(ph?3.36:4.6)+'"/></filter></defs>'+
-    G.r.map(function(r){ return ell(cx,cy,r,""); }).join("")+ell(cx+G.kid.x,cy+G.kid.y,G.kid.r," kid");
+    G.r.map(function(r){ return ell(cx,cy,r,""); }).join("");
   items=[];
   function add(el,size,name,sub,r,ox,oy,sp){
     el.className+=" item"; el.style.width=el.style.height=size+"px";
@@ -546,11 +557,11 @@ function build(){
       add(el,G.moon,m[0],m[3],r).a=at[mi+1]*Math.PI/180;
     });
   });
-  /* the Kids' Corner crescent */
-  var k=document.createElement("a"); k.href="kids.html"; k.className="kmoon"; k.style.setProperty("--s",G.kid.size+"px");
+  /* the Kids' Corner: a still, breathing orb wrapped in the moon door (kids-orb.jpg, cropped from kids-landing.jpg) */
+  var k=document.createElement("a"); k.href="kids.html"; k.className="korb"; k.style.setProperty("--s",G.kid.size+"px");
   k.setAttribute("aria-label","The Kids' Corner: Moonlets and The Outpost");
-  k.innerHTML='<span class="cres"></span><span class="sp" style="left:8%;top:12%"></span><span class="sp" style="left:2%;top:58%;animation-delay:1.2s;width:3px;height:3px"></span><span class="lbl" style="font-size:'+G.font+'px">Kids\' Corner</span>';
-  add(k,G.kid.size,"The Kids' Corner","Moonlets · The Outpost · ages 3-12",G.kid.r,G.kid.x,G.kid.y,.55).a=200*Math.PI/180;
+  k.innerHTML='<span class="body"></span><span class="word" style="font-size:'+(G.font*1.05)+'px">Kids\'<br>Corner</span><span class="sp" style="left:-6%;top:6%"></span><span class="sp" style="left:98%;top:66%;animation-delay:1.3s;width:3px;height:3px"></span>';
+  add(k,G.kid.size,"The Kids' Corner","Moonlets · The Outpost · ages 3-12",0,G.kid.x,G.kid.y,0).a=0;
   fit(); draw(performance.now());
 }
 function fit(){
