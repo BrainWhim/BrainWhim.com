@@ -299,8 +299,8 @@
     var hear=document.createElement("button"); hear.className="k-chip"; hear.textContent="▶ Hear Finn";
     hear.onclick=function(){ finn("Hi! I'm Finn, the guide moon. Let's play!", {into:$("#kFinnGu",box), clip:"hear-finn"}); }; fr.appendChild(hear);
     // Finn greets the grown-up by the name they pick (each has its own recorded clip: finn/gu-hi-<key>.mp3)
-    var MON=[["mom","Mom"],["dad","Dad"],["grandma","Grandma"],["grandpa","Grandpa"],["nana","Nana"],["papa","Papa"],["grownup","Grown-up"]];
-    function guHi(){ var m=LS.get("gu","grownup"), nm=(MON.filter(function(x){return x[0]===m;})[0]||MON[6])[1];
+    var MON=[["mom","Mom"],["dad","Dad"],["grandma","Grandma"],["grandpa","Grandpa"],["nana","Nana"],["papa","Papa"],["mimi","Mimi"],["gigi","Gigi"],["mommom","Mom-Mom"],["poppop","Pop-Pop"],["poppy","Poppy"],["juju","JuJu"],["auntie","Auntie"],["uncle","Uncle"],["bigsister","Big Sister"],["bigbrother","Big Brother"],["grownup","Grown-up"]];
+    function guHi(){ var m=LS.get("gu","grownup"), o=MON.filter(function(x){return x[0]===m;})[0]; if(!o){ m="grownup"; o=MON[MON.length-1]; } var nm=o[1];
       finn((m==="grownup"?"Hi there, grown-up!":"Hi, "+nm+"!")+" Thanks for stopping by. Here's where you can set things up.", {into:$("#kFinnGu",box), clip:"gu-hi-"+m}); }
     var mr=$("#kMon",box), mc=LS.get("gu","grownup");
     MON.forEach(function(o){ var b=document.createElement("button"); b.className="k-chip"+(o[0]===mc?" on":""); b.textContent=o[1];

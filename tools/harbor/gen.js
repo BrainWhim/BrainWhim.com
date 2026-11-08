@@ -34,7 +34,7 @@ function tryAdd(B,P){
 }
 function mutate(B,P){
   var r=R();
-  if((r<.35&&B.length<15)||B.length<5){ return tryAdd(B,P); }
+  if((r<.35&&B.length<+(process.env.MAXB||15))||B.length<5){ return tryAdd(B,P); }
   if(r<.55&&B.length>4){ var i=1+Math.floor(R()*(B.length-1)); return [B.slice(0,i).concat(B.slice(i+1)),P.slice(0,i).concat(P.slice(i+1))]; }
   /* move one boat somewhere else */
   var j=1+Math.floor(R()*(B.length-1)), Bm=B.slice(0,j).concat(B.slice(j+1)), Pm=P.slice(0,j).concat(P.slice(j+1));

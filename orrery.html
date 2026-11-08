@@ -634,8 +634,8 @@ function hint(){
 function hintGlow(m){ var R=RG[m.ring]; if(!R) return; var n=0; (function blink(){ R.hi.setAttribute("stroke",n%2?"rgba(255,226,140,.15)":"rgba(255,226,140,.8)"); if(++n<6) setTimeout(blink,230); else showSel(); })(); }
 function counts(extra){
   var c=$("#orCount",stage), mv=moves+(extra||0);
-  c.innerHTML="Moves <b>"+mv+"</b> · Par <b>"+P.par+"</b>";
-  if(window.Parlor){ Parlor.score([mv]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Orrery", "Moves "+mv+" · par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+  c.innerHTML="Turns <b>"+mv+"</b> · Par <b>"+P.par+"</b>";
+  if(window.Parlor){ Parlor.score([mv]); Parlor.status(mode==="lesson"?"Learn to Play":mode==="practice"?"Practice":"Today's Orrery", "Turns "+mv+" · par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
 }
 
 /* ---------- drag to turn, tap to choose (Oct 31: the ring follows your hand) ----------
@@ -749,7 +749,8 @@ function startDaily(again){
 }
 
 /* ---------- solved ---------- */
-function stars(m,par,h){ var s=m<=par?3:m<=par+3?2:1; if(h) s=Math.min(s,2); return s; }
+function stars(m,par,h){ /* Nov 8 (Judy: one star for going a few over felt harsh): within 2 of par: 3 · within half of par (at least 6): 2 */
+  var s=m<=par+2?3:m<=par+Math.max(6,Math.ceil(par/2))?2:1; if(h) s=Math.min(s,2); return s; }
 function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
 function streak(){ try{ return JSON.parse(store("bwOrreryStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
 function solved(){
@@ -774,8 +775,8 @@ function result(st,secs,first,sk,sv){
   var head=mode==="practice"?"Practice Puzzle":"The Orrery · No. "+dayNo(today);
   b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+(perfect&&!hints?"Perfect Alignment!":"The Planets Are Set")+'</h2>'+
     '<div class="or-stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(st)+'</i></div>'+
-    '<div class="or-facts"><div><b>'+moves+'</b><small>Moves</small></div><div><b>'+P.par+'</b><small>Par</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
-    '<p class="or-note">'+(perfect?(hints?"Par, with "+hints+" hint"+(hints>1?"s":"")+". Try tomorrow's without one.":"Not a turn wasted."):"Par is "+P.par+": the fewest turns it can be done in. "+(moves-P.par)+" more than that this time.")+
+    '<div class="or-facts"><div><b>'+moves+'</b><small>Turns</small></div><div><b>'+P.par+'</b><small>Par</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?sk.n||1:"–")+'</b><small>Streak</small></div></div>'+
+    '<p class="or-note">'+(perfect?(hints?"Par, with "+hints+" hint"+(hints>1?"s":"")+". Try tomorrow's without one.":"Not a turn wasted."):"Par is "+P.par+": the fewest turns it can be done in. "+(moves-P.par)+" more than that this time"+(st===3?": close enough for three stars.":"."))+
     (mode==="daily"?(first?" A new orrery is laid out every day.":" You'd already set today's planets; your first result is the one kept."):"")+'</p>'+
     '<div class="pk-row" style="flex-wrap:wrap"></div>';
   var row=b.querySelector(".pk-row");
@@ -787,7 +788,7 @@ function result(st,secs,first,sk,sv){
   v.classList.add("on");
 }
 function share(st,secs,sk){
-  var txt="BrainWhim · The Orrery No. "+dayNo(today)+"\n"+"★★★".slice(0,st)+"☆☆☆".slice(st)+" "+moves+" moves (par "+P.par+") · "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/orrery.html";
+  var txt="BrainWhim · The Orrery No. "+dayNo(today)+"\n"+"★★★".slice(0,st)+"☆☆☆".slice(st)+" "+moves+" turns (par "+P.par+") · "+fmt(secs)+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/orrery.html";
   if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
   try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
 }
@@ -815,7 +816,7 @@ var LESSONS=[
     puz:function(){ return L(6,[{p:[0],crank:true},{p:[0],crank:false}],[],[0,1],[2,1]); },allow:"any"},
   {title:"No Crank",text:"<p>A ring <b>without a handle</b> has no crank: it turns only through its gear. Here <b>Mercury</b> drives <b>Venus</b> the same way.</p><p>Turn Mercury clockwise once.</p>",done:"<p>Exactly. Rings without a crank are set through their gears.</p>",
     puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:false}],[{a:0,b:1,dir:1}],[2,4],[3,5]); },allow:[[0,1]]},
-  {title:"Par and Stars",text:"<p><b>Par</b> is the fewest turns the puzzle can be done in. Match it for <b>three stars</b>; within three turns of it, two. A hint caps the day at two stars.</p><p>A new orrery every day: gentle on Monday, a real test by Sunday. Keep your streak going!</p>",
+  {title:"Par and Stars",text:"<p><b>Par</b> is the fewest turns the puzzle can be done in. Each stop a ring moves is <b>one turn</b>, so dragging a ring three stops counts as three.</p><p>Finish within two turns of par for <b>three stars</b>; a few more still earns two. A hint caps the day at two stars.</p><p>A new orrery every day: gentle on Monday, a real test by Sunday. Keep your streak going!</p>",
     puz:function(){ return L(8,[{p:[0],crank:true},{p:[0],crank:true},{p:[0],crank:true}],[{a:1,b:2,dir:-1}],[0,3,2],[0,3,2]); }}
 ];
 var lessonK=0;
@@ -870,7 +871,7 @@ Parlor.init({
   ],
   rules:{
     play:"<ol><li><b>The goal:</b> turn the brass rings until every planet (and moon) sits on its <b>dashed mark</b>.</li><li><b>Turning:</b> drag a ring around, or tap it and press <b>↺</b> or <b>↻</b>. Each turn moves a ring one stop. On a keyboard: ↑ ↓ choose a ring, ← → turn it.</li><li><b>Gears:</b> turning some rings turns another ring too, the same way or the opposite way (it's written under the orrery, and arrows show it when you choose a ring). A gear works one way only: turning the driven ring doesn't turn the one that drives it.</li><li><b>No crank:</b> a ring without a brass handle can't be turned by hand; it turns only through its gear.</li><li><b>Arms can't clash:</b> planets on neighboring rings can never share a spoke. A turn that would make them clash, or pass through each other, won't go. Sometimes the best way is the long way around.</li><li><b>Undo</b> takes back a turn, <b>Hint</b> shows a best next turn, <b>Restart</b> lays the puzzle out again.</li></ol>",
-    score:"<ul><li><b>One puzzle a day</b>, the same for everyone. It changes at midnight on your device. Monday is gentle; it gets harder through the week, with more rings, more gears and moons by the weekend.</li><li><b>Par</b> is the fewest turns the puzzle can be done in (worked out by a solver).</li><li><b>★★★</b> at par · <b>★★</b> within three turns of par · <b>★</b> otherwise. Using a hint caps the day at two stars.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice puzzles (in Learn to Play) are free and don't count.</li></ul>"
+    score:"<ul><li><b>One puzzle a day</b>, the same for everyone. It changes at midnight on your device. Monday is gentle; it gets harder through the week, with more rings, more gears and moons by the weekend.</li><li><b>Par</b> is the fewest turns the puzzle can be done in (worked out by a solver). Each stop a ring moves is one turn: dragging a ring three stops counts as three.</li><li><b>★★★</b> within two turns of par · <b>★★</b> within half of par again (at least six turns over) · <b>★</b> otherwise. Using a hint caps the day at two stars.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice puzzles (in Learn to Play) are free and don't count.</li></ul>"
   },
   onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
   lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
