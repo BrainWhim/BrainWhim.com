@@ -174,8 +174,8 @@
   function syl(w){ w=w.toLowerCase().replace(/[^a-z]/g,""); if(!w) return 1; if(w.length<=3) return 1;
     w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,"").replace(/^y/,""); var m=w.match(/[aeiouy]{1,2}/g); return Math.max(1,m?m.length:1); }
   // hand-set word starts (seconds) for a clip the measuring can't read, e.g. one with a sound before the first word.
-  // door-waking starts with a sleepy yawn (0.23-0.7 s); "Hi, friend!" begins at 0.93.
-  var MARKS = {"door-waking":[0.93,1.08,1.99,2.39,3.12,3.22,3.47,4.02,4.16,5.30,5.53,5.97,6.63,6.77,7.47,7.87,8.09]};
+  // door-waking: a yawn, then "Oh," (0.98 s, not in the bubble); "Hi" starts at 2.04. Times from ElevenLabs Scribe (Nov 8).
+  var MARKS = {"door-waking":[2.04,2.36,3.18,3.44,4.02,4.16,4.50,5.32,5.52,5.80,5.96,6.30,6.62,6.88,7.50,7.70,7.98]};
   function alignWords(x, sr, words, lead){
     var hop=Math.round(sr*0.01), n=Math.floor(x.length/hop), e=new Float32Array(n), pk=0, i, j, k, g;
     for(i=0;i<n;i++){ var s=0; for(j=i*hop;j<(i+1)*hop;j++) s+=x[j]*x[j]; e[i]=Math.sqrt(s/hop); if(e[i]>pk) pk=e[i]; }
