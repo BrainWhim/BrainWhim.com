@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Print Shop Jr. · The Outpost · BrainWhim</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="kids.css?v=1108c">
+<style>
+/* Print Shop Jr. (The Outpost · The Lab). Kids' kit only: no Google Fonts, no outside files, nothing sent anywhere.
+   Built from tools/printshopjr/page.html by tools/printshopjr/build-page.js (the jobs and the core are filled in there). */
+:root{--pj-red:#c0392b;--pj-blue:#1f3f73;--pj-gold:#e9c46a}
+body{overflow:hidden;touch-action:manipulation}
+.bg{position:fixed;inset:-24px;z-index:0;background:#0b1630 url("kids-outpost-sm.jpg") 12% 48%/cover no-repeat;filter:blur(2px) brightness(.5) saturate(1.1)}
+.bg2{position:fixed;inset:0;z-index:0;background:radial-gradient(120% 90% at 22% 8%,rgba(255,200,120,.16),transparent 55%),linear-gradient(180deg,rgba(5,11,28,.2),rgba(5,11,28,.55))}
+#app{position:fixed;inset:0;z-index:1;padding:calc(84px + var(--k-safe-t)) 12px calc(10px + var(--k-safe-b))}
+@media (max-width:420px){#app{padding-top:calc(74px + var(--k-safe-t));padding-left:8px;padding-right:8px}}
+.scr{display:none;height:100%}
+body.m-menu #menu{display:flex}
+body.m-play #play{display:flex}
+
+/* ---------- menu ---------- */
+#menu{align-items:center;justify-content:center}
+.mcard{width:min(470px,100%);max-height:100%;overflow:auto;border-radius:28px;padding:22px 22px 20px;text-align:center;
+  background:linear-gradient(180deg,rgba(27,45,87,.94),rgba(14,26,56,.94));border:1px solid rgba(126,182,217,.4);
+  box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14);animation:kRise .45s cubic-bezier(.2,.9,.3,1.2)}
+.emb{width:132px;height:92px;margin:0 auto 4px;display:block}
+.emb .rol{transform-box:fill-box;transform-origin:50% 50%;animation:roll 3.6s ease-in-out infinite}
+@keyframes roll{0%,100%{transform:translateX(0)}50%{transform:translateX(-6px)}}
+.mcard h1{margin:0 0 4px;font-size:30px;line-height:1.1;color:var(--k-warm)}
+.mcard .lead{margin:0 auto 12px;max-width:380px;font-size:16.5px;line-height:1.4;color:#d5e2f0}
+.week{display:flex;justify-content:center;gap:6px;margin:4px 0 14px}
+.wd{width:40px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:700;color:#9fb3cc}
+.wd i{width:34px;height:34px;border-radius:9px;border:2px dashed rgba(232,241,248,.25);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11.5px;font-weight:700;color:#b9c9dc;background:rgba(255,255,255,.03)}
+.wd.today b{color:var(--k-warm)}
+.wd.today i{border-style:solid;border-color:var(--k-gold)}
+.wd.done i{border:2px solid #b98a4a;background:linear-gradient(180deg,#f3dfb4,#d9b77c);color:var(--pj-red);font-size:17px}
+.mbtns{display:flex;flex-direction:column;gap:10px;align-items:stretch;max-width:340px;margin:0 auto}
+.mbtns .k-btn{width:100%}
+.k-btn small{font-size:13px;font-weight:400;opacity:.85;margin-left:4px}
+.pulse{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 4px 0 #3f7499,0 8px 18px rgba(0,0,0,.35),0 0 0 0 rgba(126,182,217,.55)}50%{box-shadow:0 4px 0 #3f7499,0 8px 18px rgba(0,0,0,.35),0 0 0 10px rgba(126,182,217,0)}}
+.mfoot{margin:12px 0 0;font-size:14px;color:#a9bad0}
+@media (max-height:700px) and (orientation:portrait){.mcard{padding:14px 18px 12px}.emb{width:96px;height:66px}.mcard h1{font-size:25px}.mcard .lead{font-size:15px;margin-bottom:8px}.week{margin:2px 0 10px}.wd i{width:30px;height:30px}.mbtns{gap:8px}.mbtns .k-btn{min-height:46px;font-size:17px}.mfoot{margin-top:8px;font-size:13px}}
+@media (max-height:580px) and (orientation:portrait){.emb{display:none}.mcard .lead{font-size:14px}}
+
+/* ---------- play ---------- */
+#play{flex-direction:column;gap:7px;align-items:center}
+.side{display:contents}
+.bar{order:1;display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:17px;color:var(--k-warm);text-shadow:0 2px 6px rgba(0,0,0,.6);min-height:22px;text-align:center}
+.bar span{font-weight:400;font-size:15px;color:#cfe0f0}
+/* the job ticket: one row of letter boxes per word */
+.ticket{order:2;width:min(560px,100%);border-radius:14px;padding:8px 10px 7px;position:relative;
+  background:linear-gradient(180deg,#f7ecd2,#ead8b0);color:#3b2412;box-shadow:0 8px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6),inset 0 0 0 1px rgba(120,80,30,.3)}
+.ticket::before{content:"";position:absolute;left:10px;right:10px;top:4px;border-top:1px dashed rgba(120,80,30,.35)}
+.tk-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:2px 0 5px}
+.tk-top b{font-size:14.5px;letter-spacing:.02em}
+.tk-top span{font-size:13px;font-weight:700;color:#6b4a26;white-space:nowrap}
+.slots{display:flex;flex-wrap:wrap;gap:5px 10px;justify-content:center}
+.sl{display:flex;gap:2px;align-items:center}
+.sl i{width:var(--bx,17px);height:var(--bx,17px);border-radius:3px;border:1.5px solid rgba(31,63,115,.45);background:rgba(255,255,255,.45);
+  font-style:normal;font-weight:800;font-size:calc(var(--bx,17px) * .7);line-height:1;display:flex;align-items:center;justify-content:center;color:var(--pj-blue)}
+.sl.head i{border-color:rgba(192,57,43,.6);background:rgba(255,235,228,.6);color:var(--pj-red)}
+.sl.head::before{content:"★";color:var(--pj-red);font-size:13px;margin-right:2px}
+.sl.got i{background:#fff8e6;border-color:transparent;box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.sl.pop i{animation:slotPop .45s cubic-bezier(.2,1.6,.4,1) both}
+.sl.ring{outline:3px solid #ffb020;outline-offset:2px;border-radius:5px;animation:ringO 1s ease-in-out infinite}
+@keyframes ringO{50%{outline-color:rgba(255,176,32,.35)}}
+@keyframes slotPop{from{transform:scale(.4)}to{transform:none}}
+.coach{order:3;display:none;width:min(560px,100%);border-radius:20px;padding:11px 14px;background:linear-gradient(180deg,rgba(27,45,87,.95),rgba(14,26,56,.95));
+  border:1px solid rgba(233,196,106,.38);box-shadow:0 10px 26px rgba(0,0,0,.45);animation:kRise .3s ease}
+.coach.on{display:block}
+.coach .ct{font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--k-teal);margin-bottom:3px}
+.coach p{margin:0;font-size:16px;line-height:1.38;color:#e3ecf6}
+.coach p b{color:var(--k-warm)}
+.coach .cr{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap}
+.coach .k-btn{min-height:44px;font-size:16px;padding:0 18px}
+.coach.hint{border-color:rgba(95,209,193,.6)}
+.wrap{order:4;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
+/* the type case: an oak tray tilted on the table, one maple block in each compartment */
+.case{position:relative;flex:none;border-radius:10px;
+  background:linear-gradient(135deg,#c78f55 0%,#a8703c 40%,#8a5428 100%);
+  box-shadow:inset 0 2px 0 rgba(255,230,190,.55),inset 0 -2px 0 rgba(60,30,10,.5),0 4px 0 #5c3415,0 7px 0 #4a290f,0 22px 34px rgba(0,0,0,.6)}
+.case::before{content:"";position:absolute;inset:0;border-radius:10px;pointer-events:none;opacity:.35;
+  background:repeating-linear-gradient(92deg,rgba(80,40,10,.0) 0 7px,rgba(80,40,10,.35) 7px 8px,rgba(255,220,170,.0) 8px 15px,rgba(255,220,170,.25) 15px 16px)}
+.case::after{content:"";position:absolute;inset:0;border-radius:10px;pointer-events:none;background:radial-gradient(90% 70% at 10% 0%,rgba(255,226,160,.28),transparent 60%);animation:flick 4.5s infinite}
+@keyframes flick{0%,100%{opacity:1}12%{opacity:.82}16%{opacity:.97}41%{opacity:.88}58%{opacity:1}77%{opacity:.86}83%{opacity:.98}}
+.floor{position:absolute;border-radius:5px;background:linear-gradient(180deg,#2b1708,#4a2c14);box-shadow:inset 3px 3px 5px rgba(0,0,0,.65),inset -1px -1px 0 rgba(255,210,160,.2)}
+.plate{position:absolute;left:50%;bottom:-6px;transform:translate(-50%,0);padding:1px 9px 2px;border-radius:4px;font:700 11px/1.3 var(--k-font);letter-spacing:.12em;color:#5a3a10;white-space:nowrap;
+  background:linear-gradient(180deg,#ffeab0,#d1a446 55%,#9a7020);box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.6);z-index:3;pointer-events:none}
+.blk{position:absolute;border-radius:16%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3b2412;pointer-events:none;
+  background:radial-gradient(120% 90% at 30% 20%,#f7e6c2 0%,#e8cf9e 55%,#d2b07a 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -3px 0 rgba(140,95,45,.55),0 3px 0 #a37a45,0 5px 6px rgba(0,0,0,.45);
+  transition:transform .12s ease,box-shadow .12s ease,background .25s,color .25s}
+.blk span{transform:scaleY(.94);text-shadow:0 1px 0 rgba(255,255,255,.55)}
+.blk.on{transform:translateY(-4px) scale(1.07);z-index:2;box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -3px 0 rgba(140,95,45,.55),0 0 0 3px var(--pj-gold),0 4px 0 #a37a45,0 12px 14px rgba(0,0,0,.5)}
+.blk.set{color:var(--pj-blue);background:radial-gradient(120% 90% at 30% 20%,#eef3fb 0%,#d4e1f3 55%,#b6c8e2 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -3px 0 rgba(60,90,140,.45),0 2px 0 #7d93b8,0 3px 4px rgba(0,0,0,.4)}
+.blk.set.hd{color:var(--pj-red);background:radial-gradient(120% 90% at 30% 20%,#fff1ea 0%,#f6d2c6 55%,#e5ad9d 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -3px 0 rgba(150,60,40,.45),0 2px 0 #b97a6a,0 3px 4px rgba(0,0,0,.4)}
+.blk.ring{box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 4px #ffb020,0 0 18px 4px rgba(255,176,32,.7),0 3px 0 #a37a45;animation:blkR 1s ease-in-out infinite}
+.blk.ring.first{transform:translateY(-3px) scale(1.06)}
+@keyframes blkR{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 0 0 2px rgba(255,176,32,.6),0 0 8px 2px rgba(255,176,32,.35),0 3px 0 #a37a45}}
+.blk.shine{animation:shine .7s ease both}
+@keyframes shine{0%{filter:none}40%{filter:brightness(1.35) saturate(1.2);transform:translateY(-5px)}100%{filter:none;transform:none}}
+.blk.no{animation:rattle .35s ease}
+@keyframes rattle{20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+#ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+#ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.hit{position:absolute;inset:0;z-index:4;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+.flash{position:absolute;left:50%;top:6%;transform:translate(-50%,0);z-index:6;pointer-events:none;padding:7px 16px;border-radius:999px;font-weight:800;font-size:17px;white-space:nowrap;
+  background:rgba(10,20,44,.88);border:1px solid var(--k-line);color:var(--k-warm);box-shadow:0 8px 20px rgba(0,0,0,.45);opacity:0;transition:opacity .2s,transform .2s}
+.flash.on{opacity:1;transform:translate(-50%,-4px)}
+.flash.bad{color:#ffc2b5}.flash.good{color:#bff3ea}
+.stick{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;pointer-events:none;display:flex;gap:2px;padding:4px 8px;border-radius:8px;min-height:30px;
+  background:linear-gradient(180deg,#d9dee6,#9aa3b1 60%,#6e7684);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 4px 10px rgba(0,0,0,.5);opacity:0;transition:opacity .15s}
+.stick.on{opacity:1}
+.stick i{font-style:normal;font-weight:800;font-size:18px;width:20px;text-align:center;color:#2b2f38}
+/* the printed proof that slides over the case at the end */
+.proof{position:absolute;left:50%;top:50%;z-index:7;width:min(88%,380px);transform:translate(-50%,-50%) rotate(-2deg);padding:16px 16px 14px;border-radius:4px;text-align:center;pointer-events:none;
+  background:linear-gradient(180deg,#fffaf0,#f3e7cc);box-shadow:0 18px 40px rgba(0,0,0,.55),0 0 0 1px rgba(120,80,30,.2);color:var(--pj-blue);animation:proofIn .7s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes proofIn{from{transform:translate(-50%,-160%) rotate(-8deg);opacity:0}to{transform:translate(-50%,-50%) rotate(-2deg);opacity:1}}
+.proof small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#7b5a33}
+.proof h3{margin:4px 0 6px;font-size:28px;line-height:1.05;color:var(--pj-red);letter-spacing:.06em;font-weight:800}
+.proof p{margin:0;font-size:15px;font-weight:700;letter-spacing:.08em;line-height:1.45}
+.tools{order:5;display:flex;gap:8px;justify-content:center;width:min(560px,100%)}
+.tb{appearance:none;flex:1;max-width:130px;min-height:58px;border-radius:18px;border:1px solid var(--k-line);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13.5px;font-weight:700;color:#e3ecf6;font-family:var(--k-font);
+  background:linear-gradient(180deg,rgba(30,50,94,.92),rgba(14,26,56,.92));box-shadow:0 4px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .12s}
+.tb svg{width:26px;height:26px}
+.tb:active{transform:translateY(2px)}
+.tb.hint{color:var(--k-warm);border-color:rgba(233,196,106,.45)}
+.tb[disabled]{opacity:.4}
+@media (max-height:700px) and (orientation:portrait){.tb{min-height:52px}.tb svg{width:22px;height:22px}#play{gap:6px}.coach p{font-size:15px}.coach .k-btn{min-height:40px}}
+/* phone sideways and other short wide screens: notes and buttons at the left, case at the right */
+@media (orientation:landscape) and (max-height:560px){
+  #app{padding-top:calc(72px + var(--k-safe-t));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px))}
+  #play{flex-direction:row;gap:14px;align-items:stretch}
+  .side{display:flex;flex-direction:column;gap:7px;width:min(340px,44%);height:100%;justify-content:center;overflow:auto}
+  .bar,.ticket,.coach,.tools{width:100%}
+  .tools{flex-wrap:wrap}.tb{flex:1 1 40%;max-width:none;min-height:46px}
+  .coach p{font-size:14.5px}
+  .mcard{padding:14px 18px}.emb{display:none}.mcard h1{font-size:24px}.mcard .lead{font-size:14.5px;margin-bottom:6px}
+  .week{margin:2px 0 8px}.mbtns{max-width:none;display:grid;grid-template-columns:1fr 1fr}.mbtns .k-btn{min-height:46px;font-size:16px}.k-btn small,.mfoot{display:none}.wd i{width:28px;height:28px}
+}
+/* result sheet */
+.patch{display:flex;align-items:center;gap:12px;margin:6px 0 10px;padding:10px 12px;border-radius:16px;background:rgba(47,127,214,.16);border:1px solid rgba(126,182,217,.45)}
+.patch svg{width:58px;height:58px;flex:none}
+.patch p{margin:0;font-size:15.5px}
+.fact{position:relative;margin:8px 0 4px;padding:10px 46px 10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--k-line)}
+.fact b{display:block;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--k-teal);margin-bottom:2px}
+.fact span{font-size:15px;line-height:1.4;color:#dbe6f3}
+.fact button{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:1px solid var(--k-line);background:rgba(255,255,255,.08);color:var(--k-warm);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.fact button svg{width:18px;height:18px}
+.rb{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.rb .k-btn{min-height:50px;font-size:16px;padding:0 10px}
+.rb .wide{grid-column:1/-1}
+@media (max-height:700px){.k-sheet{padding:20px 18px 16px}.k-sheet h2{font-size:23px}.fact span{font-size:14px}.patch svg{width:48px;height:48px}.rb{margin-top:8px}.rb .k-btn{min-height:46px}}
+</style>
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true">
+        <defs><linearGradient id="pjEmbT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e6c2"/><stop offset="1" stop-color="#d2b07a"/></linearGradient>
+        <linearGradient id="pjEmbS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c0945a"/><stop offset="1" stop-color="#7a5128"/></linearGradient>
+        <linearGradient id="pjEmbR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a6270"/><stop offset=".5" stop-color="#1d222b"/><stop offset="1" stop-color="#3b414c"/></linearGradient></defs>
+        <ellipse cx="62" cy="84" rx="50" ry="5" fill="rgba(0,0,0,.35)"/>
+        <path d="M14 34h30l6-6H20z" fill="#f9ecd0"/><rect x="14" y="34" width="30" height="40" rx="3" fill="url(#pjEmbT)"/><path d="M44 34l6-6v40l-6 6z" fill="url(#pjEmbS)"/>
+        <text x="29" y="65" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="800" font-size="30" fill="#c0392b">A</text>
+        <path d="M54 44h26l5-5H59z" fill="#f9ecd0"/><rect x="54" y="44" width="26" height="30" rx="3" fill="url(#pjEmbT)"/><path d="M80 44l5-5v30l-5 5z" fill="url(#pjEmbS)"/>
+        <text x="67" y="68" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="800" font-size="24" fill="#1f3f73">b</text>
+        <g class="rol"><rect x="90" y="48" width="34" height="18" rx="9" fill="url(#pjEmbR)"/><path d="M107 48V22h-14" fill="none" stroke="#b98a4a" stroke-width="3.5" stroke-linecap="round"/><rect x="84" y="16" width="12" height="12" rx="3" fill="#8a5a26"/></g>
+      </svg>
+      <h1>Print Shop Jr.</h1>
+      <p class="lead">Every wooden letter in the type case belongs to a hidden word. Find them all to print today's page!</p>
+      <div class="week" id="week"></div>
+      <div class="mbtns">
+        <button class="k-btn" id="bToday">Today's Job</button>
+        <button class="k-btn k-cool" id="bLearn">Learn to Play</button>
+        <button class="k-btn k-ghost" id="bPractice">Practice Job</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="side">
+      <div class="bar" id="bar"></div>
+      <div class="ticket" id="ticket"><div class="tk-top"><b id="tkT"></b><span id="tkB"></span></div><div class="slots" id="slots"></div></div>
+      <div class="coach" id="coach" aria-live="polite"></div>
+      <div class="tools">
+        <button class="tb hint" id="tHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/><path d="M8 9a3 3 0 0 1 3-2"/></svg>Hint</button>
+        <button class="tb" id="tClear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Clear</button>
+        <button class="tb" id="tMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
+      </div>
+    </div>
+    <div class="wrap" id="wrap">
+      <div class="case" id="case"><div id="cells"></div><svg id="ink" aria-hidden="true"></svg><div class="stick" id="stick"></div><div class="hit" id="hit" aria-label="Type case"></div>
+        <div class="plate">BrainWhim Press</div></div>
+      <div class="flash" id="flash"></div>
+    </div>
+  </section>
+</main>
+
+<script id="psjCore">
+/*CORE*/
+</script>
+<script src="printshop-words.js?v=1102a"></script>
+<script src="kids.js?v=1109b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, NS="http://www.w3.org/2000/svg";
+var WDN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FACTS=[
+ "Long ago, printers kept the capital letters in a case up high and the small letters in a case down low. That's why we still say uppercase and lowercase!",
+ "Around 1450, Johannes Gutenberg in Germany built a printing press with metal letters that could be moved around and used again and again.",
+ "Before printing presses, every book was copied by hand. One book could take months to finish!",
+ "Benjamin Franklin was a printer before he helped start the United States. He printed a newspaper and a yearly almanac.",
+ "Printers set every letter backward, like in a mirror, so it would print the right way around on the paper.",
+ "Mind your p's and q's! One story says it comes from print shops, where a small p and a small q look like mirror images and are easy to mix up.",
+ "Giant letters for posters were carved out of wood, because metal letters that big would be far too heavy.",
+ "The sign that means and is called an ampersand. It started as the letters e and t, which spell et, the Latin word for and.",
+ "In China, a man named Bi Sheng made letters out of baked clay that could be moved around, about 400 years before Gutenberg.",
+ "Printers measure letters in points. There are 72 points in one inch.",
+ "The Linotype machine let one person type a whole line of metal letters at once. It made newspapers much faster to print.",
+ "Printers used thin strips of lead to make space between lines of type. That's why line spacing is still called leading.",
+ "In 1377, printers in Korea made a book with metal letters, more than 70 years before Gutenberg's famous Bible.",
+ "The word font comes from an old French word that means melted, because metal letters were made by pouring melted metal into molds."
+];
+var LS=BWK.store, ST=LS.get("pshop",{}); if(!ST||typeof ST!=="object") ST={};
+if(!ST.done) ST.done={};
+function save(){ LS.set("pshop",ST); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var today=new Date(), todayKey=ymd(today), todayWd=today.getDay();
+function doneCount(){ return Object.keys(ST.done).length; }
+var S=window.PSJ;
+
+/* ---------------- sounds of its own (Web Audio; wakes on the first tap) ---------------- */
+var AC=null;
+function wake(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return; AC=new C(); } if(AC.state==="suspended") AC.resume(); }
+document.addEventListener("pointerdown",wake,{capture:true,passive:true});
+function tone(f,t,d,v,ty){ var o=AC.createOscillator(), g=AC.createGain(); o.type=ty||"sine"; o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+d+.05); }
+function hiss(t,d,v,ty,f0,f1,q){ var n=Math.max(1,Math.floor(AC.sampleRate*d)), b=AC.createBuffer(1,n,AC.sampleRate), x=b.getChannelData(0);
+  for(var i=0;i<n;i++) x[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+  var s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; f.type=ty; f.Q.value=q||1;
+  f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f1,t+d); g.gain.value=v; s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t); }
+function tock(t,v,f){ hiss(t,.05,v||.35,"bandpass",f||1300,(f||1300)*.8,4); tone((f||1300)/3,t,.06,(v||.35)*.12,"triangle"); }
+function bell(t,v){ tone(1320,t,1.2,v||.05); tone(1320*2.76,t,.5,(v||.05)*.3); }
+function thunk(t,v){ tone(90,t,.22,v||.16,"sine"); hiss(t,.12,(v||.16)*1.6,"lowpass",900,200,.7); }
+var SND={
+  pick:function(t){ tock(t,.32,1250); },
+  step:function(t,k){ tock(t,.26,1300+Math.min(k||0,9)*110); },
+  set:function(t){ for(var i=0;i<4;i++) tock(t+i*.045,.22,1900+i*140); thunk(t+.22,.16); tone(1046,t+.3,.25,.03,"triangle"); },
+  head:function(t){ for(var i=0;i<5;i++) tock(t+i*.04,.22,1800+i*120); thunk(t+.24,.2); bell(t+.36,.05); [523,659,784].forEach(function(f,i){ tone(f,t+.5+i*.08,.5,.04,"triangle"); }); },
+  bonus:function(t){ tone(1180,t,.12,.05); tone(620,t+.03,.3,.05); tone(1500,t+.16,.18,.03); },
+  no:function(t){ for(var i=0;i<5;i++) tock(t+i*.035,.18,900+Math.random()*500); },
+  hint:function(t){ bell(t,.05); },
+  clear:function(t){ hiss(t,.22,.16,"bandpass",1400,500,.8); },
+  next:function(t){ tone(659,t,.16,.04,"triangle"); tone(880,t+.07,.2,.035,"triangle"); },
+  solve:function(t){ hiss(t,.9,.08,"lowpass",200,900,.7); thunk(t+.5,.22); thunk(t+1.0,.22); hiss(t+1.25,.5,.12,"bandpass",2600,900,.8); bell(t+1.7,.055);
+    [523,659,784,1047].forEach(function(f,i){ tone(f,t+1.85+i*.09,.6,.045,"triangle"); }); },
+  lesson:function(t){ bell(t,.045); [523,659,784].forEach(function(f,i){ tone(f,t+.25+i*.08,.45,.04,"triangle"); }); }
+};
+function sfx(k,a){ if(!LS.get("sound",true)||!AC||AC.state!=="running"||!SND[k]) return; SND[k](AC.currentTime+.01,a); }
+
+/* ---------------- making a tray (in a worker, so the page never freezes) ---------------- */
+var worker=null, wq={}, wn=0;
+function mkWorker(){
+  try{
+    var url=new URL("printshop-words.js?v=1102a",location.href).href, core=$("#psjCore").textContent;
+    var src="importScripts("+JSON.stringify(url)+");\n"+core+"\nonmessage=function(e){ var d=e.data, P=null; try{ P=d.job!=null?PSJ.make(d.seed,PSJ.JOBS[d.job],PSJ.WEEK[d.wd]):PSJ.forDay(d.key,d.wd); }catch(x){} postMessage({id:d.id,P:P}); };";
+    worker=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})));
+    worker.onmessage=function(e){ var cb=wq[e.data.id]; delete wq[e.data.id]; if(cb) cb(e.data.P); };
+    worker.onerror=function(){ worker=null; var q=wq; wq={}; for(var k in q) q[k](null); };
+  }catch(x){ worker=null; }
+}
+function slim(P){ return P&&{R:P.R,C:P.C,words:P.words,paths:P.paths,letters:P.letters,title:P.title,score:P.score,key:P.key}; }
+function makeTray(msg,cb){
+  function local(){ setTimeout(function(){ var P=msg.job!=null?S.make(msg.seed,S.JOBS[msg.job],S.WEEK[msg.wd]):S.forDay(msg.key,msg.wd); cb(slim(P)); },30); }
+  if(!worker) mkWorker();
+  if(!worker){ local(); return; }
+  var id=++wn, done=false; wq[id]=function(P){ if(done) return; done=true; if(P) cb(slim(P)); else local(); };
+  setTimeout(function(){ if(!done&&wq[id]){ delete wq[id]; done=true; local(); } },8000);
+  worker.postMessage(Object.assign({id:id},msg));
+}
+
+/* ---------------- the board ---------------- */
+var P=null;   /* {R,C,words,paths,letters,title,mode:"daily"|"practice"|"lesson"} */
+var found=[], bonus=[], trace=[], tapMode=false, dragging=false, locked=false, solved=false, pend=null, owner=[], sz=60, FR=14;
+var cellsEl=$("#cells"), ink=$("#ink"), hit=$("#hit"), caseEl=$("#case");
+function build(){
+  owner=new Array(P.R*P.C).fill(-1); P.paths.forEach(function(p,k){ p.forEach(function(x){ owner[x]=k; }); });
+  var h=""; for(var i=0;i<P.R*P.C;i++) h+='<div class="floor"></div><div class="blk" data-i="'+i+'"><span>'+P.letters[i]+'</span></div>';
+  cellsEl.innerHTML=h; fit(); slotsHTML(); paint();
+}
+function fit(){
+  if(!P) return; var w=$("#wrap"), W=w.clientWidth, H=w.clientHeight; if(!W||!H) return;
+  var s=Math.floor(Math.min((W*.97-2*FR)/P.C,(H*.98-2*FR-6)/P.R,96)); s=Math.max(s,30); sz=s;
+  caseEl.style.width=(P.C*s+2*FR)+"px"; caseEl.style.height=(P.R*s+2*FR)+"px";
+  var fl=cellsEl.querySelectorAll(".floor"), bl=cellsEl.querySelectorAll(".blk"), g=Math.max(3,Math.round(s*.07));
+  for(var i=0;i<bl.length;i++){ var r=(i/P.C)|0, c=i%P.C, x=FR+c*s, y=FR+r*s;
+    fl[i].style.cssText="left:"+(x+1)+"px;top:"+(y+1)+"px;width:"+(s-2)+"px;height:"+(s-2)+"px";
+    bl[i].style.left=(x+g)+"px"; bl[i].style.top=(y+g-1)+"px"; bl[i].style.width=(s-2*g)+"px"; bl[i].style.height=(s-2*g)+"px"; bl[i].style.fontSize=Math.round(s*.5)+"px"; }
+  ink.setAttribute("viewBox","0 0 "+(P.C*s+2*FR)+" "+(P.R*s+2*FR)); paint();
+  var bx=Math.max(14,Math.min(window.innerWidth>=700?24:19,Math.floor((Math.min(window.innerWidth,560)-40)/(P.mode==="lesson"?24:30)))); $("#slots").style.setProperty("--bx",bx+"px");
+}
+function ctr(i){ return [FR+(i%P.C+.5)*sz,FR+(((i/P.C)|0)+.5)*sz]; }
+function pathD(p){ return p.map(function(x,j){ var c=ctr(x); return (j?"L":"M")+c[0].toFixed(1)+" "+c[1].toFixed(1); }).join(""); }
+function paint(){
+  if(!P) return; var bl=cellsEl.querySelectorAll(".blk"), on={}, ringSet={}, first=-1;
+  trace.forEach(function(x){ on[x]=1; });
+  if(pend&&pend.cells){ pend.cells.forEach(function(x){ ringSet[x]=1; }); first=pend.cells[0]; }
+  for(var i=0;i<bl.length;i++){ var k=owner[i], s=found[k];
+    bl[i].className="blk"+(s?" set"+(k===0?" hd":""):"")+(on[i]?" on":"")+(ringSet[i]?" ring":"")+(i===first?" first":""); }
+  var h="", w=Math.max(4,sz*.16);
+  found.forEach(function(f,k){ if(f) h+='<path d="'+pathD(P.paths[k])+'" stroke="'+(k===0?"rgba(192,57,43,.55)":"rgba(31,63,115,.5)")+'" stroke-width="'+w.toFixed(1)+'"/>'; });
+  if(trace.length>1) h+='<path d="'+pathD(trace)+'" stroke="rgba(233,196,106,.85)" stroke-width="'+(w*1.25).toFixed(1)+'"/>';
+  ink.innerHTML=h;
+  var st=$("#stick"); st.innerHTML=trace.map(function(x){ return "<i>"+P.letters[x]+"</i>"; }).join(""); st.classList.toggle("on",trace.length>0);
+}
+function order(){ /* the ticket's words: the theme word first, then longest to shortest */
+  var o=P.words.map(function(w,k){ return k; }).slice(1); o.sort(function(a,b){ return P.words[b].length-P.words[a].length||a-b; }); return [0].concat(o); }
+function slotsHTML(popK){
+  var h=""; order().forEach(function(k){ var w=P.words[k], g=found[k];
+    h+='<div class="sl'+(k===0?" head":"")+(g?" got":"")+(k===popK?" pop":"")+(pend&&pend.k===k?" ring":"")+'" data-k="'+k+'">';
+    for(var j=0;j<w.length;j++) h+="<i"+(k===popK?' style="animation-delay:'+(j*.05)+'s"':"")+">"+(g?w.charAt(j):"")+"</i>";
+    h+="</div>"; });
+  $("#slots").innerHTML=h;
+  var n=found.filter(Boolean).length; $("#tkB").textContent=n+" of "+P.words.length+" words"+(bonus.length?" · Bonus "+bonus.length:"");
+  $("#tkT").textContent=P.title;
+}
+var flashT=null;
+function flash(txt,cls){ var f=$("#flash"); f.textContent=txt; f.className="flash on"+(cls?" "+cls:""); clearTimeout(flashT); flashT=setTimeout(function(){ f.className="flash"; },1500); }
+
+/* ---------------- tracing: drag across touching blocks, or tap them one by one and tap the last again ---------------- */
+function cellAt(ev,strict){
+  var r=hit.getBoundingClientRect(), x=(ev.clientX-r.left)/r.width*(P.C*sz+2*FR)-FR, y=(ev.clientY-r.top)/r.height*(P.R*sz+2*FR)-FR;
+  var c=Math.floor(x/sz), rr=Math.floor(y/sz); if(c<0||rr<0||c>=P.C||rr>=P.R) return -1;
+  if(strict){ var dx=x-(c+.5)*sz, dy=y-(rr+.5)*sz; if(Math.hypot(dx,dy)>sz*.42) return -1; }
+  return rr*P.C+c;
+}
+function usable(i){ return i>=0&&!found[owner[i]]; }
+function extend(i){
+  if(i<0) return;
+  var L=trace.length;
+  if(L&&trace[L-1]===i) return;
+  var at=trace.indexOf(i);
+  if(at>=0){ if(at===L-2){ trace.pop(); sfx("step",trace.length); paint(); } return; }
+  if(!usable(i)) return;
+  if(L&&!S.adj(trace[L-1],i,P.C)) return;
+  trace.push(i); sfx(L?"step":"pick",L); paint();
+}
+hit.addEventListener("pointerdown",function(ev){
+  if(!P||locked) return; ev.preventDefault(); var i=cellAt(ev,false); if(i<0) return;
+  try{ hit.setPointerCapture(ev.pointerId); }catch(e){}
+  if(tapMode&&trace.length){
+    var L=trace.length, at=trace.indexOf(i);
+    if(at===L-1){ submit(); return; }                       /* tap the last block again: set the word */
+    if(at>=0){ trace.length=at+1; sfx("step",at); paint(); dragging=true; return; }   /* tap an earlier block: step back to it */
+    if(usable(i)&&S.adj(trace[L-1],i,P.C)){ extend(i); dragging=true; return; }
+    trace=[]; tapMode=false;                                  /* not touching: start a new word here */
+  }
+  if(!usable(i)){ var b=cellsEl.children[i*2+1]; b.classList.remove("no"); void b.offsetWidth; b.classList.add("no"); return; }
+  trace=[]; extend(i); dragging=true; tapMode=false; dragStartLen=1;
+});
+var dragStartLen=1;
+hit.addEventListener("pointermove",function(ev){ if(!dragging||!P) return; extend(cellAt(ev,true)); });
+function up(){ if(!dragging) return; dragging=false;
+  if(trace.length>=2&&!tapMode){ submit(); return; }
+  tapMode=trace.length>0; }
+hit.addEventListener("pointerup",up); hit.addEventListener("pointercancel",function(){ dragging=false; tapMode=trace.length>0; });
+
+function samePath(a,b){ if(a.length!==b.length) return false; var f=true, r=true; for(var j=0;j<a.length;j++){ if(a[j]!==b[j]) f=false; if(a[j]!==b[b.length-1-j]) r=false; } return f||r; }
+function submit(){
+  var path=trace.slice(), w=path.map(function(x){ return P.letters[x]; }).join(""); trace=[]; tapMode=false;
+  if(path.length<2){ paint(); return; }
+  var k=-1, other=false;
+  for(var q=0;q<P.words.length;q++){ if(found[q]||P.words[q]!==w) continue; if(samePath(path,P.paths[q])){ k=q; break; } other=true; }
+  if(k>=0){ setWord(k,true); return; }
+  if(other){ rattle(path); sfx("no"); flash("Right word, wrong blocks!","bad"); coach({t:"So close",txt:"That's one of today's words, but its blocks are somewhere else in the case!",btn:null}); BWK.say("That's one of today's words, but its blocks are somewhere else in the case!"); setTimeout(function(){ if(!pend) coach(null); },3800); paint(); return; }
+  if(w.length>=4&&P.mode!=="lesson"&&S.dictHas(w)){
+    if(bonus.indexOf(w)>=0){ flash("You found that bonus word already"); paint(); return; }
+    bonus.push(w); sfx("bonus"); flash("Bonus word: "+w+"!","good"); keep(); slotsHTML(); paint(); return; }
+  rattle(path); sfx("no"); flash("Not one of today's words","bad"); paint();
+}
+function rattle(path){ path.forEach(function(x){ var b=cellsEl.children[x*2+1]; b.classList.remove("no"); void b.offsetWidth; b.classList.add("no"); }); }
+function setWord(k,byKid){
+  found[k]=true; if(pend&&pend.k===k) clearRing();
+  sfx(k===0?"head":"set"); flash(k===0?"The theme word!":byKid?"You found "+P.words[k]+"!":P.words[k],"good");
+  slotsHTML(k); paint(); keep();
+  if(P.mode==="lesson") lessonCheck();
+  if(found.every(Boolean)) win();
+}
+function keep(){ if(P.mode!=="daily") return; ST.now={key:todayKey,f:found.map(function(x){ return x?1:0; }),b:bonus}; save(); }
+
+/* ---------------- hints: the magnifying glass rings where a word starts, then the whole word ---------------- */
+var HINT1="Look at the glowing block. One of today's words starts there!", HINT2="Here's the whole word. Start at the bright block and follow the glow.";
+function target(){ var o=order().slice(1).concat([0]); for(var q=0;q<o.length;q++) if(!found[o[q]]) return o[q]; return -1; }
+function clearRing(){ pend=null; coach(null); if(P){ paint(); slotsHTML(); } }
+function hint(){
+  if(!P||solved||locked) return; trace=[]; tapMode=false; sfx("hint");
+  var k=pend&&pend.k>=0?pend.k:target(); if(k<0) return;
+  if(!pend||pend.lvl===2&&pend.k!==k){ pend={k:k,lvl:1,cells:[P.paths[k][0]]}; }
+  paint(); slotsHTML();
+  if(pend.lvl===1){ coach({t:"Magnifying glass",h:true,txt:HINT1,btn:"Show me the word",go:hint2}); BWK.say(HINT1); }
+  else { coach({t:"Magnifying glass",h:true,txt:HINT2,btn:"Do it for me",go:doHint}); }
+}
+function hint2(){ if(!pend) return; sfx("hint"); pend={k:pend.k,lvl:2,cells:P.paths[pend.k].slice()}; paint(); slotsHTML(); coach({t:"Magnifying glass",h:true,txt:HINT2,btn:"Do it for me",go:doHint}); BWK.say(HINT2); }
+function doHint(){ if(!pend) return; var k=pend.k; pend=null; coach(null); setWord(k,false); }
+
+/* ---------------- coach card (lessons and hints) ---------------- */
+function coach(o){ var c=$("#coach");
+  if(!o){ if(P&&P.mode==="lesson"&&!lessonHold){ lessonCard(); return; } c.className="coach"; c.innerHTML=""; requestAnimationFrame(fit); return; }
+  c.className="coach on"+(o.h?" hint":"");
+  c.innerHTML='<div class="ct">'+o.t+'</div><p>'+o.txt+'</p>'+(o.btn||o.btn2?'<div class="cr">'+(o.btn2?'<button class="k-btn k-ghost" id="cB2">'+o.btn2+'</button>':'')+(o.btn?'<button class="k-btn" id="cB">'+o.btn+'</button>':'')+'</div>':'');
+  var b=$("#cB"); if(b) b.onclick=o.go||doHint; var b2=$("#cB2"); if(b2) b2.onclick=o.go2;
+  requestAnimationFrame(fit);
+}
+var lessonHold=false;
+
+/* ---------------- loading a job ---------------- */
+function load(p,mode,saved){
+  P=p; P.mode=mode; solved=false; locked=false; pend=null; trace=[]; tapMode=false; lessonHold=false;
+  found=P.words.map(function(_,k){ return !!(saved&&saved.f&&saved.f[k]); }); bonus=saved&&saved.b?saved.b.slice():[];
+  document.body.className="m-play"; var pr=$(".proof"); if(pr) pr.remove(); clearTimeout(flashT); $("#flash").className="flash";
+  $("#tHint").disabled=false; $("#tClear").disabled=false;
+  var b=$("#bar");
+  if(mode==="daily") b.innerHTML=WDN[todayWd]+"'s Job <span>· "+P.R+" × "+P.C+" case</span>";
+  else if(mode==="practice") b.innerHTML="Practice Job <span>· "+P.R+" × "+P.C+" case</span>";
+  else b.innerHTML="Learn to Play";
+  coach(null); build(); requestAnimationFrame(fit);
+  if(found.every(Boolean)){ solved=true; locked=true; $("#tHint").disabled=true; }
+}
+function busy(t){ document.body.className="m-play"; P=null; cellsEl.innerHTML=""; ink.innerHTML=""; $("#slots").innerHTML=""; $("#tkT").textContent=""; $("#tkB").textContent=""; $("#bar").innerHTML=t; coach(null); }
+var START="Here's today's job! Every block belongs to one word. Find them all to print the page.";
+function loadToday(){
+  var sv=ST.now&&ST.now.key===todayKey?ST.now:null, cached=LS.get("pshopT",null);
+  function go(p){ if(!p){ busy("The press is stuck. Tap Menu and try again."); return; }
+    LS.set("pshopT",p); sfx("next"); load(p,"daily",sv);
+    if(!sv) BWK.say(START); }
+  if(cached&&cached.key===todayKey&&cached.words){ go(cached); return; }
+  busy("Setting today's type…"); makeTray({key:todayKey,wd:todayWd},function(p){ if(p) p.key=todayKey; go(p); });
+}
+function loadPractice(){
+  var t1=S.JOBS.filter(function(j){ return j.tier===1; }), job=t1[Math.floor(Math.random()*t1.length)], wd=Math.random()<.5?1:2;
+  busy("Setting the type…"); makeTray({seed:"practice"+Date.now(),job:job.id,wd:wd},function(p){ if(!p){ busy("The press is stuck. Tap Menu and try again."); return; } sfx("next"); load(p,"practice"); });
+}
+
+/* ---------------- the page is printed ---------------- */
+var PATCH='<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="27" fill="#2f7fd6" stroke="#1b4f8f" stroke-width="3"/><circle cx="30" cy="30" r="23" fill="none" stroke="#cfe5ff" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="15" y="20" width="16" height="18" rx="2.5" fill="#f3dfb4"/><text x="23" y="34" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="800" font-size="13" fill="#c0392b">A</text><rect x="30" y="25" width="14" height="15" rx="2.5" fill="#e8cf9e"/><text x="37" y="36.5" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="800" font-size="11" fill="#1f3f73">b</text><circle cx="45" cy="18" r="2" fill="#fff"/><circle cx="16" cy="44" r="1.5" fill="#fff"/></svg>';
+var SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+var WIN="Hot off the press! Great job! You found every word.", WINP="Hot off the press! Great job! New patch! The Lab patch is on your badge wall.";
+function win(){
+  solved=true; locked=true; pend=null; $("#tHint").disabled=true;
+  var bl=cellsEl.querySelectorAll(".blk"); for(var i=0;i<bl.length;i++){ bl[i].style.animationDelay=(((i/P.C)|0)*.09+(i%P.C)*.03)+"s"; bl[i].classList.add("shine"); }
+  if(P.mode==="lesson"){ sfx("lesson"); lessonDone(); return; }
+  sfx("solve");
+  setTimeout(function(){ var pr=document.createElement("div"); pr.className="proof";
+    pr.innerHTML="<small>"+P.title.replace(/</g,"")+"</small><h3>"+P.words[0]+"</h3><p>"+order().slice(1).map(function(k){ return P.words[k]; }).join(" · ")+"</p>"; $("#wrap").appendChild(pr); },900);
+  var fresh=false;
+  if(P.mode==="daily"){ ST.done[todayKey]=1; save();
+    var bd=LS.get("badges",{}); if(!bd||typeof bd!=="object") bd={}; if(!bd.lab){ bd.lab=true; LS.set("badges",bd); fresh=true; } }
+  var s=BWK.seat(), who=s&&s.name?s.name:"Printer";
+  var dn=S.daysFrom(todayKey)+(P.mode==="practice"?Math.floor(Math.random()*7):0), fi=((dn%FACTS.length)+FACTS.length)%FACTS.length, fact=FACTS[fi];
+  setTimeout(function(){
+    var box=BWK.sheet('<h2>Hot off the press!</h2><p>Great job, '+who.replace(/</g,"")+'! You found every word'+(P.mode==="daily"?' in <b>'+P.title.replace(/</g,"")+'</b>':'')+(bonus.length?', plus '+bonus.length+' bonus word'+(bonus.length===1?'':'s'):'')+'.</p>'+
+      (fresh?'<div class="patch">'+PATCH+'<p><b style="color:var(--k-warm)">New patch!</b> The Lab patch is on your badge wall.</p></div>':'')+
+      '<div class="fact"><b>Print fact</b><span>'+fact+'</span><button id="rFact" aria-label="Read the print fact">'+SPK+'</button></div>'+
+      (P.mode==="daily"?'<p class="k-small" style="margin:8px 0 0">Pages printed: '+doneCount()+'. '+(todayWd===0?'A brand-new week of jobs starts tomorrow!':'A new job comes in tomorrow.')+'</p>':'')+
+      '<div class="rb"><button class="k-btn wide" id="rOut">Back to The Outpost</button><button class="k-btn k-cool" id="rPr">Practice Job</button><button class="k-btn k-ghost" id="rLook">See my page</button></div>');
+    box.querySelector("#rOut").onclick=goOutpost;
+    box.querySelector("#rPr").onclick=function(){ BWK.closeSheet(true); loadPractice(); };
+    box.querySelector("#rLook").onclick=function(){ BWK.closeSheet(true); coach({t:"Hot off the press",txt:"What a page! Tap <b>Menu</b> when you're ready.",btn:null}); };
+    box.querySelector("#rFact").onclick=function(){ BWK.sfx("tap"); BWK.say("Print fact: "+fact,true); };
+    BWK.say(fresh?WINP:WIN);
+  },2700);
+}
+
+/* ---------------- Learn to Play (one 4 x 4 case) ---------------- */
+var LTRAY={R:4,C:4,title:"In the Print Shop",words:["PRINT","TYPE","PAGE","INK"],paths:[[8,4,5,6,7],[0,1,2,3],[12,13,14,15],[9,10,11]],letters:"TYPERINTPINKPAGE".split("")};
+var LP=[
+  {look:true,txt:"This is a type case, full of wooden letter blocks. <b>Every block belongs to one hidden word.</b> The ticket above shows how many letters each word has. Find them all to print the page!"},
+  {try:1,ring:[0,1,2,3],txt:"Let's set a word! Drag your finger across the glowing blocks to spell <b>TYPE</b>, then lift. Or tap the blocks one at a time and tap the last one again."},
+  {try:0,ring:[8],txt:"The red word with a star is the <b>theme word</b>. It always reaches from one side of the case to the other. Find <b>PRINT</b>. It starts at the glowing block. Words can turn corners and go diagonally!"},
+  {try:"all",txt:"Now find the last two words on your own. Every block left over belongs to one of them. Look at the ticket to see how long they are."},
+  {end:true,look:true,txt:"You're ready, Printer! Stuck? Tap <b>Hint</b> and the magnifying glass shows where a word starts. Find a real word that isn't on the ticket? That's a <b>bonus word</b>! A new job comes every day, and each one is a little bigger and trickier, all the way to Sunday."}
+];
+var LDONE={1:"Nice! TYPE is set. Words can run in a straight line like that. Tap Next.",0:"That's the theme word! It went up and around the corner. Tap Next.",3:"You printed the whole page! That's the game. Tap Next."};
+var lpage=0, lFound=null;
+function startLesson(){ lpage=0; lFound=null; showLesson(); }
+function showLesson(){
+  var pg=LP[lpage], sv=null;
+  if(pg.look&&!pg.end) sv={f:[0,0,0,0]}; else if(pg.end) sv={f:[1,1,1,1]}; else if(lFound) sv={f:lFound.slice()};
+  load(Object.assign({},LTRAY,{letters:LTRAY.letters.slice()}),"lesson",sv);
+  if(pg.end){ var bl=cellsEl.querySelectorAll(".blk"); for(var i=0;i<bl.length;i++) bl[i].classList.add("shine"); }
+  if(pg.look){ locked=true; $("#tHint").disabled=true; $("#tClear").disabled=true; }
+  if(pg.ring){ pend={k:pg.try,lvl:pg.ring.length>1?2:1,cells:pg.ring.slice()}; paint(); slotsHTML(); }
+  pg.doneNow=false; lessonCard(); BWK.say(pg.txt.replace(/<[^>]+>/g,"")+(pg.look&&!pg.end?" Just look for now, then tap Next.":""));
+}
+function lessonCard(){
+  var pg=LP[lpage], t="Learn to Play · "+(lpage+1)+" of "+LP.length;
+  if(pg.doneNow){ coachL({t:t,txt:LDONE[pg.try].replace("Tap Next.","Tap <b>Next</b>."),btn:"Next",go:nextPage}); return; }
+  var txt=pg.txt+(pg.look&&!pg.end?" Just look for now, then tap <b>Next</b>.":"");
+  if(pg.end){ coachL({t:t,txt:txt,btn:"Today's Job",go:function(){ ST.lesson=1; save(); loadToday(); },btn2:"Menu",go2:function(){ ST.lesson=1; save(); toMenu(); }}); return; }
+  coachL({t:t,txt:txt,btn:pg.look?"Next":null,go:nextPage});
+}
+function coachL(o){ lessonHold=true; coach(o); lessonHold=false; }
+function nextPage(){ sfx("next"); lFound=found.map(function(x){ return x?1:0; }); lpage++; showLesson(); }
+function lessonCheck(){
+  var pg=LP[lpage]; if(pg.doneNow) return;
+  var ok=pg.try==="all"?found.every(Boolean):found[pg.try];
+  if(!ok) return;
+  if(pg.try==="all") return;   /* lessonDone runs from win() */
+  pg.doneNow=true; pend=null; paint(); slotsHTML(); locked=true; sfx("lesson"); lessonCard(); BWK.say(LDONE[pg.try]);
+}
+function lessonDone(){ var pg=LP[lpage]; pg.doneNow=true; pg.try="all"; LDONE.all=LDONE[3]; lessonCard(); BWK.say(LDONE[3]); }
+
+/* ---------------- menu ---------------- */
+function weekRow(){
+  var w=$("#week"), d=new Date(today); d.setDate(d.getDate()-((d.getDay()+6)%7)); var h="";
+  for(var i=0;i<7;i++){ var k=ymd(d), wd=d.getDay(), done=!!ST.done[k], sp=S.WEEK[wd], cls="wd"+(k===todayKey?" today":"")+(done?" done":"");
+    h+='<div class="'+cls+'"><b>'+"SMTWTFS"[wd]+'</b><i>'+(done?"✓":sp.R+"×"+sp.C)+'</i></div>'; d.setDate(d.getDate()+1); }
+  w.innerHTML=h;
+}
+function toMenu(){
+  document.body.className="m-menu"; P=null; pend=null; weekRow();
+  var done=!!ST.done[todayKey], sp=S.WEEK[todayWd];
+  $("#bToday").innerHTML=(done?"Today's Job ✓":"Today's Job")+'<small>'+WDN[todayWd]+' · '+sp.R+' × '+sp.C+'</small>';
+  $("#bLearn").classList.toggle("pulse",!ST.lesson);
+  var n=doneCount(); $("#mfoot").textContent=n?("Pages printed: "+n+". Each job is a little harder than the day before, all week long."):"Each day's job is a little harder than the day before, all week long.";
+}
+function goOutpost(){ BWK.closeSheet(true); BWK.sfx("whoosh"); setTimeout(function(){ location.href="outpost.html"; },200); }
+var DONE_TODAY="You already printed today's page! Try a Practice Job from the menu.";
+$("#bToday").onclick=function(){ loadToday(); };
+$("#bLearn").onclick=function(){ sfx("next"); startLesson(); };
+$("#bPractice").onclick=function(){ loadPractice(); };
+$("#bBack").onclick=goOutpost;
+$("#tHint").onclick=hint;
+$("#tClear").onclick=function(){ if(!P) return; if(solved&&P.mode==="daily"){ coach({t:"Hot off the press",txt:DONE_TODAY,btn:null}); BWK.say(DONE_TODAY); return; }
+  if(trace.length){ trace=[]; tapMode=false; sfx("clear"); paint(); } };
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); trace=[]; toMenu(); };
+window.addEventListener("resize",function(){ requestAnimationFrame(fit); });
+if(window.ResizeObserver) new ResizeObserver(function(){ fit(); }).observe($("#wrap"));
+
+toMenu();
+var INTRO="Print Shop Jr. Every wooden letter in the type case belongs to a hidden word. Find them all to print today's page! Tap Learn to Play to see how.";
+var L={"psj-intro":INTRO,"psj-start":START,"psj-hint-1":HINT1,"psj-hint-2":HINT2,"psj-win":WIN,"psj-win-patch":WINP,"psj-done-today":DONE_TODAY,
+  "psj-elsewhere":"That's one of today's words, but its blocks are somewhere else in the case!",
+  "psj-learn-2-done":LDONE[1],"psj-learn-3-done":LDONE[0],"psj-learn-4-done":LDONE[3]};
+LP.forEach(function(pg,i){ L["psj-learn-"+(i+1)]=pg.txt.replace(/<[^>]+>/g,"")+(pg.look&&!pg.end?" Just look for now, then tap Next.":""); });
+FACTS.forEach(function(f,i){ L["psj-fact-"+(i+1)]="Print fact: "+f; });
+BWK.lines(L);
+BWK.init({here:"pshop", voice:"outpost", intro:INTRO});
+/* test hook */
+window.PJO={load:load,today:loadToday,lesson:startLesson,practice:loadPractice,P:function(){ return P; },found:function(){ return found; },
+  set:function(k){ setWord(k,false); },solveAll:function(){ P.words.forEach(function(_,k){ if(!found[k]) setWord(k,false); }); },lines:L,hint:hint};
+})();
+</script>
+</body>
+</html>
