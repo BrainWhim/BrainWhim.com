@@ -173,11 +173,15 @@
     a.src=url; try{ a.defaultPlaybackRate=rate; a.playbackRate=rate; }catch(e){} return a; }
   function syl(w){ w=w.toLowerCase().replace(/[^a-z]/g,""); if(!w) return 1; if(w.length<=3) return 1;
     w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,"").replace(/^y/,""); var m=w.match(/[aeiouy]{1,2}/g); return Math.max(1,m?m.length:1); }
-  function alignWords(x, sr, words){
+  // hand-set word starts (seconds) for a clip the measuring can't read, e.g. one with a sound before the first word.
+  // door-waking starts with a sleepy yawn (0.23-0.7 s); "Hi, friend!" begins at 0.93.
+  var MARKS = {"door-waking":[0.93,1.08,1.99,2.39,3.12,3.22,3.47,4.02,4.16,5.30,5.53,5.97,6.63,6.77,7.47,7.87,8.09]};
+  function alignWords(x, sr, words, lead){
     var hop=Math.round(sr*0.01), n=Math.floor(x.length/hop), e=new Float32Array(n), pk=0, i, j, k, g;
     for(i=0;i<n;i++){ var s=0; for(j=i*hop;j<(i+1)*hop;j++) s+=x[j]*x[j]; e[i]=Math.sqrt(s/hop); if(e[i]>pk) pk=e[i]; }
     if(!pk) return null;
     var th=pk*0.05, a=0, b=n-1; while(a<n&&e[a]<th) a++; while(b>a&&e[b]<th) b--;
+    if(lead){ a=Math.max(a,Math.min(b,Math.round(lead*100))); while(a<b&&e[a]<th) a++; }
     var gaps=[], run=0; for(i=a;i<=b;i++){ if(e[i]<th) run++; else { if(run>=7) gaps.push({s:(i-run)/100, e:i/100}); run=0; } }
     var W=words.map(function(w){ return syl(w)+0.5; }), br=[];
     words.forEach(function(w,k){ if(k<words.length-1 && /[,.!?;:]["”’)]*$/.test(w)) br.push(k); });
@@ -229,7 +233,7 @@
     var box=document.createElement("div"), host=o.into||null;
     box.className="k-finn "+(host?"k-finn-in":"k-finn-float");
     box.setAttribute("role","status");
-    box.innerHTML=finnSvg()+'<p class="k-fb"></p><i class="k-dust" aria-hidden="true"></i>';
+    box.innerHTML=finnSvg()+'<p class="k-fb"></p><i class="k-dust" aria-hidden="true"><i class="k-dc"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></i></i>';
     var p=box.querySelector(".k-fb"), dust=box.querySelector(".k-dust"), words=[];
     function setText(t){ text=t; p.innerHTML=""; words=[]; var pos=0;
       t.split(/(\s+)/).forEach(function(w){
@@ -242,14 +246,29 @@
     var run={box:box, float:!host, dead:false, cur:-1, hop:0};
     finnRun=run;
     function rel(el){ var a=el.getBoundingClientRect(), b=box.getBoundingClientRect(); return {x:a.left-b.left, y:a.top-b.top, w:a.width, h:a.height}; }
-    run.home=function(){ var m=rel(box.querySelector(".k-fm")); dust.style.transform="translate("+(m.x+m.w*.72)+"px,"+(m.y+m.h*.5)+"px)";
+    // the trail: glitter shed wherever the dust flies, fading as it drifts down
+    var calm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches, tl={on:false,until:0,last:null,lt:0,n:0};
+    function shed(x,y){ if(tl.n>46) return; var g=document.createElement("i"), z=Math.random();
+      g.className="k-spk "+(z<.3?"s0":z<.65?"s1":"s2")+" c"+((Math.random()*7)|0);
+      g.style.left=(x+(Math.random()-.5)*9)+"px"; g.style.top=(y+(Math.random()-.5)*9)+"px";
+      g.style.setProperty("--dx",((Math.random()-.5)*16)+"px"); g.style.setProperty("--dy",(4+Math.random()*9)+"px");
+      g.style.animationDuration=(0.55+Math.random()*0.45)+"s";
+      tl.n++; g.addEventListener("animationend",function(){ tl.n--; if(g.parentNode) g.parentNode.removeChild(g); });
+      box.appendChild(g); }
+    function trail(){ if(calm) return; tl.until=performance.now()+1400; if(tl.on) return; tl.on=true;
+      (function step(now){ if(run.dead||!box.isConnected||now>tl.until){ tl.on=false; tl.last=null; return; }
+        var r=rel(dust), x=r.x+r.w/2, y=r.y+r.h/2, L=tl.last;
+        if(L){ var d=Math.hypot(x-L.x,y-L.y); if(d>2.5){ var k=Math.min(3,Math.ceil(d/9)); for(var q=1;q<=k;q++) shed(L.x+(x-L.x)*q/k, L.y+(y-L.y)*q/k); tl.lt=now; }
+          else if(now-tl.lt>170){ shed(x,y); tl.lt=now; } }
+        tl.last={x:x,y:y}; requestAnimationFrame(step); })(performance.now()); }
+    run.home=function(){ var m=rel(box.querySelector(".k-fm")); dust.style.transform="translate("+(m.x+m.w*.72)+"px,"+(m.y+m.h*.5)+"px)"; trail();
       words.forEach(function(w){w.classList.remove("on");}); run.cur=-1; };
     function lite(i){
       if(run.dead || i===run.cur || !words[i]) return;
       if(run.cur>=0 && words[run.cur]) words[run.cur].classList.remove("on");
       run.cur=i; var w=words[i], r=rel(w); w.classList.add("on");
       dust.style.transform="translate("+(r.x+r.w/2)+"px,"+(r.y-5)+"px)";
-      run.hop=1-run.hop; dust.className="k-dust "+(run.hop?"hopA":"hopB")+" c"+(i%6);
+      run.hop=1-run.hop; dust.className="k-dust "+(run.hop?"hopA":"hopB")+" c"+(i%6); trail();
     }
     run.home();
     // timing when the voice gives no word marks (or there is no voice): a rough pace per word
@@ -281,14 +300,15 @@
       run.audio=a;
       function fall(){ if(fell||run.dead||run!==finnRun) return; fell=true; cancelAnimationFrame(run.raf); speak(); }
       var key=c.T.text; c.st=c.st||{};
-      if(c.x){ if(!c.st[key]){ try{ c.st[key]=alignWords(c.x, c.sr, words.map(function(w){return w.textContent;})); }catch(e){} } starts=c.st[key]||null; }
+      var mk=MARKS[c.T.clip]; if(mk && mk.length===words.length) starts=mk;
+      else if(c.x){ if(!c.st[key]){ try{ c.st[key]=alignWords(c.x, c.sr, words.map(function(w){return w.textContent;})); }catch(e){} } starts=c.st[key]||null; }
       function est(){ // no samples to measure: spread by word length and pauses
         var wts=words.map(function(w){ var t=w.textContent; return t.length+2+(/[.!?]$/.test(t)?5:(/[,;:]$/.test(t)?3:0)); }), tot=0, acc=0;
         wts.forEach(function(x){tot+=x;}); var d=a.duration*0.9;
         starts=wts.map(function(x){ var st=acc/tot*d; acc+=x; return st; }); }
       if(!starts) a.onloadedmetadata=est;
       function tick(){ if(run.dead||fell) return;
-        if(starts){ var t=a.currentTime+0.06, k=0; for(var j=0;j<starts.length;j++){ if(starts[j]<=t) k=j; } if(a.currentTime>0) lite(k); }
+        if(starts){ var t=a.currentTime+0.06, k=-1; for(var j=0;j<starts.length;j++){ if(starts[j]<=t) k=j; } if(a.currentTime>0 && k>=0) lite(k); }
         run.raf=requestAnimationFrame(tick); }
       a.onplay=function(){ cancelAnimationFrame(run.raf); run.raf=requestAnimationFrame(tick); };
       a.onended=function(){ cancelAnimationFrame(run.raf); if(run===finnRun && !fell){ lite(words.length-1); done(); } };
