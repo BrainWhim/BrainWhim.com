@@ -98,7 +98,7 @@
       u.voice=voice; u.lang=voice.lang; u.rate=LS.get("rate",0.95); u.pitch=1.05; speechSynthesis.speak(u); }catch(e){return false;}
     return true;
   }
-  function say(text, force, clip){
+  function say(text, force, clip, blocked){
     if(!(readOn||force) || !text) return false;
     if(finnRun && !finnRun.float) finnStop();
     stopSay(); if("speechSynthesis" in window) speechSynthesis.cancel();
@@ -113,7 +113,8 @@
         if(!c){ tryDir(i+1); return; }
         var a=playOn(c.url, finnRate()/0.95); sayA=a;
         a.onerror=function(){ if(sayA===a){ sayA=null; tryDir(i+1); } };
-        var pr=a.play(); if(pr&&pr.catch) pr.catch(function(){ if(sayA===a){ sayA=null; sayDevice(text); } });
+        var pr=a.play(); if(pr&&pr.catch) pr.catch(function(err){ if(sayA===a){ sayA=null;
+          if(blocked && err && err.name==="NotAllowedError") blocked(); else sayDevice(text); } });
       });
     })(0);
     return true;
@@ -475,6 +476,20 @@
     el.textContent=(fresh?"Hi, ":(cfg.helloWord||"Welcome back, "))+s.name+"!";
     el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(function(){el.classList.remove("on");},5200);
     if(fresh){ var k=sayable(s.name); say("Hi, "+s.name+"!", false, k?"hi-"+k:"hi-friend"); }
+    else if(soundOn){ var hc=cfg.helloClip||(!cfg.helloWord && cfg.voice==="jo"?"back":""); if(hc) welcomeBack(el, s.name, hc, cfg.helloWord||"Welcome back, "); }
+  }
+  // The arrival greeting out loud (Nov 9): kids.html "Welcome back, <name>!" in Jo's voice (jo-voice/back-<key>.mp3);
+  // a page with helloClip (outpost.html: "welcome") plays <voice folder>/<helloClip>-<key>.mp3. Pages without one stay text-only.
+  // Phones block sound until the first tap, so if it can't play on arrival it plays on the first tap (within 30 s).
+  // A tap that starts something else (Finn at the moon door, Read to me) wins: that stops the greeting.
+  function welcomeBack(el, nm, pre, word){
+    var k=sayable(nm), clip=pre+"-"+(k||"friend"), txt=word+(k?nm:"friend")+"!", t0=Date.now();
+    say(txt, true, clip, function(){
+      document.addEventListener("pointerdown",function wb(){ document.removeEventListener("pointerdown",wb,true);
+        if(Date.now()-t0>30000 || !soundOn) return;
+        el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(function(){el.classList.remove("on");},4000);
+        say(txt, true, clip); }, true);
+    });
   }
 
   /* ---------------- header ---------------- */
