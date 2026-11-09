@@ -84,11 +84,11 @@
   }
   function pickVoice(){ return rankVoices()[0] || null; }
   if("speechSynthesis" in window){ voice=pickVoice(); speechSynthesis.onvoiceschanged=function(){voice=pickVoice();}; }
-  /* Read to me plays recorded lines in the page's guide voice (Nov 8): Finn on kids.html and in Moonlets
-     (finn/), the Outpost voice in The Outpost and its activities (outpost-voice/; BWK.init({voice:"outpost"})).
+  /* Read to me plays recorded lines in the page's guide voice (Nov 8): Jo on kids.html and shared Kids' Corner pages
+     (jo-voice/; BWK.init({voice:"jo"}), Judy's ElevenLabs "Jo - Read to Me"), Finn in Moonlets (finn/), the Outpost voice in The Outpost and its activities (outpost-voice/; BWK.init({voice:"outpost"})).
      A line with no recording yet falls back to Finn's clip, then to the device voice. Pages add their lines
      with BWK.lines({clipName:"exact words", ...}); matching ignores capitals, tags and punctuation. */
-  var VDIR = {finn:"finn/", outpost:"outpost-voice/"}, LINES = {}, sayA = null, sayN = 0;
+  var VDIR = {finn:"finn/", outpost:"outpost-voice/", jo:"jo-voice/"}, LINES = {}, sayA = null, sayN = 0;
   function norm(t){ return String(t||"").replace(/<[^>]+>/g," ").toLowerCase().replace(/[\u2018\u2019]/g,"'").replace(/[^a-z0-9' ]+/g," ").replace(/\s+/g," ").trim(); }
   function lines(m){ for(var k in m){ if(m.hasOwnProperty(k)) LINES[norm(m[k])]=k; } }
   function stopSay(){ sayN++; if(sayA){ try{ sayA.pause(); }catch(e){} sayA=null; } }
@@ -419,7 +419,7 @@
     var mins=LS.get("break",30);
     var box=sheet('<h2>For Grown-ups</h2><div id="kFinnGu"></div>'+
       '<p>The Kids\' Corner is BrainWhim\'s wing for children: <b>Moonlets</b> (about 3 to 7) and <b>The Outpost</b> (about 8 to 12).</p>'+
-      '<p class="k-small">Our promise: no accounts for children, no chat, no ads, no trackers, no links out, no uploads, no camera or microphone. A child\'s name and progress stay in this browser only. Read to me plays recorded voices (Finn in Moonlets, the Outpost guide in The Outpost) that come with this site; nothing is recorded or sent.</p>'+
+      '<p class="k-small">Our promise: no accounts for children, no chat, no ads, no trackers, no links out, no uploads, no camera or microphone. A child\'s name and progress stay in this browser only. Read to me plays recorded voices (Jo in the Kids\' Corner, Finn in Moonlets, the Outpost guide in The Outpost) that come with this site; nothing is recorded or sent.</p>'+
       '<p style="margin:14px 0 6px;font-weight:700">Break reminder</p><div class="k-chips" id="kBrk"></div>'+
       '<p style="margin:16px 0 6px;font-weight:700">Voice speed <span class="k-small" style="font-weight:400">(Finn and Read to me)</span></p><div class="k-chips" id="kFr"></div>'+
       '<p style="margin:14px 0 6px;font-weight:700">What should Finn call you?</p><div class="k-chips" id="kMon"></div>'+
