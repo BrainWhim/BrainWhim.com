@@ -66,6 +66,13 @@
 .bask svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 8px 8px rgba(0,0,0,.45))}
 .bask.hop{animation:bhop .45s ease-out}
 @keyframes bhop{0%{transform:scale(1)}35%{transform:scale(1.12,.9)}70%{transform:scale(.96,1.05)}100%{transform:scale(1)}}
+.bask::before{content:"";position:absolute;left:-18%;top:-14%;width:136%;height:128%;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(closest-side,rgba(255,228,140,.75),rgba(255,210,90,.28) 55%,rgba(255,210,90,0));transition:opacity .4s}
+.bask.ready::before{animation:bglow 2.4s ease-in-out infinite}
+.bask.call::before{animation:bglow 1.2s ease-in-out infinite}
+.bask.call svg{animation:bnudge 2.4s ease-in-out infinite}
+@keyframes bglow{0%,100%{opacity:.25}50%{opacity:.9}}
+@keyframes bnudge{0%,70%,100%{transform:translateY(0)}78%{transform:translateY(-9%) rotate(-4deg)}86%{transform:translateY(0) rotate(3deg)}92%{transform:translateY(-4%)}}
 .bask .n{position:absolute;right:-4%;top:-2%;min-width:34%;padding:0 6%;aspect-ratio:1;border-radius:999px;display:flex;align-items:center;justify-content:center;
   font-weight:800;font-size:clamp(13px,2.2cqw,22px);color:#3a2604;background:radial-gradient(circle at 35% 30%,#fff3c0,#f3c447 60%,#c8901c);
   box-shadow:0 3px 6px rgba(0,0,0,.4),0 0 10px rgba(255,210,90,.6)}
@@ -127,7 +134,10 @@
 (function(){
   var HI="This is the moon garden! Pick a seed, then tap the dirt to plant it.";
   var WATER="Now tap it again to water it, and watch it grow!";
-  var YAY="Six flowers! Your whole garden is blooming! Great job, little gardener!";
+  var YAY="Six flowers! Your whole garden is blooming! Now tap the basket to pick them all.";
+  var FIRST="One flower! Tap the basket any time to pick it.";
+  var NUDGE="Tap the basket to pick your flowers!";
+  var toldBask=false, nudgeT=0;
   var PICK="Into the basket they go! Let's plant some more.";
   var EMPTY="Grow some flowers first, then put them in the basket!";
   var COUNT=["One flower!","Two flowers!","Three flowers!","Four flowers!","Five flowers!"];
@@ -313,10 +323,12 @@
     busy[i]=true; water(i); hopFinn();
     setTimeout(function(){ p.s++; persist(); render(i,true); grow(i);
       if(p.s===4){ var hx=headXY(i); setTimeout(function(){ bloomSnd(i); sparkle(hx[0],hx[1],KINDS[p.k].c==="#ffffff"?"#fff6c8":KINDS[p.k].c,3); },220);
-        var n=blooms(); if(n===6) finish(); else say(COUNT[n-1],"gd-"+n); flutter(); } },820);
+        var n=blooms(); if(n===6) finish(); else if(n===1&&!toldBask){ toldBask=true; say(FIRST,"gd-first"); } else say(COUNT[n-1],"gd-"+n); baskState(); flutter(); } },820);
     setTimeout(function(){ busy[i]=false; },1000); }
   function finish(){ setTimeout(function(){ chord(); for(var k=0;k<8;k++) (function(k){ setTimeout(function(){ sparkle(10+k*11,18+(k%3)*18,"#ffe08a",2); },k*90); })(k); },300);
-    setTimeout(function(){ say(YAY,"gd-yay"); },500); }
+    setTimeout(function(){ toldBask=true; say(YAY,"gd-yay-2"); },500);
+    clearTimeout(nudgeT); nudgeT=setTimeout(function(){ if(blooms()===6) say(NUDGE,"gd-nudge"); },16000); }
+  function baskState(){ var n=blooms(); bask.classList.toggle("ready",n>0&&n<6); bask.classList.toggle("call",n===6); }
   /* ---------- the basket ---------- */
   var bask=$("bask"), bn=$("bn");
   function drawBasket(){ var s='<defs><linearGradient id="gdWick" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfa760"/><stop offset="1" stop-color="#9c6129"/></linearGradient></defs>'+
@@ -339,7 +351,7 @@
         {left:tx+"%",top:ty+"%",transform:"translate(-50%,-50%) scale(.45) rotate(40deg)"}],{duration:650,delay:j*110,easing:"ease-in-out",fill:"forwards"}):null;
       if(a) a.onfinish=function(){ f.remove(); }; else setTimeout(function(){ f.remove(); },700); });
     if(save.recent.length>5) save.recent=save.recent.slice(-5);
-    save.basket+=list.length; persist(); pickSnd(list.length); hints(); flutter();
+    clearTimeout(nudgeT); save.basket+=list.length; persist(); baskState(); pickSnd(list.length); hints(); flutter();
     setTimeout(function(){ drawBasket(); bask.classList.remove("hop"); void bask.offsetWidth; bask.classList.add("hop"); },650+list.length*110);
     say(PICK,"gd-pick"); });
   /* ---------- a butterfly visits the flowers ---------- */
@@ -372,12 +384,12 @@
   seedsEl.addEventListener("click",function(e){ var b=e.target.closest(".pk"); if(!b) return; var k=+b.dataset.k; save.seed=k; persist();
     pkBtns.forEach(function(x){ x.classList.toggle("on",x===b); }); rustle(); say(KINDS[k].name+"!","gd-"+KINDS[k].id); });
   /* ---------- start ---------- */
-  for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); setTimeout(flutter,900);
+  for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); baskState(); setTimeout(flutter,900);
   function size(){ var w=bed.getBoundingClientRect().width; perch.style.setProperty("--hw",Math.round(Math.max(44,Math.min(74,w*.085)))+"px"); }
   requestAnimationFrame(size); window.addEventListener("resize",size);
   window.GDO={tap:tapPlot, seed:function(k){ seedsEl.children[k].click(); }, pick:function(){ bask.click(); },
-    growAll:function(){ for(var i=0;i<6;i++){ if(!save.plots[i]) save.plots[i]={k:i,s:1}; save.plots[i].s=4; render(i,false); } persist(); hints(); flutter(); },
-    reset:function(){ save={plots:[null,null,null,null,null,null],seed:0,basket:0,recent:[]}; persist(); for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); },
+    growAll:function(){ for(var i=0;i<6;i++){ if(!save.plots[i]) save.plots[i]={k:i,s:1}; save.plots[i].s=4; render(i,false); } persist(); hints(); baskState(); flutter(); },
+    reset:function(){ save={plots:[null,null,null,null,null,null],seed:0,basket:0,recent:[]}; persist(); for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); baskState(); },
     state:function(){ return {plots:save.plots.map(function(p){ return p?p.k+":"+p.s:"-"; }).join(" "), basket:save.basket, seed:save.seed, busy:busy.join()}; }};
 })();
 </script>
