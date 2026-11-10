@@ -101,6 +101,8 @@ header{height:64px;padding:0 10px}
 @keyframes shk{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .keys button,.mtile,.letters button{touch-action:manipulation}
 .stats.two{grid-template-columns:repeat(2,1fr)}
+.kcur{outline:3px solid #2f6f9f;outline-offset:3px}
+.keys button.press{transform:translateY(3px);filter:brightness(.9)}
 @media (max-width:380px){.keys button{min-width:26px;padding:0 5px;height:46px}.keys button.wide{min-width:48px}.kr{gap:4px}}
 </style>
 </head>
@@ -291,7 +293,11 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Enter"){ e.preventDefault(); submit(); }
   else if(e.key==="Backspace"){ e.preventDefault(); back(); }
   else if(/^[a-zA-Z]$/.test(e.key)) type(e.key.toUpperCase());
+  else return;
+  flashKey(e.key==="Enter"?"ENTER":e.key==="Backspace"?"DEL":e.key.toUpperCase());
 });
+/* a typed key presses its on-screen key for a moment, so desktop players see it register */
+function flashKey(t){ const b=[...keysEl.querySelectorAll("button")].find(x=>x.textContent===t); if(!b) return; b.classList.add("press"); setTimeout(()=>b.classList.remove("press"),120); }
 $("btnStats").onclick=()=>showCard({title:"Sky Word stats", body:"Daily record on this device.", stats:skyStats()});
 $("mClose").onclick=()=>modal.classList.remove("on");
 modal.addEventListener("click",e=>{ if(e.target===modal) modal.classList.remove("on"); });
@@ -321,8 +327,8 @@ function startMatch(){
   other.innerHTML=`<h1 class="title">Star Match</h1><p class="sub">Eight pairs. Flip two at a time; each pair you flip is one move.</p>
     <div class="mbar"><span id="ms">0 moves · 0 / 8</span><button type="button" id="mn">New board</button></div>
     <div class="mg" id="mg" style="grid-template-columns:repeat(4,1fr)"></div>
-    <p class="how">${S.matchBest?("Your best: "+S.matchBest+" moves. A perfect memory needs 8."):"Finish a board to set your best."}</p>`;
-  const mg=other.querySelector("#mg"), ms=other.querySelector("#ms");
+    <p class="how">${S.matchBest?("Your best: "+S.matchBest+" moves. A perfect memory needs 8."):"Finish a board to set your best."} On a computer: arrow keys and Space.</p>`;
+  const mg=other.querySelector("#mg"), ms=other.querySelector("#ms"), ak=arrowKeys(mg,4); kb=ak.key;
   deck.forEach(icon=>{
     const b=document.createElement("button"); b.type="button"; b.className="mtile back"; b.dataset.i=icon; b.setAttribute("aria-label","Hidden card");
     b.onclick=()=>{
@@ -339,12 +345,12 @@ function startMatch(){
         }
       } else {
         lock=true; const a=first; ms.textContent=moves+" moves · "+found+" / 8";
-        setTimeout(()=>{ a.textContent=""; a.className="mtile back"; b.textContent=""; b.className="mtile back"; first=null; lock=false; },750);
+        setTimeout(()=>{ a.textContent=""; a.className="mtile back"; b.textContent=""; b.className="mtile back"; first=null; lock=false; ak.paint(); },750);
       }
     };
     mg.appendChild(b);
   });
-  other.querySelector("#mn").onclick=startMatch;
+  ak.paint(); other.querySelector("#mn").onclick=startMatch;
 }
 
 /* ---------- Drift Word ---------- */
@@ -357,7 +363,7 @@ function startDrift(){
     <div class="mbar"><span id="ds">${S.driftSolved} solved on this device</span><span class="btns"><button type="button" class="alt" id="dm">Mix</button><button type="button" id="dn">New word</button></span></div>
     <div class="letters built" id="built"></div>
     <div class="letters" id="pool"></div>
-    <p class="how">Tap letters to spell. Tap a spelled letter to send it back. Any real word that uses every letter counts.</p>`;
+    <p class="how">Tap letters to spell. Tap a spelled letter to send it back. Any real word that uses every letter counts. On a computer, just type (Backspace takes one back).</p>`;
   const built=other.querySelector("#built"), pool=other.querySelector("#pool");
   function check(){
     if(guess.length<W.length) return;
@@ -384,6 +390,12 @@ function startDrift(){
     });
   }
   draw();
+  kb=e=>{
+    if(e.key==="Backspace"){ if(guess.length){ guess.pop(); draw(); } return true; }
+    if(/^[a-zA-Z]$/.test(e.key)){ const ch=e.key.toUpperCase(), b=[...pool.children].find(x=>!x.disabled&&x.textContent===ch);
+      if(b) b.click(); else say("No "+ch+" left"); return true; }
+    return false;
+  };
   other.querySelector("#dn").onclick=startDrift;
   other.querySelector("#dm").onclick=()=>{ letters=shuffle(letters); guess=[]; draw(); };
 }
@@ -401,8 +413,8 @@ function startGrid(){
   other.innerHTML=`<h1 class="title">Signal Grid</h1><p class="sub">Turn every light off. A tap flips a cell and the cells beside it.</p>
     <div class="mbar"><span id="gs">0 taps · can be done in ${par}</span><button type="button" id="gn">New grid</button></div>
     <div class="mg" id="gg" style="grid-template-columns:repeat(5,1fr);max-width:320px"></div>
-    <p class="how">${S.gridBest?("Your best: "+S.gridBest+" taps."):"Lit cells glow gold. Tapping a cell twice undoes it."}</p>`;
-  const gg=other.querySelector("#gg"), gs=other.querySelector("#gs");
+    <p class="how">${S.gridBest?("Your best: "+S.gridBest+" taps."):"Lit cells glow gold. Tapping a cell twice undoes it."} On a computer: arrow keys and Space.</p>`;
+  const gg=other.querySelector("#gg"), gs=other.querySelector("#gs"), ak=arrowKeys(gg,5); kb=ak.key;
   function draw(){
     gg.innerHTML="";
     cells.forEach((v,i)=>{
@@ -415,9 +427,30 @@ function startGrid(){
       };
       gg.appendChild(b);
     });
+    ak.paint();
   }
   draw(); other.querySelector("#gn").onclick=startGrid;
 }
+
+/* ---------- desktop keyboard (Nov 10): arrows move a blue ring, Space or Enter taps; Drift Word takes typed letters ---------- */
+let kb=null, kbOn=false;
+function arrowKeys(box,cols){
+  let i=0;
+  const paint=()=>[...box.children].forEach((b,j)=>b.classList.toggle("kcur",kbOn&&j===i));
+  return { paint, key(e){
+    const n=box.children.length, k=e.key; if(!n) return false;
+    let j=i;
+    if(k==="ArrowRight") j=i+1; else if(k==="ArrowLeft") j=i-1; else if(k==="ArrowDown") j=i+cols; else if(k==="ArrowUp") j=i-cols;
+    else if(k===" "||k==="Enter"){ if(kbOn) box.children[i].click(); kbOn=true; paint(); return true; }
+    else return false;
+    if(kbOn&&j>=0&&j<n) i=j; kbOn=true; paint(); return true;
+  }};
+}
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&modal.classList.contains("on")){ modal.classList.remove("on"); return; }
+  if(room==="sky"||!kb||modal.classList.contains("on")||e.metaKey||e.ctrlKey||e.altKey) return;
+  if(kb(e)){ e.preventDefault(); const a=document.activeElement; if(a&&other.contains(a)) a.blur(); }
+});
 
 startDaily();
 /* quickplays.html#match opens Star Match, etc. (links from puzzles.html) */
