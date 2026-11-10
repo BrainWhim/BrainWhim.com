@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Space Snake · The Outpost · BrainWhim</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="kids.css?v=1110a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Space Snake (The Outpost · The Telescope), Nov 10, Zayden's idea: a comet snake catches stars; fill the board to win. */
+:root{--bgx:30%;--bgy:30%}
+.bar{display:flex;gap:8px;justify-content:center;align-items:center}
+.bar div{min-width:92px;padding:5px 10px;border-radius:14px;text-align:center;background:rgba(14,26,52,.72);border:1px solid var(--k-line);font-size:13px;color:#b9c9dc;font-weight:700}
+.bar b{display:block;font-size:21px;color:#fff}
+.bar .st b{color:#ffe27a}
+.frame{--s:min(94vw,560px,calc(100svh - 330px));width:var(--s);height:var(--s);min-width:230px;min-height:230px;position:relative;border-radius:22px;padding:10px;
+  background:linear-gradient(180deg,#c98c52,#8d5626);box-shadow:0 8px 0 #5e3614,0 18px 36px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,230,190,.45)}
+.frame canvas{width:100%;height:100%;display:block;border-radius:14px;touch-action:none;background:#060d22;box-shadow:inset 0 0 0 2px rgba(0,0,0,.5)}
+.frame.bonk{animation:bonk .45s ease}
+@keyframes bonk{20%{transform:translate(-7px,2px)}40%{transform:translate(6px,-2px)}60%{transform:translate(-4px,1px)}80%{transform:translate(3px,0)}}
+.plate{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);font-size:10px;font-weight:700;letter-spacing:.08em;color:#f6dca0;opacity:.75}
+.tap{position:absolute;inset:10px;display:flex;align-items:center;justify-content:center;pointer-events:none;text-align:center;font-weight:700;font-size:19px;color:#fff;text-shadow:0 2px 8px #000}
+.tap span{background:rgba(6,13,34,.7);padding:10px 16px;border-radius:16px;border:1px solid rgba(126,182,217,.4)}
+.low{display:flex;align-items:center;justify-content:center;gap:18px}
+.pad{display:grid;grid-template:repeat(3,52px)/repeat(3,52px);gap:4px}
+.pad button{appearance:none;border:0;border-radius:14px;cursor:pointer;color:#06243a;font-size:24px;font-weight:900;
+  background:linear-gradient(180deg,#bfe4f7,#7EB6D9);box-shadow:0 4px 0 #3f7499,0 8px 14px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 #3f7499}
+.pad .u{grid-area:1/2}.pad .l{grid-area:2/1}.pad .r{grid-area:2/3}.pad .d{grid-area:3/2}
+.side{display:flex;flex-direction:column;gap:8px}
+.side .k-btn{min-height:44px;padding:0 16px;font-size:16px}
+.keys{display:none;font-size:14px;color:#cfe0f0;text-align:center}
+@media (hover:hover) and (pointer:fine){.pad{display:none}.keys{display:block}.frame{--s:min(94vw,600px,calc(100svh - 230px))}}
+@media (max-height:640px){.pad{grid-template:repeat(3,44px)/repeat(3,44px)}.frame{--s:min(94vw,560px,calc(100svh - 300px))}.bar b{font-size:18px}}
+</style>
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true">
+        <rect x="16" y="6" width="100" height="80" rx="12" fill="#0b1630" stroke="#7EB6D9" stroke-opacity=".5"/>
+        <path d="M30 70 H60 V40 H92" fill="none" stroke="#b48cff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+        <path d="M44 70 H60 V40 H92" fill="none" stroke="#7ff0ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="94" cy="40" r="8" fill="#e8fbff"/><circle cx="97" cy="38" r="1.6" fill="#13233f"/>
+        <path d="M104 20l2.4 5 5.4.6-4 3.6 1.1 5.3-4.9-2.7-4.9 2.7 1.1-5.3-4-3.6 5.4-.6z" fill="#ffe27a"/>
+      </svg>
+      <h1>Space Snake</h1>
+      <p class="lead">Steer the comet snake to catch the stars. Every star makes it longer. Fill the whole board to win!</p>
+      <p class="seg-l">Board size</p>
+      <div class="seg" id="size"><button data-n="6">Small</button><button data-n="8">Medium</button><button data-n="10">Big</button></div>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Play</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="bar"><div class="st">Stars<b id="nStars">0</b></div><div>Length<b id="nLen">3</b></div><div>Best<b id="nBest">0</b></div></div>
+    <div class="frame" id="frame"><canvas id="cv"></canvas><div class="tap" id="tapMsg"><span>Swipe or tap an arrow to start!</span></div><div class="plate" aria-hidden="true">BW</div></div>
+    <div class="low">
+      <div class="pad" id="pad"><button class="u" data-d="u" aria-label="Up">▲</button><button class="l" data-d="l" aria-label="Left">◀</button><button class="r" data-d="r" aria-label="Right">▶</button><button class="d" data-d="d" aria-label="Down">▼</button></div>
+      <div class="side"><button class="k-btn k-cool" id="tPause">Pause</button><button class="k-btn k-ghost" id="tMenu">Menu</button></div>
+    </div>
+    <div class="keys">Arrow keys (or W A S D) to steer · Space to pause</div>
+  </section>
+</main>
+<script src="kids.js?v=1110a"></script>
+<script src="kids-games.js?v=1110a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store;
+var ST=LS.get("snake",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||6; ST.best=ST.best||{}; ST.wins=ST.wins||{};
+function save(){ LS.set("snake",ST); }
+var DIR={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}, OPP={u:"d",d:"u",l:"r",r:"l"}, SZN={6:"Small",8:"Medium",10:"Big"};
+var N, S, prev, dir, q, star, stars, run=false, paused=false, dead=false, won=false, last=0, acc=0, gen=0, sparks=[], bgStars=[], t0=performance.now();
+var cv=$("#cv"), cx=cv.getContext("2d"), px=0, cell=0;
+
+/* ---------- sounds ---------- */
+function sStar(){ var b=880*Math.pow(2,Math.min(stars,24)/24); BWG.tone(b,0,.14,.05,"triangle"); BWG.tone(b*1.5,.06,.2,.04,"triangle"); BWG.noise(.02,.18,.03,5000,10000); }
+function sTurn(){ BWG.tone(520,0,.04,.012,"sine"); }
+function sBonk(){ BWG.noise(0,.18,.2,80,600); BWG.tone(200,0,.3,.08,"triangle",70); BWG.tone(150,.15,.3,.05,"triangle",60); }
+function sWin(){ [523,659,784,1047,1319,1568].forEach(function(f,i){ BWG.tone(f,i*.09,.5,.05,"triangle"); }); BWG.noise(.5,.6,.05,4000,10000); }
+
+/* ---------- game ---------- */
+function speed(){ /* moves per second: starts slow, speeds up a little as the snake grows */
+  var f=(S.length-3)/(N*N-3); return 3.2+2.6*Math.min(1,f*1.6); }
+function newGame(){
+  gen++; N=ST.n; var m=Math.floor(N/2);
+  S=[[m-1,m],[m-2,m],[m-3,m]].map(function(p){ return [Math.max(0,p[0]),p[1]]; });
+  if(N<=6) S=[[2,m],[1,m],[0,m]];
+  prev=S.map(function(p){ return p.slice(); }); dir="r"; q=[]; stars=0; run=false; paused=false; dead=false; won=false; acc=0; sparks=[];
+  placeStar(); hud(); $("#tapMsg").style.display=""; $("#tapMsg span").textContent="Swipe or tap an arrow to start!"; $("#tPause").textContent="Pause";
+}
+function placeStar(){ var free=[]; for(var y=0;y<N;y++) for(var x=0;x<N;x++){ if(!S.some(function(p){ return p[0]===x&&p[1]===y; })) free.push([x,y]); }
+  star=free.length?free[Math.floor(Math.random()*free.length)]:null; if(star) star.born=performance.now(); }
+function hud(){ $("#nStars").textContent=stars; $("#nLen").textContent=S.length; $("#nBest").textContent=Math.max(ST.best[N]||0,S.length); }
+function steer(d){
+  if(dead||won) return; if(paused){ togglePause(); }
+  var lastD=q.length?q[q.length-1]:dir;
+  if(d!==lastD&&d!==OPP[lastD]&&q.length<2){ q.push(d); sTurn(); }
+  if(!run){ run=true; $("#tapMsg").style.display="none"; last=performance.now(); }
+}
+function step(){
+  if(q.length) dir=q.shift();
+  var h=S[0], v=DIR[dir], nh=[h[0]+v[0],h[1]+v[1]];
+  var eat=star&&nh[0]===star[0]&&nh[1]===star[1];
+  var body=eat?S:S.slice(0,-1);
+  if(nh[0]<0||nh[1]<0||nh[0]>=N||nh[1]>=N||body.some(function(p){ return p[0]===nh[0]&&p[1]===nh[1]; })){ bonk(); return; }
+  prev=S.map(function(p){ return p.slice(); });
+  S.unshift(nh); if(eat){ prev.push(prev[prev.length-1].slice()); } else S.pop();
+  /* each piece glides from where it was to where the one ahead of it was */
+  if(eat){ stars++; sStar(); burst(star[0],star[1]); if(S.length>=N*N){ hud(); win(); return; } placeStar(); }
+  hud();
+}
+function burst(x,y){ for(var i=0;i<14;i++){ var a=Math.random()*6.283, s=.6+Math.random()*1.6; sparks.push({x:x+.5,y:y+.5,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:0,c:i%3}); } }
+function record(){ var b=ST.best[N]||0, nb=S.length>b; if(nb) ST.best[N]=S.length; save(); return nb; }
+function bonk(){
+  dead=true; run=false; sBonk(); var f=$("#frame"); f.classList.remove("bonk"); void f.offsetWidth; f.classList.add("bonk");
+  var nb=record()&&S.length>3, g=gen; hud();
+  setTimeout(function(){ if(g!==gen) return; var h=nb?BEST:BONK;
+    var box=BWK.sheet('<h2>Bonk!</h2><p>Your comet snake was <b>'+S.length+'</b> long'+(stars?' and caught <b>'+stars+'</b> star'+(stars===1?'':'s'):'')+'.'+(nb?' That\'s your longest snake yet!':' Your best on '+SZN[N]+' is '+(ST.best[N]||3)+'.')+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="again">Try Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>', function(){ if(dead&&g===gen) newGame(); });
+    box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); };
+    box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
+    BWK.say(h); },650);
+}
+function win(){
+  won=true; run=false; ST.wins[N]=(ST.wins[N]||0)+1; record(); sWin(); for(var i=0;i<S.length;i+=2) burst(S[i][0],S[i][1]);
+  var g=gen;
+  setTimeout(function(){ if(g!==gen) return;
+    var box=BWK.sheet('<h2>You filled the board!</h2><p>Your comet snake is <b>'+S.length+'</b> long and fills every square of the '+SZN[N]+' board. You\'re a Space Snake champion!</p>'+
+      (N<10?'<p>Ready for a bigger board?</p>':'')+'<div class="k-row">'+(N<10?'<button class="k-btn" data-a="next">Bigger Board</button>':'<button class="k-btn" data-a="again">Play Again</button>')+'<button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
+    var nx=box.querySelector('[data-a=next]'), ag=box.querySelector('[data-a=again]');
+    if(nx) nx.onclick=function(){ BWK.closeSheet(true); ST.n=N+2; save(); newGame(); resize(); };
+    if(ag) ag.onclick=function(){ BWK.closeSheet(true); newGame(); };
+    box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
+    BWK.say(WIN); },1400);
+}
+function togglePause(){ if(dead||won||!run&&!paused) return; paused=!paused; run=!paused; $("#tPause").textContent=paused?"Go!":"Pause";
+  $("#tapMsg").style.display=paused?"":"none"; $("#tapMsg span").textContent="Paused. Tap Go! or an arrow."; last=performance.now(); }
+
+/* ---------- drawing (one redraw a frame, no blur filters) ---------- */
+function resize(){ var r=cv.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1); px=Math.round(r.width*dpr); cv.width=px; cv.height=px; cell=px/(N||8);
+  bgStars=[]; for(var i=0;i<60;i++) bgStars.push([Math.random()*px,Math.random()*px,Math.random()*1.4+.3,Math.random()*6]); }
+function ease(t){ return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
+function draw(now){
+  if(!px){ return; }
+  var t=performance.now(), k=run?ease(Math.min(1,acc*speed())):1, c=cell;
+  cx.clearRect(0,0,px,px);
+  /* the space tiles */
+  for(var y=0;y<N;y++) for(var x=0;x<N;x++){ var g=cx.createLinearGradient(x*c,y*c,x*c,(y+1)*c); var odd=(x+y)%2;
+    g.addColorStop(0,odd?"#14244a":"#101e3e"); g.addColorStop(1,odd?"#0e1a37":"#0b1630"); cx.fillStyle=g;
+    rr(x*c+c*.05,y*c+c*.05,c*.9,c*.9,c*.16); cx.fill(); cx.strokeStyle="rgba(126,182,217,.10)"; cx.lineWidth=Math.max(1,c*.02); cx.stroke(); }
+  bgStars.forEach(function(s){ cx.globalAlpha=.25+.25*Math.sin(t/700+s[3]); cx.fillStyle="#cfe6ff"; cx.beginPath(); cx.arc(s[0],s[1],s[2]*(px/500),0,6.283); cx.fill(); }); cx.globalAlpha=1;
+  /* the star */
+  if(star){ var sx=(star[0]+.5)*c, sy=(star[1]+.5)*c, pop=Math.min(1,(t-star.born)/300), pul=1+.08*Math.sin(t/220);
+    var gl=cx.createRadialGradient(sx,sy,0,sx,sy,c*.7); gl.addColorStop(0,"rgba(255,226,122,.55)"); gl.addColorStop(1,"rgba(255,226,122,0)"); cx.fillStyle=gl; cx.fillRect(sx-c,sy-c,c*2,c*2);
+    starPath(sx,sy,c*.36*pop*pul,c*.16*pop*pul,t/1800); var sg=cx.createLinearGradient(sx,sy-c*.4,sx,sy+c*.4); sg.addColorStop(0,"#fff6c8"); sg.addColorStop(1,"#f2b83a"); cx.fillStyle=sg; cx.fill();
+    cx.strokeStyle="#b9791a"; cx.lineWidth=c*.03; cx.stroke(); }
+  /* the comet snake, tail first */
+  var n=S.length, pts=[];
+  for(var i=0;i<n;i++){ var a=prev[i]||S[i], b=S[i]; pts.push([(a[0]+(b[0]-a[0])*k+.5)*c,(a[1]+(b[1]-a[1])*k+.5)*c]); }
+  for(i=n-1;i>=0;i--){ var p=pts[i], f=n>1?i/(n-1):0, r=c*(.42-.14*f), hue=190+90*f;
+    var gw=cx.createRadialGradient(p[0],p[1],0,p[0],p[1],r*1.7); gw.addColorStop(0,"hsla("+hue+",100%,70%,.35)"); gw.addColorStop(1,"hsla("+hue+",100%,70%,0)"); cx.fillStyle=gw; cx.beginPath(); cx.arc(p[0],p[1],r*1.7,0,6.283); cx.fill();
+    if(i<n-1){ var q2=pts[i+1]; cx.strokeStyle="hsl("+hue+",90%,66%)"; cx.lineWidth=r*1.7; cx.lineCap="round"; cx.beginPath(); cx.moveTo(p[0],p[1]); cx.lineTo(q2[0],q2[1]); cx.stroke(); }
+    var bg=cx.createRadialGradient(p[0]-r*.35,p[1]-r*.35,r*.1,p[0],p[1],r); bg.addColorStop(0,i?"hsl("+hue+",100%,88%)":"#ffffff"); bg.addColorStop(1,"hsl("+hue+",85%,"+(i?58:70)+"%)");
+    cx.fillStyle=bg; cx.beginPath(); cx.arc(p[0],p[1],r,0,6.283); cx.fill(); }
+  /* the head's face */
+  var h=pts[0], v=DIR[q.length&&!run?q[0]:dir], hr=c*.42, ex=-v[1], ey=v[0];
+  [-1,1].forEach(function(sd){ var x2=h[0]+v[0]*hr*.3+ex*sd*hr*.38, y2=h[1]+v[1]*hr*.3+ey*sd*hr*.38;
+    cx.fillStyle="#fff"; cx.beginPath(); cx.arc(x2,y2,hr*.22,0,6.283); cx.fill(); cx.fillStyle=dead?"#13233f":"#13233f";
+    if(dead){ cx.strokeStyle="#13233f"; cx.lineWidth=hr*.08; cx.beginPath(); cx.moveTo(x2-hr*.12,y2-hr*.12); cx.lineTo(x2+hr*.12,y2+hr*.12); cx.moveTo(x2+hr*.12,y2-hr*.12); cx.lineTo(x2-hr*.12,y2+hr*.12); cx.stroke(); }
+    else { cx.beginPath(); cx.arc(x2+v[0]*hr*.07,y2+v[1]*hr*.07,hr*.12,0,6.283); cx.fill(); } });
+  cx.strokeStyle="#13233f"; cx.lineWidth=hr*.09; cx.lineCap="round"; cx.beginPath(); var mx=h[0]+v[0]*hr*.62, my=h[1]+v[1]*hr*.62;
+  cx.arc(mx-v[0]*hr*.25,my-v[1]*hr*.25,hr*.22,Math.atan2(v[1],v[0])-1,Math.atan2(v[1],v[0])+1); cx.stroke();
+  /* sparkles */
+  sparks=sparks.filter(function(s){ s.t+=1/60; s.x+=s.vx/60*2; s.y+=s.vy/60*2; return s.t<.7; });
+  sparks.forEach(function(s){ cx.globalAlpha=1-s.t/.7; cx.fillStyle=["#ffe27a","#7ff0ff","#ff9ad5"][s.c]; starPath(s.x*c,s.y*c,c*.12,c*.05,s.t*4); cx.fill(); }); cx.globalAlpha=1;
+}
+function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r); cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+function starPath(x,y,R,r,rot){ cx.beginPath(); for(var i=0;i<10;i++){ var a=rot-Math.PI/2+i*Math.PI/5, d=i%2?r:R; cx[i?"lineTo":"moveTo"](x+Math.cos(a)*d,y+Math.sin(a)*d); } cx.closePath(); }
+function loop(now){
+  if(document.body.classList.contains("m-play")){
+    if(run){ var dt=Math.min(.1,(now-last)/1000); last=now; acc+=dt; var per=1/speed(); while(run&&acc>=per){ acc-=per; step(); } }
+    else acc=0;
+    draw(now);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ---------- controls ---------- */
+$("#pad").addEventListener("pointerdown",function(e){ var b=e.target.closest("button"); if(!b) return; e.preventDefault(); steer(b.dataset.d); });
+var sw=null;
+cv.addEventListener("pointerdown",function(e){ sw=[e.clientX,e.clientY]; try{ cv.setPointerCapture(e.pointerId); }catch(_){} });
+cv.addEventListener("pointermove",function(e){ if(!sw) return; var dx=e.clientX-sw[0], dy=e.clientY-sw[1]; if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
+  steer(Math.abs(dx)>Math.abs(dy)?(dx>0?"r":"l"):(dy>0?"d":"u")); sw=[e.clientX,e.clientY]; });
+cv.addEventListener("pointerup",function(){ sw=null; }); cv.addEventListener("pointercancel",function(){ sw=null; });
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  var m={ArrowUp:"u",ArrowDown:"d",ArrowLeft:"l",ArrowRight:"r",w:"u",s:"d",a:"l",d:"r",W:"u",S:"d",A:"l",D:"r"}[e.key];
+  if(m){ e.preventDefault(); steer(m); } else if(e.key===" "){ e.preventDefault(); togglePause(); } });
+window.addEventListener("resize",function(){ requestAnimationFrame(resize); });
+if(window.ResizeObserver) new ResizeObserver(function(){ resize(); }).observe(cv);
+document.addEventListener("visibilitychange",function(){ if(document.hidden&&run) togglePause(); });
+$("#tPause").onclick=function(){ BWK.sfx("tap"); if(!run&&!paused) return; togglePause(); };
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+
+function sizeUI(){ [].forEach.call($("#size").children,function(b){ b.classList.toggle("on",+b.dataset.n===ST.n); });
+  var parts=[6,8,10].filter(function(n){ return ST.best[n]; }).map(function(n){ return SZN[n]+" "+ST.best[n]+(ST.wins[n]?" ★":""); });
+  $("#mfoot").innerHTML=(parts.length?"Longest snakes: "+parts.join(" · ")+"<br>":"")+"Small is 6 × 6, Medium 8 × 8, Big 10 × 10."; }
+$("#size").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; ST.n=+b.dataset.n; save(); BWK.sfx("tap"); sizeUI(); });
+function toMenu(){ gen++; run=false; document.body.className="m-menu"; sizeUI(); }
+$("#bPlay").onclick=function(){ document.body.className="m-play"; BWK.sfx("open"); newGame(); requestAnimationFrame(resize); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW1+'</p><p>'+HOW2+'</p><p>On a computer, use the arrow keys or W A S D. Space pauses.</p></div>'); BWK.say(HOW1+" "+HOW2); };
+$("#bBack").onclick=BWG.toOutpost;
+
+var INTRO="Space Snake! Steer the comet snake to catch the stars. Every star makes it longer. Fill the whole board to win!";
+var HOW1="Swipe on the board, or tap the arrow buttons, to turn the snake. It keeps zooming the way it's pointing.";
+var HOW2="Catch a star and your snake grows longer. Don't bump into the walls or your own tail! Fill every square on the board to win.";
+var BONK="Bonk! Try again.", BEST="Bonk! That's your longest snake yet!", WIN="You filled the whole board! You're a Space Snake champion!";
+var L={"sn-intro":INTRO,"sn-how":HOW1+" "+HOW2,"sn-bonk":BONK,"sn-best":BEST,"sn-win":WIN};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"snake", voice:"outpost", intro:INTRO, noHello:true});
+window.SNO={steer:steer,step:step,newGame:newGame,state:function(){ return {S:S,dir:dir,star:star,run:run,dead:dead,won:won,N:N,stars:stars}; },
+  fill:function(){ /* test: lay the snake in a zigzag over all but the last square */ var p=[]; for(var y=0;y<N;y++) for(var x=0;x<N;x++) p.push([y%2?N-1-x:x,y]);
+    p.reverse(); star=p[0].slice(); S=p.slice(1).map(function(a){return a.slice();}); prev=S.map(function(a){return a.slice();}); var a=S[0],b=star; dir=b[0]>a[0]?"r":b[0]<a[0]?"l":b[1]>a[1]?"d":"u"; q=[]; },lines:L};
+})();
+</script>
+</body>
+</html>

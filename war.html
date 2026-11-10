@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>War · The Outpost · BrainWhim</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="kids.css?v=1110a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* War (The Outpost · The Joke Shack), Nov 10. You vs Brody-Bot: flip, higher card takes both; ties are WAR. */
+:root{--bgx:62%;--bgy:55%}
+.table{position:relative;width:min(560px,100%);flex:1;min-height:300px;max-height:760px;border-radius:26px;
+  background:repeating-linear-gradient(90deg,rgba(80,44,14,0) 0 22%,rgba(60,30,8,.5) 22% calc(22% + 3px),rgba(255,220,170,.12) calc(22% + 3px) calc(22% + 5px)),
+   repeating-linear-gradient(178deg,rgba(255,220,170,.05) 0 7px,rgba(90,50,18,.10) 7px 9px),
+   radial-gradient(130% 90% at 30% 10%,#c98c52,#a2672f 55%,#7b4a1f);
+  box-shadow:0 10px 0 #5e3614,0 22px 40px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,230,190,.45),inset 0 -6px 14px rgba(60,30,8,.45)}
+.plate{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-size:12px;font-weight:700;letter-spacing:.08em;color:#f6dca0;opacity:.7;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+.lbl{position:absolute;font-weight:700;font-size:15px;line-height:22px;color:#fff3da;text-shadow:0 2px 4px rgba(0,0,0,.6);text-align:center;transform:translateX(-50%);white-space:nowrap}
+.lbl b{font-size:19px;color:var(--k-warm)}
+.stack{position:absolute;border-radius:10%/7%;cursor:default}
+.stack.empty{border:2px dashed rgba(255,240,210,.35);background:rgba(0,0,0,.08)}
+.stack .cnt{position:absolute;right:-8px;top:-10px;min-width:30px;height:30px;border-radius:15px;padding:0 6px;display:flex;align-items:center;justify-content:center;
+  background:#13233f;color:#fff;font-weight:800;font-size:15px;border:2px solid var(--k-gold);box-shadow:0 3px 6px rgba(0,0,0,.4);z-index:3}
+.stack.mine{cursor:pointer}
+.stack.mine.go{animation:nudge 1.4s ease-in-out infinite}
+@keyframes nudge{0%,100%{filter:drop-shadow(0 0 0 rgba(255,217,138,0))}50%{filter:drop-shadow(0 0 12px rgba(255,217,138,.9))}}
+/* a card: 5 x 7 */
+.cd{position:absolute;left:0;top:0;border-radius:10%/7%;transition:transform .42s cubic-bezier(.3,.8,.3,1);will-change:transform;perspective:600px;z-index:2}
+.cd .in{position:absolute;inset:0;transition:transform .42s ease;transform-style:preserve-3d}
+.cd.up .in{transform:rotateY(180deg)}
+.cd .f,.cd .b{position:absolute;inset:0;border-radius:inherit;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 3px 6px rgba(0,0,0,.35)}
+.cd .b{background:radial-gradient(circle at 50% 50%,#ffe27a 0 9%,transparent 10%),repeating-linear-gradient(45deg,#1f6f5a 0 6px,#18594a 6px 12px);border:3px solid #fff4df}
+.cd .b::after{content:"★";position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);color:#7b4a1f;font-size:calc(var(--cw)*.14)}
+.cd .f{transform:rotateY(180deg);background:linear-gradient(180deg,#fffdf6,#f3ead6);border:1px solid #d8c9a6;color:#1d2433;overflow:hidden}
+.cd.red .f{color:#c8322b}
+.cd .c1,.cd .c2{position:absolute;font-weight:800;line-height:.9;text-align:center;font-size:calc(var(--cw)*.2)}
+.cd .c1{left:7%;top:5%}.cd .c2{right:7%;bottom:5%;transform:rotate(180deg)}
+.cd .c1 i,.cd .c2 i{display:block;font-style:normal;font-size:.8em}
+.cd .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:calc(var(--cw)*.46);line-height:1}
+.cd .face{position:absolute;inset:22% 18%;border-radius:8px;border:2px solid currentColor;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(233,196,106,.18)}
+.cd .face b{font-size:calc(var(--cw)*.34);line-height:1}
+.cd .face svg{width:46%;height:auto}
+.cd.won .f{box-shadow:0 0 0 3px #ffe27a,0 0 18px #ffe27a}
+.banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.3);opacity:0;pointer-events:none;z-index:9;font-weight:900;font-size:56px;letter-spacing:.04em;
+  color:#ffe27a;-webkit-text-stroke:2px #7b2410;text-shadow:0 5px 0 #7b2410,0 10px 20px rgba(0,0,0,.6)}
+.banner.on{animation:ban 1.2s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-8deg)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(3deg)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+.msg{font-weight:700;font-size:18px;color:var(--k-warm);text-shadow:0 2px 6px rgba(0,0,0,.6);text-align:center;min-height:24px}
+@media (max-height:620px){.lbl{font-size:12.5px}.lbl b{font-size:18px}.msg{font-size:16px}}
+</style>
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true">
+        <g transform="rotate(-12 50 50)"><rect x="24" y="14" width="44" height="62" rx="6" fill="#fffdf6" stroke="#d8c9a6"/><text x="46" y="56" font-size="30" text-anchor="middle" fill="#1d2433">♠</text><text x="31" y="30" font-size="12" font-weight="800" fill="#1d2433">K</text></g>
+        <g transform="rotate(12 82 50)"><rect x="64" y="14" width="44" height="62" rx="6" fill="#fffdf6" stroke="#d8c9a6"/><text x="86" y="56" font-size="30" text-anchor="middle" fill="#c8322b">♥</text><text x="70" y="30" font-size="12" font-weight="800" fill="#c8322b">A</text></g>
+        <text x="66" y="88" font-size="16" font-weight="900" text-anchor="middle" fill="#ffe27a" stroke="#7b2410" stroke-width=".8">WAR!</text>
+      </svg>
+      <h1>War</h1>
+      <p class="lead">You and Brody-Bot each flip a card. The higher card wins both!</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Play Brody-Bot</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="msg" id="msg"></div>
+    <div class="table" id="tbl">
+      <div class="lbl" id="lBot"></div><div class="lbl" id="lMe"></div>
+      <div class="stack" id="dBot"><span class="cnt"></span></div><div class="stack" id="wBot"><span class="cnt"></span></div>
+      <div class="stack mine" id="dMe" role="button" aria-label="Flip your card"><span class="cnt"></span></div><div class="stack" id="wMe"><span class="cnt"></span></div>
+      <div class="banner" id="ban">WAR!</div>
+      <div class="plate" aria-hidden="true">BW</div>
+    </div>
+    <div class="tools">
+      <button class="k-btn" id="tFlip">Flip!</button>
+      <button class="k-btn k-ghost" id="tMenu">Menu</button>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1110a"></script>
+<script src="kids-games.js?v=1110a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store;
+var ST=LS.get("war",{}); if(!ST||typeof ST!=="object") ST={}; ST.w=ST.w||0; ST.l=ST.l||0; ST.t=ST.t||0;
+function save(){ LS.set("war",ST); }
+var SU=["♣","♦","♥","♠"], RK=["2","3","4","5","6","7","8","9","10","J","Q","K","A"], RN=["2","3","4","5","6","7","8","9","10","jack","queen","king","ace"];
+var me, bot, wonMe, wonBot, pot, busy=false, G=null, gen=0;
+var tbl=$("#tbl");
+
+/* ---------- sounds ---------- */
+function sFlip(){ BWG.noise(0,.09,.12,1500,6000); BWG.tone(900,0,.05,.015,"triangle",600); }
+function sSlide(){ BWG.noise(0,.22,.07,600,3000); }
+function sWinR(){ BWG.tone(660,0,.16,.045,"triangle"); BWG.tone(880,.08,.22,.045,"triangle"); }
+function sLoseR(){ BWG.tone(440,0,.18,.04,"triangle"); BWG.tone(370,.1,.24,.035,"triangle"); }
+function sWar(){ [0,.12,.24].forEach(function(t){ BWG.noise(t,.12,.18,90,500); BWG.tone(110,t,.16,.09,"sine",70); }); BWG.tone(523,.4,.3,.05,"square"); BWG.tone(784,.52,.4,.04,"square"); }
+function sEnd(win){ if(win){ [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,i*.09,.42,.05,"triangle"); }); BWG.noise(.4,.4,.04,4000,9000); }
+  else { BWG.tone(392,0,.22,.05,"triangle"); BWG.tone(330,.18,.26,.05,"triangle"); BWG.tone(262,.38,.42,.05,"triangle"); } }
+
+/* ---------- layout ---------- */
+function geo(){
+  var W=tbl.clientWidth, H=tbl.clientHeight, ch=Math.min(H*.24,W*.3*1.4), cw=ch/1.4;
+  tbl.style.setProperty("--cw",cw+"px");
+  var gx=Math.max(12,(W-cw*3)/4);
+  G={W:W,H:H,cw:cw,ch:ch,
+    dBot:[W/2-cw-gx*.35,H*.05],wBot:[W/2+gx*.35,H*.05],
+    dMe:[W/2-cw-gx*.35,H*.95-ch-10],wMe:[W/2+gx*.35,H*.95-ch-10],
+    bBot:[W/2-cw-gx*.35,H/2-ch/2],bMe:[W/2+gx*.35,H/2-ch/2]};
+  ["dBot","wBot","dMe","wMe"].forEach(function(k){ var e=$("#"+k); e.style.left=G[k][0]+"px"; e.style.top=G[k][1]+"px"; e.style.width=cw+"px"; e.style.height=ch+"px"; });
+  var lb=$("#lBot"), lm=$("#lMe"); lb.style.left=lm.style.left=(W/2)+"px"; lb.style.top=(G.dBot[1]+ch+8)+"px"; lm.style.top=(G.dMe[1]-30)+"px";
+  if(pot) pot.forEach(function(p){ put(p.el,p.x(),p.y(),p.r,true); });
+}
+function put(el,x,y,r,now){ if(now){ el.style.transition="none"; } el.style.width=G.cw+"px"; el.style.height=G.ch+"px";
+  el.style.transform="translate("+x+"px,"+y+"px) rotate("+(r||0)+"deg)"; if(now){ el.offsetWidth; el.style.transition=""; } }
+function cardEl(c){
+  var red=c.s===1||c.s===2, d=document.createElement("div"), mid;
+  if(c.r>=9&&c.r<=11) mid='<div class="face"><svg viewBox="0 0 24 14"><path d="M2 13 1 3l6 5 5-7 5 7 6-5-1 10z" fill="#e9c46a" stroke="currentColor" stroke-width="1.2"/></svg><b>'+RK[c.r]+'</b></div>';
+  else mid='<div class="mid">'+SU[c.s]+'</div>';
+  d.className="cd"+(red?" red":"");
+  d.innerHTML='<div class="in"><div class="b"></div><div class="f"><div class="c1">'+RK[c.r]+'<i>'+SU[c.s]+'</i></div>'+mid+'<div class="c2">'+RK[c.r]+'<i>'+SU[c.s]+'</i></div></div></div>';
+  tbl.appendChild(d); return d;
+}
+function stacks(){
+  [["dBot",bot.length],["wBot",wonBot],["dMe",me.length],["wMe",wonMe]].forEach(function(a){ var e=$("#"+a[0]), n=a[1], deck=a[0][0]==="d";
+    e.classList.toggle("empty",!n); e.querySelector(".cnt").textContent=n; e.querySelector(".cnt").style.display=n?"":"none";
+    e.style.background=n?(deck?"radial-gradient(circle at 50% 50%,#ffe27a 0 9%,transparent 10%),repeating-linear-gradient(45deg,#1f6f5a 0 6px,#18594a 6px 12px)":"linear-gradient(180deg,#fffdf6,#efe4cc)"):"";
+    e.style.border=n?"3px solid #fff4df":""; e.style.boxShadow=n?(Array.from({length:Math.min(5,Math.ceil(n/6))},function(_,i){ return (i+1)+"px "+(i+1)*1.5+"px 0 "+(deck?"#e9dcc0":"#d8c9a6"); }).join(",")+",0 8px 12px rgba(0,0,0,.35)"):""; });
+  $("#lBot").innerHTML="Brody-Bot · <b>"+wonBot+"</b> won"; $("#lMe").innerHTML=BWG.who("You")+" · <b>"+wonMe+"</b> won";
+  var canGo=!busy&&me.length>0; $("#dMe").classList.toggle("go",canGo); $("#tFlip").disabled=!canGo;
+}
+
+/* ---------- play ---------- */
+function deal(){
+  gen++; [].slice.call(tbl.querySelectorAll(".cd")).forEach(function(e){ e.remove(); });
+  var d=[]; for(var s=0;s<4;s++) for(var r=0;r<13;r++) d.push({s:s,r:r});
+  for(var i=d.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=d[i]; d[i]=d[j]; d[j]=t; }
+  me=d.slice(0,26); bot=d.slice(26); wonMe=0; wonBot=0; pot=[]; busy=false; layer=0;
+  geo(); stacks(); $("#msg").textContent="Tap your deck or Flip! to start.";
+}
+var layer=0;
+function lay(who,up,i){ /* who: "me" | "bot"; i: place in a war pile */
+  var c=(who==="me"?me:bot).shift(), el=cardEl(c), from=who==="me"?G.dMe:G.dBot, to=who==="me"?"bMe":"bBot";
+  put(el,from[0],from[1],0,true); el.style.zIndex=10+(layer++);
+  var off=i*G.cw*.13, rot=(who==="me"?1:-1)*(i?3:0)+(Math.random()*4-2);
+  var p={c:c,el:el,who:who,r:rot,x:function(){ return G[to][0]+(who==="me"?off:-off); },y:function(){ return G[to][1]-off*.4; }};
+  pot.push(p);
+  requestAnimationFrame(function(){ put(el,p.x(),p.y(),rot); if(up) el.classList.add("up"); });
+  return p;
+}
+function wait(ms){ var g=gen; return new Promise(function(res,rej){ setTimeout(function(){ g===gen?res():rej("x"); },ms); }); }
+function flip(){
+  if(busy||!me.length) return; busy=true; stacks();
+  var a=lay("me",true,0), b=lay("bot",true,0); sFlip(); stacks();
+  wait(560).then(function(){ return compare(a,b,0); }).catch(function(){});
+}
+function compare(a,b,depth){
+  if(a.c.r===b.c.r){
+    $("#msg").textContent="Both are "+RN[a.c.r]+(a.c.r>=9||a.c.r===12?"s":"s")+"! It's WAR!";
+    var ban=$("#ban"); ban.classList.remove("on"); void ban.offsetWidth; ban.classList.add("on"); sWar();
+    if(depth===0) BWK.say(WARL);
+    return wait(1100).then(function(){
+      if(!me.length||!bot.length){ /* nobody can fight: everyone takes back their own cards */
+        $("#msg").textContent="No cards left for War! Everyone takes back their own cards.";
+        return wait(900).then(function(){ var mine=pot.filter(function(p){return p.who==="me";}).length; return sweep(null,mine,pot.length-mine); }); }
+      var nm=Math.min(3,me.length-1), nb=Math.min(3,bot.length-1), i;
+      for(i=0;i<nm;i++) lay("me",false,i+1); for(i=0;i<nb;i++) lay("bot",false,i+1);
+      sSlide(); stacks();
+      return wait(520).then(function(){ var a2=lay("me",true,nm+1), b2=lay("bot",true,nb+1); sFlip(); stacks(); return wait(600).then(function(){ return compare(a2,b2,depth+1); }); });
+    });
+  }
+  var meWin=a.c.r>b.c.r, w=meWin?a:b;
+  w.el.classList.add("won"); if(meWin) sWinR(); else sLoseR();
+  $("#msg").textContent=meWin?("Your "+RN[a.c.r]+" beats Brody-Bot's "+RN[b.c.r]+"!"):("Brody-Bot's "+RN[b.c.r]+" beats your "+RN[a.c.r]+".");
+  return wait(depth?1100:700).then(function(){ return sweep(meWin?"me":"bot"); });
+}
+function sweep(who,nMe,nBot){
+  sSlide();
+  pot.forEach(function(p,i){ var dest=who?(who==="me"?G.wMe:G.wBot):(p.who==="me"?G.wMe:G.wBot); p.el.style.transitionDelay=(i*.03)+"s"; put(p.el,dest[0],dest[1],0); p.el.classList.add("up"); });
+  return wait(480+pot.length*30).then(function(){
+    pot.forEach(function(p){ p.el.remove(); });
+    if(who==="me") wonMe+=pot.length; else if(who==="bot") wonBot+=pot.length; else { wonMe+=nMe; wonBot+=nBot; }
+    pot=[]; layer=0; busy=false; stacks();
+    if(!me.length||!bot.length) return wait(500).then(endGame);
+  });
+}
+function endGame(){
+  /* a war can leave one player with cards still in hand: they count as won */
+  wonMe+=me.length; wonBot+=bot.length; me=[]; bot=[]; stacks();
+  var r=wonMe>wonBot?"w":wonMe<wonBot?"l":"t", fresh=false, t, h, body;
+  if(r==="w"){ ST.w++; fresh=BWG.patch("joke"); t="You won the war!"; h=fresh?WINP:WIN; body="You won "+wonMe+" cards. Brody-Bot won "+wonBot+"."; }
+  else if(r==="l"){ ST.l++; t="Brody-Bot won this time"; h=LOSE; body="Brody-Bot won "+wonBot+" cards. You won "+wonMe+"."; }
+  else { ST.t++; t="It's a tie!"; h=TIE; body="You both won 26 cards."; }
+  save(); sEnd(r!=="l"); $("#msg").textContent=t;
+  var box=BWK.sheet('<h2>'+t+'</h2>'+(fresh?'<p style="color:var(--k-warm);font-weight:700">New patch! The Joke Shack patch is on your badge wall.</p>':'')+'<p>'+body+'</p>'+
+    '<div class="k-row"><button class="k-btn" data-a="again">Play Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
+  box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); deal(); };
+  box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
+  BWK.say(h);
+}
+
+/* ---------- controls ---------- */
+$("#dMe").onclick=flip; $("#tFlip").onclick=flip;
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  if(e.key===" "||e.key==="Enter"){ e.preventDefault(); flip(); } });
+window.addEventListener("resize",function(){ requestAnimationFrame(geo); });
+if(window.ResizeObserver) new ResizeObserver(function(){ if(document.body.classList.contains("m-play")) geo(); }).observe(tbl);
+function toMenu(){ gen++; busy=false; document.body.className="m-menu";
+  $("#mfoot").textContent=(ST.w+ST.l+ST.t)?("Games won: "+ST.w+" · Brody-Bot: "+ST.l+(ST.t?" · Ties: "+ST.t:"")):"On a computer, press Space to flip."; }
+$("#bPlay").onclick=function(){ document.body.className="m-play"; BWK.sfx("open"); requestAnimationFrame(deal); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW1+'</p><p>'+HOW2+'</p><p>On a computer, press Space to flip.</p></div>'); BWK.say(HOW1+" "+HOW2); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+
+var INTRO="War! You and Brody-Bot each flip a card. The higher card wins both. Tap your deck to flip!";
+var HOW1="Aces are the highest, then king, queen and jack, then ten, all the way down to two.";
+var HOW2="If both cards match, it's War! You each put down three cards face down and one face up. The higher card takes them all. When the decks run out, whoever won the most cards wins the game.";
+var WARL="War!";
+var WIN="You won the war! Great game!", WINP="You won the war! You earned a new patch for your badge wall!";
+var LOSE="Brody-Bot won this time. Want a rematch?", TIE="It's a tie! You both won the same number of cards.";
+var L={"war-intro":INTRO,"war-how":HOW1+" "+HOW2,"war-war":WARL,"war-win":WIN,"war-win-patch":WINP,"war-lose":LOSE,"war-tie":TIE};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"war", voice:"outpost", intro:INTRO, noHello:true});
+window.WAO={flip:flip,deal:deal,state:function(){ return {me:me&&me.length,bot:bot&&bot.length,wonMe:wonMe,wonBot:wonBot,pot:pot&&pot.length,busy:busy}; },
+  rig:function(a,b){ me.unshift(a); bot.unshift(b); stacks(); },lines:L};
+})();
+</script>
+</body>
+</html>

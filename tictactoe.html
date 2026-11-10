@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Tic-Tac-Toe · The Outpost · BrainWhim</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="kids.css?v=1110a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Tic-Tac-Toe (The Outpost · The Joke Shack), Nov 10. You (X, red sticks) vs Brody-Bot (O, blue rings), or two players. */
+:root{--bgx:62%;--bgy:55%}
+/* Brody-Bot and the turn line */
+.top{display:flex;align-items:center;gap:10px;width:min(520px,100%);justify-content:center;min-height:64px}
+.bot{width:62px;height:62px;flex:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.bot .eye{transition:transform .25s}
+.bot.think .eye{animation:look 1s ease-in-out infinite}
+@keyframes look{0%,100%{transform:translateX(-2.5px)}50%{transform:translateX(2.5px)}}
+.bot .ant{transform-box:fill-box;transform-origin:50% 100%;animation:ant 2.4s ease-in-out infinite}
+@keyframes ant{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.bot .led{animation:led 1.6s steps(2) infinite}
+@keyframes led{50%{fill:#ffe27a}}
+.bot.sad .mouth{d:path("M23 44 Q31 39 39 44")}
+.bot.happy .mouth{d:path("M23 41 Q31 49 39 41")}
+.bot.two{display:none}
+.msg{font-weight:700;font-size:20px;color:var(--k-warm);text-shadow:0 2px 6px rgba(0,0,0,.6);text-align:center}
+.msg span{display:block;font-weight:400;font-size:14.5px;color:#cfe0f0}
+/* the wooden board */
+.board{--s:min(92vw,500px,calc(100svh - 330px));width:var(--s);height:var(--s);min-width:220px;min-height:220px;position:relative;border-radius:calc(var(--s)*.07);padding:calc(var(--s)*.05);
+  background:
+   repeating-linear-gradient(88deg,rgba(90,50,18,.0) 0 9px,rgba(90,50,18,.12) 9px 11px,rgba(255,220,170,.06) 11px 15px),
+   radial-gradient(130% 90% at 28% 12%,#d9a066,#b5773f 55%,#8d5626);
+  box-shadow:0 calc(var(--s)*.035) 0 #5e3614,0 calc(var(--s)*.07) calc(var(--s)*.09) rgba(0,0,0,.55),inset 0 2px 0 rgba(255,230,190,.5),inset 0 -3px 6px rgba(60,30,8,.4)}
+.board::after{content:"";position:absolute;inset:calc(var(--s)*.05);pointer-events:none;
+  background:
+   linear-gradient(90deg,transparent calc(33.33% - 5px),rgba(70,36,10,.55) calc(33.33% - 5px) calc(33.33% - 2px),rgba(255,214,160,.35) calc(33.33% - 2px) calc(33.33% + 2px),transparent calc(33.33% + 2px) calc(66.66% - 5px),rgba(70,36,10,.55) calc(66.66% - 5px) calc(66.66% - 2px),rgba(255,214,160,.35) calc(66.66% - 2px) calc(66.66% + 2px),transparent calc(66.66% + 2px)),
+   linear-gradient(180deg,transparent calc(33.33% - 5px),rgba(70,36,10,.55) calc(33.33% - 5px) calc(33.33% - 2px),rgba(255,214,160,.35) calc(33.33% - 2px) calc(33.33% + 2px),transparent calc(33.33% + 2px) calc(66.66% - 5px),rgba(70,36,10,.55) calc(66.66% - 5px) calc(66.66% - 2px),rgba(255,214,160,.35) calc(66.66% - 2px) calc(66.66% + 2px),transparent calc(66.66% + 2px))}
+.cells{position:absolute;inset:calc(var(--s)*.05);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr)}
+.cell{appearance:none;border:0;background:none;padding:0;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+.cell:disabled{cursor:default}
+.cell:not(:disabled):hover::before,.cell.kb::before{content:"";position:absolute;inset:14%;border-radius:18%;background:rgba(255,236,200,.16)}
+.cell.kb::before{outline:3px solid #ffd98a;outline-offset:2px}
+.pc{position:absolute;inset:16%;animation:drop .38s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes drop{0%{transform:translateY(-18%) scale(1.25);opacity:0;filter:drop-shadow(0 22px 10px rgba(0,0,0,.25))}60%{opacity:1}100%{transform:none;filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}}
+.pc.x::before,.pc.x::after{content:"";position:absolute;left:44%;top:-4%;width:13%;height:108%;border-radius:999px;
+  background:linear-gradient(90deg,#8e1f17,#e0533f 35%,#f47a62 50%,#c63a2a 70%,#7d1a12);box-shadow:0 3px 3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35)}
+.pc.x::before{transform:rotate(45deg)}.pc.x::after{transform:rotate(-45deg)}
+.pc.o{border-radius:50%;background:radial-gradient(circle,transparent 46%,#163f80 47%,#2f7fd6 56%,#7cc0ff 63%,#2f7fd6 71%,#123570 79%,transparent 80%);
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
+.pc.win{animation:drop .38s both,glow 1s ease-in-out .3s infinite alternate}
+@keyframes glow{to{filter:drop-shadow(0 0 10px #ffe27a) drop-shadow(0 0 3px #fff2b8)}}
+.line{position:absolute;inset:calc(var(--s)*.05);pointer-events:none}
+.line path{fill:none;stroke:#ffe27a;stroke-width:3.2;stroke-linecap:round;stroke-dasharray:110;stroke-dashoffset:110;filter:drop-shadow(0 0 2px #fff4c8)}
+.line.on path{animation:strike .55s ease-out forwards}
+@keyframes strike{to{stroke-dashoffset:0}}
+/* BW monogram plate on the board's bottom rim */
+.plate{position:absolute;left:50%;bottom:calc(var(--s)*.008);transform:translateX(-50%);font-size:calc(var(--s)*.028);font-weight:700;letter-spacing:.06em;color:#f6dca0;opacity:.75;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+.score{display:flex;gap:8px;justify-content:center}
+.score div{min-width:84px;padding:6px 10px;border-radius:14px;text-align:center;background:rgba(14,26,52,.72);border:1px solid var(--k-line);font-size:13px;color:#b9c9dc;font-weight:700}
+.score b{display:block;font-size:22px;color:#fff}
+.score .me b{color:#ff8a73}.score .op b{color:#8fc8ff}
+@media (max-height:620px){.top{min-height:52px}.bot{width:50px;height:50px}.msg{font-size:18px}.score b{font-size:19px}.board{--s:min(92vw,500px,calc(100svh - 300px))}}
+</style>
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true">
+        <rect x="26" y="6" width="80" height="80" rx="10" fill="#b5773f"/><rect x="26" y="6" width="80" height="80" rx="10" fill="none" stroke="#5e3614" stroke-width="2"/>
+        <path d="M53 14v64M79 14v64M34 33h64M34 59h64" stroke="#5e3614" stroke-width="3" stroke-linecap="round"/>
+        <path d="M37 17l10 10M47 17l-10 10M63 43l10 10M73 43l-10 10M89 69l10 10M99 69l-10 10" stroke="#e0533f" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="94" cy="20" r="6" fill="none" stroke="#2f7fd6" stroke-width="4"/><circle cx="42" cy="72" r="6" fill="none" stroke="#2f7fd6" stroke-width="4"/>
+        <path d="M33 14 L105 80" stroke="#ffe27a" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+      </svg>
+      <h1>Tic-Tac-Toe</h1>
+      <p class="lead">Get three in a row to win! Play Brody-Bot, or a friend on this device.</p>
+      <p class="seg-l">Brody-Bot level</p>
+      <div class="seg" id="lvl"><button data-l="easy">Easy</button><button data-l="medium">Medium</button><button data-l="hard">Hard</button></div>
+      <div class="mbtns">
+        <button class="k-btn" id="bBot">Play Brody-Bot<small id="bBotL"></small></button>
+        <button class="k-btn k-cool" id="bTwo">Two Players<small>one device</small></button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="top">
+      <svg class="bot" id="bot" viewBox="0 0 62 62" aria-hidden="true">
+        <g class="ant"><path d="M31 12V4" stroke="#9aa9bd" stroke-width="2.5"/><circle class="led" cx="31" cy="4" r="3.5" fill="#ff6b5a"/></g>
+        <rect x="9" y="12" width="44" height="40" rx="12" fill="url(#ttBotG)" stroke="#3b4a63" stroke-width="2"/>
+        <rect x="15" y="19" width="32" height="18" rx="8" fill="#13233f"/>
+        <g class="eye"><circle cx="24" cy="28" r="4" fill="#7ff0ff"/><circle cx="38" cy="28" r="4" fill="#7ff0ff"/></g>
+        <path class="mouth" d="M23 43 Q31 46 39 43" fill="none" stroke="#13233f" stroke-width="2.6" stroke-linecap="round"/>
+        <rect x="4" y="26" width="6" height="12" rx="3" fill="#8a9ab0"/><rect x="52" y="26" width="6" height="12" rx="3" fill="#8a9ab0"/>
+        <defs><linearGradient id="ttBotG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6edf6"/><stop offset="1" stop-color="#9fb0c6"/></linearGradient></defs>
+      </svg>
+      <div class="msg" id="msg">Your turn!</div>
+    </div>
+    <div class="board" id="board">
+      <div class="cells" id="cells"></div>
+      <svg class="line" id="line" viewBox="0 0 30 30" preserveAspectRatio="none"><path d=""/></svg>
+      <div class="plate" aria-hidden="true">BW</div>
+    </div>
+    <div class="score" id="score"></div>
+    <div class="tools">
+      <button class="k-btn" id="tNew">New Game</button>
+      <button class="k-btn k-ghost" id="tMenu">Menu</button>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1110a"></script>
+<script src="kids-games.js?v=1110a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store;
+var ST=LS.get("ttt",{}); if(!ST||typeof ST!=="object") ST={};
+ST.lvl=ST.lvl||"easy"; ST.w=ST.w||{easy:0,medium:0,hard:0}; ST.t=ST.t||{easy:0,medium:0,hard:0}; ST.l=ST.l||{easy:0,medium:0,hard:0};
+function save(){ LS.set("ttt",ST); }
+var LINES3=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+var B, mode="bot", turn="x", over=false, first="x", busy=false, sess={x:0,o:0,t:0}, kb=-1;
+var LVLN={easy:"Easy",medium:"Medium",hard:"Hard"};
+
+/* ---------- sounds of its own ---------- */
+function sKnock(o){ BWG.noise(0,.07,.16,700,2600); BWG.tone(o?240:190,0,.14,.07,"triangle",o?200:150); BWG.tone(o?620:520,.01,.05,.02,"sine"); }
+function sWin(){ [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,i*.09,.42,.05,"triangle"); }); BWG.noise(.4,.4,.04,4000,9000); }
+function sLose(){ BWG.tone(392,0,.22,.05,"triangle"); BWG.tone(330,.18,.26,.05,"triangle"); BWG.tone(262,.38,.42,.05,"triangle"); }
+function sTie(){ BWG.tone(523,0,.25,.045,"triangle"); BWG.tone(523,.2,.35,.045,"triangle"); BWG.tone(659,.2,.35,.03,"sine"); }
+function sBeep(){ BWG.tone(1200,0,.05,.025,"square"); BWG.tone(1600,.07,.05,.02,"square"); }
+
+/* ---------- Brody-Bot ---------- */
+function winner(b){ for(var i=0;i<8;i++){ var L=LINES3[i]; if(b[L[0]]&&b[L[0]]===b[L[1]]&&b[L[0]]===b[L[2]]) return {p:b[L[0]],line:L}; }
+  return b.indexOf(null)<0?{p:"t"}:null; }
+function empties(b){ var e=[]; for(var i=0;i<9;i++) if(!b[i]) e.push(i); return e; }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function finish(b,p){ var e=empties(b); for(var i=0;i<e.length;i++){ b[e[i]]=p; var w=winner(b); b[e[i]]=null; if(w&&w.p===p) return e[i]; } return -1; }
+function mm(b,p){ var w=winner(b); if(w) return w.p==="o"?10:w.p==="x"?-10:0;
+  var e=empties(b), best=p==="o"?-99:99; e.forEach(function(i){ b[i]=p; var s=mm(b,p==="o"?"x":"o"); b[i]=null; s+= (s>0?-1:s<0?1:0);
+    if(p==="o"?s>best:s<best) best=s; }); return best; }
+function botMove(){
+  var b=B.slice(), e=empties(b), m;
+  if(ST.lvl==="easy"){ m=finish(b,"o"); if(m<0||Math.random()<.5) m=pick(e); return m; }
+  if(ST.lvl==="medium"){ m=finish(b,"o"); if(m>=0) return m; m=finish(b,"x"); if(m>=0&&Math.random()<.75) return m;
+    if(!b[4]&&Math.random()<.6) return 4; return pick(e); }
+  if(e.length===9) return pick([0,2,4,6,8]);
+  var best=-99, mv=[]; e.forEach(function(i){ b[i]="o"; var s=mm(b,"x"); b[i]=null; if(s>best){best=s;mv=[i];} else if(s===best) mv.push(i); });
+  return pick(mv);
+}
+function face(c){ var bot=$("#bot"); bot.classList.remove("think","sad","happy"); if(c) bot.classList.add(c); }
+
+/* ---------- the board ---------- */
+var cellsEl=$("#cells");
+for(var i=0;i<9;i++){ var c=document.createElement("button"); c.className="cell"; c.dataset.i=i; c.setAttribute("aria-label","Square "+(i+1)); cellsEl.appendChild(c); }
+cellsEl.addEventListener("click",function(e){ var c=e.target.closest(".cell"); if(!c) return; tap(+c.dataset.i); });
+function tap(i){ if(over||busy||B[i]) return; if(mode==="bot"&&turn!=="x") return; place(i,turn); }
+function place(i,p){
+  B[i]=p; var c=cellsEl.children[i]; c.innerHTML='<i class="pc '+p+'"></i>'; c.disabled=true; c.setAttribute("aria-label",(p==="x"?"X":"O")+" in square "+(i+1)); sKnock(p==="o");
+  var w=winner(B); if(w){ end(w); return; }
+  turn=p==="x"?"o":"x"; status();
+  if(mode==="bot"&&turn==="o"){ busy=true; face("think"); setTimeout(function(){ busy=false; face(""); if(!over){ sBeep(); place(botMove(),"o"); } },650+Math.random()*350); }
+}
+function status(){
+  var m=$("#msg");
+  if(mode==="bot") m.innerHTML=turn==="x"?"Your turn!<span>You are the red X</span>":"Brody-Bot is thinking…<span>"+LVLN[ST.lvl]+"</span>";
+  else m.innerHTML=(turn==="x"?"Red X's turn":"Blue O's turn")+"<span>Pass the device to your friend</span>";
+}
+function score(){
+  var me=mode==="bot"?BWG.who("You"):"Red X", op=mode==="bot"?"Brody-Bot":"Blue O";
+  $("#score").innerHTML='<div class="me">'+me+'<b>'+sess.x+'</b></div><div>Ties<b>'+sess.t+'</b></div><div class="op">'+op+'<b>'+sess.o+'</b></div>';
+}
+function newGame(){
+  B=[null,null,null,null,null,null,null,null,null]; over=false; busy=false; turn=first; first=first==="x"?"o":"x";
+  for(var i=0;i<9;i++){ var c=cellsEl.children[i]; c.innerHTML=""; c.disabled=false; c.setAttribute("aria-label","Square "+(i+1)); }
+  $("#line").classList.remove("on"); $("#line path").setAttribute("d","");
+  face(""); status(); score();
+  if(mode==="bot"&&turn==="o"){ busy=true; face("think"); setTimeout(function(){ busy=false; face(""); sBeep(); place(botMove(),"o"); },800); }
+}
+function center(k){ return [5+10*(k%3),5+10*Math.floor(k/3)]; }
+function end(w){
+  over=true; for(var i=0;i<9;i++) cellsEl.children[i].disabled=true;
+  if(w.p==="t"){ sess.t++; } else { sess[w.p]++;
+    w.line.forEach(function(k){ var p=cellsEl.children[k].firstChild; if(p) p.classList.add("win"); });
+    var a=center(w.line[0]), b=center(w.line[2]), dx=b[0]-a[0], dy=b[1]-a[1], n=Math.hypot(dx,dy);
+    $("#line path").setAttribute("d","M"+(a[0]-dx/n*3.2)+" "+(a[1]-dy/n*3.2)+"L"+(b[0]+dx/n*3.2)+" "+(b[1]+dy/n*3.2)); $("#line").classList.add("on"); }
+  score();
+  var t, h, clip, fresh=false;
+  if(mode==="bot"){
+    if(w.p==="x"){ ST.w[ST.lvl]++; fresh=BWG.patch("joke"); face("sad"); sWin(); t="You beat Brody-Bot!"; h=fresh?WINP:WIN; }
+    else if(w.p==="o"){ ST.l[ST.lvl]++; face("happy"); sLose(); t="Brody-Bot wins!"; h=LOSE; }
+    else { ST.t[ST.lvl]++; face(""); sTie(); t=ST.lvl==="hard"?"A tie on Hard!":"It's a tie!"; h=ST.lvl==="hard"?TIEH:TIE; }
+    save();
+    $("#msg").innerHTML=t;
+  } else {
+    if(w.p==="t"){ sTie(); t="It's a tie!"; h=TIE; } else { sWin(); t=w.p==="x"?"Red X wins!":"Blue O wins!"; h=w.p==="x"?XW:OW; }
+    $("#msg").innerHTML=t;
+  }
+  setTimeout(function(){
+    var box=BWK.sheet('<h2>'+t+'</h2>'+(fresh?'<p style="color:var(--k-warm);font-weight:700">New patch! The Joke Shack patch is on your badge wall.</p>':'')+'<p>'+BODY[h]+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="again">Play Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
+    box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); newGame(); };
+    box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
+    BWK.say(h);
+  }, w.p==="t"?700:1300);
+}
+
+/* ---------- keyboard (computers) ---------- */
+document.addEventListener("keydown",function(e){
+  if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  var k=e.key, mv={ArrowLeft:-1,ArrowRight:1,ArrowUp:-3,ArrowDown:3}[k];
+  if(k>="1"&&k<="9"){ tap(+k-1); return; }
+  if(mv!==undefined){ e.preventDefault(); if(kb<0) kb=4; else { var n=kb+mv; if(Math.abs(mv)===1&&Math.floor(n/3)!==Math.floor(kb/3)) n=kb; if(n>=0&&n<9) kb=n; }
+    [].forEach.call(cellsEl.children,function(c,i){ c.classList.toggle("kb",i===kb); }); return; }
+  if((k==="Enter"||k===" ")&&kb>=0){ e.preventDefault(); tap(kb); }
+});
+
+/* ---------- menu ---------- */
+function lvlUI(){ [].forEach.call($("#lvl").children,function(b){ b.classList.toggle("on",b.dataset.l===ST.lvl); }); $("#bBotL").textContent=LVLN[ST.lvl]; foot(); }
+function foot(){ var w=ST.w, t=ST.t;
+  $("#mfoot").innerHTML="Wins against Brody-Bot: Easy "+w.easy+" · Medium "+w.medium+" · Hard "+w.hard+(t.hard?"<br>Ties on Hard: "+t.hard:"")+"<br>On Hard, Brody-Bot never loses. Can you tie him?"; }
+$("#lvl").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; ST.lvl=b.dataset.l; save(); BWK.sfx("tap"); lvlUI(); });
+function toMenu(){ document.body.className="m-menu"; lvlUI(); }
+function play(m){ if(m!==mode){ sess={x:0,o:0,t:0}; first="x"; } mode=m; document.body.className="m-play"; $("#bot").classList.toggle("two",m==="two"); BWK.sfx("open"); kb=-1; newGame(); }
+$("#bBot").onclick=function(){ if(mode==="bot") sess={x:0,o:0,t:0}; play("bot"); };
+$("#bTwo").onclick=function(){ play("two"); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW+'</p><p><b>Brody-Bot levels:</b> Easy makes silly moves, Medium tries to block you, and on Hard he never loses. Can you tie him?</p><p>On a computer, press 1 to 9, or use the arrow keys and Enter.</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tNew").onclick=function(){ BWK.sfx("tap"); newGame(); };
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+
+var INTRO="Tic-Tac-Toe! Get three in a row before Brody-Bot does. Pick Easy, Medium or Hard, or play with a friend.";
+var HOW="Take turns putting your mark in a square. The first one to get three in a row wins. A row can go across, up and down, or corner to corner. If all nine squares fill up and nobody has a row, it's a tie.";
+var WIN="You beat Brody-Bot! Nice moves!";
+var WINP="You beat Brody-Bot! You earned a new patch for your badge wall!";
+var LOSE="Brody-Bot got three in a row. Try again!";
+var TIE="It's a tie! Nobody got three in a row.";
+var TIEH="A tie on Hard! That's the best anyone can do against Brody-Bot.";
+var XW="Red X wins! Great game!", OW="Blue O wins! Great game!";
+var BODY={}; BODY[WIN]="Nice moves!"; BODY[WINP]="Nice moves!"; BODY[LOSE]="He got three in a row. Try again!"; BODY[TIE]="Nobody got three in a row.";
+BODY[TIEH]="That's the best anyone can do against Brody-Bot."; BODY[XW]="Great game!"; BODY[OW]="Great game!";
+var L={"ttt-intro":INTRO,"ttt-how":HOW,"ttt-win":WIN,"ttt-win-patch":WINP,"ttt-lose":LOSE,"ttt-tie":TIE,"ttt-tie-hard":TIEH,"ttt-x-wins":XW,"ttt-o-wins":OW};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"ttt", voice:"outpost", intro:INTRO, noHello:true});
+window.TTO={play:play,place:place,tap:tap,B:function(){return B;},bot:botMove,lines:L,state:function(){return {B:B,turn:turn,over:over,mode:mode,ST:ST};}};
+})();
+</script>
+</body>
+</html>
