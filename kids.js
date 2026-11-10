@@ -473,6 +473,9 @@
   function hello(fresh){
     var el=$(".k-hello"), s=seat(); if(!el) return;
     if(!s||!s.name){ el.classList.remove("on"); return; }
+    // noHello (Nov 10): play areas inside a room (moonlets-piano.html and future moon activities) skip the arrival
+    // "Welcome back" banner, since the room already greeted the child; the "Hi, <name>!" after joining still shows.
+    if(!fresh && cfg.noHello){ el.classList.remove("on"); return; }
     el.textContent=(fresh?"Hi, ":(cfg.helloWord||"Welcome back, "))+s.name+"!";
     el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(function(){el.classList.remove("on");},5200);
     if(fresh){ var k=sayable(s.name); say("Hi, "+s.name+"!", false, k?"hi-"+k:"hi-friend"); }
