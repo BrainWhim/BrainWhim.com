@@ -151,6 +151,8 @@
 .patch svg{width:76px;height:76px;filter:none}
 .patch span{font-size:13px;font-weight:700;color:#f6e4c6;line-height:1.15;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .patch.off span{color:#cbb393;opacity:.8}
+.patch small{font-size:12px;font-weight:700;color:#e9c46a;line-height:1}
+.act .pd{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font-style:normal;font-size:12px;font-weight:700;color:#14402e;background:#8fe3b4;vertical-align:2px}
 .patch svg{transition:transform .25s}
 .patch:not(.off) svg{animation:lift 3s ease-in-out infinite}
 @keyframes lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
@@ -187,7 +189,7 @@
   <div class="cards" id="cards"></div>
 </main>
 
-<script src="kids.js?v=1110a"></script>
+<script src="kids.js?v=1110b"></script>
 <script>
 (function(){
   /* ---- the five corners (Blueprint v1). An activity opens when it gets an href. ---- */
@@ -202,27 +204,27 @@
   var C = {
     lab:{name:"The Lab", line:"Brain games and word tricks", col:"#2f7fd6",
       say:"Welcome to The Lab! This is where brainy experiments happen.",
-      acts:[{n:"Print Shop Jr.", d:"Find the hidden words in a wooden type case", s:"soon", href:"printshop-jr.html"},
-            {n:"Zayden's Challenge", d:"The toughest brain puzzle of the week", s:"later"}]},
+      acts:[{id:"psj", n:"Print Shop Jr.", d:"Find the hidden words in a wooden type case", s:"soon", href:"printshop-jr.html"},
+            {id:"challenge", n:"Zayden's Challenge", d:"The toughest brain puzzle of the week", s:"later"}]},
     tele:{name:"The Telescope", line:"Maps, stars and far-off places", col:"#169e9a",
       say:"Welcome to The Telescope! Look out the window and explore.",
-      acts:[{n:"Captain Zayden's Map", d:"A new treasure map puzzle every day", s:"soon", href:"treasure-map.html"},
-            {n:"Space Snake", d:"Steer a comet snake to catch the stars", s:"soon", href:"space-snake.html"},
-            {n:"Star Stickers", d:"Find the star pictures hiding in the sky", s:"later"}]},
+      acts:[{id:"tmap", n:"Captain Zayden's Map", d:"A new treasure map puzzle every day", s:"soon", href:"treasure-map.html"},
+            {id:"snake", n:"Space Snake", d:"Steer a comet snake to catch the stars", s:"soon", href:"space-snake.html"},
+            {id:"stickers", n:"Star Stickers", d:"Find the star pictures hiding in the sky", s:"later"}]},
     joke:{name:"The Joke Shack", line:"Silly jokes and goofy games", col:"#e08a1e",
       say:"Welcome to The Joke Shack! Get ready to giggle.",
-      acts:[{n:"Tic-Tac-Toe", d:"Three in a row against Brody-Bot or a friend", s:"soon", href:"tictactoe.html"},
-            {n:"War", d:"Flip cards with Brody-Bot. High card wins!", s:"soon", href:"war.html"},
-            {n:"Joke-a-Day", d:"A brand-new joke every morning", s:"soon"},
-            {n:"Crazy Eights, Goofy Edition", d:"Cards with a llama, Brody-Bot and Grandpa Wobble", s:"soon"}]},
+      acts:[{id:"ttt", n:"Tic-Tac-Toe", d:"Three in a row against Brody-Bot or a friend", s:"soon", href:"tictactoe.html"},
+            {id:"war", n:"War", d:"Flip cards with Brody-Bot. High card wins!", s:"soon", href:"war.html"},
+            {id:"jokeaday", n:"Joke-a-Day", d:"A brand-new joke every morning", s:"soon"},
+            {id:"eights", n:"Crazy Eights, Goofy Edition", d:"Cards with a llama, Brody-Bot and Grandpa Wobble", s:"soon"}]},
     work:{name:"The Workshop", line:"Make it, mix it, build it", col:"#7c52e0",
       say:"Welcome to The Workshop! Grab your tools and make something.",
-      acts:[{n:"Slime Lab", d:"Printable recipe cards, like Sophie's Sparkle Slime", s:"soon"},
-            {n:"Studio Sophie", d:"Design your own outfits", s:"later"}]},
+      acts:[{id:"slime", n:"Slime Lab", d:"Printable recipe cards, like Sophie's Sparkle Slime", s:"soon"},
+            {id:"sophie", n:"Studio Sophie", d:"Design your own outfits", s:"later"}]},
     mission:{name:"Mission Control", line:"Timers, charts and goals", col:"#109a6e",
       say:"Welcome to Mission Control! Brody's three big screens and the captain's chair are warming up.",
-      acts:[{n:"Launch Timer", d:"Count down any job like a rocket launch", s:"later"},
-            {n:"Chore Chart", d:"Earn pretend money for jobs well done", s:"later"}],
+      acts:[{id:"timer", n:"Launch Timer", d:"Count down any job like a rocket launch", s:"later"},
+            {id:"chores", n:"Chore Chart", d:"Earn pretend money for jobs well done", s:"later"}],
       note:"Brody's three big screens and the captain's chair are warming up."}
   };
   var ORDER = ["lab","tele","joke","work","mission"];
@@ -249,27 +251,27 @@
 
   function openWall(){
     var b=badges(), n=earnedCount(), cells="";
-    ORDER.forEach(function(k){ cells+='<div class="patch'+(b[k]?"":" off")+'">'+patch(k,!!b[k])+'<span>'+C[k].name.replace("The ","")+'</span></div>'; });
+    ORDER.forEach(function(k){ var g=BWK.cornerProgress(k); cells+='<div class="patch'+(b[k]?"":" off")+'">'+patch(k,!!b[k])+'<span>'+C[k].name.replace("The ","")+'</span>'+(b[k]?'':'<small>'+g.n+' of '+g.of+' played</small>')+'</div>'; });
     cells+='<div class="patch'+(n===5?"":" off")+'">'+patch("cmd",n===5)+'<span>Commander</span></div>';
     BWK.sheet('<div class="cHead"><span class="ic" style="background:linear-gradient(180deg,#e9c46a,#b8862b)">'+IC.badges+'</span>'+
       '<div><h2>Badge Wall</h2><p>'+n+' of 5 patches earned</p></div></div>'+
       '<div class="wall">'+cells+'</div>'+
-      '<p class="note">Finish a mission in a corner to earn its patch. Collect all five to become <b>Commander</b>!</p>');
-    BWK.say("This is your badge wall. Finish a mission in a corner to earn its patch. Collect all five to become Commander!");
+      '<p class="note">Play every game in a corner to earn its patch. Collect all five to become <b>Commander</b>!</p>');
+    BWK.say("This is your badge wall. Play every game in a corner to earn its patch. Collect all five to become Commander!");
   }
 
   function openCorner(k){
     if(k==="badges"){ openWall(); return; }
-    var c=C[k], rows="";
+    var c=C[k], rows="", pl=BWK.store.get("played",{})||{}, g=BWK.cornerProgress(k), pn=c.name.replace("The ",""), got=!!badges()[k];
     BWK.store.set("corner",k);
     c.acts.forEach(function(a,i){
       var st = a.href ? '<span class="st go">Play</span>' : '<span class="st'+(a.s==="later"?" later":"")+'">'+STATUS[a.s]+'</span>';
-      rows+='<button class="act" data-i="'+i+'"><span class="tx"><b>'+a.n+'</b><i>'+a.d+'</i></span>'+st+'</button>';
+      rows+='<button class="act" data-i="'+i+'"><span class="tx"><b>'+a.n+(pl[a.id]?'<em class="pd">✓ Played</em>':'')+'</b><i>'+a.d+'</i></span>'+st+'</button>';
     });
     var box=BWK.sheet('<div class="cHead"><span class="ic" style="background:linear-gradient(180deg,'+c.col+','+c.col+'bb)">'+IC[k]+'</span>'+
       '<div><h2>'+c.name+'</h2><p>'+c.line+'</p></div></div>'+
       '<div class="acts">'+rows+'</div>'+
-      '<p class="note" id="opNote">'+(c.note||"Missions start soon: finish one here to earn the "+c.name.replace("The ","")+" patch!")+'</p>');
+      '<p class="note" id="opNote">'+(c.note||(got?"You earned the "+pn+" patch! Great exploring.":"Play every game here to earn the "+pn+" patch! You've played "+g.n+" of "+g.of+"."))+'</p>');
     BWK.say(c.say);
     [].forEach.call(box.querySelectorAll(".act"),function(btn){
       btn.onclick=function(){
@@ -311,7 +313,7 @@
 
   showCount();
   BWK.lines({"intro-outpost":"Welcome to The Outpost treehouse! Tap The Lab, The Telescope, The Joke Shack, The Workshop or Mission Control. Your patches go on the badge wall.",
-    "badge-wall":"This is your badge wall. Finish a mission in a corner to earn its patch. Collect all five to become Commander!",
+    "badge-wall-2":"This is your badge wall. Play every game in a corner to earn its patch. Collect all five to become Commander!",
     "corner-lab":"Welcome to The Lab! This is where brainy experiments happen.",
     "corner-telescope":"Welcome to The Telescope! Look out the window and explore.",
     "corner-jokeshack":"Welcome to The Joke Shack! Get ready to giggle.",

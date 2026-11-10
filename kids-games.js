@@ -17,8 +17,11 @@
     g.gain.setValueAtTime(v||.1,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
     s.connect(f); f.connect(g); g.connect(a.destination); s.start(t); s.stop(t+d+.02); }
   function who(def){ var s=BWK.seat(); return (s&&s.name?s.name:def).replace(/[<>&"]/g,""); }
-  /* returns true the first time this corner's patch is earned */
-  function patch(k){ var b=LS.get("badges",{}); if(!b||typeof b!=="object") b={}; if(b[k]) return false; b[k]=true; LS.set("badges",b); return true; }
+  /* marks this game played (a finished game); returns its corner's key the first time that corner's patch is earned
+     (every game in the corner played, Judy Nov 10), else "" */
+  function patch(id){ return BWK.played(id); }
+  var CN={lab:"The Lab",tele:"The Telescope",joke:"The Joke Shack",work:"The Workshop",mission:"Mission Control"};
+  function patchLine(k){ return k?'<p style="color:var(--k-warm);font-weight:700">New patch! You played every game in '+CN[k]+'. Its patch is on your badge wall.</p>':""; }
   function toOutpost(){ BWK.closeSheet(true); BWK.sfx("whoosh"); setTimeout(function(){ location.href="outpost.html"; },200); }
-  window.BWG={tone:tone,noise:noise,who:who,patch:patch,toOutpost:toOutpost,store:LS};
+  window.BWG={tone:tone,noise:noise,who:who,patch:patch,patchLine:patchLine,toOutpost:toOutpost,store:LS};
 })();

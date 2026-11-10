@@ -114,8 +114,8 @@
     </div>
   </section>
 </main>
-<script src="kids.js?v=1110a"></script>
-<script src="kids-games.js?v=1110a"></script>
+<script src="kids.js?v=1110b"></script>
+<script src="kids-games.js?v=1110b"></script>
 <script>
 (function(){
 "use strict";
@@ -149,7 +149,13 @@ function botMove(){
   if(ST.lvl==="medium"){ m=finish(b,"o"); if(m>=0) return m; m=finish(b,"x"); if(m>=0&&Math.random()<.75) return m;
     if(!b[4]&&Math.random()<.6) return 4; return pick(e); }
   if(e.length===9) return pick([0,2,4,6,8]);
-  var best=-99, mv=[]; e.forEach(function(i){ b[i]="o"; var s=mm(b,"x"); b[i]=null; if(s>best){best=s;mv=[i];} else if(s===best) mv.push(i); });
+  /* Hard (Judy, Nov 10: hard to beat, never impossible): he always takes a win and always blocks, and plays perfectly,
+     but in about half his games he makes one slip early on that leaves a trap (a fork) for you to find. */
+  m=finish(b,"o"); if(m>=0) return m; m=finish(b,"x"); if(m>=0) return m;
+  var best=-99, mv=[], sc={}; e.forEach(function(i){ b[i]="o"; var s=mm(b,"x"); b[i]=null; sc[i]=s; if(s>best){best=s;mv=[i];} else if(s===best) mv.push(i); });
+  if(!slipped && e.length>=5 && e.length<=8 && Math.random()<slipP){
+    var bad=e.filter(function(i){ return sc[i]<best && sc[i]<0; });
+    if(bad.length){ slipped=true; return pick(bad); } }
   return pick(mv);
 }
 function face(c){ var bot=$("#bot"); bot.classList.remove("think","sad","happy"); if(c) bot.classList.add(c); }
@@ -174,7 +180,8 @@ function score(){
   var me=mode==="bot"?BWG.who("You"):"Red X", op=mode==="bot"?"Brody-Bot":"Blue O";
   $("#score").innerHTML='<div class="me">'+me+'<b>'+sess.x+'</b></div><div>Ties<b>'+sess.t+'</b></div><div class="op">'+op+'<b>'+sess.o+'</b></div>';
 }
-function newGame(){
+var slipped=false, slipP=.4;
+function newGame(){ slipped=false;
   B=[null,null,null,null,null,null,null,null,null]; over=false; busy=false; turn=first; first=first==="x"?"o":"x";
   for(var i=0;i<9;i++){ var c=cellsEl.children[i]; c.innerHTML=""; c.disabled=false; c.setAttribute("aria-label","Square "+(i+1)); }
   $("#line").classList.remove("on"); $("#line path").setAttribute("d","");
@@ -191,17 +198,19 @@ function end(w){
   score();
   var t, h, clip, fresh=false;
   if(mode==="bot"){
-    if(w.p==="x"){ ST.w[ST.lvl]++; fresh=BWG.patch("joke"); face("sad"); sWin(); t="You beat Brody-Bot!"; h=fresh?WINP:WIN; }
+    fresh=BWG.patch("ttt");
+    if(w.p==="x"){ ST.w[ST.lvl]++; face("sad"); sWin(); t="You beat Brody-Bot!"; h=fresh?WINP:WIN; }
     else if(w.p==="o"){ ST.l[ST.lvl]++; face("happy"); sLose(); t="Brody-Bot wins!"; h=LOSE; }
     else { ST.t[ST.lvl]++; face(""); sTie(); t=ST.lvl==="hard"?"A tie on Hard!":"It's a tie!"; h=ST.lvl==="hard"?TIEH:TIE; }
     save();
     $("#msg").innerHTML=t;
   } else {
+    fresh=BWG.patch("ttt");
     if(w.p==="t"){ sTie(); t="It's a tie!"; h=TIE; } else { sWin(); t=w.p==="x"?"Red X wins!":"Blue O wins!"; h=w.p==="x"?XW:OW; }
     $("#msg").innerHTML=t;
   }
   setTimeout(function(){
-    var box=BWK.sheet('<h2>'+t+'</h2>'+(fresh?'<p style="color:var(--k-warm);font-weight:700">New patch! The Joke Shack patch is on your badge wall.</p>':'')+'<p>'+BODY[h]+'</p>'+
+    var box=BWK.sheet('<h2>'+t+'</h2>'+BWG.patchLine(fresh)+'<p>'+BODY[h]+'</p>'+
       '<div class="k-row"><button class="k-btn" data-a="again">Play Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
     box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); newGame(); };
     box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
@@ -222,13 +231,13 @@ document.addEventListener("keydown",function(e){
 /* ---------- menu ---------- */
 function lvlUI(){ [].forEach.call($("#lvl").children,function(b){ b.classList.toggle("on",b.dataset.l===ST.lvl); }); $("#bBotL").textContent=LVLN[ST.lvl]; foot(); }
 function foot(){ var w=ST.w, t=ST.t;
-  $("#mfoot").innerHTML="Wins against Brody-Bot: Easy "+w.easy+" · Medium "+w.medium+" · Hard "+w.hard+(t.hard?"<br>Ties on Hard: "+t.hard:"")+"<br>On Hard, Brody-Bot never loses. Can you tie him?"; }
+  $("#mfoot").innerHTML="Wins against Brody-Bot: Easy "+w.easy+" · Medium "+w.medium+" · Hard "+w.hard+(t.hard?"<br>Ties on Hard: "+t.hard:"")+"<br>Hard is tough, but Brody-Bot can slip up. Can you beat him?"; }
 $("#lvl").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; ST.lvl=b.dataset.l; save(); BWK.sfx("tap"); lvlUI(); });
 function toMenu(){ document.body.className="m-menu"; lvlUI(); }
 function play(m){ if(m!==mode){ sess={x:0,o:0,t:0}; first="x"; } mode=m; document.body.className="m-play"; $("#bot").classList.toggle("two",m==="two"); BWK.sfx("open"); kb=-1; newGame(); }
 $("#bBot").onclick=function(){ if(mode==="bot") sess={x:0,o:0,t:0}; play("bot"); };
 $("#bTwo").onclick=function(){ play("two"); };
-$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW+'</p><p><b>Brody-Bot levels:</b> Easy makes silly moves, Medium tries to block you, and on Hard he never loses. Can you tie him?</p><p>On a computer, press 1 to 9, or use the arrow keys and Enter.</p></div>'); BWK.say(HOW); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW+'</p><p><b>Brody-Bot levels:</b> Easy makes silly moves, Medium tries to block you, and on Hard he is really tricky. Watch for his slip-ups!</p><p>On a computer, press 1 to 9, or use the arrow keys and Enter.</p></div>'); BWK.say(HOW); };
 $("#bBack").onclick=BWG.toOutpost;
 $("#tNew").onclick=function(){ BWK.sfx("tap"); newGame(); };
 $("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
@@ -239,11 +248,11 @@ var WIN="You beat Brody-Bot! Nice moves!";
 var WINP="You beat Brody-Bot! You earned a new patch for your badge wall!";
 var LOSE="Brody-Bot got three in a row. Try again!";
 var TIE="It's a tie! Nobody got three in a row.";
-var TIEH="A tie on Hard! That's the best anyone can do against Brody-Bot.";
+var TIEH="A tie on Hard! So close. Keep trying, and you can beat Brody-Bot!";
 var XW="Red X wins! Great game!", OW="Blue O wins! Great game!";
 var BODY={}; BODY[WIN]="Nice moves!"; BODY[WINP]="Nice moves!"; BODY[LOSE]="He got three in a row. Try again!"; BODY[TIE]="Nobody got three in a row.";
-BODY[TIEH]="That's the best anyone can do against Brody-Bot."; BODY[XW]="Great game!"; BODY[OW]="Great game!";
-var L={"ttt-intro":INTRO,"ttt-how":HOW,"ttt-win":WIN,"ttt-win-patch":WINP,"ttt-lose":LOSE,"ttt-tie":TIE,"ttt-tie-hard":TIEH,"ttt-x-wins":XW,"ttt-o-wins":OW};
+BODY[TIEH]="So close. Keep trying, and you can beat Brody-Bot!"; BODY[XW]="Great game!"; BODY[OW]="Great game!";
+var L={"ttt-intro":INTRO,"ttt-how":HOW,"ttt-win":WIN,"ttt-win-patch":WINP,"ttt-lose":LOSE,"ttt-tie":TIE,"ttt-tie-hard-2":TIEH,"ttt-x-wins":XW,"ttt-o-wins":OW};
 BWK.lines(L);
 toMenu();
 BWK.init({here:"ttt", voice:"outpost", intro:INTRO, noHello:true});

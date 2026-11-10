@@ -71,8 +71,8 @@
     <div class="keys">Arrow keys (or W A S D) to steer · Space to pause</div>
   </section>
 </main>
-<script src="kids.js?v=1110a"></script>
-<script src="kids-games.js?v=1110a"></script>
+<script src="kids.js?v=1110b"></script>
+<script src="kids-games.js?v=1110b"></script>
 <script>
 (function(){
 "use strict";
@@ -124,19 +124,19 @@ function burst(x,y){ for(var i=0;i<14;i++){ var a=Math.random()*6.283, s=.6+Math
 function record(){ var b=ST.best[N]||0, nb=S.length>b; if(nb) ST.best[N]=S.length; save(); return nb; }
 function bonk(){
   dead=true; run=false; sBonk(); var f=$("#frame"); f.classList.remove("bonk"); void f.offsetWidth; f.classList.add("bonk");
-  var nb=record()&&S.length>3, g=gen; hud();
+  var nb=record()&&S.length>3, g=gen, fresh=BWG.patch("snake"); hud();
   setTimeout(function(){ if(g!==gen) return; var h=nb?BEST:BONK;
-    var box=BWK.sheet('<h2>Bonk!</h2><p>Your comet snake was <b>'+S.length+'</b> long'+(stars?' and caught <b>'+stars+'</b> star'+(stars===1?'':'s'):'')+'.'+(nb?' That\'s your longest snake yet!':' Your best on '+SZN[N]+' is '+(ST.best[N]||3)+'.')+'</p>'+
+    var box=BWK.sheet('<h2>Bonk!</h2><p>Your comet snake was <b>'+S.length+'</b> long'+(stars?' and caught <b>'+stars+'</b> star'+(stars===1?'':'s'):'')+'.'+(nb?' That\'s your longest snake yet!':' Your best on '+SZN[N]+' is '+(ST.best[N]||3)+'.')+'</p>'+BWG.patchLine(fresh)+
       '<div class="k-row"><button class="k-btn" data-a="again">Try Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>', function(){ if(dead&&g===gen) newGame(); });
     box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); };
     box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
     BWK.say(h); },650);
 }
 function win(){
-  won=true; run=false; ST.wins[N]=(ST.wins[N]||0)+1; record(); sWin(); for(var i=0;i<S.length;i+=2) burst(S[i][0],S[i][1]);
+  won=true; run=false; ST.wins[N]=(ST.wins[N]||0)+1; var fresh=BWG.patch("snake"); record(); sWin(); for(var i=0;i<S.length;i+=2) burst(S[i][0],S[i][1]);
   var g=gen;
   setTimeout(function(){ if(g!==gen) return;
-    var box=BWK.sheet('<h2>You filled the board!</h2><p>Your comet snake is <b>'+S.length+'</b> long and fills every square of the '+SZN[N]+' board. You\'re a Space Snake champion!</p>'+
+    var box=BWK.sheet('<h2>You filled the board!</h2><p>Your comet snake is <b>'+S.length+'</b> long and fills every square of the '+SZN[N]+' board. You\'re a Space Snake champion!</p>'+BWG.patchLine(fresh)+
       (N<10?'<p>Ready for a bigger board?</p>':'')+'<div class="k-row">'+(N<10?'<button class="k-btn" data-a="next">Bigger Board</button>':'<button class="k-btn" data-a="again">Play Again</button>')+'<button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
     var nx=box.querySelector('[data-a=next]'), ag=box.querySelector('[data-a=again]');
     if(nx) nx.onclick=function(){ BWK.closeSheet(true); ST.n=N+2; save(); newGame(); resize(); };
