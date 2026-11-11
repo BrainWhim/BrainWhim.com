@@ -50,7 +50,7 @@
 @keyframes twk{50%{opacity:.35}}
 /* the words page */
 .words{position:absolute;left:53.5%;width:40%;top:11%;height:76%;display:flex;flex-direction:column;justify-content:center;gap:4.5%;pointer-events:none}
-.ln{display:flex;gap:.45em;margin:0;font-size:clamp(9.5px,2.9cqw,21px);line-height:1.3;font-weight:700;color:#4a3d2a;transition:color .3s,background .3s;
+.ln{display:flex;gap:.45em;margin:0;font-size:var(--fs,clamp(9.5px,2.9cqw,21px));line-height:1.3;font-weight:700;color:#4a3d2a;transition:color .3s,background .3s;
   padding:.25em .4em;border-radius:.5em}
 .ln i{flex:none;width:.7em;height:.7em;margin-top:.32em;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px rgba(255,255,255,.7)}
 .ln span.blank{color:rgba(74,61,42,.32);letter-spacing:.3em}
@@ -107,6 +107,37 @@
 @media (max-height:600px){.sb{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.blk{--w:56px}.blocks{gap:5px 8px}.play{gap:6px}
   .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px;margin-top:0}}
 @media (max-height:600px) and (min-aspect-ratio:5/4){.play{flex-direction:row;align-items:stretch;gap:14px}.blocks{align-self:center}}
+/* Big Moonlet (Nov 11): the switch on the book, the purple "Uh oh" row, the choice cards, five story lines */
+.blocks:not(.big) .r3{display:none}
+.bigsw{position:absolute;left:1.5%;bottom:-1%;z-index:4;height:9.5%;min-height:26px;padding:0 1em 0 .6em;border-radius:999px;border:1.5px solid rgba(214,190,255,.5);
+  display:flex;align-items:center;gap:.45em;cursor:pointer;font:800 clamp(11px,2.4cqw,18px)/1 var(--k-font);color:#f1eafc;
+  background:linear-gradient(180deg,rgba(70,46,128,.95),rgba(34,22,78,.95));box-shadow:0 3px 6px rgba(0,0,0,.4);-webkit-tap-highlight-color:transparent}
+.bigsw i{position:relative;display:block;width:2.1em;height:1.15em;border-radius:.6em;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25);box-sizing:border-box}
+.bigsw i::after{content:"";position:absolute;top:.1em;left:.12em;width:.78em;height:.78em;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.bigsw[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);color:#2a1650;border-color:#efe4ff;
+  box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 14px rgba(190,160,255,.55),0 3px 6px rgba(0,0,0,.4)}
+.bigsw[aria-pressed="true"] i{background:#6a48c8}
+.bigsw[aria-pressed="true"] i::after{left:1.1em;background:#fff6d0}
+.made.moon{background:radial-gradient(circle at 35% 30%,#f3eaff,#c3a6f4 60%,#7d58c8);color:#24124a;box-shadow:0 3px 6px rgba(0,0,0,.4),0 0 10px rgba(190,160,255,.6)}
+.words.five{left:52.5%;width:42%;top:7%;height:84%;gap:2%;--fs:clamp(9px,3cqw,18px)}
+.words.five .ln{line-height:1.22;padding:.18em .35em}
+.words.scroll{justify-content:flex-start;overflow-y:auto;pointer-events:auto;scrollbar-width:none;scroll-behavior:smooth}
+.words.scroll::-webkit-scrollbar{display:none}
+.words.scroll>*{flex:none}
+.choose{position:absolute;inset:2% 1%;z-index:5;display:flex;align-items:center;justify-content:center;gap:7%;border-radius:4%;
+  background:rgba(22,16,56,.5);opacity:0;pointer-events:none;transition:opacity .3s}
+.choose.on{opacity:1;pointer-events:auto}
+.cc{appearance:none;border:0;padding:0;background:none;cursor:pointer;width:33%;aspect-ratio:1;position:relative;transition:transform .25s,opacity .3s;-webkit-tap-highlight-color:transparent}
+.cc svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 8px 8px rgba(0,0,0,.45))}
+.cc.lit{transform:translateY(-6%) scale(1.07)}
+.cc.lit svg,.cc.picked svg{filter:drop-shadow(0 0 10px rgba(255,236,170,.95)) drop-shadow(0 8px 8px rgba(0,0,0,.45))}
+.cc.picked{transform:translateY(-8%) scale(1.12)}
+.choose.done .cc:not(.picked){opacity:.2;transform:scale(.88)}
+.choose.wait .cc{animation:ccw 1.8s ease-in-out infinite}.choose.wait .cc+.cc{animation-delay:-.9s}
+@keyframes ccw{50%{transform:translateY(-5%)}}
+@media (max-width:600px){.blocks.big .blk{--w:min(58px,15.5vw)}.blocks.big{gap:5px 8px}}
+@media (max-width:380px){.blocks.big .blk{--w:min(56px,17vw)}}
+@media (max-height:600px){.blocks.big .blk{--w:48px}.blocks.big{gap:4px 8px}}
 @media (prefers-reduced-motion:reduce){.perch svg,.blk.hint svg,.book.ready,.twk{animation:none}}
 </style>
 </head>
@@ -133,16 +164,18 @@
     <div class="nook">
       <div class="book" id="book" role="button" tabindex="0" aria-label="The storybook: tap to hear your story">
         <svg id="art" viewBox="0 0 600 380" aria-hidden="true"></svg>
-        <div class="words" id="words"></div>
+        <div class="words" id="words" data-bws="off"></div>
         <div class="perch" id="perch" aria-hidden="true"></div>
         <span class="made" id="made"></span>
+        <button class="bigsw" id="bigsw" type="button" aria-label="Big Moonlet" aria-pressed="false"><i></i>Big</button>
+        <div class="choose" id="choose" aria-label="Choose what happens next"></div>
       </div>
     </div>
     <nav class="blocks" id="blocks" aria-label="Story blocks"></nav>
   </div>
 </main>
 
-<script src="kids.js?v=1110c"></script>
+<script src="kids.js?v=1110d"></script>
 <script>
 (function(){
   var HI="This is the story corner! Pick a friend, a place, and a surprise. Then tap the book, and I'll tell your story!";
@@ -151,6 +184,12 @@
   var READY="Your story is ready! Tap the book.";
   var WAIT="Pick a friend, a place, and a surprise first!";
   var AGAIN="What a story! Pick new blocks to make another one.";
+  /* Big Moonlet (Nov 11): a fourth row (an "uh oh") and, mid-story, two pictures to choose what happens next */
+  var BIGHI="Big Moonlet stories! Now you pick an uh oh too. And in the middle of the story, you get to choose what happens next!";
+  var BIGWAIT="Pick a friend, a place, an uh oh, and a surprise first!";
+  var BIGAGAIN="What a story! Next time, try choosing something different.";
+  var CHOOSE="Tap a picture to choose!";
+  ASK[3]="Now pick an uh oh!"; ASKC[3]="st-uhoh";
   var ROWS=[
     {tag:"Who",c:"#e2574c",l:"#f39a8f",d:"#9e2c25",items:[
       {id:"bunny",name:"A bunny!",line:"Once upon a time, there was a little bunny."},
@@ -166,7 +205,18 @@
       {id:"star",name:"A star!",line:"And there, our friend found a shining star to keep! The end!"},
       {id:"balloon",name:"A balloon!",line:"And there, our friend found a big red balloon and floated up high! The end!"},
       {id:"cake",name:"A cake!",line:"And there, everyone had a birthday party with cake! The end!"},
-      {id:"rainbow",name:"A rainbow!",line:"And there, our friend saw a giant rainbow, and smiled and smiled! The end!"}]}];
+      {id:"rainbow",name:"A rainbow!",line:"And there, our friend saw a giant rainbow, and smiled and smiled! The end!"}]},
+    {tag:"Uh oh",c:"#9a6ad8",l:"#c9a8f2",d:"#5e3a9a",items:[
+      {id:"storm",name:"A storm!",line:"Then, uh oh! Big dark clouds rolled in, and it started to rain.",q:"What should our friend do? Make an umbrella, or hide in a cave?",
+        ch:[{id:"umbrella",name:"Make an umbrella",line:"So our friend made an umbrella from a giant leaf, and stayed nice and dry."},{id:"cave",name:"Hide in a cave",line:"So our friend hid in a cozy cave until the rain stopped."}]},
+      {id:"lost",name:"Lost!",line:"Then, uh oh! Our friend got lost, and could not find the way.",q:"What should our friend do? Follow the stars, or ask an owl?",
+        ch:[{id:"stars",name:"Follow the stars",line:"So our friend followed the bright stars, and found the way again."},{id:"owl",name:"Ask an owl",line:"So our friend asked a wise old owl, who pointed the way."}]},
+      {id:"fox",name:"A sad fox!",line:"Then, uh oh! Our friend met a little fox who was crying.",q:"What should our friend do? Give a hug, or share a snack?",
+        ch:[{id:"hug",name:"Give a hug",line:"So our friend gave the fox a great big hug, and the fox smiled."},{id:"snack",name:"Share a snack",line:"So our friend shared a yummy snack, and the fox felt much better."}]},
+      {id:"kite",name:"A stuck kite!",line:"Then, uh oh! A kite got stuck way up in a tall tree.",q:"What should our friend do? Ask a bird for help, or give the tree a shake?",
+        ch:[{id:"bird",name:"Ask a bird",line:"So our friend asked a bird, who flew up and wiggled the kite free."},{id:"shake",name:"Shake the tree",line:"So our friend gave the tree a gentle shake, and down came the kite."}]}]}];
+  var big=!!(BWK.big&&BWK.big()), choice=-1;
+  function order(){ return big?[0,1,3,2]:[0,1,2]; }
   BWK.lines({"st-hi":HI});
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
@@ -186,9 +236,11 @@
   top.innerHTML='<div class="k-finn k-finn-in">'+face("sbS")+'<p class="k-fb">'+HI+'</p></div>';
   var talked=false;
   function say(t,clip,then){ talked=true; BWK.finn(t,{into:top, clip:clip, onend:then}); }
-  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm") && !talked) say(HI,"st-hi"); });
+  function greet(){ if(big) say(BIGHI,"st-bighi",askNext); else say(HI,"st-hi"); }
+  function askNext(){ if(busy) return; var n=firstMissing(); if(n>=0) say(ASK[n],ASKC[n]); else say(READY,"st-ready"); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm") && !talked) greet(); });
   document.addEventListener("click",function(e){
-    if(talked || e.target.closest(".blk,.book,.k-head,.k-sheet,.k-veil")) return; say(HI,"st-hi"); });
+    if(talked || e.target.closest(".blk,.book,.k-head,.k-sheet,.k-veil")) return; greet(); });
   var perch=$("perch"); perch.innerHTML=face("sbP");
   function hopFinn(){ perch.classList.remove("land"); void perch.offsetWidth; perch.classList.add("land"); }
 
@@ -204,11 +256,11 @@
     for(var i=0;i<n;i++) d[i]=Math.random()*2-1; var s=c.createBufferSource(); s.buffer=b; var fl=c.createBiquadFilter(); fl.type=ftype; fl.frequency.setValueAtTime(freq,t);
     if(f2) fl.frequency.exponentialRampToValueAtTime(f2,t+dur); fl.Q.value=q; var g=c.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
     s.connect(fl); fl.connect(g); g.connect(c.destination); s.start(t); s.stop(t+dur); }
-  var TOK=[[523,392],[659,494],[784,587]];
+  var TOK=[[523,392],[659,494],[784,587],[587,440]];
   function tok(r,i){ var c=snd(); if(!c) return; var t=c.currentTime+.01, f=TOK[r][0]*(1+i*.06);
     noise(c,t,.05,"bandpass",1800,3,.18); tone(c,f,t,.16,.16,"triangle",f*.97); tone(c,f*2.01,t,.08,.04,"sine"); }
   function flip(){ var c=snd(); if(!c) return; var t=c.currentTime+.01; noise(c,t,.32,"bandpass",900,1.2,.14,3600); noise(c,t+.18,.12,"highpass",2600,.7,.05); }
-  var CH=[523.25,659.25,783.99];
+  var CH=[523.25,659.25,783.99,698.46];
   function chime(k){ var c=snd(); if(!c) return; var t=c.currentTime+.02, f=CH[k]; tone(c,f,t,.9,.07,"sine"); tone(c,f*2,t+.03,.5,.025,"sine"); }
   function chord(){ var c=snd(); if(!c) return; var t=c.currentTime+.02;
     [523.25,659.25,783.99,1046.5].forEach(function(f,i){ tone(c,f,t+i*.09,1.3,.06,"sine"); tone(c,f*2,t+i*.09,.6,.015,"triangle"); }); }
@@ -306,6 +358,75 @@
       return s+'<g fill="#fff" stroke="#b9c6d6" stroke-width="1.3"><path d="M2 80 q0-9 9-9 q3-7 11-5 q8-1 9 8 q6 1 6 6 q0 5-6 5 H8 q-6 0-6-5z"/>'+
         '<path d="M63 80 q0-9 9-9 q3-7 11-5 q8-1 9 8 q6 1 6 6 q0 5-6 5 H69 q-6 0-6-5z"/></g>'; }};
 
+  /* ---------- Big Moonlet (Nov 11): the "Uh oh" row and the choice pictures ---------- */
+  function starP(cx,cy,r){ var p=""; for(var k=0;k<10;k++){ var a=(-90+k*36)*Math.PI/180, q=k%2?r*.45:r; p+=(k?"L":"M")+(cx+q*Math.cos(a)).toFixed(1)+" "+(cy+q*Math.sin(a)).toFixed(1); } return p+"Z"; }
+  function heart(cx,cy,s){ return "M"+cx+" "+(cy+s*.9)+" C"+(cx-s*1.4)+" "+(cy+s*.1)+" "+(cx-s*.9)+" "+(cy-s*.9)+" "+cx+" "+(cy-s*.35)+" C"+(cx+s*.9)+" "+(cy-s*.9)+" "+(cx+s*1.4)+" "+(cy+s*.1)+" "+cx+" "+(cy+s*.9)+"Z"; }
+  var CANOPY='<g fill="#4aa354" stroke="#2c6b34" stroke-width="1.6"><circle cx="32" cy="50" r="18"/><circle cx="68" cy="50" r="18"/><circle cx="50" cy="34" r="22"/></g>'+
+    '<path d="M38 30 q6-8 14-8 M24 50 q2-6 8-8" stroke="#7fd086" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  var TRUNK='<path d="M44 96 L46 62 H54 L56 96Z" fill="#8a5a2f" stroke="#5a3519" stroke-width="1.6" stroke-linejoin="round"/>';
+  var DROP=function(x,y){ return '<path d="M'+x+' '+y+' q-3 6 0 7 q3-1 0-7z"/>'; };
+  var BIGICON={
+    storm:function(){ return '<path d="M18 54 q-12 0-12-11 q0-11 12-11 q3-14 18-14 q12 0 17 10 q4-4 11-4 q14 0 15 14 q12 1 12 12 q0 11-12 11 H18z" fill="#8a93a8" stroke="#565e73" stroke-width="2" stroke-linejoin="round"/>'+
+      '<path d="M24 38 q4-8 12-8" stroke="#b8c0d2" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<g stroke="#5aa2e6" stroke-width="3" stroke-linecap="round"><path d="M22 64 l-4 10"/><path d="M30 74 l-4 10"/><path d="M76 64 l-4 10"/><path d="M84 74 l-4 10"/><path d="M68 80 l-3 8"/></g>'+
+      '<path d="M53 56 L42 75 H52 L46 94 L65 68 H55 L61 56Z" fill="#ffd23f" stroke="#c9900c" stroke-width="1.6" stroke-linejoin="round"/>'; },
+    lost:function(){ return '<ellipse cx="50" cy="95" rx="24" ry="3.8" fill="#6fae55"/>'+
+      '<rect x="46" y="34" width="8" height="62" rx="2" fill="#9a6436" stroke="#5a3519" stroke-width="1.6"/>'+
+      '<path d="M14 40 H54 V54 H14 L6 47Z" fill="#c98a4b" stroke="#5a3519" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M46 60 H86 L94 67 L86 74 H46Z" fill="#c98a4b" stroke="#5a3519" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M18 47 H46 M54 67 H82" stroke="#8a5a2a" stroke-width="1.4" stroke-dasharray="3 3"/>'+
+      '<circle cx="76" cy="20" r="14" fill="#9a6ad8" stroke="#5e3a9a" stroke-width="1.6"/><text x="76" y="27.5" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="800" font-size="21" fill="#fff">?</text>'; },
+    fox:function(){ return '<g stroke="#8a4214" stroke-width="1.6" stroke-linejoin="round"><path d="M24 40 L21 10 L45 29Z" fill="#f08a3c"/><path d="M76 40 L79 10 L55 29Z" fill="#f08a3c"/>'+
+      '<path d="M16 44 Q18 24 50 24 Q82 24 84 44 Q82 64 50 84 Q18 64 16 44Z" fill="#f08a3c"/></g>'+
+      '<path d="M27 33 L25 17 L38 28Z M73 33 L75 17 L62 28Z" fill="#3a2418"/>'+
+      '<path d="M20 50 Q36 52 50 84 Q28 68 20 50Z M80 50 Q64 52 50 84 Q72 68 80 50Z" fill="#fff4e8"/>'+
+      '<path d="M31 40 L43 35.5 M69 40 L57 35.5" stroke="#5a2a0c" stroke-width="2.2" stroke-linecap="round"/>'+
+      '<circle cx="38" cy="46" r="3" fill="#2b2118"/><circle cx="62" cy="46" r="3" fill="#2b2118"/><circle cx="37.2" cy="45.1" r="1" fill="#fff"/><circle cx="61.2" cy="45.1" r="1" fill="#fff"/>'+
+      '<path d="M38 52 q-3.4 6.5 0 8 q3.4-1.5 0-8z" fill="#6ab8f2"/>'+
+      '<ellipse cx="50" cy="63" rx="4.2" ry="3" fill="#2b2118"/><path d="M44.5 72 q5.5-4.5 11 0" stroke="#5a2a0c" stroke-width="1.8" fill="none" stroke-linecap="round"/>'; },
+    kite:function(){ return TRUNK+CANOPY+
+      '<path d="M66 38 q-7 10 1 18 q8 8 0 18" stroke="#7a4e2a" stroke-width="1.4" fill="none"/><path d="M61 52 l-5-3 v6z M72 63 l5-3 v6z" fill="#f5d33c" stroke="#a8730c" stroke-width=".8"/>'+
+      '<path d="M66 4 L79 20 L66 38 L53 20Z" fill="#e3372e" stroke="#9d1b17" stroke-width="1.6" stroke-linejoin="round"/><path d="M66 4 V38 M53 20 H79" stroke="#ffd0c8" stroke-width="1.2"/>'; },
+    umbrella:function(){ return '<g fill="#6ab8f2">'+DROP(14,64)+DROP(86,62)+DROP(24,82)+DROP(78,84)+'</g>'+
+      '<path d="M50 50 V84 q0 8-8 8 q-6 0-6-6" stroke="#7a4e2a" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M8 52 Q12 18 50 12 Q88 18 92 52 Q81 45 71 52 Q61 45 50 52 Q39 45 29 52 Q19 45 8 52Z" fill="#5cc163" stroke="#2c6b34" stroke-width="1.8" stroke-linejoin="round"/>'+
+      '<path d="M50 12 V52 M50 25 L31 40 M50 25 L69 40 M50 38 L37 48 M50 38 L63 48" stroke="#2c8a3a" stroke-width="1.4" fill="none" stroke-linecap="round"/>'; },
+    cave:function(){ return '<ellipse cx="50" cy="93" rx="47" ry="4.5" fill="#6fae55"/>'+
+      '<path d="M4 92 Q8 40 36 24 Q52 14 70 26 Q94 42 96 92Z" fill="#9a8f84" stroke="#5d544b" stroke-width="1.8" stroke-linejoin="round"/>'+
+      '<path d="M22 46 q8-10 18-12 M66 34 q10 4 16 14 M14 76 q4-8 10-10" stroke="#c4bab0" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+      '<path d="M30 92 Q30 54 50 52 Q70 54 70 92Z" fill="#2a2230"/><ellipse cx="50" cy="86" rx="12" ry="5" fill="#ffb347" opacity=".6"/>'+
+      '<g fill="#6ab8f2">'+DROP(12,18)+DROP(86,12)+'</g>'; },
+    stars:function(){ return '<path d="M16 94 Q38 76 30 66 Q24 56 46 52 Q62 50 64 42" stroke="#9dbdf0" stroke-dasharray="3 5" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+      '<path d="'+starP(68,30,22)+'" fill="url(#sbGold)" stroke="#a8730c" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="'+starP(24,24,10)+'" fill="#ffe27a" stroke="#a8730c" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="'+starP(84,72,8)+'" fill="#ffe27a" stroke="#a8730c" stroke-width="1.2" stroke-linejoin="round"/>'; },
+    owl:function(){ return '<g stroke="#5a3519" stroke-width="1.6" stroke-linejoin="round"><path d="M28 36 L25 16 L41 28Z M72 36 L75 16 L59 28Z" fill="#9b6a3f"/>'+
+      '<ellipse cx="50" cy="56" rx="26" ry="32" fill="#9b6a3f"/></g><ellipse cx="50" cy="66" rx="16" ry="19" fill="#e8cfa6"/>'+
+      '<path d="M42 62 q3 3 6 0 M52 62 q3 3 6 0 M46 71 q3 3 6 0" stroke="#b08a5a" stroke-width="1.3" fill="none"/>'+
+      '<g stroke="#5a3519" stroke-width="1.4"><circle cx="39" cy="40" r="10" fill="#fff"/><circle cx="61" cy="40" r="10" fill="#fff"/></g>'+
+      '<circle cx="40" cy="41" r="4.6" fill="#2b2118"/><circle cx="60" cy="41" r="4.6" fill="#2b2118"/><circle cx="41.5" cy="39.5" r="1.4" fill="#fff"/><circle cx="61.5" cy="39.5" r="1.4" fill="#fff"/>'+
+      '<path d="M46 48 H54 L50 56Z" fill="#f5b52c" stroke="#a8730c" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<rect x="6" y="85" width="88" height="8" rx="4" fill="#7a4e2a" stroke="#5a3519" stroke-width="1.2"/><path d="M42 85 v-3 M46 85 v-3 M54 85 v-3 M58 85 v-3" stroke="#f5b52c" stroke-width="2" stroke-linecap="round"/>'; },
+    hug:function(){ return '<path d="'+heart(42,56,30)+'" fill="#f28aa8" stroke="#b8405f" stroke-width="1.8" stroke-linejoin="round"/>'+
+      '<path d="M28 44 q2-8 10-9" stroke="#ffd0dc" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+      '<path d="'+heart(74,32,15)+'" fill="#e3372e" stroke="#9d1b17" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M86 66 l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#ffd23f"/>'; },
+    snack:function(){ return '<circle cx="44" cy="54" r="31" fill="#d9a05b" stroke="#8a5a2a" stroke-width="1.8"/><circle cx="44" cy="54" r="25" fill="none" stroke="#e9bd7d" stroke-width="2" opacity=".7"/>'+
+      '<g fill="#5a3519"><ellipse cx="32" cy="42" rx="4" ry="3"/><ellipse cx="52" cy="36" rx="3.6" ry="2.8"/><ellipse cx="58" cy="56" rx="4" ry="3"/><ellipse cx="36" cy="64" rx="3.6" ry="2.8"/><ellipse cx="48" cy="74" rx="3.4" ry="2.6"/><ellipse cx="24" cy="54" rx="3" ry="2.4"/></g>'+
+      '<circle cx="80" cy="78" r="13" fill="#e3372e" stroke="#9d1b17" stroke-width="1.6"/><path d="M80 65 q1-6 5-8" stroke="#5a3519" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M82 64 q8-6 12 0 q-6 4-12 0z" fill="#5cc163"/>'+
+      '<path d="M74 72 q2-3 5-3" stroke="#ff9e8e" stroke-width="2" fill="none" stroke-linecap="round"/>'; },
+    bird:function(){ return '<path d="M8 82 q8-4 16 0 M70 86 q8-4 16 0" stroke="#9dbdf0" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<g stroke="#21508f" stroke-width="1.6" stroke-linejoin="round"><path d="M28 56 L6 46 L11 60 L6 72 L28 64Z" fill="#2f6fc0"/>'+
+      '<ellipse cx="48" cy="58" rx="24" ry="17" fill="#3f86de"/></g><ellipse cx="51" cy="64" rx="15" ry="8.5" fill="#cfe5ff"/>'+
+      '<circle cx="72" cy="46" r="13" fill="#3f86de" stroke="#21508f" stroke-width="1.6"/>'+
+      '<path d="M38 52 Q28 18 50 8 Q56 30 56 50Z" fill="#5fa0ee" stroke="#21508f" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M84 43 L96 47.5 L84 52Z" fill="#f5b52c" stroke="#a8730c" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<circle cx="75" cy="43" r="2.6" fill="#2b2118"/><circle cx="75.8" cy="42.2" r=".9" fill="#fff"/>'; },
+    shake:function(){ return TRUNK+'<g transform="rotate(-6 50 92)">'+CANOPY+'</g>'+
+      '<path d="M8 30 q-6 14 0 28 M16 22 q-6 14 0 28 M92 30 q6 14 0 28 M84 22 q6 14 0 28" stroke="#7a8aa8" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<g fill="#5cc163" stroke="#2c6b34" stroke-width="1"><ellipse cx="22" cy="82" rx="5" ry="2.6" transform="rotate(30 22 82)"/><ellipse cx="80" cy="76" rx="5" ry="2.6" transform="rotate(-25 80 76)"/><ellipse cx="70" cy="90" rx="4.4" ry="2.3" transform="rotate(15 70 90)"/></g>'; }};
+  for(var bk in BIGICON) ICON[bk]=BIGICON[bk];
+
   /* ---------- the wooden blocks ---------- */
   function block(r,i){ var R=ROWS[r], it=R.items[i];
     return '<svg viewBox="0 0 100 100" aria-hidden="true">'+
@@ -316,17 +437,19 @@
       '<rect x="6" y="18" width="74" height="10" rx="5" fill="#fff" opacity=".18"/>'+
       '<rect x="12" y="24" width="62" height="64" rx="7" fill="#fff8e8" stroke="'+R.d+'" stroke-width="1.2"/>'+
       '<g transform="translate(15 27) scale(.56)">'+ICON[it.id]()+'</g></svg>'; }
-  var blocksEl=$("blocks"), btn=[[],[],[]];
-  ROWS.forEach(function(R,r){
-    var t=document.createElement("span"); t.className="tag"; t.style.setProperty("--c",R.c); t.innerHTML='<b></b>'+R.tag; blocksEl.appendChild(t);
-    R.items.forEach(function(it,i){ var b=document.createElement("button"); b.className="blk"; b.dataset.r=r; b.dataset.i=i; b.style.setProperty("--c",R.c);
+  var blocksEl=$("blocks"), btn=[[],[],[],[]];
+  [0,1,3,2].forEach(function(r){ var R=ROWS[r];
+    var t=document.createElement("span"); t.className="tag"+(r===3?" r3":""); t.style.setProperty("--c",R.c); t.innerHTML='<b></b>'+R.tag; blocksEl.appendChild(t);
+    R.items.forEach(function(it,i){ var b=document.createElement("button"); b.className="blk"+(r===3?" r3":""); b.dataset.r=r; b.dataset.i=i; b.style.setProperty("--c",R.c);
       b.setAttribute("aria-label",it.name.replace("!","")); b.innerHTML=block(r,i); blocksEl.appendChild(b); btn[r].push(b); }); });
 
   /* ---------- saved state ---------- */
   var save=BWK.store.get("stories",null);
   if(!save||!save.pick) save={told:0,made:{},pick:[-1,-1,-1]};
+  while(save.pick.length<4) save.pick.push(-1); if(!save.bmade) save.bmade={}; if(!save.btold) save.btold=0;
   function persist(){ try{ BWK.store.set("stories",save); }catch(_){ } }
   function nMade(){ return Object.keys(save.made).length; }
+  function nBig(){ return Object.keys(save.bmade).length; }
 
   /* ---------- the book ---------- */
   var book=$("book"), art=$("art"), words=$("words"), made=$("made"), busy=false, told=false, failT=0;
@@ -353,13 +476,16 @@
       '<path d="M0 240 Q130 222 260 240 V320 H0Z" fill="#5fae55"/><path d="M168 194 Q150 250 120 320 H160 Q176 250 186 194Z" fill="#e6d3a8"/>'; }
     else { s='<rect width="260" height="320" fill="url(#sbDream)"/>';
       [[40,40],[210,60],[130,30],[60,150],[200,170],[120,250],[230,270],[30,280]].forEach(function(q,i){ s+='<path class="twk" style="animation-delay:-'+(i*.5)+'s" transform="translate('+q[0]+' '+q[1]+')" d="M0-7l1.8 5.2 5.2 1.8-5.2 1.8-1.8 5.2-1.8-5.2-5.2-1.8 5.2-1.8z" fill="#9dbdf0"/>'; });
-      ROWS.forEach(function(R,r){ s+='<circle cx="'+(70+r*60)+'" cy="160" r="22" fill="none" stroke="'+R.c+'" stroke-width="3" stroke-dasharray="6 6" opacity=".7"/><text x="'+(70+r*60)+'" y="168" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="700" font-size="22" fill="'+R.c+'" opacity=".8">?</text>'; }); }
+      var O=order(), x0=130-(O.length-1)*30;
+      O.forEach(function(r,j){ var R=ROWS[r], cx=x0+j*60; s+='<circle cx="'+cx+'" cy="160" r="22" fill="none" stroke="'+R.c+'" stroke-width="3" stroke-dasharray="6 6" opacity=".7"/><text x="'+cx+'" y="168" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="700" font-size="22" fill="'+R.c+'" opacity=".8">?</text>'; }); }
     return s; }
   var WHAT_AT={star:"translate(140 36) scale(.95)",balloon:"translate(146 28) scale(.95)",cake:"translate(146 210) scale(.86)",rainbow:"translate(20 40) scale(2.2)"};
   function scene(anim){ var w=save.pick[0], p=save.pick[1], s=save.pick[2];
     var hero=w<0?"":'<g transform="'+(s===3||s<0?"translate(70 176)":"translate(22 176)")+' scale(1.2)"><g class="'+(anim==="w"?"pop":"")+'" id="sbHero">'+ICON[ROWS[0].items[w].id]()+'</g></g>';
     var item=""; if(s>=0){ var id=ROWS[2].items[s].id; item='<g transform="'+WHAT_AT[id]+'"><g class="'+(anim==="s"?"pop":"")+'" id="sbItem">'+ICON[id]()+'</g></g>'; }
-    var inner=bg(p)+(s===3?item+hero:hero+item);
+    var uh=""; if(big && save.pick[3]>=0){ var U=ROWS[3].items[save.pick[3]], uid=choice>=0?U.ch[choice].id:U.id;
+      uh='<g transform="translate(8 14) scale(.86)"><g class="'+(anim==="u"||anim==="c"?"pop":"")+'" id="sbUh">'+ICON[uid]()+'</g></g>'; }
+    var inner=bg(p)+uh+(s===3?item+hero:hero+item);
     return '<g class="scn"><svg x="40" y="36" width="244" height="308" viewBox="0 0 260 320" preserveAspectRatio="xMidYMid slice"><clipPath id="sbClip"><rect width="260" height="320" rx="10"/></clipPath><g clip-path="url(#sbClip)">'+inner+'</g></svg></g>'+
       '<rect x="40" y="36" width="244" height="308" rx="9" fill="none" stroke="#c9b48a" stroke-width="1.5"/>'; }
   function drawBook(anim){
@@ -371,58 +497,115 @@
       '<path d="M300 22 V346" stroke="#b9a983" stroke-width="2"/><rect x="290" y="22" width="20" height="324" fill="rgba(90,70,30,.08)"/>'+
       '<path d="M548 22 v40 l9-8 9 8 v-40z" fill="#e3577c" stroke="#a8324f" stroke-width="1.2"/>'+
       scene(anim); }
-  function drawWords(on){ var h="";
-    ROWS.forEach(function(R,r){ var k=save.pick[r], t=k<0?'<span class="blank">· · · · ·</span>':'<span>'+R.items[k].line.replace(" The end!","")+'</span>';
-      h+='<p class="ln'+(on===r?" on":"")+'" style="--c:'+R.c+'"><i></i>'+t+'</p>'; });
-    h+='<p class="end'+(on===3?" on":"")+'">The end!</p>';
-    words.innerHTML=h; }
-  function full(){ return save.pick.every(function(k){ return k>=0; }); }
-  function marks(){ var first=save.pick.indexOf(-1);
+  var BLANK='<span class="blank">· · · · ·</span>';
+  function drawWords(on){ var h="", O=big?[0,1,3,"c",2]:[0,1,2];
+    O.forEach(function(r){ var t, c;
+      if(r==="c"){ var u=save.pick[3]; c="#c9a8f2"; t=(u<0||choice<0)?BLANK:'<span>'+ROWS[3].items[u].ch[choice].line+'</span>'; }
+      else { var R=ROWS[r], k=save.pick[r]; c=R.c; t=k<0?BLANK:'<span>'+R.items[k].line.replace(" The end!","")+'</span>'; }
+      h+='<p class="ln'+(on===r?" on":"")+'" style="--c:'+c+'"><i></i>'+t+'</p>'; });
+    h+='<p class="end'+(on==="e"?" on":"")+'">The end!</p>';
+    words.innerHTML=h; fit(); }
+  /* five lines on a small book: shrink the words until they fit the page */
+  /* (never below 10px: if five lines still don't fit, the page scrolls and keeps the line being read in view) */
+  function fit(){ words.style.removeProperty("--fs"); words.classList.remove("scroll"); if(!big) return;
+    var ps=words.children, H=words.clientHeight, fs=Math.max(10,Math.min(18,book.clientWidth*.03));
+    words.style.setProperty("--fs",fs+"px");
+    function tot(){ var t=0; for(var k=0;k<ps.length;k++) t+=ps[k].offsetHeight; return t+(ps.length-1)*H*.02; }
+    while(tot()>H && fs>10){ fs=Math.max(10,fs-.5); words.style.setProperty("--fs",fs+"px"); }
+    if(tot()>H){ words.classList.add("scroll"); var on=words.querySelector(".ln.on,.end.on");
+      words.scrollTop=on?Math.max(0,on.offsetTop-H*.3):0; } }
+  function firstMissing(){ var O=order(); for(var j=0;j<O.length;j++) if(save.pick[O[j]]<0) return O[j]; return -1; }
+  function full(){ return firstMissing()<0; }
+  function marks(){ var first=firstMissing();
     btn.forEach(function(row,r){ row.forEach(function(b,i){ b.classList.toggle("on",save.pick[r]===i); b.classList.toggle("hint",!busy && r===first && !told); }); });
     book.classList.toggle("ready",full() && !busy && !told);
-    made.textContent=nMade()?"★ "+nMade():""; }
+    var n=big?nBig():nMade(); made.textContent=n?(big?"☾ ":"★ ")+n:""; made.classList.toggle("moon",big); }
   function sparkle(xp,yp,c,n){ for(var k=0;k<(n||2);k++){ var s=document.createElement("i"); s.className="spk"; s.textContent=k%2?"✦":"★";
     s.style.left=xp+"%"; s.style.top=yp+"%"; s.style.setProperty("--c",c); s.style.setProperty("--dx",(Math.random()*40-20).toFixed(0)+"px");
     book.appendChild(s); setTimeout(function(){ s.remove(); },950); } }
 
   /* ---------- picking a block ---------- */
   blocksEl.addEventListener("click",function(e){ var b=e.target.closest(".blk"); if(!b||busy) return;
-    var r=+b.dataset.r, i=+b.dataset.i, it=ROWS[r].items[i]; told=false;
+    var r=+b.dataset.r, i=+b.dataset.i, it=ROWS[r].items[i]; told=false; choice=-1;
     save.pick[r]=i; persist(); tok(r,i); b.classList.remove("tok"); void b.offsetWidth; b.classList.add("tok");
-    drawBook(["w","p","s"][r]); if(r===1){ book.classList.remove("turn"); void book.offsetWidth; book.classList.add("turn"); }
+    drawBook(["w","p","s","u"][r]); if(r===1){ book.classList.remove("turn"); void book.offsetWidth; book.classList.add("turn"); }
     drawWords(-1); marks(); hopFinn();
-    var nxt=save.pick.indexOf(-1);
-    say(it.name,"st-"+it.id,function(){ if(busy) return;
-      if(nxt>=0) say(ASK[nxt],ASKC[nxt]); else say(READY,"st-ready"); }); });
+    say(it.name,"st-"+it.id,askNext); });
 
   /* ---------- telling the story: three recorded lines in a row ---------- */
   function tell(){ if(busy) return;
-    if(!full()){ BWK.sfx("tap"); say(WAIT,"st-wait"); return; }
+    if(!full()){ BWK.sfx("tap"); if(big) say(BIGWAIT,"st-bigwait"); else say(WAIT,"st-wait"); return; }
     busy=true; told=true; blocksEl.classList.add("telling"); marks(); flip();
-    var ids=save.pick.map(function(k,r){ return ROWS[r].items[k].id; });
+    if(choice>=0){ choice=-1; drawBook(""); }
+    var seq=big?[0,1,3,"c",2]:[0,1,2], CL=["st-1-","st-2-","st-3-","st-4-"];
     clearTimeout(failT); failT=setTimeout(finish,30000);
-    function part(r){ if(!busy) return;
+    function part(k){ if(!busy) return; var r=seq[k];
+      function next(){ if(k<seq.length-1) setTimeout(function(){ part(k+1); },250); else finish(); }
+      if(r==="c"){ askChoice(next); return; }
       drawWords(r); chime(r); hopFinn();
       if(r===0){ var h=$("sbHero"); if(h){ h.classList.remove("bounce"); void h.getBoundingClientRect(); h.classList.add("bounce"); } }
       if(r===2){ var it=$("sbItem"); if(it){ it.classList.remove("pop"); void it.getBoundingClientRect(); it.classList.add("pop"); } sparkle(30,28,"#ffe08a",3); }
-      say(ROWS[r].items[save.pick[r]].line,"st-"+(r+1)+"-"+ids[r],function(){ if(r<2) setTimeout(function(){ part(r+1); },250); else finish(); }); }
+      if(r===3){ var u=$("sbUh"); if(u){ u.classList.remove("pop"); void u.getBoundingClientRect(); u.classList.add("pop"); } }
+      var I=ROWS[r].items[save.pick[r]]; say(I.line,CL[r]+I.id,next); }
     setTimeout(function(){ part(0); },450); }
-  function finish(){ if(!busy) return; clearTimeout(failT); busy=false; blocksEl.classList.remove("telling");
-    var key=save.pick.join("-"), isNew=!save.made[key]; save.made[key]=1; save.told++; persist();
-    drawWords(3); marks(); chord();
+
+  /* ---------- Big Moonlet: choose what happens next (two picture cards over the book) ---------- */
+  var chooseEl=$("choose"), cT=[], chosen=false;
+  function card(id){ return '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="3" y="3" width="94" height="94" rx="13" fill="#fff8e8" stroke="#5e3a9a" stroke-width="3"/>'+
+    '<rect x="8.5" y="8.5" width="83" height="83" rx="9" fill="none" stroke="#c9a8f2" stroke-width="1.6" stroke-dasharray="4 4"/>'+
+    '<g transform="translate(13 13) scale(.74)">'+ICON[id]()+'</g></svg>'; }
+  function cClear(){ cT.forEach(clearTimeout); cT=[]; }
+  function askChoice(then){ clearTimeout(failT); cClear(); chosen=false;
+    var U=ROWS[3].items[save.pick[3]];
+    chooseEl.innerHTML=""; chooseEl.className="choose";
+    U.ch.forEach(function(C,i){ var b=document.createElement("button"); b.type="button"; b.className="cc"; b.setAttribute("aria-label",C.name); b.innerHTML=card(C.id);
+      b.addEventListener("click",function(e){ e.stopPropagation(); pickChoice(i,then); }); chooseEl.appendChild(b); });
+    drawWords("c"); hopFinn(); chime(3);
+    requestAnimationFrame(function(){ chooseEl.classList.add("on"); });
+    var cs=chooseEl.children;
+    function lit(i){ for(var k=0;k<cs.length;k++) cs[k].classList.toggle("lit",k===i); }
+    cT.push(setTimeout(function(){ lit(0); },1700), setTimeout(function(){ lit(1); },3300));
+    say(U.q,"st-q-"+U.id,function(){ if(chosen) return; lit(-1); chooseEl.classList.add("wait");
+      cT.push(setTimeout(function(){ if(!chosen && busy) say(CHOOSE,"st-choose"); },7000),
+              setTimeout(function(){ if(!chosen && busy) say(U.q,"st-q-"+U.id); },20000)); }); }
+  function pickChoice(i,then){ if(chosen||!busy) return; chosen=true; cClear();
+    var U=ROWS[3].items[save.pick[3]], C=U.ch[i]; choice=i; tok(3,i);
+    var cs=chooseEl.children; for(var k=0;k<cs.length;k++){ cs[k].classList.remove("lit"); cs[k].classList.toggle("picked",k===i); }
+    chooseEl.classList.remove("wait"); chooseEl.classList.add("done");
+    failT=setTimeout(finish,30000);
+    setTimeout(function(){ chooseEl.classList.remove("on"); drawBook("c"); drawWords("c"); sparkle(16,22,"#d7c2ff",3); hopFinn();
+      say(C.line,"st-5-"+C.id,then); },650); }
+  function finish(){ if(!busy) return; clearTimeout(failT); cClear(); busy=false; blocksEl.classList.remove("telling"); chooseEl.classList.remove("on");
+    if(big){ save.bmade[[0,1,3,2].map(function(r){ return save.pick[r]; }).join("-")+"-"+choice]=1; save.btold++; }
+    else { save.made[save.pick.slice(0,3).join("-")]=1; save.told++; }
+    persist(); drawWords("e"); marks(); chord();
     for(var k=0;k<8;k++) (function(k){ setTimeout(function(){ sparkle(8+k*11,14+(k%3)*20,k%2?"#ffe08a":"#9cc4ff",2); },k*90); })(k);
-    setTimeout(function(){ if(!busy) say(AGAIN,"st-again"); },900); }
+    setTimeout(function(){ if(!busy){ if(big) say(BIGAGAIN,"st-bigagain"); else say(AGAIN,"st-again"); } },900); }
+
+  /* ---------- the Big Moonlet switch (bottom-left corner of the book) ---------- */
+  var bigB=$("bigsw");
+  function bigShow(){ bigB.setAttribute("aria-pressed",big?"true":"false"); blocksEl.classList.toggle("big",big); words.classList.toggle("five",big); }
+  function preBig(){ if(!big||!BWK.preload) return; ROWS[3].items.forEach(function(U){ BWK.preload("st-4-"+U.id); BWK.preload("st-q-"+U.id); U.ch.forEach(function(C){ BWK.preload("st-5-"+C.id); }); }); }
+  function toggleBig(){ big=!big; BWK.setBig(big); bigShow(); BWK.sfx("tap"); told=false; choice=-1; drawBook(""); drawWords(-1); marks(); preBig();
+    requestAnimationFrame(function(){ size(); fit(); });
+    if(big) say(BWK.BIG_LINES.on,"bg-on",function(){ say(BIGHI,"st-bighi",askNext); }); else say(BWK.BIG_LINES.off,"bg-off"); }
+  bigB.addEventListener("click",function(e){ e.stopPropagation(); if(busy) return; toggleBig(); });
+  bigB.addEventListener("keydown",function(e){ e.stopPropagation(); });
   book.addEventListener("click",tell);
   book.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tell(); } });
 
   /* ---------- start ---------- */
   ["st-1-","st-2-","st-3-"].forEach(function(p,r){ ROWS[r].items.forEach(function(it){ BWK.preload&&BWK.preload(p+it.id); }); });
+  bigShow(); preBig();
   drawBook(""); drawWords(-1); marks();
   function size(){ var w=book.getBoundingClientRect().width; perch.style.setProperty("--hw",Math.round(Math.max(44,Math.min(74,w*.09)))+"px"); }
-  requestAnimationFrame(size); window.addEventListener("resize",size);
+  requestAnimationFrame(function(){ size(); fit(); }); window.addEventListener("resize",function(){ size(); fit(); });
   window.SBO={pick:function(r,i){ btn[r][i].click(); }, tell:tell, finish:finish,
-    reset:function(){ save={told:0,made:{},pick:[-1,-1,-1]}; persist(); told=false; drawBook(""); drawWords(-1); marks(); },
-    state:function(){ return {pick:save.pick.join(","), told:save.told, made:nMade(), busy:busy}; }};
+    reset:function(){ save={told:0,made:{},pick:[-1,-1,-1,-1],bmade:{},btold:0}; persist(); told=false; choice=-1; drawBook(""); drawWords(-1); marks(); },
+    big:function(on){ if(!!on!==big) toggleBig(); return big; },
+    choose:function(i){ var c=chooseEl.children[i]; if(c) c.click(); },
+    state:function(){ return {pick:save.pick.join(","), told:save.told, made:nMade(), busy:busy, big:big, choice:choice, bmade:nBig(), btold:save.btold,
+      choosing:chooseEl.classList.contains("on")&&!chosen}; }};
 })();
 </script>
 </body>
