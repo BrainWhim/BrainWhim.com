@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Story Blocks · Moonlets · BrainWhim</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="kids.css?v=1110a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Story Blocks (Nov 10, 2026), the blue moon's Stories spot
+   An open storybook on the meadow and three rows of wooden picture blocks:
+   red = a friend (bunny, bear, robot, turtle), blue = a place (moon, sea, forest, castle),
+   gold = a surprise (star, balloon, cake, rainbow). Finn names each block, then asks for the next row.
+   The book's left page draws the picks as they're chosen; tap the book and Finn tells the story,
+   three recorded lines in a row (st-1-*, st-2-*, st-3-*), each line lit on the right page. 64 stories.
+   No wrong answers, no timer. Saved on the device: bwk.stories {told, made:{"w-p-s":1}, pick:[w,p,s]}. Test hook SBO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:url("kids-moonlets-sm.jpg") center/cover;filter:blur(2px) brightness(.5)}
+.sb{height:100svh;min-height:500px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(14px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+.defs{position:absolute;width:0;height:0;overflow:hidden}
+
+.play{flex:1 1 0;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
+/* the storybook */
+.nook{position:relative;flex:1 1 0;min-height:130px;width:100%;container-type:size;display:flex;align-items:center;justify-content:center;perspective:1400px}
+.book{position:relative;width:min(100cqw - 8px,(100cqh - 8px)*600/380,900px);aspect-ratio:600/380;container-type:inline-size;cursor:pointer;
+  transform:rotateX(7deg);transform-origin:50% 100%;-webkit-tap-highlight-color:transparent}
+.book>svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.book::before{content:"";position:absolute;left:-5%;top:-7%;width:110%;height:114%;border-radius:40%;pointer-events:none;opacity:0;
+  background:radial-gradient(closest-side,rgba(150,200,255,.7),rgba(120,175,255,.25) 60%,rgba(120,175,255,0));transition:opacity .4s}
+.book.ready::before{animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.25}50%{opacity:.95}}
+.book.ready{animation:nudge 3.2s ease-in-out infinite}
+@keyframes nudge{0%,80%,100%{transform:rotateX(7deg)}86%{transform:rotateX(7deg) translateY(-2.5%)}92%{transform:rotateX(7deg) translateY(0)}}
+.book.turn .scn{animation:turn .5s ease-out}
+@keyframes turn{0%{opacity:.2}100%{opacity:1}}
+.pop{transform-box:fill-box;transform-origin:50% 100%;animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.bounce{transform-box:fill-box;transform-origin:50% 100%;animation:bnc .7s ease-in-out 2}
+@keyframes bnc{0%,100%{transform:translateY(0)}40%{transform:translateY(-9%) scale(1.04,.97)}60%{transform:translateY(0) scale(.98,1.02)}}
+.twk{animation:twk 2.4s ease-in-out infinite}
+@keyframes twk{50%{opacity:.35}}
+/* the words page */
+.words{position:absolute;left:53.5%;width:40%;top:11%;height:76%;display:flex;flex-direction:column;justify-content:center;gap:4.5%;pointer-events:none}
+.ln{display:flex;gap:.45em;margin:0;font-size:clamp(9.5px,2.9cqw,21px);line-height:1.3;font-weight:700;color:#4a3d2a;transition:color .3s,background .3s;
+  padding:.25em .4em;border-radius:.5em}
+.ln i{flex:none;width:.7em;height:.7em;margin-top:.32em;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.ln span.blank{color:rgba(74,61,42,.32);letter-spacing:.3em}
+.ln.on{background:rgba(120,175,255,.3);color:#16284a}
+.end{font-family:var(--k-font);font-size:clamp(10px,3cqw,22px);font-weight:700;color:#1f5fb8;text-align:center;opacity:0;transition:opacity .4s;margin:0}
+.end.on{opacity:1}
+.made{position:absolute;right:1.5%;bottom:-1%;min-width:9%;padding:0 1.4%;height:9.5%;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:.2em;
+  font-weight:800;font-size:clamp(11px,2.6cqw,20px);color:#3a2604;background:radial-gradient(circle at 35% 30%,#fff3c0,#f3c447 60%,#c8901c);
+  box-shadow:0 3px 6px rgba(0,0,0,.4),0 0 10px rgba(255,210,90,.6);pointer-events:none}
+.made:empty{display:none}
+.spk{position:absolute;z-index:7;pointer-events:none;font-size:20px;line-height:1;color:var(--c,#ffe08a);text-shadow:0 0 8px var(--c,#ffe08a);animation:spk .9s ease-out forwards}
+@keyframes spk{0%{opacity:1;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% - 60px)) scale(1.2)}}
+
+/* Finn sits on the top edge of the book */
+.perch{position:absolute;z-index:3;right:3%;top:calc(var(--hw,58px)*-.78);width:var(--hw,58px);height:var(--hw,58px);pointer-events:none}
+.perch svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 8px rgba(255,214,140,.55));transform-origin:50% 90%;animation:bob 2.6s ease-in-out infinite}
+.perch.land svg{animation:land .3s ease-out}
+@keyframes land{0%{transform:scale(1.14,.84)}60%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
+@keyframes bob{50%{transform:translateY(-6px)}}
+
+/* the blocks */
+.blocks{flex:none;display:grid;grid-template-columns:auto repeat(4,auto);gap:8px 10px;align-items:center;justify-content:center}
+.blocks.telling .blk{pointer-events:none}
+.tag{font-size:12px;font-weight:700;letter-spacing:.04em;color:#e8f0ff;text-shadow:0 1px 3px rgba(0,0,0,.7);text-align:right;padding-right:2px;line-height:1.1}
+.tag b{display:block;width:12px;height:12px;border-radius:4px;background:var(--c);margin:0 0 4px auto;box-shadow:0 0 8px var(--c)}
+.blk{--w:74px;appearance:none;border:0;padding:0;background:none;cursor:pointer;position:relative;width:var(--w);aspect-ratio:1;transition:transform .15s;
+  -webkit-tap-highlight-color:transparent}
+.blk svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 5px rgba(0,0,0,.45))}
+.blk.on{transform:translateY(-8px)}
+.blk.on::after{content:"";position:absolute;left:12%;right:22%;bottom:-8px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 12px 3px var(--c)}
+.blk:active{transform:translateY(-3px) scale(.95)}
+.blk.hint svg{animation:bhint 1.6s ease-in-out infinite}
+@keyframes bhint{0%,100%{filter:drop-shadow(0 6px 5px rgba(0,0,0,.45))}50%{filter:drop-shadow(0 0 9px rgba(255,255,255,.95)) drop-shadow(0 6px 5px rgba(0,0,0,.45))}}
+.blk.dim{opacity:.72}
+.blk.tok{animation:tok .3s ease-out}
+@keyframes tok{0%{transform:translateY(-8px) scale(1)}35%{transform:translateY(-12px) scale(1.07,.94)}100%{transform:translateY(-8px) scale(1)}}
+
+/* wide screens: book on the left, blocks on the right */
+@media (min-width:900px) and (min-aspect-ratio:5/4){
+  .play{flex-direction:row;align-items:stretch;justify-content:center;gap:26px;max-width:1400px}
+  .blocks{align-self:center;gap:12px 14px}.blk{--w:86px}.tag{font-size:14px}
+}
+@media (max-width:600px),(max-aspect-ratio:4/5){
+  .play>.blocks{margin-bottom:2px}
+}
+@media (max-width:600px){
+  .top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px;margin-top:0}
+  .blk{--w:min(66px,17.5vw)}.blocks{gap:7px 8px}.tag{font-size:10.5px}
+  .book{width:min(100cqw - 2px,(100cqh - 4px)*600/380)}
+}
+@media (max-width:380px){.tag{display:none}.blocks{grid-template-columns:repeat(4,auto)}.blk{--w:min(64px,19vw)}}
+@media (min-width:601px) and (max-aspect-ratio:4/5){.blk{--w:104px}.blocks{gap:12px 18px}.tag{font-size:15px}}
+@media (min-width:700px) and (min-height:700px) and (min-aspect-ratio:4/5) and (max-aspect-ratio:5/4){.blk{--w:92px}}
+@media (max-height:600px){.sb{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.blk{--w:56px}.blocks{gap:5px 8px}.play{gap:6px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px;margin-top:0}}
+@media (max-height:600px) and (min-aspect-ratio:5/4){.play{flex-direction:row;align-items:stretch;gap:14px}.blocks{align-self:center}}
+@media (prefers-reduced-motion:reduce){.perch svg,.blk.hint svg,.book.ready,.twk{animation:none}}
+</style>
+</head>
+<body class="moon-blue">
+<div class="bg" aria-hidden="true"></div>
+<svg class="defs" aria-hidden="true"><defs>
+  <linearGradient id="sbPaper" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fbf3df"/><stop offset=".85" stop-color="#fffaf0"/><stop offset="1" stop-color="#e3d6b6"/></linearGradient>
+  <linearGradient id="sbPaperR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e3d6b6"/><stop offset=".15" stop-color="#fffaf0"/><stop offset="1" stop-color="#fbf3df"/></linearGradient>
+  <linearGradient id="sbCover" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a6fc6"/><stop offset="1" stop-color="#173a7a"/></linearGradient>
+  <linearGradient id="sbGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".55" stop-color="#f6c63c"/><stop offset="1" stop-color="#c98a12"/></linearGradient>
+  <radialGradient id="sbRed" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ff8d80"/><stop offset=".55" stop-color="#e3372e"/><stop offset="1" stop-color="#9d1b17"/></radialGradient>
+  <radialGradient id="sbMoonG" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#f4f5fa"/><stop offset=".6" stop-color="#c7cad6"/><stop offset="1" stop-color="#8b90a3"/></radialGradient>
+  <linearGradient id="sbNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1330"/><stop offset="1" stop-color="#26397a"/></linearGradient>
+  <linearGradient id="sbDay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6cbcf0"/><stop offset="1" stop-color="#d4f0ff"/></linearGradient>
+  <linearGradient id="sbSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8fdc"/><stop offset="1" stop-color="#1c5aa8"/></linearGradient>
+  <linearGradient id="sbDusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22426a"/><stop offset="1" stop-color="#6aa3a0"/></linearGradient>
+  <linearGradient id="sbSunset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc8f2"/><stop offset="1" stop-color="#ffd9b8"/></linearGradient>
+  <linearGradient id="sbDream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9e7fb"/><stop offset="1" stop-color="#f4f0e2"/></linearGradient>
+  <linearGradient id="sbStone" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#efe6da"/><stop offset="1" stop-color="#c9b9a6"/></linearGradient>
+</defs></svg>
+<main class="sb">
+  <section class="top" id="finnHere"></section>
+  <div class="play">
+    <div class="nook">
+      <div class="book" id="book" role="button" tabindex="0" aria-label="The storybook: tap to hear your story">
+        <svg id="art" viewBox="0 0 600 380" aria-hidden="true"></svg>
+        <div class="words" id="words"></div>
+        <div class="perch" id="perch" aria-hidden="true"></div>
+        <span class="made" id="made"></span>
+      </div>
+    </div>
+    <nav class="blocks" id="blocks" aria-label="Story blocks"></nav>
+  </div>
+</main>
+
+<script src="kids.js?v=1110c"></script>
+<script>
+(function(){
+  var HI="This is the story corner! Pick a friend, a place, and a surprise. Then tap the book, and I'll tell your story!";
+  var ASK=["Pick a friend for your story!","Now pick a place to go!","Now pick a surprise!"];
+  var ASKC=["st-friend","st-place","st-surprise"];
+  var READY="Your story is ready! Tap the book.";
+  var WAIT="Pick a friend, a place, and a surprise first!";
+  var AGAIN="What a story! Pick new blocks to make another one.";
+  var ROWS=[
+    {tag:"Who",c:"#e2574c",l:"#f39a8f",d:"#9e2c25",items:[
+      {id:"bunny",name:"A bunny!",line:"Once upon a time, there was a little bunny."},
+      {id:"bear",name:"A bear!",line:"Once upon a time, there was a big brown bear."},
+      {id:"robot",name:"A robot!",line:"Once upon a time, there was a friendly robot."},
+      {id:"turtle",name:"A turtle!",line:"Once upon a time, there was a tiny turtle."}]},
+    {tag:"Where",c:"#3f86de",l:"#8cbcf4",d:"#21508f",items:[
+      {id:"moon",name:"The moon!",line:"One night, our friend took a trip all the way up to the moon."},
+      {id:"sea",name:"The sea!",line:"One day, our friend went sailing out on the big blue sea."},
+      {id:"forest",name:"The forest!",line:"One day, our friend went for a walk in the deep green forest."},
+      {id:"castle",name:"A castle!",line:"One day, our friend went to visit a tall, tall castle."}]},
+    {tag:"What",c:"#efb128",l:"#ffd979",d:"#a8730c",items:[
+      {id:"star",name:"A star!",line:"And there, our friend found a shining star to keep! The end!"},
+      {id:"balloon",name:"A balloon!",line:"And there, our friend found a big red balloon and floated up high! The end!"},
+      {id:"cake",name:"A cake!",line:"And there, everyone had a birthday party with cake! The end!"},
+      {id:"rainbow",name:"A rainbow!",line:"And there, our friend saw a giant rainbow, and smiled and smiled! The end!"}]}];
+  BWK.lines({"st-hi":HI});
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+
+  /* ---------- Finn's face (the same drawing as the kit's speech bubble) ---------- */
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("sbS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,then){ talked=true; BWK.finn(t,{into:top, clip:clip, onend:then}); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm") && !talked) say(HI,"st-hi"); });
+  document.addEventListener("click",function(e){
+    if(talked || e.target.closest(".blk,.book,.k-head,.k-sheet,.k-veil")) return; say(HI,"st-hi"); });
+  var perch=$("perch"); perch.innerHTML=face("sbP");
+  function hopFinn(){ perch.classList.remove("land"); void perch.offsetWidth; perch.classList.add("land"); }
+
+  /* ---------- sounds: wooden tok (block), page flip, line chime, story chord ---------- */
+  var AC=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C(); }
+    if(AC.state==="suspended") AC.resume(); return AC; }
+  function snd(){ return BWK.store.get("sound",true) ? ac() : null; }
+  function tone(c,f,t,dur,vol,type,f2){ var o=c.createOscillator(), g=c.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+    if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.05); }
+  function noise(c,t,dur,ftype,freq,q,vol,f2){ var n=Math.floor(c.sampleRate*dur), b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+    for(var i=0;i<n;i++) d[i]=Math.random()*2-1; var s=c.createBufferSource(); s.buffer=b; var fl=c.createBiquadFilter(); fl.type=ftype; fl.frequency.setValueAtTime(freq,t);
+    if(f2) fl.frequency.exponentialRampToValueAtTime(f2,t+dur); fl.Q.value=q; var g=c.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    s.connect(fl); fl.connect(g); g.connect(c.destination); s.start(t); s.stop(t+dur); }
+  var TOK=[[523,392],[659,494],[784,587]];
+  function tok(r,i){ var c=snd(); if(!c) return; var t=c.currentTime+.01, f=TOK[r][0]*(1+i*.06);
+    noise(c,t,.05,"bandpass",1800,3,.18); tone(c,f,t,.16,.16,"triangle",f*.97); tone(c,f*2.01,t,.08,.04,"sine"); }
+  function flip(){ var c=snd(); if(!c) return; var t=c.currentTime+.01; noise(c,t,.32,"bandpass",900,1.2,.14,3600); noise(c,t+.18,.12,"highpass",2600,.7,.05); }
+  var CH=[523.25,659.25,783.99];
+  function chime(k){ var c=snd(); if(!c) return; var t=c.currentTime+.02, f=CH[k]; tone(c,f,t,.9,.07,"sine"); tone(c,f*2,t+.03,.5,.025,"sine"); }
+  function chord(){ var c=snd(); if(!c) return; var t=c.currentTime+.02;
+    [523.25,659.25,783.99,1046.5].forEach(function(f,i){ tone(c,f,t+i*.09,1.3,.06,"sine"); tone(c,f*2,t+i*.09,.6,.015,"triangle"); }); }
+
+  /* ---------- pictures: each drawn in a 100×100 box ---------- */
+  var ICON={
+    bunny:function(){ return '<g stroke="#7d6a58" stroke-width="1.6" stroke-linejoin="round">'+
+      '<ellipse cx="39" cy="20" rx="7.5" ry="19" fill="#f6f1ea" transform="rotate(-12 39 34)"/><ellipse cx="39" cy="22" rx="3.6" ry="13" fill="#f6b3bd" stroke="none" transform="rotate(-12 39 34)"/>'+
+      '<ellipse cx="60" cy="20" rx="7.5" ry="19" fill="#f6f1ea" transform="rotate(14 60 34)"/><ellipse cx="60" cy="22" rx="3.6" ry="13" fill="#f6b3bd" stroke="none" transform="rotate(14 60 34)"/>'+
+      '<circle cx="73" cy="80" r="7" fill="#fff"/>'+
+      '<ellipse cx="50" cy="78" rx="21" ry="18" fill="#efe8df"/><ellipse cx="50" cy="82" rx="11" ry="11" fill="#fffaf4" stroke="none"/>'+
+      '<ellipse cx="38" cy="95" rx="8" ry="4" fill="#efe8df"/><ellipse cx="62" cy="95" rx="8" ry="4" fill="#efe8df"/>'+
+      '<circle cx="50" cy="50" r="19" fill="#f6f1ea"/></g>'+
+      '<circle cx="43" cy="48" r="2.6" fill="#2b2118"/><circle cx="57" cy="48" r="2.6" fill="#2b2118"/><circle cx="42.2" cy="47.1" r=".9" fill="#fff"/><circle cx="56.2" cy="47.1" r=".9" fill="#fff"/>'+
+      '<path d="M47.5 54.5h5l-2.5 3z" fill="#e8798b"/><path d="M50 57.5q-2 3-5 2M50 57.5q2 3 5 2" stroke="#7d6a58" stroke-width="1.3" fill="none" stroke-linecap="round"/>'+
+      '<ellipse cx="39" cy="57" rx="3.4" ry="2" fill="#f6b3bd" opacity=".7"/><ellipse cx="61" cy="57" rx="3.4" ry="2" fill="#f6b3bd" opacity=".7"/>'+
+      '<path d="M36 55l-9-1M36 58l-9 2M64 55l9-1M64 58l9 2" stroke="#a6978a" stroke-width=".9" stroke-linecap="round"/>'; },
+    bear:function(){ return '<g stroke="#5a3519" stroke-width="1.6" stroke-linejoin="round">'+
+      '<circle cx="31" cy="31" r="9.5" fill="#9b6436"/><circle cx="69" cy="31" r="9.5" fill="#9b6436"/>'+
+      '<ellipse cx="50" cy="80" rx="23" ry="17" fill="#8d5a2f"/><ellipse cx="50" cy="83" rx="12" ry="11" fill="#d7a679" stroke="none"/>'+
+      '<ellipse cx="36" cy="95" rx="9" ry="4.5" fill="#8d5a2f"/><ellipse cx="64" cy="95" rx="9" ry="4.5" fill="#8d5a2f"/>'+
+      '<circle cx="50" cy="50" r="22" fill="#9b6436"/></g>'+
+      '<circle cx="31" cy="31" r="4.6" fill="#d7a679"/><circle cx="69" cy="31" r="4.6" fill="#d7a679"/>'+
+      '<ellipse cx="50" cy="58" rx="10.5" ry="8" fill="#e2b98d"/><ellipse cx="50" cy="54.5" rx="4" ry="3" fill="#2b1a0e"/>'+
+      '<path d="M50 57.5v3.5M50 61q-3 3-6 1M50 61q3 3 6 1" stroke="#2b1a0e" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="41" cy="45" r="2.8" fill="#1f130a"/><circle cx="59" cy="45" r="2.8" fill="#1f130a"/><circle cx="40.2" cy="44" r=".9" fill="#fff"/><circle cx="58.2" cy="44" r=".9" fill="#fff"/>'+
+      '<ellipse cx="38" cy="38" rx="9" ry="4" fill="#fff" opacity=".12"/>'; },
+    robot:function(){ return '<path d="M50 9v12" stroke="#5b6f86" stroke-width="2.4"/><circle cx="50" cy="8" r="4.5" fill="#ff6a5a" stroke="#a8332a" stroke-width="1.3"/>'+
+      '<g stroke="#4d6178" stroke-width="1.6" stroke-linejoin="round">'+
+      '<rect x="23" y="62" width="8" height="20" rx="4" fill="#9db9d6"/><rect x="69" y="62" width="8" height="20" rx="4" fill="#9db9d6"/>'+
+      '<rect x="31" y="58" width="38" height="32" rx="7" fill="#a9c5e0"/>'+
+      '<rect x="34" y="90" width="11" height="7" rx="2" fill="#7f9bb8"/><rect x="55" y="90" width="11" height="7" rx="2" fill="#7f9bb8"/>'+
+      '<rect x="27" y="21" width="46" height="34" rx="9" fill="#bcd4ea"/></g>'+
+      '<rect x="32" y="27" width="36" height="21" rx="6" fill="#17284a"/>'+
+      '<circle cx="42" cy="36" r="4" fill="#7ff0ff"/><circle cx="58" cy="36" r="4" fill="#7ff0ff"/><path d="M44 42.5q6 4 12 0" stroke="#7ff0ff" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+      '<rect x="38" y="65" width="24" height="15" rx="3" fill="#dbe8f5" stroke="#4d6178" stroke-width="1.2"/>'+
+      '<circle cx="44" cy="72.5" r="2.6" fill="#ffcf4a"/><circle cx="50" cy="72.5" r="2.6" fill="#5fd38a"/><circle cx="56" cy="72.5" r="2.6" fill="#ff6a5a"/>'+
+      '<rect x="22" y="33" width="5" height="10" rx="2" fill="#7f9bb8"/><rect x="73" y="33" width="5" height="10" rx="2" fill="#7f9bb8"/>'+
+      '<rect x="31" y="24" width="20" height="3" rx="1.5" fill="#fff" opacity=".45"/>'; },
+    turtle:function(){ return '<g stroke="#2e6430" stroke-width="1.6" stroke-linejoin="round">'+
+      '<ellipse cx="30" cy="86" rx="7" ry="6" fill="#8fcf7a"/><ellipse cx="66" cy="86" rx="7" ry="6" fill="#8fcf7a"/>'+
+      '<path d="M84 68 q10-14 2-22 q-8-6-14 2 q-4 6 0 16z" fill="#8fcf7a"/>'+
+      '<path d="M14 80 Q16 44 48 42 Q80 44 82 80 Z" fill="#4fa35a"/>'+
+      '<path d="M12 80 H84 Q84 86 78 86 H18 Q12 86 12 80Z" fill="#d9c27a"/></g>'+
+      '<path d="M48 50 l9 6 v10 l-9 6 l-9-6 v-10z" fill="#77c47c" stroke="#2e6430" stroke-width="1.3"/>'+
+      '<path d="M29 62 l7 4 v8 l-7 4 l-7-4 v-8z" fill="#77c47c" stroke="#2e6430" stroke-width="1.3"/>'+
+      '<path d="M67 62 l7 4 v8 l-7 4 l-7-4 v-8z" fill="#77c47c" stroke="#2e6430" stroke-width="1.3"/>'+
+      '<path d="M8 80 q-4 -2 -2 -6 q4 1 6 6z" fill="#8fcf7a" stroke="#2e6430" stroke-width="1.2"/>'+
+      '<circle cx="82" cy="54" r="2.6" fill="#1b2b14"/><circle cx="81.3" cy="53.2" r=".9" fill="#fff"/>'+
+      '<path d="M80 61 q4 3 7 0" stroke="#1b2b14" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M28 52 Q40 45 54 46" stroke="#fff" stroke-width="2.5" opacity=".3" fill="none" stroke-linecap="round"/>'; },
+    moon:function(){ return '<circle cx="50" cy="50" r="36" fill="url(#sbMoonG)" stroke="#7a7f93" stroke-width="1.5"/>'+
+      '<circle cx="38" cy="40" r="8" fill="#a7abbb"/><circle cx="37" cy="39" r="6" fill="#b9bdcb"/>'+
+      '<circle cx="62" cy="58" r="10" fill="#a7abbb"/><circle cx="61" cy="57" r="7.6" fill="#b9bdcb"/>'+
+      '<circle cx="42" cy="68" r="4.5" fill="#a7abbb"/><circle cx="64" cy="33" r="3.6" fill="#a7abbb"/><circle cx="28" cy="58" r="3" fill="#a7abbb"/>'+
+      '<path d="M88 14l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#ffe7a0"/><path d="M12 84l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#ffe7a0"/>'; },
+    sea:function(){ return '<path d="M50 14 V62 H26 Z" fill="#fffdf6" stroke="#8a7c66" stroke-width="1.5" stroke-linejoin="round"/>'+
+      '<path d="M54 22 V62 H74 Z" fill="#ff8b6e" stroke="#a84a33" stroke-width="1.5" stroke-linejoin="round"/>'+
+      '<path d="M51 10 V66" stroke="#6b4a2a" stroke-width="2.6"/>'+
+      '<path d="M18 64 H82 L72 78 H28 Z" fill="#b5713c" stroke="#6b4a2a" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M4 80 q8-7 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 V100 H4Z" fill="#3f8fe0" stroke="#1f5fb0" stroke-width="1.5"/>'+
+      '<path d="M0 90 q8-6 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 V100 H0Z" fill="#2a74c8"/>'; },
+    forest:function(){ function tree(x,y,s,c,d){ return '<g transform="translate('+x+' '+y+') scale('+s+')"><rect x="-4" y="30" width="8" height="12" rx="1.5" fill="#7a4e2a"/>'+
+        '<path d="M0 -36 L18 -6 H8 L24 18 H12 L28 34 H-28 L-12 18 H-24 L-8 -6 H-18 Z" fill="'+c+'" stroke="'+d+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+        '<path d="M0 -30 L-9 -10" stroke="#fff" stroke-width="2" opacity=".25" stroke-linecap="round"/></g>'; }
+      return '<ellipse cx="50" cy="93" rx="44" ry="6" fill="#4c8f3e"/>'+tree(28,48,.78,"#2f8a4a","#1b5a2e")+tree(74,50,.72,"#3a9a55","#1b5a2e")+tree(50,46,1,"#43a85c","#1b5a2e")+
+        '<circle cx="18" cy="88" r="3" fill="#ff7aa8"/><circle cx="82" cy="89" r="2.6" fill="#ffd04a"/>'; },
+    castle:function(){ return '<g stroke="#7d6b58" stroke-width="1.5" stroke-linejoin="round">'+
+      '<path d="M22 46 h8 v-5 h6 v5 h6 v-5 h6 v5 h6 v-5 h6 v5 h8 V94 H22Z" fill="url(#sbStone)"/>'+
+      '<rect x="8" y="36" width="18" height="58" fill="#eadfce"/><rect x="74" y="36" width="18" height="58" fill="#eadfce"/>'+
+      '<path d="M5 37 L17 12 L29 37Z" fill="#e3577c"/><path d="M71 37 L83 12 L95 37Z" fill="#4f8fe0"/>'+
+      '<path d="M40 94 V76 q10-12 20 0 V94Z" fill="#8a5a33"/></g>'+
+      '<path d="M17 12 V3 l8 3 -8 3" fill="#ffcf4a" stroke="#7d6b58" stroke-width="1.2"/>'+
+      '<rect x="14" y="50" width="6" height="9" rx="3" fill="#3a3a5a"/><rect x="80" y="50" width="6" height="9" rx="3" fill="#3a3a5a"/>'+
+      '<rect x="46" y="56" width="8" height="10" rx="4" fill="#3a3a5a"/><circle cx="56" cy="86" r="1.4" fill="#ffcf4a"/>'; },
+    star:function(){ return '<circle cx="50" cy="52" r="40" fill="#ffe27a" opacity=".22"/>'+
+      '<path d="M50 10 L61 38 L91 40 L68 59 L76 88 L50 72 L24 88 L32 59 L9 40 L39 38Z" fill="url(#sbGold)" stroke="#b07a10" stroke-width="2" stroke-linejoin="round"/>'+
+      '<path d="M50 20 L57 39" stroke="#fff" stroke-width="3" opacity=".55" stroke-linecap="round"/>'+
+      '<circle cx="43" cy="54" r="2.6" fill="#6a4508"/><circle cx="57" cy="54" r="2.6" fill="#6a4508"/><path d="M45 61 q5 4 10 0" stroke="#6a4508" stroke-width="2" fill="none" stroke-linecap="round"/>'; },
+    balloon:function(){ return '<path d="M50 68 q-6 10 2 18 q6 6 -2 14" stroke="#8a7c66" stroke-width="1.6" fill="none"/>'+
+      '<ellipse cx="50" cy="36" rx="25" ry="30" fill="url(#sbRed)" stroke="#8a1a15" stroke-width="1.6"/>'+
+      '<path d="M45 66 h10 l-5 6z" fill="#c42a22" stroke="#8a1a15" stroke-width="1.4" stroke-linejoin="round"/>'+
+      '<ellipse cx="40" cy="24" rx="6" ry="9" fill="#fff" opacity=".5" transform="rotate(-20 40 24)"/>'; },
+    cake:function(){ return '<rect x="47.5" y="14" width="5" height="16" rx="1.5" fill="#7fb6ff" stroke="#3a6fb8" stroke-width="1.2"/>'+
+      '<path d="M50 3 q6 6 0 11 q-6-5 0-11z" fill="#ffcf4a" stroke="#e08a12" stroke-width="1.1"/>'+
+      '<g stroke="#a3586a" stroke-width="1.5" stroke-linejoin="round">'+
+      '<rect x="12" y="62" width="76" height="28" rx="5" fill="#ffd6df"/><rect x="24" y="30" width="52" height="32" rx="5" fill="#fff3e4"/></g>'+
+      '<path d="M24 36 q4 7 8 0 q4 7 8 0 q4 7 8 0 q4 7 8 0 q4 7 8 0 q4 7 8 0 V32 q0-2 2-2 H74 q2 0 2 2Z" fill="#ff8fb1"/>'+
+      '<path d="M12 68 q5 8 10 0 q5 8 10 0 q5 8 10 0 q5 8 10 0 q5 8 10 0 q5 8 10 0 q5 8 10 0 q3 5 6 2 V66 q0-4 4-4 H84 q4 0 4 4Z" fill="#fff3e4"/>'+
+      '<circle cx="34" cy="48" r="2.4" fill="#5fd38a"/><circle cx="50" cy="51" r="2.4" fill="#ffcf4a"/><circle cx="66" cy="48" r="2.4" fill="#7fb6ff"/>'+
+      '<circle cx="26" cy="80" r="2.4" fill="#7fb6ff"/><circle cx="50" cy="82" r="2.4" fill="#e3372e"/><circle cx="74" cy="80" r="2.4" fill="#5fd38a"/>'+
+      '<ellipse cx="50" cy="92" rx="44" ry="5" fill="#d9d2c2" stroke="#9a907c" stroke-width="1.2"/>'; },
+    rainbow:function(){ var C=["#e8473c","#f59a2c","#f5d33c","#5cc163","#3f86de","#8a5ad6"], s="";
+      C.forEach(function(c,i){ var r=42-i*5.2; s+='<path d="M'+(50-r)+' 74 A'+r+' '+r+' 0 0 1 '+(50+r)+' 74" stroke="'+c+'" stroke-width="5.4" fill="none"/>'; });
+      return s+'<g fill="#fff" stroke="#b9c6d6" stroke-width="1.3"><path d="M2 80 q0-9 9-9 q3-7 11-5 q8-1 9 8 q6 1 6 6 q0 5-6 5 H8 q-6 0-6-5z"/>'+
+        '<path d="M63 80 q0-9 9-9 q3-7 11-5 q8-1 9 8 q6 1 6 6 q0 5-6 5 H69 q-6 0-6-5z"/></g>'; }};
+
+  /* ---------- the wooden blocks ---------- */
+  function block(r,i){ var R=ROWS[r], it=R.items[i];
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">'+
+      '<path d="M8 16 L22 4 H96 L82 16Z" fill="'+R.l+'" stroke="'+R.d+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<path d="M26 8 H90 M20 12 H84" stroke="#fff" stroke-width="1" opacity=".35"/>'+
+      '<path d="M82 16 L96 4 V84 L82 96Z" fill="'+R.d+'" stroke="'+R.d+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+      '<rect x="4" y="16" width="78" height="80" rx="6" fill="'+R.c+'" stroke="'+R.d+'" stroke-width="1.6"/>'+
+      '<rect x="6" y="18" width="74" height="10" rx="5" fill="#fff" opacity=".18"/>'+
+      '<rect x="12" y="24" width="62" height="64" rx="7" fill="#fff8e8" stroke="'+R.d+'" stroke-width="1.2"/>'+
+      '<g transform="translate(15 27) scale(.56)">'+ICON[it.id]()+'</g></svg>'; }
+  var blocksEl=$("blocks"), btn=[[],[],[]];
+  ROWS.forEach(function(R,r){
+    var t=document.createElement("span"); t.className="tag"; t.style.setProperty("--c",R.c); t.innerHTML='<b></b>'+R.tag; blocksEl.appendChild(t);
+    R.items.forEach(function(it,i){ var b=document.createElement("button"); b.className="blk"; b.dataset.r=r; b.dataset.i=i; b.style.setProperty("--c",R.c);
+      b.setAttribute("aria-label",it.name.replace("!","")); b.innerHTML=block(r,i); blocksEl.appendChild(b); btn[r].push(b); }); });
+
+  /* ---------- saved state ---------- */
+  var save=BWK.store.get("stories",null);
+  if(!save||!save.pick) save={told:0,made:{},pick:[-1,-1,-1]};
+  function persist(){ try{ BWK.store.set("stories",save); }catch(_){ } }
+  function nMade(){ return Object.keys(save.made).length; }
+
+  /* ---------- the book ---------- */
+  var book=$("book"), art=$("art"), words=$("words"), made=$("made"), busy=false, told=false, failT=0;
+  function bg(p){ var s;
+    if(p===0){ s='<rect width="260" height="320" fill="url(#sbNight)"/>';
+      [[20,30],[60,70],[110,24],[150,60],[200,34],[236,90],[30,120],[90,140],[180,130],[240,170]].forEach(function(q,i){ s+='<circle class="twk" style="animation-delay:-'+(i*.4)+'s" cx="'+q[0]+'" cy="'+q[1]+'" r="'+(i%3?1.4:2.2)+'" fill="#fff"/>'; });
+      s+='<circle cx="46" cy="58" r="17" fill="#3f86de"/><path d="M36 50 q8-6 12 2 q4 8 12 4 q-2 10-12 10 q-10-4-12-16z" fill="#5cc163"/>'+
+        '<path d="M0 236 Q130 196 260 236 V320 H0Z" fill="url(#sbMoonG)"/><ellipse cx="60" cy="258" rx="22" ry="6" fill="#a7abbb"/><ellipse cx="190" cy="272" rx="28" ry="7" fill="#a7abbb"/><ellipse cx="128" cy="300" rx="16" ry="4" fill="#a7abbb"/>'; }
+    else if(p===1){ s='<rect width="260" height="320" fill="url(#sbDay)"/><circle cx="210" cy="50" r="22" fill="#ffe27a"/><circle cx="210" cy="50" r="32" fill="#ffe27a" opacity=".25"/>'+
+      '<g fill="#fff"><ellipse cx="60" cy="56" rx="26" ry="10"/><ellipse cx="78" cy="48" rx="16" ry="10"/><ellipse cx="160" cy="96" rx="20" ry="7"/></g>'+
+      '<rect y="168" width="260" height="110" fill="url(#sbSea)"/><path d="M0 186 q16-7 32 0 t32 0 t32 0 t32 0 t32 0 t32 0 t32 0 t32 0" stroke="#bfe2ff" stroke-width="2.4" fill="none" opacity=".7"/>'+
+      '<path d="M0 216 q20-8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" stroke="#bfe2ff" stroke-width="2.4" fill="none" opacity=".5"/>'+
+      '<path d="M186 160 L196 120 V160Z" fill="#fff" stroke="#8a7c66" stroke-width="1.2"/><path d="M176 160 H206 L200 168 H182Z" fill="#b5713c"/>'+
+      '<path d="M0 262 Q130 244 260 262 V320 H0Z" fill="#f1d79a"/><circle cx="210" cy="292" r="4" fill="#ff9e7a"/><path d="M40 300 l6-6 6 6" stroke="#e0b870" stroke-width="2" fill="none"/>'; }
+    else if(p===2){ s='<rect width="260" height="320" fill="url(#sbDusk)"/><circle cx="200" cy="44" r="14" fill="#fff6d8"/>';
+      function tr(x,y,h,c){ return '<path d="M'+x+' '+(y-h)+' L'+(x+h*.32)+' '+y+' H'+(x-h*.32)+'Z" fill="'+c+'"/><rect x="'+(x-3)+'" y="'+y+'" width="6" height="'+(h*.14)+'" fill="#4a2f1a"/>'; }
+      [[20,200,110],[66,196,90],[112,204,120],[160,198,96],[214,204,120],[250,196,80]].forEach(function(q){ s+=tr(q[0],q[1],q[2],"#24573a"); });
+      s+='<path d="M0 230 Q130 212 260 230 V320 H0Z" fill="#4c8f3e"/>';
+      [[14,260,120],[244,262,130]].forEach(function(q){ s+=tr(q[0],q[1],q[2],"#2f8a4a"); });
+      s+='<circle cx="60" cy="296" r="3.4" fill="#ff7aa8"/><circle cx="196" cy="300" r="3" fill="#ffd04a"/><circle cx="120" cy="250" r="2" fill="#e8ff9a" class="twk"/><circle cx="170" cy="230" r="2" fill="#e8ff9a" class="twk" style="animation-delay:-1.2s"/>'; }
+    else if(p===3){ s='<rect width="260" height="320" fill="url(#sbSunset)"/><g fill="#fff" opacity=".9"><ellipse cx="50" cy="50" rx="24" ry="8"/><ellipse cx="200" cy="80" rx="18" ry="6"/></g>'+
+      '<path d="M0 210 Q70 170 140 200 T260 186 V320 H0Z" fill="#7fc56d"/>'+
+      '<g transform="translate(128 74) scale(1.2)">'+ICON.castle()+'</g>'+
+      '<path d="M0 240 Q130 222 260 240 V320 H0Z" fill="#5fae55"/><path d="M168 194 Q150 250 120 320 H160 Q176 250 186 194Z" fill="#e6d3a8"/>'; }
+    else { s='<rect width="260" height="320" fill="url(#sbDream)"/>';
+      [[40,40],[210,60],[130,30],[60,150],[200,170],[120,250],[230,270],[30,280]].forEach(function(q,i){ s+='<path class="twk" style="animation-delay:-'+(i*.5)+'s" transform="translate('+q[0]+' '+q[1]+')" d="M0-7l1.8 5.2 5.2 1.8-5.2 1.8-1.8 5.2-1.8-5.2-5.2-1.8 5.2-1.8z" fill="#9dbdf0"/>'; });
+      ROWS.forEach(function(R,r){ s+='<circle cx="'+(70+r*60)+'" cy="160" r="22" fill="none" stroke="'+R.c+'" stroke-width="3" stroke-dasharray="6 6" opacity=".7"/><text x="'+(70+r*60)+'" y="168" text-anchor="middle" font-family="BWKOutfit,system-ui,sans-serif" font-weight="700" font-size="22" fill="'+R.c+'" opacity=".8">?</text>'; }); }
+    return s; }
+  var WHAT_AT={star:"translate(140 36) scale(.95)",balloon:"translate(146 28) scale(.95)",cake:"translate(146 210) scale(.86)",rainbow:"translate(20 40) scale(2.2)"};
+  function scene(anim){ var w=save.pick[0], p=save.pick[1], s=save.pick[2];
+    var hero=w<0?"":'<g transform="'+(s===3||s<0?"translate(70 176)":"translate(22 176)")+' scale(1.2)"><g class="'+(anim==="w"?"pop":"")+'" id="sbHero">'+ICON[ROWS[0].items[w].id]()+'</g></g>';
+    var item=""; if(s>=0){ var id=ROWS[2].items[s].id; item='<g transform="'+WHAT_AT[id]+'"><g class="'+(anim==="s"?"pop":"")+'" id="sbItem">'+ICON[id]()+'</g></g>'; }
+    var inner=bg(p)+(s===3?item+hero:hero+item);
+    return '<g class="scn"><svg x="40" y="36" width="244" height="308" viewBox="0 0 260 320" preserveAspectRatio="xMidYMid slice"><clipPath id="sbClip"><rect width="260" height="320" rx="10"/></clipPath><g clip-path="url(#sbClip)">'+inner+'</g></svg></g>'+
+      '<rect x="40" y="36" width="244" height="308" rx="9" fill="none" stroke="#c9b48a" stroke-width="1.5"/>'; }
+  function drawBook(anim){
+    art.innerHTML='<ellipse cx="300" cy="372" rx="300" ry="14" fill="rgba(0,0,0,.42)"/>'+
+      '<rect x="6" y="12" width="588" height="358" rx="18" fill="url(#sbCover)" stroke="#0f2a5c" stroke-width="2"/>'+
+      '<rect x="14" y="20" width="572" height="342" rx="13" fill="none" stroke="#9cc0f5" stroke-width="1.4" stroke-dasharray="5 5" opacity=".6"/>'+
+      '<path d="M24 352 H300 M24 348 H300 M300 352 H576 M300 348 H576" stroke="#d8ccb0" stroke-width="1.4"/>'+
+      '<rect x="24" y="22" width="276" height="324" rx="6" fill="url(#sbPaper)"/><rect x="300" y="22" width="276" height="324" rx="6" fill="url(#sbPaperR)"/>'+
+      '<path d="M300 22 V346" stroke="#b9a983" stroke-width="2"/><rect x="290" y="22" width="20" height="324" fill="rgba(90,70,30,.08)"/>'+
+      '<path d="M548 22 v40 l9-8 9 8 v-40z" fill="#e3577c" stroke="#a8324f" stroke-width="1.2"/>'+
+      scene(anim); }
+  function drawWords(on){ var h="";
+    ROWS.forEach(function(R,r){ var k=save.pick[r], t=k<0?'<span class="blank">· · · · ·</span>':'<span>'+R.items[k].line.replace(" The end!","")+'</span>';
+      h+='<p class="ln'+(on===r?" on":"")+'" style="--c:'+R.c+'"><i></i>'+t+'</p>'; });
+    h+='<p class="end'+(on===3?" on":"")+'">The end!</p>';
+    words.innerHTML=h; }
+  function full(){ return save.pick.every(function(k){ return k>=0; }); }
+  function marks(){ var first=save.pick.indexOf(-1);
+    btn.forEach(function(row,r){ row.forEach(function(b,i){ b.classList.toggle("on",save.pick[r]===i); b.classList.toggle("hint",!busy && r===first && !told); }); });
+    book.classList.toggle("ready",full() && !busy && !told);
+    made.textContent=nMade()?"★ "+nMade():""; }
+  function sparkle(xp,yp,c,n){ for(var k=0;k<(n||2);k++){ var s=document.createElement("i"); s.className="spk"; s.textContent=k%2?"✦":"★";
+    s.style.left=xp+"%"; s.style.top=yp+"%"; s.style.setProperty("--c",c); s.style.setProperty("--dx",(Math.random()*40-20).toFixed(0)+"px");
+    book.appendChild(s); setTimeout(function(){ s.remove(); },950); } }
+
+  /* ---------- picking a block ---------- */
+  blocksEl.addEventListener("click",function(e){ var b=e.target.closest(".blk"); if(!b||busy) return;
+    var r=+b.dataset.r, i=+b.dataset.i, it=ROWS[r].items[i]; told=false;
+    save.pick[r]=i; persist(); tok(r,i); b.classList.remove("tok"); void b.offsetWidth; b.classList.add("tok");
+    drawBook(["w","p","s"][r]); if(r===1){ book.classList.remove("turn"); void book.offsetWidth; book.classList.add("turn"); }
+    drawWords(-1); marks(); hopFinn();
+    var nxt=save.pick.indexOf(-1);
+    say(it.name,"st-"+it.id,function(){ if(busy) return;
+      if(nxt>=0) say(ASK[nxt],ASKC[nxt]); else say(READY,"st-ready"); }); });
+
+  /* ---------- telling the story: three recorded lines in a row ---------- */
+  function tell(){ if(busy) return;
+    if(!full()){ BWK.sfx("tap"); say(WAIT,"st-wait"); return; }
+    busy=true; told=true; blocksEl.classList.add("telling"); marks(); flip();
+    var ids=save.pick.map(function(k,r){ return ROWS[r].items[k].id; });
+    clearTimeout(failT); failT=setTimeout(finish,30000);
+    function part(r){ if(!busy) return;
+      drawWords(r); chime(r); hopFinn();
+      if(r===0){ var h=$("sbHero"); if(h){ h.classList.remove("bounce"); void h.getBoundingClientRect(); h.classList.add("bounce"); } }
+      if(r===2){ var it=$("sbItem"); if(it){ it.classList.remove("pop"); void it.getBoundingClientRect(); it.classList.add("pop"); } sparkle(30,28,"#ffe08a",3); }
+      say(ROWS[r].items[save.pick[r]].line,"st-"+(r+1)+"-"+ids[r],function(){ if(r<2) setTimeout(function(){ part(r+1); },250); else finish(); }); }
+    setTimeout(function(){ part(0); },450); }
+  function finish(){ if(!busy) return; clearTimeout(failT); busy=false; blocksEl.classList.remove("telling");
+    var key=save.pick.join("-"), isNew=!save.made[key]; save.made[key]=1; save.told++; persist();
+    drawWords(3); marks(); chord();
+    for(var k=0;k<8;k++) (function(k){ setTimeout(function(){ sparkle(8+k*11,14+(k%3)*20,k%2?"#ffe08a":"#9cc4ff",2); },k*90); })(k);
+    setTimeout(function(){ if(!busy) say(AGAIN,"st-again"); },900); }
+  book.addEventListener("click",tell);
+  book.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tell(); } });
+
+  /* ---------- start ---------- */
+  ["st-1-","st-2-","st-3-"].forEach(function(p,r){ ROWS[r].items.forEach(function(it){ BWK.preload&&BWK.preload(p+it.id); }); });
+  drawBook(""); drawWords(-1); marks();
+  function size(){ var w=book.getBoundingClientRect().width; perch.style.setProperty("--hw",Math.round(Math.max(44,Math.min(74,w*.09)))+"px"); }
+  requestAnimationFrame(size); window.addEventListener("resize",size);
+  window.SBO={pick:function(r,i){ btn[r][i].click(); }, tell:tell, finish:finish,
+    reset:function(){ save={told:0,made:{},pick:[-1,-1,-1]}; persist(); told=false; drawBook(""); drawWords(-1); marks(); },
+    state:function(){ return {pick:save.pick.join(","), told:save.told, made:nMade(), busy:busy}; }};
+})();
+</script>
+</body>
+</html>

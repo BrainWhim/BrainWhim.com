@@ -279,6 +279,7 @@
       run.t=setTimeout(function(){ paced(i+1, slow); }, ((150+52*len)+(end?260:0))*(slow?1.35:1)/finnRate());
     }
     function done(){ if(run.dead) return; box.classList.remove("talk");
+      if(o.onend){ var f=o.onend; o.onend=null; setTimeout(f,0); }
       run.t2=setTimeout(function(){ if(run.dead) return; run.home(); if(run.float) finnStop(); }, run.float?2600:700); }
     var fv = pickVoice(), useVoice = soundOn && fv && ("speechSynthesis" in window);
     sfx("sparkle");
@@ -543,7 +544,7 @@
 
   window.BWK = {
     init:function(o){ cfg=o||{}; head(); breakClock(); setTimeout(function(){hello(false);},700); },
-    sfx:sfx, say:say, lines:lines, finn:finn, finnStop:finnStop, sheet:sheet, closeSheet:closeSheet, seat:seat, store:LS, played:played, cornerProgress:cornerProgress, CORNERS:CORNERS,
+    sfx:sfx, say:say, lines:lines, finn:finn, finnStop:finnStop, preload:function(c){ loadClip("finn/"+c+".mp3",function(){}); }, sheet:sheet, closeSheet:closeSheet, seat:seat, store:LS, played:played, cornerProgress:cornerProgress, CORNERS:CORNERS,
     reading:function(){return readOn;}
   };
 })();
