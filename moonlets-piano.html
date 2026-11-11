@@ -17,6 +17,10 @@
    Listen: Finn plays it first, hopping along. No wrong notes, no losing, no timer. Slide a finger for a glissando.
    Desktop: keys A W S E D F T G Y H U J K. Songs (all public domain, pre-1929): Twinkle Twinkle, Mary Had a
    Little Lamb, Hot Cross Buns, Row Row Row Your Boat, London Bridge. Saved on the device: bwk.piano {songs:{id:n}}.
+   Nov 10 night, Big Moonlet (ages about 5-7; the kit's BWK.big switch, the moon chip at the end of the song row):
+   songs with no glowing keys (Finn hops over to help after a few seconds' wait), and the Echo game: Finn plays a
+   short tune, you play it back from memory; 3 notes on C D E, growing to 8 notes on all eight keys (6 levels).
+   A wrong note: Finn plays it again (no losing). Saved: bwk.piano {bigs:{id:n}, echo:{lv, best}}.
    ========================================================================== */
 .bg{position:fixed;inset:-12px;z-index:-1;background:url("kids-moonlets-sm.jpg") center/cover;filter:blur(2px) brightness(.5)}
 .pn{height:100svh;min-height:500px;display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -46,6 +50,17 @@
 .song span{font-size:12.5px;font-weight:700;color:#e9f0fb;white-space:nowrap}
 .song.on{background:linear-gradient(180deg,#fff4d6,#f2d892);border-color:#fff2c8;box-shadow:0 0 0 3px rgba(255,226,150,.35),0 6px 14px rgba(0,0,0,.4)}
 .song.on span{color:#3a2a10}
+.song.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.song.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.song.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.song.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.song.bigc[aria-pressed="true"] span{color:#2a1650}
+.song.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.song.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+.song .moon{position:absolute;top:3px;left:7px;font-size:12px;color:#d9c8ff;text-shadow:0 0 6px rgba(190,160,255,.9)}
+.lvl{display:none;gap:5px;align-items:center}.ctl.echo .lvl{display:flex}
+.lvl i{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,236,190,.3)}
+.lvl i.on{background:radial-gradient(circle at 35% 30%,#fff,#ffd84d 60%,#c79a12);border-color:#fff2c8;box-shadow:0 0 6px rgba(255,210,90,.8)}
 .song .got{position:absolute;top:3px;right:7px;font-size:12px;color:#ffd35c;text-shadow:0 0 6px rgba(255,200,80,.8)}
 .ctl{display:flex;align-items:center;gap:10px;width:min(100%,560px)}
 .cb:disabled{opacity:.4;cursor:default;box-shadow:0 2px 0 #b8954a}
@@ -111,8 +126,11 @@
 .hint{font-size:13px;color:#cdd8ea;text-shadow:0 1px 4px rgba(0,0,0,.7);margin:0;display:none}
 @media (hover:hover) and (pointer:fine){.hint{display:block}}
 
-@media (max-width:600px){.songs{display:grid;grid-template-columns:repeat(3,1fr);width:100%;overflow:visible;padding:0}
+/* upright tablets: the row wraps onto two lines rather than scrolling (Big Moonlet adds two chips) */
+@media (min-width:601px) and (max-aspect-ratio:4/5){.songs{flex-wrap:wrap;overflow:visible;justify-content:center}}
+@media (max-width:600px){.songs{display:grid;grid-template-columns:repeat(4,1fr);width:100%;overflow:visible;padding:0}
   .song{min-width:0;height:54px;padding:4px 6px}.song em{font-size:22px}.song span{font-size:12px;white-space:normal;text-align:center;line-height:1.1}
+  .songs .song:nth-child(7):last-child{grid-column:span 2}.lvl i{width:9px;height:9px}
   .top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px;margin-top:0}.hint{display:none!important}}
 @media (min-width:700px) and (min-height:700px){.song{height:82px;min-width:112px;border-radius:24px}.song em{font-size:32px}.song span{font-size:15px}.cb{height:52px;font-size:18px}.cb.round{width:52px}}
 @media (max-width:600px) and (min-height:740px){.song{height:68px}.song em{font-size:27px}.song span{font-size:13px}}
@@ -131,6 +149,7 @@
   <div class="ctl off" id="ctl">
     <button class="cb" id="bListen" disabled><span aria-hidden="true">👂</span> Listen</button>
     <div class="prog" aria-hidden="true"><i id="progF"></i></div>
+    <div class="lvl" id="lvl" aria-hidden="true"></div>
     <button class="cb round" id="bAgain" aria-label="Start the song again" disabled>↺</button>
   </div>
   <div class="piano" id="piano">
@@ -142,7 +161,7 @@
   <p class="hint">On a computer: keys A to K play the notes.</p>
 </main>
 
-<script src="kids.js?v=1110a"></script>
+<script src="kids.js?v=1110d"></script>
 <script>
 (function(){
   var HI="This is the moon piano! Tap the keys to make music, or pick a song and follow me.";
@@ -150,6 +169,11 @@
   var LISTEN="Listen first! Watch me hop along the keys.";
   var YAY="You played the whole song! You're a little star!";
   var FREE="Free play! Tap any key you like.", WATCH="Listen and watch me!";
+  var BIGSONG="No glowing keys this time! If you get stuck, wait, and I'll hop over to help.";
+  var BIGYAY="You played it all by yourself! Amazing!";
+  var ECHO="The echo game! I play a little tune, then you play it back.";
+  var EGO="Your turn! Play it back.", EOOPS="Oops! Listen again.", EYES="You got it! Here comes a longer one.";
+  var ESTAR="Wow, eight notes! You're an echo star!";
   BWK.lines({"pn-hi":HI});
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
@@ -173,6 +197,7 @@
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm") && !talked) say(HI,"pn-hi"); });
   document.addEventListener("click",function(e){
     if(talked || e.target.closest(".keys,.song,.cb,.k-head,.k-sheet,.k-veil")) return; say(HI,"pn-hi"); });
+  ["bg-on","bg-off","pn-echo","pn-echo-go","pn-echo-oops","pn-echo-yes"].forEach(BWK.preload);
 
   /* ---------- the keys ---------- */
   var WH=[["C",261.63,"#ff7a7a","#c93c4a"],["D",293.66,"#ffad5c","#c9701f"],["E",329.63,"#ffd84d","#c79a12"],["F",349.23,"#7ee08a","#2f9a4a"],
@@ -234,18 +259,26 @@
       s.addEventListener("animationend",function(){ this.remove(); }); piano.appendChild(s); } }
 
   /* ---------- playing ---------- */
-  var mode="free", song=null, idx=0, demo=0, played=BWK.store.get("piano",{songs:{}});
+  var mode="free", song=null, idx=0, demo=0, played=BWK.store.get("piano",{songs:{}}), help=0;
+  played.songs=played.songs||{}; played.bigs=played.bigs||{}; played.echo=played.echo||{lv:1,best:0};
+  var big=BWK.big();
   function down(k){ var b=K[k]; b.classList.add("down"); note(FREQ[k]); sparkle(k); }
   function up(k){ K[k].classList.remove("down"); }
   function press(k){
     down(k);
     if(mode==="free"){ hopTo(k,240); return; }
+    if(mode==="echo"){ echoPress(k); return; }
     if(mode!=="song") return;
     if(k!==song.notes[idx].k){ wiggle(); return; }
     K[k].classList.remove("next"); idx++; prog();
     if(idx>=song.notes.length){ finish(); return; }
-    var nk=song.notes[idx].k; setTimeout(function(){ if(mode==="song"&&song.notes[idx]&&song.notes[idx].k===nk){ hopTo(nk,280); mark(nk); } },140);
+    var nk=song.notes[idx].k;
+    if(big){ mark(null); if(hopAt) hopTo(null,300); helpLater(); return; }
+    setTimeout(function(){ if(mode==="song"&&song.notes[idx]&&song.notes[idx].k===nk){ hopTo(nk,280); mark(nk); } },140);
   }
+  // Big Moonlet songs: no glow; after a few seconds with no right note, Finn hops onto the key
+  function helpLater(){ clearTimeout(help); var me=demo, at=idx;
+    help=setTimeout(function(){ if(me===demo && mode==="song" && idx===at && song.notes[idx]){ hopTo(song.notes[idx].k,300); mark(song.notes[idx].k); } },4000); }
   function mark(k){ [].forEach.call(keysEl.querySelectorAll(".next"),function(x){x.classList.remove("next");}); if(k) K[k].classList.add("next"); }
   function prog(){ $("progF").style.width=(song?idx/song.notes.length*100:0)+"%"; }
 
@@ -274,42 +307,75 @@
   var songsEl=$("songs");
   function chip(id,em,name){ var b=document.createElement("button"); b.className="song"; b.dataset.id=id;
     b.innerHTML='<em aria-hidden="true">'+em+'</em><span>'+name+'</span>'+(played.songs[id]?'<i class="got" aria-hidden="true">★</i>':''); songsEl.appendChild(b); return b; }
-  chip("free","🎹","Free play").classList.add("on");
-  SONGS.forEach(function(s){ chip(s.id,s.em,s.name); });
-  songsEl.addEventListener("click",function(e){ var b=e.target.closest(".song"); if(!b) return;
-    [].forEach.call(songsEl.children,function(x){x.classList.toggle("on",x===b);}); BWK.sfx("tap");
+  function chips(){ songsEl.innerHTML=""; chip("free","🎹","Free play").classList.add("on");
+    if(big) chip("echo","🔁","Echo game");
+    SONGS.forEach(function(s){ var c=chip(s.id,s.em,s.name); if(played.bigs[s.id]) c.insertAdjacentHTML("beforeend",'<i class="moon" aria-hidden="true">☾</i>'); });
+    var b=document.createElement("button"); b.className="song bigc"; b.dataset.id="big"; b.setAttribute("aria-pressed",big);
+    b.innerHTML='<i class="sw" aria-hidden="true"></i><span>Big Moonlet</span>'; songsEl.appendChild(b); }
+  chips();
+  songsEl.addEventListener("click",function(e){ var b=e.target.closest(".song"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.id==="big"){ big=!big; talked=true; BWK.setBig(big,top); chips(); free(); return; }
+    [].forEach.call(songsEl.children,function(x){ if(x.dataset.id!=="big") x.classList.toggle("on",x===b);});
     if(b.dataset.id==="free"){ free(); say(FREE,"pn-free"); return; }
+    if(b.dataset.id==="echo"){ echoStart(); return; }
     var s=SONGS.filter(function(x){return x.id===b.dataset.id;})[0]; start(s,false); say(s.say,"pn-"+s.id);
-    // the first song of the visit: after its name, Finn explains how to follow her
-    if(!taught){ taught=true; var me=demo; setTimeout(function(){ if(me===demo && mode==="song" && idx===0) say(SONGLN,"pn-song"); },3400); } });
-  var taught=false;
-  function ctlOn(on){ $("ctl").classList.toggle("off",!on); $("bListen").disabled=!on; $("bAgain").disabled=!on; }
-  function free(){ demo++; mode="free"; song=null; mark(null); ctlOn(false); prog(); hopTo(null,380); setTimeout(function(){ if(mode==="free") hop.classList.add("idle"); },420); }
-  function start(s,talk){ demo++; song=s; idx=0; mode="song"; ctlOn(true); prog();
+    // the first song of the visit: after its name, Finn explains how to follow her (Big Moonlet: how she helps)
+    var tk=big?"b":"l"; if(!taught[tk]){ taught[tk]=true; var me=demo; setTimeout(function(){ if(me===demo && mode==="song" && idx===0) say(big?BIGSONG:SONGLN,big?"pn-bigsong":"pn-song"); },3400); } });
+  var taught={};
+  function ctlOn(on,echo){ $("ctl").classList.toggle("off",!on); $("ctl").classList.toggle("echo",!!echo); $("bListen").disabled=!on; $("bAgain").disabled=!on;
+    $("bAgain").setAttribute("aria-label",echo?"A new tune":"Start the song again"); }
+  function free(){ demo++; clearTimeout(help); mode="free"; song=null; mark(null); ctlOn(false); prog(); hopTo(null,380); setTimeout(function(){ if(mode==="free") hop.classList.add("idle"); },420); }
+  function start(s,talk){ demo++; clearTimeout(help); song=s; idx=0; mode="song"; ctlOn(true); prog();
+    if(big){ mark(null); hopTo(null,380); helpLater(); return; }
     hopTo(s.notes[0].k,380); mark(s.notes[0].k); if(talk) say(SONGLN,"pn-song"); }
-  function finish(){ mode="done"; mark(null);
-    played.songs[song.id]=(played.songs[song.id]||0)+1; BWK.store.set("piano",played);
-    var c=songsEl.querySelector('[data-id="'+song.id+'"]'); if(c && !c.querySelector(".got")) c.insertAdjacentHTML("beforeend",'<i class="got" aria-hidden="true">★</i>');
+  function finish(){ mode="done"; mark(null); clearTimeout(help);
+    var bag=big?played.bigs:played.songs; bag[song.id]=(bag[song.id]||0)+1; BWK.store.set("piano",played);
+    var c=songsEl.querySelector('[data-id="'+song.id+'"]'), mk=big?"moon":"got";
+    if(c && !c.querySelector("."+mk)) c.insertAdjacentHTML("beforeend",big?'<i class="moon" aria-hidden="true">☾</i>':'<i class="got" aria-hidden="true">★</i>');
     setTimeout(function(){ ["C","E","G","c"].forEach(function(k,i){ setTimeout(function(){ note(FREQ[k],.7); sparkle(k); },i*90); });
       WH.forEach(function(w,i){ setTimeout(function(){ sparkle(w[0]); },300+i*60); }); },250);
-    hopTo("c",420); setTimeout(function(){ say(YAY,"pn-yay"); },900);
+    hopTo("c",420); setTimeout(function(){ if(big) say(BIGYAY,"pn-bigyay"); else say(YAY,"pn-yay"); },900);
     var me=demo; setTimeout(function(){ if(me===demo && mode==="done") start(song,false); },5200);
   }
-  $("bAgain").onclick=function(){ if(song){ BWK.sfx("tap"); start(song,false); } };
-  $("bListen").onclick=function(){ if(!song) return; var s=song, me=++demo; mode="demo"; idx=0; prog(); mark(null);
-    say(WATCH,"pn-watch"); hopTo(s.notes[0].k,360);
-    var beat=60000/s.bpm, t=1900;
+  $("bAgain").onclick=function(){ if(!song) return; BWK.sfx("tap"); if(song.id==="echo"){ newTune(); listen(song,1200); } else start(song,false); };
+  $("bListen").onclick=function(){ if(!song) return; say(WATCH,"pn-watch"); listen(song,1900); };
+  function listen(s,t){ var me=++demo; clearTimeout(help); mode="demo"; idx=0; prog(); mark(null);
+    hopTo(s.notes[0].k,360);
+    var beat=60000/s.bpm;
     s.notes.forEach(function(n,i){ var at=t, d=n.d*beat;
       setTimeout(function(){ if(me!==demo) return; if(i>0) hopTo(n.k,Math.min(300,Math.max(150,d*.6))); },Math.max(0,at-Math.min(300,Math.max(150,d*.6))));
       setTimeout(function(){ if(me!==demo) return; down(n.k); idx=i+1; prog(); setTimeout(function(){ up(n.k); },Math.min(260,d*.7)); },at);
       t+=d; });
-    setTimeout(function(){ if(me===demo) start(s,false); },t+900);
-  };
+    setTimeout(function(){ if(me!==demo) return; if(s.id==="echo") echoGo(); else start(s,false); },t+900);
+  }
+
+  /* ---------- the Echo game (Big Moonlet): Finn plays, you play it back from memory ---------- */
+  var EKEYS=[["C","D","E"],["C","D","E"],["C","D","E","F","G"],["C","D","E","F","G"],null,null];
+  function lvDots(){ var h=""; for(var i=1;i<=6;i++) h+='<i class="'+(i<=played.echo.lv?"on":"")+'"></i>'; $("lvl").innerHTML=h; }
+  function newTune(){ var lv=played.echo.lv, ks=EKEYS[lv-1]||WH.map(function(w){return w[0];}), n=Math.min(8,lv+2), t=[], j=Math.floor(Math.random()*ks.length);
+    for(var i=0;i<n;i++){ if(i){ var step=Math.floor(Math.random()*5)-2; if(!step) step=Math.random()<.5?-1:1;  // small steps, sounds like a tune
+        j=Math.max(0,Math.min(ks.length-1,j+step)); if(t.length>=2 && t[i-1]===ks[j] && t[i-2]===ks[j]) j=(j+1)%ks.length; }
+      t.push(ks[j]); }
+    song={id:"echo", bpm:lv<=2?92:lv<=4?104:112, notes:t.map(function(k){return {k:k,d:1};})}; }
+  function echoStart(){ demo++; newTune(); ctlOn(true,true); lvDots(); say(ECHO,"pn-echo"); listen(song,4300); }
+  function echoGo(){ mode="echo"; idx=0; prog(); hopTo(null,360); say(EGO,"pn-echo-go"); }
+  function echoPress(k){
+    if(k!==song.notes[idx].k){ wiggle(); mode="demo"; idx=0; prog(); var me=++demo; say(EOOPS,"pn-echo-oops");
+      setTimeout(function(){ if(me===demo) listen(song,600); },1700); return; }
+    idx++; prog(); if(idx<song.notes.length) return;
+    mode="done"; var me=++demo, lv=played.echo.lv, n=song.notes.length;
+    played.echo.best=Math.max(played.echo.best||0,n); if(lv<6) played.echo.lv=lv+1; BWK.store.set("piano",played);
+    setTimeout(function(){ ["C","E","G","c"].forEach(function(k,i){ setTimeout(function(){ note(FREQ[k],.7); sparkle(k); },i*90); }); },250);
+    hopTo("c",420); setTimeout(function(){ lvDots(); if(n>=8) say(ESTAR,"pn-echo-star"); else say(EYES,"pn-echo-yes"); },900);
+    setTimeout(function(){ if(me===demo){ newTune(); listen(song,600); } },n>=8?5200:4200);
+  }
 
   // Finn starts up on the lid, bobbing; keep her on her key when the screen changes size
   requestAnimationFrame(function(){ place(null); });
   window.addEventListener("resize",function(){ place(hopAt); });
-  window.PNO={press:press,start:function(id){ start(SONGS.filter(function(s){return s.id===id;})[0],false); },state:function(){ return {mode:mode,idx:idx,at:hopAt}; }};
+  window.PNO={press:press,start:function(id){ start(SONGS.filter(function(s){return s.id===id;})[0],false); },echo:function(){ echoStart(); },
+    big:function(on){ big=!!on; BWK.setBig(big); chips(); free(); },
+    state:function(){ return {mode:mode,idx:idx,at:hopAt,big:big,tune:song&&song.id==="echo"?song.notes.map(function(n){return n.k;}).join(" "):"",lv:played.echo.lv}; }};
 })();
 </script>
 </body>

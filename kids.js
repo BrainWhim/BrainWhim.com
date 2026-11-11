@@ -542,7 +542,17 @@
     if(b.tele) p.tmap=1; if(b.lab) p.psj=1; LS.set("played",p);
     var nb={}; for(var k in CORNERS){ var g=cornerProgress(k); if(g.n===g.of) nb[k]=true; } LS.set("badges",nb); LS.set("badgeRule",2); })();
 
+  /* ---- Big Moonlet (Nov 10 night, Judy: ages about 5-7, a switch): one setting for the harder layer in every
+     Moonlets moon, kept on this device (bwk.big). Pages build their own button and listen for "bwk-big". ---- */
+  var BIGL={on:"Big Moonlet! Let's try something trickier.", off:"Okay! Back to the easy way."};
+  function big(){ return LS.get("big",false)===true; }
+  function setBig(on, into){ on=!!on; LS.set("big",on); document.documentElement.classList.toggle("k-bigm",on);
+    if(into) finn(BIGL[on?"on":"off"],{into:into, clip:on?"bg-on":"bg-off"});
+    try{ window.dispatchEvent(new CustomEvent("bwk-big",{detail:on})); }catch(e){} return on; }
+  document.documentElement.classList.toggle("k-bigm",big());
+
   window.BWK = {
+    big:big, setBig:setBig, BIG_LINES:BIGL,
     init:function(o){ cfg=o||{}; head(); breakClock(); setTimeout(function(){hello(false);},700); },
     sfx:sfx, say:say, lines:lines, finn:finn, finnStop:finnStop, preload:function(c){ loadClip("finn/"+c+".mp3",function(){}); }, sheet:sheet, closeSheet:closeSheet, seat:seat, store:LS, played:played, cornerProgress:cornerProgress, CORNERS:CORNERS,
     reading:function(){return readOn;}
