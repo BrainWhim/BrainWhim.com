@@ -17,6 +17,9 @@
    No wrong answers, no timer. ↺ takes the last paint back (a fresh page too); 🗑 gives a fresh page.
    A picture with every part painted: chord, sparkles, Finn's "You painted the whole picture!", gold ★ on its chip.
    Saved on the device: bwk.easel {pics:{id:{region:color}}, done:{id:n}, doodle:[strokes]}. Test hook EZO.
+   Nov 10 night: a white pot and an eraser (Judy's ideas). Big Moonlet (BWK.big, the chip at the end of the picture row):
+   only five paints (red, yellow, blue, white, black) and a mixing bowl: tap the bowl, then two paints; Finn names the new
+   color and it goes on a shelf of five "my colors" (bwk.easel.mine). A picture finished in Big Moonlet gets a ☾ (bdone).
    ========================================================================== */
 .bg{position:fixed;inset:-12px;z-index:-1;background:url("kids-moonlets-sm.jpg") center/cover;filter:blur(2px) brightness(.5)}
 .ez{height:100svh;min-height:500px;display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -40,6 +43,16 @@
 .pic.on{background:linear-gradient(180deg,#f6efff,#d9c4ff);border-color:#f3eaff;box-shadow:0 0 0 3px rgba(200,170,255,.4),0 6px 14px rgba(0,0,0,.4)}
 .pic.on span{color:#2c1b4f}
 .pic .got{position:absolute;top:3px;right:7px;font-size:12px;color:#ffd35c;text-shadow:0 0 6px rgba(255,200,80,.8)}
+.pic .gotb{position:absolute;top:3px;left:8px;font-size:12px;color:#e6d6ff;text-shadow:0 0 6px rgba(200,170,255,.9)}
+/* the Big Moonlet chip (same look as the Moon Piano's) */
+.pic.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45);gap:5px}
+.pic.bigc b{display:none;font-size:11px;font-weight:800;color:#f1eafc}
+.pic.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.pic.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.pic.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.pic.bigc[aria-pressed="true"] span,.pic.bigc[aria-pressed="true"] b{color:#2a1650}
+.pic.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.pic.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
 
 /* the easel: warm wood, splayed legs, a ledge, a brass clip with a little purple moon */
 .easel{position:relative;flex:1 1 0;min-height:150px;width:100%;container-type:size;display:flex;align-items:center;justify-content:center}
@@ -78,17 +91,22 @@
 @keyframes spk{0%{opacity:1;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% - 60px)) scale(1.2)}}
 
 /* paint pots and the two tools */
-.tray{display:flex;align-items:flex-end;justify-content:center;gap:8px;flex:none;width:min(100%,900px);padding-top:4px}
-.pot,.tool{appearance:none;border:0;padding:0;cursor:pointer;position:relative;flex:none;width:58px;height:58px;background:none;transition:transform .15s}
+.tray{--ps:min(58px,calc((100vw - 60px)/16));display:flex;align-items:flex-end;justify-content:center;gap:8px;flex:none;width:min(100%,1100px);padding-top:4px}
+.pot,.tool{appearance:none;border:0;padding:0;cursor:pointer;position:relative;flex:none;width:var(--ps);height:var(--ps);background:none;transition:transform .15s}
 .pot svg{width:100%;height:100%;display:block;filter:drop-shadow(0 5px 6px rgba(0,0,0,.45))}
 .pot.on{transform:translateY(-8px)}
 .pot.on::after{content:"";position:absolute;left:8%;right:8%;bottom:-9px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 12px 3px var(--c)}
 .pot:active{transform:translateY(-3px) scale(.95)}
 .tool{border-radius:50%;font-size:24px;background:linear-gradient(180deg,#f6efff,#d6c2fb);color:#2c1b4f;
-  box-shadow:0 4px 0 #8f74c4,0 8px 14px rgba(0,0,0,.35);width:52px;height:52px;margin-bottom:3px;display:flex;align-items:center;justify-content:center}
+  box-shadow:0 4px 0 #8f74c4,0 8px 14px rgba(0,0,0,.35);width:calc(var(--ps)*.88);height:calc(var(--ps)*.88);font-size:calc(var(--ps)*.42);margin-bottom:3px;display:flex;align-items:center;justify-content:center}
 .tool:active{transform:translateY(2px);box-shadow:0 2px 0 #8f74c4,0 4px 8px rgba(0,0,0,.35)}
 .tool:disabled{opacity:.4;cursor:default}
 .tray .gap{width:10px;flex:none}
+.tool svg{width:72%;height:72%;display:block}
+.tool.on{background:linear-gradient(180deg,#fff0f6,#ffbcd9);transform:translateY(-6px);box-shadow:0 0 0 3px rgba(255,170,210,.45),0 0 16px rgba(255,170,210,.6),0 4px 0 #c27a9c}
+.pot.slot{cursor:default;pointer-events:none}
+.pot.bowl.stir svg{animation:stir .7s ease-in-out}
+@keyframes stir{25%{transform:rotate(-9deg)}50%{transform:rotate(8deg)}75%{transform:rotate(-4deg)}}
 
 /* phones and upright tablets: Finn right under the menu, the rows spread evenly down the page */
 @media (max-width:600px),(max-aspect-ratio:4/5){
@@ -99,24 +117,24 @@
   .pics{gap:5px;padding:2px 0 4px;width:100%;justify-content:center}
   .pic{flex:1 1 0;min-width:0;max-width:58px;height:50px;padding:0;border-radius:16px}.pic span{display:none}.pic em{font-size:25px}
   .top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px;margin-top:0}
-  .tray{display:grid;grid-template-columns:repeat(6,1fr);gap:6px 4px;justify-items:center;align-items:end}
+  .tray{--ps:min(54px,12.4vw);display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px;justify-items:center;align-items:end}
+  .pic.bigc b{display:block}.pic.bigc i.sw{width:28px;height:15px}.pic.bigc i.sw::after{width:9px;height:9px}.pic.bigc[aria-pressed="true"] i.sw::after{left:15px}
   .tray .gap{display:none}
-  .pot{width:min(54px,15vw);height:min(54px,15vw)}
-  .tool{width:46px;height:46px;font-size:21px}
   .frame{width:min(100cqw - 22px,(100cqh - 40px)*4/3)}
   .board{padding:7px}.ledge{height:13px;margin:-2px -10px 0}
 }
 /* upright tablets: pots in two rows of big pots */
 @media (min-width:601px) and (max-aspect-ratio:4/5){
-  .tray{display:grid;grid-template-columns:repeat(6,auto);gap:10px 22px;justify-content:center;align-items:end}
+  .tray{display:grid;grid-template-columns:repeat(7,auto);gap:10px 16px;justify-content:center;align-items:end}
   .tray .gap{display:none}
 }
 @media (min-width:700px) and (min-height:700px){.pic{height:82px;min-width:104px;border-radius:24px}.pic em{font-size:32px}.pic span{font-size:15px}
-  .pot{width:70px;height:70px}.tool{width:60px;height:60px;font-size:27px}}
+  .tray{--ps:min(70px,calc((100vw - 60px)/16))}}
 @media (max-height:560px){.ez{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.pic{height:50px;min-width:64px}.pic em{font-size:21px}.pic span{font-size:11px}
-  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px;margin-top:0}.pot{width:48px;height:48px}.tool{width:44px;height:44px}}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px;margin-top:0}.tray{--ps:min(48px,calc((100vw - 60px)/16))}}
 @media (max-height:440px){.pic span{display:none}.pic{height:44px;min-width:48px}}
-@media (max-width:600px) and (max-height:560px){.pic{min-width:0;height:46px}}
+@media (max-width:600px) and (max-height:560px){.pic{min-width:0;height:46px}.tray{--ps:min(48px,12.4vw)}}
+@media (min-width:601px) and (max-aspect-ratio:4/5){.tray{--ps:min(74px,10.5vw)}}
 @media (prefers-reduced-motion:reduce){.perch svg{animation:none}.r{transition:none}}
 </style>
 </head>
@@ -139,13 +157,15 @@
   <div class="tray" id="tray" aria-label="Paint pots"></div>
 </main>
 
-<script src="kids.js?v=1110a"></script>
+<script src="kids.js?v=1110d"></script>
 <script>
 (function(){
   var HI="This is the paint easel! Pick a color, then tap the picture to paint it.";
   var YAY="You painted the whole picture! It's so pretty!";
   var DOODLE="Finger painting! Draw anything you like.";
   var UNDO="Oops! Let's take that back.", CLEAR="A fresh clean page!";
+  var BIGHI="Big Moonlet painting! Only five paints. Tap the bowl to mix two colors and make new ones.";
+  var MIXGO="Pick two paints to mix.", NEWC="A brand new color!", ERASE="The eraser! Rub or tap to clean it off.";
   BWK.lines({"ez-hi":HI});
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
@@ -165,7 +185,7 @@
   var top=$("finnHere");
   top.innerHTML='<div class="k-finn k-finn-in">'+face("ezS")+'<p class="k-fb">'+HI+'</p></div>';
   var talked=false;
-  function say(t,clip){ talked=true; BWK.finn(t,{into:top, clip:clip}); }
+  var sayN=0; function say(t,clip,then){ talked=true; var n=++sayN; BWK.finn(t,{into:top, clip:clip, onend:then?function(){ if(n===sayN) then(); }:null}); }
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm") && !talked) say(HI,"ez-hi"); });
   document.addEventListener("click",function(e){
     if(talked || e.target.closest(".paper,.pic,.pot,.tool,.k-head,.k-sheet,.k-veil")) return; say(HI,"ez-hi"); });
@@ -175,7 +195,7 @@
   /* ---------- the paint pots ---------- */
   var POTS=[["red","Red!","#ef4a4a"],["orange","Orange!","#ff9a2e"],["yellow","Yellow!","#ffd93b"],["green","Green!","#4cc35a"],
     ["lightblue","Light blue!","#8fd3ff"],["blue","Blue!","#3d7ff0"],["purple","Purple!","#9a62e8"],["pink","Pink!","#ff86c2"],
-    ["brown","Brown!","#9a6233"],["black","Black!","#2f2b38"]];
+    ["brown","Brown!","#9a6233"],["black","Black!","#2f2b38"],["white","White!","#ffffff"]];
   function shade(hex,k){ var n=parseInt(hex.slice(1),16), r=n>>16, g=n>>8&255, b=n&255;
     var f=function(v){ return Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k))); };
     return "#"+((1<<24)|(f(r)<<16)|(f(g)<<8)|f(b)).toString(16).slice(1); }
@@ -188,16 +208,66 @@
     '<ellipse cx="30" cy="22" rx="21" ry="7.5" fill="url(#'+id+'p)" stroke="'+shade(c,-.35)+'" stroke-width="1.2"/>'+
     '<path d="M44 24 q2 6 0 9 q-2 -3 0 -9z" fill="'+c+'"/>'+
     '<ellipse cx="24" cy="20" rx="7" ry="2.2" fill="#fff" opacity=".45"/></svg>'; }
-  var tray=$("tray"), ink=POTS[0][2], potBtns=[];
-  POTS.forEach(function(p,i){ var b=document.createElement("button"); b.className="pot"+(i?"":" on"); b.dataset.i=i;
-    b.setAttribute("aria-label",p[1].replace("!","")); b.style.setProperty("--c",p[2]); b.innerHTML=potSvg(i,p[2]);
-    tray.appendChild(b); potBtns.push(b); });
-  var gap=document.createElement("i"); gap.className="gap"; tray.appendChild(gap);
-  tray.insertAdjacentHTML("beforeend",'<button class="tool" id="bUndo" aria-label="Take back the last paint">↺</button>'+
-    '<button class="tool" id="bClear" aria-label="A fresh page">🗑</button>');
-  tray.addEventListener("click",function(e){ var b=e.target.closest(".pot"); if(!b) return;
-    potBtns.forEach(function(x){ x.classList.toggle("on",x===b); }); var p=POTS[+b.dataset.i]; ink=p[2];
-    clink(+b.dataset.i); say(p[1],"ez-"+p[0]); });
+  /* colors by name; Big Moonlet mixes (Nov 10 night): two paints in the bowl make a named color, or "a brand new color" */
+  var COL={};
+  POTS.concat([["gray","Gray!","#9a98a4"],["lightyellow","Light yellow!","#fff1a0"],["darkblue","Dark blue!","#24408f"],["mint","Mint green!","#a8ecc0"],
+    ["lavender","Lavender!","#cdb4f6"],["darkred","Dark red!","#9e2430"],["lime","Lime green!","#a6e23a"]])
+    .forEach(function(p){ COL[p[0]]={k:p[0],say:p[1],hex:p[2]}; });
+  var BASE=["red","yellow","blue","white","black"];
+  var MIX={"red+yellow":"orange","blue+yellow":"green","blue+red":"purple","red+white":"pink","blue+white":"lightblue","white+yellow":"lightyellow",
+    "black+white":"gray","black+blue":"darkblue","black+red":"darkred","green+white":"mint","purple+white":"lavender","green+yellow":"lime",
+    "green+red":"brown","blue+orange":"brown","purple+yellow":"brown"};
+  function hexAvg(a,b){ var x=parseInt(a.slice(1),16), y=parseInt(b.slice(1),16), f=function(s){ return Math.round(((x>>s)&255)/2+((y>>s)&255)/2); };
+    return "#"+((1<<24)|(f(16)<<16)|(f(8)<<8)|f(0)).toString(16).slice(1); }
+  function mix(a,b){ if(a.hex===b.hex) return a; var k=MIX[[a.k,b.k].sort().join("+")]; if(k) return COL[k];
+    var h=hexAvg(a.hex,b.hex); return {k:"x"+h.slice(1),say:NEWC,hex:h,clip:"ez-new"}; }
+  function clipOf(c){ return c.clip||("ez-"+c.k); }
+  var ERASER='<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-35 20 20)"><rect x="5" y="13" width="30" height="14" rx="3" fill="#ff9ec4" stroke="#b9577f" stroke-width="1.4"/>'+
+    '<rect x="19" y="13" width="16" height="14" rx="2" fill="#7ab4f5" stroke="#3f72b8" stroke-width="1.4"/><rect x="7" y="15.5" width="9" height="3" rx="1.5" fill="#fff" opacity=".6"/></g></svg>';
+  var SLOT='<svg viewBox="0 0 60 60" aria-hidden="true"><ellipse cx="30" cy="38" rx="19" ry="15" fill="rgba(255,255,255,.07)" stroke="rgba(230,215,255,.5)" stroke-width="2" stroke-dasharray="4 4"/></svg>';
+  var tray=$("tray"), big=BWK.big(), ink=COL.red.hex, erasing=false, mixing=null, lastMix=null, potN=0;
+  function potBtn(c,extra){ var b=document.createElement("button"); b.className="pot pc"+(extra||""); b.style.setProperty("--c",c.hex);
+    b.setAttribute("aria-label",c.say.replace("!","")); b.innerHTML=potSvg(potN++,c.hex); b._c=c; b._n=potN-1; tray.appendChild(b); return b; }
+  function bowlDraw(){ var w=$("bowl"); if(!w) return; var d=mixing||[], f=!mixing&&lastMix?lastMix.hex:null;
+    w.classList.toggle("on",!!mixing); w.style.setProperty("--c","#e6d6ff");
+    w.innerHTML='<svg viewBox="0 0 60 60" aria-hidden="true"><defs><linearGradient id="bwlG" x1="0" x2="1"><stop offset="0" stop-color="#c9b6e8"/><stop offset=".35" stop-color="#fbf8ff"/><stop offset="1" stop-color="#a996c8"/></linearGradient></defs>'+
+      '<ellipse cx="30" cy="27" rx="25" ry="8" fill="#5b4a78"/>'+
+      (f?'<ellipse cx="30" cy="28.5" rx="21" ry="5.4" fill="'+f+'"/>':'')+
+      (d[0]?'<circle cx="'+(d[1]?23:30)+'" cy="28.5" r="5" fill="'+d[0].hex+'" stroke="rgba(0,0,0,.25)"/>':'')+
+      (d[1]?'<circle cx="37" cy="28.5" r="5" fill="'+d[1].hex+'" stroke="rgba(0,0,0,.25)"/>':'')+
+      '<path d="M5 27 Q7 52 30 53 Q53 52 55 27 Q42 36 30 36 Q18 36 5 27Z" fill="url(#bwlG)" stroke="#7d6a9e" stroke-width="1.2"/>'+
+      '<path d="M13 40 Q30 47 47 40" stroke="#b48cf0" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M41 29 L52 5" stroke="#b9814a" stroke-width="3.6" stroke-linecap="round"/><ellipse cx="39.5" cy="30" rx="4" ry="2.3" fill="#a06c3a"/></svg>'; }
+  function pick(b){ [].forEach.call(tray.querySelectorAll(".pc,#bErase"),function(x){ x.classList.toggle("on",x===b); }); }
+  function buildTray(){ tray.innerHTML=""; potN=0; mixing=null;
+    if(!big) POTS.forEach(function(p){ potBtn(COL[p[0]]); });
+    else{ BASE.forEach(function(k){ potBtn(COL[k]); });
+      var w=document.createElement("button"); w.className="pot bowl"; w.id="bowl"; w.setAttribute("aria-label","Mixing bowl"); tray.appendChild(w); bowlDraw();
+      for(var i=0;i<5;i++){ if(save.mine[i]) potBtn(save.mine[i]," mine"); else tray.insertAdjacentHTML("beforeend",'<i class="pot slot" aria-hidden="true">'+SLOT+'</i>'); } }
+    tray.insertAdjacentHTML("beforeend",'<i class="gap"></i><button class="tool" id="bErase" aria-label="Eraser">'+ERASER+'</button>'+
+      '<button class="tool" id="bUndo" aria-label="Take back the last paint">↺</button><button class="tool" id="bClear" aria-label="A fresh page">🗑</button>');
+    $("bUndo").onclick=doUndo; $("bClear").onclick=doClear; $("bErase").onclick=doErase;
+    if(erasing){ pick($("bErase")); }
+    else{ var on=null; [].forEach.call(tray.querySelectorAll(".pc"),function(b){ if(!on && b._c.hex===ink) on=b; });
+      if(!on){ on=tray.querySelector(".pc"); ink=on._c.hex; } pick(on); }
+    tools(); }
+  function doErase(){ erasing=true; mixing=null; bowlDraw(); pick($("bErase")); BWK.sfx("tap"); say(ERASE,"ez-eraser"); }
+  function bowlTap(){ if(mixing){ mixing=null; bowlDraw(); BWK.sfx("tap"); return; }
+    mixing=[]; bowlDraw(); clink(5); say(MIXGO,"ez-mix"); }
+  function bowlStir(r){ var w=$("bowl"); lastMix=r; bowlDraw(); w=$("bowl"); w.classList.remove("stir"); void w.offsetWidth; w.classList.add("stir"); swish();
+    setTimeout(function(){
+      save.mine=save.mine.filter(function(m){ return m.hex!==r.hex; }); save.mine.unshift(r); save.mine=save.mine.slice(0,5); persist();
+      erasing=false; ink=r.hex; buildTray(); lastMix=r; bowlDraw();
+      var c=snd(); if(c){ var t=c.currentTime+.01; tone(c,784,t,.35,.05,"triangle"); tone(c,1175,t+.09,.45,.04,"triangle"); }
+      var br=$("bowl").getBoundingClientRect(); sparkleAt(br.left+br.width*.3,br.top+br.height*.3); sparkleAt(br.left+br.width*.7,br.top+br.height*.2);
+      say(r.say,clipOf(r)); },650); }
+  tray.addEventListener("click",function(e){
+    if(e.target.closest("#bowl")){ bowlTap(); return; }
+    var b=e.target.closest(".pc"); if(!b) return; var c=b._c; clink(b._n%10);
+    if(mixing && mixing.length>1) return;
+    if(mixing){ mixing.push(c); bowlDraw(); if(mixing.length<2){ say(c.say,clipOf(c)); return; }
+      var r=mix(mixing[0],mixing[1]); bowlStir(r); return; }
+    erasing=false; pick(b); ink=c.hex; say(c.say,clipOf(c)); });
 
   /* ---------- sounds: a glassy clink for a pot, a soft "plop" for paint, a swish for finger paint ---------- */
   var AC=null;
@@ -262,7 +332,7 @@
       lines:["M195 103 q-10 -24 -26 -28","M205 103 q10 -24 26 -28"], dots:[[169,75,4],[231,75,4]]}];
 
   var art=$("art"), paper=$("paper"), save=BWK.store.get("easel",{pics:{},done:{}});
-  if(!save.pics) save.pics={}; if(!save.done) save.done={};
+  if(!save.pics) save.pics={}; if(!save.done) save.done={}; if(!save.bdone) save.bdone={}; if(!Array.isArray(save.mine)) save.mine=[];
   function persist(){ try{ BWK.store.set("easel",save); }catch(_){ } }
   var cur=null, shapes=[], undo=[];
   function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
@@ -290,17 +360,18 @@
       else setTimeout(function(){ dd.remove(); },460); }); }
   function sparkleAt(px,py){ var fr=$("frame").getBoundingClientRect();
     for(var i=0;i<2;i++){ var s=document.createElement("i"); s.className="spk"; s.textContent=i?"✦":"★";
-      s.style.left=(px-fr.left+(i?12:-10))+"px"; s.style.top=(py-fr.top)+"px"; s.style.setProperty("--c",ink); s.style.setProperty("--dx",(i?18:-16)+"px");
+      s.style.left=(px-fr.left+(i?12:-10))+"px"; s.style.top=(py-fr.top)+"px"; s.style.setProperty("--c",erasing?"#ffffff":ink); s.style.setProperty("--dx",(i?18:-16)+"px");
       s.addEventListener("animationend",function(){ this.remove(); }); $("frame").appendChild(s); } }
   function toSvg(e){ var r=art.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width*400, y:(e.clientY-r.top)/r.height*300}; }
   art.addEventListener("pointerdown",function(e){ var t=e.target.closest(".r"); if(!t||!cur) return; e.preventDefault();
-    var i=+t.dataset.r, prev=t.getAttribute("fill"); if(prev===ink){ hopFinn(); return; }
-    undo.push([[i,prev]]); var was=painted(); setFill(i,ink); persist(); tools();
-    var p=toSvg(e); splash(p.x,p.y,ink); plop(potIndex()); hopFinn(); sparkleAt(e.clientX,e.clientY);
+    var i=+t.dataset.r, prev=t.getAttribute("fill"), col=erasing?PAPER:ink; if(prev===col){ hopFinn(); return; }
+    undo.push([[i,prev]]); var was=painted(); setFill(i,col); persist(); tools();
+    var p=toSvg(e); splash(p.x,p.y,erasing?"#d9c4ff":ink); if(erasing) swish(); else plop(potIndex()); hopFinn(); sparkleAt(e.clientX,e.clientY);
     if(painted()===shapes.length && was<shapes.length) finish(); });
   function potIndex(){ for(var i=0;i<POTS.length;i++) if(POTS[i][2]===ink) return i; return 0; }
-  function finish(){ save.done[cur.id]=(save.done[cur.id]||0)+1; persist(); var c=picsEl.querySelector('[data-id="'+cur.id+'"]');
-    if(c && !c.querySelector(".got")) c.insertAdjacentHTML("beforeend",'<i class="got" aria-hidden="true">★</i>');
+  function finish(){ var key=big?"bdone":"done", cls=big?"gotb":"got"; save[key][cur.id]=(save[key][cur.id]||0)+1; persist();
+    var c=picsEl.querySelector('[data-id="'+cur.id+'"]');
+    if(c && !c.querySelector("."+cls)) c.insertAdjacentHTML("beforeend",'<i class="'+cls+'" aria-hidden="true">'+(big?"☾":"★")+'</i>');
     setTimeout(function(){ chord(); var r=paper.getBoundingClientRect();
       for(var k=0;k<7;k++) (function(k){ setTimeout(function(){ sparkleAt(r.left+r.width*(.12+k*.13), r.top+r.height*(.3+(k%3)*.2)); },k*90); })(k); },300);
     setTimeout(function(){ say(YAY,"ez-yay"); },900); }
@@ -309,31 +380,31 @@
   var cv=$("cv"), cx=cv.getContext("2d"), strokes=Array.isArray(save.doodle)?save.doodle:[], live=null;
   function fit(){ var r=paper.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1);
     cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); redraw(); }
-  function line(s){ var W=cv.width,H=cv.height,p=s.p; if(!p.length) return; cx.strokeStyle=s.c; cx.fillStyle=s.c; cx.lineWidth=s.w*W; cx.lineCap="round"; cx.lineJoin="round";
+  function line(s){ var W=cv.width,H=cv.height,p=s.p; if(!p.length) return; cx.globalCompositeOperation=s.e?"destination-out":"source-over"; cx.strokeStyle=s.c; cx.fillStyle=s.c; cx.lineWidth=s.w*W; cx.lineCap="round"; cx.lineJoin="round";
     if(p.length<4){ cx.beginPath(); cx.arc(p[0]*W,p[1]*H,s.w*W/2,0,7); cx.fill(); return; }
     cx.beginPath(); cx.moveTo(p[0]*W,p[1]*H);
     for(var i=2;i<p.length-2;i+=2){ var mx=(p[i]+p[i+2])/2, my=(p[i+1]+p[i+3])/2; cx.quadraticCurveTo(p[i]*W,p[i+1]*H,mx*W,my*H); }
     cx.lineTo(p[p.length-2]*W,p[p.length-1]*H); cx.stroke(); }
   function redraw(){ cx.clearRect(0,0,cv.width,cv.height); var from=0;
     for(var i=strokes.length-1;i>=0;i--) if(strokes[i].clear){ from=i+1; break; }
-    for(var j=from;j<strokes.length;j++) if(!strokes[j].clear) line(strokes[j]); if(live) line(live); }
+    for(var j=from;j<strokes.length;j++) if(!strokes[j].clear) line(strokes[j]); if(live) line(live); cx.globalCompositeOperation="source-over"; }
   function rel(e){ var r=cv.getBoundingClientRect(); return [+((e.clientX-r.left)/r.width).toFixed(4), +((e.clientY-r.top)/r.height).toFixed(4)]; }
   cv.addEventListener("pointerdown",function(e){ e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){ }
-    live={c:ink,w:.045,p:rel(e),id:e.pointerId}; swish(); redraw(); });
+    live=erasing?{e:1,c:"#000",w:.08,p:rel(e),id:e.pointerId}:{c:ink,w:.045,p:rel(e),id:e.pointerId}; swish(); redraw(); });
   cv.addEventListener("pointermove",function(e){ if(!live||live.id!==e.pointerId) return; var q=rel(e), p=live.p;
     var dx=q[0]-p[p.length-2], dy=q[1]-p[p.length-1]; if(dx*dx+dy*dy<.00002) return; p.push(q[0],q[1]); redraw(); });
-  function endStroke(e){ if(!live||live.id!==e.pointerId) return; var s={c:live.c,w:live.w,p:live.p}; live=null; strokes.push(s); undo.push("s"); keepDoodle(); redraw(); tools(); hopFinn(); }
+  function endStroke(e){ if(!live||live.id!==e.pointerId) return; var s={c:live.c,w:live.w,p:live.p}; if(live.e) s.e=1; live=null; strokes.push(s); undo.push("s"); keepDoodle(); redraw(); tools(); hopFinn(); }
   cv.addEventListener("pointerup",endStroke); cv.addEventListener("pointercancel",endStroke);
   function keepDoodle(){ var j=JSON.stringify(strokes); if(j.length<400000){ save.doodle=strokes; persist(); } }
   function blank(){ for(var i=strokes.length-1;i>=0;i--){ if(strokes[i].clear) return true; if(!strokes[i].clear) return false; } return true; }
 
   /* ---------- undo and a fresh page ---------- */
   function tools(){ $("bUndo").disabled=!undo.length; $("bClear").disabled=cur?painted()===0:blank(); }
-  $("bUndo").onclick=function(){ if(!undo.length) return; var u=undo.pop(); BWK.sfx("close"); say(UNDO,"ez-undo");
+  function doUndo(){ if(!undo.length) return; var u=undo.pop(); BWK.sfx("close"); say(UNDO,"ez-undo");
     if(u==="s"||u==="c"){ strokes.pop(); keepDoodle(); redraw(); }
     else{ u.forEach(function(x){ setFill(x[0],x[1]); }); persist(); }
     tools(); };
-  $("bClear").onclick=function(){ BWK.sfx("whoosh"); say(CLEAR,"ez-clear");
+  function doClear(){ BWK.sfx("whoosh"); say(CLEAR,"ez-clear");
     if(cur){ var f=save.pics[cur.id]||{}, batch=[]; Object.keys(f).forEach(function(i){ batch.push([+i,f[i]]); setFill(+i,PAPER); });
       if(batch.length) undo.push(batch); persist(); }
     else if(!blank()){ strokes.push({clear:1}); undo.push("c"); keepDoodle(); redraw(); }
@@ -342,15 +413,22 @@
   /* ---------- picture chips ---------- */
   var picsEl=$("pics");
   function chip(id,em,name){ var b=document.createElement("button"); b.className="pic"; b.dataset.id=id; b.setAttribute("aria-label",name);
-    b.innerHTML='<em aria-hidden="true">'+em+'</em><span>'+name+'</span>'+(save.done[id]?'<i class="got" aria-hidden="true">★</i>':''); picsEl.appendChild(b); return b; }
+    b.innerHTML='<em aria-hidden="true">'+em+'</em><span>'+name+'</span>'+(save.done[id]?'<i class="got" aria-hidden="true">★</i>':'')+(save.bdone[id]?'<i class="gotb" aria-hidden="true">☾</i>':''); picsEl.appendChild(b); return b; }
   PICS.forEach(function(p){ chip(p.id,p.em,p.name); });
   chip("doodle","🖐️","Finger paint");
+  var bigB=document.createElement("button"); bigB.className="pic bigc"; bigB.dataset.id="big"; bigB.setAttribute("aria-label","Big Moonlet");
+  bigB.innerHTML='<i class="sw" aria-hidden="true"></i><span>Big Moonlet</span><b aria-hidden="true">Big</b>'; picsEl.appendChild(bigB);
+  function bigShow(){ bigB.setAttribute("aria-pressed",big?"true":"false"); }
+  bigShow();
+  function toggleBig(){ big=!big; BWK.setBig(big); bigShow(); BWK.sfx("tap"); erasing=false; lastMix=null; buildTray();
+    if(big) say(BWK.BIG_LINES.on,"bg-on",function(){ say(BIGHI,"ez-bighi"); }); else say(BWK.BIG_LINES.off,"bg-off"); }
   function open(id){ undo=[]; [].forEach.call(picsEl.children,function(x){ x.classList.toggle("on",x.dataset.id===id); });
     if(id==="doodle"){ cur=null; paper.classList.add("doodle"); fit(); }
     else{ cur=PICS.filter(function(p){ return p.id===id; })[0]; paper.classList.remove("doodle"); draw(cur); }
     save.last=id; persist(); tools(); }
-  picsEl.addEventListener("click",function(e){ var b=e.target.closest(".pic"); if(!b) return; BWK.sfx("tap"); open(b.dataset.id);
+  picsEl.addEventListener("click",function(e){ var b=e.target.closest(".pic"); if(!b) return; if(b.dataset.id==="big"){ toggleBig(); return; } BWK.sfx("tap"); open(b.dataset.id);
     if(b.dataset.id==="doodle") say(DOODLE,"ez-doodle"); else { var p=cur; say(p.say,"ez-"+p.id); } });
+  buildTray();
   open(save.last && (save.last==="doodle"||PICS.some(function(p){ return p.id===save.last; })) ? save.last : "moon");
 
   function size(){ var w=$("frame").getBoundingClientRect().width; perch.style.setProperty("--hw",Math.round(Math.max(48,Math.min(78,w*.09)))+"px");
@@ -359,7 +437,10 @@
   window.EZO={open:open,paint:function(i,c){ if(c) ink=c; var t=shapes[i]; t.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,clientX:0,clientY:0})); },
     fillAll:function(){ shapes.forEach(function(t,i){ ink=POTS[i%POTS.length][2]; var r=t.getBoundingClientRect();
       t.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2})); }); },
-    state:function(){ return {pic:cur&&cur.id, painted:cur?painted():null, parts:shapes.length, undo:undo.length, strokes:strokes.length}; }};
+    big:function(on){ if(!!on!==big) toggleBig(); },
+    state:function(){ return {pic:cur&&cur.id, painted:cur?painted():null, parts:shapes.length, undo:undo.length, strokes:strokes.length,
+      big:big, ink:ink, erasing:erasing, mixing:mixing?mixing.length:null, mine:save.mine.map(function(m){ return m.k; }),
+      pots:tray.querySelectorAll(".pc").length}; }};
 })();
 </script>
 </body>
