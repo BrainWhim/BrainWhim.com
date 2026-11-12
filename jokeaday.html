@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Joke-a-Day · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1110a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Joke-a-Day (The Outpost · The Joke Shack), Nov 12. A new joke every day; its punchline is in space code.
+   Crack it with the brass decoder wheel: find each symbol on the inner disc, tap the letter beside it on the outer ring. */
+:root{--bgx:56%;--bgy:70%}
+#play{flex-direction:column;align-items:center;justify-content:center;gap:10px}
+body.wide #play{flex-direction:row;gap:22px}
+.jcard{position:relative;width:min(560px,100%);border-radius:18px;padding:12px 14px 10px;color:#2b2116;
+  background:repeating-linear-gradient(180deg,rgba(120,90,40,0) 0 27px,rgba(120,90,40,.08) 27px 28px),linear-gradient(180deg,#fffaf0,#f4e9cf);
+  box-shadow:0 6px 0 #c9b384,0 16px 30px rgba(0,0,0,.45),inset 0 1px 0 #fff;transform:rotate(-.6deg)}
+.jcard::before{content:"";position:absolute;left:50%;top:-9px;width:86px;height:20px;margin-left:-43px;background:rgba(255,236,170,.75);
+  box-shadow:0 1px 2px rgba(0,0,0,.2);transform:rotate(2deg);border-radius:2px}
+body.wide .jcard{width:min(46%,520px);transform:rotate(-1deg)}
+.jtop{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.jday{flex:1;text-align:center;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#a0661c}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:38px;padding:0 12px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.jq{margin:2px 2px 8px;font-size:20px;font-weight:700;line-height:1.3;text-align:center}
+.code{display:flex;flex-wrap:wrap;justify-content:center;gap:6px calc(var(--sz)*.55);margin:0 0 6px}
+.wd{display:flex;gap:3px;flex-wrap:nowrap}
+.sl{width:var(--sz);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border-radius:8px}
+.sl .sy{width:var(--sz);height:var(--sz);border-radius:7px;background:radial-gradient(circle at 40% 30%,#24396c,#101d3d);box-shadow:inset 0 0 0 1.5px #c99a3c;display:flex;align-items:center;justify-content:center}
+.sl .sy svg{width:78%;height:78%}
+.sl .lt{width:var(--sz);height:calc(var(--sz)*1.05);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--sz)*.72);color:#1e2a44;
+  border-bottom:3px solid #b8955a;line-height:1}
+.sl.given .lt{color:#8a7a5c}
+.sl.on .sy{box-shadow:inset 0 0 0 2px #fff3c4,0 0 0 3px #f2be45,0 0 12px #f2be45;animation:slp 1.2s ease-in-out infinite}
+@keyframes slp{50%{transform:translateY(-2px)}}
+.sl.bad{animation:shk .35s}
+@keyframes shk{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.sl.pop .lt{animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+.pn{display:flex;align-items:flex-end;justify-content:center;font-weight:800;font-size:calc(var(--sz)*.8);height:calc(var(--sz)*2.1);color:#6b4a1a}
+.done .code{display:none}
+.ans{display:none;text-align:center;font-size:26px;font-weight:900;line-height:1.2;color:#c2541a;margin:4px 0 8px}
+.done .ans{display:block;animation:ansIn .6s cubic-bezier(.2,1.5,.4,1)}
+@keyframes ansIn{0%{opacity:0;transform:scale(.4) rotate(-6deg)}100%{opacity:1;transform:none}}
+.key{display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:16px;color:#5a4220;min-height:30px}
+.key svg{width:24px;height:24px;background:#13213f;border-radius:6px;padding:2px}
+.key b{font-size:20px;color:#1e2a44;background:#fff3c4;border:2px solid #c99a3c;border-radius:8px;padding:0 8px}
+.key .ok{color:#2e8b3e;font-weight:800}
+.done .key{display:none}
+.wwrap{position:relative;flex:none;touch-action:none}
+#wheel{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none}
+#wheel .lh{cursor:pointer}
+#wheel .lh:hover .lb{fill:rgba(255,255,255,.22)}
+#wheel text{font-family:Outfit,system-ui,sans-serif;pointer-events:none}
+#wheel .inner{cursor:grab}
+.wwrap.locked #wheel .inner{cursor:default}
+.turn{position:absolute;bottom:0;width:48px;height:48px;border-radius:50%;border:0;cursor:pointer;font-size:24px;font-weight:900;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c,0 6px 12px rgba(0,0,0,.4)}
+.turn.l{left:0}.turn.r{right:0}
+.locked .turn{display:none}
+.turn.go{animation:nudge2 1.1s ease-in-out infinite}
+@keyframes nudge2{50%{box-shadow:0 3px 0 #a97a1c,0 0 0 6px rgba(255,217,138,.55)}}
+.lflash{animation:lf .5s}
+@keyframes lf{0%{fill:#fff6c8}100%{fill:transparent}}
+.wglow{animation:wg 1s ease-in-out infinite}
+@keyframes wg{50%{opacity:.25}}
+@media (max-height:620px){.jq{font-size:17px;margin-bottom:5px}.key{font-size:14px;min-height:26px}.ib{min-height:34px;font-size:14px}}
+</style>
+<link rel="icon" href="bw-favicon.png?v=1111a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1111a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="jdSyms"></defs></svg>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true">
+        <circle cx="66" cy="46" r="42" fill="#d9ab4a" stroke="#8a5f12" stroke-width="2"/>
+        <circle cx="66" cy="46" r="29" fill="#14244a" stroke="#8a5f12" stroke-width="1.5"/>
+        <g font-size="9" font-weight="800" fill="#3a2306" text-anchor="middle" font-family="Outfit,system-ui,sans-serif"><text x="66" y="12">A</text><text x="98" y="31">B</text><text x="98" y="68">C</text><text x="66" y="87">D</text><text x="34" y="68">E</text><text x="34" y="31">F</text></g>
+        <use href="#jsym0" x="58" y="18" width="16" height="16"/><use href="#jsym1" x="80" y="30" width="14" height="14"/><use href="#jsym2" x="80" y="50" width="14" height="14"/><use href="#jsym3" x="59" y="60" width="14" height="14"/><use href="#jsym4" x="38" y="50" width="14" height="14"/><use href="#jsym5" x="38" y="30" width="14" height="14"/>
+        <circle cx="66" cy="46" r="9" fill="#f0cf7a" stroke="#8a5f12"/>
+      </svg>
+      <h1>Joke-a-Day</h1>
+      <p class="lead">A new joke every day. The punchline is in secret space code. Crack it with the decoder wheel!</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Today's Joke</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="jcard" id="jcard">
+      <div class="jtop"><button class="ib gh" id="tMenu">Menu</button><span class="jday" id="jday"></span><button class="ib gh" id="tHear" aria-label="Hear the joke">🔊</button><button class="ib" id="tHint">Hint</button></div>
+      <p class="jq" id="jq"></p>
+      <div class="ans" id="ans"></div>
+      <div class="code" id="code"></div>
+      <div class="key" id="key"></div>
+    </div>
+    <div class="wwrap" id="ww">
+      <svg id="wheel" viewBox="-104 -104 208 208" role="group" aria-label="Decoder wheel"></svg>
+      <button class="turn l" id="tL" aria-label="Turn the wheel left">↺</button>
+      <button class="turn r" id="tR" aria-label="Turn the wheel right">↻</button>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1110b"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, NS="http://www.w3.org/2000/svg";
+var ST=LS.get("jad",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0;
+function save(){ LS.set("jad",ST); }
+
+/* ---------- the 60 jokes (each recorded in the Outpost voice: outpost-voice/jk-NN-q.mp3 and jk-NN-a.mp3) ---------- */
+var JOKES=[
+["Why did the cookie go to the doctor?","Because it felt crummy!"],["What do you call a sleeping dinosaur?","A dino-snore!"],
+["What do you call a bear with no teeth?","A gummy bear!"],["Why did the math book look so sad?","It had too many problems!"],
+["Why did the cow cross the road?","To get to the udder side!"],["What did the ocean say to the beach?","Nothing, it just waved!"],
+["Why do bees have sticky hair?","Because they use honeycombs!"],["Why did the scarecrow win an award?","He was outstanding in his field!"],
+["What has ears but cannot hear?","A cornfield!"],["What do you call a dog magician?","A labracadabrador!"],
+["Why did the banana go to the doctor?","It wasn't peeling well!"],["What did one wall say to the other wall?","I'll meet you at the corner!"],
+["Why are fish so smart?","They live in schools!"],["What do you call a train carrying bubble gum?","A chew-chew train!"],
+["What did the baby corn say to the mama corn?","Where is pop corn?"],["Why did the teddy bear say no to dessert?","She was already stuffed!"],
+["What kind of tree fits in your hand?","A palm tree!"],["What do you call a funny mountain?","Hill-arious!"],
+["How does the moon cut his hair?","Eclipse it!"],["What do planets like to read?","Comet books!"],
+["How do you throw a party in space?","You planet!"],["What did the zero say to the eight?","Nice belt!"],
+["Why did the bicycle fall over?","It was two tired!"],["What's orange and sounds like a parrot?","A carrot!"],
+["Where do cows go on a Friday night?","To the moo-vies!"],["What do you call a duck that gets all A's?","A wise quacker!"],
+["What do elves learn in school?","The elf-abet!"],["What do frogs order at restaurants?","French flies!"],
+["Why don't eggs tell jokes?","They'd crack each other up!"],["How do bees get to school?","On the school buzz!"],
+["What kind of gum do bees chew?","Bumble gum!"],["What do you call a lazy kangaroo?","A pouch potato!"],
+["What kind of key opens a banana?","A mon-key!"],["What do you call a sleepy bull?","A bulldozer!"],
+["Why did the robot go on vacation?","To recharge its batteries!"],["What is a cat's favorite color?","Purr-ple!"],
+["What do you call cheese that isn't yours?","Nacho cheese!"],["What gets wetter the more it dries?","A towel!"],
+["What did the stamp say to the envelope?","Stick with me!"],["How do you make an octopus laugh?","With ten-tickles!"],
+["What do you call a bear in the rain?","A drizzly bear!"],["What has hands but can't clap?","A clock!"],
+["Where do pencils go on vacation?","Pencil-vania!"],["What's a frog's favorite game?","Hopscotch!"],
+["Why do cows wear bells?","Their horns don't work!"],["What do you call a dog that can tell time?","A watch dog!"],
+["What did one plate say to the other plate?","Dinner is on me!"],["What runs but never walks?","A river!"],
+["What do you call an alligator in a vest?","An investigator!"],["Why did the star go to school?","To get brighter!"],
+["What did the astronaut cook for lunch?","An unidentified frying object!"],["What do you call a pile of kittens?","A meow-ntain!"],
+["What do you call a cold puppy?","A chili dog!"],["What's a robot's favorite snack?","Computer chips!"],
+["What did the big flower say to the little flower?","Hi, bud!"],["What kind of shoes do frogs wear?","Open-toad shoes!"],
+["What does a cloud wear under its raincoat?","Thunderwear!"],["What did the pirate say on his eightieth birthday?","Aye, matey!"],
+["What did the left eye say to the right eye?","Between you and me, something smells!"],["Why did the student eat his homework?","The teacher said it was a piece of cake!"]];
+
+/* ---------- 26 space symbols (the rocket, 0, is the key) ---------- */
+var SYM=[
+'<path d="M0-11c4 3 5.5 9 4 14h-8c-1.5-5 0-11 4-14z" fill="#f4f4f4" stroke="#d64545" stroke-width="1"/><path d="M-4 1l-4.5 6h4.5zM4 1l4.5 6h-4.5z" fill="#e04848"/><circle cy="-3" r="2.2" fill="#4fc3f7" stroke="#2a6f9c" stroke-width=".7"/><path d="M-2.5 4l2.5 7 2.5-7z" fill="#ffb020"/>',
+'<path d="M0-11l3.2 7 7.6.8-5.7 5.1 1.6 7.5L0 5.6l-6.7 3.8 1.6-7.5-5.7-5.1 7.6-.8z" fill="#ffd84a" stroke="#c99a1c" stroke-width=".8"/>',
+'<path d="M3-10a10 10 0 1 0 7.5 15A8.2 8.2 0 1 1 3-10z" fill="#ffe9a8" stroke="#c9a54a" stroke-width=".8"/>',
+'<circle r="6.3" fill="#f39a3c"/><ellipse rx="11" ry="3.6" transform="rotate(-20)" fill="none" stroke="#ffd7a0" stroke-width="2"/><path d="M-6 -1.5a6.3 6.3 0 0 1 12 0" fill="#f39a3c"/>',
+'<circle cx="4.5" cy="-4.5" r="4.3" fill="#7fe7ff"/><path d="M1.5-.8L-10 10M4 1.5L-6 11M-1-3.2L-11 5" stroke="#7fe7ff" stroke-width="2" stroke-linecap="round" opacity=".75"/>',
+'<g stroke="#ffb627" stroke-width="2" stroke-linecap="round"><path d="M0-11v3M0 8v3M-11 0h3M8 0h3M-7.8-7.8l2 2M5.8 5.8l2 2M-7.8 7.8l2-2M5.8-5.8l2-2"/></g><circle r="5.2" fill="#ffc94a"/>',
+'<path d="M-5-1a5 5 0 0 1 10 0z" fill="#c9f5ff" stroke="#6bb8c9" stroke-width=".7"/><ellipse cy="1.5" rx="11" ry="4" fill="#8fd16a" stroke="#4f8a32" stroke-width=".8"/><circle cx="-5" cy="1.8" r="1" fill="#fff59a"/><circle cy="2.4" r="1" fill="#fff59a"/><circle cx="5" cy="1.8" r="1" fill="#fff59a"/>',
+'<ellipse rx="8" ry="9.5" fill="#7ddc5a" stroke="#3f8a2a" stroke-width=".8"/><ellipse cx="-3.4" cy="-1" rx="2.4" ry="3.6" transform="rotate(-25 -3.4 -1)" fill="#1b2433"/><ellipse cx="3.4" cy="-1" rx="2.4" ry="3.6" transform="rotate(25 3.4 -1)" fill="#1b2433"/><path d="M-2 5q2 1.6 4 0" stroke="#1b2433" stroke-width="1" fill="none" stroke-linecap="round"/>',
+'<rect x="-11" y="-3.5" width="7" height="7" fill="#4a7bd0" stroke="#bcd0f0" stroke-width=".6"/><rect x="4" y="-3.5" width="7" height="7" fill="#4a7bd0" stroke="#bcd0f0" stroke-width=".6"/><rect x="-3.5" y="-4.5" width="7" height="9" rx="1.5" fill="#cfd8dc"/><path d="M0-4.5v-4M0-9l3-2" stroke="#cfd8dc" stroke-width="1.2"/>',
+'<path d="M0-11C1 -2 2-1 11 0 2 1 1 2 0 11-1 2-2 1-11 0-2-1-1-2 0-11z" fill="#ff8ad8"/>',
+'<circle r="9.5" fill="#c9ccd6"/><circle cx="-3" cy="-3" r="2.4" fill="#a3a7b4"/><circle cx="3.5" cy="2" r="1.8" fill="#a3a7b4"/><circle cx="-2" cy="4.5" r="1.3" fill="#a3a7b4"/>',
+'<circle r="9.5" fill="#3d8bfd"/><path d="M-6-5c3-1 4 1 3 3s-4 2-5 0zM2 1c3-2 6 0 5 3s-5 3-6 1zM1-8c2 0 3 1 2 2" fill="#5ccf6a"/>',
+'<path d="M2-11L-7 2h6L-3 11 7-3H1z" fill="#ffcc00" stroke="#c98a00" stroke-width=".8"/>',
+'<rect x="-9" y="-5" width="17" height="6" rx="2" transform="rotate(-25)" fill="#c08850" stroke="#7b4a1f" stroke-width=".8"/><path d="M0 2L-5 11M0 2L5 11M0 2v9" stroke="#7b4a1f" stroke-width="1.4"/>',
+'<circle r="9.5" fill="#f4f7fb" stroke="#9fb0c8" stroke-width=".8"/><rect x="-6.5" y="-4.5" width="13" height="8" rx="4" fill="#2b4a7a"/><path d="M-4-2.5q2-1 4 0" stroke="#9fd3ff" stroke-width="1" fill="none"/>',
+'<path d="M-8-3l4-6 7 1 5 5-1 8-6 4-7-2-3-5z" fill="#9b6b43" stroke="#5f3d22" stroke-width=".8"/><circle cx="-2" cy="-2" r="1.6" fill="#6f4a2c"/><circle cx="3" cy="3" r="1.2" fill="#6f4a2c"/>',
+'<path d="M0 0c2-1 3 1 2 3s-5 2-6-1 1-7 6-7 8 4 7 9-6 8-11 7" fill="none" stroke="#b18cff" stroke-width="2.2" stroke-linecap="round"/><circle r="1.6" fill="#e4d5ff"/>',
+'<path d="M-9 6L-3-2 3 3 9-7" stroke="#9fd3ff" stroke-width="1.1" fill="none"/><g fill="#e8f4ff"><circle cx="-9" cy="6" r="2"/><circle cx="-3" cy="-2" r="2"/><circle cx="3" cy="3" r="2"/><circle cx="9" cy="-7" r="2"/></g>',
+'<path d="M0-11l8 7-8 15-8-15z" fill="#3fd1c6" stroke="#1b8f87" stroke-width=".8"/><path d="M-8-4h16M0-11l-3 7 3 15 3-15z" stroke="#bff5f0" stroke-width=".7" fill="none"/>',
+'<path d="M0-10L10 8H-10z" fill="#ff7043" stroke="#b6401c" stroke-width=".9" stroke-linejoin="round"/>',
+'<path d="M-9 5a4 4 0 0 1 1-7.5A5.5 5.5 0 0 1 2.5-5 4.5 4.5 0 0 1 9 5z" fill="#ffffff" stroke="#b5c4d6" stroke-width=".8"/>',
+'<path d="M-6-10v21" stroke="#d0d6de" stroke-width="1.8" stroke-linecap="round"/><path d="M-5-9.5h13l-3 4.5 3 4.5H-5z" fill="#ef4444"/>',
+'<path d="M0-7v-3" stroke="#90a4ae" stroke-width="1.4"/><circle cy="-10.5" r="1.6" fill="#ff5252"/><rect x="-8.5" y="-7" width="17" height="14" rx="3.5" fill="#90a4ae" stroke="#56707c" stroke-width=".8"/><circle cx="-3.5" cy="-1.5" r="2.3" fill="#ffee58"/><circle cx="3.5" cy="-1.5" r="2.3" fill="#ffee58"/><rect x="-4" y="3" width="8" height="2" rx="1" fill="#37474f"/>',
+'<path d="M0 9.5C-10 3-10-5-5.2-8.4-2.8-10-1-9 0-7c1-2 2.8-3 5.2-1.4C10-5 10 3 0 9.5z" fill="#ff4f6d" stroke="#c2304a" stroke-width=".8"/>',
+'<path d="M0-11C4-4 7 0 7 4A7 7 0 0 1-7 4c0-4 3-8 7-15z" fill="#4fb3ff" stroke="#1f6fb0" stroke-width=".8"/><path d="M-3 3a3 3 0 0 0 3 3" stroke="#d6eeff" stroke-width="1.2" fill="none"/>',
+'<g fill="none" stroke="#5ee0ff" stroke-width="1.3"><ellipse rx="10.5" ry="4"/><ellipse rx="10.5" ry="4" transform="rotate(60)"/><ellipse rx="10.5" ry="4" transform="rotate(-60)"/></g><circle r="2.2" fill="#ffe066"/>'];
+var SNAME=["rocket","star","moon","planet","comet","sun","flying saucer","alien","satellite","sparkle","full moon","Earth","lightning bolt","telescope","space helmet","space rock","galaxy","constellation","crystal","pyramid","cloud","flag","robot","heart","raindrop","atom"];
+(function(){ var d=$("#jdSyms"), h=""; SYM.forEach(function(s,i){ h+='<symbol id="jsym'+i+'" viewBox="-12 -12 24 24">'+s+'</symbol>'; }); d.innerHTML=h; })();
+function symSvg(j){ return '<svg viewBox="-12 -12 24 24" aria-hidden="true"><use href="#jsym'+j+'" x="-12" y="-12" width="24" height="24"/></svg>'; }
+
+/* ---------- the week: Monday gentle, Sunday hardest (more letters given early; the wheel comes set Mon-Tue;
+   the helper glow shows where the symbol is Mon-Wed; Thu-Sun it glows after two misses or a hint) ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var GIVE=[.5,.4,.35,.3,.22,.15,.1], PRESET=[1,1,0,0,0,0,0], GLOW=[1,1,1,0,0,0,0];
+function lvOf(wd){ return wd===0?6:wd-1; }
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function today(){ var d=new Date(); return {n:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5), wd:d.getDay()}; }
+
+var P=null, rot=0, anim=null, gen=0;
+function build(ji,lv,seed,bonus){
+  var R=rng(seed), q=JOKES[ji][0], a=JOKES[ji][1], A=a.toUpperCase().split(""), k=1+Math.floor(R()*25);
+  var letters=[]; A.forEach(function(c){ if(/[A-Z]/.test(c)&&letters.indexOf(c)<0) letters.push(c); });
+  for(var i=letters.length-1;i>0;i--){ var j=Math.floor(R()*(i+1)), t=letters[i]; letters[i]=letters[j]; letters[j]=t; }
+  var nGive=Math.round(letters.length*GIVE[lv]), given=letters.slice(0,nGive);
+  var r0=PRESET[lv]?k:((k+8+Math.floor(R()*10))%26);
+  return {ji:ji,q:q,a:a,A:A,k:k,lv:lv,given:given,got:given.slice(),set:!!PRESET[lv],r0:r0,act:-1,miss:{},help:{},done:false,bonus:!!bonus};
+}
+function enc(c){ return (c.charCodeAt(0)-65-P.k+26)%26; }
+
+/* ---------- the wheel ---------- */
+var W=$("#wheel"), INNER, SYG=[], LH=[], STEP=360/26;
+function el(t,a,p){ var e=document.createElementNS(NS,t); for(var k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e; }
+function polar(r,deg){ var a=(deg-90)*Math.PI/180; return [r*Math.cos(a),r*Math.sin(a)]; }
+function sector(r1,r2,d1,d2){ var a=polar(r2,d1),b=polar(r2,d2),c=polar(r1,d2),d=polar(r1,d1);
+  return "M"+a+"A"+r2+" "+r2+" 0 0 1 "+b+"L"+c+"A"+r1+" "+r1+" 0 0 0 "+d+"Z"; }
+function drawWheel(){
+  W.innerHTML='<defs><radialGradient id="jdBrass" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#fbe39a"/><stop offset=".5" stop-color="#d9ab4a"/><stop offset="1" stop-color="#8a5f12"/></radialGradient>'+
+    '<radialGradient id="jdNavy" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#26407a"/><stop offset="1" stop-color="#0d1a3a"/></radialGradient>'+
+    '<radialGradient id="jdHub" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#fff0b8"/><stop offset="1" stop-color="#b98522"/></radialGradient></defs>';
+  el("ellipse",{cx:3,cy:6,rx:101,ry:99,fill:"rgba(0,0,0,.35)"},W);
+  el("circle",{r:101,fill:"url(#jdBrass)",stroke:"#6b4708","stroke-width":1.5},W);
+  el("circle",{r:96.5,fill:"none",stroke:"rgba(255,245,200,.55)","stroke-width":.8},W);
+  LH=[];
+  for(var i=0;i<26;i++){
+    var g=el("g",{"class":"lh","data-l":i,role:"button","aria-label":String.fromCharCode(65+i)},W);
+    LH.push(el("path",{"class":"lb",d:sector(74,99,(i-.5)*STEP,(i+.5)*STEP),fill:"transparent"},g));
+    var p=polar(86.5,i*STEP); var t=el("text",{x:p[0],y:p[1]+5.3,"text-anchor":"middle","font-size":15.5,"font-weight":800,fill:"#3a2306"},g); t.textContent=String.fromCharCode(65+i);
+    var a=polar(74,(i+.5)*STEP), b=polar(99,(i+.5)*STEP); el("line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:"rgba(90,58,10,.45)","stroke-width":.7},W);
+  }
+  el("circle",{r:74,fill:"none",stroke:"#6b4708","stroke-width":1.5},W);
+  INNER=el("g",{"class":"inner"},W);
+  el("circle",{r:72.5,fill:"url(#jdNavy)"},INNER);
+  for(i=0;i<26;i++) if(i%2) el("path",{d:sector(30,72,(i-.5)*STEP,(i+.5)*STEP),fill:"rgba(255,255,255,.045)"},INNER);
+  var R=rng(77); for(i=0;i<40;i++){ var pp=polar(32+R()*38,R()*360); el("circle",{cx:pp[0],cy:pp[1],r:.35+R()*.6,fill:"#fff",opacity:.25+R()*.5},INNER); }
+  SYG=[];
+  for(var j=0;j<26;j++){ var sg=el("g",{},INNER); el("circle",{"class":"hl",r:11.5,fill:"none",stroke:"#ffe27a","stroke-width":2.2,opacity:0},sg);
+    var u=el("use",{x:-10,y:-10,width:20,height:20},sg); u.setAttribute("href","#jsym"+j); SYG.push(sg); }
+  el("circle",{r:27,fill:"url(#jdHub)",stroke:"#6b4708","stroke-width":1.2},W);
+  el("circle",{r:22,fill:"none",stroke:"rgba(107,71,8,.5)","stroke-width":.8},W);
+  var bw=el("text",{y:5,"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#6b4708",opacity:.8},W); bw.textContent="BW";
+  setRot(rot);
+}
+function setRot(r){ rot=r; var deg=r*STEP; INNER.setAttribute("transform","rotate("+deg+")");
+  for(var j=0;j<26;j++){ var p=polar(57,j*STEP); SYG[j].setAttribute("transform","translate("+p[0]+" "+p[1]+") rotate("+(-deg)+")"); } }
+function mod(n){ return ((n%26)+26)%26; }
+function tweenTo(target,cb){ cancelAnimationFrame(anim); var from=rot, t0=performance.now(), d=Math.min(520,140+Math.abs(target-from)*45), last=Math.round(from);
+  (function f(now){ var u=Math.min(1,(now-t0)/d), e=1-Math.pow(1-u,3), r=from+(target-from)*e; setRot(r);
+    if(Math.round(r)!==last){ last=Math.round(r); sTick(); }
+    if(u<1) anim=requestAnimationFrame(f); else { setRot(mod(Math.round(target))); if(cb) cb(); } })(t0); }
+
+/* ---------- sounds ---------- */
+function sTick(){ BWG.noise(0,.03,.07,2500,7000); BWG.tone(1800,0,.02,.01,"square"); }
+function sSet(){ BWG.noise(0,.08,.14,200,1200); BWG.tone(523,.08,.18,.05,"triangle"); BWG.tone(784,.18,.3,.05,"triangle"); }
+function sRight(){ BWG.tone(880,0,.12,.045,"triangle"); BWG.tone(1175,.07,.2,.04,"triangle"); }
+function sWrong(){ BWG.tone(220,0,.18,.05,"sine",180); }
+function sTap(){ BWG.tone(660,0,.05,.03,"triangle"); }
+function sRim(){ BWG.noise(0,.09,.22,80,400); BWG.tone(150,0,.12,.08,"sine",90); BWG.noise(.18,.09,.2,80,400); BWG.tone(120,.18,.14,.08,"sine",70); BWG.noise(.38,.6,.08,5000,12000); }
+function sWin(){ [523,659,784,1047].forEach(function(f,i){ BWG.tone(f,.8+i*.09,.38,.045,"triangle"); }); }
+
+/* ---------- the joke card ---------- */
+function slotAt(i){ return document.querySelector('.sl[data-i="'+i+'"]'); }
+function render(){
+  var c=$("#code"), h="", w="";
+  P.A.forEach(function(ch,i){
+    if(/[A-Z]/.test(ch)){ var have=P.got.indexOf(ch)>=0;
+      w+='<div class="sl'+(have?(P.given.indexOf(ch)>=0?" given":""):"")+(i===P.act?" on":"")+'" data-i="'+i+'" role="button" aria-label="'+(have?ch:"secret "+SNAME[enc(ch)])+'"><div class="sy">'+symSvg(enc(ch))+'</div><div class="lt">'+(have?ch:"")+'</div></div>'; }
+    else if(ch===" "){ h+='<div class="wd">'+w+'</div>'; w=""; }
+    else w+='<div class="pn">'+ch.replace("&","&amp;")+'</div>';
+  });
+  h+='<div class="wd">'+w+'</div>'; c.innerHTML=h;
+  [].forEach.call(c.querySelectorAll(".sl"),function(s){ s.onclick=function(){ var i=+s.dataset.i; if(P.done||P.got.indexOf(P.A[i])>=0) return; P.act=i; sTap(); render(); glow(); }; });
+  var kh=symSvg(0)+' points to <b>'+String.fromCharCode(65+P.k)+'</b>';
+  $("#key").innerHTML=P.set?('Key: '+kh+' <span class="ok">✓ set</span>'):('Turn the wheel: '+kh);
+  $("#ww").classList.toggle("locked",P.set);
+  $("#tL").classList.toggle("go",!P.set); $("#tR").classList.toggle("go",!P.set);
+}
+function nextAct(){ for(var i=0;i<P.A.length;i++) if(/[A-Z]/.test(P.A[i])&&P.got.indexOf(P.A[i])<0) return i; return -1; }
+function glow(){ SYG.forEach(function(g){ var c=g.querySelector(".hl"); c.setAttribute("opacity",0); c.classList.remove("wglow"); });
+  if(!P||P.done||!P.set||P.act<0) return;
+  var j=enc(P.A[P.act]); if(GLOW[P.lv]||P.help[j]){ var c=SYG[j].querySelector(".hl"); c.setAttribute("opacity",1); c.classList.add("wglow"); } }
+
+function start(bonus){
+  gen++; var t=today(), lv=lvOf(t.wd), ji, seed;
+  if(bonus){ do{ ji=Math.floor(Math.random()*JOKES.length); }while(ji===(t.n*23)%60); seed=(Math.random()*1e9)|0; }
+  else { ji=(t.n*23)%60; seed=t.n*7919+ji; }
+  P=build(ji,lv,seed,bonus);
+  if(!bonus&&ST.day===t.n&&ST.cur){ P.got=ST.cur.got||P.got; P.set=P.set||!!ST.cur.set; P.done=!!ST.cur.done; }
+  rot=P.set?P.k:P.r0;
+  document.body.className="m-play"+(document.body.classList.contains("wide")?" wide":"");
+  $("#jday").textContent=bonus?"Bonus Joke":(DAYN[t.wd]+"'s Joke");
+  $("#jq").textContent=P.q; $("#ans").textContent=P.a;
+  $("#jcard").classList.toggle("done",P.done);
+  P.act=nextAct(); drawWheel(); render(); glow(); layout();
+  if(P.done){ $("#key").innerHTML=""; return; }
+  var g=gen; setTimeout(function(){ if(g!==gen) return; BWK.say(bonus?"Here's a bonus joke!":P.q); if(bonus) setTimeout(function(){ if(g===gen) BWK.say(P.q); },1700);
+    if(!P.set) setTimeout(function(){ if(g===gen&&!P.set) BWK.say(TURN); },bonus?4600:3200); },350);
+}
+function saveCur(){ if(!P||P.bonus) return; ST.day=today().n; ST.cur={got:P.got,set:P.set,done:P.done}; save(); }
+
+function onLetter(i){
+  if(!P||P.done) return;
+  var lb=LH[i]; lb.classList.remove("lflash"); void lb.getBBox(); lb.classList.add("lflash");
+  if(!P.set){ sWrong(); $("#key").innerHTML='First turn the wheel until '+symSvg(0)+' points to <b>'+String.fromCharCode(65+P.k)+'</b>'; BWK.say(TURN); return; }
+  if(P.act<0) P.act=nextAct();
+  var want=P.A[P.act], s=slotAt(P.act);
+  if(String.fromCharCode(65+i)===want){
+    P.got.push(want); sRight(); P.act=nextAct(); render();
+    [].forEach.call(document.querySelectorAll('.sl'),function(x){ if(P.A[+x.dataset.i]===want) x.classList.add("pop"); });
+    glow(); saveCur(); if(P.act<0) win();
+  } else {
+    sWrong(); if(s){ s.classList.remove("bad"); void s.offsetWidth; s.classList.add("bad"); }
+    P.miss[P.act]=(P.miss[P.act]||0)+1; if(P.miss[P.act]>=2) P.help[enc(want)]=1; glow();
+  }
+}
+function setDone(){ P.set=true; sSet(); render(); glow(); saveCur(); BWK.say(SETL); }
+function turn(d){ if(!P||P.set||P.done) return; tweenTo(rot+d,function(){ if(mod(rot)===P.k) setDone(); }); }
+function hint(){
+  if(!P||P.done) return; BWK.sfx("tap");
+  if(!P.set){ var d=mod(P.k-rot); if(d>13) d-=26; tweenTo(rot+d,function(){ setDone(); }); return; }
+  if(P.act<0) return; P.help[enc(P.A[P.act])]=1; glow();
+  setTimeout(function(){ if(P&&!P.done&&P.act>=0) onLetter(P.A[P.act].charCodeAt(0)-65); },650);
+}
+function win(){
+  P.done=true; saveCur(); var g=gen;
+  var fresh=BWG.patch("jokeaday"); ST.n++; if(!P.bonus) ST.last=today().n; save();
+  setTimeout(function(){ if(g!==gen) return; $("#jcard").classList.add("done"); glow(); sRim(); sWin(); BWK.say(P.a,true); },500);
+  setTimeout(function(){ if(g!==gen) return;
+    var box=BWK.sheet('<h2>You cracked the code!</h2>'+BWG.patchLine(fresh)+'<p><b>'+P.q.replace(/</g,"")+'</b><br>'+P.a.replace(/</g,"")+'</p>'+
+      '<p>'+(P.bonus?'Want another one?':'Come back tomorrow for a brand-new joke.')+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="more">Bonus Joke</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    BWK.say(fresh?WINP:WIN);
+  },3300);
+}
+
+/* ---------- pointer: tap a letter, drag the disc ---------- */
+var drag=null;
+function ang(e){ var r=W.getBoundingClientRect(), x=e.clientX-(r.left+r.width/2), y=e.clientY-(r.top+r.height/2);
+  return {d:Math.sqrt(x*x+y*y)*208/r.width, a:Math.atan2(y,x)*180/Math.PI}; }
+W.addEventListener("pointerdown",function(e){
+  var p=ang(e);
+  if(p.d>=74&&p.d<=104){ var deg=mod(Math.round(((p.a+90+360)%360)/STEP)); onLetter(deg); return; }
+  if(p.d<74&&p.d>27&&P&&!P.set&&!P.done){ cancelAnimationFrame(anim); drag={a:p.a,r:rot,last:Math.round(rot)}; W.setPointerCapture(e.pointerId); e.preventDefault(); }
+});
+W.addEventListener("pointermove",function(e){ if(!drag) return; var p=ang(e), da=p.a-drag.a; if(da>180) da-=360; if(da<-180) da+=360;
+  drag.r+=da/STEP; drag.a=p.a; setRot(drag.r); if(Math.round(drag.r)!==drag.last){ drag.last=Math.round(drag.r); sTick(); } });
+function endDrag(){ if(!drag) return; var r=drag.r; drag=null; tweenTo(Math.round(r),function(){ if(mod(rot)===P.k) setDone(); }); }
+W.addEventListener("pointerup",endDrag); W.addEventListener("pointercancel",endDrag);
+$("#tL").onclick=function(){ turn(-1); }; $("#tR").onclick=function(){ turn(1); };
+$("#tHint").onclick=hint;
+$("#tHear").onclick=function(){ if(P) BWK.say(P.done?P.a:P.q,true); };
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  if(/^[a-z]$/i.test(e.key)){ onLetter(e.key.toUpperCase().charCodeAt(0)-65); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); turn(-1); } else if(e.key==="ArrowRight"){ e.preventDefault(); turn(1); } });
+
+/* ---------- layout: card on top and the wheel below (phones), side by side when wide ---------- */
+function layout(){
+  var pl=$("#play"), w=pl.clientWidth, h=pl.clientHeight; if(!w||!h) return;
+  var wide=w>h*1.15&&w>640; document.body.classList.toggle("wide",wide);
+  var card=$("#jcard"), cw=wide?Math.min(w*.46,520):Math.min(560,w);
+  /* the biggest slot size whose word-wrapped punchline fits in a fifth of the height on phones (the wheel gets the rest), half when wide */
+  var words=P?P.a.toUpperCase().split(" "):["XXXXXX","XXXXX"], inW=cw-30, budget=wide?h*.5:h*.2, sz=20;
+  for(var z=(wide?34:30);z>=20;z--){ var lines=1, x=0;
+    words.forEach(function(wd){ var L=wd.replace(/[^A-Z]/g,"").length, pn=wd.length-L, ww2=L*(z+3)-3+pn*z*.85; if(x&&x+z*.55+ww2>inW){ lines++; x=ww2; } else x+=(x?z*.55:0)+ww2; });
+    if(lines*(z*2.15+8)<=budget||z===20){ sz=z; break; } }
+  card.style.setProperty("--sz",sz+"px");
+  var s=wide?Math.min(w-cw-30,h-6):Math.min(w,h-card.offsetHeight-14);
+  s=Math.max(180,Math.min(s,560)); var ww=$("#ww"); ww.style.width=(wide?s:Math.min(w,s+120))+"px"; ww.style.height=s+"px"; W.style.width=s+"px"; W.style.margin="0 auto";
+}
+window.addEventListener("resize",function(){ requestAnimationFrame(layout); });
+if(window.ResizeObserver) new ResizeObserver(function(){ if(document.body.classList.contains("m-play")) layout(); }).observe($("#play"));
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; cancelAnimationFrame(anim); document.body.className="m-menu"; var t=today();
+  var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
+  $("#bPlay").textContent=doneToday?"Today's Joke ✓":"Today's Joke";
+  $("#mfoot").textContent=(ST.n?("Jokes cracked: "+ST.n+". "):"")+DAYN[t.wd]+": "+["the wheel is set for you, and lots of letters are free.","the wheel is set for you.","turn the wheel first.","turn the wheel first. Fewer free letters!","fewer free letters!","a tricky one!","the trickiest joke of the week!"][lvOf(t.wd)]; }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+INTRO+'</p><p>'+HOW+'</p><p>Some days the wheel is already set. On other days, turn it first with the arrows, or spin the dark middle with your finger, until the rocket points to the key letter.</p><p>On a computer, type the letters, and use the arrow keys to turn the wheel.</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+
+var INTRO="Joke-a-Day! Here's today's joke, but the punchline is in secret space code. Use the decoder wheel to crack it!";
+var HOW="Find each secret symbol on the inside of the wheel. The letter right next to it, on the outside, is the answer. Tap that letter on the wheel to fill it in. Stuck? Tap Hint.";
+var TURN="First, turn the wheel until the rocket points to today's key letter.", SETL="The wheel is set! Now crack the code.";
+var WIN="You cracked the code! Come back tomorrow for a brand-new joke.", WINP="You cracked the code! You earned a new patch for your badge wall!";
+var L={"jad-intro":INTRO,"jad-how":HOW,"jad-turn":TURN,"jad-set":SETL,"jad-win":WIN,"jad-win-patch":WINP,"jad-bonus":"Here's a bonus joke!"};
+JOKES.forEach(function(j,i){ var n=(i<9?"0":"")+(i+1); L["jk-"+n+"-q"]=j[0]; L["jk-"+n+"-a"]=j[1]; });
+BWK.lines(L);
+toMenu();
+BWK.init({here:"jokeaday", voice:"outpost", intro:INTRO, noHello:true});
+window.JDO={start:start,letter:function(c){ onLetter(c.toUpperCase().charCodeAt(0)-65); },hint:hint,turn:turn,
+  solve:function(){ if(!P) return; if(!P.set){ rot=P.k; setRot(rot); P.set=true; render(); } var g=0; while(P&&!P.done&&P.act>=0&&g++<40) onLetter(P.A[P.act].charCodeAt(0)-65); },
+  state:function(){ return P&&{ji:P.ji,k:P.k,lv:P.lv,set:P.set,done:P.done,got:P.got.join(""),act:P.act,rot:rot,a:P.a}; },jokes:JOKES,lines:L};
+})();
+</script>
+</body>
+</html>
