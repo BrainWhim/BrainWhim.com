@@ -136,6 +136,7 @@ function faceSvg(c){
   var col=c.r===8?"url(#ceRain)":SC[c.s], st=c.r===8?' stroke="#7b2410" stroke-width=".5"':'';
   h+='<text x="5" y="12.5" font-size="11.5" font-weight="900" fill="'+col+'"'+st+' font-family="Outfit,system-ui,sans-serif">'+c.r+'</text>';
   h+='<text x="45" y="57.5" font-size="11.5" font-weight="900" fill="'+col+'"'+st+' text-anchor="end" transform="rotate(180 40 61)" font-family="Outfit,system-ui,sans-serif">'+c.r+'</text>';
+  h+='<use href="#ceS'+c.s+'" x="2.5" y="15" width="6.5" height="6.5"/><use href="#ceS'+c.s+'" x="41" y="48.5" width="6.5" height="6.5" transform="rotate(180 44.25 51.75)"/>';
   return h+'</svg>';
 }
 var BACK='<svg viewBox="0 0 50 70" aria-hidden="true"><defs><pattern id="ceBk" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#1f6f5a"/><rect width="3" height="6" fill="#18594a"/></pattern></defs><rect x=".5" y=".5" width="49" height="69" rx="5" fill="url(#ceBk)" stroke="#fff4df" stroke-width="2.5"/><circle cx="25" cy="35" r="7" fill="#ffe27a"/><path d="M25 29.5l1.6 3.4 3.7.4-2.8 2.5.8 3.7L25 37.6l-3.3 1.9.8-3.7-2.8-2.5 3.7-.4z" fill="#7b4a1f"/></svg>';
@@ -193,6 +194,7 @@ function stacks(){
 function bubble(i,txt){ var b=$("#op"+i+" .bub"); b.textContent=txt; b.classList.add("on"); clearTimeout(b._t); b._t=setTimeout(function(){ b.classList.remove("on"); },1300); }
 
 function deal(){
+  clearTimeout(nagT); saidTurn=saidDraw=false;
   gen++; over=false; busy=false; drewThis=false;
   [].slice.call(tbl.querySelectorAll(".cd,.opp")).forEach(function(e){ e.remove(); });
   P=["me"].concat(ORDER.filter(function(id){ return ST.who.indexOf(id)>=0; })); if(P.length<2) P=["me","brody"];
@@ -202,7 +204,7 @@ function deal(){
   deck=[]; for(var s=0;s<4;s++) for(var r=1;r<=10;r++) deck.push({s:s,r:r}); shuffle(deck);
   hands=P.map(function(){ return []; }); pile=[];
   geo();
-  for(var k=0;k<5;k++) P.forEach(function(id,i){ var c=deck.pop(); hands[i].push(c); if(!i) cardEl(c,true); });
+  for(var k=0;k<8;k++) P.forEach(function(id,i){ var c=deck.pop(); hands[i].push(c); if(!i) cardEl(c,true); });
   var first; do{ first=deck.pop(); if(first.r===8){ deck.unshift(first); first=null; } }while(!first);
   cardEl(first,true); first.rot=Math.random()*8-4; pile.push(first); suit=first.s;
   hands[0].sort(function(a,b){ return a.s-b.s||a.r-b.r; });
@@ -211,10 +213,15 @@ function deal(){
   requestAnimationFrame(function(){ layoutAll(false); myTurn(true); });
 }
 function msg(t){ $("#msg").textContent=t; }
+/* Spoken nudges: the first "Your turn!" (and the first draw tip) of a game is said right away;
+   after that only if the player waits 5 s without playing or drawing (Judy, Nov 12). */
+var nagT=0, saidTurn=false, saidDraw=false;
+function nag(line,said){ clearTimeout(nagT); if(!said){ BWK.say(line); return; }
+  var g=gen; nagT=setTimeout(function(){ if(g===gen&&turn===0&&!busy&&!over&&!drewThis) BWK.say(line); },5000); }
 function myTurn(first){
   busy=false; drewThis=false; turn=0; layoutHand(); stacks();
-  if(hands[0].some(legal)){ msg(first?"You go first! Tap a glowing card that matches.":"Your turn! Match the picture or the number."); if(!first) BWK.say("Your turn!"); }
-  else { msg("No match? Tap the deck to draw a card."); BWK.say(DRAW); }
+  if(hands[0].some(legal)){ msg(first?"You go first! Tap a glowing card that matches.":"Your turn! Match the picture or the number."); if(!first){ nag("Your turn!",saidTurn); saidTurn=true; } }
+  else { msg("No match? Tap the deck to draw a card."); nag(DRAW,saidDraw); saidDraw=true; }
 }
 function tapCard(c){
   if(turn!==0||busy||over) return;
@@ -224,7 +231,7 @@ function tapCard(c){
   play(0,c);
 }
 function play(i,c){
-  busy=true; var h=hands[i]; h.splice(h.indexOf(c),1);
+  clearTimeout(nagT); busy=true; var h=hands[i]; h.splice(h.indexOf(c),1);
   if(!c.el){ cardEl(c,false); var o=$("#op"+i), r=o.getBoundingClientRect(), tr=tbl.getBoundingClientRect(); put(c,r.left-tr.left+r.width/2-G.cw/2,r.top-tr.top+20,0,90,true); }
   showFace(c); c.el.classList.remove("mine","can","dim"); c.rot=Math.random()*14-7; c.dx=Math.random()*6-3; c.dy=Math.random()*6-3;
   pile.push(c); c.el.onclick=null; sPlay(); layoutAll(false);
@@ -249,6 +256,7 @@ function chooseSuit(i,random){ if(random) return Math.floor(Math.random()*4);
 function refill(){ if(deck.length||pile.length<2) return; var t=pile.pop(); deck=shuffle(pile.map(function(c){ if(c.el){ c.el.remove(); c.el=null; } c.up=false; return {s:c.s,r:c.r}; })); pile=[t]; }
 function drawMe(){
   if(turn!==0||busy||over||drewThis) return;
+  clearTimeout(nagT);
   if(hands[0].some(legal)){ sWrong(); msg("You have a match! Look for the glowing cards."); return; }
   refill(); if(!deck.length){ msg("No cards left to draw. Next player!"); busy=true; wait(900).then(next).catch(function(){}); return; }
   var c=deck.pop(); cardEl(c,true); put(c,G.deck[0],G.deck[1],0,80,true); hands[0].push(c); sDraw();
@@ -315,10 +323,10 @@ $("#bBack").onclick=BWG.toOutpost;
 $("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
 
 var INTRO="Crazy Eights, Goofy Edition! Match the picture or the number to get rid of all your cards. Pick who you want to play with!";
-var HOW="Everyone gets five cards. On your turn, play a card that matches the picture or the number on the top card. Eights are crazy! You can play an eight any time, then pick the new picture. If you can't play, tap the deck to draw a card. The first one with no cards left wins!";
+var HOW="Everyone gets eight cards. On your turn, play a card that matches the picture or the number on the top card. Eights are crazy! You can play an eight any time, then pick the new picture. If you can't play, tap the deck to draw a card. The first one with no cards left wins!";
 var PICK="Pick a picture!", DRAW="No match? Tap the deck to draw a card.";
 var WIN="You got rid of all your cards! You win!", WINP="You win! You earned a new patch for your badge wall!";
-var L={"ce-intro":INTRO,"ce-how":HOW,"ce-pick":PICK,"ce-draw":DRAW,"ce-turn":"Your turn!","ce-win":WIN,"ce-win-patch":WINP,
+var L={"ce-intro":INTRO,"ce-how-2":HOW,"ce-pick":PICK,"ce-draw":DRAW,"ce-turn":"Your turn!","ce-win":WIN,"ce-win-patch":WINP,
   "ce-lose-brody":CAST.brody.lose,"ce-lose-lulu":CAST.lulu.lose,"ce-lose-grandpa":CAST.grandpa.lose,
   "ce-s-banana":"Bananas!","ce-s-sock":"Socks!","ce-s-frog":"Frogs!","ce-s-balloon":"Balloons!",
   "ce-n-brody":"Brody-Bot!","ce-n-lulu":"Lulu the Llama!","ce-n-grandpa":"Grandpa Wobble!","ce-go":"Let's play!"};
