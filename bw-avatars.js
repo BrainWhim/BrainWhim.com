@@ -163,7 +163,7 @@ function drawNebula(p,a){
   return {d:d,g:g};
 }
 function drawHouse(p){
-  return {d:'',g:'<text x="50" y="64" text-anchor="middle" fill="url(#'+p+'rm)" style="font-family:Montserrat;font-weight:600;font-size:40px">B<tspan style="font-family:Pacifico;font-weight:400;font-size:30.4px" dx="-1">W</tspan></text>'};
+  return {d:'',g:'<text x="50" y="64" text-anchor="middle" fill="url(#'+p+'rm)" style="font-family:Fraunces,Georgia,serif;font-weight:700;font-size:38.6px">B<tspan style="font-family:Pacifico,cursive;font-weight:400;font-size:30.4px">W</tspan></text>'};
 }
 
 
