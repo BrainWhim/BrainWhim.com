@@ -370,8 +370,14 @@
     finish({ ok: true, user: r.data.user });
   }
   async function saveProfile(user, un) {
-    var r = await S.sb.from("profiles").upsert({ id: user.id, username: un, display_name: un });
+    /* Nov 12: update first, insert only if there's no row yet. (An upsert asks to UPDATE id when the row already exists,
+       e.g. the sign-up trigger made it, and the Oct 31 lock-down rightly refuses that: "permission denied for table profiles".) */
+    var r = await S.sb.from("profiles").update({ username: un, display_name: un }).eq("id", user.id).select("id");
     if (r.error) throw r.error;
+    if (!r.data || !r.data.length) {
+      r = await S.sb.from("profiles").insert({ id: user.id, username: un, display_name: un });
+      if (r.error) throw r.error;
+    }
     S.profile = Object.assign(S.profile || {}, { username: un, display_name: un });
   }
   async function sendCode(isNew) {
