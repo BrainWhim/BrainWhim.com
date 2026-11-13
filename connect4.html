@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Beach Porch Connect Four · BrainWhim Play</title>
+<title>Seaside Connect Four · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1112a">
 <style>
-/* ===== Beach Porch Connect Four (Nov 12): an upright board seen face-on, painted in code (no picture files) =====
+/* ===== Seaside Connect Four (Nov 12): an upright board seen face-on, painted in code (no picture files) =====
    Layers inside the board, back to front: the discs (they slide down behind the face), the face panel with its
    seven-by-six holes (one painted picture with the holes cut out, so the porch shows through empty holes), a slow
    sun glint on the paint, the frame (a border-image, in front so a disc slips in behind the top rail), and the marks
@@ -159,8 +159,8 @@ function paintFrame(o){
 }
 /* ---------- the three boards (the Boards card) ---------- */
 var DESIGNS={
-  /* Porch White: matches the room photo; white-enamel cast-iron frame with scrollwork, cobalt and sand discs */
-  porch:{name:"Porch White",names:["cobalt","sand"],dots:["#2a54b0","#e2c48c"],
+  /* Seashell White: matches the room photo; white-enamel cast-iron frame with scrollwork, cobalt and sand discs */
+  porch:{name:"Seashell White",names:["cobalt","sand"],dots:["#2a54b0","#e2c48c"],
     frame:function(){ return paintFrame({bevel:[[0,"#ffffff"],[.35,"#f1ece2"],[.7,"#d3cbbb"],[1,"#a59c8a"]],beads:true,scroll:true,glint:"rgba(255,255,255,.98)",mid:"#ece6da",deep:"#a39a88",shade:"rgba(90,78,58,.55)"}); },
     panel:{base:[244,240,231],grain:"enamel",wall:"#b9b1a0",lip:.55,seed:7},
     foot:"linear-gradient(180deg,#f6f2ea,#cfc7b6)",sheen:.30,
@@ -395,7 +395,7 @@ function afterMove(side,r,c){
   if(Parlor.lessonOn){ if(w){ winLine=w; Parlor.sfx("c4-four"); } paintMarks(); Parlor.lessonDone(); paintMarks(); return; }
   if(w){ winLine=w; over=true; paintMarks(); Parlor.sfx("c4-four"); push(); setTimeout(end,1100); return; }
   if(full(g)){ over=true; paintMarks(); push(); setTimeout(end,500); return; }
-  turn=3-side; paintMarks(); msg(); showGhost(); push();
+  turn=3-side; if(turn===mySide) aimCol=3; paintMarks(); msg(); showGhost(); push();
   if(practice) setTimeout(function(){ practiceTip(side); },0);
   if(!online && turn===2) setTimeout(houseMove,550);
 }
@@ -477,10 +477,11 @@ async function bootOnline(){
     /* the other player's drop: let it fall into the board we already show */
     if(st.board && st.last && !busy && !(last && last[0]===st.last[0] && last[1]===st.last[1]) && st.board[st.last[0]][st.last[1]]!==mySide && !g[st.last[0]][st.last[1]] && dropRow(g,st.last[1])===st.last[0]){
       var side=st.board[st.last[0]][st.last[1]]; busy=true;
-      houseSlide(st.last[1]).then(function(){ return dropAnim(side,st.last[0],st.last[1]); }).then(function(){ busy=false; var wasOver=over; applySnap(st); redraw(); if(over&&!wasOver) setTimeout(end,900); else { msg(); showGhost(); } });
+      houseSlide(st.last[1]).then(function(){ return dropAnim(side,st.last[0],st.last[1]); }).then(function(){ busy=false; var wasOver=over; applySnap(st); if(turn===mySide) aimCol=3; redraw(); if(over&&!wasOver) setTimeout(end,900); else { msg(); showGhost(); } });
       return;
     }
     var wasOver=over; applySnap(st); redraw();
+    if(turn===mySide) aimCol=3;
     if(over&&!wasOver) end(); else { msg(); showGhost(); }
   }).subscribe();
 }
@@ -531,13 +532,13 @@ function practiceTip(side){
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"connect4", title:"Beach Porch Connect Four", bg:"c4-beach-porch.jpg", home:"lobby.html", stage:stage,
+  game:"connect4", title:"Seaside Connect Four", bg:"c4-beach-porch.jpg", home:"lobby.html", stage:stage,
   tagline:"Drop a disc. Four in a row wins.", invite:"The breeze is up and the board is set. Pull up a chair and drop a disc.",
   pip:true,
   players:[{name:"You (cobalt)",color:"var(--c4-dot1,#2a54b0)"},{name:"The House (sand)",color:"var(--c4-dot2,#e2c48c)"}],
   setsLabel:"Boards",
   sets:[
-    {id:"porch",name:"Porch White",need:0,dots:["#f1ece2","#2a54b0","#e2c48c"]},
+    {id:"porch",name:"Seashell White",need:0,dots:["#f1ece2","#2a54b0","#e2c48c"]},
     {id:"drift",name:"Driftwood",club:true,dots:["#9c8b6e","#3f9c94","#e8735a"]},
     {id:"navy",name:"Regatta Navy",club:true,dots:["#1e2e52","#c8352e","#f2c230"]}
   ],
