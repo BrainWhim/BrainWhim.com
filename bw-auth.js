@@ -342,6 +342,23 @@
     if (S.kind === "email") args.email = S.ident;
     else if (S.kind === "phone") args.phone = S.ident;
     else {
+      /* Nov 13: username login runs through the bw-login Edge Function, which finds the email or phone
+         inside Supabase and returns only the session (works for phone accounts; never reveals contact details). */
+      var f = null;
+      try { f = await S.sb.functions.invoke("bw-login", { body: { username: S.ident, password: pw } }); } catch (e) { f = null; }
+      var fd = f && !f.error ? f.data : null;
+      if (fd && typeof fd === "string") { try { fd = JSON.parse(fd); } catch (e) { fd = null; } }
+      if (fd && fd.access_token) {
+        var ss = await S.sb.auth.setSession({ access_token: fd.access_token, refresh_token: fd.refresh_token });
+        if (ss.error) { setErr(friendly(ss.error)); return; }
+        S.user = ss.data.user; S.session = ss.data.session;
+        finish({ ok: true, user: ss.data.user });
+        return;
+      }
+      if (fd && fd.error === "invalid") { setErr("That password doesn't match. Try again, or use Forgot password."); return; }
+      if (fd && fd.error === "rate") { setErr("Too many tries. Wait a minute and try again."); return; }
+      if (fd && fd.error === "unconfirmed") { setErr("This account still needs its email confirmed. Check your inbox (and spam)."); return; }
+      /* function not reachable yet: fall back to the old email lookup */
       var l = await rpc("bw_login_email", { n: S.ident });
       if (l.error || !l.data) { setErr("That username can't log in by itself. Enter the email or phone number you signed up with."); return; }
       args.email = l.data;
