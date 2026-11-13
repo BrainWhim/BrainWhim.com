@@ -67,7 +67,10 @@
 .pc.finn{background:radial-gradient(circle at 34% 28%,#fffbe8 0 7%,#ffd970 42%,#c9932c 100%);
   box-shadow:inset 0 -4px 7px rgba(110,70,0,.3),inset 0 3px 4px rgba(255,255,255,.6)}
 .pc.finn svg{position:absolute;inset:18%;width:64%;height:64%}
-.pc.ghost{opacity:.45;transition:transform .12s ease-out}
+.pc.ghost{opacity:.92;transition:transform .12s ease-out;box-shadow:0 0 0 2px rgba(255,248,225,.85),0 0 16px var(--mc),inset 0 -4px 7px rgba(0,0,0,.25)}
+.pc.ghost i,.pc.ghost b{animation:none}
+.pc.ghost{animation:gb 1.4s ease-in-out infinite}
+@keyframes gb{50%{translate:0 -5px}}
 .pc.win{animation:glow 1s ease-in-out infinite}
 @keyframes glow{50%{box-shadow:0 0 0 4px rgba(255,248,210,.95),0 0 22px 6px rgba(255,236,160,.85)}}
 .hintc{position:absolute;z-index:4;pointer-events:none;border-radius:999px;top:calc(var(--pad) - 6px);height:calc(var(--rows)*var(--cs) + 12px);width:calc(var(--cs) - 4px);
@@ -229,11 +232,13 @@
   function fit(){
     var W=$("wrap").clientWidth, H=$("wrap").clientHeight;
     PAD=Math.round(Math.max(8,Math.min(18,W*.025)));
-    CS=Math.floor(Math.min((W-PAD*2-6)/COLS, (H-PAD*2-Math.max(14,H*.06))/(ROWS+0.5), 100));
+    // on a computer, leave a row above the board for the aiming moon (so it never covers Finn's bubble)
+    var aim=matchMedia("(hover:hover) and (pointer:fine)").matches;
+    CS=Math.floor(Math.min((W-PAD*2-6)/COLS, (H-PAD*2-Math.max(14,H*.06))/(ROWS+(aim?1.3:0.5)), 100));
     CS=Math.max(30,CS);
     brd.style.setProperty("--cs",CS+"px"); brd.style.setProperty("--pad",PAD+"px");
     brd.style.setProperty("--cols",COLS); brd.style.setProperty("--rows",ROWS);
-    brd.style.width=(COLS*CS+PAD*2)+"px"; brd.style.height=(ROWS*CS+PAD*2)+"px"; brd.style.marginBottom=Math.round(CS*.3)+"px";
+    brd.style.width=(COLS*CS+PAD*2)+"px"; brd.style.height=(ROWS*CS+PAD*2)+"px"; brd.style.marginBottom=Math.round(CS*.3)+"px"; brd.style.marginTop=aim?Math.round(CS*.95)+"px":"0";
     var r=CS*.4, at="calc("+PAD+"px + "+CS/2+"px) calc("+PAD+"px + "+CS/2+"px)";
     var hole="radial-gradient(circle at "+(CS/2)+"px "+(CS/2)+"px, transparent "+r+"px, #000 "+(r+1)+"px)";
     brd.style.setProperty("--holes", "linear-gradient(#000,#000) 0 0/100% "+PAD+"px no-repeat, linear-gradient(#000,#000) 0 100%/100% "+PAD+"px no-repeat, linear-gradient(#000,#000) 0 0/"+PAD+"px 100% no-repeat, linear-gradient(#000,#000) 100% 0/"+PAD+"px 100% no-repeat, "+hole+" "+PAD+"px "+PAD+"px/"+CS+"px "+CS+"px");
@@ -317,7 +322,7 @@
   function colAt(e){ var b=brd.getBoundingClientRect(), x=e.clientX-b.left-PAD; var c=Math.floor(x/CS); return Math.max(0,Math.min(COLS-1,c)); }
   function showGhost(c){ if(!matchMedia("(hover:hover) and (pointer:fine)").matches || turn!==1 || over || busy || !color) return;
     if(c==null) return; if(!ghost){ ghost=pieceEl(1); ghost.classList.add("ghost"); pcs.appendChild(ghost); }
-    ghost.style.transform="translate("+(c*CS)+"px,"+(-CS*1.02)+"px)"; }
+    ghost.style.transform="translate("+(c*CS)+"px,"+(-CS*.98-PAD)+"px)"; }
   function hideGhost(){ if(ghost){ ghost.remove(); ghost=null; } }
   brd.addEventListener("pointermove",function(e){ if(e.pointerType==="mouse") showGhost(colAt(e)); });
   brd.addEventListener("pointerleave",hideGhost);
