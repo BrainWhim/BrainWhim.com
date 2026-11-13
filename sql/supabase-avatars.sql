@@ -26,7 +26,7 @@ as $$
 declare
   free_ids text[] := array['sunny','rosy','mint','lilac','ringed','moon','marble','coral','cobalt','magenta','teal','goldm'];
   club_ids text[] := array['queen','archer','owl','knight','rose','aurora','ember'];
-  charm_ids text[] := array['chess','checkers','backgammon','yahtzee','dominoes','othello','mancala','cribbage','shutbox','morris'];
+  charm_ids text[] := array['chess','checkers','backgammon','yahtzee','dominoes','othello','connect4','mancala','cribbage','shutbox','morris'];
 begin
   -- unknown names are cleared
   if new.avatar is not null and not (new.avatar = any(free_ids) or new.avatar = any(club_ids)) then

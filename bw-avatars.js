@@ -236,6 +236,7 @@ var CHARMS=[
   {id:"yahtzee",name:"Lucky Five",room:"Yahtzee"},
   {id:"dominoes",name:"Pearl Double",room:"Dominoes"},
   {id:"othello",name:"Terrace Disc",room:"Othello"},
+  {id:"connect4",name:"Four by the Sea",room:"Connect Four"},
   {id:"mancala",name:"Sea-Glass Marble",room:"Mancala"},
   {id:"cribbage",name:"Golden Peg",room:"Cribbage"},
   {id:"shutbox",name:"Tavern Nine",room:"Shut the Box"},
@@ -248,6 +249,8 @@ function charmIcon(id,p){
   if(id==="backgammon")return '<circle cx="-4" r="3.6" fill="#cfe8ff" fill-opacity=".25" stroke="'+GOLD+'" stroke-width="1.3"/><circle cx="4" r="3.6" fill="#cfe8ff" fill-opacity=".25" stroke="'+GOLD+'" stroke-width="1.3"/><path d="M-.7 -.6Q0 -2.2 .7 -.6M-7.6 -.6L-9.2 -2.6M7.6 -.6L9.2 -2.6" stroke="'+GOLD+'" stroke-width="1.1" fill="none" stroke-linecap="round"/><circle cx="-5" cy="-1.2" r=".8" fill="#fff" opacity=".7"/>';
   if(id==="checkers")return '<circle r="7" fill="#7fd0c8" stroke="#f5efe0" stroke-width="1.5"/><circle r="4" fill="none" stroke="#f5efe0" stroke-opacity=".7" stroke-width=".8"/>';
   if(id==="othello")return '<circle r="7" fill="#f4efe2"/><path d="M0 -7A7 7 0 0 1 0 7Z" fill="#2f56c9"/><circle r="7" fill="none" stroke="'+GOLD+'" stroke-width=".9"/>';
+  if(id==="connect4"){var d=[-5.25,-1.75,1.75,5.25].map(function(x){return '<circle cx="'+x+'" cy="'+(-x)+'" r="2.6" fill="#2f56c9" stroke="#f4efe2" stroke-width=".6"/><circle cx="'+(x-.7)+'" cy="'+(-x-.7)+'" r=".6" fill="#fff" opacity=".55"/>'}).join("");
+    return '<line x1="-7.2" y1="7.2" x2="7.2" y2="-7.2" stroke="'+GOLD+'" stroke-width="1.3" stroke-linecap="round"/>'+d;}
   if(id==="yahtzee"){var pp=[[-3.2,-3.2],[3.2,-3.2],[0,0],[-3.2,3.2],[3.2,3.2]].map(function(q){return '<circle cx="'+q[0]+'" cy="'+q[1]+'" r="1.15" fill="#1b2340"/>'}).join("");
     return '<rect x="-6.6" y="-6.6" width="13.2" height="13.2" rx="2.4" fill="#fbf6e8" transform="rotate(-10)"/><g transform="rotate(-10)">'+pp+'</g>';}
   if(id==="dominoes"){var six=function(y){return [-2,2].map(function(x){return [-2.4,0,2.4].map(function(dy){return '<circle cx="'+x+'" cy="'+(y+dy*.75)+'" r=".75" fill="#1b2340"/>'}).join("")}).join("")};
