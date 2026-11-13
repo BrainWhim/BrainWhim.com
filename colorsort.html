@@ -78,6 +78,7 @@
       <p class="lead">Zayden's potion puzzle! Pour the space potions from bottle to bottle until every bottle holds just one color.</p>
       <div class="mbtns">
         <button class="k-btn" id="bPlay">Today's Potions</button>
+        <button class="k-btn" id="bBonus" style="display:none">Bonus Potions</button>
         <button class="k-btn k-ghost" id="bHow">How to Play</button>
         <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
       </div>
@@ -178,7 +179,7 @@ function start(bonus){
     else { var M=G.make(lv,bonus?(Math.random()*1e9)|0:G.daySeed(t.n)); P={B:M.B,B0:G.clone(M.B),hist:[],hints:0,pours:0,done:false,lv:lv,bonus:!!bonus,min:M.min}; }
     P.sel=-1; P.shut=P.B.map(function(b){ return G.full(b); });
     build(); saveCur();
-    if(P.done){ msg("All sorted! Come back tomorrow for new potions."); return; }
+    if(P.done){ msg("All sorted! Tap Menu for Bonus Potions, or come back tomorrow."); return; }
     if(bonus) BWK.say(BONUS);
     msg(ST.n<3?"Tap a bottle to pick it up.":"Sort the potions: one color in each bottle.");
     if(ST.n<3&&!bonus) BWK.say(TAP1);
@@ -306,8 +307,10 @@ if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(r
 function toMenu(){ gen++; busy=false; document.body.className="m-menu"; var t=today();
   var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
   $("#bPlay").textContent=doneToday?"Today's Potions ✓":"Today's Potions";
+  $("#bBonus").style.display=doneToday?"":"none"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
   $("#mfoot").textContent=(ST.n?("Potions sorted: "+ST.n+". "):"")+DAYN[t.wd]+": "+FOOT[G.lvOf(t.wd)]; }
 $("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
 $("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+INTRO+'</p><p>'+HOW+'</p><p>Every potion has its own pattern: stars, waves, dots, stripes, rings and zigzags. When a bottle is full of one potion, it gets a cork.</p><p>On a computer, press 1-7 to pick a bottle, U to undo, H for a hint.</p></div>'); BWK.say(HOW); };
 $("#bBack").onclick=BWG.toOutpost;
 $("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
