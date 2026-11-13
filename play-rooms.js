@@ -13,6 +13,7 @@ window.BW_ROOMS={
   checkers:"checkers.html",
   backgammon:"backgammon.html",
   othello:"othello.html",
+  connect4:"connect4.html",
   morris:"morris.html",
   mancala:"mancala.html",
   dominoes:"dominoes.html",
@@ -34,6 +35,7 @@ function bwGuessGame(room){
   if(window.BW_ROOMS[g]) return g;
   var st=room.state||{};
   if(st.pts) return "backgammon";
+  if(st.game==="connect4") return "connect4";
   if(st.game==="crazyeights") return "crazyeights";
   if(st.game==="ginrummy") return "ginrummy";
   if(st.game==="hearts") return "hearts";
