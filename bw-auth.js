@@ -265,7 +265,7 @@
     if (st === "start") { /* only the single input */ }
     else if (st === "login") { open.pw = 1; btn = "Login"; title = "Welcome back"; f = true; sms = S.kind === "phone"; alt = "New here? Create an account"; }
     else if (st === "register") { open.un = 1; open.np = 1; btn = "Create account"; title = "Create your free account"; alt = "Already have an account? Log in"; }
-    else if (st === "forgot") { btn = "Send Secure Access Link"; title = "Reset your password"; alt = "Back to log in"; }
+    else if (st === "forgot") { btn = S.kind === "phone" ? "Text Me a Code" : "Send Secure Access Link"; title = "Reset your password"; alt = "Back to log in"; }
     else if (st === "code") { open.cd = 1; btn = "Verify"; title = "Enter your code"; alt = "Back"; }
     else if (st === "recovery") { open.id = 0; open.rc = 1; btn = "Save new password"; title = "Choose a new password"; }
     else if (st === "name") { open.id = 0; open.un = 1; btn = "Save username"; title = "Pick your username"; }
@@ -343,7 +343,7 @@
     else if (S.kind === "phone") args.phone = S.ident;
     else {
       var l = await rpc("bw_login_email", { n: S.ident });
-      if (l.error || !l.data) { setErr("Couldn't find that username. Try your email or phone."); return; }
+      if (l.error || !l.data) { setErr("That username can't log in by itself. Enter the email or phone number you signed up with."); return; }
       args.email = l.data;
     }
     var r = await S.sb.auth.signInWithPassword(args);
@@ -380,7 +380,7 @@
     }
     S.profile = Object.assign(S.profile || {}, { username: un, display_name: un });
   }
-  async function sendCode(isNew) {
+  async function sendCode(isNew, reset) {
     setErr(""); busy(true);
     try {
       await ensure();
@@ -389,7 +389,7 @@
       else o.options = { shouldCreateUser: false };
       var r = await S.sb.auth.signInWithOtp(o);
       if (r.error) { setErr(friendly(r.error)); busy(false); return; }
-      S.otpNew = !!isNew; setState("code");
+      S.otpNew = !!isNew; S.otpReset = !!reset; setState("code");
       S.ui.sub.textContent = "We texted a code to " + S.ident + ".";
     } catch (e) { setErr(friendly(e)); }
     busy(false);
@@ -399,6 +399,12 @@
     if (tok.length < 4) { setErr("Enter the code from the text message."); return; }
     var r = await S.sb.auth.verifyOtp({ phone: S.ident, token: tok, type: "sms" });
     if (r.error) { setErr(friendly(r.error)); return; }
+    /* Nov 12: "Forgot password" by phone: the code signs you in, then asks for a new password (it used to just close) */
+    if (S.otpReset) {
+      S.otpReset = false; S.user = r.data.user; S.session = r.data.session; S.loadedFor = null;
+      setState("recovery"); S.ui.sub.textContent = "Code accepted, you're signed in. Choose a new password to finish.";
+      return;
+    }
     if (S.otpNew && S.reg) {
       var up = await S.sb.auth.updateUser({ password: S.reg.pw });
       if (up.error) { setErr(friendly(up.error)); return; }
@@ -412,7 +418,7 @@
     var email = S.ident, c = classify(S.ui.id.value);
     if (c.kind) { S.kind = c.kind; S.ident = c.value; email = c.value; }
     if (!S.kind) { setErr("Enter your email, phone, or username above first."); return; }
-    if (S.kind === "phone") { await sendCode(false); return; }
+    if (S.kind === "phone") { await sendCode(false, true); return; }
     if (S.kind === "username") {
       var l = await rpc("bw_login_email", { n: S.ident });
       if (l.error || !l.data) { setErr("Couldn't find that username. Try your email."); return; }
