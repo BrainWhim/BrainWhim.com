@@ -204,7 +204,7 @@
       '<div class="bwa-card" role="dialog" aria-modal="true" aria-labelledby="bwa-title">' +
       '<h2 id="bwa-title">Welcome to BrainWhim</h2><p class="bwa-sub" id="bwa-sub"></p>' +
       '<form id="bwa-form" novalidate>' +
-      rv("bwa-idw", '<label for="bwa-id">Email, phone, or username</label><input id="bwa-id" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">', true) +
+      rv("bwa-idw", '<label for="bwa-id" id="bwa-idl">Email, phone, or username</label><input id="bwa-id" type="text" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">', true) +
       rv("bwa-pwd", pwField("bwa-pass", "Enter password", "current-password")) +
       rv("bwa-unw", '<label for="bwa-un">Choose username</label><input id="bwa-un" type="text" autocomplete="nickname" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="20">') +
       rv("bwa-npw", pwField("bwa-newpass", "Create password", "new-password")) +
@@ -226,7 +226,7 @@
     var $ = function (id) { return ov.querySelector("#" + id); };
     var ui = S.ui = {
       ov: ov, card: ov.firstChild, title: $("bwa-title"), sub: $("bwa-sub"), form: $("bwa-form"), err: $("bwa-err"), go: $("bwa-go"),
-      id: $("bwa-id"), pass: $("bwa-pass"), un: $("bwa-un"), newpass: $("bwa-newpass"), otp: $("bwa-otp"), recpass: $("bwa-recpass"),
+      idl: $("bwa-idl"), id: $("bwa-id"), pass: $("bwa-pass"), un: $("bwa-un"), newpass: $("bwa-newpass"), otp: $("bwa-otp"), recpass: $("bwa-recpass"),
       forgot: $("bwa-forgot"), sms: $("bwa-sms"), alt: $("bwa-alt"), guest: $("bwa-guest"), close: $("bwa-close"),
       rv: { id: $("bwa-idw"), pw: $("bwa-pwd"), un: $("bwa-unw"), np: $("bwa-npw"), cd: $("bwa-cdw"), rc: $("bwa-rcw") }
     };
@@ -241,7 +241,9 @@
     });
     ui.form.addEventListener("submit", function (e) { e.preventDefault(); go(); });
     ui.id.addEventListener("input", function () {
-      if (["login", "register", "code", "forgot"].indexOf(S.state) > -1) { setState("start"); }
+      /* Nov 13: typing on the reset screen stays on the reset screen (only the button wording follows what's typed) */
+      if (S.state === "forgot") { var fc = classify(ui.id.value); ui.go.textContent = fc.kind === "phone" ? "Text Me a Code" : "Send Secure Access Link"; setErr(""); return; }
+      if (["login", "register", "code"].indexOf(S.state) > -1) { setState("start"); }
       setErr("");
     });
     ui.forgot.onclick = function () { setErr(""); setState("forgot"); };
@@ -249,7 +251,8 @@
     ui.alt.onclick = function () {
       setErr("");
       if (S.state === "login") { if (S.kind === "username") { setErr("To create an account, enter an email or phone number first."); setState("start"); } else setState("register"); }
-      else if (S.state === "register" || S.state === "forgot" || S.state === "code") setState("login");
+      else if (S.state === "forgot") setState("start"); /* Nov 13: the box may hold a new or empty entry */
+      else if (S.state === "register" || S.state === "code") setState("login");
     };
     ui.guest.onclick = function () { finish({ ok: false, guest: true }); };
     ui.close.onclick = function () { finish({ ok: false }); };
@@ -258,24 +261,31 @@
   function setErr(m) { if (S.ui) S.ui.err.textContent = m || ""; }
   function busy(b) { if (!S.ui) return; S.ui.go.disabled = !!b; }
   function setState(st) {
-    var ui = S.ui; S.state = st;
+    var ui = S.ui, was = S.state; S.state = st;
     var open = { id: 1, pw: 0, un: 0, np: 0, cd: 0, rc: 0 };
     var title = "Welcome to BrainWhim", btn = "Continue";
     var f = false, sms = false, alt = "";
     if (st === "start") { /* only the single input */ }
     else if (st === "login") { open.pw = 1; btn = "Login"; title = "Welcome back"; f = true; sms = S.kind === "phone"; alt = "New here? Create an account"; }
     else if (st === "register") { open.un = 1; open.np = 1; btn = "Create account"; title = "Create your free account"; alt = "Already have an account? Log in"; }
-    else if (st === "forgot") { btn = S.kind === "phone" ? "Text Me a Code" : "Send Secure Access Link"; title = "Reset your password"; alt = "Back to log in"; }
+    else if (st === "forgot") {
+      /* Nov 13 (Judy): reset asks only for an email or phone; a username typed earlier is cleared from the box */
+      if (S.kind === "username" || classify(ui.id.value).kind === "username") { ui.id.value = ""; S.kind = ""; S.ident = ""; }
+      btn = S.kind === "phone" ? "Text Me a Code" : "Send Secure Access Link"; title = "Reset your password"; alt = "Back to log in";
+    }
     else if (st === "code") { open.cd = 1; btn = "Verify"; title = "Enter your code"; alt = "Back"; }
     else if (st === "recovery") { open.id = 0; open.rc = 1; btn = "Save new password"; title = "Choose a new password"; }
     else if (st === "name") { open.id = 0; open.un = 1; btn = "Save username"; title = "Pick your username"; }
     ui.title.textContent = title; ui.go.textContent = btn;
+    if (st === "forgot") { ui.sub.textContent = "Let's get you signed back in. Please enter the email or phone number you used to create your account."; ui.idl.textContent = "Email or phone number"; }
+    else if ((was === "forgot" || was === "code") && st !== "code" && st !== "recovery") { ui.sub.textContent = S.subBase || ""; ui.idl.textContent = "Email, phone, or username"; }
+    else if (was === "forgot") ui.idl.textContent = "Email, phone, or username";
     Object.keys(open).forEach(function (k) { ui.rv[k].classList.toggle("open", !!open[k]); });
     ui.forgot.hidden = !f; ui.sms.hidden = !sms; ui.alt.hidden = !alt; ui.alt.textContent = alt;
     ui.guest.hidden = !(S.opts.allowGuest && st !== "recovery" && st !== "name");
     ui.close.hidden = st === "recovery";
     ui.close.textContent = st === "name" ? "Later" : "Not now";
-    var focusEl = { start: ui.id, login: ui.pass, register: ui.un, forgot: null, code: ui.otp, recovery: ui.recpass, name: ui.un }[st];
+    var focusEl = { start: ui.id, login: ui.pass, register: ui.un, forgot: ui.id.value ? null : ui.id, code: ui.otp, recovery: ui.recpass, name: ui.un }[st];
     if (focusEl) setTimeout(function () { try { focusEl.focus({ preventScroll: true }); } catch (e) {} }, 140);
   }
 
@@ -287,7 +297,7 @@
     var res; var promise = new Promise(function (r) { res = r; });
     S.pending = { promise: promise, resolve: res };
     S.kind = ""; S.ident = "";
-    ui.sub.textContent = opts.reason || (opts.state === "recovery" ? "You're signed in from your reset link. Set a new password to finish." : "Sign in or create a free account. It only takes a moment.");
+    ui.sub.textContent = S.subBase = opts.reason || (opts.state === "recovery" ? "You're signed in from your reset link. Set a new password to finish." : "Sign in or create a free account. It only takes a moment.");
     document.documentElement.style.overflow = "hidden";
     setState(opts.state || "start");
     requestAnimationFrame(function () { requestAnimationFrame(function () { ui.ov.classList.add("on"); }); });
@@ -434,13 +444,9 @@
   async function doForgot() {
     var email = S.ident, c = classify(S.ui.id.value);
     if (c.kind) { S.kind = c.kind; S.ident = c.value; email = c.value; }
-    if (!S.kind) { setErr("Enter your email, phone, or username above first."); return; }
+    /* Nov 13: reset by email or phone only (usernames can't be looked up from the browser any more) */
+    if (!c.kind || c.kind === "username") { setErr("Enter your email or phone number."); return; }
     if (S.kind === "phone") { await sendCode(false, true); return; }
-    if (S.kind === "username") {
-      var l = await rpc("bw_login_email", { n: S.ident });
-      if (l.error || !l.data) { setErr("Couldn't find that username. Try your email."); return; }
-      email = l.data;
-    }
     var r = await S.sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/index.html" });
     if (r.error) { setErr(friendly(r.error)); return; }
     finish({ ok: false, sent: true }, "Secure link sent. Check your inbox (and spam).");
