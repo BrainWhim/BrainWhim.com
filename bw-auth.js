@@ -59,6 +59,8 @@
     if (l.indexOf("rate limit") > -1 || l.indexOf("security purposes") > -1 || (e && e.status === 429)) return "Too many tries. Wait a minute and try again.";
     if (l.indexOf("already registered") > -1 || l.indexOf("already been registered") > -1) return "That account already exists. Log in instead.";
     if (l.indexOf("at least") > -1 && l.indexOf("character") > -1) return "Password needs at least 8 characters.";
+    /* Nov 13: a code asked for an email/phone with no account (shouldCreateUser:false) */
+    if (l.indexOf("signups not allowed") > -1 || l.indexOf("user not found") > -1) return "We couldn't find an account with that " + (S.kind === "email" ? "email" : "phone number") + ". Check it and try again, or create a new account.";
     if (l.indexOf("sms") > -1 || l.indexOf("phone provider") > -1 || l.indexOf("unsupported phone") > -1) return "Phone sign-in isn't switched on yet. Use your email for now.";
     if (l.indexOf("token has expired") > -1 || l.indexOf("invalid") > -1 && l.indexOf("otp") > -1) return "That code didn't work or has expired. Request a new one.";
     if (l.indexOf("failed to fetch") > -1 || l.indexOf("network") > -1) return "Can't reach the server. Check your connection.";
