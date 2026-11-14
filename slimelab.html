@@ -51,6 +51,10 @@
 .cface{transform-box:fill-box;transform-origin:50% 100%;animation:bob 2.6s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(-3px) rotate(2deg)}}
 .jwob{transform-box:fill-box;transform-origin:50% 100%;animation:jw 3.4s ease-in-out infinite}
+.bulb{animation:bulb 3.1s ease-in-out infinite}
+@keyframes bulb{50%{opacity:.4}}
+.cbub{animation:cbub 3s ease-in-out infinite}
+@keyframes cbub{50%{transform:translateY(-2px)}}
 @keyframes jw{0%,86%,100%{transform:none}90%{transform:scale(1.06,.94)}95%{transform:scale(.97,1.03)}}
 /* the tray: a wooden shelf of ingredients */
 .tray{width:min(640px,100%);flex:none;border-radius:16px;padding:6px 8px 9px;
@@ -83,9 +87,9 @@
   .it svg{width:30px;height:25px}.ing{height:70px}.ing svg{height:42px}.cmsg{font-size:14px;min-height:19px}.ib{min-height:34px;font-size:14px}.steps{margin-bottom:4px}}
 @media (min-height:900px) and (min-width:700px){.tray,.cbar{width:min(760px,100%)}.ticket{width:min(680px,100%)}.ing{height:100px;font-size:15px;max-width:120px}.steps span{font-size:13px}.ing svg{height:62px}.cday span{font-size:15px}.ticket{padding:10px 16px 10px 10px}
   .cust{width:84px}.cust .face{width:68px;height:68px;font-size:44px;line-height:68px}.it svg{width:50px;height:42px}.it{font-size:14px}.items .wants{font-size:15px}.cmsg{font-size:18px}}
-@media (prefers-reduced-motion:reduce){.cface,.jwob,.ing.glow{animation:none}}
+@media (prefers-reduced-motion:reduce){.cface,.jwob,.ing.glow,.bulb,.cbub{animation:none}}
 </style>
-<link rel="icon" href="bw-favicon.png?v=1111a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1111a">
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
 <body class="m-menu">
 <div class="bg"></div><div class="bg2"></div>
@@ -180,7 +184,7 @@ function bitArt(id,x,y,s,rot,k){ k=k||0;
   if(id==="hearts") return '<path d="'+heartPath(x,y,3.6*s)+'" fill="#ff5f9e" stroke="#c83774" stroke-width="'+(.5*s)+'"/>';
   return '<rect x="'+(x-3.4*s)+'" y="'+(y-1.1*s)+'" width="'+(6.8*s)+'" height="'+(2.2*s)+'" rx="'+(1.1*s)+'" fill="'+SPR[k%6]+'" transform="rotate('+(rot*57).toFixed(0)+' '+x+' '+y+')"/>'; }
 function glitCol(id,k){ return id==="gold"?(k%3?"#ffd54a":"#fff3b0"):id==="silver"?(k%3?"#dfe6ef":"#ffffff"):"hsl("+((k*47)%360)+",95%,"+(k%2?70:62)+"%)"; }
-function speck(x,y,s,c){ return '<path d="M'+x+' '+(y-2.4*s)+'L'+(x+.7*s)+' '+(y-.7*s)+'L'+(x+2.4*s)+' '+y+'L'+(x+.7*s)+' '+(y+.7*s)+'L'+x+' '+(y+2.4*s)+'L'+(x-.7*s)+' '+(y+.7*s)+'L'+(x-2.4*s)+' '+y+'L'+(x-.7*s)+' '+(y-.7*s)+'Z" fill="'+c+'"/>'; }
+function speck(x,y,s,c,st){ return '<path d="M'+x+' '+(y-2.4*s)+'L'+(x+.7*s)+' '+(y-.7*s)+'L'+(x+2.4*s)+' '+y+'L'+(x+.7*s)+' '+(y+.7*s)+'L'+x+' '+(y+2.4*s)+'L'+(x-.7*s)+' '+(y+.7*s)+'L'+(x-2.4*s)+' '+y+'L'+(x-.7*s)+' '+(y-.7*s)+'Z" fill="'+c+'"'+(st?' stroke="'+st+'" stroke-width="'+(.3*s).toFixed(2)+'"':'')+'/>'; }
 function blobIcon(c,id){ return '<svg viewBox="0 0 40 34"><defs><radialGradient id="'+id+'" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="'+shade(c,.45)+'"/><stop offset=".6" stop-color="'+hex(c)+'"/><stop offset="1" stop-color="'+shade(c,-.3)+'"/></radialGradient></defs>'+
   '<path d="M5 29C2 29 2 23 6 21C5 13 13 5 21 7C29 6 36 13 34 21C39 23 38 29 34 29Z" fill="url(#'+id+')" stroke="rgba(0,0,0,.25)" stroke-width="1"/><ellipse cx="15" cy="13" rx="5" ry="2.6" fill="#fff" opacity=".55" transform="rotate(-25 15 13)"/></svg>'; }
 function jarIcon(gid){ var s='<svg viewBox="0 0 40 34"><rect x="11" y="3" width="18" height="5" rx="2" fill="#b98b5a" stroke="#7a5530" stroke-width=".8"/><rect x="9" y="8" width="22" height="24" rx="6" fill="rgba(210,235,255,.35)" stroke="rgba(90,110,130,.6)" stroke-width="1.2"/>';
@@ -221,11 +225,90 @@ function sServe(){ N(0,.05,.16,500,2600); T(600,0,.1,.06,"sine",1250); [784,988,
 function sWrong(){ T(220,0,.18,.05,"sine",180); }
 function sWin(){ [523,659,784,1047,1319].forEach(function(f,i){ T(f,i*.09,.4,.045,"triangle"); }); }
 
+/* ---------- scene art (Nov 13 night: richer look) ---------- */
+function qpt(x0,y0,cx,cy,x1,y1,t){ var u=1-t; return [u*u*x0+2*u*t*cx+t*t*x1, u*u*y0+2*u*t*cy+t*t*y1]; }
+function lightsArt(){ var s='<g>', b='', k=0;
+  for(var x=-500;x<900;x+=100){ var x1=x+100, cx=x+50, cy=17;
+    s+='<path d="M'+x+' 1Q'+cx+' '+cy+' '+x1+' 1" fill="none" stroke="#3d2a1a" stroke-width="1" opacity=".85"/>';
+    [.2,.5,.8].forEach(function(t){ var p=qpt(x,1,cx,cy,x1,1,t), px=+p[0].toFixed(1), py=+(p[1]+3).toFixed(1);
+      b+='<g class="bulb" style="animation-delay:'+((k*0.73)%3.1).toFixed(2)+'s"><circle cx="'+px+'" cy="'+py+'" r="8" fill="url(#slBulb)"/></g>'+
+        '<rect x="'+(px-1.2)+'" y="'+(py-4.2)+'" width="2.4" height="2.2" rx=".5" fill="#4a3624"/><ellipse cx="'+px+'" cy="'+py+'" rx="1.7" ry="2.3" fill="#fff4cc"/>'; k++; }); }
+  return s+b+'</g>'; }
+function signArt(){
+  var goo='M3 18C3 11 12 10 22 12C34 8 48 11 60 10C74 8 88 12 102 10C118 8 130 11 146 10C160 8 176 10 184 14C188 17 186 21 181 22'+
+    'C176 22 173 25 173 29C173 34 166 34 166 29C166 25 163 23 158 23L132 23C127 23 126 27 126 32C126 38 118 38 118 32C118 27 116 23 111 23'+
+    'L74 23C69 23 68 26 68 28C68 32 62 32 62 28C62 26 60 23 56 23L33 23C28 23 26 27 26 33C26 39 18 39 18 33C18 27 15 24 10 23C5 22 3 21 3 18Z';
+  return '<g transform="rotate(-1.5 94 36)">'+
+   '<path d="M40 16L44 -4M148 16L144 -4" stroke="#d9bf8a" stroke-width="2.2" stroke-linecap="round"/><path d="M40 16L44 -4M148 16L144 -4" stroke="#8a6a3a" stroke-width="2.2" stroke-dasharray="1.2 2.2" stroke-linecap="round"/>'+
+   '<rect x="1" y="17" width="186" height="46" rx="7" fill="#3b2210" opacity=".35" transform="translate(2 3)"/>'+
+   '<rect x="1" y="15" width="186" height="46" rx="7" fill="url(#slPlank)" stroke="#5a3415" stroke-width="1.2"/>'+
+   '<rect x="1" y="15" width="186" height="46" rx="7" fill="url(#slGrainS)"/>'+
+   '<path d="M8 17.2H180" stroke="#f3cf9c" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round"/><path d="M8 59H180" stroke="#3b2210" stroke-opacity=".4" stroke-width="1.4" stroke-linecap="round"/>'+
+   '<circle cx="12" cy="52" r="2" fill="#8d8f96"/><circle cx="11.4" cy="51.4" r=".7" fill="#fff" opacity=".8"/><circle cx="176" cy="52" r="2" fill="#8d8f96"/><circle cx="175.4" cy="51.4" r=".7" fill="#fff" opacity=".8"/>'+
+   '<text x="95" y="52.5" text-anchor="middle" font-size="16.5" font-weight="800" fill="#3b2210" opacity=".5" font-family="Outfit,system-ui,sans-serif">Sophie\'s Slime Lab</text>'+
+   '<text x="94" y="51" text-anchor="middle" font-size="16.5" font-weight="800" fill="url(#slPaint)" stroke="#fff4e2" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round" font-family="Outfit,system-ui,sans-serif">Sophie\'s Slime Lab</text>'+
+   '<path d="'+goo+'" fill="#7a1e52" opacity=".35" transform="translate(1 2)"/>'+
+   '<path d="'+goo+'" fill="url(#slGoo)"/>'+
+   '<path d="M12 13.5C26 11 40 12.5 52 12" stroke="#fff" stroke-opacity=".7" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M96 12.2C108 11 118 11.6 128 11.4" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
+   '<ellipse cx="20" cy="32" rx="1.4" ry="2.6" fill="#fff" opacity=".65"/><ellipse cx="120" cy="31" rx="1.2" ry="2.3" fill="#fff" opacity=".6"/><ellipse cx="168" cy="28" rx="1.1" ry="2" fill="#fff" opacity=".6"/>'+
+   speck(150,14,1,"#fff6c8")+speck(78,15,.8,"#ffffff")+speck(34,16,.8,"#fff6c8")+'</g>'; }
+function jarArt(x,y,c,k){ var g="slJ"+k, w=13, t=y-44, lv=y-24, rgb=hexRGB(c);
+  return '<defs><linearGradient id="'+g+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+shade(rgb,.25)+'"/><stop offset=".55" stop-color="'+c+'"/><stop offset="1" stop-color="'+shade(rgb,-.3)+'"/></linearGradient></defs>'+
+   '<g class="jwob" style="animation-delay:'+(k*1.1)+'s">'+
+   '<ellipse cx="'+x+'" cy="'+(y+.4)+'" rx="'+(w+1.5)+'" ry="2.2" fill="#000" opacity=".32"/>'+
+   /* slime inside, with a glossy domed top */
+   '<path d="M'+(x-w+1.5)+' '+(lv+3)+'Q'+(x-w+2)+' '+(lv-5)+' '+(x-3)+' '+(lv-4)+'Q'+(x+2)+' '+(lv-7)+' '+(x+6)+' '+(lv-4)+'Q'+(x+w-1.5)+' '+(lv-3)+' '+(x+w-1.5)+' '+(lv+3)+'V'+(y-4)+'Q'+(x+w-1.5)+' '+(y-1.2)+' '+(x+w-5)+' '+(y-1.2)+'H'+(x-w+5)+'Q'+(x-w+1.5)+' '+(y-1.2)+' '+(x-w+1.5)+' '+(y-4)+'Z" fill="url(#'+g+')"/>'+
+   '<path d="M'+(x-w+4)+' '+(lv-1)+'Q'+(x-4)+' '+(lv-5)+' '+(x+1)+' '+(lv-4.5)+'" stroke="#fff" stroke-opacity=".75" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+   speck(x-5,y-8,.9,"#fff7c9")+speck(x+5,y-13,.8,"#ffffff")+speck(x+2,y-5,.7,"#fff7c9")+speck(x-2,lv+3,.7,"#ffffff")+
+   /* the glass: thick walls, a neck and rim */
+   '<path d="M'+(x-w+3)+' '+(t+7)+'V'+(t+10)+'Q'+(x-w)+' '+(t+11)+' '+(x-w)+' '+(t+15)+'V'+(y-5)+'Q'+(x-w)+' '+y+' '+(x-w+5)+' '+y+'H'+(x+w-5)+'Q'+(x+w)+' '+y+' '+(x+w)+' '+(y-5)+'V'+(t+15)+'Q'+(x+w)+' '+(t+11)+' '+(x+w-3)+' '+(t+10)+'V'+(t+7)+'Z" fill="rgba(215,235,255,.16)" stroke="rgba(238,248,255,.8)" stroke-width="1.2"/>'+
+   '<path d="M'+(x-w+1.6)+' '+(t+16)+'V'+(y-5)+'" stroke="#fff" stroke-opacity=".75" stroke-width="1.8" stroke-linecap="round"/><path d="M'+(x+w-2.2)+' '+(t+17)+'V'+(t+24)+'" stroke="#fff" stroke-opacity=".4" stroke-width="1.2" stroke-linecap="round"/>'+
+   '<rect x="'+(x-w+2)+'" y="'+(t)+'" width="'+(2*w-4)+'" height="7.5" rx="2" fill="url(#slLid)" stroke="#6e4a26" stroke-width=".7"/>'+
+   '<path d="M'+(x-w+5)+' '+(t+.6)+'v6.3M'+(x-w+9)+' '+(t+.6)+'v6.3M'+(x-w+13)+' '+(t+.6)+'v6.3M'+(x-w+17)+' '+(t+.6)+'v6.3M'+(x-w+21)+' '+(t+.6)+'v6.3" stroke="#6e4a26" stroke-opacity=".4" stroke-width=".7"/>'+
+   '<path d="M'+(x-w+3)+' '+(t+1.3)+'H'+(x+w-3)+'" stroke="#fff" stroke-opacity=".45" stroke-width=".8"/>'+
+   '<rect x="'+(x-7)+'" y="'+(t+13)+'" width="14" height="9" rx="2" fill="#fff8ec" stroke="rgba(160,120,70,.5)" stroke-width=".5"/><path d="'+heartPath(x,t+17.3,2.5)+'" fill="'+c+'"/></g>'; }
+function hexRGB(h){ return [1,3,5].map(function(i){ return parseInt(h.substr(i,2),16); }); }
+function shelfArt(){ return '<g>'+
+   '<path d="M300 84L300 98L308 84Z" fill="#6b4120"/><path d="M386 84L386 98L378 84Z" fill="#6b4120"/>'+
+   jarArt(305,78,"#ff8fc4",0)+jarArt(337,78,"#4fd1bf",1)+jarArt(369,78,"#b48cff",2)+speck(392,68,1.2,"#fff3b0")+
+   '<rect x="282" y="78" width="122" height="5" rx="1.5" fill="url(#slShelf)"/><rect x="282" y="83" width="122" height="3.5" rx="1" fill="#5a3418"/>'+
+   '<path d="M284 78.8H402" stroke="#f0c48e" stroke-opacity=".6" stroke-width=".8"/></g>'; }
+function glueArt(){ var x=34, y=214; return '<g>'+
+   '<ellipse cx="'+(x+3)+'" cy="'+(y+1)+'" rx="18" ry="4" fill="#000" opacity=".3"/>'+
+   '<path d="M'+(x-12)+' '+(y-32)+'Q'+(x-12)+' '+(y-38)+' '+(x-6)+' '+(y-38)+'H'+(x+6)+'Q'+(x+12)+' '+(y-38)+' '+(x+12)+' '+(y-32)+'V'+(y-3)+'Q'+(x+12)+' '+y+' '+(x+8)+' '+y+'H'+(x-8)+'Q'+(x-12)+' '+y+' '+(x-12)+' '+(y-3)+'Z" fill="url(#slBottle)" stroke="#b9b4aa" stroke-width=".8"/>'+
+   '<path d="M'+(x-5)+' '+(y-38)+'L'+(x-3)+' '+(y-46)+'H'+(x+3)+'L'+(x+5)+' '+(y-38)+'Z" fill="#ff8a3d" stroke="#c15a17" stroke-width=".7"/><path d="M'+(x-1.4)+' '+(y-46)+'L'+(x-.6)+' '+(y-52)+'H'+(x+.6)+'L'+(x+1.4)+' '+(y-46)+'Z" fill="#ff8a3d" stroke="#c15a17" stroke-width=".6"/>'+
+   '<rect x="'+(x-10.5)+'" y="'+(y-27)+'" width="21" height="13" rx="2" fill="#4f8fe8"/><text x="'+x+'" y="'+(y-17.8)+'" text-anchor="middle" font-size="7" font-weight="800" fill="#fff" font-family="Outfit,system-ui,sans-serif" letter-spacing=".4">GLUE</text>'+
+   '<path d="M'+(x-8)+' '+(y-33)+'V'+(y-5)+'" stroke="#fff" stroke-opacity=".9" stroke-width="2" stroke-linecap="round"/></g>'+
+   /* a few sequins and sprinkles on the bench */
+   '<path d="'+starPath(64,208,3.2)+'" fill="#ffd23f" stroke="#c98d00" stroke-width=".5" transform="translate(0 0) scale(1 1)"/><path d="'+heartPath(72,219,2.6)+'" fill="#ff6fa8"/>'+
+   '<rect x="54" y="220" width="5.5" height="1.8" rx=".9" fill="#4fc3f7" transform="rotate(30 56.7 221)"/><rect x="80" y="210" width="5.5" height="1.8" rx=".9" fill="#7ed957" transform="rotate(-20 82.7 211)"/>'+
+   '<circle cx="86" cy="221" r="2" fill="#b47cff"/><circle cx="85.4" cy="220.4" r=".6" fill="#fff" opacity=".8"/>'; }
+function matArt(){ var s='<path d="M108 166H292L322 222H78Z" fill="#000" opacity=".18" transform="translate(2 2)"/>'+
+   '<path d="M108 166H292L322 222H78Z" fill="url(#slMat)" stroke="#9b84cf" stroke-width="1.2" stroke-linejoin="round"/>';
+  for(var i=1;i<8;i++){ var t=i/8, xa=108+184*t, xb=78+244*t; s+='<path d="M'+xa.toFixed(1)+' 166L'+xb.toFixed(1)+' 222" stroke="#fff" stroke-opacity=".28" stroke-width=".7"/>'; }
+  [176,188,203].forEach(function(y){ var f=(y-166)/56, xa=108-30*f, xb=292+30*f; s+='<path d="M'+xa.toFixed(1)+' '+y+'H'+xb.toFixed(1)+'" stroke="#fff" stroke-opacity=".28" stroke-width=".7"/>'; });
+  return s+'<path d="M80 220.6H320" stroke="#7d64b8" stroke-width="1.6" opacity=".6"/>'; }
+var SCENE_DEFS=
+   '<linearGradient id="slPlank" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d49a5f"/><stop offset=".55" stop-color="#ad713d"/><stop offset="1" stop-color="#83501f"/></linearGradient>'+
+   '<pattern id="slGrainS" width="90" height="46" patternUnits="userSpaceOnUse"><path d="M0 6Q22 3 45 7T90 6M0 15Q30 12 60 17T90 14M0 27Q20 24 48 28T90 27M0 38Q35 35 62 39T90 37" stroke="#4a2810" stroke-opacity=".22" fill="none" stroke-width=".8"/><ellipse cx="62" cy="22" rx="4" ry="1.6" fill="none" stroke="#4a2810" stroke-opacity=".25" stroke-width=".7"/></pattern>'+
+   '<linearGradient id="slPaint" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff4fa0"/><stop offset=".5" stop-color="#d156d8"/><stop offset="1" stop-color="#8a4fe0"/></linearGradient>'+
+   '<linearGradient id="slGoo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb3dc"/><stop offset=".45" stop-color="#ff6fb6"/><stop offset="1" stop-color="#d93f91"/></linearGradient>'+
+   '<radialGradient id="slBulb"><stop offset="0" stop-color="#fff6d0" stop-opacity=".95"/><stop offset=".3" stop-color="#ffd27a" stop-opacity=".55"/><stop offset="1" stop-color="#ffb84d" stop-opacity="0"/></radialGradient>'+
+   '<linearGradient id="slLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8bf86"/><stop offset="1" stop-color="#a87442"/></linearGradient>'+
+   '<linearGradient id="slShelf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c58b52"/><stop offset="1" stop-color="#8f5a2c"/></linearGradient>'+
+   '<linearGradient id="slBottle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#f1eee8"/><stop offset="1" stop-color="#cfc9bd"/></linearGradient>'+
+   '<linearGradient id="slMat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cbb7f2"/><stop offset="1" stop-color="#b59ce8"/></linearGradient>'+
+   '<linearGradient id="slShadeV" x1="0" y1="0" x2="0" y2="1"><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>'+
+   '<radialGradient id="slSpot" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9b0" stop-opacity=".35"/><stop offset="1" stop-color="#ffe9b0" stop-opacity="0"/></radialGradient>'+
+   '<radialGradient id="slBub" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#efe3c8"/></radialGradient>'+
+   '<pattern id="slGrain" width="160" height="80" patternUnits="userSpaceOnUse"><path d="M0 6Q40 2 80 7T160 6M0 17Q50 13 100 19T160 16M0 29Q30 26 70 31T160 29M0 41Q45 37 90 43T160 40M0 53Q35 50 75 55T160 53M0 66Q50 62 100 68T160 65" stroke="#4f2a10" stroke-opacity=".2" fill="none" stroke-width=".9"/>'+
+     '<path d="M0 11Q60 8 120 12T160 11M0 47Q55 44 110 49T160 47" stroke="#f0c896" stroke-opacity=".12" fill="none" stroke-width="1.4"/><ellipse cx="118" cy="30" rx="6" ry="2" fill="none" stroke="#4f2a10" stroke-opacity=".22"/></pattern>';
+
 /* ---------- the bench (SVG) ---------- */
 var CX=200, SURF=158, BASE=200, svg=null, gC=null, gTop=null, gCust=null;
 var BOWL="M82 132C84 192 132 216 200 216C268 216 316 192 318 132";
 function build(){
-  var b=$("#bench"), s='<svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMax meet" xmlns="'+NS+'"><defs>'+
+  var b=$("#bench"), s='<svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMax meet" xmlns="'+NS+'"><defs>'+SCENE_DEFS+
    '<linearGradient id="slWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c99158"/><stop offset=".5" stop-color="#a86d3a"/><stop offset="1" stop-color="#8a5629"/></linearGradient>'+
    '<linearGradient id="slEdge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7b4a22"/><stop offset="1" stop-color="#4f2c11"/></linearGradient>'+
    '<pattern id="slGrain" width="120" height="40" patternUnits="userSpaceOnUse"><path d="M0 8Q30 4 60 9T120 8M0 22Q40 18 80 24T120 21M0 33Q25 30 55 34T120 33" stroke="#5a3214" stroke-opacity=".18" fill="none"/></pattern>'+
@@ -237,33 +320,23 @@ function build(){
    '<linearGradient id="slL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" id="slL0"/><stop offset="1" id="slL1"/></linearGradient></defs>'+
    /* the table */
    '<rect x="-2000" y="150" width="4400" height="80" fill="url(#slWood)"/><rect x="-2000" y="150" width="4400" height="80" fill="url(#slGrain)"/>'+
-   '<rect x="-2000" y="150" width="4400" height="2" fill="#e7b682" opacity=".7"/>'+
+   '<rect x="-2000" y="150" width="4400" height="2" fill="#f0c48e" opacity=".75"/><rect x="-2000" y="152" width="4400" height="14" fill="#000" opacity=".08"/>'+
    '<rect x="-2000" y="226" width="4400" height="40" fill="url(#slEdge)"/><rect x="-2000" y="226" width="4400" height="1.5" fill="#d9a46c" opacity=".6"/>'+
    '<rect x="186" y="232" width="28" height="13" rx="3" fill="#e9c46a" stroke="#8a5f12" stroke-width=".8"/><text x="200" y="242" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif" letter-spacing=".5">BW</text>'+
-   /* Sophie's sign */
-   '<path d="M40 2V14M140 2V14" stroke="#6b4420" stroke-width="1.5"/>'+
-   '<g transform="rotate(-2 90 30)"><rect x="12" y="13" width="156" height="34" rx="7" fill="#f4ead3" stroke="#a5814f" stroke-width="2"/><rect x="16" y="17" width="148" height="26" rx="5" fill="none" stroke="#d9c49c" stroke-dasharray="3 3"/>'+
-   '<text x="90" y="35.5" text-anchor="middle" font-size="15" font-weight="800" fill="#8a4fb8" font-family="Outfit,system-ui,sans-serif">Sophie\'s Slime Lab</text>'+
-   '<path d="'+heartPath(22,30,3.4)+'" fill="#ff5f9e"/><path d="'+starPath(158,30,4.4)+'" fill="#ffc83a"/></g>'+
-   /* her little shelf of finished slime */
-   '<rect x="296" y="64" width="98" height="6" rx="2" fill="#8a5629"/><rect x="296" y="70" width="98" height="3" fill="#5a3214" opacity=".6"/>'+
-   jarArt(310,64,"#ff8fc4",0)+jarArt(338,64,"#5fd1c1",1)+jarArt(366,64,"#a97cf0",2)+
+   lightsArt()+signArt()+shelfArt()+glueArt()+matArt()+
    /* bowl shadow and back */
-   '<ellipse cx="200" cy="218" rx="122" ry="12" fill="url(#slShadow)"/>'+
+   '<ellipse cx="200" cy="218" rx="122" ry="12" fill="url(#slShadow)"/><ellipse cx="200" cy="213" rx="56" ry="6" fill="rgba(200,230,255,.14)" stroke="rgba(235,248,255,.6)" stroke-width="1.2"/>'+
    '<ellipse cx="200" cy="132" rx="118" ry="22" fill="rgba(170,210,240,.10)" stroke="rgba(225,242,255,.55)" stroke-width="1.6"/>'+
    '<g id="slC"></g>'+
    '<path d="'+BOWL+'A118 22 0 0 1 82 132Z" fill="url(#slGlass)"/>'+
    '<path d="'+BOWL+'" fill="none" stroke="rgba(230,245,255,.85)" stroke-width="2"/>'+
-   '<path d="M82 132A118 22 0 0 0 318 132" fill="none" stroke="rgba(240,250,255,.95)" stroke-width="2.4"/>'+
+   '<path d="M82 132A118 22 0 0 0 318 132" fill="none" stroke="rgba(240,250,255,.95)" stroke-width="2.4"/><path d="M89 134A111 19 0 0 0 311 134" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>'+
+   '<ellipse cx="294" cy="164" rx="2.2" ry="6" fill="#fff" opacity=".5" transform="rotate(28 294 164)"/><ellipse cx="303" cy="152" rx="1.3" ry="2.2" fill="#fff" opacity=".6"/>'+
    '<path d="M98 150Q104 186 138 202" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>'+
    '<path d="M108 141L111 149" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>'+
    '<g id="slTop"></g><g id="slCust"></g></svg>';
   b.innerHTML=s; svg=b.firstChild; gC=svg.querySelector("#slC"); gTop=svg.querySelector("#slTop"); gCust=svg.querySelector("#slCust");
 }
-function jarArt(x,y,c,k){ return '<g class="jwob" style="animation-delay:'+(k*1.1)+'s"><rect x="'+(x-9)+'" y="'+(y-27)+'" width="18" height="5" rx="1.5" fill="#b98b5a"/><rect x="'+(x-11)+'" y="'+(y-22)+'" width="22" height="22" rx="5" fill="rgba(210,235,255,.3)" stroke="rgba(230,245,255,.7)"/>'+
-  '<path d="M'+(x-10)+' '+(y-9)+'Q'+x+' '+(y-14)+' '+(x+10)+' '+(y-9)+'V'+(y-4)+'Q'+(x+10)+' '+(y-1)+' '+(x+6)+' '+(y-1)+'H'+(x-6)+'Q'+(x-10)+' '+(y-1)+' '+(x-10)+' '+(y-4)+'Z" fill="'+c+'"/>'+
-  '<path d="M'+(x-7)+' '+(y-19)+'v12" stroke="#fff" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round"/></g>'; }
-
 /* draw the bowl's contents from the state */
 function moundPath(h,w){ var y=BASE; return "M"+(CX-w)+" "+(y+8)+"C"+(CX-w)+" "+(y-h*.85)+" "+(CX-w*.45)+" "+(y-h)+" "+CX+" "+(y-h)+"C"+(CX+w*.45)+" "+(y-h)+" "+(CX+w)+" "+(y-h*.85)+" "+(CX+w)+" "+(y+8)+"Z"; }
 function render(){
@@ -273,13 +346,14 @@ function render(){
   var a=S.tint==null?1:S.tint, glue=S.c[0]+S.c[1]+S.c[2]+S.c[3]===0;
   /* runny glue + color: a pool with a surface */
   if(p<1){ html+='<g clip-path="url(#slIn)" opacity="'+(1-p).toFixed(3)+'"><rect x="70" y="'+SURF+'" width="260" height="70" fill="url(#slL)" opacity="'+(glue?.55:.93)+'"/>'+
-      '<ellipse cx="200" cy="'+SURF+'" rx="106" ry="17" fill="'+shade(c,.22)+'" opacity="'+(glue?.6:.96)+'"/><ellipse cx="172" cy="'+(SURF-4)+'" rx="44" ry="5" fill="#fff" opacity=".28"/>';
+      '<ellipse cx="200" cy="'+SURF+'" rx="106" ry="17" fill="'+shade(c,.22)+'" opacity="'+(glue?.6:.96)+'"/><ellipse cx="172" cy="'+(SURF-4)+'" rx="44" ry="5" fill="#fff" opacity=".28"/><ellipse cx="200" cy="'+SURF+'" rx="106" ry="17" fill="none" stroke="'+shade(c,.5)+'" stroke-opacity=".55" stroke-width="1.3"/>';
     if(S.swirl){ html+='<g transform="translate(200 '+SURF+') scale(1 .16) rotate('+(S.swirl*57.3%360).toFixed(1)+')" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="7" stroke-linecap="round">'+
       '<path d="M60 0A60 60 0 0 1 -30 52"/><path d="M-80 0A80 80 0 0 1 40 -69"/><path d="M28 0A28 28 0 0 1 -14 -24"/></g>'; }
     html+=specks(false,0,0)+'</g>'; }
   /* slime: a mound that rises as it's stirred */
   if(p>0){ var h=18+p*58, w=96-p*20, pull=S.pull;
-    html+='<g opacity="'+Math.min(1,p*1.6).toFixed(3)+'"><g clip-path="url(#slInUp)"><path d="'+moundPath(h,w)+'" fill="url(#slG)"/>'+specks(true,h,w)+
+    html+='<g opacity="'+Math.min(1,p*1.6).toFixed(3)+'"><g clip-path="url(#slInUp)"><path d="'+moundPath(h,w)+'" fill="url(#slG)"/>'+specks(true,h,w)+'<path d="'+moundPath(h,w)+'" fill="url(#slShadeV)"/><path d="'+moundPath(h,w)+'" fill="none" stroke="'+shade(c,.55)+'" stroke-opacity=".6" stroke-width="1.6"/>'+
+      '<circle cx="'+(CX+w*.36).toFixed(1)+'" cy="'+(BASE-h*.62).toFixed(1)+'" r="2.3" fill="#fff" opacity=".7"/><circle cx="'+(CX+w*.44).toFixed(1)+'" cy="'+(BASE-h*.5).toFixed(1)+'" r="1.1" fill="#fff" opacity=".6"/>'+
       '<ellipse cx="'+(CX-w*.32)+'" cy="'+(BASE-h*.72)+'" rx="'+(w*.26)+'" ry="'+(h*.1+2)+'" fill="#fff" opacity=".45" transform="rotate(-14 '+(CX-w*.32)+' '+(BASE-h*.72)+')"/></g></g>';
     if(pull){ var top=BASE-h+6, dx=pull[0]-CX, dy=pull[1]-top, d=Math.sqrt(dx*dx+dy*dy), nw=Math.max(7,22-d*.09), r=Math.max(13,21-d*.04);
       var ux=-dy/(d||1), uy=dx/(d||1), mx=CX+dx*.5, my=top+dy*.5;
@@ -294,7 +368,7 @@ function render(){
 function specks(mound,h,w){ var o=O(), s="";
   o.pts.forEach(function(q,k){ var x,y;
     if(mound){ x=CX+q[0]*w*.8; y=BASE+4-(h*(1-q[0]*q[0]*.9))*(.08+.84*q[1]); } else { x=CX+q[0]*92; y=SURF+4+q[1]*46-Math.abs(q[0])*12; }
-    if(S.glit&&k<30) s+=speck(+x.toFixed(1),+y.toFixed(1),q[3]*(S.glitA||1),glitCol(S.glit,k));
+    if(S.glit&&k<30) s+=speck(+x.toFixed(1),+y.toFixed(1),q[3]*1.3*(S.glitA||1),glitCol(S.glit,k),"rgba(70,45,10,.5)");
     else if(k>=30&&S.bits.length){ var b=S.bits[k%S.bits.length]; if(S.bitA[b]) s+=bitArt(b,+x.toFixed(1),+y.toFixed(1),.9*S.bitA[b],q[2],k); } });
   return s; }
 
@@ -345,7 +419,15 @@ function ticket(fresh){ var o=O(), c=mixRGB(o.col.d), h='<div class="cust"><span
   if(fresh){ var tk=$("#ticket"); tk.classList.remove("new"); void tk.offsetWidth; tk.classList.add("new"); } }
 function tipHtml(d){ var parts=[]; d.forEach(function(n,k){ if(n) parts.push(n+' <i style="background:'+DROP[k].c+'"></i>'); }); return '<span class="tip">'+parts.join(" + ")+'</span>'; }
 function tick(sel){ var e=sel?document.querySelector(sel):null; if(e) e.classList.add("done"); }
-function custIn(){ var o=O(); gCust.innerHTML='<text class="cface" x="356" y="214" font-size="44" text-anchor="middle">'+o.cust.e+'</text>'; }
+function custIn(){ var o=O(), c=mixRGB(o.col.d), s='<ellipse cx="356" cy="214" rx="44" ry="30" fill="url(#slSpot)"/><ellipse cx="356" cy="217" rx="21" ry="3.8" fill="#000" opacity=".38"/>'+
+  '<text class="cface" x="356" y="215" font-size="58" text-anchor="middle">'+o.cust.e+'</text>'+
+  '<g class="cbub"><circle cx="356" cy="152" r="2.3" fill="url(#slBub)" stroke="#c9b083" stroke-width=".7"/><circle cx="351" cy="143" r="3.4" fill="url(#slBub)" stroke="#c9b083" stroke-width=".8"/>'+
+  '<ellipse cx="346" cy="120" rx="23" ry="17" fill="#000" opacity=".2" transform="translate(1.5 2)"/><ellipse cx="346" cy="120" rx="23" ry="17" fill="url(#slBub)" stroke="#c9b083" stroke-width="1"/>'+
+  '<path d="M334 129C330 129 330 123 334 122C334 116 340 111 346 112C353 111 358 116 357 122C361 123 361 129 357 129Z" fill="'+hex(c)+'" stroke="'+shade(c,-.35)+'" stroke-width=".8"/>'+
+  '<ellipse cx="341" cy="117" rx="4" ry="2" fill="#fff" opacity=".6" transform="rotate(-25 341 117)"/>';
+  if(o.glit) s+=speck(338,125,1,glitCol(o.glit,1),"rgba(70,45,10,.5)")+speck(350,121,.9,glitCol(o.glit,2),"rgba(70,45,10,.5)")+speck(353,126,.8,glitCol(o.glit,4),"rgba(70,45,10,.5)");
+  if(o.bits.length) s+=bitArt(o.bits[0],346,124,.8,1,1);
+  gCust.innerHTML=s+'</g>'; }
 
 function steps(){ var o=P&&S?O():null, names={color:"Color",sparkle:"Sparkle",bits:"Fun bits",mix:"Mix",stretch:"Stretch"};
   $("#steps").innerHTML=o?o.steps.map(function(s){ var i=o.steps.indexOf(s), j=S.step==="served"?99:S.step==="done-mix"?o.steps.indexOf("mix")+1:o.steps.indexOf(S.step);
