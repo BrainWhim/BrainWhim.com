@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Jack's Bee Garden · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Jack's Bee Garden (The Outpost · The Workshop), Nov 14. Named by Jack (10, a young beekeeper). A sliding puzzle in a
+   garden bed: slide the hive boxes, honey frames and flower boxes until the bee can fly out of the gate to the flowers.
+   After each win, one of Jack's own bee facts. Engine: the jbCore script below (pool grown with the Harbor's tools). */
+:root{--bgx:62%;--bgy:55%}
+#play{flex-direction:column;align-items:center;justify-content:flex-start;gap:8px}
+.cbar{width:min(640px,100%);display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#a0661c}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.ib:disabled{opacity:.45;cursor:default}
+.cmsg{min-height:22px;max-width:640px;text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#ffe9b8;text-shadow:0 2px 6px rgba(0,0,0,.7);padding:0 6px;flex:none}
+#yard{position:relative;flex:1 1 auto;width:100%;max-width:900px;min-height:0;user-select:none;-webkit-user-select:none;touch-action:none}
+/* the raised bed: a thick wooden frame, lit from the top left */
+.frm{position:absolute;border-radius:14px;
+  background:repeating-linear-gradient(90deg,rgba(60,30,10,0) 0 31px,rgba(60,30,10,.13) 31px 33px,rgba(255,220,170,.06) 33px 52px,rgba(60,30,10,.09) 52px 53px),
+    linear-gradient(160deg,#d29b5f 0%,#b47a43 35%,#8d5a2c 75%,#6f4420 100%);
+  box-shadow:0 18px 34px rgba(0,0,0,.55),0 4px 8px rgba(0,0,0,.35),inset 2px 2px 0 rgba(255,226,180,.55),inset -3px -3px 0 rgba(60,30,10,.45)}
+.frm::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(60,30,10,.35)}
+.bed{position:absolute;border-radius:6px;overflow:visible;
+  background:
+    linear-gradient(90deg,rgba(30,70,20,.22) 0 1px,transparent 1px) 0 0/var(--s) var(--s),
+    linear-gradient(180deg,rgba(30,70,20,.22) 0 1px,transparent 1px) 0 0/var(--s) var(--s),
+    radial-gradient(circle at 30% 30%,rgba(255,255,255,.07) 0 2px,transparent 3px) 0 0/calc(var(--s)*.37) calc(var(--s)*.31),
+    radial-gradient(circle at 70% 60%,rgba(20,60,10,.12) 0 1.5px,transparent 2.5px) 0 0/calc(var(--s)*.29) calc(var(--s)*.41),
+    linear-gradient(150deg,#8fcf6a,#6cb24c 55%,#5b9d3f);
+  box-shadow:inset 3px 4px 10px rgba(20,50,10,.55),inset -1px -1px 0 rgba(255,255,255,.12)}
+.gate{position:absolute;z-index:1;
+  background:linear-gradient(150deg,#86c862,#66ab48);box-shadow:inset 0 4px 6px -3px rgba(20,50,10,.5),inset 0 -4px 6px -3px rgba(20,50,10,.5)}
+.gdoor{position:absolute;z-index:1;height:5px;border-radius:3px;transform-origin:0 50%;background:linear-gradient(180deg,#fffaf0,#d9cfb8);box-shadow:1px 2px 2px rgba(0,0,0,.4);
+  background-image:linear-gradient(90deg,#fffaf0 0 20%,#d9cfb8 20% 24%,#fffaf0 24% 46%,#d9cfb8 46% 50%,#fffaf0 50% 72%,#d9cfb8 72% 76%,#fffaf0 76%)}
+.post{position:absolute;z-index:2;border-radius:4px;background:linear-gradient(90deg,#f6efe0,#d9cfb8);box-shadow:1px 2px 3px rgba(0,0,0,.45),inset 0 1px 0 #fff}
+.flw{position:absolute;z-index:0;pointer-events:none;overflow:visible}
+.flw .sw{transform-box:fill-box;transform-origin:50% 100%;animation:sway 4s ease-in-out infinite}
+.flw .sw:nth-child(2n){animation-duration:5.2s;animation-delay:-1.3s}
+@keyframes sway{50%{transform:rotate(4deg)}}
+.bwp{position:absolute;transform:translate(-50%,-50%);font:800 10px/1 Outfit,system-ui,sans-serif;letter-spacing:.06em;color:#4a300c;z-index:2;
+  padding:3px 7px 2px;border-radius:4px;background:linear-gradient(180deg,#f6dc8e,#c99a3c);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 2px rgba(0,0,0,.5)}
+/* the pieces */
+.pc{position:absolute;left:0;top:0;z-index:3;cursor:grab;-webkit-tap-highlight-color:transparent;touch-action:none;
+  border-radius:12%;filter:none;box-shadow:2px 4px 0 rgba(30,40,10,.28),3px 7px 10px rgba(20,40,10,.35)}
+.pc.v{border-radius:12%/6%}
+.pc.h3{border-radius:6%/12%}.pc.h2{border-radius:9%/12%}.pc.v2{border-radius:12%/9%}
+.pc svg{display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+.pc.snap{transition:transform .2s cubic-bezier(.3,.8,.35,1.15)}
+.pc.lift{z-index:6;cursor:grabbing;box-shadow:3px 8px 0 rgba(30,40,10,.2),6px 16px 20px rgba(20,40,10,.38)}
+.pc.lift svg{transform:scale(1.03)}
+.pc.bee{box-shadow:none;border-radius:40%}
+.pc.bee .wg{transform-box:fill-box;transform-origin:50% 100%;animation:flap .24s ease-in-out infinite alternate}
+.pc.bee .wg2{animation-delay:-.12s}
+@keyframes flap{from{transform:scaleY(1)}to{transform:scaleY(.72)}}
+.pc.bee.rest .wg{animation:flap 1.6s ease-in-out infinite alternate}
+.pc.out{transition:transform 1.4s cubic-bezier(.45,.05,.55,1),opacity .5s 1s;opacity:0}
+.pc .ring{position:absolute;inset:-5px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .2s}
+.pc.ha .ring{opacity:1;box-shadow:0 0 0 4px #ffd98a,0 0 20px 6px rgba(242,190,69,.9);animation:hring .8s ease-in-out infinite}
+@keyframes hring{50%{opacity:.4}}
+.pc .arw{position:absolute;left:50%;top:50%;width:44%;max-width:56px;aspect-ratio:1;transform:translate(-50%,-50%) rotate(var(--a));pointer-events:none;
+  display:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.pc.ha .arw{display:block;animation:nud .8s ease-in-out infinite}
+@keyframes nud{50%{margin-left:calc(var(--dx)*8px);margin-top:calc(var(--dy)*8px)}}
+.pc.bump{animation:bump .28s}
+@keyframes bump{30%{margin-left:calc(var(--bx)*4px);margin-top:calc(var(--by)*4px)}}
+.spk{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;z-index:10;pointer-events:none;
+  background:radial-gradient(circle,#fff 0 20%,rgba(255,240,180,.9) 30%,transparent 70%);animation:spk .9s ease-out forwards}
+@keyframes spk{0%{transform:translate(0,0) scale(.4);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.1);opacity:0}}
+.ctools{display:flex;gap:10px;justify-content:center;flex:none;padding-bottom:2px}
+.ctools .k-btn{min-height:46px;padding:0 20px;font-size:17px}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.fact{display:flex;gap:10px;align-items:flex-start;text-align:left;margin:10px 0 12px;padding:10px 12px;border-radius:14px;cursor:pointer;color:#3b2a14;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 3px 0 #b99c62,inset 0 1px 0 #fff}
+.fact svg{flex:none;width:60px;height:34px;margin-top:4px}
+.fact b{display:block;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:#a0661c;margin-bottom:2px}
+.fact span{font-size:16px;line-height:1.35;font-weight:600}
+.mix{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#ffe9b8;text-shadow:0 2px 6px #000}
+@media (max-height:620px){.cmsg{font-size:14px;min-height:18px}.ib{min-height:34px;font-size:14px}.ctools .k-btn{min-height:40px;font-size:15px}.cday span{font-size:13px}.fact span{font-size:15px}}
+@media (prefers-reduced-motion:reduce){.pc.snap{transition-duration:.01s}.pc.bee .wg,.flw .sw,.pc.ha .ring,.pc.ha .arw{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="jbDefs"></defs></svg>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="jbEmb"></svg>
+      <h1>Jack's Bee Garden</h1>
+      <p class="lead">Jack's beehive puzzle! Slide the hive boxes, honey frames and flower boxes out of the way so the bee can fly out the gate to the flowers.</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Today's Garden</button>
+        <button class="k-btn" id="bBonus" style="display:none">Bonus Garden</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b id="cday"></b><span id="cmoves">Moves: 0</span></div>
+      <button class="ib" id="tHint">Hint</button>
+    </div>
+    <div class="cmsg" id="cmsg" aria-live="polite"></div>
+    <div id="yard" role="group" aria-label="Garden bed"></div>
+    <div class="ctools">
+      <button class="k-btn k-ghost" id="tUndo">↶ Undo</button>
+      <button class="k-btn k-ghost" id="tReset">Start Over</button>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1114a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script id="jbCore">
+/* ===== Jack's Bee Garden core (the pieces, the search, the graded days). Run by check-year.js too. =====
+   A 6 × 6 garden bed. Each piece lies along a row (sideways) or a column (up and down) and only slides along it.
+   The bee lies in the third row; slide pieces out of the way until it can fly out of the garden gate on the right.
+   One move = one piece slid any distance. Pool grown offline (Harbor tools), graded by the fewest moves. */
+(function(root){
+"use strict";
+function rng(seed){ var h=1779033703^seed.length; for(var i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
+function shuffle(a,r){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+var N=6;
+/* fewest-move bands by weekday (0 = Sunday): a gentle Monday, a real climb, a properly hard (but short) Sunday */
+var WEEK={1:[5,6],2:[7,8],3:[9,10],4:[11,12],5:[13,14],6:[15,17],0:[18,21]};
+var POOL={0:[{s:".B..CC.B...D.BAA.D.EEF.D...FGG..HHII",d:19},{s:".BBCDE.F.CDE.FAAD..GGH.....HII......",d:19},{s:"BCD...BCD.EEAAF..G..F.HG.IIIHG......",d:18},{s:"........BCD.AABCDEFFB.DE.GHH.E.GII..",d:18},{s:"..BBB.CDDD.EC.FAAEC.FG.E...GHHIIIG..",d:20},{s:"B..CDDB..C...AAE.FGGGE.F..HIIF..HJJ.",d:20},{s:"BBCDEF..CDEF.AAG.F.H.GII.H.JJ.......",d:21},{s:".B.CCD.BEFFDAAEG.H..IG.H..IJ.....J..",d:18},{s:".B.CCD.B.E.DAA.E.F.GGH.F..IH....IJJJ",d:18},{s:"..BBCC.....D.EFAAD.EFGGD..FHIIJJJH..",d:20},{s:".BCCCD.BE..DAAE..D..E.FF.GGGH...IIH.",d:18},{s:"..B.CC..BDDD.AAE....FEGGHHFIIJ.....J",d:20},{s:"...BCC..DB.E..DAAE.FFGGE.HIIJJ.H....",d:18},{s:"BCCDD.B...E.AA..E.FFGGE...HII.JJH...",d:21},{s:".BCC.D.BEE.DAAFG..H.FGIIH.FJJJ......",d:21},{s:"..BBBCDDE..CAAE..FG.HI.FG.HIJJ......",d:21},{s:".BCCD..BE.D.AAE...FGGGH.FIIJH.F..J..",d:21},{s:"BBC.....CDDDAAEF...GEFHI.GJJHI......",d:19},{s:".BCDDDEBCFGHEAAFGHEIIIJH....J.......",d:18},{s:".B....CBDD.ECAAF.EGGHFII..HJJJ..H...",d:20},{s:"B..CDDBE.CF.BEAAF..GG.F...HII.JJH...",d:18},{s:"..BB..CDDDE.C.AAEFC.GHEF..GHIIJJJH..",d:20},{s:"....BC.DDDBCEAA.B.E.FG..E.FGHHIIJJ..",d:18},{s:"BBB.C.....C.DEAAFGDEH.FG..HII.......",d:21},{s:"B.CCC.B.DDEEAAF..GHHFI.GJJJI.G......",d:21},{s:".BCCDE.BFGDEAAFG..HHI.....IJJJ......",d:18},{s:"BBCD..E.CDFFE.CAAGE.HH.G.II..J.....J",d:18},{s:"...B....CB..AACDEF.GGDEF.HIIEF.H.JJ.",d:18},{s:"B.....BC..D.BCAADEFFG.DE..GHHE.IIJJ.",d:19},{s:"..BBBC.DDDECAAF.EG.HF..G.HI.JJ..I...",d:20},{s:".BBCD....CD..AAED...FEGG.HFII..HJJJ.",d:21},{s:".BBC.D..EC.D.FEAAD.FGH....GHII....JJ",d:21},{s:"BBC..D..C.ED.FAAED.FGG...HHIJJ...I..",d:18},{s:"BBCCC.DDE.F.AAE.F.G.E..HG.II.H..JJJH",d:20},{s:"...BCC...BDE..AADEFFGGDE.H.I...H.IJJ",d:18},{s:"...BCC..DBEEAAD..F..DGGF..HHHI.JJ..I",d:18},{s:".B.CC..BDEEFAADG.F..DGH..IIIH...JJJ.",d:18},{s:".BBCDE...CDE.FAADG.FH..G..HIIG..H.JJ",d:21},{s:"B.CCDDB..E..AAFE....FEGG..HHHI...JJI",d:19},{s:"..B.CC..B..D..BAADEEEF.D...FGG.HHII.",d:21},{s:"..BCDDE.BCF.EAACF..G..H..GIIH...JJ..",d:21},{s:"B.....BCCDE.AAFDE.GGF.....HIIIJJH...",d:18},{s:"BBCCCD..E..DAAE..D..E.F.G.HHF.GIIJJJ",d:20},{s:"..BBB...C..DAAC..DEECFFDGGGHI.JJJHI.",d:21},{s:"..BCDD..BC.EAABC.E.F..GH.FIIGH.JJKK.",d:21},{s:".B....CB..DECBAADEFFG.DE..GHII.JJH..",d:18},{s:".BCCDE.B.FDE.AAFGH.IIJGH...J....KK..",d:18},{s:"BBBCDE..FCDEAAF..EG.....G.HHII....JJ",d:19},{s:"BBCCD..EEEDF..GAAF..G..FH.GIJJHKKI..",d:19},{s:"BC.DD.BC..E.BAA.E.FFG.E...GHH.IIJJ..",d:21},{s:"BBC.D...C.DEAAF.DEG.FHHIGJJK.I...K..",d:21},{s:"..BCC...BD..AABD..E..FGHEIIFGH..JJJH",d:21}],1:[{s:".............AA.B..C..B..C..B..CDDD.",d:5},{s:"....B.....B.AA..BC...DDC...EE.......",d:5},{s:"............AABCDE..BCDE............",d:5},{s:"..B.....B..CAAB..C.....C.DD....EE...",d:5},{s:"..B.....BC..AABC....DDD...EE........",d:5},{s:"....B.....B..AA.B....CC...DDD....EE.",d:5},{s:".....B.....B.AA..B...CCC...DDD....EE",d:5},{s:"........B.CDAABECD...E..............",d:5},{s:".............AA..B.C...B.C...B.CDDEE",d:6},{s:"....B.....BC..AABC...DEE...D........",d:5},{s:"...........B..AACB...DCB...DEE......",d:6},{s:".....B.....BAAC..B..C.DD..........EE",d:5},{s:"..............AABC....BC..D.B...DEE.",d:5},{s:".........B...AABC.....C....DC....DEE",d:5},{s:".............AABCD...BCD...B.....EE.",d:5},{s:"....B.....BC..AABC.....C...DD....EE.",d:5},{s:".........B.C.AABDC...BD...EE........",d:5},{s:".....B....CB.AA.CB....DD....EE......",d:5},{s:"...BCC...B....AAD.....D.....E.....E.",d:5},{s:".........B..AACBD...C.D...C.....EE..",d:5},{s:"...B.....B...AAB.C.....C..DD....EE..",d:5},{s:"...BBB..CCDD..AA.E.....E.....F.....F",d:5},{s:"BBB.....C...AACDE..FFDE.............",d:5},{s:"....B.....B..AA.BC..DDDC...EE...FFF.",d:6},{s:"...B.....B..AACB....CDD.........EE..",d:5},{s:"...B.....BC..AABC..DEEE..D..........",d:5},{s:"........B...AAB.C..D..C..D..C..D.EEE",d:6},{s:".........BC.AA.BC....B....DD....EE..",d:5},{s:"..BBB....CC...AADE....DE....F.....F.",d:5},{s:".....B.....BAA...B..CCDD..EEFF......",d:6},{s:".BB.........AACD....CD...EED.....FF.",d:5},{s:"...........BAA...B.....B.C.....CDDEE",d:5},{s:"............AA...BC....BC....BCDDDEE",d:6},{s:".....B.....B..AA.B....CC...DDD...EEE",d:5},{s:"..........B..AA.BC....BC...DD.....EE",d:5},{s:"...BB.....C.AAD.CE..DFFE............",d:5},{s:"...BBC....DC.AA.DC..EEE..........FFF",d:5},{s:"....BB....CCAAD..E..D..E.....F.....F",d:5},{s:"..BB.....C.DAAEC.D..EF....EF.....F..",d:5},{s:".....B..CD.BAACD.B...EEE............",d:5},{s:"..BCCC..B.DE.AA.DE.....F.....F......",d:6},{s:"..........B..AA.BC.....C..D..C..DEEE",d:5},{s:"...........B.AA.CB....CB...DDD...EEE",d:5},{s:"..BB....C.D.AAC.DE..F..E..F.....F...",d:5},{s:"...........BAACDEB..CDE.....E....FF.",d:6},{s:".........BC.AADBCE..D..E.....E....FF",d:6},{s:"........B.CDAAB.CD....C...EEE....FF.",d:6},{s:"...BB.........AACD....CD..EEED....FF",d:5},{s:"..BBC....DC.AA.DCE.F.GGE.F...E......",d:6},{s:".....B...C.B.AAC.B.DEEFF.D..........",d:6},{s:".........B.CAA.B.CD..B..DEEE..D.....",d:6},{s:".....B.....B..AACB....C...DEC...DEFF",d:6}],2:[{s:"..........B..AA.BC..D.BC..D.....DEE.",d:7},{s:".......B...C.BAADC...EDC...E.....EFF",d:8},{s:"...........B..AA.B..CCCB..D.....DEEE",d:8},{s:".....B....CB..AACB...DC....DEE...D..",d:7},{s:"..........B...AABC...D.C...D.C...DEE",d:7},{s:"...B.....B.CAA.BDCE...D.EFFF........",d:7},{s:"........B...AAB.C.D...C.D...C.DEE.FF",d:7},{s:"..BB.......C..AA.C...D.C...DEE...FFF",d:7},{s:"....B..CCDB..AADB...EFF...E.....E...",d:8},{s:".BBBC.....C...AAC....D.....DEE....FF",d:7},{s:".....B.....B.AA..B.C..DD.C.....CEEFF",d:7},{s:"....B...CCB...AAB....DEE...D.....D..",d:7},{s:"..........BC.AA.BC.D..BC.DEEFF......",d:7},{s:"...B.....B...AAB...CDDD..CE...FFE...",d:8},{s:".........B...AABCD..E.CD..E.CD..EFF.",d:8},{s:"..BBB......C..AA.C..DD.C...EFF...E..",d:7},{s:"...........BAACDEB..CDE.F..D..FGGG..",d:7},{s:".....B.CCCDB..AADE...F.E...FGG......",d:7},{s:"...........B..AACB...DCB...DEE..FFGG",d:8},{s:"..........B...AABC...DBC..ED....EDFF",d:8},{s:".BBB.C...D.CAA.D.C.........EFF...E..",d:7},{s:"BCC.DDB...E.AA..EF....GF....G.....G.",d:7},{s:"....B.....BC.AA.BC..D.....DEE....FF.",d:7},{s:"...........BAA...BC....BCDDDEE....FF",d:7},{s:"..BBB.....C...AACD...ECD...EFF......",d:7},{s:".........B.C.AAB.C..D..C..DEEE....FF",d:7},{s:"...B.....B...AAB.C..DEEC..D..C..FFF.",d:7},{s:"....B.CD..B.CDAAB...E.....E.FF......",d:7},{s:".....B.....BAA...BC...DDC.....CEEEFF",d:7},{s:".BCCDD.B..EE.AA..F.....F.....G.....G",d:7},{s:"...BB.....C...AAC...DDC....EFF...EGG",d:8},{s:"...B.....BC.AA.BC.D.EE..D.....D..FFF",d:7},{s:"...B.....BCDAA.BCD..EE.....FFF..GG..",d:7},{s:"....B.....BC.AA.BC.D.EEC.D.FF..DGGG.",d:8},{s:"...BCC...B.D.EAAFD.E..FG.E...G......",d:7},{s:"...BCC...BD...AADE...F.E...FGE...FG.",d:7},{s:".....B....CBAADECB..DE.........FFFGG",d:7},{s:".BCCDD.B....AAE.....E..F..GGGF......",d:8},{s:"..BCC...B...AAB.D..EEED.........FFF.",d:7},{s:"..B.....B...AAB..CDDD.EC.FF.E...GG..",d:7},{s:"..........B..AA.B..CC.B..DEEE..D.FF.",d:7},{s:"..B..C..BDDCAAB..C......EEFFG.....G.",d:7},{s:"........BBC...AAC..DDDC....EFF...E..",d:7},{s:"..B.....B..CAAB..C..DDDE.FF..E.GG...",d:7},{s:"....B..C..B..CAADE...FDE...FGG......",d:7},{s:".....B..CCCB..DAABE.DFFFEGG.HH......",d:7},{s:"...BCC...BDE..AADE.....F..GGGF.....F",d:7},{s:"..BCC...BDE..AADE....DFF..GG...HHH..",d:8},{s:"..BCCCD.B.E.DAA.E..FFFG.....G.......",d:8},{s:"...BCC...BDD..AAE...FFE.....G.....G.",d:7},{s:"...B.....BCC..AA.D.EEE.D..FGGG..F...",d:7},{s:"....BB..C.DDAAC..E..C..E..FFF...GG..",d:7}],3:[{s:".....B.....BAAC..B..C.DD..C.EE..FFF.",d:9},{s:"...BBB.....CAA...C..DDDC..E.....EFFF",d:9},{s:"........BBBCAAD..C..D..E..FFFE......",d:9},{s:"......B...CDBAAECD..FEC...FEGG......",d:9},{s:"BCCCDEB..FDEAA.FDE...FGG............",d:9},{s:"....B.....BC..AABC...DEEF..D..FGG.HH",d:9},{s:"..BBBC..DE.CAADE....F.....F.GG......",d:9},{s:"...B.....BCC..AADE...FDE...FG...HHG.",d:9},{s:"...B....CB..AACBDEF.GGDEF.....FHHH..",d:9},{s:"B...C.B.DDC.AAE.C...EFF...GGG.......",d:9},{s:"..B.....B...AAC..D..C..D..EEED....FF",d:9},{s:".....B...C.B.AAC.B..DEE...DFGG..DF..",d:10},{s:"..............AABC.DDEBC..FEBC..FEGG",d:9},{s:".......BB..C..DAAC..DE.C..DEFF...E..",d:10},{s:"....B.....B..AA.BC..DE.C.FDE...FDEGG",d:10},{s:"..........B..AA.BC..D.BCEFD...EFDGG.",d:9},{s:"........B.C.AAB.C...BDDDEEE..FGGG..F",d:9},{s:".........BBC.AA.DC.EEEDC.FGGHH.F....",d:9},{s:"B...C.B...C.BAA.C.DDE....FE....FGGG.",d:10},{s:"..........BC.AA.BC.DDDB..EFFF..E....",d:9},{s:"........BC..AABC....BDDD.EE..F.GGG.F",d:9},{s:"......BBCCC..AA.D...EFD...EFGG..E...",d:9},{s:".B.CCD.B..EDAAFGED..FG.....H.....HII",d:9},{s:"........B..CAAB..CDDBEE...FFG..HHHG.",d:9},{s:"BBBCCC.......AA.DE..FGDE..FGHH......",d:9},{s:"..BBC..DDDCE.AAFCE...FGG...F....HH..",d:9},{s:"..BCCD..B.ED.AA.EF.....F.GGGHH......",d:9},{s:"..BBC...DDC..AAEFG...EFG...HII...H..",d:9},{s:".......BB.C..DAAC..DE.C...EFFF...GG.",d:10},{s:".....B....CB..AACB.DEFGG.DEF.....F..",d:9},{s:"..BCDD..BC.E.AA.FE....F..GGHHH......",d:9},{s:"...BCC...B...AAD.....DEF.GHHEF.G....",d:10},{s:"..B.CC..B.D.AAE.D...E..F..GGGF......",d:9},{s:"...BB...CCD..AAED..F.ED..FGGG....HH.",d:9},{s:"..BBC.....C..AA.CD..EF.D..EFGG..EHH.",d:10},{s:"....B...CCB...AAB..DDEFF...EGG..HHH.",d:9},{s:".BCDDD.BC.EF.AAGEF...GH....GH.....H.",d:9},{s:"..BCDD..BCE..FAAE..FGHH...G.....G...",d:9},{s:"......BBCCD..EAAD..E..D..FG....FGHHH",d:9},{s:"........B..CAAB..CDD...C.EFFGG.E..HH",d:9},{s:"..BB.....C..AADCEF..DGEF...GE....GHH",d:9},{s:"..BCCC..BDDD.AAE...F.EG..FHHG.......",d:9},{s:"..BB.C...D.CAA.D.CE..DFFE.....EGGG..",d:9},{s:"......BBBC..DAACEFD..CEFG.....GHHH..",d:9},{s:"...BB...CDDE..CAAE..FG.E..FGHH....II",d:10},{s:".BBBC...DDCE..AACE.F.GHH.F.G.....G..",d:10},{s:".........BBC..AADC...EDC...EFF..GGHH",d:9},{s:"....BB.....C..AA.CDD.EEC...F.....FGG",d:9},{s:".BB.......C..DAAC..DE.C...EFF..GG.HH",d:9},{s:"....B.....BCAA..BCD..EEED..FF.DGG.HH",d:9},{s:".BB.C.....CD.EAAFD.E..F...GHHH..G...",d:10},{s:".......BBC.D.AACED..FCED..FGGG..HH..",d:9}],4:[{s:"..........B..CAAB..C..B..C.DEEFFFD..",d:11},{s:"..B.....B.CCAAB..D..EEED..FFFD.GG...",d:12},{s:"B.....BC..D.BCAAD.EEF.D...FGG.......",d:11},{s:".BCC.D.B...D.AAE.D..FEGG..FE........",d:11},{s:"...B.....B.C.AADEC.F.DE..FGGE.......",d:12},{s:"........BC.DAABC.D..B..E.FF..EGGG..E",d:11},{s:"..BBB..CC...AADE....DE.FGGGHHF......",d:11},{s:".B.CDD.BEC.F.BEAAF.GGG.H.....H.....H",d:11},{s:"BB.CC...DE..AADE....D..F..GGGF..HHH.",d:11},{s:"..B.CC..B..DAAE..DF.EGGDFHHI.....I..",d:11},{s:"..BBBC..D..CAAD..E..FFFE.....E..GGHH",d:11},{s:"B.CC..B.D...AAD....EDFFF.EGGH.....H.",d:11},{s:"........BC..AABC.DEEEC.DF.GG..F.HHH.",d:11},{s:"....BB.....C.AA.DC..EFDG.HEFDG.HEFII",d:11},{s:"...B.....B..CAAB..CDEEFF.DGGH..II.H.",d:11},{s:"..B....CBDD..CAAE..FFGE...HGII..HG..",d:11},{s:"........B..C..BAACDDBEEC.F..GG.FHHII",d:12},{s:"....B.C...B.CDAABE.DF..E.GFH...GFHII",d:11},{s:".BBBCD..E.CDAAEF....GF....GFHH......",d:12},{s:"B.CCCDB.EEFDAAG.FD..GHF...IH....IHJJ",d:12},{s:".BBCC...D.E.AAD.E...FGG...FHII.JJH..",d:12},{s:".......BB.C..AADC.EFFDC.E.GDHH..GII.",d:11},{s:"...BCCDDDB.E.F.AAE.F..GH.IIIGH......",d:11},{s:"...BCC...BD.AA.EDFGG.EHFIJJJH.I.....",d:11},{s:"BCCC..BDDDEFAA.GEF.H.GE..HIII....JJ.",d:12},{s:".BCCD..BEFD.AAEF....GHH...GII...JJ..",d:11},{s:".BBB..CC.D..AA.DEFGGGDEFH...E.HIII..",d:12},{s:".BCCDE.B.FDE.AAF....GG.....HII...H..",d:11},{s:".BBCC.....DE..AADEFFGGD....HII...H..",d:12},{s:"..BB.C.DDDEC..AAEC...FGG...FHH.IIIJJ",d:11},{s:"BCCDD.B.EEE.AAF..G.HF.IG.HJJIG......",d:11},{s:"..BCDD..BCEF.AAGEF..HGII..HG....JJ..",d:11},{s:"..BCC...B...DEAAFGDEHHFGDE..IG.JJJI.",d:12},{s:"..B.....B.CCAAB.....DDDE..FF.E..GG.E",d:11},{s:".BB.C....DCE.AADCE..FDGG..FHH..III..",d:11},{s:"..BBC....DC..AADCE..FGGE..FHHE.IIJJ.",d:11},{s:"....BBCCCD.EAAFD.E..FD..GGGHH....II.",d:12},{s:".BBCDD...CEF..AAEFGG.HHI..JJJI...KKK",d:11},{s:".B.CCC.B.DE.AA.DEFGHIIIFGH..J.G...J.",d:11},{s:"..BCCC..BDEE.AADF..GGHF....HII..JJ..",d:11},{s:"...BB...CC.D..EAAD..EF.DG..FHHGIIJJJ",d:11},{s:"..BC...DBCEEFDAA.GFD...G...HIIJJ.H..",d:12},{s:"..BCCCDDB.EF.GAAEF.GHHHI.GJJ.I.KK...",d:11},{s:"..B.CC..B.DDAAB..E..FF.E..GGGH.....H",d:12},{s:"..BBBC.DD..CAAE..FG.E..FG.HHIIG.....",d:12},{s:"..BCCC..BDEE.AAD.F....GFHHIIGJ.....J",d:11},{s:"..B..C..BDDC..BAAE.FFG.E...GHH.IIG..",d:12},{s:".......BBBCD.AA.CDEF...DEFGGHH.F.III",d:11},{s:"..B.....B...AAB..CDEEFFCD.GGGC..HHH.",d:12},{s:"BBB....C...D.CAA.D.EEFFD...GHH...GII",d:12},{s:"..BBBC.....CAAD..C.EDFFF.EGGHH....II",d:12},{s:".BCCC..BDEEFAAD..FG.D.HFG.IIH.....JJ",d:11}],5:[{s:"........B...AAB..C..BDDCEEEF.CGGGF..",d:13},{s:".........B.C.AABDC...BD..EFFD..EGG..",d:14},{s:"B..CC.B...DEBAA.DEFFF.DE..GHH...G...",d:13},{s:"BBC.....CDDDAAE.....E.F.G.HHF.G.....",d:14},{s:".B.CC..B.DDE.AAF.E...F.G...H.G...H..",d:14},{s:"..B.CC..B..DAAB.ED....EF..GGGF.HH...",d:13},{s:".BBC....DC..AAD.E..FD.E..FGGE.......",d:14},{s:".B.CCD.B.E.D.AAEFG...HFG...H........",d:13},{s:".BBBCD..E.CDAAE...F.G...FHG.II.H....",d:14},{s:".BBCCD..EE.D..FAAD..F.....FGHHIIIG..",d:14},{s:"BBC.D..EC.D..EAAD..EFFFG.....G.HH...",d:14},{s:"..B.....B.CCAAB..DEFFGGDE.HHHD..III.",d:13},{s:"..B.CC..B.DDAAB..E.FF..E..GGGH.II..H",d:13},{s:"..BBBC.DD..CE.FAACE.FGHH...GII...G..",d:14},{s:"BCC.DDB.....AAEF....EF..GGGF...HHH..",d:14},{s:"...B.....BCC.AABDE.FFFDE..G..E..GHH.",d:14},{s:"....BB....CD.AA.CD.EEFFD.GHHII.G....",d:13},{s:"BBBC.....CDDAAEF..G.EFHHG.IIJ.....J.",d:14},{s:"...BCC...BD...AADE.FFFDE.G.HHH.G.III",d:14},{s:"...BCC...B..DAAB..DEFFGG.E..HI.JJ.HI",d:14},{s:"...BB..CCDDE.AAFGE.HIFG..HIJJJ......",d:13},{s:".BBB.....CDDAAECF...EGF.HIIG..HJJJ..",d:13},{s:".BCCC..B.DD..AAE...F.EGG.FHHI.....I.",d:13},{s:"BBCCD.E...D.EAAFDGHH.F.G..IFJJ..I...",d:13},{s:".B.CCD.B..ED.BAAEF..G..F..GHIIJJGH..",d:14},{s:".BBCCD..EF.DAAEFG...HIG...HIJJ......",d:13},{s:".B.CDD.B.C.E.B.AAE.FF.G..HHHGI.JJ..I",d:13},{s:"..B..C..B..CAAB..CDEFFGGDEHHH...III.",d:13},{s:"..BBBC..DD.CAAEFGH..EFGH..I..H..I.JJ",d:13},{s:"BBCCD.EE.FD.AA.F..GHHH..G..IJJG..I..",d:13},{s:"BCDDDEBC..FEBAAGFEH.IGJJH.IG........",d:14},{s:"......B..CD.BAACDE.FGCDE.FGHHE......",d:14},{s:"..BBBC..DD.CAAE..C.FEGGG.FHHII....JJ",d:13},{s:"BBBC.....CDD..EAAF..EGGF..EHHI..JJ.I",d:14},{s:"..BCC...BD.E.AAD.E.FFDGG....H.IIJJH.",d:13},{s:"......BC..DEBCAADEFFFGDE..HG....HII.",d:13},{s:"..B.CC..B.DDAAB..E..FFFE..GG.E.HH.II",d:13},{s:".BC.DD.BC...AAE.....E.FG.HHHFG......",d:13},{s:"BCDDE.BC.FE.BAAF..GGHI....HIJJ......",d:14},{s:"..BC....BCDD.AAE...F.EGH.FIIGH.FJJ..",d:13},{s:"..B....CB..D.CBAAD.EEFFD...GHH.IIGJJ",d:13},{s:"BCCC..B.DEF.AADEFG..D..G..HHHG..II..",d:14},{s:"...BC....BCDEAAFCDEGHF...GHII...JJJ.",d:14},{s:".BB...CCCD.E.AAD.E..FDGG..FHHH...II.",d:13},{s:"....B.CC..B.D.AAB.D.EFGGHHEF.IJJJF.I",d:14},{s:"BBBCCD.EFF.D.EAAG..HHIG....IJJ......",d:13},{s:"BBC..D.EC..D.EAA.D...FGG.HHFII...JJJ",d:14},{s:".BB.....C..DAAC..DEEC..FG.HHHFGIIJJ.",d:14},{s:"...BCC.DDBE..FAAE..FGGE...H.IIJJH...",d:13},{s:"BCCC..B.DD..AA.E..FFGE...HGE...HIII.",d:13},{s:"...B....CB.DAACEFD.G.EFH.G.IIH......",d:14},{s:"BCCDE.B.FDE.AAF..G.HI..G.HIJJ..H....",d:14}],6:[{s:"...BB...C.DDAAC..E..C.FE.GGGFEHHH...",d:15},{s:".B.CC..BDDE..AAFE.GGHFI...HJI....J..",d:17},{s:"..B.....B.C.AAD.C.EED.F.GHIIF.GHJJ..",d:16},{s:".BCCDE.B.FDE.AAFGH...IGH...I.....I..",d:15},{s:"BBCC..DDDEE.AAF...G.FHI.GJJHI.......",d:17},{s:"B.CCDEB.F.DEAAF..E..G.....G.HH..GIII",d:16},{s:".BBC.....C...AACDE....DE.FGGDE.FHH..",d:16},{s:".B.CC..B.DDE.AAFGE.HHFGI...J.I...J..",d:17},{s:"..BCDD..BC.EAAB..E.FF..G..HHHG..II..",d:15},{s:".BCCDE.B..DE.AAFDG...F.G..HI....HIJJ",d:17},{s:".BCCC..B.DD..AAE...F.EGG.FHHIJ....IJ",d:15},{s:".B.CC..B..DE.BAADE.FFGD....GHH...II.",d:15},{s:"B.CCC.B...D.EAAFDGE.HF.GE.HIIGJJH...",d:17},{s:"BCCDDDB.....AAEF.G..EF.GHHHF.G..II..",d:16},{s:"...B....CB..AACD.E.FFD.E.G.HHE.G.II.",d:16},{s:"BCCCD.B..EDFAAGEDF..GEHH.....I.JJJ.I",d:16},{s:"...BCC.DEB.F.DEAAFGGHHIJ....IJ....I.",d:15},{s:"....B.....BC.AA.BCDDEFFC.GEHH..GIIJJ",d:15},{s:"B.CCD.B.E.DFAAE..FGGH.....HIII..JJ..",d:15},{s:"BBCCDE...FDE.AAFD...GHII..GHJJ......",d:15},{s:"..BCDD..BC...AAC...EFFGG.E..HI.JJ.HI",d:15},{s:".BBB.CDEE..CD.FAAC..FGHH...GII...GJJ",d:15},{s:".BCCDD.BEEE.AAF...G.FHH.G.IIJ.....J.",d:15},{s:".BCCCD.BE..DAAE..DF.E.GGF.HHI...JJI.",d:15},{s:"...BB...CD..AACD.EFFC..E.GHHHE.GIIJJ",d:15},{s:"BCCC..B...D.EFAADGEF..DG.F.HIIJJJH..",d:15},{s:"..BB..C.DDEFC.AAEFC.GHE...GHIIJJJH..",d:17},{s:"..BCCCDDB..E.FAA.E.FGGGE.HIIJJ.H....",d:15},{s:".B.CCD.B.EFD.AAEFG.HHI.G...I...JJJ..",d:16},{s:".BCC...BD...AADEF.GGHEF.I.HEJJI.....",d:15},{s:"...B.....BC..AADCE.F.DGE.FHHGE....II",d:15},{s:"..BBBCDDEEEC.FAAGH.FI.GH..I.JJ......",d:16},{s:"..BCC...B..DAAB..D.EEFFGHHHI.G.JJI..",d:17},{s:".BBCDD...CEF..AAEFGGHHEF..I.....IJJ.",d:15},{s:"B.CDD.BEC...BEAAF.GGHIF...HIJ....IJ.",d:17},{s:"BBBCD...ECD.AAE...F.GG..FHHIII......",d:16},{s:"BCD...BCD.EEAAF...GGF.HI.JJJHI......",d:16},{s:"...BCC...BDE..AADE.FFGGE.HIIJJ.H....",d:16},{s:"...BBC..D..C.EDAACFED...FGGHIIJJJH..",d:16},{s:"..BCCCD.B...D.AAEF..GGEFHHIIIJ.....J",d:15},{s:"..B.C.DDB.C..EAAC..EFFFGHE...GHII...",d:15},{s:".BB.......C.DAAECFD..ECFD.GHHHIIGJJ.",d:15},{s:"BBC..D.EC.FD.EAAFD...G...HHGII...JJJ",d:17},{s:"..BCCC..BDEEFAAD..FG.HH.FGIIJ.....J.",d:15},{s:"BBCCCD.EE.FDAAG.FD..G.HH..GII...JJJ.",d:15},{s:"....BC.DD.BC.EAA.C.E.FGG.HHFIIJJ.KK.",d:15},{s:"BCDDE.BC..E.AAFGH...FGH...I.H...IJJ.",d:17},{s:"........BCCDAAB.EDFGG.E.F.HIIIJJH...",d:17},{s:"..BC....BC..AADEFGHIDEFGHI.JJG......",d:16},{s:".BBBCD..E.CDAAEF..GHHF..GIIJJ.......",d:16},{s:".BCCD..BEFDGAAEFHG...IH...JI....J...",d:16},{s:"..BCCC.DB..E.D.AAE.FFGGE...HII...HJJ",d:15}]};
+/* a pool string: 36 cells, "." empty, A = the bee, other letters = pieces. flip = mirrored top to bottom (bee in row 4) */
+function decode(s,flip){ var B=[],P=[],seen={};
+  if(flip){ var t=""; for(var r=N-1;r>=0;r--) t+=s.slice(r*N,r*N+N); s=t; }
+  for(var c=0;c<36;c++){ var ch=s[c]; if(ch==="."||seen[ch]) continue; seen[ch]=1;
+    var r2=Math.floor(c/N), col=c%N, h=col<N-1&&s[c+1]===ch, len=1;
+    if(h){ while(col+len<N&&s[c+len]===ch) len++; } else { while(r2+len<N&&s[c+len*N]===ch) len++; }
+    var b=h?{r:r2,c:0,len:len,h:true}:{r:0,c:col,len:len,h:false};
+    if(ch==="A"){ B.unshift(b); P.unshift(h?col:r2); } else { B.push(b); P.push(h?col:r2); } }
+  return {B:B,P:P}; }
+function cells(b,pos){ var o=[]; for(var k=0;k<b.len;k++) o.push(b.h?(b.r*N+pos+k):((pos+k)*N+b.c)); return o; }
+function occ(B,P){ var g=new Int8Array(N*N).fill(-1); for(var i=0;i<B.length;i++){ var cs=cells(B[i],P[i]); for(var k=0;k<cs.length;k++){ if(g[cs[k]]>=0) return null; g[cs[k]]=i; } } return g; }
+/* how far piece i can slide each way: [lowest place, highest place] */
+function range(B,P,i,g){ g=g||occ(B,P); var b=B[i], p=P[i], lo=p, hi=p;
+  while(lo>0){ var c=b.h?b.r*N+lo-1:(lo-1)*N+b.c; if(g[c]>=0) break; lo--; }
+  while(hi+b.len<N){ var e=hi+b.len, c2=b.h?b.r*N+e:e*N+b.c; if(g[c2]>=0) break; hi++; }
+  return [lo,hi]; }
+function moves(B,P){ var g=occ(B,P), out=[]; for(var i=0;i<B.length;i++){ var R=range(B,P,i,g); for(var q=R[0];q<=R[1];q++) if(q!==P[i]) out.push([i,q]); } return out; }
+function solved(P){ return P[0]===N-2; }
+/* the fewest moves from P, as a list of [piece, new place] */
+function solve(B,P0){
+  if(solved(P0)) return [];
+  var pow=[], m=1; for(var i=0;i<B.length;i++){ pow.push(m); m*=5; }
+  function enc(P){ var k=0; for(var i=0;i<P.length;i++) k+=P[i]*pow[i]; return k; }
+  var seen=new Map(), list=[P0.slice()], from=[-1], mv=[null]; seen.set(enc(P0),0);
+  for(var h=0;h<list.length;h++){ var P=list[h], ms=moves(B,P);
+    for(var j=0;j<ms.length;j++){ var Q=P.slice(); Q[ms[j][0]]=ms[j][1]; var k=enc(Q); if(seen.has(k)) continue;
+      seen.set(k,list.length); list.push(Q); from.push(h); mv.push(ms[j]);
+      if(solved(Q)){ var path=[]; for(var x=list.length-1;from[x]>=0;x=from[x]) path.unshift(mv[x]); return path; } } }
+  return null;
+}
+/* the pieces' looks: three-long pieces are painted hive boxes; two-long pieces are honey frames or flower boxes */
+var PAINTS=[["mint","#9fdcc0","#5aa486"],["sky blue","#a9d3f2","#5f9cc8"],["butter yellow","#f6df8a","#c9a63c"],["pink","#f6b9cf","#c9789a"],["lavender","#cdb8ef","#8e72c4"],["white","#f4f1e8","#bdb6a3"],["peach","#f9c9a2","#cf8d5c"]];
+function dress(B,seed){
+  var r=rng("jb-look:"+seed), out=[{kind:"bee",name:"the bee"}], pi=shuffle(PAINTS.map(function(_,i){ return i; }),r), np=0, nf=0, nb=0;
+  for(var i=1;i<B.length;i++){
+    if(B[i].len===3){ var p=PAINTS[pi[np++%PAINTS.length]]; out.push({kind:"hive",col:p[1],dk:p[2],name:"the "+p[0]+" hive box"}); }
+    else { var fl=r()<.5; out.push(fl?{kind:"flowers",n:nf++,name:"a flower box"}:{kind:"frame",n:nb++,name:"a honey frame"}); } }
+  return out; }
+/* the day's garden: the weekday's pool in a fixed shuffled order, one a week; once the pool has gone round, it goes
+   round again mirrored top to bottom (the bee and the gate in the fourth row) */
+function pickDay(wd,weekNo){ var list=POOL[wd]||[], n=list.length, order=shuffle(list.map(function(_,i){ return i; }),rng("jb-order:"+wd)), k=((weekNo%(2*n))+2*n)%(2*n), e=list[order[k%n]];
+  return {s:e.s,d:e.d,flip:k>=n}; }
+root.JB={rng:rng,shuffle:shuffle,N:N,WEEK:WEEK,POOL:POOL,decode:decode,cells:cells,occ:occ,range:range,moves:moves,solved:solved,solve:solve,dress:dress,pickDay:pickDay};
+})(typeof window!=="undefined"?window:globalThis);
+
+</script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, G=JB, N=G.N;
+var ST=LS.get("jbee",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0; ST.fx=ST.fx||0;
+function save(){ LS.set("jbee",ST); }
+
+/* ---------- Jack's Bee Facts (Jack's own, Nov 14; cleaned up with Judy's OK). Add new ones at the end. ---------- */
+var FACTS=[
+  "Honey bees make beeswax! People use it in everyday things like candles, skin care and lip balm.",
+  "To make just one pound of honey, the bees in a hive fly about 55,000 miles all together. That's more than twice around the Earth!",
+  "Honey bees can fly up to 20 miles an hour.",
+  "Super cool fact: honey bees have five eyes! Two big ones, plus three tiny ones on top of their heads.",
+  "Raw honey never goes bad. If it gets thick and crunchy, that's just crystals, and it's still good to eat!",
+  "The waggle dance: worker bees do a special dance to show the other bees where the flowers are, which way to fly and how far to go."];
+
+/* ---------- the art (drawn in units of 100 per square; light from the top left) ---------- */
+(function(){ var h='';
+  h+='<linearGradient id="jbWoodG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2b277"/><stop offset=".5" stop-color="#c38a4f"/><stop offset="1" stop-color="#93602f"/></linearGradient>';
+  h+='<linearGradient id="jbDarkWoodG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9824c"/><stop offset=".5" stop-color="#94602f"/><stop offset="1" stop-color="#6e431d"/></linearGradient>';
+  h+='<linearGradient id="jbShineG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>';
+  h+='<pattern id="jbCombP" width="24" height="41.57" patternUnits="userSpaceOnUse"><rect width="24" height="41.57" fill="#e9a91e"/>'+
+     '<path d="M12 0l12 6.93v13.86L12 27.71 0 20.79V6.93z M0 20.79v13.86L12 41.57 24 34.64V20.79" fill="none" stroke="#b77408" stroke-width="2.2"/>'+
+     '<path d="M12 3.5l9 5.2v10.4l-9 5.2-9-5.2V8.7z" fill="#f7c84a"/><path d="M5 10l7-4" stroke="#fff3c4" stroke-width="2" stroke-linecap="round" opacity=".8"/></pattern>';
+  h+='<radialGradient id="jbBeeG" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffe680"/><stop offset=".55" stop-color="#f6c22c"/><stop offset="1" stop-color="#d5960e"/></radialGradient>';
+  h+='<radialGradient id="jbGlowG"><stop offset="0" stop-color="#fff6c0" stop-opacity=".75"/><stop offset="1" stop-color="#fff6c0" stop-opacity="0"/></radialGradient>';
+  h+='<clipPath id="jbBodyC"><ellipse cx="96" cy="58" rx="58" ry="33"/></clipPath>';
+  $("#jbDefs").innerHTML=h; })();
+function grain(w,h,n){ var s='', L=w>h; for(var i=1;i<=n;i++){ var t=i/(n+1);
+  s+= L?'<path d="M10 '+(h*t).toFixed(1)+'q'+(w*.3).toFixed(0)+' -3 '+(w*.55).toFixed(0)+' 1t'+(w*.4).toFixed(0)+' -1" stroke="#5a3514" stroke-opacity=".14" stroke-width="1.2" fill="none"/>'
+       :'<path d="M'+(w*t).toFixed(1)+' 10q-3 '+(h*.3).toFixed(0)+' 1 '+(h*.55).toFixed(0)+'t-1 '+(h*.4).toFixed(0)+'" stroke="#5a3514" stroke-opacity=".14" stroke-width="1.2" fill="none"/>'; }
+  return s; }
+function hiveSvg(w,h,col,dk){ var L=w>h, s='';
+  s+='<rect x="4" y="4" width="'+(w-8)+'" height="'+(h-8)+'" rx="10" fill="'+col+'" stroke="'+dk+'" stroke-width="2"/>';
+  s+='<rect x="4" y="4" width="'+(w-8)+'" height="'+(h-8)+'" rx="10" fill="url(#jbShineG)"/>';
+  s+=grain(w,h,3).replace(/#5a3514/g,dk);
+  s+='<rect x="15" y="15" width="'+(w-30)+'" height="'+(h-30)+'" rx="6" fill="none" stroke="'+dk+'" stroke-opacity=".55" stroke-width="2"/>';
+  s+='<rect x="16.5" y="16.5" width="'+(w-33)+'" height="'+(h-33)+'" rx="5" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.4"/>';
+  /* two handholds near the ends, a little painted hexagon in the middle */
+  [0.2,0.8].forEach(function(t){ var cx=L?w*t:w/2, cy=L?h/2:h*t;
+    s+='<rect x="'+(cx-(L?6:20))+'" y="'+(cy-(L?20:6))+'" width="'+(L?12:40)+'" height="'+(L?40:12)+'" rx="6" fill="#3a2410" fill-opacity=".42"/>';
+    s+='<rect x="'+(cx-(L?6:20))+'" y="'+(cy-(L?20:6))+'" width="'+(L?12:40)+'" height="4" rx="2" fill="#000" fill-opacity=".25"/>'; });
+  var cx=w/2, cy=h/2; s+='<path d="M'+cx+' '+(cy-14)+'l12.1 7v14l-12.1 7-12.1-7v-14z" fill="#fff" fill-opacity=".55" stroke="'+dk+'" stroke-opacity=".5" stroke-width="1.5"/>';
+  return s; }
+function frameSvg(w,h){ var s='';
+  s+='<rect x="4" y="4" width="'+(w-8)+'" height="'+(h-8)+'" rx="7" fill="url(#jbWoodG)" stroke="#7a4a1e" stroke-width="2"/>';
+  s+=grain(w,h,2);
+  s+='<rect x="15" y="15" width="'+(w-30)+'" height="'+(h-30)+'" rx="3" fill="url(#jbCombP)" stroke="#8a5a20" stroke-width="2"/>';
+  s+='<rect x="15" y="15" width="'+(w-30)+'" height="'+(h-30)+'" rx="3" fill="url(#jbShineG)"/>';
+  s+='<rect x="4" y="4" width="'+(w-8)+'" height="'+(h-8)+'" rx="7" fill="none" stroke="#ffe2b0" stroke-opacity=".5" stroke-width="1.5" transform="translate(1 1)"/>';
+  return s; }
+var FCOL=[["#f27aa6","#c9467a"],["#9f7be6","#6b48b5"],["#ffffff","#d9d2c0"],["#ff9b5e","#d6652a"],["#ffd84a","#d4a514"],["#6fb6f2","#3d82c2"]];
+function flowerAt(x,y,r,k){ var c=FCOL[k%FCOL.length], s='';
+  for(var i=0;i<5;i++){ var a=i/5*Math.PI*2-Math.PI/2; s+='<circle cx="'+(x+Math.cos(a)*r*.62).toFixed(1)+'" cy="'+(y+Math.sin(a)*r*.62).toFixed(1)+'" r="'+(r*.5).toFixed(1)+'" fill="'+c[0]+'" stroke="'+c[1]+'" stroke-width="1"/>'; }
+  return s+'<circle cx="'+x+'" cy="'+y+'" r="'+(r*.34).toFixed(1)+'" fill="#ffcf3a" stroke="#c98a10" stroke-width="1"/><circle cx="'+(x-r*.1)+'" cy="'+(y-r*.12)+'" r="'+(r*.1)+'" fill="#fff" opacity=".7"/>'; }
+function flowersSvg(w,h,seed){ var L=w>h, s='', len=L?w:h;
+  s+='<rect x="4" y="4" width="'+(w-8)+'" height="'+(h-8)+'" rx="8" fill="url(#jbDarkWoodG)" stroke="#5e3816" stroke-width="2"/>';
+  s+=grain(w,h,2);
+  s+='<rect x="15" y="15" width="'+(w-30)+'" height="'+(h-30)+'" rx="5" fill="#5b3a20"/><rect x="15" y="15" width="'+(w-30)+'" height="7" rx="3" fill="#2e1c0c" opacity=".45"/>';
+  var n=Math.round(len/42), k=seed*3;
+  for(var i=0;i<n;i++){ var t=(i+.5)/n, x=L?w*t:w/2, y=L?h/2:h*t, lx=L?x+12:x+15, ly=L?y+12:y+10;
+    s+='<ellipse cx="'+lx+'" cy="'+ly+'" rx="11" ry="6" fill="#4f9a3a" transform="rotate('+(i%2?35:-35)+' '+lx+' '+ly+')"/>'; }
+  for(var j=0;j<n;j++){ var t2=(j+.5)/n, x2=L?w*t2:w/2+(j%2?-6:6), y2=L?h/2+(j%2?-5:5):h*t2; s+=flowerAt(x2,y2,17,k+j); }
+  s+='<rect x="4" y="4" width="'+(w-8)+'" height="'+(h-8)+'" rx="8" fill="url(#jbShineG)" opacity=".6"/>';
+  return s; }
+function beeSvg(){ var s='';
+  s+='<ellipse cx="100" cy="60" rx="92" ry="44" fill="url(#jbGlowG)"/>';
+  s+='<ellipse cx="96" cy="88" rx="56" ry="7" fill="#1e3a10" opacity=".22"/>';
+  s+='<g class="wg"><ellipse cx="82" cy="24" rx="24" ry="17" fill="#e6f4ff" fill-opacity=".85" stroke="#fff" stroke-width="2" transform="rotate(-18 82 24)"/></g>';
+  s+='<g class="wg wg2"><ellipse cx="108" cy="22" rx="21" ry="15" fill="#e6f4ff" fill-opacity=".75" stroke="#fff" stroke-width="2" transform="rotate(14 108 22)"/></g>';
+  s+='<ellipse cx="96" cy="58" rx="58" ry="33" fill="url(#jbBeeG)" stroke="#9a6608" stroke-width="2"/>';
+  s+='<g clip-path="url(#jbBodyC)" fill="#3b2a1a"><rect x="66" y="0" width="13" height="120" rx="4"/><rect x="92" y="0" width="13" height="120" rx="4"/><rect x="36" y="0" width="11" height="120" rx="4"/></g>';
+  s+='<ellipse cx="80" cy="42" rx="26" ry="8" fill="#fff" opacity=".35"/>';
+  /* the face */
+  s+='<circle cx="150" cy="56" r="27" fill="url(#jbBeeG)" stroke="#9a6608" stroke-width="2"/>';
+  s+='<path d="M140 31q-6-16-16-18M158 31q4-17 15-20" fill="none" stroke="#3b2a1a" stroke-width="3" stroke-linecap="round"/><circle cx="124" cy="13" r="4.5" fill="#3b2a1a"/><circle cx="173" cy="11" r="4.5" fill="#3b2a1a"/>';
+  s+='<ellipse cx="146" cy="52" rx="5" ry="6.5" fill="#2a1d10"/><ellipse cx="162" cy="52" rx="5" ry="6.5" fill="#2a1d10"/><circle cx="147.5" cy="49.5" r="2" fill="#fff"/><circle cx="163.5" cy="49.5" r="2" fill="#fff"/>';
+  s+='<circle cx="139" cy="64" r="5" fill="#f28a9a" opacity=".6"/><circle cx="170" cy="64" r="5" fill="#f28a9a" opacity=".6"/>';
+  s+='<path d="M148 66q6 6 12 0" fill="none" stroke="#2a1d10" stroke-width="2.6" stroke-linecap="round"/>';
+  return s; }
+function pieceSvg(b,look){ var w=b.h?b.len*100:100, h=b.h?100:b.len*100, inner;
+  if(look.kind==="bee") inner=beeSvg(); else if(look.kind==="hive") inner=hiveSvg(w,h,look.col,look.dk);
+  else if(look.kind==="frame") inner=frameSvg(w,h); else inner=flowersSvg(w,h,look.n);
+  return '<svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'+inner+'</svg>'; }
+var ARW='<svg class="arw" viewBox="0 0 40 40"><path d="M6 15h17V6l13 14-13 14v-9H6z" fill="#ffd34d" stroke="#6b4100" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+function gateFlowers(w,h){ var s='<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="100%" overflow="visible">';
+  var spots=[[.35,.18,15,0],[.7,.32,13,3],[.3,.5,17,1],[.75,.66,14,4],[.4,.82,15,5],[.85,.9,12,2],[.9,.12,11,1]];
+  spots.forEach(function(p,i){ var x=w*p[0], y=h*p[1];
+    s+='<g class="sw"><path d="M'+x+' '+(y+p[2])+'v'+(p[2]*1.3)+'" stroke="#3f8a2e" stroke-width="3"/><ellipse cx="'+(x+6)+'" cy="'+(y+p[2]*1.6)+'" rx="7" ry="3.5" fill="#4f9a3a" transform="rotate(-30 '+(x+6)+' '+(y+p[2]*1.6)+')"/>'+flowerAt(x,y,p[2],p[3])+'</g>'; });
+  return s+'</svg>'; }
+
+/* ---------- menu emblem: the bee over a hive box ---------- */
+$("#jbEmb").innerHTML='<g transform="translate(14 46) scale(.35)">'+hiveSvg(300,100,"#9fdcc0","#5aa486")+'</g><g transform="translate(26 4) scale(.4)">'+beeSvg()+'</g>'+
+  '<g transform="translate(104 30)">'+flowerAt(0,0,10,0)+'</g><g transform="translate(118 50)">'+flowerAt(0,0,8,1)+'</g>';
+
+/* ---------- sounds of its own ---------- */
+function sGrab(){ BWG.tone(660,0,.06,.03,"triangle"); BWG.noise(0,.04,.05,1500,4000); }
+function sSlide(d){ BWG.noise(0,.12+d*.05,.07,180,900); }
+function sThunk(){ BWG.tone(150,0,.12,.09,"sine",90); BWG.noise(0,.06,.09,200,700); }
+function sNope(){ BWG.tone(220,0,.16,.05,"sine",170); }
+function sBuzz(at,d){ var a=at||0; BWG.tone(220,a,d||.6,.035,"sawtooth",250); BWG.tone(223,a,d||.6,.025,"square",240); }
+function sWin(){ sBuzz(0,1.1); [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,.5+i*.1,.45,.045,"triangle"); }); }
+function sHint(){ BWG.tone(1046,0,.15,.035,"triangle"); BWG.tone(1568,.08,.2,.03,"triangle"); }
+
+/* ---------- the week ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FOOT=["The trickiest garden of the week!","A gentle start!","A little trickier.","Midweek: more to move.","Getting tricky!","A tricky one!","A big weekend puzzle!"];
+var EPOCH=new Date(2026,9,1);
+function today(){ var d=new Date(), n=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; return {n:n, wd:d.getDay(), wk:Math.floor((n-1)/7)}; }
+
+var Z=null, gen=0, busy=false, EL=[], GEO=null, LOOK=[], said={}, drag=null;
+function msg(t){ $("#cmsg").textContent=t||""; }
+function start(bonus){
+  gen++; var g=gen, t=today();
+  document.body.className="m-play";
+  $("#cday").textContent=bonus?"Bonus Garden":(DAYN[t.wd]+"'s Garden");
+  $("#yard").innerHTML='<div class="mix">Planting the garden…</div>'; msg(""); said={};
+  setTimeout(function(){ if(g!==gen) return;
+    if(!bonus&&ST.day===t.n&&ST.cur&&ST.cur.s){ var c=ST.cur, z=G.decode(c.s,c.flip);
+      Z={B:z.B,P:c.P||z.P,P0:z.P,s:c.s,flip:c.flip,d:c.d,hist:c.hist||[],hints:c.hints||0,moves:c.moves||0,done:!!c.done,bonus:false}; }
+    else { var e;
+      if(bonus){ var list=G.POOL[t.wd], today_=G.pickDay(t.wd,t.wk), tries=0; do{ var x=list[Math.floor(Math.random()*list.length)]; e={s:x.s,d:x.d,flip:Math.random()<.5}; tries++; } while(e.s===today_.s&&tries<20); }
+      else e=G.pickDay(t.wd,t.wk);
+      var z2=G.decode(e.s,e.flip); Z={B:z2.B,P:z2.P.slice(),P0:z2.P.slice(),s:e.s,flip:e.flip,d:e.d,hist:[],hints:0,moves:0,done:false,bonus:!!bonus}; }
+    LOOK=G.dress(Z.B,Z.s);
+    build(); saveCur();
+    if(Z.done){ msg("The bee is out with the flowers! Tap Menu for a Bonus Garden, or come back tomorrow."); EL[0].style.opacity="0"; return; }
+    if(bonus) BWK.say(BONUS);
+    msg(ST.n<3?TAP1:"Clear a path to the gate for the bee!");
+    if(ST.n<3&&!bonus) BWK.say(TAP1);
+  },60);
+}
+function saveCur(){ if(!Z||Z.bonus) return; ST.day=today().n; ST.cur={s:Z.s,flip:Z.flip,d:Z.d,P:Z.P,hist:Z.hist.slice(-80),hints:Z.hints,moves:Z.moves,done:Z.done}; save(); }
+
+/* ---------- layout: the biggest square bed that fits, with room for the flowers past the gate ---------- */
+function geo(){ var y=$("#yard"), W=y.clientWidth, H=y.clientHeight;
+  var s=Math.floor(Math.min(W/(6+0.84+0.5), H/(6+0.84), 118)), F=Math.round(s*.42), tot=6*s+2*F, gw=Math.round(s*.5);
+  var x0=Math.round((W-tot-gw)/2), y0=Math.round(Math.max(0,(H-tot)/2));
+  return {s:s,F:F,x0:x0,y0:y0,tot:tot,gw:gw,ex:Z.B[0].r}; }
+function px(i,pos){ var b=Z.B[i], s=GEO.s; return b.h?{x:pos*s,y:b.r*s}:{x:b.c*s,y:pos*s}; }
+function place(i,pos){ var p=px(i,pos); EL[i].style.transform="translate("+p.x+"px,"+p.y+"px)"; }
+function build(){ var y=$("#yard"); y.innerHTML=""; GEO=geo(); EL=[]; var s=GEO.s, F=GEO.F;
+  var fr=document.createElement("div"); fr.className="frm"; fr.style.cssText="left:"+GEO.x0+"px;top:"+GEO.y0+"px;width:"+GEO.tot+"px;height:"+GEO.tot+"px"; y.appendChild(fr);
+  var fl=document.createElement("div"); fl.className="flw"; fl.style.cssText="left:"+(GEO.x0+GEO.tot-F*.2)+"px;top:"+(GEO.y0+F+(GEO.ex-1)*s)+"px;width:"+(GEO.gw+F*.6)+"px;height:"+(3*s)+"px";
+  fl.innerHTML=gateFlowers(GEO.gw+F*.6,3*s); y.appendChild(fl);
+  var gt=document.createElement("div"); gt.className="gate"; gt.style.cssText="left:"+(GEO.x0+GEO.tot-F-2)+"px;top:"+(GEO.y0+F+GEO.ex*s)+"px;width:"+(F+4)+"px;height:"+s+"px"; y.appendChild(gt);
+  [0,1].forEach(function(k){ var p=document.createElement("div"); p.className="post"; var pw=Math.max(6,F*.36);
+    p.style.cssText="left:"+(GEO.x0+GEO.tot-F/2-pw/2)+"px;top:"+(GEO.y0+F+(GEO.ex+k)*s-pw/2)+"px;width:"+pw+"px;height:"+pw+"px"; y.appendChild(p);
+    /* the gate's two little doors, swung open outward */
+    var dr=document.createElement("div"); dr.className="gdoor"; dr.style.cssText="left:"+(GEO.x0+GEO.tot-F/2)+"px;top:"+(GEO.y0+F+(GEO.ex+k)*s-2.5)+"px;width:"+(s*.42)+"px;transform:rotate("+(k?35:-35)+"deg)"; y.insertBefore(dr,p); });
+  var bw=document.createElement("span"); bw.className="bwp"; bw.textContent="BW"; bw.style.left=(GEO.x0+GEO.tot/2)+"px"; bw.style.top=(GEO.y0+GEO.tot-F/2)+"px"; y.appendChild(bw);
+  var bed=document.createElement("div"); bed.className="bed"; bed.id="bed"; bed.style.cssText="left:"+(GEO.x0+F)+"px;top:"+(GEO.y0+F)+"px;width:"+(6*s)+"px;height:"+(6*s)+"px;--s:"+s+"px"; y.appendChild(bed);
+  Z.B.forEach(function(b,i){ var d=document.createElement("div"), lk=LOOK[i]; d.className="pc "+(b.h?"h":"v")+b.len+(i===0?" bee rest":"")+(b.h?"":" v");
+    d.style.width=(b.h?b.len*s:s)+"px"; d.style.height=(b.h?s:b.len*s)+"px";
+    d.setAttribute("aria-label",lk.name); d.innerHTML=pieceSvg(b,lk)+'<div class="ring"></div>'+ARW;
+    d.addEventListener("pointerdown",function(e){ down(e,i); }); bed.appendChild(d); EL.push(d); place(i,Z.P[i]); });
+  tools(); }
+function tools(){ $("#cmoves").textContent="Moves: "+Z.moves+(Z.hints?"  ·  Hints: "+Z.hints:""); $("#tUndo").disabled=!Z.hist.length||Z.done; $("#tReset").disabled=Z.done||!Z.hist.length; $("#tHint").disabled=Z.done; }
+function clearHint(){ EL.forEach(function(e){ e.classList.remove("ha"); }); }
+
+/* ---------- dragging: a piece follows the finger along its own line, stops at anything in the way, then settles on a square ---------- */
+function down(e,i){
+  if(!Z||Z.done||busy||drag) return; e.preventDefault(); clearHint();
+  var R=G.range(Z.B,Z.P,i), el=EL[i]; el.classList.remove("snap"); el.classList.add("lift"); if(i===0) el.classList.remove("rest");
+  try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  drag={i:i,id:e.pointerId,x:e.clientX,y:e.clientY,p0:Z.P[i],lo:R[0],hi:R[1],at:Z.P[i],side:false,moved:false};
+  sGrab();
+  el.onpointermove=move; el.onpointerup=el.onpointercancel=up; }
+function move(e){ if(!drag||e.pointerId!==drag.id) return; var b=Z.B[drag.i], s=GEO.s;
+  var along=(b.h?e.clientX-drag.x:e.clientY-drag.y)/s, across=(b.h?e.clientY-drag.y:e.clientX-drag.x)/s;
+  if(Math.abs(along)>.08) drag.moved=true;
+  if(!drag.moved&&Math.abs(across)>.45&&!drag.side){ drag.side=true; sideNote(drag.i); }
+  var p=Math.max(drag.lo,Math.min(drag.hi,drag.p0+along)); drag.at=p;
+  var q=px(drag.i,p); EL[drag.i].style.transform="translate("+q.x+"px,"+q.y+"px)"; }
+function up(e){ if(!drag||e.pointerId!==drag.id) return; var i=drag.i, el=EL[i], np=Math.round(drag.at), p0=drag.p0, d=drag;
+  el.onpointermove=el.onpointerup=el.onpointercancel=null; drag=null; el.classList.remove("lift"); el.classList.add("snap"); place(i,np);
+  if(i===0) el.classList.add("rest");
+  if(np!==p0){ Z.hist.push({P:Z.P.slice(),moves:Z.moves}); Z.P[i]=np; Z.moves++; sSlide(Math.abs(np-p0)); setTimeout(sThunk,120); tools(); saveCur();
+    if(G.solved(Z.P)) win(); else if(said.first!==1&&ST.n<3){ said.first=1; msg("Nice! Keep clearing the way to the gate."); } }
+  else if(!d.moved&&!d.side){ /* a tap: wiggle the way it can go */
+    if(d.lo===d.hi){ bump(i,0); sNope(); msg(i===0?"The bee is blocked. Slide pieces out of its way!":"That one is stuck for now. Move something else first."); }
+    else { bump(i,d.hi>p0?1:-1); msg(Z.B[i].h?"Drag it left or right to slide it.":"Drag it up or down to slide it."); } } }
+function bump(i,dir){ var b=Z.B[i], el=EL[i]; el.style.setProperty("--bx",b.h?dir:0); el.style.setProperty("--by",b.h?0:dir);
+  el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+function sideNote(i){ var b=Z.B[i]; sNope(); var t=b.h?SIDEH:SIDEV; msg(t); if(!said.side){ said.side=1; BWK.say(SIDE); } }
+
+function slideTo(i,np,cb){ var el=EL[i], p0=Z.P[i]; busy=true; el.classList.add("snap"); el.style.transition="transform "+(.18+.08*Math.abs(np-p0))+"s cubic-bezier(.3,.8,.35,1.1)";
+  Z.hist.push({P:Z.P.slice(),moves:Z.moves}); Z.P[i]=np; Z.moves++; place(i,np); sSlide(Math.abs(np-p0));
+  var g=gen; setTimeout(function(){ if(g!==gen) return; el.style.transition=""; sThunk(); busy=false; tools(); saveCur(); if(G.solved(Z.P)) win(); if(cb) cb(); },220+80*Math.abs(np-p0)); }
+function sparkle(x,y,n,r){ var bed=$("#bed"); for(var k=0;k<n;k++){ var s=document.createElement("div"), a=k/n*Math.PI*2; s.className="spk"; s.style.left=x+"px"; s.style.top=y+"px";
+  s.style.setProperty("--dx",(Math.cos(a)*r)+"px"); s.style.setProperty("--dy",(Math.sin(a)*r-10)+"px"); bed.appendChild(s); setTimeout(function(q){ return function(){ q.remove(); }; }(s),950); } }
+function undo(){ if(!Z||busy||!Z.hist.length||Z.done) return; clearHint(); var h=Z.hist.pop(); Z.P=h.P; Z.moves=h.moves; BWK.sfx("tap");
+  Z.P.forEach(function(p,i){ EL[i].classList.add("snap"); place(i,p); }); tools(); saveCur(); msg("Undone."); }
+function reset(){ if(!Z||busy||Z.done||!Z.hist.length) return; clearHint(); Z.hist.push({P:Z.P.slice(),moves:Z.moves}); Z.P=Z.P0.slice(); Z.moves=0;
+  BWK.sfx("whoosh"); Z.P.forEach(function(p,i){ EL[i].classList.add("snap"); place(i,p); }); tools(); saveCur(); msg("Fresh start! (Undo brings your moves back.)"); }
+function hint(){
+  if(!Z||busy||Z.done||drag) return; clearHint(); var path=G.solve(Z.B,Z.P); if(!path||!path.length) return;
+  var m=path[0], i=m[0], b=Z.B[i], dir=m[1]>Z.P[i]?1:-1; Z.hints++; tools(); saveCur(); sHint();
+  var el=EL[i], ang=b.h?(dir>0?0:180):(dir>0?90:-90); el.style.setProperty("--a",ang+"deg"); el.style.setProperty("--dx",b.h?dir:0); el.style.setProperty("--dy",b.h?0:dir);
+  el.classList.add("ha");
+  msg("Slide "+LOOK[i].name+" "+(b.h?(dir>0?"right":"left"):(dir>0?"down":"up"))+(Math.abs(m[1]-Z.P[i])>1?" "+Math.abs(m[1]-Z.P[i])+" squares.":" one square."));
+  var g=gen; setTimeout(function(){ if(g!==gen||busy||Z.done||drag) return; clearHint(); slideTo(i,m[1]); },1900); }
+function starsOf(h){ return h===0?3:h<=2?2:1; }
+function factNo(){ if(Z.bonus){ ST.fx=(ST.fx+1)%FACTS.length; save(); return ST.fx; } return ((today().n%FACTS.length)+FACTS.length)%FACTS.length; }
+function win(){
+  if(Z.done) return; Z.done=true; saveCur(); var g=gen; tools(); clearHint();
+  var fresh=BWG.patch("beegarden"); ST.n++; save();
+  msg("Buzz! The bee is free!"); sWin();
+  var el=EL[0], s=GEO.s; el.classList.remove("rest","snap"); var q=px(0,N-2);
+  setTimeout(function(){ if(g!==gen) return; el.classList.add("out"); el.style.transform="translate("+(q.x+s*2.4)+"px,"+(q.y-s*.8)+"px) scale(.8)";
+    sparkle(6*s+s*.4,q.y+s/2,10,s*.9); },250);
+  setTimeout(function(){ if(g!==gen) return; var st=starsOf(Z.hints), f=factNo();
+    var box=BWK.sheet('<h2>To the flowers!</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(0,3-st)+'</i></div>'+
+      '<p>You freed the bee in <b>'+Z.moves+'</b> move'+(Z.moves===1?'':'s')+(Z.hints?' with '+Z.hints+' hint'+(Z.hints>1?'s':''):' with no hints')+'.'+
+      (Z.moves<=Z.d?' That\'s the fewest moves possible!':' The fewest possible was '+Z.d+'.')+'</p>'+
+      '<div class="fact" data-say="'+FSAY[f].replace(/"/g,"&quot;")+'"><svg viewBox="0 0 200 110" aria-hidden="true">'+beeSvg()+'</svg><div><b>Jack\'s Bee Fact</b><span>'+FACTS[f]+'</span></div></div>'+
+      '<div class="k-row"><button class="k-btn" data-a="more">Bonus Garden</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    BWK.say(fresh?WINP:FSAY[f]);
+  },1700);
+}
+
+/* ---------- keys on a computer: U undo, H hint ---------- */
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  if(e.key==="u"||e.key==="U"||(e.key==="z"&&(e.metaKey||e.ctrlKey))) undo(); else if(e.key==="h"||e.key==="H") hint(); });
+function relayout(){ if(!Z||!document.body.classList.contains("m-play")||!EL.length) return; if(busy||drag){ setTimeout(relayout,400); return; }
+  var g=GEO; var n=geo(); if(g&&n.s===g.s&&n.x0===g.x0&&n.y0===g.y0) return; build(); if(Z.done) EL[0].style.opacity="0"; }
+window.addEventListener("resize",function(){ requestAnimationFrame(relayout); });
+if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(relayout); }).observe($("#yard"));
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; busy=false; drag=null; document.body.className="m-menu"; var t=today();
+  var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
+  $("#bPlay").textContent=doneToday?"Today's Garden ✓":"Today's Garden";
+  $("#bBonus").style.display=doneToday?"":"none"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
+  $("#mfoot").textContent=(ST.n?("Bees freed: "+ST.n+". "):"")+DAYN[t.wd]+": "+FOOT[t.wd]; }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+INTRO+'</p><p>'+HOW+'</p><p>Hive boxes are three squares long. Honey frames and flower boxes are two. The bee always flies out through the gate on the right.</p><p>Every time you free the bee, you get one of Jack\'s Bee Facts. Jack is a real young beekeeper!</p><p>On a computer: drag with the mouse, U to undo, H for a hint.</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+$("#tHint").onclick=function(){ hint(); };
+$("#tUndo").onclick=undo; $("#tReset").onclick=reset;
+
+var INTRO="Jack's Bee Garden! Slide the hive boxes, honey frames and flower boxes out of the way, so the bee can fly out the gate to the flowers.";
+var HOW="Drag a piece to slide it. Pieces only slide the long way, along their own row or column. Each slide counts as one move, however far it goes. Clear a path, then slide the bee out the gate! Stuck? Tap Hint. Made a mistake? Tap Undo.";
+var TAP1="Drag a piece to slide it. Clear a path for the bee!";
+var SIDE="Pieces only slide the long way.", SIDEH="That one only slides left and right.", SIDEV="That one only slides up and down.";
+var WINP="Buzz! The bee made it to the flowers! You earned a new patch for your badge wall!";
+var BONUS="Here's a bonus garden!";
+var FSAY=FACTS.map(function(f){ return "Here's Jack's Bee Fact! "+f; });
+var L={"jb-intro":INTRO,"jb-how":HOW,"jb-tap":TAP1,"jb-side":SIDE,"jb-win-patch":WINP,"jb-bonus":BONUS};
+FSAY.forEach(function(f,i){ L["jb-f"+(i+1)]=f; });
+BWK.lines(L);
+toMenu();
+BWK.init({here:"beegarden", voice:"outpost", intro:INTRO, noHello:true});
+window.JBO={start:start,hint:hint,undo:undo,reset:reset,slide:slideTo,win:win,
+  solve:function(cb){ if(!Z||Z.done) return; var p=G.solve(Z.B,Z.P), k=0; (function nx(){ if(!Z||Z.done||k>=p.length){ if(cb) cb(); return; } var m=p[k++]; slideTo(m[0],m[1],nx); })(); },
+  state:function(){ return Z&&{s:Z.s,flip:Z.flip,d:Z.d,P:Z.P,moves:Z.moves,hints:Z.hints,done:Z.done,geo:GEO,looks:LOOK.map(function(l){return l.kind;})}; },lines:L,G:G,FACTS:FACTS};
+})();
+</script>
+</body>
+</html>
