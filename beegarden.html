@@ -201,7 +201,13 @@ var FACTS=[
   "Honey bees can fly up to 20 miles an hour.",
   "Super cool fact: honey bees have five eyes! Two big ones, plus three tiny ones on top of their heads.",
   "Raw honey never goes bad. If it gets thick and crunchy, that's just crystals, and it's still good to eat!",
-  "The waggle dance: worker bees do a special dance to show the other bees where the flowers are, which way to fly and how far to go."];
+  "The waggle dance: worker bees do a special dance to show the other bees where the flowers are, which way to fly and how far to go.",
+  /* Jack's second batch (Nov 15) */
+  "Honey bees have an amazing sense of smell! Scientists have even trained bees to sniff things out, just like dogs do.",
+  "Honey bees can taste with their feet!",
+  "When the hive gets too hot, honey bees flap their wings like tiny fans to cool it down.",
+  "A honey bee's big eyes are made of thousands of tiny six-sided lenses, so up close they look like a honeycomb!",
+  "We need bees to grow our food! Bees carry pollen from flower to flower, which helps fruits and vegetables grow. Save the bees!"];
 
 /* ---------- the art (drawn in units of 100 per square; light from the top left) ---------- */
 (function(){ var h='';
@@ -287,8 +293,28 @@ function sGrab(){ BWG.tone(660,0,.06,.03,"triangle"); BWG.noise(0,.04,.05,1500,4
 function sSlide(d){ BWG.noise(0,.12+d*.05,.07,180,900); }
 function sThunk(){ BWG.tone(150,0,.12,.09,"sine",90); BWG.noise(0,.06,.09,200,700); }
 function sNope(){ BWG.tone(220,0,.16,.05,"sine",170); }
+/* The bee's live buzz (Judy, Nov 15: "a clear buzzing sound when it's moved"): two detuned saws near a real bee's
+   wingbeat (~225 Hz) with a wobble and a wing flutter; it hums while the bee is held and rises with its speed. */
+var BAC=null, BZ=null;
+function bac(){ if(!BAC){ try{ BAC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(BAC.state==="suspended") BAC.resume(); return BAC; }
+document.addEventListener("pointerdown",bac,true);
+function buzzOn(){ var a=bac(); if(!a||BZ||BWK.store.get("sound",true)===false) return; var t=a.currentTime;
+  var g=a.createGain(), lp=a.createBiquadFilter(), pk=a.createBiquadFilter(), o1=a.createOscillator(), o2=a.createOscillator(),
+      lfo=a.createOscillator(), ld=a.createGain(), am=a.createOscillator(), ad=a.createGain(), ag=a.createGain();
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.05,t+.06);
+  lp.type="lowpass"; lp.frequency.value=1800; lp.Q.value=.7; pk.type="peaking"; pk.frequency.value=650; pk.gain.value=6; pk.Q.value=1.2;
+  o1.type=o2.type="sawtooth"; o1.frequency.value=222; o2.frequency.value=226.5;
+  lfo.frequency.value=7; ld.gain.value=5; lfo.connect(ld); ld.connect(o1.frequency); ld.connect(o2.frequency);
+  am.frequency.value=31; ad.gain.value=.25; ag.gain.value=.75; am.connect(ad); ad.connect(ag.gain);
+  o1.connect(pk); o2.connect(pk); pk.connect(lp); lp.connect(ag); ag.connect(g); g.connect(a.destination);
+  [o1,o2,lfo,am].forEach(function(o){ o.start(t); }); BZ={a:a,g:g,o:[o1,o2],all:[o1,o2,lfo,am]}; }
+function buzzSpeed(v){ if(!BZ) return; var t=BZ.a.currentTime, k=Math.min(1,v/6), f=215+65*k;
+  BZ.o[0].frequency.setTargetAtTime(f,t,.06); BZ.o[1].frequency.setTargetAtTime(f*1.02,t,.06); BZ.g.gain.setTargetAtTime(.035+.055*k,t,.05); }
+function buzzOff(){ if(!BZ) return; var z=BZ, t=z.a.currentTime; BZ=null; z.g.gain.cancelScheduledValues(t); z.g.gain.setTargetAtTime(.0001,t,.07);
+  z.all.forEach(function(o){ o.stop(t+.5); }); }
+function buzzFor(d){ buzzOn(); buzzSpeed(4); setTimeout(buzzOff,d*1000); }
 function sBuzz(at,d){ var a=at||0; BWG.tone(220,a,d||.6,.035,"sawtooth",250); BWG.tone(223,a,d||.6,.025,"square",240); }
-function sWin(){ sBuzz(0,1.1); [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,.5+i*.1,.45,.045,"triangle"); }); }
+function sWin(){ buzzFor(1.1); [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,.5+i*.1,.45,.045,"triangle"); }); }
 function sHint(){ BWG.tone(1046,0,.15,.035,"triangle"); BWG.tone(1568,.08,.2,.03,"triangle"); }
 
 /* ---------- the week ---------- */
@@ -353,16 +379,18 @@ function down(e,i){
   var R=G.range(Z.B,Z.P,i), el=EL[i]; el.classList.remove("snap"); el.classList.add("lift"); if(i===0) el.classList.remove("rest");
   try{ el.setPointerCapture(e.pointerId); }catch(_){}
   drag={i:i,id:e.pointerId,x:e.clientX,y:e.clientY,p0:Z.P[i],lo:R[0],hi:R[1],at:Z.P[i],side:false,moved:false};
-  sGrab();
+  sGrab(); if(i===0){ buzzOn(); buzzSpeed(0); drag.lt=performance.now(); drag.lp=Z.P[i]; }
   el.onpointermove=move; el.onpointerup=el.onpointercancel=up; }
 function move(e){ if(!drag||e.pointerId!==drag.id) return; var b=Z.B[drag.i], s=GEO.s;
   var along=(b.h?e.clientX-drag.x:e.clientY-drag.y)/s, across=(b.h?e.clientY-drag.y:e.clientX-drag.x)/s;
   if(Math.abs(along)>.08) drag.moved=true;
   if(!drag.moved&&Math.abs(across)>.45&&!drag.side){ drag.side=true; sideNote(drag.i); }
   var p=Math.max(drag.lo,Math.min(drag.hi,drag.p0+along)); drag.at=p;
+  if(drag.i===0){ var now=performance.now(), dt=Math.max(16,now-drag.lt); buzzSpeed(Math.abs(p-drag.lp)*1000/dt); drag.lt=now; drag.lp=p;
+    clearTimeout(drag.bt); drag.bt=setTimeout(function(){ buzzSpeed(0); },140); }
   var q=px(drag.i,p); EL[drag.i].style.transform="translate("+q.x+"px,"+q.y+"px)"; }
 function up(e){ if(!drag||e.pointerId!==drag.id) return; var i=drag.i, el=EL[i], np=Math.round(drag.at), p0=drag.p0, d=drag;
-  el.onpointermove=el.onpointerup=el.onpointercancel=null; drag=null; el.classList.remove("lift"); el.classList.add("snap"); place(i,np);
+  el.onpointermove=el.onpointerup=el.onpointercancel=null; clearTimeout(d.bt); if(i===0) buzzOff(); drag=null; el.classList.remove("lift"); el.classList.add("snap"); place(i,np);
   if(i===0) el.classList.add("rest");
   if(np!==p0){ Z.hist.push({P:Z.P.slice(),moves:Z.moves}); Z.P[i]=np; Z.moves++; sSlide(Math.abs(np-p0)); setTimeout(sThunk,120); tools(); saveCur();
     if(G.solved(Z.P)) win(); else if(said.first!==1&&ST.n<3){ said.first=1; msg("Nice! Keep clearing the way to the gate."); } }
@@ -374,7 +402,7 @@ function bump(i,dir){ var b=Z.B[i], el=EL[i]; el.style.setProperty("--bx",b.h?di
 function sideNote(i){ var b=Z.B[i]; sNope(); var t=b.h?SIDEH:SIDEV; msg(t); if(!said.side){ said.side=1; BWK.say(SIDE); } }
 
 function slideTo(i,np,cb){ var el=EL[i], p0=Z.P[i]; busy=true; el.classList.add("snap"); el.style.transition="transform "+(.18+.08*Math.abs(np-p0))+"s cubic-bezier(.3,.8,.35,1.1)";
-  Z.hist.push({P:Z.P.slice(),moves:Z.moves}); Z.P[i]=np; Z.moves++; place(i,np); sSlide(Math.abs(np-p0));
+  Z.hist.push({P:Z.P.slice(),moves:Z.moves}); Z.P[i]=np; Z.moves++; place(i,np); sSlide(Math.abs(np-p0)); if(i===0) buzzFor(.25+.08*Math.abs(np-p0));
   var g=gen; setTimeout(function(){ if(g!==gen) return; el.style.transition=""; sThunk(); busy=false; tools(); saveCur(); if(G.solved(Z.P)) win(); if(cb) cb(); },220+80*Math.abs(np-p0)); }
 function sparkle(x,y,n,r){ var bed=$("#bed"); for(var k=0;k<n;k++){ var s=document.createElement("div"), a=k/n*Math.PI*2; s.className="spk"; s.style.left=x+"px"; s.style.top=y+"px";
   s.style.setProperty("--dx",(Math.cos(a)*r)+"px"); s.style.setProperty("--dy",(Math.sin(a)*r-10)+"px"); bed.appendChild(s); setTimeout(function(q){ return function(){ q.remove(); }; }(s),950); } }
@@ -419,7 +447,7 @@ window.addEventListener("resize",function(){ requestAnimationFrame(relayout); })
 if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(relayout); }).observe($("#yard"));
 
 /* ---------- menu ---------- */
-function toMenu(){ gen++; busy=false; drag=null; document.body.className="m-menu"; var t=today();
+function toMenu(){ gen++; busy=false; drag=null; buzzOff(); document.body.className="m-menu"; var t=today();
   var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
   $("#bPlay").textContent=doneToday?"Today's Garden ✓":"Today's Garden";
   $("#bBonus").style.display=doneToday?"":"none"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
