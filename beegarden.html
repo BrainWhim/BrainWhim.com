@@ -12,7 +12,24 @@
 /* Jack's Bee Garden (The Outpost · The Workshop), Nov 14. Named by Jack (10, a young beekeeper). A sliding puzzle in a
    garden bed: slide the hive boxes, honey frames and flower boxes until the bee can fly out of the gate to the flowers.
    After each win, one of Jack's own bee facts. Engine: the jbCore script below (pool grown with the Harbor's tools). */
-:root{--bgx:62%;--bgy:55%}
+:root{--bgx:50%;--bgy:62%}
+/* Nov 15: the realistic look (ChatGPT photos in jb/: the twilight bee-garden deck behind, the cedar bed, the pieces) */
+.bg{background-image:url("jb/bg-sm.jpg");filter:blur(1.5px) brightness(.62) saturate(1.1)}
+@media (min-width:1100px){.bg{background-image:url("jb/bg.jpg")}}
+.frm.ph{background:url("jb/bed.webp") 0 0/100% 100% no-repeat;box-shadow:0 18px 34px rgba(0,0,0,.55),0 4px 8px rgba(0,0,0,.35)}
+.frm.ph::after{display:none}
+.bed.ph{background:linear-gradient(90deg,rgba(15,35,5,.3) 0 1px,transparent 1px) 0 0/var(--s) var(--s),linear-gradient(180deg,rgba(15,35,5,.3) 0 1px,transparent 1px) 0 0/var(--s) var(--s);
+  box-shadow:inset 2px 3px 8px rgba(10,30,5,.35)}
+.gate.ph{background:url("jb/bed.webp?v=1115a") 50% 50%/700% 700%;box-shadow:inset 0 4px 6px -3px rgba(10,30,5,.6),inset 0 -4px 6px -3px rgba(10,30,5,.6)}
+#yard.ph .post{background:linear-gradient(135deg,#d3a066,#8d5a2c 70%,#6f4420);box-shadow:1px 2px 3px rgba(0,0,0,.5),inset 1px 1px 0 rgba(255,226,180,.6)}
+#yard.ph .gdoor{background:linear-gradient(180deg,#d9ad75,#9a6634);background-image:none;box-shadow:1px 2px 3px rgba(0,0,0,.45)}
+.pc.ph{border-radius:2.5%;box-shadow:2px 4px 0 rgba(15,25,5,.32),3px 8px 10px rgba(10,20,5,.42)}
+.pc.ph.lift{box-shadow:3px 9px 0 rgba(15,25,5,.22),6px 16px 20px rgba(10,20,5,.42)}
+.pc.bee .bwu,.pc.bee .bwl{transform-box:view-box;transform-origin:113px 50px;animation:bflapu .11s ease-in-out infinite alternate}
+.pc.bee .bwl{animation-name:bflapl}
+.pc.bee.rest .bwu,.pc.bee.rest .bwl{animation-duration:1.4s}
+@keyframes bflapu{to{transform:rotate(-16deg)}}
+@keyframes bflapl{to{transform:rotate(16deg)}}
 #play{flex-direction:column;align-items:center;justify-content:flex-start;gap:8px}
 .cbar{width:min(640px,100%);display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
   background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
@@ -89,7 +106,7 @@
 .fact span{font-size:16px;line-height:1.35;font-weight:600}
 .mix{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#ffe9b8;text-shadow:0 2px 6px #000}
 @media (max-height:620px){.cmsg{font-size:14px;min-height:18px}.ib{min-height:34px;font-size:14px}.ctools .k-btn{min-height:40px;font-size:15px}.cday span{font-size:13px}.fact span{font-size:15px}}
-@media (prefers-reduced-motion:reduce){.pc.snap{transition-duration:.01s}.pc.bee .wg,.flw .sw,.pc.ha .ring,.pc.ha .arw{animation:none}}
+@media (prefers-reduced-motion:reduce){.pc.snap{transition-duration:.01s}.pc.bee .wg,.pc.bee .bwu,.pc.bee .bwl,.flw .sw,.pc.ha .ring,.pc.ha .arw{animation:none}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -273,20 +290,50 @@ function beeSvg(){ var s='';
   s+='<circle cx="139" cy="64" r="5" fill="#f28a9a" opacity=".6"/><circle cx="170" cy="64" r="5" fill="#f28a9a" opacity=".6"/>';
   s+='<path d="M148 66q6 6 12 0" fill="none" stroke="#2a1d10" stroke-width="2.6" stroke-linecap="round"/>';
   return s; }
-function pieceSvg(b,look){ var w=b.h?b.len*100:100, h=b.h?100:b.len*100, inner;
+/* the photo art (Nov 15): loaded once; until it's in (or if it fails) the drawn art above is used */
+var ART={ok:false,done:false,img:{},q:[]}, TINT={};
+(function(){ var names=["hive-h","hive-v","frame-h","frame-v","flowers-h","flowers-v","bee","bed"], left=names.length, bad=false;
+  function fin(){ if(ART.done) return; ART.done=true; ART.ok=!bad; var q=ART.q; ART.q=[]; q.forEach(function(f){ f(); }); }
+  names.forEach(function(n){ var im=new Image(); im.onload=function(){ if(--left===0) fin(); }; im.onerror=function(){ bad=true; if(--left===0) fin(); };
+    im.src="jb/"+n+".webp?v=1115a"; ART.img[n]=im; });
+  setTimeout(function(){ bad=bad||left>0; fin(); },8000); })();
+function artReady(f){ if(ART.done) f(); else ART.q.push(f); }
+/* a painted hive box: the white photo multiplied by the paint, cut back to the box's own shape */
+function hiveURL(col,v){ var k=col+v; if(TINT[k]) return TINT[k]; var im=ART.img[v?"hive-v":"hive-h"];
+  if(col==="#f4f1e8") return TINT[k]=im.src;
+  try{ var c=document.createElement("canvas"); c.width=im.naturalWidth; c.height=im.naturalHeight; var x=c.getContext("2d");
+    x.drawImage(im,0,0); x.globalCompositeOperation="multiply"; x.fillStyle=col; x.fillRect(0,0,c.width,c.height);
+    x.globalCompositeOperation="destination-in"; x.drawImage(im,0,0); TINT[k]=c.toDataURL("image/webp",.9); }catch(e){ TINT[k]=im.src; }
+  return TINT[k]; }
+function pimg(href,w,h){ return '<image href="'+href+'" x="0" y="0" width="'+w+'" height="'+h+'" preserveAspectRatio="none"/>'; }
+/* the photo bee (head to the right) with see-through wings that flap from her back */
+function beePhoto(){ var s='<ellipse cx="102" cy="92" rx="60" ry="6" fill="#0e2005" opacity=".25"/>';
+  s+='<image href="jb/bee.webp?v=1115a" x="0" y="0" width="200" height="100"/>';
+  var wing=function(cx,cy,rx,ry,a){ return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" transform="rotate('+a+' '+cx+' '+cy+')" fill="#eef7ff" fill-opacity=".42" stroke="#fff" stroke-opacity=".8" stroke-width="1.2"/>'+
+    '<path d="M'+(cx+rx*.8*Math.cos(a*Math.PI/180)).toFixed(1)+' '+(cy+rx*.8*Math.sin(a*Math.PI/180)).toFixed(1)+'L'+(cx-rx*.7*Math.cos(a*Math.PI/180)).toFixed(1)+' '+(cy-rx*.7*Math.sin(a*Math.PI/180)).toFixed(1)+'" stroke="#fff" stroke-opacity=".45" stroke-width=".9"/>'; };
+  s+='<g class="bwu">'+wing(97,33,13,5.5,52)+wing(90,26,26,9.5,36)+'</g>';
+  s+='<g class="bwl">'+wing(97,67,13,5.5,-52)+wing(90,74,26,9.5,-36)+'</g>';
+  return s; }
+function pieceSvg(b,look){ var w=b.h?b.len*100:100, h=b.h?100:b.len*100, inner, v=b.h?"h":"v";
+  if(ART.ok){
+    if(look.kind==="bee") inner=beePhoto(); else if(look.kind==="hive") inner=pimg(hiveURL(look.col,!b.h),w,h);
+    else inner=pimg("jb/"+(look.kind==="frame"?"frame":"flowers")+"-"+v+".webp?v=1115a",w,h);
+    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+inner+'</svg>'; }
   if(look.kind==="bee") inner=beeSvg(); else if(look.kind==="hive") inner=hiveSvg(w,h,look.col,look.dk);
   else if(look.kind==="frame") inner=frameSvg(w,h); else inner=flowersSvg(w,h,look.n);
   return '<svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'+inner+'</svg>'; }
 var ARW='<svg class="arw" viewBox="0 0 40 40"><path d="M6 15h17V6l13 14-13 14v-9H6z" fill="#ffd34d" stroke="#6b4100" stroke-width="2.5" stroke-linejoin="round"/></svg>';
 function gateFlowers(w,h){ var s='<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="100%" overflow="visible">';
+  if(ART.ok){ var iw=w*1.25; return s+'<g class="sw"><image href="jb/gf-lav.webp?v=1115a" x="'+(-w*.05)+'" y="'+(h*.02)+'" width="'+iw+'" height="'+(iw*.87)+'"/></g>'+
+    '<g class="sw"><image href="jb/gf-clo.webp?v=1115a" x="'+(-w*.1)+'" y="'+(h*.55)+'" width="'+iw+'" height="'+(iw*.7)+'"/></g></svg>'; }
   var spots=[[.35,.18,15,0],[.7,.32,13,3],[.3,.5,17,1],[.75,.66,14,4],[.4,.82,15,5],[.85,.9,12,2],[.9,.12,11,1]];
   spots.forEach(function(p,i){ var x=w*p[0], y=h*p[1];
     s+='<g class="sw"><path d="M'+x+' '+(y+p[2])+'v'+(p[2]*1.3)+'" stroke="#3f8a2e" stroke-width="3"/><ellipse cx="'+(x+6)+'" cy="'+(y+p[2]*1.6)+'" rx="7" ry="3.5" fill="#4f9a3a" transform="rotate(-30 '+(x+6)+' '+(y+p[2]*1.6)+')"/>'+flowerAt(x,y,p[2],p[3])+'</g>'; });
   return s+'</svg>'; }
 
 /* ---------- menu emblem: the bee over a hive box ---------- */
-$("#jbEmb").innerHTML='<g transform="translate(14 46) scale(.35)">'+hiveSvg(300,100,"#9fdcc0","#5aa486")+'</g><g transform="translate(26 4) scale(.4)">'+beeSvg()+'</g>'+
-  '<g transform="translate(104 30)">'+flowerAt(0,0,10,0)+'</g><g transform="translate(118 50)">'+flowerAt(0,0,8,1)+'</g>';
+$("#jbEmb").innerHTML='<image href="jb/hive-h.webp?v=1115a" x="12" y="50" width="108" height="36" preserveAspectRatio="none"/><g transform="translate(26 6) scale(.4)">'+beePhoto()+'</g>'+
+  '<image href="jb/gf-clo.webp?v=1115a" x="94" y="22" width="40" height="28"/>';
 
 /* ---------- sounds of its own ---------- */
 function sGrab(){ BWG.tone(660,0,.06,.03,"triangle"); BWG.noise(0,.04,.05,1500,4000); }
@@ -338,34 +385,35 @@ function start(bonus){
       else e=G.pickDay(t.wd,t.wk);
       var z2=G.decode(e.s,e.flip); Z={B:z2.B,P:z2.P.slice(),P0:z2.P.slice(),s:e.s,flip:e.flip,d:e.d,hist:[],hints:0,moves:0,done:false,bonus:!!bonus}; }
     LOOK=G.dress(Z.B,Z.s);
+    artReady(function(){ if(g!==gen) return;
     build(); saveCur();
     if(Z.done){ msg("The bee is out with the flowers! Tap Menu for a Bonus Garden, or come back tomorrow."); EL[0].style.opacity="0"; return; }
     if(bonus) BWK.say(BONUS);
     msg(ST.n<3?TAP1:"Clear a path to the gate for the bee!");
-    if(ST.n<3&&!bonus) BWK.say(TAP1);
+    if(ST.n<3&&!bonus) BWK.say(TAP1); });
   },60);
 }
 function saveCur(){ if(!Z||Z.bonus) return; ST.day=today().n; ST.cur={s:Z.s,flip:Z.flip,d:Z.d,P:Z.P,hist:Z.hist.slice(-80),hints:Z.hints,moves:Z.moves,done:Z.done}; save(); }
 
 /* ---------- layout: the biggest square bed that fits, with room for the flowers past the gate ---------- */
 function geo(){ var y=$("#yard"), W=y.clientWidth, H=y.clientHeight;
-  var s=Math.floor(Math.min(W/(6+0.84+0.5), H/(6+0.84), 118)), F=Math.round(s*.42), tot=6*s+2*F, gw=Math.round(s*.5);
+  var ff=ART.ok?.5614:.42, s=Math.floor(Math.min(W/(6+2*ff+0.5), H/(6+2*ff), 118)), F=Math.round(s*ff), tot=6*s+2*F, gw=Math.round(s*.5);
   var x0=Math.round((W-tot-gw)/2), y0=Math.round(Math.max(0,(H-tot)/2));
   return {s:s,F:F,x0:x0,y0:y0,tot:tot,gw:gw,ex:Z.B[0].r}; }
 function px(i,pos){ var b=Z.B[i], s=GEO.s; return b.h?{x:pos*s,y:b.r*s}:{x:b.c*s,y:pos*s}; }
 function place(i,pos){ var p=px(i,pos); EL[i].style.transform="translate("+p.x+"px,"+p.y+"px)"; }
-function build(){ var y=$("#yard"); y.innerHTML=""; GEO=geo(); EL=[]; var s=GEO.s, F=GEO.F;
-  var fr=document.createElement("div"); fr.className="frm"; fr.style.cssText="left:"+GEO.x0+"px;top:"+GEO.y0+"px;width:"+GEO.tot+"px;height:"+GEO.tot+"px"; y.appendChild(fr);
+function build(){ var y=$("#yard"); y.innerHTML=""; y.classList.toggle("ph",ART.ok); GEO=geo(); EL=[]; var s=GEO.s, F=GEO.F;
+  var fr=document.createElement("div"); fr.className="frm"+(ART.ok?" ph":""); fr.style.cssText="left:"+GEO.x0+"px;top:"+GEO.y0+"px;width:"+GEO.tot+"px;height:"+GEO.tot+"px"; y.appendChild(fr);
   var fl=document.createElement("div"); fl.className="flw"; fl.style.cssText="left:"+(GEO.x0+GEO.tot-F*.2)+"px;top:"+(GEO.y0+F+(GEO.ex-1)*s)+"px;width:"+(GEO.gw+F*.6)+"px;height:"+(3*s)+"px";
   fl.innerHTML=gateFlowers(GEO.gw+F*.6,3*s); y.appendChild(fl);
-  var gt=document.createElement("div"); gt.className="gate"; gt.style.cssText="left:"+(GEO.x0+GEO.tot-F-2)+"px;top:"+(GEO.y0+F+GEO.ex*s)+"px;width:"+(F+4)+"px;height:"+s+"px"; y.appendChild(gt);
+  var gt=document.createElement("div"); gt.className="gate"+(ART.ok?" ph":""); gt.style.cssText="left:"+(GEO.x0+GEO.tot-F-2)+"px;top:"+(GEO.y0+F+GEO.ex*s)+"px;width:"+(F+4)+"px;height:"+s+"px"; y.appendChild(gt);
   [0,1].forEach(function(k){ var p=document.createElement("div"); p.className="post"; var pw=Math.max(6,F*.36);
     p.style.cssText="left:"+(GEO.x0+GEO.tot-F/2-pw/2)+"px;top:"+(GEO.y0+F+(GEO.ex+k)*s-pw/2)+"px;width:"+pw+"px;height:"+pw+"px"; y.appendChild(p);
     /* the gate's two little doors, swung open outward */
     var dr=document.createElement("div"); dr.className="gdoor"; dr.style.cssText="left:"+(GEO.x0+GEO.tot-F/2)+"px;top:"+(GEO.y0+F+(GEO.ex+k)*s-2.5)+"px;width:"+(s*.42)+"px;transform:rotate("+(k?35:-35)+"deg)"; y.insertBefore(dr,p); });
   var bw=document.createElement("span"); bw.className="bwp"; bw.textContent="BW"; bw.style.left=(GEO.x0+GEO.tot/2)+"px"; bw.style.top=(GEO.y0+GEO.tot-F/2)+"px"; y.appendChild(bw);
-  var bed=document.createElement("div"); bed.className="bed"; bed.id="bed"; bed.style.cssText="left:"+(GEO.x0+F)+"px;top:"+(GEO.y0+F)+"px;width:"+(6*s)+"px;height:"+(6*s)+"px;--s:"+s+"px"; y.appendChild(bed);
-  Z.B.forEach(function(b,i){ var d=document.createElement("div"), lk=LOOK[i]; d.className="pc "+(b.h?"h":"v")+b.len+(i===0?" bee rest":"")+(b.h?"":" v");
+  var bed=document.createElement("div"); bed.className="bed"+(ART.ok?" ph":""); bed.id="bed"; bed.style.cssText="left:"+(GEO.x0+F)+"px;top:"+(GEO.y0+F)+"px;width:"+(6*s)+"px;height:"+(6*s)+"px;--s:"+s+"px"; y.appendChild(bed);
+  Z.B.forEach(function(b,i){ var d=document.createElement("div"), lk=LOOK[i]; d.className="pc "+(b.h?"h":"v")+b.len+(i===0?" bee rest":"")+(b.h?"":" v")+(ART.ok&&i>0?" ph":"");
     d.style.width=(b.h?b.len*s:s)+"px"; d.style.height=(b.h?s:b.len*s)+"px";
     d.setAttribute("aria-label",lk.name); d.innerHTML=pieceSvg(b,lk)+'<div class="ring"></div>'+ARW;
     d.addEventListener("pointerdown",function(e){ down(e,i); }); bed.appendChild(d); EL.push(d); place(i,Z.P[i]); });
@@ -430,7 +478,7 @@ function win(){
     var box=BWK.sheet('<h2>To the flowers!</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,st)+'<i>'+"★★★".slice(0,3-st)+'</i></div>'+
       '<p>You freed the bee in <b>'+Z.moves+'</b> move'+(Z.moves===1?'':'s')+(Z.hints?' with '+Z.hints+' hint'+(Z.hints>1?'s':''):' with no hints')+'.'+
       (Z.moves<=Z.d?' That\'s the fewest moves possible!':' The fewest possible was '+Z.d+'.')+'</p>'+
-      '<div class="fact" data-say="'+FSAY[f].replace(/"/g,"&quot;")+'"><svg viewBox="0 0 200 110" aria-hidden="true">'+beeSvg()+'</svg><div><b>Jack\'s Bee Fact</b><span>'+FACTS[f]+'</span></div></div>'+
+      '<div class="fact" data-say="'+FSAY[f].replace(/"/g,"&quot;")+'"><svg viewBox="0 0 200 110" aria-hidden="true">'+(ART.ok?'<g transform="translate(0 5)">'+beePhoto()+'</g>':beeSvg())+'</svg><div><b>Jack\'s Bee Fact</b><span>'+FACTS[f]+'</span></div></div>'+
       '<div class="k-row"><button class="k-btn" data-a="more">Bonus Garden</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
     box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
     box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
