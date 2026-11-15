@@ -11,7 +11,15 @@
 <style>
 /* Cosmic Chemistry (named by Zayden, Nov 13; was Color Sort) (The Outpost · The Lab), Nov 12. Zayden's idea: pour the space potions between corked bottles on a wooden shelf
    until every bottle holds one color. A pour goes onto the same color or into an empty bottle. Engine: colorsort-gen.js. */
-:root{--bgx:18%;--bgy:50%}
+:root{--bgx:50%;--bgy:28%}
+/* the photorealistic look (Nov 15): Judy's ChatGPT pictures in cc/ (the Lab corner, the glass bottle, the cork, the shelf) */
+.bg{background-image:url("cc/bg-sm.jpg?v=1115a");filter:blur(1.5px) brightness(.62) saturate(1.05)}
+@media (min-width:900px){.bg{background-image:url("cc/bg.jpg?v=1115a")}}
+.plank.ph{background:none;border-radius:0;border-style:solid;border-color:transparent;border-image:url("cc/shelf.webp?v=1115a") 0 46 fill / 0 var(--cap) stretch;
+  box-shadow:none;filter:drop-shadow(0 9px 8px rgba(0,0,0,.55))}
+.plank.ph::before,.plank.ph::after{top:calc(100% - 3px);width:var(--brk);height:calc(var(--brk) * .904);border-radius:0;box-shadow:none;
+  background:url("cc/bracket.webp?v=1115a") 0 0/100% 100% no-repeat;z-index:-1;filter:drop-shadow(2px 5px 4px rgba(0,0,0,.45))}
+.plank.ph::before{left:5%}.plank.ph::after{right:5%;transform:scaleX(-1)}
 #play{flex-direction:column;align-items:center;justify-content:flex-start;gap:8px}
 .cbar{width:min(640px,100%);display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;
   background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
@@ -134,9 +142,16 @@ var PAT=[
   $("#csDefs").innerHTML=h; })();
 function BODY(){ return "M21 16L21 38C21 47 5 49 5 62L5 158Q5 170 17 170L43 170Q55 170 55 158L55 62C55 49 39 47 39 38L39 16Z"; }
 var VB_H=176, LH=26, FLOOR=167; /* each layer is 26 tall; the liquid sits on y=167 */
+/* the photo bottle (cc/glass.webp, 300x933 = 60 x 186.6 here): the inside of the glass runs x 3.6-56.4, its floor is y 177.3;
+   four layers of 31.8 fill it up to the shoulders. The cork sits in the real neck. */
+var AV="1115a", ART={ok:false}, PH={vh:186.6, lh:31.8, floor:177.3, inner:"M3.6 26L56.4 26L56.4 173.3Q56.4 177.3 52.4 177.3L7.6 177.3Q3.6 177.3 3.6 173.3Z"};
+(function(){ var need=["glass.webp","cork.webp","shelf.webp","bracket.webp"], left=need.length;
+  need.forEach(function(f){ var i=new Image(); i.onload=function(){ if(--left) return; ART.ok=true; VB_H=PH.vh; LH=PH.lh; FLOOR=PH.floor;
+      $("#csDefs").insertAdjacentHTML("beforeend",'<clipPath id="csInC"><path d="'+PH.inner+'"/></clipPath>'); relayout(); }; i.src="cc/"+f+"?v="+AV; }); })();
 
 /* draw one bottle. lay: [{c, h}] bottom first, h = 1 for a full layer (fractions while pouring) */
 function bottleSvg(lay,corked){
+  if(ART.ok) return photoBottle(lay,corked);
   var s='<svg viewBox="0 0 60 '+VB_H+'" aria-hidden="true"><g clip-path="url(#csBodyC)"><rect x="0" y="0" width="60" height="176" fill="rgba(170,215,255,.07)"/>', y=FLOOR;
   lay.forEach(function(l,i){ if(l.h<=0.001) return; var hh=LH*l.h; y-=hh; var p=POT[l.c];
     s+='<rect x="0" y="'+y.toFixed(2)+'" width="60" height="'+(hh+.6).toFixed(2)+'" fill="'+p.c+'"/><rect x="0" y="'+y.toFixed(2)+'" width="60" height="'+(hh+.6).toFixed(2)+'" fill="url(#csPat'+l.c+')"/>';
@@ -148,6 +163,15 @@ function bottleSvg(lay,corked){
   if(corked) s+='<g class="cork"><rect x="19" y="1" width="22" height="15" rx="3.5" fill="url(#csCorkG)" stroke="#6b4420" stroke-width=".8"/><path d="M23 5h3M31 9h4M25 12h2M34 4h2" stroke="#7a4e24" stroke-width="1" stroke-linecap="round" opacity=".7"/></g>';
   return s+'</svg>';
 }
+/* the photo version: drawn potions inside, then the cork, then the real glass on top */
+function photoBottle(lay,corked){
+  var s='<svg viewBox="0 0 60 '+PH.vh+'" aria-hidden="true"><g clip-path="url(#csInC)"><rect x="0" y="0" width="60" height="'+PH.vh+'" fill="rgba(170,215,255,.06)"/>', y=FLOOR;
+  lay.forEach(function(l,i){ if(l.h<=0.001) return; var hh=LH*l.h; y-=hh; var p=POT[l.c];
+    s+='<rect x="0" y="'+y.toFixed(2)+'" width="60" height="'+(hh+.6).toFixed(2)+'" fill="'+p.c+'"/><rect x="0" y="'+y.toFixed(2)+'" width="60" height="'+(hh+.6).toFixed(2)+'" fill="url(#csPat'+l.c+')"/>';
+    if(i===lay.length-1||lay[i+1].h<=0.001) s+='<ellipse cx="30" cy="'+y.toFixed(2)+'" rx="26.4" ry="2.2" fill="'+p.c+'"/><ellipse cx="30" cy="'+y.toFixed(2)+'" rx="26.4" ry="2.2" fill="#fff" opacity=".3"/>'; });
+  s+='<rect x="0" y="0" width="60" height="'+PH.vh+'" fill="url(#csLiqG)" opacity=".8"/></g>';
+  if(corked) s+='<image class="cork" href="cc/cork.webp?v='+AV+'" x="17" y="-13" width="26" height="33.2"/>';
+  return s+'<image href="cc/glass.webp?v='+AV+'" x="0" y="0" width="60" height="'+PH.vh+'"/></svg>'; }
 function layOf(b){ return b.map(function(c){ return {c:c,h:1}; }); }
 
 /* ---------- menu emblem: three corked bottles ---------- */
@@ -198,9 +222,11 @@ function geo(){ var sh=$("#shelf"), W=sh.clientWidth, H=sh.clientHeight, N=P.B.l
   return {r:best.r,bw:best.bw,bh:bh,rowH:rowH,off:off,pos:pos,W:W}; }
 function build(){ var sh=$("#shelf"); sh.innerHTML=""; GEO=geo(); EL=[];
   for(var r=0;r<GEO.r;r++){ var pl=document.createElement("div"); pl.className="plank"; pl.style.top=(GEO.off+GEO.rowH*(r+1)-26)+"px";
+    if(ART.ok){ var ph=Math.round(Math.max(24,Math.min(40,GEO.bw*.42))); pl.className="plank ph"; pl.style.height=ph+"px";
+      pl.style.top=(GEO.off+GEO.rowH*(r+1)-26-ph*.2)+"px"; pl.style.setProperty("--cap",Math.round(46*ph/96)+"px"); pl.style.setProperty("--brk",Math.round(ph*1.35)+"px"); }
     var span=Math.min(GEO.W, (r<GEO.r-1||GEO.r===1? Math.ceil(P.B.length/GEO.r):P.B.length-Math.ceil(P.B.length/GEO.r))*(GEO.bw*1.5)+40);
     pl.style.left=((GEO.W-span)/2)+"px"; pl.style.right=((GEO.W-span)/2)+"px";
-    if(r===GEO.r-1) pl.innerHTML='<span class="bwp">BW</span>'; sh.appendChild(pl); }
+    if(r===GEO.r-1) pl.innerHTML='<span class="bwp"'+(ART.ok?' style="top:'+Math.round(parseFloat(pl.style.height)*.66)+'px"':'')+'>BW</span>'; sh.appendChild(pl); }
   P.B.forEach(function(b,i){ var d=document.createElement("div"); d.className="bt"; d.dataset.i=i;
     d.setAttribute("role","button"); d.setAttribute("aria-label","Bottle "+(i+1));
     d.style.width=GEO.bw+"px"; d.style.height=GEO.bh+"px"; d.style.left=GEO.pos[i].x+"px"; d.style.top=GEO.pos[i].y+"px";
