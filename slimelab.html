@@ -12,7 +12,10 @@
 /* Sophie's Slime Lab (The Outpost · The Workshop), Nov 13. Sophie's game: animal customers order slime; mix red, yellow, blue and white
    drops until the color matches (ratios count: 2 blue + 1 yellow = 4 blue + 2 yellow), add the glitter and fun bits on the card,
    squeeze in activator, stir, stretch, serve. 3 orders a day, harder colors through the week; Bonus Order once today's are done. */
-:root{--bgx:83%;--bgy:83%}
+:root{--bgx:50%;--bgy:30%}
+.bg{background-image:url("sl/bg-sm.jpg?v=1115a");filter:blur(1.5px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.bg{background-image:url("sl/bg.jpg?v=1115a")}}
+.cust .face img{width:100%;height:100%;object-fit:cover;object-position:50% 0;border-radius:50%;display:block}
 #play{flex-direction:column;align-items:center;justify-content:flex-start;gap:6px}
 .cbar{width:min(640px,100%);display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:16px;color:#2b2116;flex:none;
   background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b39c70,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.7)}
@@ -195,6 +198,7 @@ function bowlIcon(id){ var s='<svg viewBox="0 0 40 34"><path d="M4 16Q6 31 20 31
   var P=[[12,15],[19,13],[26,15],[16,18],[24,18],[20,10],[29,12],[10,12]];
   P.forEach(function(p,k){ s+=bitArt(id,p[0],p[1],id==="stars"?.85:1,k*.9,k); }); return s+'</svg>'; }
 function dropperIcon(k){ var c=DROP[k].c;
+  if(ART.drop) return '<svg viewBox="0 0 40 52"><image href="'+ART.drop[k]+'" x="'+(20-ART.dw/2).toFixed(2)+'" y="1" width="'+ART.dw.toFixed(2)+'" height="50"/></svg>';
   return '<svg viewBox="0 0 40 52"><rect x="14" y="2" width="12" height="11" rx="5" fill="#3a3a44"/><path d="M12 13h16v4l-2 3v24q0 5-6 5t-6-5V20l-2-3z" fill="rgba(220,240,255,.45)" stroke="rgba(70,90,110,.6)" stroke-width="1.2"/>'+
     '<path d="M15 24h10v20q0 3-5 3t-5-3z" fill="'+c+'"'+(k===3?' stroke="#c9c2b0" stroke-width="1"':'')+'/><path d="M16.5 25v17" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>'+
     '<circle cx="20" cy="50" r="0" fill="'+c+'"/></svg>'; }
@@ -304,9 +308,31 @@ var SCENE_DEFS=
    '<pattern id="slGrain" width="160" height="80" patternUnits="userSpaceOnUse"><path d="M0 6Q40 2 80 7T160 6M0 17Q50 13 100 19T160 16M0 29Q30 26 70 31T160 29M0 41Q45 37 90 43T160 40M0 53Q35 50 75 55T160 53M0 66Q50 62 100 68T160 65" stroke="#4f2a10" stroke-opacity=".2" fill="none" stroke-width=".9"/>'+
      '<path d="M0 11Q60 8 120 12T160 11M0 47Q55 44 110 49T160 47" stroke="#f0c896" stroke-opacity=".12" fill="none" stroke-width="1.4"/><ellipse cx="118" cy="30" rx="6" ry="2" fill="none" stroke="#4f2a10" stroke-opacity=".22"/></pattern>';
 
+/* ---------- photo art (Nov 15): drawn art stays as the fallback until each picture loads ---------- */
+var AV="1115a", ART={drop:null,dw:15.7,cust:{},ch:76,bowl:false}, PHOTO_CUST=["biscuit"];
+function artBowl(){ if(!svg||!ART.bowl) return; var im=svg.querySelector("#slBowl");
+  svg.querySelector("#slIn path").setAttribute("d",BOWLP+"A118 22 0 0 0 82 132Z"); svg.querySelector("#slInUp path").setAttribute("d",BOWLP+"L318 0L82 0Z"); im.setAttribute("href","sl/bowl.webp?v="+AV); im.style.display="";
+  ["#slGl","#slGlB"].forEach(function(q){ var g=svg.querySelector(q); if(g) g.style.display="none"; }); }
+(function(){
+  var b=new Image(); b.onload=function(){ ART.bowl=true; artBowl(); }; b.src="sl/bowl.webp?v="+AV;
+  var d=new Image(); d.onload=function(){ try{
+    var w=d.naturalWidth, h=d.naturalHeight, cv=document.createElement("canvas"); cv.width=w; cv.height=h; var x=cv.getContext("2d");
+    x.drawImage(d,0,0); var src=x.getImageData(0,0,w,h), out=[];
+    DROP.forEach(function(D){ var c=hexRGB(D.c), id=x.createImageData(w,h), a=src.data, o=id.data;
+      for(var i=0;i<a.length;i+=4){ var r=a[i],g=a[i+1],bb=a[i+2], mx=Math.max(r,g,bb), mn=Math.min(r,g,bb), lum=(r+g+bb)/3,
+          m=Math.min(1,Math.max(0,(lum-150)/60))*(mx-mn<30?1:0);
+        o[i]=r*(1-m)+r*c[0]/255*m; o[i+1]=g*(1-m)+g*c[1]/255*m; o[i+2]=bb*(1-m)+bb*c[2]/255*m; o[i+3]=a[i+3]; }
+      x.putImageData(id,0,0); out.push(cv.toDataURL()); });
+    ART.dw=50*w/h; ART.drop=out;
+    document.querySelectorAll('.ing[data-k^="d"]').forEach(function(e){ var k=+e.dataset.k.slice(1), s=e.querySelector("svg"); if(s&&DROP[k]) s.outerHTML=dropperIcon(k); });
+  }catch(e){} }; d.src="sl/dropper.webp?v="+AV;
+  PHOTO_CUST.forEach(function(id){ var im=new Image(); im.onload=function(){ ART.cust[id]={src:im.src,w:ART.ch*im.naturalWidth/im.naturalHeight};
+    try{ if(gCust&&gCust.firstChild&&P&&S&&O().cust.id===id){ custIn(); ticket(false); } }catch(e){} }; im.src="sl/c-"+id+".webp?v="+AV; });
+})();
+
 /* ---------- the bench (SVG) ---------- */
 var CX=200, SURF=158, BASE=200, svg=null, gC=null, gTop=null, gCust=null;
-var BOWL="M82 132C84 192 132 216 200 216C268 216 316 192 318 132";
+var BOWL0="M82 132C84 192 132 216 200 216C268 216 316 192 318 132", BOWL=BOWL0, BOWLP="M82.0 132.0C82.2 133.0 82.5 136.0 83.2 137.9C83.9 139.7 85.6 141.3 86.3 143.1C87.0 144.8 86.9 146.5 87.3 148.2C87.7 150.0 88.1 151.7 88.9 153.5C89.7 155.2 91.5 156.9 92.3 158.7C93.1 160.4 93.2 162.1 93.9 163.9C94.6 165.6 95.6 167.3 96.6 169.1C97.6 170.8 98.6 172.5 99.7 174.2C100.9 176.0 102.1 177.7 103.4 179.4C104.8 181.2 106.2 182.9 107.7 184.7C109.2 186.4 110.8 188.1 112.6 189.9C114.4 191.6 116.6 193.3 118.6 195.1C120.6 196.8 122.4 198.5 124.7 200.2C127.0 202.0 129.3 203.7 132.4 205.4C135.6 207.2 137.7 208.9 143.6 210.7C149.5 212.4 158.4 214.6 167.8 215.9C177.2 217.1 189.3 218.1 200.0 218.1C210.7 218.1 222.8 217.1 232.2 215.9C241.6 214.6 250.5 212.4 256.4 210.7C262.3 208.9 264.4 207.2 267.6 205.4C270.7 203.7 273.0 202.0 275.3 200.2C277.6 198.5 279.4 196.8 281.4 195.1C283.4 193.3 285.6 191.6 287.4 189.9C289.2 188.1 290.8 186.4 292.3 184.7C293.8 182.9 295.2 181.2 296.6 179.4C297.9 177.7 299.1 176.0 300.3 174.2C301.4 172.5 302.4 170.8 303.4 169.1C304.4 167.3 305.4 165.6 306.1 163.9C306.8 162.1 306.9 160.4 307.7 158.7C308.5 156.9 310.3 155.2 311.1 153.5C311.9 151.7 312.3 150.0 312.7 148.2C313.1 146.5 313.0 144.8 313.7 143.1C314.4 141.3 316.1 139.7 316.8 137.9C317.5 136.0 317.8 133.0 318.0 132.0";
 function build(){
   var b=$("#bench"), s='<svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMax meet" xmlns="'+NS+'"><defs>'+SCENE_DEFS+
    '<linearGradient id="slWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c99158"/><stop offset=".5" stop-color="#a86d3a"/><stop offset="1" stop-color="#8a5629"/></linearGradient>'+
@@ -323,19 +349,20 @@ function build(){
    '<rect x="-2000" y="150" width="4400" height="2" fill="#f0c48e" opacity=".75"/><rect x="-2000" y="152" width="4400" height="14" fill="#000" opacity=".08"/>'+
    '<rect x="-2000" y="226" width="4400" height="40" fill="url(#slEdge)"/><rect x="-2000" y="226" width="4400" height="1.5" fill="#d9a46c" opacity=".6"/>'+
    '<rect x="186" y="232" width="28" height="13" rx="3" fill="#e9c46a" stroke="#8a5f12" stroke-width=".8"/><text x="200" y="242" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif" letter-spacing=".5">BW</text>'+
-   lightsArt()+signArt()+shelfArt()+glueArt()+matArt()+
+   signArt()+glueArt()+matArt()+
    /* bowl shadow and back */
    '<ellipse cx="200" cy="218" rx="122" ry="12" fill="url(#slShadow)"/><ellipse cx="200" cy="213" rx="56" ry="6" fill="rgba(200,230,255,.14)" stroke="rgba(235,248,255,.6)" stroke-width="1.2"/>'+
-   '<ellipse cx="200" cy="132" rx="118" ry="22" fill="rgba(170,210,240,.10)" stroke="rgba(225,242,255,.55)" stroke-width="1.6"/>'+
-   '<g id="slC"></g>'+
+   '<ellipse cx="200" cy="132" rx="118" ry="22" fill="rgba(170,210,240,.10)"/><g id="slGlB"><ellipse cx="200" cy="132" rx="118" ry="22" fill="none" stroke="rgba(225,242,255,.55)" stroke-width="1.6"/></g>'+
+   '<g id="slC"></g><g id="slGl">'+
    '<path d="'+BOWL+'A118 22 0 0 1 82 132Z" fill="url(#slGlass)"/>'+
    '<path d="'+BOWL+'" fill="none" stroke="rgba(230,245,255,.85)" stroke-width="2"/>'+
    '<path d="M82 132A118 22 0 0 0 318 132" fill="none" stroke="rgba(240,250,255,.95)" stroke-width="2.4"/><path d="M89 134A111 19 0 0 0 311 134" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>'+
    '<ellipse cx="294" cy="164" rx="2.2" ry="6" fill="#fff" opacity=".5" transform="rotate(28 294 164)"/><ellipse cx="303" cy="152" rx="1.3" ry="2.2" fill="#fff" opacity=".6"/>'+
    '<path d="M98 150Q104 186 138 202" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>'+
-   '<path d="M108 141L111 149" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>'+
+   '<path d="M108 141L111 149" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/></g>'+
+   '<image id="slBowl" href="" x="73.4" y="106.65" width="253.2" height="115.3" preserveAspectRatio="none" style="display:none"/>'+
    '<g id="slTop"></g><g id="slCust"></g></svg>';
-  b.innerHTML=s; svg=b.firstChild; gC=svg.querySelector("#slC"); gTop=svg.querySelector("#slTop"); gCust=svg.querySelector("#slCust");
+  b.innerHTML=s; svg=b.firstChild; gC=svg.querySelector("#slC"); gTop=svg.querySelector("#slTop"); gCust=svg.querySelector("#slCust"); artBowl();
 }
 /* draw the bowl's contents from the state */
 function moundPath(h,w){ var y=BASE; return "M"+(CX-w)+" "+(y+8)+"C"+(CX-w)+" "+(y-h*.85)+" "+(CX-w*.45)+" "+(y-h)+" "+CX+" "+(y-h)+"C"+(CX+w*.45)+" "+(y-h)+" "+(CX+w)+" "+(y-h*.85)+" "+(CX+w)+" "+(y+8)+"Z"; }
@@ -411,7 +438,7 @@ function order(){
   ticket(true); render(); custIn(); go("color",true);
   msg(o.cust.n+" would like "+o.col.n+" slime!"); talk(o.cust.n+" has an order!");
 }
-function ticket(fresh){ var o=O(), c=mixRGB(o.col.d), h='<div class="cust"><span class="face" aria-hidden="true">'+o.cust.e+'</span><b>'+o.cust.short+'</b></div><div class="items"><p class="wants">'+o.cust.n+' would like:</p><div class="irow">';
+function ticket(fresh){ var o=O(), c=mixRGB(o.col.d), h='<div class="cust"><span class="face" aria-hidden="true">'+(ART.cust[o.cust.id]?'<img src="'+ART.cust[o.cust.id].src+'" alt="">':o.cust.e)+'</span><b>'+o.cust.short+'</b></div><div class="items"><p class="wants">'+o.cust.n+' would like:</p><div class="irow">';
   h+='<div class="it'+(S.done&&S.done.color?' done':'')+'" id="iColor">'+blobIcon(c,"tkB")+o.col.n+(S.hinted?tipHtml(o.col.d):"")+'<span class="ok">✓</span></div>';
   if(o.glit){ var g=GLIT.filter(function(x){ return x.id===o.glit; })[0]; h+='<div class="it'+(S.glit?' done':'')+'">'+jarIcon(o.glit)+g.n+'<span class="ok">✓</span></div>'; }
   o.bits.forEach(function(b){ var B=BITS.filter(function(x){ return x.id===b; })[0]; h+='<div class="it'+(S.bitA[b]?' done':'')+'">'+bowlIcon(b)+B.n+'<span class="ok">✓</span></div>'; });
@@ -420,14 +447,15 @@ function ticket(fresh){ var o=O(), c=mixRGB(o.col.d), h='<div class="cust"><span
 function tipHtml(d){ var parts=[]; d.forEach(function(n,k){ if(n) parts.push(n+' <i style="background:'+DROP[k].c+'"></i>'); }); return '<span class="tip">'+parts.join(" + ")+'</span>'; }
 function tick(sel){ var e=sel?document.querySelector(sel):null; if(e) e.classList.add("done"); }
 function custIn(){ var o=O(), c=mixRGB(o.col.d), s='<ellipse cx="356" cy="214" rx="44" ry="30" fill="url(#slSpot)"/><ellipse cx="356" cy="217" rx="21" ry="3.8" fill="#000" opacity=".38"/>'+
-  '<text class="cface" x="356" y="215" font-size="58" text-anchor="middle">'+o.cust.e+'</text>'+
-  '<g class="cbub"><circle cx="356" cy="152" r="2.3" fill="url(#slBub)" stroke="#c9b083" stroke-width=".7"/><circle cx="351" cy="143" r="3.4" fill="url(#slBub)" stroke="#c9b083" stroke-width=".8"/>'+
+  (ART.cust[o.cust.id]?'<image class="cface" href="'+ART.cust[o.cust.id].src+'" x="'+(356-ART.cust[o.cust.id].w/2).toFixed(1)+'" y="'+(218-ART.ch)+'" width="'+ART.cust[o.cust.id].w.toFixed(1)+'" height="'+ART.ch+'"/>':
+   '<text class="cface" x="356" y="215" font-size="58" text-anchor="middle">'+o.cust.e+'</text>')+
+  '<g'+(ART.cust[o.cust.id]?' transform="translate(0 -15)"':'')+'><g class="cbub"><circle cx="356" cy="152" r="2.3" fill="url(#slBub)" stroke="#c9b083" stroke-width=".7"/><circle cx="351" cy="143" r="3.4" fill="url(#slBub)" stroke="#c9b083" stroke-width=".8"/>'+
   '<ellipse cx="346" cy="120" rx="23" ry="17" fill="#000" opacity=".2" transform="translate(1.5 2)"/><ellipse cx="346" cy="120" rx="23" ry="17" fill="url(#slBub)" stroke="#c9b083" stroke-width="1"/>'+
   '<path d="M334 129C330 129 330 123 334 122C334 116 340 111 346 112C353 111 358 116 357 122C361 123 361 129 357 129Z" fill="'+hex(c)+'" stroke="'+shade(c,-.35)+'" stroke-width=".8"/>'+
   '<ellipse cx="341" cy="117" rx="4" ry="2" fill="#fff" opacity=".6" transform="rotate(-25 341 117)"/>';
   if(o.glit) s+=speck(338,125,1,glitCol(o.glit,1),"rgba(70,45,10,.5)")+speck(350,121,.9,glitCol(o.glit,2),"rgba(70,45,10,.5)")+speck(353,126,.8,glitCol(o.glit,4),"rgba(70,45,10,.5)");
   if(o.bits.length) s+=bitArt(o.bits[0],346,124,.8,1,1);
-  gCust.innerHTML=s+'</g>'; }
+  gCust.innerHTML=s+'</g></g>'; }
 
 function steps(){ var o=P&&S?O():null, names={color:"Color",sparkle:"Sparkle",bits:"Fun bits",mix:"Mix",stretch:"Stretch"};
   $("#steps").innerHTML=o?o.steps.map(function(s){ var i=o.steps.indexOf(s), j=S.step==="served"?99:S.step==="done-mix"?o.steps.indexOf("mix")+1:o.steps.indexOf(S.step);
