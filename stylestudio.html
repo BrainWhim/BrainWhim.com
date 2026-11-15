@@ -97,6 +97,8 @@
 .ing{appearance:none;border:0;cursor:pointer;font:inherit;flex:0 0 76px;min-width:0;height:84px;padding:4px 2px 5px;border-radius:14px;
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;color:#4a3518;font-size:12px;font-weight:800;line-height:1.05;text-align:center;
   background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 3px 0 #8a6236,0 6px 10px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent;position:relative}
+.ing{position:relative}.ing .stb{position:absolute;top:2px;right:5px;font-style:normal;font-size:15px;line-height:1;color:#f2be45;text-shadow:0 1px 0 #7a5410,0 0 4px rgba(255,220,120,.8);pointer-events:none}
+.ing .stb.tw{animation:stw 1.6s ease-in-out 2}@keyframes stw{0%,100%{transform:scale(1)}50%{transform:scale(1.6) rotate(20deg)}}
 .ing img{width:100%;height:54px;object-fit:contain;display:block;pointer-events:none}
 .ing span{font-size:11px}
 .ing:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6236}
@@ -235,7 +237,7 @@ var HARD=[
  R_("allneutral","All neutrals, no bright colors",function(s){ return colorsIn(s).every(function(c){ return NEUTRAL[c]; }); },"color"),
  R_("twin","Two pieces in the same color",function(s){ var n={}; return pieces(s).some(function(q){ if(!q.c||JEWEL[q.s]||q.s==="eyes") return false; n[q.c]=(n[q.c]||0)+1; return n[q.c]>=2; }); },"color"),
  R_("onepat","One pattern, the rest solid",function(s){ return patN(s)===1; }),
- R_("statement","One statement piece (just one!)",function(s){ return pieces(s).filter(function(q){ return q.p.st; }).length===1; }),
+ R_("statement","One ★ statement piece (just one!)",function(s){ return pieces(s).filter(function(q){ return q.p.st; }).length===1; }),
  R_("metals","Match your metals (2+ jewelry pieces)",function(s){ var m=pieces(s).filter(function(q){ return JEWEL[q.s]; }).map(function(q){ return q.p.m; });
    return m.length>=2&&m.every(function(x){ return x&&x===m[0]; }); }),
  R_("cold","Dressed for the cold",function(s){ var p=pieces(s); return p.every(function(q){ return q.p.se!=="S"; })&&(!!s.layer||(!!s.top&&s.top.id==="top-chunkysweater")); }),
@@ -498,7 +500,7 @@ function lvOf(wd){ return (wd+6)%7; }
 var P=null, S=null, gen=0, busy=false, said={}, drawN=0;
 function O(){ return P.looks[P.i]; }
 function msg(t){ $("#cmsg").textContent=t||""; }
-function talk(t){ BWK.say(t); }
+function talk(t){ BWK.say(String(t).replace(/★ /g,"")); }
 function teach(){ return ST.n<9; }
 function sayOnce(key,t){ var k=(P?P.i:0)+":"+key; if(said[k]) return; said[k]=1; talk(t); }
 function start(mode){
@@ -532,7 +534,9 @@ function ticket(fresh){ var t=$("#ticket");
       h+='<button class="cl'+(r.k==="not"?" neg":"")+(st?" "+st:"")+'" data-i="'+i+'"><span class="ck"></span><span class="tx">'+r.t+'</span></button>'; });
     t.innerHTML=h+'</div></div>'; }
   t.classList.remove("new"); if(fresh){ void t.offsetWidth; t.classList.add("new"); }
-  t.querySelectorAll(".cl").forEach(function(e){ e.onclick=function(){ BWK.sfx("tap"); talk(O().rules[+e.dataset.i].t); }; });
+  t.querySelectorAll(".cl").forEach(function(e){ e.onclick=function(){ BWK.sfx("tap"); var r=O().rules[+e.dataset.i]; talk(r.t);
+    /* Judy, Nov 15: "statement piece" was a puzzle until she asked for a hint: say which pieces they are and make their stars twinkle */
+    if(r.id==="statement"){ msg(STMSG); document.querySelectorAll(".ing .stb").forEach(function(s){ s.classList.remove("tw"); void s.offsetWidth; s.classList.add("tw"); }); } }; });
   var w=t.querySelector(".wants"); if(w) w.onclick=function(){ BWK.sfx("tap"); talk(P.free?SAY.free:SAY.card); }; }
 function ruleState(r){ if(!S) return ""; if(live()) return complete(S.sel)||r.k!=="not"?(r.f(S.sel)?"ok":""):""; if(!S.checked) return ""; return r.f(S.sel)?"ok":"no"; }
 function tabs(){ var h=""; if(S) TABS.forEach(function(tb){ var has=tb[2].some(function(s){ return S.sel[s]; }), any=tb[2].some(function(s){ return ofSlot(s).length; });
@@ -542,7 +546,7 @@ function tabOf(sl){ for(var i=0;i<TABS.length;i++) if(TABS[i][2].indexOf(sl)>=0)
 function tab(t,quiet){ S.tab=t; tabs(); var b=$("#tbox"); b.innerHTML="";
   var slots=TABS.filter(function(x){ return x[0]===t; })[0][2];
   slots.forEach(function(sl){ ofSlot(sl).forEach(function(p){ var e=document.createElement("button"), on=S.sel[sl]&&S.sel[sl].id===p.id;
-    e.className="ing"+(on?" sel":""); e.dataset.k=p.id; e.setAttribute("aria-label",p.n); e.innerHTML='<img alt=""><span>'+p.n+'</span>';
+    e.className="ing"+(on?" sel":""); e.dataset.k=p.id; e.setAttribute("aria-label",p.n+(p.st?" (statement piece)":"")); e.innerHTML='<img alt=""><span>'+p.n+'</span>'+(p.st?'<i class="stb" aria-hidden="true">★</i>':'');
     e.onclick=function(){ if(busy) return; choose(p); }; b.appendChild(e); setIcon(e,p); }); });
   if(!b.children.length) b.innerHTML='<p class="none">More pieces coming soon!</p>';
   b.scrollLeft=0; colorBar(); }
@@ -638,6 +642,7 @@ function runway(){ if(!S||busy||!complete(S.sel)) return;
     if(P.free){ busy=false; S.checked=false; runwayBtn(); return; }
     busy=false; done(); },3300); }
 
+var STMSG="Statement pieces wear a gold ★: "+PC.filter(function(p){ return p.st; }).map(function(p){ return p.n.toLowerCase(); }).join(", ")+".";
 var WOW=["Fabulous!","Gorgeous!","What a look!","Stunning!","So stylish!"], wowI=0;
 function pickWow(){ wowI=(wowI+1+Math.floor(Math.random()*3))%WOW.length; return WOW[wowI]; }
 function el(tag,attrs,parent){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); (parent||gFx).appendChild(e); return e; }
@@ -707,7 +712,7 @@ WOW.forEach(function(w,i){ L["ss-wow-"+i]=w; });
 ALL.forEach(function(p){ L["ss2-p-"+p.id]=p.n; });
 COLS.forEach(function(c){ L["ss2-c-"+c[0]]=c[1]; });
 PATS.forEach(function(p){ L["ss2-pt-"+p[0]]=p[1]; }); L["ss2-ptg1"]="Patterns"; L["ss2-ptg0"]="Colors";
-EASY.concat(HARD).forEach(function(r){ L["ss2-r-"+r.id]=r.t; });
+EASY.concat(HARD).forEach(function(r){ L["ss2-r-"+r.id]=r.t.replace(/★ /g,""); });
 Object.keys(VIBEN).forEach(function(v){ L["ss2-r-v-"+v]=ruleVibe(v).t; });
 POPS.forEach(function(c){ L["ss2-r-use-"+c]=ruleUse(c).t; });
 ["black","denim","white","navy","cherry","blush"].forEach(function(c){ L["ss2-r-no-"+c]=ruleNo(c).t; });

@@ -398,7 +398,8 @@ function saveCur(){ if(!Z||Z.bonus) return; ST.day=today().n; ST.cur={s:Z.s,flip
 /* ---------- layout: the biggest square bed that fits, with room for the flowers past the gate ---------- */
 function geo(){ var y=$("#yard"), W=y.clientWidth, H=y.clientHeight;
   var ff=ART.ok?.5614:.42, s=Math.floor(Math.min(W/(6+2*ff+0.5), H/(6+2*ff), 118)), F=Math.round(s*ff), tot=6*s+2*F, gw=Math.round(s*.5);
-  var x0=Math.round((W-tot-gw)/2), y0=Math.round(Math.max(0,(H-tot)/2));
+  /* center the wooden frame itself (Judy, Nov 15); the flowers past the gate hang out to the right when there is room */
+  var room=Math.max(0,window.innerWidth-y.getBoundingClientRect().right-4), x0=Math.round(Math.max(0,Math.min((W-tot)/2,W+room-tot-gw))), y0=Math.round(Math.max(0,(H-tot)/2));
   return {s:s,F:F,x0:x0,y0:y0,tot:tot,gw:gw,ex:Z.B[0].r}; }
 function px(i,pos){ var b=Z.B[i], s=GEO.s; return b.h?{x:pos*s,y:b.r*s}:{x:b.c*s,y:pos*s}; }
 function place(i,pos){ var p=px(i,pos); EL[i].style.transform="translate("+p.x+"px,"+p.y+"px)"; }
