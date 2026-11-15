@@ -34,6 +34,13 @@
 .keys{display:none;font-size:14px;color:#cfe0f0;text-align:center}
 @media (hover:hover) and (pointer:fine){.pad{display:none}.keys{display:block}.frame{--s:min(94vw,600px,calc(100svh - 230px))}}
 @media (max-height:640px){.pad{grid-template:repeat(3,44px)/repeat(3,44px)}.frame{--s:min(94vw,560px,calc(100svh - 300px))}.bar b{font-size:18px}}
+.snp .frame{padding:calc(var(--s)*.06);background:none;box-shadow:none;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55))}
+.snp .frame::after{content:"";position:absolute;inset:0;background:url("sn/sn-frame.webp?v=1115a") center/100% 100% no-repeat;pointer-events:none;z-index:1}
+.snp .frame canvas{border-radius:calc(var(--s)*.035);box-shadow:none}
+.snp .plate{z-index:2;bottom:calc(var(--s)*.012);font-size:calc(var(--s)*.026);color:#5a3a08;opacity:.8;text-shadow:0 1px 0 rgba(255,236,170,.6)}
+.snp .tap{inset:calc(var(--s)*.06);z-index:2}
+.snp .bg{background-image:url("sn/sn-bg-sm.jpg?v=1115a");background-position:58% 40%;filter:blur(1.5px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.snp .bg{background-image:url("sn/sn-bg.jpg?v=1115a")}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -82,6 +89,9 @@ function save(){ LS.set("snake",ST); }
 var DIR={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}, OPP={u:"d",d:"u",l:"r",r:"l"}, SZN={6:"Small",8:"Medium",10:"Big"};
 var N, S, prev, dir, q, star, stars, run=false, paused=false, dead=false, won=false, last=0, acc=0, gen=0, sparks=[], bgStars=[], t0=performance.now();
 var cv=$("#cv"), cx=cv.getContext("2d"), px=0, cell=0;
+/* the photo look (Nov 15): sn/ pictures; html.snp turns on the brass frame and Telescope-corner background; the drawn look is the fallback */
+var PH={ok:false}; (function(){ var L={space:"sn-space.jpg",star:"sn-star.webp",frame:"sn-frame.webp",bg:"sn-bg-sm.jpg"}, n=0, k;
+  for(k in L)(function(k){ var i=new Image(); i.onload=function(){ PH[k]=i; if(++n===4){ PH.ok=true; document.documentElement.classList.add("snp"); } }; i.src="sn/"+L[k]+"?v=1115a"; })(k); })();
 
 /* ---------- sounds ---------- */
 function sStar(){ var b=880*Math.pow(2,Math.min(stars,24)/24); BWG.tone(b,0,.14,.05,"triangle"); BWG.tone(b*1.5,.06,.2,.04,"triangle"); BWG.noise(.02,.18,.03,5000,10000); }
@@ -156,15 +166,20 @@ function draw(now){
   var t=performance.now(), k=run?ease(Math.min(1,acc*speed())):1, c=cell;
   cx.clearRect(0,0,px,px);
   /* the space tiles */
-  for(var y=0;y<N;y++) for(var x=0;x<N;x++){ var g=cx.createLinearGradient(x*c,y*c,x*c,(y+1)*c); var odd=(x+y)%2;
+  if(PH.ok){ /* the photo look: the space panel, faint squares on top */
+    cx.drawImage(PH.space,0,0,px,px); cx.fillStyle="rgba(4,8,24,.18)"; cx.fillRect(0,0,px,px);
+    cx.strokeStyle="rgba(170,205,255,.16)"; cx.lineWidth=Math.max(1,c*.02);
+    for(var y=0;y<N;y++) for(var x=0;x<N;x++){ rr(x*c+c*.06,y*c+c*.06,c*.88,c*.88,c*.16); cx.stroke(); }
+  } else for(var y=0;y<N;y++) for(var x=0;x<N;x++){ var g=cx.createLinearGradient(x*c,y*c,x*c,(y+1)*c); var odd=(x+y)%2;
     g.addColorStop(0,odd?"#14244a":"#101e3e"); g.addColorStop(1,odd?"#0e1a37":"#0b1630"); cx.fillStyle=g;
     rr(x*c+c*.05,y*c+c*.05,c*.9,c*.9,c*.16); cx.fill(); cx.strokeStyle="rgba(126,182,217,.10)"; cx.lineWidth=Math.max(1,c*.02); cx.stroke(); }
-  bgStars.forEach(function(s){ cx.globalAlpha=.25+.25*Math.sin(t/700+s[3]); cx.fillStyle="#cfe6ff"; cx.beginPath(); cx.arc(s[0],s[1],s[2]*(px/500),0,6.283); cx.fill(); }); cx.globalAlpha=1;
+  if(!PH.ok) bgStars.forEach(function(s){ cx.globalAlpha=.25+.25*Math.sin(t/700+s[3]); cx.fillStyle="#cfe6ff"; cx.beginPath(); cx.arc(s[0],s[1],s[2]*(px/500),0,6.283); cx.fill(); }); cx.globalAlpha=1;
   /* the star */
   if(star){ var sx=(star[0]+.5)*c, sy=(star[1]+.5)*c, pop=Math.min(1,(t-star.born)/300), pul=1+.08*Math.sin(t/220);
     var gl=cx.createRadialGradient(sx,sy,0,sx,sy,c*.7); gl.addColorStop(0,"rgba(255,226,122,.55)"); gl.addColorStop(1,"rgba(255,226,122,0)"); cx.fillStyle=gl; cx.fillRect(sx-c,sy-c,c*2,c*2);
+    if(PH.ok){ var sz=c*.86*pop*pul; cx.save(); cx.translate(sx,sy); cx.rotate(Math.sin(t/1800)*.25); cx.drawImage(PH.star,-sz/2,-sz/2,sz,sz); cx.restore(); } else {
     starPath(sx,sy,c*.36*pop*pul,c*.16*pop*pul,t/1800); var sg=cx.createLinearGradient(sx,sy-c*.4,sx,sy+c*.4); sg.addColorStop(0,"#fff6c8"); sg.addColorStop(1,"#f2b83a"); cx.fillStyle=sg; cx.fill();
-    cx.strokeStyle="#b9791a"; cx.lineWidth=c*.03; cx.stroke(); }
+    cx.strokeStyle="#b9791a"; cx.lineWidth=c*.03; cx.stroke(); } }
   /* the comet snake, tail first */
   var n=S.length, pts=[];
   for(var i=0;i<n;i++){ var a=prev[i]||S[i], b=S[i]; pts.push([(a[0]+(b[0]-a[0])*k+.5)*c,(a[1]+(b[1]-a[1])*k+.5)*c]); }
