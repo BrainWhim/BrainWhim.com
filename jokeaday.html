@@ -69,6 +69,10 @@ body.wide .jcard{width:min(46%,520px);transform:rotate(-1deg)}
 .wglow{animation:wg 1s ease-in-out infinite}
 @keyframes wg{50%{opacity:.25}}
 @media (max-height:620px){.jq{font-size:17px;margin-bottom:5px}.key{font-size:14px;min-height:26px}.ib{min-height:34px;font-size:14px}}
+#wheel .ph{display:none}.jtp #wheel .ph{display:inline}.jtp #wheel .fb{display:none}
+.jtp .jcard{background:none;border:0 solid transparent;border-image:url("jd/jd-card.webp?v=1115a") 70 fill / 18px stretch;box-shadow:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
+.jtp .bg{background-image:url("jt/jt-bg-sm.jpg?v=1115a");background-position:42% 40%;filter:blur(1.5px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.jtp .bg{background-image:url("jt/jt-bg.jpg?v=1115a")}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -210,13 +214,16 @@ function el(t,a,p){ var e=document.createElementNS(NS,t); for(var k in a) e.setA
 function polar(r,deg){ var a=(deg-90)*Math.PI/180; return [r*Math.cos(a),r*Math.sin(a)]; }
 function sector(r1,r2,d1,d2){ var a=polar(r2,d1),b=polar(r2,d2),c=polar(r1,d2),d=polar(r1,d1);
   return "M"+a+"A"+r2+" "+r2+" 0 0 1 "+b+"L"+c+"A"+r1+" "+r1+" 0 0 0 "+d+"Z"; }
+// the photo look (Nov 15): an <image> of a jd/ picture, shown only once html.jtp is set (drawn parts carry class "fb")
+function ph(f,r,into){ var im=el("image",{"class":"ph",x:-r,y:-r,width:2*r,height:2*r,preserveAspectRatio:"none"},into); im.setAttribute("href","jd/"+f+"?v=1115a"); return im; }
 function drawWheel(){
   W.innerHTML='<defs><radialGradient id="jdBrass" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#fbe39a"/><stop offset=".5" stop-color="#d9ab4a"/><stop offset="1" stop-color="#8a5f12"/></radialGradient>'+
     '<radialGradient id="jdNavy" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#26407a"/><stop offset="1" stop-color="#0d1a3a"/></radialGradient>'+
     '<radialGradient id="jdHub" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#fff0b8"/><stop offset="1" stop-color="#b98522"/></radialGradient></defs>';
   el("ellipse",{cx:3,cy:6,rx:101,ry:99,fill:"rgba(0,0,0,.35)"},W);
-  el("circle",{r:101,fill:"url(#jdBrass)",stroke:"#6b4708","stroke-width":1.5},W);
-  el("circle",{r:96.5,fill:"none",stroke:"rgba(255,245,200,.55)","stroke-width":.8},W);
+  el("circle",{"class":"fb",r:101,fill:"url(#jdBrass)",stroke:"#6b4708","stroke-width":1.5},W);
+  el("circle",{"class":"fb",r:96.5,fill:"none",stroke:"rgba(255,245,200,.55)","stroke-width":.8},W);
+  ph("jd-ring.webp",101,W);
   LH=[];
   for(var i=0;i<26;i++){
     var g=el("g",{"class":"lh","data-l":i,role:"button","aria-label":String.fromCharCode(65+i)},W);
@@ -226,14 +233,16 @@ function drawWheel(){
   }
   el("circle",{r:74,fill:"none",stroke:"#6b4708","stroke-width":1.5},W);
   INNER=el("g",{"class":"inner"},W);
-  el("circle",{r:72.5,fill:"url(#jdNavy)"},INNER);
-  for(i=0;i<26;i++) if(i%2) el("path",{d:sector(30,72,(i-.5)*STEP,(i+.5)*STEP),fill:"rgba(255,255,255,.045)"},INNER);
-  var R=rng(77); for(i=0;i<40;i++){ var pp=polar(32+R()*38,R()*360); el("circle",{cx:pp[0],cy:pp[1],r:.35+R()*.6,fill:"#fff",opacity:.25+R()*.5},INNER); }
+  el("circle",{"class":"fb",r:72.5,fill:"url(#jdNavy)"},INNER); ph("jd-disc.webp",72.5,INNER);
+  for(i=0;i<26;i++) if(i%2) el("path",{"class":"fb",d:sector(30,72,(i-.5)*STEP,(i+.5)*STEP),fill:"rgba(255,255,255,.045)"},INNER);
+  var R=rng(77); for(i=0;i<40;i++){ var pp=polar(32+R()*38,R()*360); el("circle",{"class":"fb",cx:pp[0],cy:pp[1],r:.35+R()*.6,fill:"#fff",opacity:.25+R()*.5},INNER); }
   SYG=[];
   for(var j=0;j<26;j++){ var sg=el("g",{},INNER); el("circle",{"class":"hl",r:11.5,fill:"none",stroke:"#ffe27a","stroke-width":2.2,opacity:0},sg);
     var u=el("use",{x:-10,y:-10,width:20,height:20},sg); u.setAttribute("href","#jsym"+j); SYG.push(sg); }
-  el("circle",{r:27,fill:"url(#jdHub)",stroke:"#6b4708","stroke-width":1.2},W);
-  el("circle",{r:22,fill:"none",stroke:"rgba(107,71,8,.5)","stroke-width":.8},W);
+  el("circle",{"class":"ph",r:72.5,fill:"none",stroke:"#c9973a","stroke-width":1.8},W); el("circle",{"class":"ph",r:71.6,fill:"none",stroke:"rgba(60,36,4,.55)","stroke-width":.6},W);
+  el("circle",{"class":"fb",r:27,fill:"url(#jdHub)",stroke:"#6b4708","stroke-width":1.2},W);
+  el("circle",{"class":"fb",r:22,fill:"none",stroke:"rgba(107,71,8,.5)","stroke-width":.8},W);
+  el("ellipse",{"class":"ph",cx:1.5,cy:3,rx:27,ry:26,fill:"rgba(0,0,0,.35)"},W); ph("jd-hub.webp",27.5,W);
   var bw=el("text",{y:5,"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#6b4708",opacity:.8},W); bw.textContent="BW";
   setRot(rot);
 }
@@ -394,5 +403,7 @@ window.JDO={start:start,letter:function(c){ onLetter(c.toUpperCase().charCodeAt(
   state:function(){ return P&&{ji:P.ji,k:P.k,lv:P.lv,set:P.set,done:P.done,got:P.got.join(""),act:P.act,rot:rot,a:P.a}; },jokes:JOKES,lines:L};
 })();
 </script>
+<script>/* the photo look (Nov 15): html.jtp once the pictures have loaded; the drawn look stays as the fallback */
+(function(){ var L=["jt/jt-bg-sm.jpg","jd/jd-ring.webp","jd/jd-disc.webp","jd/jd-hub.webp","jd/jd-card.webp"], n=0; L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n===L.length) document.documentElement.classList.add("jtp"); }; i.src=f+"?v=1115a"; }); })();</script>
 </body>
 </html>
