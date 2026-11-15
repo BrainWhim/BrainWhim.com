@@ -58,6 +58,10 @@
   display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 4px 0 #a97a1c}
 .picks button svg{width:58px;height:58px}
 @media (max-height:620px){.msg{font-size:15.5px}.opp .av{width:44px;height:44px}.opp .av svg{width:40px;height:40px}.opp .nm{font-size:12px}}
+.jtp .table{background:linear-gradient(180deg,rgba(255,236,200,.05),rgba(40,20,4,.14)),url("jt/jt-table.jpg?v=1115a") center/cover}
+.jtp .cd svg .fb,.jtp .deck svg .fb{display:none}
+.jtp .bg{background-image:url("jt/jt-bg-sm.jpg?v=1115a");background-position:42% 40%;filter:blur(1.5px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.jtp .bg{background-image:url("jt/jt-bg.jpg?v=1115a")}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -130,7 +134,7 @@ var PIPS={1:[[25,35]],2:[[25,17],[25,53]],3:[[25,15],[25,35],[25,55]],4:[[16,19]
   9:[[16,15],[34,15],[16,28],[34,28],[25,35],[16,42],[34,42],[16,55],[34,55]],10:[[16,14],[34,14],[25,22],[16,29],[34,29],[16,41],[34,41],[25,48],[16,56],[34,56]]};
 var PS={1:26,2:15,3:14,4:13,5:12.5,6:12,7:11,8:10.5,9:10,10:9.5};
 function faceSvg(c){
-  var h='<svg viewBox="0 0 50 70" aria-hidden="true"><rect x=".5" y=".5" width="49" height="69" rx="5" fill="#fffdf6" stroke="'+(c.r===8?"#e9c46a":"#d8c9a6")+'" stroke-width="'+(c.r===8?2:1)+'"/>';
+  var h='<svg viewBox="0 0 50 70" aria-hidden="true"><rect class="fb" x=".5" y=".5" width="49" height="69" rx="5" fill="#fffdf6" stroke="'+(c.r===8?"#e9c46a":"#d8c9a6")+'" stroke-width="'+(c.r===8?2:1)+'"/><image href="jt/jt-face.webp?v=1115a" width="50" height="70" preserveAspectRatio="none"/>';
   if(c.r===8) h+='<rect x="3" y="3" width="44" height="64" rx="3.5" fill="none" stroke="url(#ceRain)" stroke-width="1.6" opacity=".9"/>';
   PIPS[c.r].forEach(function(p){ var s=PS[c.r]; h+='<use href="#ceS'+c.s+'" x="'+(p[0]-s/2)+'" y="'+(p[1]-s/2)+'" width="'+s+'" height="'+s+'"/>'; });
   var col=c.r===8?"url(#ceRain)":SC[c.s], st=c.r===8?' stroke="#7b2410" stroke-width=".5"':'';
@@ -139,7 +143,7 @@ function faceSvg(c){
   h+='<use href="#ceS'+c.s+'" x="2.5" y="15" width="6.5" height="6.5"/><use href="#ceS'+c.s+'" x="41" y="48.5" width="6.5" height="6.5" transform="rotate(180 44.25 51.75)"/>';
   return h+'</svg>';
 }
-var BACK='<svg viewBox="0 0 50 70" aria-hidden="true"><defs><pattern id="ceBk" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#1f6f5a"/><rect width="3" height="6" fill="#18594a"/></pattern></defs><rect x=".5" y=".5" width="49" height="69" rx="5" fill="url(#ceBk)" stroke="#fff4df" stroke-width="2.5"/><circle cx="25" cy="35" r="7" fill="#ffe27a"/><path d="M25 29.5l1.6 3.4 3.7.4-2.8 2.5.8 3.7L25 37.6l-3.3 1.9.8-3.7-2.8-2.5 3.7-.4z" fill="#7b4a1f"/></svg>';
+var BACK='<svg viewBox="0 0 50 70" aria-hidden="true"><defs><pattern id="ceBk" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#1f6f5a"/><rect width="3" height="6" fill="#18594a"/></pattern></defs><g class="fb"><rect x=".5" y=".5" width="49" height="69" rx="5" fill="url(#ceBk)" stroke="#fff4df" stroke-width="2.5"/><circle cx="25" cy="35" r="7" fill="#ffe27a"/><path d="M25 29.5l1.6 3.4 3.7.4-2.8 2.5.8 3.7L25 37.6l-3.3 1.9.8-3.7-2.8-2.5 3.7-.4z" fill="#7b4a1f"/></g><image href="jt/jt-back.webp?v=1115a" width="50" height="70" preserveAspectRatio="none"/></svg>';
 
 /* ---------- sounds ---------- */
 function sPlay(){ BWG.noise(0,.1,.12,1500,6000); BWG.tone(520,.05,.08,.03,"triangle"); }
@@ -339,5 +343,7 @@ window.CEO={deal:deal,draw:drawMe,pick:function(){ busy=true; pickSuit(); },tap:
   state:function(){ return {P:P,turn:turn,busy:busy,over:over,hand:hands&&hands[0].map(function(c){ return SN[c.s][0]+c.r; }),opp:hands&&hands.slice(1).map(function(h){ return h.length; }),deck:deck&&deck.length,top:pile&&top()&&(SN[top().s][0]+top().r),suit:SN[suit]}; },lines:L};
 })();
 </script>
+<script>/* the photo look (Nov 15): html.jtp once the jt/ pictures have loaded; the drawn look stays as the fallback */
+(function(){ var L=["jt-bg-sm.jpg","jt-table.jpg","jt-back.webp","jt-face.webp"], n=0; L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n===L.length) document.documentElement.classList.add("jtp"); }; i.src="jt/"+f+"?v=1115a"; }); })();</script>
 </body>
 </html>
