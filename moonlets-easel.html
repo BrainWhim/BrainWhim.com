@@ -295,7 +295,10 @@
   var AC=null;
   function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C(); }
     if(AC.state==="suspended") AC.resume(); return AC; }
-  document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+  /* iPhones/iPads only let sound start from a real tap (touchend/click), and the first sound must be started inside it:
+     wake the sound on every kind of tap and play a silent blip there until it runs (Nov 16; the maze was silent on phones) */
+  function unlock(){ var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
   function snd(){ return BWK.store.get("sound",true) ? ac() : null; }
   function tone(c,f,t,dur,vol,type,f2){ var o=c.createOscillator(), g=c.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
     if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur*.7);
