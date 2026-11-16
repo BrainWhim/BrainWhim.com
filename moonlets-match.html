@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Moon Match · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Moon Match (Nov 16, 2026), a Moon Games memory game.
+   Turn over two cards; find the pairs of the 13 photo animals (the Slime Lab's sl/c-*.webp). A snowy winter morning.
+   Little Moonlet: 6 pairs, with a short peek at the start. Big Moonlet (the kit's switch): 10 pairs, no peek.
+   Judy's ChatGPT photos in mm/ (bg, back, face, tray) replace the drawn card backs, faces and tray as they arrive
+   (html.mmp once the card photos are in).
+   Saved on the device: bwk.match {plays, best, bbest} (best = fewest tries). Finn's lines mm-* (Finn's voice).
+   Test hook: MMO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#c9d6ea url("mm/bg-sm.jpg?v=1116a") center 60%/cover;filter:blur(1.2px) brightness(.92)}
+@media (min-width:1100px){.bg{background-image:url("mm/bg.jpg?v=1116a")}}
+.snow{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.snow i{position:absolute;top:-12px;border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,255,255,.85) 45%,rgba(255,255,255,0) 72%);
+  animation:fall linear infinite;will-change:transform}
+@keyframes fall{to{transform:translate3d(var(--dx),110vh,0)}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+#wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+
+/* ---- the tray (drawn; the photo replaces it via border-image) ---- */
+#tray{position:relative;box-sizing:border-box;border-radius:26px;
+  background:radial-gradient(120% 90% at 30% 20%,#c8b6e6,#a993d2 60%,#9580c4);
+  border-style:solid;border-width:var(--fw,18px);border-color:#ecdcbc #d8c29a #ccb489 #e4d2ae;
+  box-shadow:inset 0 3px 8px rgba(60,30,90,.45),0 18px 36px rgba(20,20,60,.45),0 0 0 1px rgba(120,90,50,.5)}
+html.mmt #tray{background:none;border-style:solid;border-width:var(--fw);border-color:transparent;border-radius:0;box-shadow:none;
+  border-image:url("mm/tray.webp?v=1116a") var(--bs) fill / var(--fw) stretch;filter:drop-shadow(0 16px 22px rgba(20,20,60,.45))}
+#grid{position:absolute;display:grid;gap:var(--gap,10px)}
+
+/* ---- cards: a 3-D turn; back = moonstone with a silver moon, face = icy blue with the animal ---- */
+.cd{appearance:none;border:0;padding:0;margin:0;background:none;cursor:pointer;position:relative;perspective:700px;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .18s}
+.cd:active{transform:scale(.96)}
+.cd .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.3,.7,.3,1.2)}
+.cd.up .in{transform:rotateY(180deg)}
+.cd .sd{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16%}
+.cd .bk{background:radial-gradient(90% 90% at 30% 25%,#e7defa,#b7a7e0 55%,#9a86cf);
+  box-shadow:0 5px 0 #7a68ad,0 9px 12px rgba(30,20,60,.4),inset 0 0 0 3px #e9eef6,inset 0 0 0 5px #a9b2c2}
+.cd .bk svg{position:absolute;inset:26%;width:48%;height:48%}
+.cd .fc{transform:rotateY(180deg);background:radial-gradient(90% 90% at 30% 25%,#fbfdff,#e3f0fb 60%,#cfe2f3);
+  box-shadow:0 5px 0 #98b4cc,0 9px 12px rgba(30,20,60,.35),inset 0 0 0 3px #eef3f8,inset 0 0 0 5px #aab6c4;display:flex;align-items:center;justify-content:center}
+html.mmp .cd .sd{border-radius:0;box-shadow:none;background:none}
+html.mmp .cd .bk{background:url("mm/back.webp?v=1116a") center/100% 100% no-repeat;filter:drop-shadow(0 6px 6px rgba(30,20,60,.35))}
+html.mmp .cd .bk svg{display:none}
+html.mmp .cd .fc{background:url("mm/face.webp?v=1116a") center/100% 100% no-repeat;filter:drop-shadow(0 6px 6px rgba(30,20,60,.3))}
+.cd .fc img{height:78%;max-width:84%;object-fit:contain;margin-top:-4%;filter:drop-shadow(0 3px 3px rgba(40,40,70,.35));pointer-events:none;user-select:none;-webkit-user-select:none}
+.cd.got .in{animation:hop .55s ease-out}
+@keyframes hop{0%{transform:rotateY(180deg)}40%{transform:rotateY(180deg) translateY(-14%) scale(1.08)}100%{transform:rotateY(180deg)}}
+.cd.got .fc::after{content:"";position:absolute;inset:4%;border-radius:18%;box-shadow:0 0 0 3px rgba(255,214,110,.95),0 0 16px rgba(255,214,110,.8);pointer-events:none}
+.cd.got{cursor:default}
+.cd.hint .in{animation:wig .5s ease-in-out 2}
+@keyframes wig{25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+.cd:focus-visible{outline:3px solid #ffe08a;outline-offset:3px;border-radius:14px}
+.spark{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;pointer-events:none;z-index:5;border-radius:50%;
+  background:radial-gradient(circle,#fff 0,#ffe9a0 40%,rgba(255,233,160,0) 70%);animation:spk .8s ease-out forwards}
+@keyframes spk{to{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0}}
+
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+.score{flex:none;font-size:14px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85);margin:0;min-height:17px}
+.stars{color:#ffd76a;letter-spacing:2px}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}}
+@media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.snow i{animation:none}.snow{display:none}.cd .in{transition:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="snow" id="snow" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div id="wrap"><div id="tray"><div id="grid" role="grid" aria-label="Memory cards"></div></div></div>
+  <p class="score" id="score" aria-live="polite"></p>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1115r"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1116a";
+  /* ---------- the animals (the Slime Lab's photos) ---------- */
+  var AN=[["biscuit","puppy","Two puppies!"],["mittens","kitten","Two kittens!"],["clover","bunny","Two bunnies!"],["pip","hamster","Two hamsters!"],
+    ["hazel","fox","Two foxes!"],["poppy","panda","Two pandas!"],["pearl","unicorn","Two unicorns!"],["pickle","frog","Two frogs!"],["coco","koala","Two koalas!"],
+    ["rosie","piglet","Two piglets!"],["sunny","duckling","Two ducklings!"],["lulu","llama","Two llamas!"],["ziggy","monkey","Two monkeys!"]]
+    .map(function(a){ return {id:a[0],kind:a[1],line:a[2]}; });
+
+  /* ---------- Finn's lines (clips mm-*, Finn's voice) ---------- */
+  var HI="Let's play Moon Match! Turn over two cards. Can you find two that are the same?";
+  var PEEK="Take a peek! Try to remember where the animals are.", GO="Tap a card to turn it over!";
+  var MISS="Oops, not the same! Remember where they are, and try again.", WIN="You found them all! Great remembering!";
+  var BIGWIN="Wow! All ten pairs! Big Moonlet memory!", FAST="Wow, so few tries! What a memory!", AGAIN="Tap New game to play again!";
+  var LN={"mm-hi":HI,"mm-peek":PEEK,"mm-go":GO,"mm-miss":MISS,"mm-win":WIN,"mm-bigwin":BIGWIN,"mm-fast":FAST,"mm-again":AGAIN};
+  AN.forEach(function(a){ LN["mm-a-"+a.kind]=a.line; });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+
+  /* Finn's face (the same drawing as the kit's speech bubble) */
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("mmS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"mm-hi"); });
+  ["mm-hi","mm-peek","mm-go","mm-miss","mm-win","bg-on","bg-off"].forEach(BWK.preload);
+
+  /* ---------- falling snow (a few soft flakes) ---------- */
+  (function(){ var s="", n=innerWidth<700?14:24; for(var i=0;i<n;i++){ var z=3+Math.random()*6;
+      s+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+z.toFixed(1)+'px;height:'+z.toFixed(1)+'px;opacity:'+(.5+Math.random()*.45).toFixed(2)+
+        ';--dx:'+Math.round((Math.random()-.5)*120)+'px;animation-duration:'+(9+Math.random()*10).toFixed(1)+'s;animation-delay:-'+(Math.random()*18).toFixed(1)+'s"></i>'; }
+    $("snow").innerHTML=s; })();
+
+  /* ---------- saved ---------- */
+  var S=BWK.store.get("match",null)||{}; S.plays=S.plays||0; S.best=S.best||0; S.bbest=S.bbest||0;
+  function save(){ BWK.store.set("match",S); }
+
+  /* ---------- sound (made in the browser) ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state==="suspended") AC.resume(); return AC; }
+  document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+  function on(){ return BWK.store.get("sound",true) && ac() && AC.state==="running"; }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SND={
+    flip:function(){ if(!on()) return; var t=AC.currentTime+.003; noise(t,.09,.07,2600,1.1); tone(900,t+.03,.06,.025,"triangle",1300); },
+    match:function(k){ if(!on()) return; var t=AC.currentTime+.01, b=[784,880,988,1047,1175,1319,1397,1568,1760,1976][Math.min(k,9)];
+      [1,1.25,1.5,2].forEach(function(m,i){ tone(b*m,t+i*.07,.45,.045,"triangle"); tone(b*m*2,t+i*.07+.01,.3,.012); }); },
+    miss:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(520,t,.18,.05,"sine",440); tone(415,t+.16,.26,.045,"sine",330); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); });
+      for(var i=0;i<8;i++) tone(2400+Math.random()*1800,t+.7+i*.07,.25,.012,"sine"); },
+    deal:function(i){ if(!on()) return; noise(AC.currentTime+.003+i*.04,.05,.035,3200,1.4); }
+  };
+
+  /* ---------- photos: the tray (border-image) and the two card sides ---------- */
+  (function(){ var n=0, done=function(){ if(++n===2) document.documentElement.classList.add("mmp"); };
+    ["back","face"].forEach(function(k){ var im=new Image(); im.onload=done; im.src="mm/"+k+".webp?v="+AV; }); })();
+  /* the tray photo, measured on Judy's 1432 px original (top, right, bottom, left): WOOD = the birch rim, SL = border-image slices
+     (rim + the felt's rounded inner corner, so the corners never stretch) */
+  var WOOD=[130,106,90,120], SL=[290,266,250,280], TRAYK=0;
+  (function(){ var im=new Image(); im.onload=function(){ TRAYK=im.naturalWidth/1432; document.documentElement.classList.add("mmt"); layout(); }; im.src="mm/tray.webp?v="+AV; })();
+
+  /* ---------- the game ---------- */
+  var big=BWK.big(), G=null, lock=false, said={}, peekT=0;
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function newGame(){ clearTimeout(peekT); lock=false;
+    var pairs=big?10:6, pick=shuffle(AN.slice()).slice(0,pairs), deck=[];
+    pick.forEach(function(a){ deck.push(a,a); }); shuffle(deck);
+    G={pairs:pairs, cards:deck.map(function(a,i){ return {i:i,a:a,up:false,got:false}; }), open:[], found:0, tries:0, misses:0, done:false, started:false, t0:0};
+    build(); score(); bar();
+    if(!big){ lock=true; setTimeout(function(){ if(!G||G.started) return;
+        G.cards.forEach(function(c){ c.up=true; }); paint(); SND.flip();
+        if(!said.peek){ said.peek=1; say(PEEK,"mm-peek"); }
+        peekT=setTimeout(function(){ G.cards.forEach(function(c){ c.up=false; }); paint(); SND.flip(); lock=false;
+          if(!said.go){ said.go=1; setTimeout(function(){ if(!G.tries) say(GO,"mm-go"); },600); } },S.plays>2?1800:2600); },700); }
+    else if(!said.go){ said.go=1; setTimeout(function(){ if(G&&!G.tries) say(GO,"mm-go"); },1500); } }
+
+  var moonSVG='<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="mmMoonG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#d9dee8"/><stop offset="1" stop-color="#9aa3b5"/></linearGradient></defs>'+
+    '<path d="M25 5a16 16 0 1 0 10 27A13 13 0 1 1 25 5z" fill="url(#mmMoonG)" stroke="#8790a4" stroke-width=".8"/><circle cx="30" cy="11" r="1.4" fill="#fff"/></svg>';
+  function build(){ var g=$("grid");
+    g.innerHTML=G.cards.map(function(c){ return '<button class="cd" data-i="'+c.i+'" aria-label="Card '+(c.i+1)+', face down">'+
+      '<span class="in"><span class="sd bk">'+moonSVG+'</span><span class="sd fc"><img src="sl/c-'+c.a.id+'.webp?v=1115a" alt="" draggable="false"></span></span></button>'; }).join("");
+    layout(); Array.prototype.forEach.call(g.children,function(el,i){ el.animate&&el.animate([{opacity:0,transform:"translateY(-18px) scale(.9)"},{opacity:1,transform:"none"}],{duration:320,delay:i*28,easing:"ease-out",fill:"backwards"}); });
+    for(var i=0;i<4;i++) SND.deal(i); }
+  function paint(){ var els=$("grid").children;
+    G.cards.forEach(function(c,i){ var el=els[i]; el.classList.toggle("up",c.up||c.got); el.classList.toggle("got",c.got);
+      el.setAttribute("aria-label",(c.up||c.got)?("A "+c.a.kind+(c.got?", matched":"")):("Card "+(i+1)+", face down")); }); }
+
+  /* lay the cards out as big as the space allows (any number of columns), then size the tray around them */
+  function layout(){ if(!G) return; var w=$("wrap"), aw=w.clientWidth, ah=w.clientHeight; if(!aw||!ah) return;
+    var n=G.cards.length, best=null;
+    for(var cols=2;cols<=n;cols++){ var rows=Math.ceil(n/cols); if(n%cols) continue;
+      // size s of a card when the tray (frame ~ .2 s, gaps ~ .12 s) fills the space
+      var s=Math.min(aw/(cols+(cols-1)*.12+.8), ah/(rows+(rows-1)*.12+.86));
+      if(!best||s>best.s) best={cols:cols,rows:rows,s:s}; }
+    var s=Math.floor(Math.min(best.s, 170)), gap=Math.round(s*.12), fw=Math.max(12,Math.round(s*.2));
+    var gw=best.cols*s+(best.cols-1)*gap, gh=best.rows*s+(best.rows-1)*gap, pad=Math.round(s*.16);
+    var t=$("tray"), g=$("grid"); t.style.setProperty("--gap",gap+"px");
+    g.style.gridTemplateColumns="repeat("+best.cols+","+s+"px)"; g.style.gridAutoRows=s+"px";
+    if(TRAYK){ var k=fw/113, bw=SL.map(function(v){ return Math.round(v*k); }), wd=WOOD.map(function(v){ return Math.round(v*k); });
+      t.style.setProperty("--fw",bw.map(function(v){return v+"px";}).join(" ")); t.style.setProperty("--bs",SL.map(function(v){ return Math.round(v*TRAYK); }).join(" "));
+      t.style.width=(gw+2*pad+wd[1]+wd[3])+"px"; t.style.height=(gh+2*pad+wd[0]+wd[2])+"px";
+      g.style.left=(wd[3]+pad-bw[3])+"px"; g.style.top=(wd[0]+pad-bw[0])+"px"; }
+    else { t.style.setProperty("--fw",fw+"px"); t.style.width=(gw+2*pad+2*fw)+"px"; t.style.height=(gh+2*pad+2*fw)+"px"; g.style.left=pad+"px"; g.style.top=pad+"px"; }
+    G.lay=best; G.s=s; }
+  window.addEventListener("resize",layout);
+
+  function sparks(el){ var r=el.getBoundingClientRect(), tr=$("tray").getBoundingClientRect();
+    for(var i=0;i<9;i++){ var d=document.createElement("i"), a=Math.random()*Math.PI*2, v=r.width*(.45+Math.random()*.4);
+      d.className="spark"; d.style.left=(r.left-tr.left+r.width/2)+"px"; d.style.top=(r.top-tr.top+r.height/2)+"px";
+      d.style.setProperty("--dx",(Math.cos(a)*v).toFixed(0)+"px"); d.style.setProperty("--dy",(Math.sin(a)*v).toFixed(0)+"px");
+      $("tray").appendChild(d); setTimeout(d.remove.bind(d),850); } }
+
+  function tapCard(i){ if(!G||G.done||lock) return; var c=G.cards[i]; if(!c||c.up||c.got) return;
+    if(!G.started){ G.started=true; G.t0=Date.now(); bar(); }
+    c.up=true; G.open.push(c); SND.flip(); paint();
+    if(G.open.length<2) return;
+    G.tries++; var a=G.open[0], b=G.open[1]; G.open=[]; lock=true; score();
+    if(a.a.id===b.a.id){
+      setTimeout(function(){ a.got=b.got=true; G.found++; paint(); SND.match(G.found-1);
+        var els=$("grid").children; sparks(els[a.i]); sparks(els[b.i]);
+        say(a.a.line,"mm-a-"+a.a.kind); lock=false; score();
+        if(G.found===G.pairs) setTimeout(finish,700); },380);
+    } else {
+      G.misses++;
+      setTimeout(function(){ SND.miss(); if(!said.miss){ said.miss=1; say(MISS,"mm-miss"); } },420);
+      setTimeout(function(){ a.up=b.up=false; paint(); SND.flip(); lock=false; },big?1100:1400);
+    } }
+
+  function starsOf(){ var p=G.pairs, m=G.misses; return m<=p+2?3:m<=2*p+4?2:1; }
+  function finish(){ G.done=true; S.plays++; var k=big?"bbest":"best"; var rec=!S[k]||G.tries<S[k]; if(rec) S[k]=G.tries; save();
+    SND.win(); var els=$("grid").children; for(var i=0;i<G.cards.length;i+=2) (function(el,d){ setTimeout(function(){ sparks(el); },d); })(els[i],i*40);
+    BWK.played&&BWK.played("match");
+    var st=starsOf(); say(st===3?FAST:(big?BIGWIN:WIN), st===3?"mm-fast":(big?"mm-bigwin":"mm-win"));
+    score(); bar(); }
+  function score(){ var el=$("score");
+    if(!G) return el.textContent="";
+    if(G.done){ var st=starsOf(); el.innerHTML='<span class="stars">'+"★★★".slice(0,st)+'<span style="opacity:.35">'+"★★★".slice(st)+'</span></span> All '+G.pairs+' pairs in '+G.tries+' tries!'+
+      ((big?S.bbest:S.best)?' · Best: '+(big?S.bbest:S.best):''); return; }
+    el.textContent="Pairs: "+G.found+" of "+G.pairs+" · Tries: "+G.tries; }
+
+  /* ---------- the bottom row ---------- */
+  function bar(){ var done=G&&G.done;
+    $("bar").innerHTML='<button class="chip go'+(done?' pulse':'')+'" data-a="new"><em>↺</em><span>New game</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="new"){ BWK.finnStop(); newGame(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  $("grid").addEventListener("click",function(e){ var b=e.target.closest(".cd"); if(b) tapCard(+b.dataset.i); });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest("#grid,.chip,.k-head,.k-sheet,.k-veil")) return; say(HI,"mm-hi"); });
+
+  newGame();
+  window.MMO={newGame:newGame, tap:tapCard, big:function(on){ big=!!on; BWK.setBig(big); newGame(); }, layout:layout,
+    state:function(){ return G&&{pairs:G.pairs,found:G.found,tries:G.tries,misses:G.misses,done:G.done,lock:lock,lay:G.lay,s:G.s,ids:G.cards.map(function(c){return c.a.id;})}; },
+    solve:function(miss){ /* plays itself (tests): optional misses first, then every pair */ var ids=G.cards.map(function(c){return c.a.id;}), q=[];
+      for(var m=0;m<(miss||0);m++){ var x=ids.indexOf(ids[0],1)===1?2:1; q.push([0,x]); }
+      var seen={}; ids.forEach(function(id,i){ if(seen[id]!=null) q.push([seen[id],i]); else seen[id]=i; });
+      (function step(){ if(!q.length) return; if(lock){ setTimeout(step,120); return; } var p=q.shift(); tapCard(p[0]); tapCard(p[1]); setTimeout(step,160); })(); }};
+})();
+</script>
+</body>
+</html>
