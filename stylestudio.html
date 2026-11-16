@@ -460,19 +460,36 @@ var SCENE_DEFS=
   '<radialGradient id="ssSpot" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9b0" stop-opacity=".35"/><stop offset="1" stop-color="#ffe9b0" stop-opacity="0"/></radialGradient>'+
   '<linearGradient id="ssBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity=".0"/><stop offset=".3" stop-color="#fff6d8" stop-opacity=".22"/><stop offset="1" stop-color="#fff6d8" stop-opacity=".32"/></linearGradient>';
 var svg=null, gLook=null, gFx=null;
+/* photo props (Nov 16): once all six have loaded, the scene is rebuilt with them; the drawn art stays as the fallback */
+var PH=false;
+function SI(f){ return "ss/st-"+f+"?v=1116a"; }
+(function(){ var L=["rack.webp","mirror.webp","sign.webp","counter.jpg","lights.webp","frame.webp"], n=0;
+  L.forEach(function(s){ var i=new Image(); i.onload=function(){ if(++n<L.length) return; PH=true;
+    if(svg && document.body.classList.contains("m-play")){ build(); draw(); } }; i.src=SI(s); }); })();
+function photoScene(){
+  return '<defs><pattern id="ssCtrP" patternUnits="userSpaceOnUse" x="0" y="150" width="303.3" height="100"><image href="'+SI("counter.jpg")+'" width="303.3" height="100" preserveAspectRatio="none"/></pattern>'+
+    '<pattern id="ssLtP" patternUnits="userSpaceOnUse" x="0" y="-4" width="180.3" height="30"><image href="'+SI("lights.webp")+'" width="180.3" height="30" preserveAspectRatio="none"/></pattern></defs>'+
+    '<rect x="-2000" y="150" width="4400" height="100" fill="url(#ssCtrP)"/><rect x="-2000" y="150" width="4400" height="12" fill="#000" opacity=".1"/>'+
+    '<rect x="186" y="236" width="28" height="13" rx="3" fill="#e9c46a" stroke="#8a5f12" stroke-width=".8"/><text x="200" y="246" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif" letter-spacing=".5">BW</text>'+
+    '<rect x="-600" y="-4" width="1600" height="30" fill="url(#ssLtP)"/>'+
+    '<image href="'+SI("sign.webp")+'" x="-8" y="26" width="104" height="51"/>'+
+    '<text x="44" y="54.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#fff" stroke="#c2457f" stroke-width="2.2" paint-order="stroke" stroke-linejoin="round" font-family="Outfit,system-ui,sans-serif">Sophie\'s</text>'+
+    '<text x="44" y="66.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="#fff" stroke="#c2457f" stroke-width="2.2" paint-order="stroke" stroke-linejoin="round" font-family="Outfit,system-ui,sans-serif">Style Studio</text>'+
+    '<ellipse cx="364" cy="97" rx="28" ry="40" fill="#000" opacity=".22" transform="translate(2 3)"/><image href="'+SI("mirror.webp")+'" x="332" y="52" width="60" height="83.25"/>'+
+    '<ellipse cx="36" cy="203" rx="54" ry="4.5" fill="#000" opacity=".3"/><image href="'+SI("rack.webp")+'" x="-22" y="84" width="116" height="118.8"/>'; }
 function build(){
   var b=$("#stage"), old=b.querySelector("svg"); if(old) old.remove();
   var s='<svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMax meet" xmlns="'+NS+'"><defs>'+SCENE_DEFS+'</defs>'+
-   '<rect x="-2000" y="150" width="4400" height="80" fill="url(#ssWood)"/><rect x="-2000" y="150" width="4400" height="80" fill="url(#ssGrain)"/>'+
+   (PH ? photoScene() : '<rect x="-2000" y="150" width="4400" height="80" fill="url(#ssWood)"/><rect x="-2000" y="150" width="4400" height="80" fill="url(#ssGrain)"/>'+
    '<rect x="-2000" y="150" width="4400" height="2" fill="#f0c48e" opacity=".75"/><rect x="-2000" y="152" width="4400" height="14" fill="#000" opacity=".08"/>'+
    '<rect x="-2000" y="226" width="4400" height="24" fill="url(#ssEdge)"/><rect x="-2000" y="226" width="4400" height="1.5" fill="#d9a46c" opacity=".6"/>'+
    '<rect x="186" y="231.5" width="28" height="13" rx="3" fill="#e9c46a" stroke="#8a5f12" stroke-width=".8"/><text x="200" y="241.5" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif" letter-spacing=".5">BW</text>'+
-   lightsArt()+'<g transform="translate(0 40) scale(.53)">'+signArt()+'</g>'+mirrorArt()+rackArt()+
+   lightsArt()+'<g transform="translate(0 40) scale(.53)">'+signArt()+'</g>'+mirrorArt()+rackArt())+
    /* the round stage under the dress form */
    '<ellipse cx="200" cy="222" rx="74" ry="11" fill="#000" opacity=".3"/><path d="M126 214V219A74 11 0 0 0 274 219V214Z" fill="#c25e94"/><ellipse cx="200" cy="214" rx="74" ry="11" fill="url(#ssDais)"/>'+
    '<ellipse cx="200" cy="214" rx="70" ry="9.4" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1" stroke-dasharray="2 2.4"/><path d="M126 216.5A74 11 0 0 0 274 216.5" fill="none" stroke="url(#ssGold)" stroke-width="1.6"/>'+
    '<g id="ssBeamG" opacity="0"><path d="M176 -40L224 -40L290 226L110 226Z" fill="url(#ssBeam)"/></g>'+
-   '<g id="ssTw"><rect x="99" y="5" width="208" height="244" rx="3" fill="#000" opacity=".35"/><rect x="95" y="0" width="210" height="246" rx="3" fill="url(#ssWoodV)" stroke="#4f2c11" stroke-width=".8"/><image id="ssLook" x="99" y="3" width="202" height="235.7" preserveAspectRatio="none"/><rect x="188" y="239.5" width="24" height="6" rx="1.5" fill="#e9c46a" stroke="#8a5f12" stroke-width=".5"/><text x="200" y="244.3" text-anchor="middle" font-size="5" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif" letter-spacing=".3">BW</text></g><g id="ssFx"></g></svg>';
+   '<g id="ssTw"><rect x="99" y="5" width="208" height="244" rx="3" fill="#000" opacity=".35"/><rect x="95" y="0" width="210" height="246" rx="3" fill="url(#ssWoodV)" stroke="#4f2c11" stroke-width=".8"/><image id="ssLook" x="99" y="3" width="202" height="235.7" preserveAspectRatio="none"/>'+(PH?'<image href="'+SI("frame.webp")+'" x="95" y="0" width="210" height="246" preserveAspectRatio="none"/>':'')+'<rect x="188" y="239.5" width="24" height="6" rx="1.5" fill="#e9c46a" stroke="#8a5f12" stroke-width=".5"/><text x="200" y="244.3" text-anchor="middle" font-size="5" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif" letter-spacing=".3">BW</text></g><g id="ssFx"></g></svg>';
   b.insertAdjacentHTML("afterbegin",s); svg=b.querySelector("svg"); gLook=svg.querySelector("#ssLook"); gFx=svg.querySelector("#ssFx"); }
 
 /* ---------- sounds of its own ---------- */
