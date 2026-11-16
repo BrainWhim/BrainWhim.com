@@ -45,7 +45,8 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
 @keyframes glw{50%{transform:scale(1.1) rotate(-6deg)}}
 .it.gone{transform:scale(0) translateY(-40%);opacity:0}
 .it.home.shut{filter:grayscale(.5) brightness(.8)}
-.bun{position:absolute;left:0;top:0;pointer-events:none;z-index:4;transition:transform .17s ease-out;will-change:transform}
+.bun{position:absolute;left:0;top:0;pointer-events:none;z-index:4;will-change:transform}
+.bun .b{will-change:transform}
 .bun .b{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center}
 .bun img{width:118%;height:118%;object-fit:contain;filter:drop-shadow(0 4px 3px rgba(30,20,0,.45))}
 .bun .em{font-size:calc(var(--c)*.66);line-height:1}
@@ -173,7 +174,7 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
       var onRoute={}; P.forEach(function(p){ onRoute[p[0]+","+p[1]]=1; });
       cells.sort(function(a,b){ return (onRoute[a[0]+","+a[1]]?1:0)-(onRoute[b[0]+","+b[1]]?1:0); });
       for(var i=0;i<cells.length&&carrots.length<3;i++){ var c=cells[i]; if(carrots.every(function(o){ return Math.abs(o.x-c[0])+Math.abs(o.y-c[1])>=3; })) carrots.push({x:c[0],y:c[1],got:false}); } }
-    G.n=n; G.C=C; G.bx=0; G.by=0; G.end=end; G.carrots=carrots; G.trail={"0,0":1}; G.moving=false; G.q=[]; G.face=1; draw(); prog(); }
+    G.mv=null; G.n=n; G.C=C; G.bx=0; G.by=0; G.end=end; G.carrots=carrots; G.trail={"0,0":1}; G.moving=false; G.q=[]; G.face=1; draw(); prog(); }
   function prog(){ var h=""; for(var i=0;i<3;i++) h+='<i class="'+(i<G.m||G.done?'on':'')+'"></i>';
     if(G.carrots&&!G.done){ h+='<span class="cr">'+G.carrots.map(function(c){ return PH.carrot?'<img class="'+(c.got?'got':'')+'" src="'+PH.carrot+'" alt="">':'<span class="'+(c.got?'got':'')+'">🥕</span>'; }).join("")+'</span>'; }
     $("prog").innerHTML=h; }
@@ -190,15 +191,16 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
     h+='<div class="it home'+(shut?' shut':'')+'" style="left:'+(G.end[0]*c+c*.04)+'px;top:'+(G.end[1]*c+c*.02)+'px;width:'+(c*.92)+'px;height:'+(c*.92)+'px">'+img("home","🏡")+'</div>';
     h+='<div class="bun" id="bun" style="width:'+(c*.8)+'px;height:'+(c*.8)+'px"><div class="b">'+img("bunny","🐰")+'</div></div>';
     M.innerHTML=h; placeBun(true); }
-  function placeBun(now){ var b=$("bun"), c=G.c; if(!b) return; if(now) b.style.transition="none";
-    b.style.transform="translate("+(G.bx*c+c*.1)+"px,"+(G.by*c+c*.06)+"px)"; b.classList.toggle("l",G.face<0);
-    if(now){ void b.offsetWidth; b.style.transition=""; } }
+  /* Bunny's place on screen: her square plus how far along she is in a glide (G.mv), with a little hop arc per square */
+  function placeBun(){ var b=$("bun"), c=G.c; if(!b) return; var mv=G.mv, t=mv?mv.t:0, x=G.bx+(mv?mv.dx*t:0), y=G.by+(mv?mv.dy*t:0);
+    b.style.transform="translate("+(x*c+c*.1).toFixed(1)+"px,"+(y*c+c*.06).toFixed(1)+"px)"; b.classList.toggle("l",G.face<0);
+    var bob=mv?Math.sin(Math.PI*Math.max(0,Math.min(1,t)))*.2:0; b.firstChild.style.transform=bob?"translateY("+(-bob*100).toFixed(1)+"%)":""; }
 
-  /* ---------- moving: one square at a time toward the finger ---------- */
+  /* ---------- moving: Bunny glides toward the finger along the paths (rAF), hopping once per square ---------- */
   function open(x,y,dx,dy){ var o=G.C[y][x]; return dx===1?o.e:dx===-1?o.w:dy===1?o.s:o.n; }
   function step(dx,dy){ if(!G||G.done||G.busy) return false; if(!open(G.bx,G.by,dx,dy)){ return false; }
     var shut=big&&G.carrots.some(function(k){return !k.got;}), nx=G.bx+dx, ny=G.by+dy;
-    G.bx=nx; G.by=ny; if(dx) G.face=dx; var b=$("bun"); b.classList.remove("hop"); void b.offsetWidth; b.classList.add("hop"); placeBun(); SND.hop();
+    G.bx=nx; G.by=ny; G.mv=null; if(dx) G.face=dx; placeBun();
     var key=nx+","+ny; if(!G.trail[key]){ G.trail[key]=1; trailAt(nx,ny,dx,dy); }
     G.carrots.forEach(function(k,i){ if(!k.got&&k.x===nx&&k.y===ny){ k.got=true; var el=$("maze").querySelector('.it.carrot[data-k="'+i+'"]'); el&&el.classList.add("gone"); SND.crunch(); prog();
       var left=G.carrots.filter(function(k){return !k.got;}).length;
@@ -219,18 +221,33 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
     say(big?BIGWIN:WIN,big?"bz-bigwin":"bz-win");
     $("maze").innerHTML='<div class="done">'+(PH.sit?'<img src="'+PH.sit+'" alt="">':'')+'<b>★★★</b><p>Bunny is home!</p></div>'; bar(); }
 
-  var drag=false, bumpT=0;
-  function toward(e){ var r=$("maze").getBoundingClientRect(), c=G.c, fx=(e.clientX-r.left)/c, fy=(e.clientY-r.top)/c;
-    var dx=fx-(G.bx+.5), dy=fy-(G.by+.5); if(Math.abs(dx)<.55&&Math.abs(dy)<.55) return;
-    var tries=Math.abs(dx)>Math.abs(dy)?[[Math.sign(dx),0],[0,Math.sign(dy)]]:[[0,Math.sign(dy)],[Math.sign(dx),0]];
-    for(var i=0;i<2;i++){ var t=tries[i]; if(!t[0]&&!t[1]) continue; if(i===1&&Math.abs(i===1?(t[0]?dx:dy):0)<.55) continue; if(step(t[0],t[1])) return; }
-    if(Date.now()-bumpT>900){ bumpT=Date.now(); SND.bump(); G.bumps=(G.bumps||0)+1; if(G.bumps===3) say(BUMP,"bz-bump"); } }
-  var tick=0;
-  $("maze").addEventListener("pointerdown",function(e){ if(!G||G.done) return; e.preventDefault(); drag=true; $("maze").setPointerCapture&&$("maze").setPointerCapture(e.pointerId); toward(e); clearInterval(tick);
-    var last=e; tick=setInterval(function(){ if(drag) toward(last); },190); $("maze")._last=function(ev){ last=ev; }; });
-  $("maze").addEventListener("pointermove",function(e){ if(drag&&$("maze")._last) $("maze")._last(e); });
-  function up(){ drag=false; clearInterval(tick); } window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
-  document.addEventListener("keydown",function(e){ var k={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(k){ e.preventDefault(); if(!step(k[0],k[1])) SND.bump(); } });
+  var drag=false, bumpT=0, raf=0, last=0;  // speed: 4.2 squares a second (4.6 for Big Moonlet)
+  function bump(){ if(Date.now()-bumpT>900){ bumpT=Date.now(); SND.bump(); G.bumps=(G.bumps||0)+1; if(G.bumps===3) say(BUMP,"bz-bump"); } }
+  function choose(){ // from the square's center toward the finger: the main direction first, then the other if the finger is off that way too
+    var dx=G.fx-(G.bx+.5), dy=G.fy-(G.by+.5); if(Math.abs(dx)<.4&&Math.abs(dy)<.4) return null;
+    var a=[Math.sign(dx),0], b=[0,Math.sign(dy)], tries=Math.abs(dx)>=Math.abs(dy)?[a,b]:[b,a], off=Math.abs(dx)>=Math.abs(dy)?Math.abs(dy):Math.abs(dx);
+    for(var i=0;i<2;i++){ var d=tries[i]; if(!d[0]&&!d[1]) continue; if(i===1&&off<.35) continue; if(open(G.bx,G.by,d[0],d[1])) return d; }
+    bump(); return null; }
+  function startMv(d){ G.mv={dx:d[0],dy:d[1],t:0,v:1}; if(d[0]) G.face=d[0]; SND.hop(); }
+  function loop(now){ raf=0; if(!G||G.done||G.busy){ return; } var dt=Math.min(.05,(now-last)/1000); last=now;
+    if(!G.mv){ var d=drag?choose():null; if(d){ if(open(G.bx,G.by,d[0],d[1])) startMv(d); else bump(); } }
+    var mv=G.mv;
+    if(mv){
+      if(drag){ // the finger behind her (along her way) turns her back; otherwise she carries on
+        var px=G.bx+.5+mv.dx*mv.t, py=G.by+.5+mv.dy*mv.t, along=(G.fx-px)*mv.dx+(G.fy-py)*mv.dy; mv.v=along<-.25?-1:1; }
+      else if(!mv.kb) mv.v=mv.t>=.35?1:-1;
+      mv.t+=mv.v*(big?4.6:4.2)*dt;
+      if(mv.t>=1){ var dx=mv.dx, dy=mv.dy; step(dx,dy); }
+      else if(mv.t<=0){ G.mv=null; }
+      placeBun(); }
+    if(G.mv||drag) raf=requestAnimationFrame(loop); }
+  function run(){ if(!raf){ last=performance.now(); raf=requestAnimationFrame(loop); } }
+  function finger(e){ var r=$("maze").getBoundingClientRect(); G.fx=(e.clientX-r.left)/G.c; G.fy=(e.clientY-r.top)/G.c; }
+  $("maze").addEventListener("pointerdown",function(e){ if(!G||G.done) return; e.preventDefault(); drag=true; $("maze").setPointerCapture&&$("maze").setPointerCapture(e.pointerId); finger(e); run(); });
+  $("maze").addEventListener("pointermove",function(e){ if(drag) finger(e); });
+  function up(){ drag=false; } window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
+  document.addEventListener("keydown",function(e){ var k={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(k&&G&&!G.done){ e.preventDefault();
+    if(G.mv) return; if(!open(G.bx,G.by,k[0],k[1])){ SND.bump(); return; } startMv(k); G.mv.kb=1; run(); } });
   window.addEventListener("resize",function(){ if(G&&!G.done) draw(); });
 
   function bar(){ $("bar").innerHTML='<button class="chip go'+(G&&G.done?' pulse':'')+'" data-a="new"><em>↺</em><span>'+(G&&G.done?'Play again':'New maze')+'</span></button>'+
