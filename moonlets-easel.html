@@ -135,6 +135,16 @@
 @media (max-width:600px) and (max-height:560px){.pic{min-width:0;height:46px}.tray{--ps:min(48px,12.4vw)}}
 @media (min-width:601px) and (max-aspect-ratio:4/5){.tray{--ps:min(74px,10.5vw)}}
 @media (prefers-reduced-motion:reduce){.perch svg{animation:none}.r{transition:none}}
+/* the photo look (Nov 15): html.ezp once the ez/ pictures have loaded; a bright, sunny art corner (not every Moonlets room is dark) */
+.ezp .bg{background-image:url("ez/ez-bg-sm.jpg?v=1115a");background-position:50% 35%;filter:blur(1.2px) brightness(.95) saturate(1.05)}
+@media (min-width:1100px){.ezp .bg{background-image:url("ez/ez-bg.jpg?v=1115a")}}
+.ezp .board{background:linear-gradient(180deg,rgba(255,240,210,.12),rgba(80,40,10,.18)),url("ez/ez-wood.jpg?v=1115a") center/cover}
+.ezp .board::after{display:none}
+.ezp .ledge{background:linear-gradient(180deg,rgba(255,240,210,.25),rgba(80,40,10,.35)),url("ez/ez-wood.jpg?v=1115a") 0 40%/300px auto}
+.ezp .leg{background:linear-gradient(90deg,rgba(60,30,10,.35),rgba(255,240,210,.15) 40%,rgba(60,30,10,.35)),url("ez/ez-wood.jpg?v=1115a") center/400px auto}
+.ezp .paper{background:#fff url("ez/ez-paper.jpg?v=1115a") center/cover}
+.ezp .paper svg,.ezp .paper canvas{mix-blend-mode:multiply}
+.pot img{width:100%;height:100%;display:block;filter:drop-shadow(0 5px 6px rgba(0,0,0,.4))}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -199,7 +209,17 @@
   function shade(hex,k){ var n=parseInt(hex.slice(1),16), r=n>>16, g=n>>8&255, b=n&255;
     var f=function(v){ return Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k))); };
     return "#"+((1<<24)|(f(r)<<16)|(f(g)<<8)|f(b)).toString(16).slice(1); }
-  function potSvg(i,c){ var id="pt"+i; return '<svg viewBox="0 0 60 60" aria-hidden="true"><defs>'+
+  /* photo paint pots (Nov 15): the white paint in ez-pot.webp is tinted to each color on a canvas (only the paint, not the glass) */
+  var POT=null, POTC={};
+  function potURL(hex){ if(POTC[hex]) return POTC[hex]; var n=POT.width, cv=document.createElement("canvas"); cv.width=cv.height=n; var g=cv.getContext("2d"); g.drawImage(POT,0,0,n,n);
+    var d=g.getImageData(0,0,n,n), p=d.data, x=parseInt(hex.slice(1),16), cr=(x>>16)&255, cg=(x>>8)&255, cb=x&255;
+    for(var i=0;i<p.length;i+=4){ var r=p[i], gg=p[i+1], b=p[i+2], mx=Math.max(r,gg,b), mn=Math.min(r,gg,b);
+      if(p[i+3]<230||mx<150||(mx-mn)/mx>=.14) continue;
+      var L=mx/215, s=Math.min(L,1.05), h=Math.max(0,Math.min(1,(L-1)/.18));
+      p[i]=cr*s+(255-cr*s)*h; p[i+1]=cg*s+(255-cg*s)*h; p[i+2]=cb*s+(255-cb*s)*h; }
+    g.putImageData(d,0,0); return POTC[hex]=cv.toDataURL(); }
+  function potSvg(i,c){ if(POT) return '<img src="'+potURL(c)+'" alt="">'; return potSvg0(i,c); }
+  function potSvg0(i,c){ var id="pt"+i; return '<svg viewBox="0 0 60 60" aria-hidden="true"><defs>'+
     '<linearGradient id="'+id+'j" x1="0" x2="1"><stop offset="0" stop-color="#d9d2e6"/><stop offset=".28" stop-color="#fdfbff"/><stop offset=".62" stop-color="#ece6f4"/><stop offset="1" stop-color="#b9b0c9"/></linearGradient>'+
     '<radialGradient id="'+id+'p" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="'+shade(c,.35)+'"/><stop offset=".7" stop-color="'+c+'"/><stop offset="1" stop-color="'+shade(c,-.25)+'"/></radialGradient></defs>'+
     '<path d="M9 22 V48 Q9 56 30 56 Q51 56 51 48 V22Z" fill="url(#'+id+'j)" stroke="#8e84a3" stroke-width="1.2"/>'+
@@ -225,6 +245,8 @@
   var ERASER='<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-35 20 20)"><rect x="5" y="13" width="30" height="14" rx="3" fill="#ff9ec4" stroke="#b9577f" stroke-width="1.4"/>'+
     '<rect x="19" y="13" width="16" height="14" rx="2" fill="#7ab4f5" stroke="#3f72b8" stroke-width="1.4"/><rect x="7" y="15.5" width="9" height="3" rx="1.5" fill="#fff" opacity=".6"/></g></svg>';
   var SLOT='<svg viewBox="0 0 60 60" aria-hidden="true"><ellipse cx="30" cy="38" rx="19" ry="15" fill="rgba(255,255,255,.07)" stroke="rgba(230,215,255,.5)" stroke-width="2" stroke-dasharray="4 4"/></svg>';
+  window.EZPOTSET=function(img){ POT=img; [].forEach.call(document.querySelectorAll(".pot.pc"),function(b){ if(b._c) b.innerHTML=potSvg(b._n,b._c.hex); }); };
+  if(window.EZPOT&&document.documentElement.classList.contains("ezp")) POT=window.EZPOT;
   var tray=$("tray"), big=BWK.big(), ink=COL.red.hex, erasing=false, mixing=null, lastMix=null, potN=0;
   function potBtn(c,extra){ var b=document.createElement("button"); b.className="pot pc"+(extra||""); b.style.setProperty("--c",c.hex);
     b.setAttribute("aria-label",c.say.replace("!","")); b.innerHTML=potSvg(potN++,c.hex); b._c=c; b._n=potN-1; tray.appendChild(b); return b; }
@@ -443,5 +465,6 @@
       pots:tray.querySelectorAll(".pc").length}; }};
 })();
 </script>
+<script>(function(){ var L=["ez-bg-sm.jpg","ez-wood.jpg","ez-paper.jpg","ez-pot.webp"], n=0; L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(f==="ez-pot.webp") window.EZPOT=i; if(++n===L.length){ document.documentElement.classList.add("ezp"); if(window.EZPOTSET) window.EZPOTSET(i); } }; i.src="ez/"+f+"?v=1115a"; }); })();</script>
 </body>
 </html>
