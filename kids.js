@@ -528,8 +528,8 @@
 
   /* ---- The Outpost's patches (Judy, Nov 10): a corner's patch is earned once every game in that corner
      has been played (finished once). Keep this list in step with outpost.html's C table (each act's id). ---- */
-  var CORNERS={lab:["psj","colorsort","challenge"], tele:["tmap","snake","rover","stickers"], joke:["ttt","war","jokeaday","eights"],
-    work:["slime","sophie","beegarden","smoothie"], mission:["timer","chores"]};
+  var CORNERS={lab:["psj","colorsort","slime","challenge"], tele:["tmap","snake","rover","stickers"], joke:["ttt","war","jokeaday","eights"],
+    work:["sophie","beegarden","smoothie","marble"], mission:["timer","chores"]};
   function obj(k){ var o=LS.get(k,{}); return (o&&typeof o==="object")?o:{}; }
   function cornerOf(id){ for(var k in CORNERS){ if(CORNERS[k].indexOf(id)>=0) return k; } return ""; }
   function cornerProgress(k){ var p=obj("played"), l=CORNERS[k]||[], n=0; l.forEach(function(id){ if(p[id]) n++; }); return {n:n, of:l.length}; }
@@ -538,9 +538,9 @@
     var k=cornerOf(id); if(!k) return ""; var g=cornerProgress(k), b=obj("badges");
     if(g.n===g.of && !b[k]){ b[k]=true; LS.set("badges",b); return k; } return ""; }
   /* once: move from the old rule (one game earned the patch) to the new one */
-  (function(){ if(LS.get("badgeRule",1)===2) return; var b=obj("badges"), p=obj("played");
+  (function(){ if(LS.get("badgeRule",1)>=3) return; /* rule 3 (Nov 16): Slime Lab moved to The Lab, Marble Run added to The Workshop */ var b=obj("badges"), p=obj("played");
     if(b.tele) p.tmap=1; if(b.lab) p.psj=1; LS.set("played",p);
-    var nb={}; for(var k in CORNERS){ var g=cornerProgress(k); if(g.n===g.of) nb[k]=true; } LS.set("badges",nb); LS.set("badgeRule",2); })();
+    var nb={}; for(var k in CORNERS){ var g=cornerProgress(k); if(g.n===g.of) nb[k]=true; } LS.set("badges",nb); LS.set("badgeRule",3); })();
 
   /* ---- Big Moonlet (Nov 10 night, Judy: ages about 5-7, a switch): one setting for the harder layer in every
      Moonlets moon, kept on this device (bwk.big). Pages build their own button and listen for "bwk-big". ---- */
