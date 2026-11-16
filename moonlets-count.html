@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Moon Counting · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Moon Counting (Nov 16, 2026), a Moon Games counting game. A golden autumn orchard.
+   Things from the orchard sit on a wooden shelf. Tap each one as Finn counts it, then tap the moonstone with the
+   right number. 5 rounds a game. Little Moonlet: 1-5, three choices. Big Moonlet (the kit's switch): up to 10 on two
+   shelves of five (like a ten frame), "one more" / "one less" rounds, and each answer also said in Spanish
+   (a first taste of Hello World).
+   Judy's ChatGPT photos in mc/ replace the drawn shelf, stones and things as they arrive.
+   Saved on the device: bwk.count {games, rounds}. Finn's lines mc-* (Finn's voice). Test hook: MCO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#d9b77a url("mc/bg-sm.jpg?v=1116a") center 60%/cover;filter:blur(1.2px) brightness(.9)}
+@media (min-width:1100px){.bg{background-image:url("mc/bg.jpg?v=1116a")}}
+.leaves{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.leaves i{position:absolute;top:-20px;width:12px;height:9px;border-radius:70% 0 70% 0;background:linear-gradient(135deg,#f0a43a,#c4521e);
+  animation:lf linear infinite;will-change:transform;opacity:.85}
+@keyframes lf{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(var(--dx),55vh,0) rotate(200deg)}100%{transform:translate3d(0,110vh,0) rotate(420deg)}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+
+/* ---- the progress leaves ---- */
+.prog{flex:none;display:flex;gap:8px;min-height:20px}
+.prog i{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.35);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);transition:background .3s,transform .3s}
+.prog i.on{background:radial-gradient(circle at 35% 30%,#fff6c8,#ffcf4a 60%,#e09a1a);box-shadow:0 0 10px rgba(255,210,90,.8);transform:scale(1.12)}
+.prog i.now{box-shadow:0 0 0 2px #fff,inset 0 1px 3px rgba(0,0,0,.35)}
+
+/* ---- the shelves ---- */
+#scene{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--s,70px)*.42)}
+.shelf{position:relative;width:var(--sw,600px);flex:none}
+.row{position:relative;z-index:2;display:flex;justify-content:center;align-items:flex-end;gap:calc(var(--s)*.08);height:var(--s);margin-bottom:calc(var(--s)*-.2)}
+.plank{position:relative;z-index:1;height:calc(var(--s)*.42);border-radius:14px;
+  background:linear-gradient(180deg,#e9b877 0,#d9a35e 38%,#b77a3a 40%,#9c6430 100%);box-shadow:0 10px 16px rgba(40,20,0,.4),inset 0 2px 0 rgba(255,240,200,.6)}
+html.mcs .plank{background:none;box-shadow:none;border-radius:0;border-style:solid;border-color:transparent;border-width:0 var(--pc,40px);
+  border-image:url("mc/shelf.webp?v=1116a") 0 var(--psl,180) fill / 0 var(--pc,40px) stretch;filter:drop-shadow(0 10px 10px rgba(40,20,0,.4))}
+.it{appearance:none;border:0;background:none;padding:0;margin:0;position:relative;width:var(--s);height:var(--s);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .25s cubic-bezier(.3,.7,.3,1.4),filter .25s}
+.it img,.it .em{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;pointer-events:none;user-select:none;-webkit-user-select:none;
+  filter:drop-shadow(0 4px 3px rgba(40,20,0,.4))}
+.it .em{display:flex;align-items:flex-end;justify-content:center;font-size:calc(var(--s)*.8);line-height:1}
+.it.c{transform:translateY(-10%) scale(1.06);filter:drop-shadow(0 0 10px rgba(255,236,150,.95))}
+.it .tag{position:absolute;left:50%;top:-6%;transform:translate(-50%,-60%) scale(0);min-width:30px;height:30px;padding:0 6px;border-radius:15px;
+  background:radial-gradient(circle at 35% 30%,#fffbe8,#ffe39a);color:#4a2c00;font-weight:700;font-size:18px;line-height:30px;text-align:center;
+  box-shadow:0 3px 8px rgba(0,0,0,.35);transition:transform .25s cubic-bezier(.3,.7,.3,1.6);z-index:3}
+.it.c .tag{transform:translate(-50%,-60%) scale(1)}
+.it.gone{transform:translate(160%,-30%) rotate(40deg) scale(.6);opacity:0;transition:transform .7s ease-in,opacity .7s ease-in}
+.it.drop{animation:dr .55s cubic-bezier(.3,.7,.35,1.25) backwards}
+@keyframes dr{0%{transform:translateY(-140%);opacity:0}60%{opacity:1}}
+.it.hint{animation:wig .5s ease-in-out 2}
+@keyframes wig{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+
+/* ---- the number moonstones ---- */
+#stones{flex:none;display:flex;gap:calc(var(--b,84px)*.22);justify-content:center;min-height:var(--b,84px)}
+.st{appearance:none;border:0;padding:0;cursor:pointer;width:var(--b,84px);height:var(--b,84px);border-radius:50%;position:relative;font:inherit;
+  background:radial-gradient(circle at 35% 30%,#ffffff,#e4dcf8 35%,#b9a9e6 75%,#9b88d4);
+  box-shadow:0 6px 0 #7663b4,0 10px 16px rgba(30,20,60,.45),inset 0 0 0 3px #eef0f6,inset 0 0 0 5px #a6aec0;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .15s}
+html.mcp .st{background:url("mc/stone.webp?v=1116a") center/100% 100% no-repeat;box-shadow:none;filter:drop-shadow(0 6px 6px rgba(30,20,60,.45))}
+.st:active{transform:scale(.94)}
+.st b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--b,84px)*.5);font-weight:700;color:#3a2470;
+  text-shadow:0 1px 0 rgba(255,255,255,.9),0 0 8px rgba(255,255,255,.6)}
+.st.ready{animation:pls 1.3s ease-in-out infinite}
+.st.ok{animation:none;transform:scale(1.15);filter:drop-shadow(0 0 14px rgba(255,214,90,1))}
+.st.no{animation:shk .45s ease-in-out;opacity:.45}
+@keyframes shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.st:disabled{cursor:default}
+.es{position:absolute;left:50%;bottom:-24px;transform:translateX(-50%);font-size:14px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:nowrap}
+
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}}
+@media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.st.ready,.leaves i{animation:none}.leaves{display:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="leaves" id="leaves" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div class="prog" id="prog" aria-hidden="true"></div>
+  <div id="scene"></div>
+  <div id="stones" role="group" aria-label="How many?"></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1115r"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1116a";
+  /* ---------- the things to count (photos in mc/; emoji while they load) ---------- */
+  var TH=[["apple","apples","🍎"],["pumpkin","pumpkins","🎃"],["acorn","acorns","🌰"],["mushroom","mushrooms","🍄"],["pinecone","pinecones","🌲"],["leaf","leaves","🍁"]]
+    .map(function(a){ return {id:a[0],pl:a[1],em:a[2]}; });
+  var NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven"];
+  var ES=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once"];
+  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  /* ---------- Finn's lines (clips mc-*, Finn's voice) ---------- */
+  var HI="Let's play Moon Counting! Tap each thing to count it, then tap the right number.";
+  var TAPEACH="Tap each one to count it!", HOWMANY="How many? Tap the number!", AGAINTOG="Let's count again, together!";
+  var MORE="One more is coming! How many now?", LESS="Oh! One rolled away! How many now?";
+  var YES=["Yes!","That's right!","You got it!","Great counting!"];
+  var WIN="Five out of five! You're a super counter!", BIGWIN="Wow! Big Moonlet counting!", AGAIN="Tap New game to count some more!";
+  var LN={"mc-hi":HI,"mc-tap":TAPEACH,"mc-how":HOWMANY,"mc-again-tog":AGAINTOG,"mc-more":MORE,"mc-less":LESS,"mc-win":WIN,"mc-bigwin":BIGWIN,"mc-again":AGAIN};
+  YES.forEach(function(t,i){ LN["mc-yes"+(i+1)]=t; });
+  for(var n=1;n<=11;n++){ LN["mc-n"+n]=cap(NUM[n])+"!"; LN["mc-es"+n]="In Spanish, "+NUM[n]+" is "+ES[n]+"!"; }
+  TH.forEach(function(t){ LN["mc-how-"+t.id]="How many "+t.pl+"?"; LN["mc-look-"+t.id]="Look at the "+t.pl+"! Watch closely!"; });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+
+  /* Finn's face (the same drawing as the kit's speech bubble) */
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("mcS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"mc-hi"); });
+  ["mc-hi","mc-tap","mc-how","mc-n1","mc-n2","mc-n3","mc-n4","mc-n5","bg-on","bg-off"].forEach(BWK.preload);
+
+  /* ---------- falling leaves ---------- */
+  (function(){ var s="", n=innerWidth<700?8:14, cols=["#f0a43a,#c4521e","#f6c54a,#d9821c","#e8743a,#a8321a"];
+    for(var i=0;i<n;i++){ var z=.8+Math.random()*.7;
+      s+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;transform:scale('+z.toFixed(2)+');background:linear-gradient(135deg,'+cols[i%3]+');--dx:'+Math.round((Math.random()-.5)*160)+
+        'px;animation-duration:'+(11+Math.random()*9).toFixed(1)+'s;animation-delay:-'+(Math.random()*20).toFixed(1)+'s"></i>'; }
+    $("leaves").innerHTML=s; })();
+
+  /* ---------- saved ---------- */
+  var S=BWK.store.get("count",null)||{}; S.games=S.games||0; S.rounds=S.rounds||0;
+  function save(){ BWK.store.set("count",S); }
+
+  /* ---------- sound (made in the browser) ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state==="suspended") AC.resume(); return AC; }
+  document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+  function on(){ return BWK.store.get("sound",true) && ac() && AC.state==="running"; }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SCALE=[523,587,659,698,784,880,988,1047,1175,1319,1397];
+  var SND={
+    count:function(k){ if(!on()) return; var t=AC.currentTime+.005, f=SCALE[Math.min(k-1,10)]; tone(f,t,.3,.07,"triangle"); tone(f*2,t+.01,.18,.02); },
+    thud:function(i){ if(!on()) return; var t=AC.currentTime+.005+(i||0)*.0; noise(t,.08,.09,420,.8); tone(140,t,.1,.04,"sine",90); },
+    ok:function(){ if(!on()) return; var t=AC.currentTime+.01; [784,988,1175,1568].forEach(function(f,i){ tone(f,t+i*.08,.45,.05,"triangle"); tone(f*2,t+i*.08+.01,.25,.012); }); },
+    no:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(440,t,.16,.05,"sine",392); tone(349,t+.15,.24,.045,"sine",300); },
+    roll:function(){ if(!on()) return; var t=AC.currentTime+.01; for(var i=0;i<6;i++) noise(t+i*.07,.05,.05,700-i*50,1.2); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); }); }
+  };
+
+  /* ---------- photos ---------- */
+  var PH={};
+  TH.forEach(function(t){ var im=new Image(); im.onload=function(){ PH[t.id]=1; if(R&&R.th.id===t.id) refreshPics(); }; im.src="mc/"+t.id+".webp?v="+AV; });
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("mcp"); }; im.src="mc/stone.webp?v="+AV; })();
+  var SHK=0, SHH=0; (function(){ var im=new Image(); im.onload=function(){ SHK=im.naturalWidth; SHH=im.naturalHeight; document.documentElement.classList.add("mcs"); layout(); }; im.src="mc/shelf.webp?v="+AV; })();
+  function itemHTML(t){ return PH[t.id]?'<img src="mc/'+t.id+'.webp?v='+AV+'" alt="" draggable="false">':'<span class="em">'+t.em+'</span>'; }
+  function refreshPics(){ Array.prototype.forEach.call(document.querySelectorAll(".it"),function(el){ var tg=el.querySelector(".tag"); el.innerHTML=itemHTML(R.th)+tg.outerHTML; }); }
+
+  /* ---------- the game ---------- */
+  var big=BWK.big(), R=null, GM=null, lock=false, said={};
+  function rnd(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+  function newGame(){ BWK.finnStop(); GM={i:0, kinds:[], done:false, ok:0}; var last=null;
+    // Big Moonlet: rounds 3 and 5 are "one more" / "one less" (in either order)
+    var tw=Math.random()<.5?["more","less"]:["less","more"];
+    for(var i=0;i<5;i++){ GM.kinds.push(big&&i===2?tw[0]:big&&i===4?tw[1]:"count"); }
+    bar(); newRound(); }
+  function newRound(){ lock=false; var kind=GM.kinds[GM.i], th, n;
+    do{ th=TH[rnd(0,TH.length-1)]; } while(R&&th.id===R.th.id);
+    if(!big) n=GM.i<2?rnd(1,3):rnd(2,5);
+    else n=kind==="count"?rnd(GM.i<1?3:5,10):kind==="more"?rnd(3,9):rnd(4,10);
+    R={th:th, n:n, kind:kind, counted:0, ans:n+(kind==="more"?1:kind==="less"?-1:0), miss:0, phase:"count"};
+    prog(); build(); stones(false);
+    if(kind==="count"){ if(GM.i===0&&!said.tap){ said.tap=1; setTimeout(function(){ say(TAPEACH,"mc-tap"); },500); }
+      else setTimeout(function(){ say("How many "+R.th.pl+"?","mc-how-"+R.th.id); },500); }
+    else { lock=true; R.phase="twist"; setTimeout(function(){ say("Look at the "+R.th.pl+"! Watch closely!","mc-look-"+R.th.id); },400);
+      setTimeout(function(){ if(kind==="more") addOne(); else rollOne(); },2600); } }
+
+  /* lay out: Little = one shelf of up to 5; Big = two shelves of 5 (a ten frame) */
+  function rowsOf(n){ return n<=5?[n]:[5,n-5]; }
+  function build(){ var sc=$("scene"), rows=rowsOf(R.kind==="more"?R.n+1:R.n), k=0, html="";
+    var shown=R.n;
+    rows.forEach(function(cnt,ri){ html+='<div class="shelf"><div class="row">';
+      for(var j=0;j<cnt;j++){ var hidden=k>=shown; html+='<button class="it drop" data-k="'+k+'"'+' aria-label="'+R.th.id+'" style="animation-delay:'+(k*90)+'ms'+(hidden?';visibility:hidden':'')+'">'+itemHTML(R.th)+'<b class="tag"></b></button>'; k++; }
+      html+='</div><div class="plank"></div></div>'; });
+    sc.innerHTML=html; layout();
+    for(var i=0;i<Math.min(shown,5);i++) (function(i){ setTimeout(function(){ SND.thud(); },i*90+300); })(i); }
+  function layout(){ var sc=$("scene"); if(!sc||!R) return; var aw=Math.min(sc.clientWidth, 760), ah=sc.clientHeight; if(!aw||!ah) return;
+    var tot=R.kind==="more"?R.n+1:R.n, rows=rowsOf(tot).length, cols=tot>5?5:Math.max(3,tot);
+    var s=Math.min((aw-40)/(cols*1.08+.6), ah/(rows*(1+.42-.2)+(rows-1)*.42+.35), 150);  // size from width (cols across) and height
+    s=Math.max(36,Math.floor(s)); var sw=Math.min(aw, Math.round(s*(cols*1.08+.9)));
+    sc.style.setProperty("--s",s+"px"); sc.style.setProperty("--sw",sw+"px");
+    if(SHK){ var sl=Math.round(SHK*.06); sc.style.setProperty("--psl",sl); sc.style.setProperty("--pc",Math.round(sl*s*.42/SHH)+"px"); }  // the photo's rounded ends (~5% of its width) keep their shape
+    var b=Math.max(64,Math.min(110,Math.floor(Math.min((sc.clientWidth)/4.2, s*1.05)))); $("stones").style.setProperty("--b",b+"px"); }
+  window.addEventListener("resize",layout);
+
+  function items(){ return Array.prototype.slice.call(document.querySelectorAll(".it")).filter(function(el){ return el.style.visibility!=="hidden"&&!el.classList.contains("gone"); }); }
+  function tapItem(el){ if(!R||lock||R.phase!=="count"||el.classList.contains("c")) return;
+    R.counted++; el.classList.add("c"); el.querySelector(".tag").textContent=R.counted; SND.count(R.counted);
+    say(cap(NUM[R.counted])+"!","mc-n"+R.counted);
+    if(R.counted===R.n){ R.phase="pick"; setTimeout(function(){ stones(true); if(!said.how){ said.how=1; setTimeout(function(){ say(HOWMANY,"mc-how"); },700); } },350); } }
+
+  /* Big Moonlet twists */
+  function addOne(){ var hid=document.querySelector('.it[style*="hidden"]'); if(!hid) return; hid.style.visibility=""; hid.classList.remove("drop"); void hid.offsetWidth; hid.classList.add("drop"); SND.thud();
+    setTimeout(function(){ say(MORE,"mc-more"); lock=false; R.phase="pick"; stones(true); },700); }
+  function rollOne(){ var its=items(), el=its[its.length-1]; el.classList.add("gone"); SND.roll();
+    setTimeout(function(){ say(LESS,"mc-less"); lock=false; R.phase="pick"; stones(true); },800); }
+
+  function choices(a){ var max=big?10:5, set=[a], tries=0;
+    while(set.length<(big?4:3)&&tries<50){ tries++; var v=a+rnd(-2,2); if(v<1||v>max||set.indexOf(v)>=0) continue; set.push(v); }
+    for(var d=3;set.length<(big?4:3)&&d<12;d++) [a-d,a+d].forEach(function(v2){ if(set.length<(big?4:3)&&v2>=1&&v2<=max&&set.indexOf(v2)<0) set.push(v2); });
+    return set.sort(function(x,y){return x-y;}); }
+  function stones(live){ var el=$("stones");
+    if(!live){ el.innerHTML=""; return; }
+    R.ch=choices(R.ans);
+    el.innerHTML=R.ch.map(function(v){ return '<button class="st ready" data-v="'+v+'" aria-label="'+NUM[v]+'"><b>'+v+'</b></button>'; }).join(""); layout(); }
+  function pick(btn){ if(!R||R.phase!=="pick"||lock) return; var v=+btn.dataset.v;
+    if(v===R.ans){ lock=true; R.phase="done"; btn.classList.remove("ready"); btn.classList.add("ok");
+      Array.prototype.forEach.call(document.querySelectorAll(".st"),function(b){ b.disabled=true; b.classList.remove("ready"); });
+      SND.ok(); GM.ok++; S.rounds++; save();
+      items().forEach(function(it,i){ setTimeout(function(){ it.classList.add("c"); it.querySelector(".tag").textContent=i+1; },i*60); });
+      var yi=rnd(0,YES.length-1); say(YES[yi],"mc-yes"+(yi+1));
+      if(big){ var es=document.createElement("span"); es.className="es"; es.textContent=ES[v]; btn.appendChild(es);
+        setTimeout(function(){ say("In Spanish, "+NUM[v]+" is "+ES[v]+"!","mc-es"+v); },1700); }
+      setTimeout(next,big?4200:2400);
+    } else { R.miss++; btn.classList.remove("ready"); btn.classList.add("no"); btn.disabled=true; SND.no();
+      if(R.kind==="count"&&R.miss>=1){ countTogether(); } else say(AGAINTOG,"mc-again-tog"); } }
+  /* a wrong answer on a counting round: Finn counts them all together (the hint) */
+  function countTogether(){ lock=true; say(AGAINTOG,"mc-again-tog");
+    var its=items(); its.forEach(function(it){ it.classList.remove("c"); });
+    its.forEach(function(it,i){ setTimeout(function(){ it.classList.add("c"); it.querySelector(".tag").textContent=i+1; SND.count(i+1); },1800+i*750); });
+    setTimeout(function(){ say(cap(NUM[its.length])+"!","mc-n"+its.length); lock=false; },1800+its.length*750); }
+  function next(){ GM.i++; if(GM.i>=5){ finish(); return; } newRound(); }
+  function finish(){ GM.done=true; S.games++; save(); prog(); SND.win(); BWK.played&&BWK.played("count");
+    say(big?BIGWIN:WIN,big?"mc-bigwin":"mc-win"); stones(false);
+    $("scene").innerHTML='<div class="shelf"><div class="row">'+TH.slice(0,5).map(function(t,i){ return '<button class="it drop c" style="animation-delay:'+(i*120)+'ms" tabindex="-1">'+itemHTML(t)+'<b class="tag">★</b></button>'; }).join("")+'</div><div class="plank"></div></div>';
+    R={th:TH[0],n:5,kind:"count"}; layout(); bar(); }
+  function prog(){ var h=""; for(var i=0;i<5;i++) h+='<i class="'+(i<GM.i||(GM.done)?"on":"")+(i===GM.i&&!GM.done?" now":"")+'"></i>'; $("prog").innerHTML=h; }
+
+  /* ---------- the bottom row ---------- */
+  function bar(){ var done=GM&&GM.done;
+    $("bar").innerHTML='<button class="chip go'+(done?' pulse':'')+'" data-a="new"><em>↺</em><span>New game</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="new"){ newGame(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  $("scene").addEventListener("click",function(e){ var b=e.target.closest(".it"); if(b) tapItem(b); });
+  $("stones").addEventListener("click",function(e){ var b=e.target.closest(".st"); if(b) pick(b); });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest("#scene,#stones,.chip,.k-head,.k-sheet,.k-veil")) return; say(HI,"mc-hi"); });
+
+  newGame();
+  window.MCO={newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); }, layout:layout,
+    state:function(){ return {i:GM.i,done:GM.done,ok:GM.ok,kind:R&&R.kind,n:R&&R.n,ans:R&&R.ans,counted:R&&R.counted,phase:R&&R.phase,lock:lock,ch:R&&R.ch}; },
+    countAll:function(){ items().forEach(function(el){ tapItem(el); }); },
+    answer:function(right){ var v=right?R.ans:R.ch.filter(function(x){return x!==R.ans;})[0]; var b=document.querySelector('.st[data-v="'+v+'"]'); if(b) pick(b); }};
+})();
+</script>
+</body>
+</html>
