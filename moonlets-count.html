@@ -25,7 +25,8 @@
 @keyframes lf{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(var(--dx),55vh,0) rotate(200deg)}100%{transform:translate3d(0,110vh,0) rotate(420deg)}}
 .md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:10px;
   padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
-.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}  /* room for a two-line bubble, so the game doesn't jump when Finn speaks (Nov 16) */
+@media (max-height:600px){.top{min-height:84px}}
 .top .k-finn-in{margin:0}
 .top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
 .top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
@@ -153,6 +154,7 @@ html.mcp .st{background:url("mc/stone.webp?v=1116a") center/100% 100% no-repeat;
     '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
     '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
   var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();  // Finn's bubble area never shrinks, so the game below never jumps (Nov 16)
   top.innerHTML='<div class="k-finn k-finn-in">'+face("mcS")+'<p class="k-fb">'+HI+'</p></div>';
   var talked=false;
   function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
@@ -175,12 +177,12 @@ html.mcp .st{background:url("mc/stone.webp?v=1116a") center/100% 100% no-repeat;
   function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
       var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
       OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
-    if(AC.state==="suspended") AC.resume(); return AC; }
+    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }  /* also "interrupted" (iPhone, after other audio) */
   /* iPhones/iPads only let sound start from a real tap (touchend/click), and the first sound must be started inside it:
      wake the sound on every kind of tap and play a silent blip there until it runs (Nov 16; the maze was silent on phones) */
-  function unlock(){ var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
   ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
-  function on(){ return BWK.store.get("sound",true) && ac() && AC.state==="running"; }
+  function on(){ return BWK.store.get("sound",true) && !!ac(); }  // sounds queue while the iPhone wakes its audio (Nov 16)
   function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d);
     o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
