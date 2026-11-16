@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Bubble Pop · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Bubble Pop (Nov 16, 2026), a Moon Games tapping game for the youngest. A sunny lavender meadow.
+   Bubbles float up with the 13 photo animals inside (sl/c-*.webp). Finn names one ("Pop the puppies!"); pop those.
+   Popping another one is fine (it just wobbles). 3 animals a game, 6 pops each. Big Moonlet: faster, smaller,
+   more kinds at once, 8 pops each, and the target changes every round with no picture shown, only Finn's word.
+   Judy's photos: bp/bg, bp/bubble (on black → see-through). Saved: bwk.bubbles {games, pops}. Lines bp-*. Test hook BPO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#b9c9ec linear-gradient(180deg,#a9c6f0,#d9c9f0 60%,#c8b0e8) center/cover;filter:blur(1.2px) brightness(.95)}
+html.bpbg .bg{background:#b9c9ec url("bp/bg-sm.jpg?v=1116a") center 60%/cover}
+@media (min-width:1100px){html.bpbg .bg{background-image:url("bp/bg.jpg?v=1116a")}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+.goal{flex:none;display:flex;align-items:center;gap:6px;min-height:44px;padding:4px 12px 4px 4px;border-radius:24px;background:rgba(255,255,255,.55);box-shadow:0 4px 10px rgba(60,40,90,.2)}
+.goal:empty{visibility:hidden}
+.goal .who{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#e8f2ff);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.goal .who img{height:88%}
+.goal .who.hide img{visibility:hidden}
+.goal .who.hide::after{content:"?";font-weight:700;font-size:22px;color:#6a4ab0}
+.goal i{width:14px;height:14px;border-radius:50%;background:rgba(120,100,170,.25);box-shadow:inset 0 1px 2px rgba(0,0,0,.25);transition:background .2s,transform .2s}
+.goal i.on{background:radial-gradient(circle at 35% 30%,#fff6c8,#ffcf4a 60%,#e09a1a);transform:scale(1.15)}
+#field{flex:1;min-height:0;width:min(100%,900px);position:relative;overflow:hidden;touch-action:manipulation;border-radius:24px}
+.bb{position:absolute;left:0;top:0;width:var(--d);height:var(--d);margin:calc(var(--d)/-2) 0 0 calc(var(--d)/-2);border:0;padding:0;background:none;cursor:pointer;border-radius:50%;
+  -webkit-tap-highlight-color:transparent;will-change:transform}
+.bb .an{position:absolute;inset:16%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.bb .an img{max-width:100%;max-height:100%;object-fit:contain}
+.bb .sk{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95) 0 6%,rgba(255,255,255,0) 12%),
+    radial-gradient(circle at 50% 50%,rgba(255,255,255,0) 58%,rgba(190,220,255,.35) 68%,rgba(255,190,240,.55) 80%,rgba(255,255,255,.75) 92%,rgba(255,255,255,0) 100%)}
+html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-repeat}
+.bb.wob .an{animation:wob .45s ease-in-out}
+@keyframes wob{25%{transform:rotate(-12deg) scale(.95)}75%{transform:rotate(12deg) scale(.95)}}
+.drop{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,#fff,rgba(200,230,255,.8) 50%,rgba(255,200,240,0) 72%);animation:spl .55s ease-out forwards}
+@keyframes spl{to{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+.pa{position:absolute;pointer-events:none;width:var(--d);height:var(--d);margin:calc(var(--d)/-2) 0 0 calc(var(--d)/-2);display:flex;align-items:center;justify-content:center;animation:fly .9s ease-in forwards}
+.pa img{height:70%}
+@keyframes fly{30%{transform:translateY(-12%) scale(1.1)}100%{transform:translateY(-60%) scale(.3);opacity:0}}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+.done{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+.done b{font-size:44px;color:#ffcf4a;text-shadow:0 2px 6px rgba(80,40,0,.5)}
+.done p{margin:0;font-size:20px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(40,20,80,.8)}
+.done .row{display:flex;gap:10px}.done .row img{height:64px;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}}
+@media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div class="goal" id="goal" aria-live="polite"></div>
+  <div id="field" aria-label="Bubbles"></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1115r"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1116a";
+  var AN=[["biscuit","puppy","puppies"],["mittens","kitten","kittens"],["clover","bunny","bunnies"],["pip","hamster","hamsters"],["hazel","fox","foxes"],["poppy","panda","pandas"],
+    ["pearl","unicorn","unicorns"],["pickle","frog","frogs"],["coco","koala","koalas"],["rosie","piglet","piglets"],["sunny","duckling","ducklings"],["lulu","llama","llamas"],["ziggy","monkey","monkeys"]]
+    .map(function(a){ return {id:a[0],kind:a[1],pl:a[2]}; });
+
+  /* ---------- Finn's lines (clips bp-*) ---------- */
+  var HI="Let's play Bubble Pop! Pop the bubbles I tell you!", OOPS="Oops, not that one! Find the right ones!", NEXT="Great popping! Now…", WIN="Pop, pop, hooray! You popped them all!", BIGWIN="Wow! Big Moonlet bubble popper!", GO="Tap Go to play!";
+  var LN={"bp-hi":HI,"bp-oops":OOPS,"bp-next":NEXT,"bp-win":WIN,"bp-bigwin":BIGWIN,"bp-go":GO};
+  AN.forEach(function(a){ LN["bp-t-"+a.kind]="Pop the "+a.pl+"!"; });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("bpS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"bp-hi"); });
+  ["bp-hi","bp-oops","bp-next","bg-on","bg-off"].forEach(BWK.preload);
+
+  var S=BWK.store.get("bubbles",null)||{}; S.games=S.games||0; S.pops=S.pops||0;
+  function save(){ BWK.store.set("bubbles",S); }
+
+  /* ---------- sound ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state==="suspended") AC.resume(); return AC; }
+  document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+  function on(){ return BWK.store.get("sound",true) && ac() && AC.state==="running"; }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SC=[523,587,659,784,880,1047,1175,1319,1568,1760];
+  var SND={
+    pop:function(k){ if(!on()) return; var t=AC.currentTime+.003; noise(t,.05,.16,2400,.9); tone(SC[k%10],t+.01,.18,.05,"triangle"); tone(SC[k%10]*2,t+.02,.12,.015); },
+    nope:function(){ if(!on()) return; var t=AC.currentTime+.005; tone(260,t,.22,.05,"sine",200); },
+    blip:function(){ if(!on()) return; var t=AC.currentTime+.003; tone(900+Math.random()*500,t,.08,.008,"sine",1500); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); });
+      for(var i=0;i<10;i++) (function(i){ noise(t+.7+i*.08,.04,.08,2000+Math.random()*1500,1); })(i); }
+  };
+
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("bpbg"); }; im.src="bp/bg-sm.jpg?v="+AV; })();
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("bpb"); }; im.src="bp/bubble.webp?v="+AV; })();
+
+  /* ---------- the game ---------- */
+  var big=BWK.big(), G=null, raf=0, last=0, said={};
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function cfg(){ return big?{need:8, speed:.17, every:.55, kinds:3, size:.2, max:9}:{need:6, speed:.11, every:.85, kinds:2, size:.27, max:6}; }
+  function newGame(){ stop(); var picks=shuffle(AN.slice()).slice(0,3);
+    G={picks:picks, r:0, got:0, bubbles:[], t:0, next:0, on:false, done:false, misses:0, c:cfg()};
+    $("field").innerHTML=""; goal(); bar(); }
+  function go(){ if(!G||G.done) newGame(); G.on=true; bar(); startRound(); last=performance.now(); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
+  function startRound(){ if(!G.pause&&G.got) return; var a=G.picks[G.r]; G.pause=false; G.got=0; G.next=.6; goal(); say("Pop the "+a.pl+"!","bp-t-"+a.kind); }
+  function stop(){ cancelAnimationFrame(raf); raf=0; if(G) G.on=false; }
+  function goal(){ if(!G) return; var a=G.picks[Math.min(G.r,2)], h='<span class="who'+(big&&G.on?' hide':'')+'"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="'+a.kind+'"></span>';
+    for(var i=0;i<G.c.need;i++) h+='<i class="'+(i<G.got?'on':'')+'"></i>'; $("goal").innerHTML=h; }
+  function spawn(){ var f=$("field"), W=f.clientWidth, H=f.clientHeight, c=G.c, d=Math.round(Math.max(76,Math.min(150,Math.min(W,H)*c.size)));
+    if(G.bubbles.length>=c.max) return;
+    var tgt=G.picks[G.r], want=G.bubbles.filter(function(b){return b.a===tgt;}).length;
+    var a=(want<2||Math.random()<.45)?tgt:(function(){ var o=AN.filter(function(x){ return x!==tgt; }); return o[Math.floor(Math.random()*Math.min(o.length,c.kinds+3))]; })();
+    // keep the other kinds to a small, fixed set per round so the choice stays simple
+    if(a!==tgt){ var others=G.others||(G.others=shuffle(AN.filter(function(x){return x!==tgt;})).slice(0,c.kinds)); a=others[Math.floor(Math.random()*others.length)]; }
+    var x, tries=0; do{ x=d/2+Math.random()*(W-d); tries++; } while(tries<8&&G.bubbles.some(function(b){ return Math.abs(b.x-x)<d*.9&&b.y>H-d*1.4; }));
+    var el=document.createElement("button"); el.className="bb"; el.style.setProperty("--d",d+"px"); el.setAttribute("aria-label",a.kind+" bubble");
+    el.innerHTML='<span class="an"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="" draggable="false"></span><span class="sk"></span>';
+    f.appendChild(el); var b={el:el,a:a,x:x,y:H+d/2,d:d,ph:Math.random()*6.28,v:c.speed*H*(.85+Math.random()*.3)}; el._b=b; G.bubbles.push(b); place(b); SND.blip(); }
+  function place(b){ b.el.style.transform="translate("+(b.x+Math.sin(b.ph)*b.d*.12).toFixed(1)+"px,"+b.y.toFixed(1)+"px)"; }
+  function loop(now){ if(!G||!G.on) return; var dt=Math.min(.05,(now-last)/1000); last=now; G.t+=dt;
+    if(!G.pause) G.next-=dt; if(G.next<=0){ spawn(); G.next=G.c.every*(.7+Math.random()*.6); }
+    var H=$("field").clientHeight;
+    for(var i=G.bubbles.length-1;i>=0;i--){ var b=G.bubbles[i]; b.y-=b.v*dt; b.ph+=dt*1.6; place(b); if(b.y<-b.d/2){ b.el.remove(); G.bubbles.splice(i,1); } }
+    raf=requestAnimationFrame(loop); }
+  function popAt(b){ var f=$("field"), i=G.bubbles.indexOf(b); if(i<0||G.pause) return;
+    var tgt=G.picks[G.r];
+    if(b.a!==tgt){ G.misses++; b.el.classList.remove("wob"); void b.el.offsetWidth; b.el.classList.add("wob"); SND.nope(); if(!said.oops&&G.misses>=2){ said.oops=1; say(OOPS,"bp-oops"); } return; }
+    G.bubbles.splice(i,1); b.el.remove(); G.got++; S.pops++; SND.pop(G.got);
+    var x=b.x+Math.sin(b.ph)*b.d*.12, y=b.y;
+    for(var k=0;k<10;k++){ var dd=document.createElement("i"), an=k/10*6.28; dd.className="drop"; dd.style.left=x+"px"; dd.style.top=y+"px";
+      dd.style.setProperty("--dx",(Math.cos(an)*b.d*.6).toFixed(0)+"px"); dd.style.setProperty("--dy",(Math.sin(an)*b.d*.6).toFixed(0)+"px"); f.appendChild(dd); setTimeout(dd.remove.bind(dd),600); }
+    var pa=document.createElement("span"); pa.className="pa"; pa.style.left=x+"px"; pa.style.top=y+"px"; pa.style.setProperty("--d",b.d+"px"); pa.innerHTML='<img src="sl/c-'+b.a.id+'.webp?v=1115a" alt="">'; f.appendChild(pa); setTimeout(pa.remove.bind(pa),950);
+    goal();
+    if(G.got>=G.c.need){ G.r++; G.others=null; G.bubbles.forEach(function(x){ x.el.remove(); }); G.bubbles=[];
+      if(G.r>=3){ finish(); return; }
+      G.pause=true; G.next=1; goal(); say(NEXT,"bp-next",{onend:function(){ if(G&&G.on&&G.pause) startRound(); }}); setTimeout(function(){ if(G&&G.on&&G.pause) startRound(); },2600); } }
+  function finish(){ stop(); G.done=true; S.games++; save(); SND.win(); BWK.played&&BWK.played("bubbles");
+    say(big?BIGWIN:WIN,big?"bp-bigwin":"bp-win");
+    $("field").innerHTML='<div class="done"><b>★★★</b><div class="row">'+G.picks.map(function(a){ return '<img src="sl/c-'+a.id+'.webp?v=1115a" alt="'+a.kind+'">'; }).join("")+'</div><p>'+(G.c.need*3)+' bubbles popped!</p></div>';
+    $("goal").innerHTML=""; bar(); }
+  $("field").addEventListener("pointerdown",function(e){ var el=e.target.closest(".bb"); if(el&&G&&G.on){ e.preventDefault(); popAt(el._b); } });
+
+  /* ---------- the bottom row ---------- */
+  function bar(){ var running=G&&G.on;
+    $("bar").innerHTML='<button class="chip go'+(running?'':' pulse')+'" data-a="go"><em>'+(running?'↺':'▶')+'</em><span>'+(running?'Start over':(G&&G.done?'Play again':'Go!'))+'</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="go"){ BWK.finnStop(); newGame(); go(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  document.addEventListener("visibilitychange",function(){ if(document.hidden&&G&&G.on){ stop(); bar(); } });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest("#field,.chip,.k-head,.k-sheet,.k-veil")) return; say(HI,"bp-hi"); });
+
+  newGame();
+  window.BPO={go:go, newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); },
+    state:function(){ return G&&{on:G.on,done:G.done,r:G.r,got:G.got,need:G.c.need,n:G.bubbles.length,target:G.picks[Math.min(G.r,2)].kind,misses:G.misses}; },
+    popTarget:function(){ var t=G.picks[G.r], b=G.bubbles.filter(function(x){return x.a===t;})[0]; if(b){ popAt(b); return true; } return false; },
+    popWrong:function(){ var t=G.picks[G.r], b=G.bubbles.filter(function(x){return x.a!==t;})[0]; if(b){ popAt(b); return true; } return false; }};
+})();
+</script>
+</body>
+</html>

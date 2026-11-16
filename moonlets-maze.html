@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Bunny's Maze · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Bunny's Maze (Nov 16, 2026), a Moon Games maze. A misty spring dawn in a hedge garden.
+   Drag Bunny (Finley's Flip Run bunny, fr/bunny*.webp) along the sandy paths, picking up carrots, to her burrow.
+   Mazes are made fresh each time (recursive backtracker) so there is always a way. 3 mazes a game:
+   Little 4×4, 5×5, 5×5 (carrots lie on the way home); Big Moonlet 5×5, 6×6, 6×6 (3 carrots anywhere; the burrow
+   door opens only when all are found). Drag anywhere: Bunny hops one square at a time toward your finger.
+   Judy's photos: bz/bg, bz/hedge, bz/path, bz/carrot, bz/home. Saved: bwk.maze {games}. Lines bz-*. Test hook BZO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#e9c6c0 linear-gradient(180deg,#f2c9c0,#e8d7b8 55%,#a9c79a) center/cover;filter:blur(1.2px) brightness(.93)}
+html.bzbg .bg{background:#e9c6c0 url("bz/bg-sm.jpg?v=1116a") center 60%/cover}
+@media (min-width:1100px){html.bzbg .bg{background-image:url("bz/bg.jpg?v=1116a")}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+.prog{flex:none;display:flex;gap:8px;align-items:center}
+.prog i{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.prog i.on{background:radial-gradient(circle at 35% 30%,#fff6c8,#ffcf4a 60%,#e09a1a);box-shadow:0 0 8px rgba(255,210,90,.8)}
+.prog .cr{display:flex;gap:2px;margin-left:10px}.prog .cr img,.prog .cr span{width:26px;height:26px;object-fit:contain;opacity:.3;transition:opacity .3s,transform .3s}
+.prog .cr .got{opacity:1;transform:scale(1.15)}
+#wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#maze{position:relative;touch-action:none;border-radius:18px;cursor:pointer;
+  background:#3f7a3a radial-gradient(circle at 30% 30%,#5f9a4a,#2f6a2a);box-shadow:0 0 0 6px #6a4a2a,0 0 0 8px #3e2a14,0 14px 26px rgba(30,30,10,.45)}
+html.bzh #maze{background:url("bz/hedge.webp?v=1116a") center/220px repeat}
+.cell{position:absolute;border-radius:22%;background:#efd9a8;box-shadow:inset 0 2px 4px rgba(90,60,20,.35)}
+html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
+.cell.trail{box-shadow:inset 0 0 0 999px rgba(255,236,160,.28),inset 0 2px 4px rgba(90,60,20,.35)}
+.it{position:absolute;pointer-events:none;display:flex;align-items:center;justify-content:center;transition:transform .3s,opacity .3s}
+.it img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(40,30,0,.4))}
+.it .em{font-size:calc(var(--c)*.6);line-height:1}
+.it.carrot{animation:glw 1.6s ease-in-out infinite}
+@keyframes glw{50%{transform:scale(1.1) rotate(-6deg)}}
+.it.gone{transform:scale(0) translateY(-40%);opacity:0}
+.it.home.shut{filter:grayscale(.5) brightness(.8)}
+.bun{position:absolute;left:0;top:0;pointer-events:none;z-index:4;transition:transform .17s ease-out;will-change:transform}
+.bun .b{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center}
+.bun img{width:118%;height:118%;object-fit:contain;filter:drop-shadow(0 4px 3px rgba(30,20,0,.45))}
+.bun .em{font-size:calc(var(--c)*.66);line-height:1}
+.bun.hop .b{animation:bh .17s ease-out}
+@keyframes bh{50%{transform:translateY(-22%)}}
+.bun.l img{transform:scaleX(-1)}
+.done{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.done b{font-size:44px;color:#ffcf4a;text-shadow:0 2px 6px rgba(80,40,0,.5)}
+.done p{margin:0;font-size:20px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(40,20,0,.8)}
+.done img{height:110px;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}}
+@media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.it.carrot{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div class="prog" id="prog" aria-hidden="true"></div>
+  <div id="wrap"><div id="maze" role="application" aria-label="The maze. Drag Bunny along the paths."></div></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1115r"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1116a";
+  var HI="Help Bunny find her carrots and hop home! Drag her along the path.", CRUNCH="Crunch!", SHUT="Find all the carrots first!", OPEN="All the carrots! Now hop home!",
+      HOME="Home sweet home!", NEXT="Here's a bigger maze!", WIN="Bunny is home! You did it!", BIGWIN="Wow! Big Moonlet maze master!", BUMP="Oops, a hedge! Try another way.";
+  BWK.lines({"bz-hi":HI,"bz-crunch":CRUNCH,"bz-shut":SHUT,"bz-open":OPEN,"bz-home":HOME,"bz-next":NEXT,"bz-win":WIN,"bz-bigwin":BIGWIN,"bz-bump":BUMP});
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("bzS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"bz-hi"); });
+  ["bz-hi","bz-crunch","bz-home","bg-on","bg-off"].forEach(BWK.preload);
+  var S=BWK.store.get("maze",null)||{}; S.games=S.games||0;
+  function save(){ BWK.store.set("maze",S); }
+
+  /* ---------- sound: Bunny's hop (her own sound as she moves), carrot crunch, door, home ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state==="suspended") AC.resume(); return AC; }
+  document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+  function on(){ return BWK.store.get("sound",true) && ac() && AC.state==="running"; }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SND={
+    hop:function(){ if(!on()) return; var t=AC.currentTime+.003; tone(420+Math.random()*60,t,.1,.035,"sine",700); noise(t+.08,.04,.05,900,1.4); },
+    bump:function(){ if(!on()) return; var t=AC.currentTime+.003; noise(t,.12,.08,500,.8); tone(200,t,.12,.04,"sine",150); },
+    crunch:function(){ if(!on()) return; var t=AC.currentTime+.003; for(var i=0;i<3;i++) noise(t+i*.07,.05,.14,2600-i*300,1.6); tone(1047,t+.25,.3,.04,"triangle"); tone(1568,t+.32,.3,.03,"triangle"); },
+    open:function(){ if(!on()) return; var t=AC.currentTime+.01; [523,659,784,1047].forEach(function(f,i){ tone(f,t+i*.08,.4,.05,"triangle"); }); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); }); }
+  };
+
+  /* ---------- photos ---------- */
+  var PH={};
+  [["bg","bz/bg-sm.jpg","bzbg"],["hedge","bz/hedge.webp","bzh"],["path","bz/path.webp","bzp"]].forEach(function(a){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add(a[2]); }; im.src=a[1]+"?v="+AV; });
+  [["carrot","bz/carrot.webp"],["home","bz/home.webp"],["bunny","fr/bunny.webp"],["sit","fr/bunny-sit.webp"]].forEach(function(a){ var im=new Image(); im.onload=function(){ PH[a[0]]=a[1]+"?v="+(a[1].indexOf("fr/")===0?"1115a":AV); if(G&&!G.done) draw(); }; im.src=a[1]+"?v="+(a[1].indexOf("fr/")===0?"1115a":AV); });
+  function img(k,em){ return PH[k]?'<img src="'+PH[k]+'" alt="" draggable="false">':'<span class="em">'+em+'</span>'; }
+
+  /* ---------- the maze ---------- */
+  var big=BWK.big(), G=null, said={};
+  function sizes(){ return big?[5,6,6]:[4,5,5]; }
+  function gen(n){ // recursive backtracker; open[y][x] = {n,e,s,w}
+    var C=[], st=[[0,0]], seen={}; for(var y=0;y<n;y++){ C.push([]); for(var x=0;x<n;x++) C[y].push({n:0,e:0,s:0,w:0}); }
+    seen["0,0"]=1;
+    while(st.length){ var cur=st[st.length-1], x=cur[0], y=cur[1], nb=[];
+      [[0,-1,"n","s"],[1,0,"e","w"],[0,1,"s","n"],[-1,0,"w","e"]].forEach(function(d){ var nx=x+d[0], ny=y+d[1]; if(nx>=0&&ny>=0&&nx<n&&ny<n&&!seen[nx+","+ny]) nb.push([nx,ny,d[2],d[3]]); });
+      if(!nb.length){ st.pop(); continue; } var c=nb[Math.floor(Math.random()*nb.length)]; C[y][x][c[2]]=1; C[c[1]][c[0]][c[3]]=1; seen[c[0]+","+c[1]]=1; st.push([c[0],c[1]]); }
+    return C; }
+  function path(C,n,a,b){ var prev={}, q=[a], k=function(p){return p[0]+","+p[1];}; prev[k(a)]=null;
+    while(q.length){ var p=q.shift(); if(p[0]===b[0]&&p[1]===b[1]) break; var c=C[p[1]][p[0]];
+      [[0,-1,"n"],[1,0,"e"],[0,1,"s"],[-1,0,"w"]].forEach(function(d){ var np=[p[0]+d[0],p[1]+d[1]]; if(c[d[2]]&&!(k(np) in prev)){ prev[k(np)]=p; q.push(np); } }); }
+    var out=[], p=b; while(p){ out.unshift(p); p=prev[k(p)]; } return out; }
+  function newGame(){ G={m:0, done:false}; bar(); newMaze(); }
+  function newMaze(){ var n=sizes()[G.m], C=gen(n), start=[0,0], end=[n-1,n-1], P=path(C,n,start,end);
+    var carrots=[];
+    if(!big){ // on the way home, spread along the route
+      [.35,.7].forEach(function(f){ var p=P[Math.max(1,Math.min(P.length-2,Math.round(P.length*f)))]; carrots.push({x:p[0],y:p[1],got:false}); });
+    } else { var cells=[]; for(var y=0;y<n;y++) for(var x=0;x<n;x++) if(!(x===0&&y===0)&&!(x===n-1&&y===n-1)) cells.push([x,y]);
+      cells.sort(function(){return Math.random()-.5;}); // spread: prefer cells far from each other and off the main route
+      var onRoute={}; P.forEach(function(p){ onRoute[p[0]+","+p[1]]=1; });
+      cells.sort(function(a,b){ return (onRoute[a[0]+","+a[1]]?1:0)-(onRoute[b[0]+","+b[1]]?1:0); });
+      for(var i=0;i<cells.length&&carrots.length<3;i++){ var c=cells[i]; if(carrots.every(function(o){ return Math.abs(o.x-c[0])+Math.abs(o.y-c[1])>=3; })) carrots.push({x:c[0],y:c[1],got:false}); } }
+    G.n=n; G.C=C; G.bx=0; G.by=0; G.end=end; G.carrots=carrots; G.trail={"0,0":1}; G.moving=false; G.q=[]; G.face=1; draw(); prog(); }
+  function prog(){ var h=""; for(var i=0;i<3;i++) h+='<i class="'+(i<G.m||G.done?'on':'')+'"></i>';
+    if(G.carrots&&!G.done){ h+='<span class="cr">'+G.carrots.map(function(c){ return PH.carrot?'<img class="'+(c.got?'got':'')+'" src="'+PH.carrot+'" alt="">':'<span class="'+(c.got?'got':'')+'">🥕</span>'; }).join("")+'</span>'; }
+    $("prog").innerHTML=h; }
+  function bp(l,tp){ return ";background-position:"+(-l)+"px "+(-tp)+"px"; }
+  function draw(){ var w=$("wrap"), aw=w.clientWidth-16, ah=w.clientHeight-16, n=G.n, c=Math.floor(Math.min(aw,ah)/n); c=Math.max(34,Math.min(c,110));
+    var m=Math.round(c*.2), M=$("maze"); M.style.width=(c*n)+"px"; M.style.height=(c*n)+"px"; M.style.setProperty("--c",c+"px"); G.c=c;
+    var h="";
+    for(var y=0;y<n;y++) for(var x=0;x<n;x++){ var o=G.C[y][x], tr=G.trail[x+","+y]?" trail":"";
+      h+='<div class="cell'+tr+'" style="left:'+(x*c+m)+'px;top:'+(y*c+m)+'px;width:'+(c-2*m)+'px;height:'+(c-2*m)+'px'+bp(x*c+m,y*c+m)+'"></div>';
+      if(o.e) h+='<div class="cell'+(G.trail[x+","+y]&&G.trail[(x+1)+","+y]?" trail":"")+'" style="left:'+(x*c+c-m-2)+'px;top:'+(y*c+m)+'px;width:'+(2*m+4)+'px;height:'+(c-2*m)+'px;border-radius:0'+bp(x*c+c-m-2,y*c+m)+'"></div>';
+      if(o.s) h+='<div class="cell'+(G.trail[x+","+y]&&G.trail[x+","+(y+1)]?" trail":"")+'" style="left:'+(x*c+m)+'px;top:'+(y*c+c-m-2)+'px;width:'+(c-2*m)+'px;height:'+(2*m+4)+'px;border-radius:0'+bp(x*c+m,y*c+c-m-2)+'"></div>'; }
+    G.carrots.forEach(function(k,i){ h+='<div class="it carrot'+(k.got?' gone':'')+'" data-k="'+i+'" style="left:'+(k.x*c+c*.15)+'px;top:'+(k.y*c+c*.15)+'px;width:'+(c*.7)+'px;height:'+(c*.7)+'px">'+img("carrot","🥕")+'</div>'; });
+    var shut=big&&G.carrots.some(function(k){return !k.got;});
+    h+='<div class="it home'+(shut?' shut':'')+'" style="left:'+(G.end[0]*c+c*.04)+'px;top:'+(G.end[1]*c+c*.02)+'px;width:'+(c*.92)+'px;height:'+(c*.92)+'px">'+img("home","🏡")+'</div>';
+    h+='<div class="bun" id="bun" style="width:'+(c*.8)+'px;height:'+(c*.8)+'px"><div class="b">'+img("bunny","🐰")+'</div></div>';
+    M.innerHTML=h; placeBun(true); }
+  function placeBun(now){ var b=$("bun"), c=G.c; if(!b) return; if(now) b.style.transition="none";
+    b.style.transform="translate("+(G.bx*c+c*.1)+"px,"+(G.by*c+c*.06)+"px)"; b.classList.toggle("l",G.face<0);
+    if(now){ void b.offsetWidth; b.style.transition=""; } }
+
+  /* ---------- moving: one square at a time toward the finger ---------- */
+  function open(x,y,dx,dy){ var o=G.C[y][x]; return dx===1?o.e:dx===-1?o.w:dy===1?o.s:o.n; }
+  function step(dx,dy){ if(!G||G.done||G.busy) return false; if(!open(G.bx,G.by,dx,dy)){ return false; }
+    var shut=big&&G.carrots.some(function(k){return !k.got;}), nx=G.bx+dx, ny=G.by+dy;
+    G.bx=nx; G.by=ny; if(dx) G.face=dx; var b=$("bun"); b.classList.remove("hop"); void b.offsetWidth; b.classList.add("hop"); placeBun(); SND.hop();
+    var key=nx+","+ny; if(!G.trail[key]){ G.trail[key]=1; trailAt(nx,ny,dx,dy); }
+    G.carrots.forEach(function(k,i){ if(!k.got&&k.x===nx&&k.y===ny){ k.got=true; var el=$("maze").querySelector('.it.carrot[data-k="'+i+'"]'); el&&el.classList.add("gone"); SND.crunch(); prog();
+      var left=G.carrots.filter(function(k){return !k.got;}).length;
+      if(big&&!left){ SND.open(); say(OPEN,"bz-open"); var hm=$("maze").querySelector(".it.home"); hm&&hm.classList.remove("shut"); } else say(CRUNCH,"bz-crunch"); } });
+    if(nx===G.end[0]&&ny===G.end[1]){ if(shut){ if(!said.shut||Date.now()-said.shut>4000){ said.shut=Date.now(); say(SHUT,"bz-shut"); } } else arrive(); }  // the burrow can sit on a corridor: walking through it is fine
+    return true; }
+  function trailAt(x,y,dx,dy){ var M=$("maze"), c=G.c, m=Math.round(c*.2); /* light up the new square and the gap behind it */
+    var d=document.createElement("div"); d.className="cell trail"; d.style.cssText="left:"+(x*c+m)+"px;top:"+(y*c+m)+"px;width:"+(c-2*m)+"px;height:"+(c-2*m)+"px"+bp(x*c+m,y*c+m); M.insertBefore(d,M.querySelector(".it"));
+    var g=document.createElement("div"); g.className="cell trail"; g.style.borderRadius="0";
+    if(dx) g.style.cssText+=";left:"+((dx>0?x:x+1)*c-m-2)+"px;top:"+(y*c+m)+"px;width:"+(2*m+4)+"px;height:"+(c-2*m)+"px"+bp((dx>0?x:x+1)*c-m-2,y*c+m);
+    else g.style.cssText+=";left:"+(x*c+m)+"px;top:"+((dy>0?y:y+1)*c-m-2)+"px;width:"+(c-2*m)+"px;height:"+(2*m+4)+"px"+bp(x*c+m,(dy>0?y:y+1)*c-m-2);
+    M.insertBefore(g,M.querySelector(".it")); }
+  function arrive(){ G.busy=true; var b=$("bun"); setTimeout(function(){ if(PH.sit) b.querySelector(".b").innerHTML='<img src="'+PH.sit+'" alt="">'; SND.open(); },250);
+    G.m++; prog();
+    if(G.m>=3){ setTimeout(finish,1100); return; }
+    say(HOME,"bz-home"); setTimeout(function(){ G.busy=false; say(NEXT,"bz-next"); newMaze(); },2000); }
+  function finish(){ G.done=true; S.games++; save(); SND.win(); BWK.played&&BWK.played("maze"); prog();
+    say(big?BIGWIN:WIN,big?"bz-bigwin":"bz-win");
+    $("maze").innerHTML='<div class="done">'+(PH.sit?'<img src="'+PH.sit+'" alt="">':'')+'<b>★★★</b><p>Bunny is home!</p></div>'; bar(); }
+
+  var drag=false, bumpT=0;
+  function toward(e){ var r=$("maze").getBoundingClientRect(), c=G.c, fx=(e.clientX-r.left)/c, fy=(e.clientY-r.top)/c;
+    var dx=fx-(G.bx+.5), dy=fy-(G.by+.5); if(Math.abs(dx)<.55&&Math.abs(dy)<.55) return;
+    var tries=Math.abs(dx)>Math.abs(dy)?[[Math.sign(dx),0],[0,Math.sign(dy)]]:[[0,Math.sign(dy)],[Math.sign(dx),0]];
+    for(var i=0;i<2;i++){ var t=tries[i]; if(!t[0]&&!t[1]) continue; if(i===1&&Math.abs(i===1?(t[0]?dx:dy):0)<.55) continue; if(step(t[0],t[1])) return; }
+    if(Date.now()-bumpT>900){ bumpT=Date.now(); SND.bump(); G.bumps=(G.bumps||0)+1; if(G.bumps===3) say(BUMP,"bz-bump"); } }
+  var tick=0;
+  $("maze").addEventListener("pointerdown",function(e){ if(!G||G.done) return; e.preventDefault(); drag=true; $("maze").setPointerCapture&&$("maze").setPointerCapture(e.pointerId); toward(e); clearInterval(tick);
+    var last=e; tick=setInterval(function(){ if(drag) toward(last); },190); $("maze")._last=function(ev){ last=ev; }; });
+  $("maze").addEventListener("pointermove",function(e){ if(drag&&$("maze")._last) $("maze")._last(e); });
+  function up(){ drag=false; clearInterval(tick); } window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
+  document.addEventListener("keydown",function(e){ var k={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(k){ e.preventDefault(); if(!step(k[0],k[1])) SND.bump(); } });
+  window.addEventListener("resize",function(){ if(G&&!G.done) draw(); });
+
+  function bar(){ $("bar").innerHTML='<button class="chip go'+(G&&G.done?' pulse':'')+'" data-a="new"><em>↺</em><span>'+(G&&G.done?'Play again':'New maze')+'</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="new"){ BWK.finnStop(); if(G&&!G.done) newMaze(); else newGame(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest("#maze,.chip,.k-head,.k-sheet,.k-veil")) return; say(HI,"bz-hi"); });
+
+  newGame();
+  window.BZO={newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); }, step:step,
+    state:function(){ return G&&{m:G.m,n:G.n,x:G.bx,y:G.by,done:G.done,busy:!!G.busy,carrots:G.carrots.map(function(k){return k.got;}),c:G.c}; },
+    solve:function(){ /* walks to each carrot, then home (tests) */ var pts=G.carrots.filter(function(k){return !k.got;}).map(function(k){return [k.x,k.y];}).concat([G.end]), route=[], cur=[G.bx,G.by];
+      pts.forEach(function(p){ var pp=path(G.C,G.n,cur,p); route=route.concat(pp.slice(1)); cur=p; });
+      return route.map(function(p,i){ var q=i?route[i-1]:[G.bx,G.by]; return [p[0]-q[0],p[1]-q[1]]; }); }};
+})();
+</script>
+</body>
+</html>

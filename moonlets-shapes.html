@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Shape Sorter · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Shape Sorter (Nov 16, 2026), a Moon Games drag-and-drop game. A rainy afternoon in a cozy
+   treehouse playroom. Drag each painted wooden shape into its hole in the board. Finn names each shape as it's
+   picked up. 3 boards a game: Little 3, 4, 4 shapes; Big Moonlet 6 shapes, and Finn calls out which one goes next.
+   Holes are the piece's own silhouette (the photo's alpha, darkened), so they always match.
+   Judy's photos: sz/bg, sz/shapes (six pieces cut apart into sz/<shape>.webp), sz/wood (folder sz/, not ss/: that is Style Studio). Saved: bwk.shapes {games}.
+   Lines sz-*. Test hook SZO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#c9a27a linear-gradient(180deg,#8fa0b8,#c9a27a 60%,#a87a50) center/cover;filter:blur(1.2px) brightness(.92)}
+html.szbg .bg{background:#c9a27a url("sz/bg-sm.jpg?v=1116a") center 60%/cover}
+@media (min-width:1100px){html.szbg .bg{background-image:url("sz/bg.jpg?v=1116a")}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+.prog{flex:none;display:flex;gap:8px}
+.prog i{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.prog i.on{background:radial-gradient(circle at 35% 30%,#fff6c8,#ffcf4a 60%,#e09a1a);box-shadow:0 0 8px rgba(255,210,90,.8)}
+#play{flex:1;min-height:0;width:100%;position:relative;touch-action:none}
+.board{position:absolute;border-radius:28px;background:linear-gradient(160deg,#f1dcb6,#dcbf8f 60%,#c9a46e);
+  box-shadow:inset 0 2px 0 rgba(255,250,235,.8),inset 0 -6px 10px rgba(110,70,30,.25),0 10px 0 #a8794a,0 18px 26px rgba(40,20,0,.45)}
+html.szw .board{background:url("sz/wood.webp?v=1116a") center/360px repeat,#e2c79a;background-blend-mode:normal}
+.hole{position:absolute;pointer-events:none}
+.hole .hs{position:absolute;inset:0}
+.hole .hs img,.pc img,.hole .hs svg,.pc svg{width:100%;height:100%;object-fit:contain;display:block}
+.hole .hs img,.hole .hs svg{filter:brightness(0) opacity(.6) drop-shadow(0 -2px 0 rgba(255,240,210,.9))}
+.hole .hs.in{filter:none}
+.hole.glow .hs{filter:drop-shadow(0 0 8px rgba(255,230,140,1)) drop-shadow(0 0 14px rgba(255,220,120,.9))}
+.hole.call .hs{animation:cll 1s ease-in-out infinite}
+@keyframes cll{50%{transform:scale(1.08)}}
+.pc{position:absolute;left:0;top:0;cursor:grab;touch-action:none;filter:drop-shadow(0 6px 5px rgba(40,20,0,.45));will-change:transform;z-index:3}
+.pc.drag{cursor:grabbing;filter:drop-shadow(0 16px 14px rgba(40,20,0,.45));z-index:5}
+.pc.home{transition:transform .35s cubic-bezier(.3,.7,.3,1.2)}
+.pc.in{filter:drop-shadow(0 1px 1px rgba(40,20,0,.5));cursor:default;z-index:2}
+.pc.wob{animation:wob .4s ease-in-out}
+.pc.call{animation:cll 1s ease-in-out infinite}
+@keyframes wob{25%{rotate:-10deg}75%{rotate:10deg}}
+.done{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.done b{font-size:44px;color:#ffcf4a;text-shadow:0 2px 6px rgba(80,40,0,.5)}
+.done p{margin:0;font-size:20px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(40,20,0,.8)}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}}
+@media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.hole.call .hs,.pc.call{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div class="prog" id="prog" aria-hidden="true"></div>
+  <div id="play"></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1115r"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1116a";
+  /* the six shapes: id, name, color (drawn fallback), SVG path in a 100×100 box */
+  var SH=[["circle","circle","#e0453a",'<circle cx="50" cy="50" r="44"/>'],
+    ["square","square","#3a72d8",'<rect x="8" y="8" width="84" height="84" rx="10"/>'],
+    ["triangle","triangle","#f2c230",'<path d="M50 8 L94 88 Q96 92 91 92 H9 Q4 92 6 88 Z"/>'],
+    ["star","star","#3aa65a",'<path d="M50 5 L62 37 L96 38 L69 59 L79 93 L50 73 L21 93 L31 59 L4 38 L38 37 Z"/>'],
+    ["heart","heart","#ef6fa4",'<path d="M50 90 C10 62 2 40 14 22 C26 6 46 12 50 28 C54 12 74 6 86 22 C98 40 90 62 50 90 Z"/>'],
+    ["moon","moon","#8c5ad0",'<path d="M62 6 A44 44 0 1 0 94 70 A36 36 0 1 1 62 6 Z"/>']].map(function(a){ return {id:a[0],n:a[1],c:a[2],p:a[3]}; });
+
+  var HI="Let's play Shape Sorter! Drag each shape into its hole.", TRY="Hmm, that one doesn't fit there. Try another hole!", NEXT="All done! Here's a new board!",
+      WIN="You sorted every shape! Great job!", BIGWIN="Wow! Big Moonlet shape sorter!", NOTYET="Not that one yet! Listen for the shape I say.";
+  var LN={"sz-hi":HI,"sz-try":TRY,"sz-next":NEXT,"sz-win":WIN,"sz-bigwin":BIGWIN,"sz-notyet":NOTYET};
+  SH.forEach(function(s){ LN["sz-n-"+s.id]=s.n.charAt(0).toUpperCase()+s.n.slice(1)+"!"; LN["sz-f-"+s.id]="Find the "+s.n+"!"; });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("szS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"sz-hi"); });
+  ["sz-hi","sz-try","sz-next","bg-on","bg-off"].forEach(BWK.preload);
+  var S=BWK.store.get("shapes",null)||{}; S.games=S.games||0;
+  function save(){ BWK.store.set("shapes",S); }
+
+  /* ---------- sound (wooden) ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state==="suspended") AC.resume(); return AC; }
+  document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+  function on(){ return BWK.store.get("sound",true) && ac() && AC.state==="running"; }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.004); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SND={
+    tock:function(){ if(!on()) return; var t=AC.currentTime+.003; tone(820,t,.06,.06,"triangle",640); noise(t,.03,.06,1800,2); },
+    thunk:function(k){ if(!on()) return; var t=AC.currentTime+.003; tone(180,t,.14,.12,"sine",110); noise(t,.06,.12,600,1.2);
+      var f=[784,880,988,1047,1175,1319][k%6]; tone(f,t+.12,.35,.045,"triangle"); tone(f*1.5,t+.2,.3,.03,"triangle"); },
+    nope:function(){ if(!on()) return; var t=AC.currentTime+.005; tone(300,t,.12,.06,"triangle",240); tone(240,t+.1,.18,.05,"triangle",190); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); }); }
+  };
+
+  /* ---------- photos ---------- */
+  var PH={};
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("szbg"); }; im.src="sz/bg-sm.jpg?v="+AV; })();
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("szw"); }; im.src="sz/wood.webp?v="+AV; })();
+  SH.forEach(function(s){ var im=new Image(); im.onload=function(){ PH[s.id]=1; if(G&&!dragging) refreshPics(); }; im.src="sz/"+s.id+".webp?v="+AV; });
+  function pic(s){ return PH[s.id]?'<img src="sz/'+s.id+'.webp?v='+AV+'" alt="" draggable="false">':'<svg viewBox="0 0 100 100" fill="'+s.c+'">'+s.p+'</svg>'; }
+  function refreshPics(){ document.querySelectorAll("[data-s]").forEach(function(el){ var s=SH.filter(function(x){return x.id===el.dataset.s;})[0], tgt=el.querySelector(".hs")||el; tgt.innerHTML=pic(s); }); }
+
+  /* ---------- the game ---------- */
+  var big=BWK.big(), G=null, dragging=null, said={};
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function counts(){ return big?[6,6,6]:[3,4,4]; }
+  function newGame(){ G={b:0, done:false}; bar(); prog(); newBoard(); }
+  function newBoard(){ var n=counts()[G.b], pool=G.b===0&&!big?SH.slice(0,3):shuffle(SH.slice()).slice(0,n);
+    G.set=shuffle(pool.slice()); G.holes=shuffle(pool.slice()); G.placed=0; G.call=null; build(); if(big) callNext(); }
+  function prog(){ var h=""; for(var i=0;i<3;i++) h+='<i class="'+(i<G.b||G.done?'on':'')+'"></i>'; $("prog").innerHTML=h; }
+  function build(){ var P=$("play"), W=P.clientWidth, H=P.clientHeight, n=G.set.length;
+    var cols=n<=3?n:n===4?(W>H*1.2?4:2):(W>H*1.2?6:3), rows=Math.ceil(n/cols);
+    // board on top (~58% of the height), tray of loose pieces below
+    var s=Math.floor(Math.min((Math.min(W,820)-40)/(cols*1.35+.4), (H*.56-30)/(rows*1.35+.4), 140)); s=Math.max(50,s);
+    var bw=Math.round(s*(cols*1.35+.4)), bh=Math.round(s*(rows*1.35+.4)), bx=Math.round((W-bw)/2), by=Math.max(4,Math.round(H*.02));
+    // the loose pieces' size first, then center board + tray together in the space
+    var ty0=by+bh+20, th=H-ty0-4, tcols=Math.min(n,Math.max(1,Math.floor((W-20)/(s*1.15)))), trows=Math.ceil(n/tcols);
+    var ps=Math.min(s, Math.floor(th/(trows*1.12)), Math.floor((W-20)/(tcols*1.15))); ps=Math.max(44,ps);
+    by=Math.max(4,Math.round((H-(bh+20+trows*ps*1.12))/2.2));
+    var h='<div class="board" style="left:'+bx+'px;top:'+by+'px;width:'+bw+'px;height:'+bh+'px"></div>';
+    G.H=[]; G.holes.forEach(function(sh,i){ var c=i%cols, r=Math.floor(i/cols), x=bx+s*(.2+.175+c*1.35), y=by+s*(.2+.175+r*1.35);
+      G.H.push({s:sh,x:x+s/2,y:y+s/2,el:null}); h+='<div class="hole" data-h="'+i+'" style="left:'+x+'px;top:'+y+'px;width:'+s+'px;height:'+s+'px"><span class="hs" data-s="'+sh.id+'">'+pic(sh)+'</span></div>'; });
+    // loose pieces in the tray area, scattered a little
+    var ty=by+bh+20;
+    G.P=[]; G.set.forEach(function(sh,i){ var c=i%tcols, r=Math.floor(i/tcols), rowN=Math.min(tcols,n-r*tcols), gx=(W-rowN*ps*1.15)/2;
+      var x=gx+c*ps*1.15+ps*.075+(Math.random()-.5)*ps*.12, y=ty+r*ps*1.12+(Math.random()-.5)*ps*.08;
+      G.P.push({s:sh,hx:x,hy:y,x:x,y:y,ps:ps,in:false}); h+='<div class="pc" data-p="'+i+'" data-s="'+sh.id+'" aria-label="'+sh.n+'" style="width:'+ps+'px;height:'+ps+'px">'+pic(sh)+'</div>'; });
+    P.innerHTML=h; G.S=s;
+    G.P.forEach(function(p,i){ p.el=P.querySelector('[data-p="'+i+'"]'); p.rot=(Math.random()-.5)*14; put(p); }); }
+  function put(p){ var k=p.in?G.S/p.ps:p.el.classList.contains("drag")?1.12:1; p.el.style.transform="translate("+p.x.toFixed(1)+"px,"+p.y.toFixed(1)+"px) rotate("+(p.in||p.el.classList.contains("drag")?0:p.rot)+"deg) scale("+k.toFixed(3)+")"; }
+
+  function callNext(){ var left=G.P.filter(function(p){return !p.in;}); if(!left.length) return; var p=left[Math.floor(Math.random()*left.length)]; G.call=p.s;
+    document.querySelectorAll(".pc.call").forEach(function(e){ e.classList.remove("call"); });
+    setTimeout(function(){ say("Find the "+p.s.n+"!","sz-f-"+p.s.id); },400); }
+
+  var off={x:0,y:0};
+  $("play").addEventListener("pointerdown",function(e){ var el=e.target.closest(".pc"); if(!el||!G||G.done) return; var p=G.P[+el.dataset.p]; if(p.in) return;
+    e.preventDefault(); dragging=p; el.setPointerCapture&&el.setPointerCapture(e.pointerId); el.classList.remove("home"); el.classList.add("drag");
+    var r=$("play").getBoundingClientRect(); off.x=e.clientX-r.left-p.x; off.y=e.clientY-r.top-p.y; SND.tock(); put(p);
+    if(!big||!G.call) { if(!said[p.s.id]){ said[p.s.id]=1; } say(p.s.n.charAt(0).toUpperCase()+p.s.n.slice(1)+"!","sz-n-"+p.s.id); } });
+  window.addEventListener("pointermove",function(e){ if(!dragging) return; var r=$("play").getBoundingClientRect(), p=dragging;
+    p.x=e.clientX-r.left-off.x; p.y=e.clientY-r.top-off.y; put(p);
+    var cx=p.x+p.ps/2, cy=p.y+p.ps/2; G.H.forEach(function(h,i){ var el=document.querySelector('.hole[data-h="'+i+'"]'); el.classList.toggle("glow",!h.full&&h.s===p.s&&Math.hypot(cx-h.x,cy-h.y)<G.S*.55); }); });
+  function drop(e){ if(!dragging) return; var p=dragging; dragging=null; p.el.classList.remove("drag"); document.querySelectorAll(".hole.glow").forEach(function(x){x.classList.remove("glow");});
+    var cx=p.x+p.ps/2, cy=p.y+p.ps/2, best=null, bd=1e9;
+    G.H.forEach(function(h){ var d=Math.hypot(cx-h.x,cy-h.y); if(!h.full&&d<bd){ bd=d; best=h; } });
+    if(best&&bd<G.S*.6){
+      if(best.s===p.s&&(!big||!G.call||G.call===p.s)){ fit(p,best); return; }
+      if(best.s===p.s&&big&&G.call&&G.call!==p.s){ SND.nope(); if(!said.notyet){ said.notyet=1; say(NOTYET,"sz-notyet"); } else say("Find the "+G.call.n+"!","sz-f-"+G.call.id); }
+      else { SND.nope(); G.miss=(G.miss||0)+1; if(!said.try||G.miss%3===0){ said.try=1; say(TRY,"sz-try"); } }
+      p.el.classList.add("wob"); setTimeout(function(){ p.el.classList.remove("wob"); },420); }
+    home(p); }
+  window.addEventListener("pointerup",drop); window.addEventListener("pointercancel",drop);
+  function home(p){ p.el.classList.add("home"); p.x=p.hx; p.y=p.hy; put(p); }
+  function fit(p,h){ h.full=true; p.in=true; p.el.classList.add("home","in"); var k=G.S/p.ps; p.x=h.x-p.ps/2; p.y=h.y-p.ps/2; put(p);
+    var hs=document.querySelector('.hole[data-h="'+G.H.indexOf(h)+'"] .hs'); hs&&(hs.style.visibility="hidden");
+    G.placed++; SND.thunk(G.placed);
+    if(G.placed>=G.P.length){ G.b++; prog(); if(G.b>=3){ setTimeout(finish,700); return; } setTimeout(function(){ say(NEXT,"sz-next"); },500); setTimeout(newBoard,2200); }
+    else if(big) callNext(); }
+  function finish(){ G.done=true; S.games++; save(); SND.win(); BWK.played&&BWK.played("shapes"); prog();
+    say(big?BIGWIN:WIN,big?"sz-bigwin":"sz-win");
+    $("play").innerHTML='<div class="done"><b>★★★</b><p>Every shape sorted!</p></div>'; bar(); }
+  window.addEventListener("resize",function(){ if(G&&!G.done&&!dragging){ var keep=G.P.map(function(p){return p.in;}); build(); G.P.forEach(function(p,i){ if(keep[i]){ var h=G.H.filter(function(h){return h.s===p.s;})[0]; fit(p,h); G.placed--; } }); } });
+
+  function bar(){ $("bar").innerHTML='<button class="chip go'+(G&&G.done?' pulse':'')+'" data-a="new"><em>↺</em><span>'+(G&&G.done?'Play again':'New game')+'</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="new"){ BWK.finnStop(); newGame(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest("#play,.chip,.k-head,.k-sheet,.k-veil")) return; say(HI,"sz-hi"); });
+
+  newGame();
+  window.SZO={newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); },
+    state:function(){ return G&&{b:G.b,placed:G.placed,n:G.P&&G.P.length,done:G.done,call:G.call&&G.call.id,S:G.S}; },
+    pieces:function(){ var r=$("play").getBoundingClientRect(); return G.P.map(function(p){ var h=G.H.filter(function(h){return h.s===p.s;})[0]; return {s:p.s.id,in:p.in,px:r.left+p.x+p.ps/2,py:r.top+p.y+p.ps/2,hx:r.left+h.x,hy:r.top+h.y}; }); },
+    solveOne:function(){ var p=G.P.filter(function(p){ return !p.in&&(!big||!G.call||G.call===p.s); })[0]; if(!p) return false; fit(p,G.H.filter(function(h){return h.s===p.s;})[0]); return true; }};
+})();
+</script>
+</body>
+</html>
