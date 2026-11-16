@@ -157,6 +157,9 @@
   .seeds.two{display:grid;grid-template-columns:repeat(var(--cols,4),auto);gap:5px 12px}.seeds.two .pk{width:min(50px,calc((100vw - 32px)/var(--cols,4) - 12px))}}
 @media (min-width:601px) and (max-aspect-ratio:4/5){.seeds{display:grid;grid-template-columns:repeat(var(--cols,4),auto);gap:14px 24px;justify-content:center}}
 @media (prefers-reduced-motion:reduce){.perch svg,.bfly svg,.bfly .wl,.bfly .wr,.plot.hint .hit{animation:none}}
+/* the photo look (Nov 15): html.gdp once the gd/ pictures have loaded; a fresh, sunny spring morning (not every Moonlets room is dark) */
+.gdp .bg{background-image:url("gd/gd-bg-sm.jpg?v=1115a");background-position:50% 40%;filter:blur(1.2px) brightness(.95) saturate(1.05)}
+@media (min-width:1100px){.gdp .bg{background-image:url("gd/gd-bg.jpg?v=1115a")}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -321,6 +324,8 @@
     if(s===3){ var h=Math.round(H*.68); return mound+stem(h)+leaf(0,-h*.42,-160,26)+leaf(0,-h*.55,-20,26)+
       '<g transform="translate(0 '+(-h-7)+')"><ellipse rx="7" ry="11" fill="'+K.c+'" stroke="'+K.d+'" stroke-width="1.4"/>'+
       '<path d="M-8 4 Q0 14 8 4 Q4 8 0 12 Q-4 8 -8 4Z" fill="#4caf50" stroke="#2f7d35" stroke-width="1"/></g>'; }
+    var PW={sunflower:173,tulip:136,daisy:159,rose:158,bluebell:150,poppy:161};
+    if(window.GDPH&&PW[K.id]){ var ht=H*1.28, w=ht*PW[K.id]/300; return mound+'<image href="gd/gd-'+K.id+'.webp?v=1115a" x="'+(-w/2).toFixed(1)+'" y="'+(-ht+2).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+ht.toFixed(1)+'"/>'; }
     return mound+stem(H)+leaf(0,-H*.33,-160,30)+leaf(0,-H*.52,-20,30)+'<g class="hd" transform="translate(0 '+(-H)+')">'+head(k)+'</g>'; }
   /* ---------- the garden bed (600 × 380) and its six patches ---------- */
   var PLOTS=[[214,178,.8],[300,178,.8],[386,178,.8],[168,258,1],[300,258,1],[432,258,1]];
@@ -330,18 +335,25 @@
       '<linearGradient id="gdFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b47c45"/><stop offset=".5" stop-color="#97612f"/><stop offset="1" stop-color="#6e401d"/></linearGradient>'+
       '<radialGradient id="gdSoil" cx="45%" cy="35%" r="75%"><stop offset="0" stop-color="#6d472a"/><stop offset="1" stop-color="#3a2313"/></radialGradient>'+
       '<radialGradient id="gdShade"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'+
+      '<pattern id="gdWoodP" patternUnits="userSpaceOnUse" x="34" y="20" width="560" height="560"><image href="gd/gd-wood.jpg?v=1115a" width="560" height="560"/></pattern>'+
+      '<pattern id="gdSoilP" patternUnits="userSpaceOnUse" x="40" y="130" width="320" height="320"><image href="gd/gd-soil.jpg?v=1115a" width="320" height="320"/></pattern>'+
+      '<radialGradient id="gdSoilSh" cx="45%" cy="35%" r="80%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient>'+
+      '<linearGradient id="gdFaceSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>'+
       '<linearGradient id="gdPost" x1="0" x2="1"><stop offset="0" stop-color="#7a4a24"/><stop offset=".45" stop-color="#c08a52"/><stop offset="1" stop-color="#6e401d"/></linearGradient></defs>'+
       '<ellipse cx="300" cy="350" rx="300" ry="30" fill="url(#gdShade)"/>'+
       '<path d="M34 296 L566 296 L490 112 L110 112Z" fill="url(#gdWood)" stroke="#6e401d" stroke-width="2" stroke-linejoin="round"/>'+
+      '<path d="M35 295 L565 295 L489 113 L111 113Z" fill="url(#gdWoodP)" opacity=".95"/>'+
       '<path d="M112 116 L488 116" stroke="#f0c993" stroke-width="2" opacity=".6"/>'+
       '<path d="M58 288 L542 288 L476 124 L124 124Z" fill="#4a2e17"/>'+
-      '<path d="M60 290 L540 290 L472 142 L128 142Z" fill="url(#gdSoil)"/>';
+      '<path d="M60 290 L540 290 L472 142 L128 142Z" fill="url(#gdSoil)"/>'+
+      '<path d="M60 290 L540 290 L472 142 L128 142Z" fill="url(#gdSoilP)"/><path d="M60 290 L540 290 L472 142 L128 142Z" fill="url(#gdSoilSh)"/>';
     var seed=7; function rnd(){ seed=(seed*16807)%2147483647; return seed/2147483647; }
     for(var i=0;i<90;i++){ var y=146+rnd()*140, f=(y-142)/148, xl=128-68*f, xr=472+68*f, x=xl+6+rnd()*(xr-xl-12);
       s+='<ellipse cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" rx="'+(1+rnd()*2.2).toFixed(1)+'" ry="'+(.8+rnd()*1.2).toFixed(1)+'" fill="'+(rnd()<.5?"#8a6040":"#2b190c")+'" opacity=".55"/>'; }
     PLOTS.forEach(function(p){ s+='<ellipse cx="'+p[0]+'" cy="'+(p[1]+2)+'" rx="'+(40*p[2])+'" ry="'+(12*p[2])+'" fill="#7a5435" opacity=".7"/>'+
       '<ellipse cx="'+p[0]+'" cy="'+p[1]+'" rx="'+(36*p[2])+'" ry="'+(10*p[2])+'" fill="#24150a"/>'; });
     s+='<path d="M34 296 H566 V340 Q566 346 560 346 H40 Q34 346 34 340Z" fill="url(#gdFace)" stroke="#5a3417" stroke-width="2"/>'+
+      '<path d="M35 297 H565 V340 Q565 345 560 345 H40 Q35 345 35 340Z" fill="url(#gdWoodP)"/><path d="M35 297 H565 V340 Q565 345 560 345 H40 Q35 345 35 340Z" fill="url(#gdFaceSh)"/>'+
       '<path d="M36 298 H564" stroke="#e6b67c" stroke-width="2" opacity=".7"/><path d="M36 321 H564" stroke="#5a3417" stroke-width="2" opacity=".7"/>'+
       '<path d="M36 323 H564" stroke="#d29c62" stroke-width="1" opacity=".5"/>'+
       '<path d="M90 306 q40 -4 80 0 M240 310 q60 3 120 0 M420 305 q50 -3 100 1 M120 333 q70 4 140 0 M330 336 q60 -3 130 0" stroke="#5a3417" stroke-width="1.2" fill="none" opacity=".35"/>'+
@@ -365,6 +377,7 @@
   function render(i,anim){ var p=save.plots[i], g=plotEls[i].querySelector(".pl"); g.innerHTML=p?plant(p.k,p.s):"";
     if(anim && p && g.animate) g.animate([{transform:"scale(.35)",opacity:.4},{transform:"scale(1.08)",opacity:1,offset:.7},{transform:"scale(1)"}],{duration:520,easing:"ease-out"}); }
   function hints(){ var any=save.plots.some(function(p){ return p; }); plotEls.forEach(function(e,i){ e.classList.toggle("hint",!any); }); }
+  window.GDRE=function(){ for(var i=0;i<6;i++) render(i); };
   function blooms(){ var n=0; save.plots.forEach(function(p){ if(p&&p.s===4) n++; }); return n; }
   /* positions in % of the bed, for the can, drops, sparkles and the butterfly */
   function pct(x,y){ return [x/600*100, y/380*100]; }
@@ -515,5 +528,7 @@
       for(var i=0;i<6;i++){ save.plots[i]=i<list.length?{k:list[i],s:4}:null; render(i,false); } persist(); hints(); baskState(); flutter(); }};
 })();
 </script>
+<script>(function(){ var L=["gd-bg-sm.jpg","gd-soil.jpg","gd-wood.jpg","gd-sunflower.webp","gd-tulip.webp","gd-daisy.webp","gd-rose.webp","gd-bluebell.webp","gd-poppy.webp"], n=0;
+  L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n===L.length){ document.documentElement.classList.add("gdp"); window.GDPH=true; if(window.GDRE) window.GDRE(); } }; i.src="gd/"+f+"?v=1115a"; }); })();</script>
 </body>
 </html>
