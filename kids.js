@@ -529,7 +529,7 @@
   /* ---- The Outpost's patches (Judy, Nov 10): a corner's patch is earned once every game in that corner
      has been played (finished once). Keep this list in step with outpost.html's C table (each act's id). ---- */
   var CORNERS={lab:["psj","colorsort","challenge"], tele:["tmap","snake","stickers"], joke:["ttt","war","jokeaday","eights"],
-    work:["slime","sophie","beegarden"], mission:["timer","chores"]};
+    work:["slime","sophie","beegarden","smoothie"], mission:["timer","chores"]};
   function obj(k){ var o=LS.get(k,{}); return (o&&typeof o==="object")?o:{}; }
   function cornerOf(id){ for(var k in CORNERS){ if(CORNERS[k].indexOf(id)>=0) return k; } return ""; }
   function cornerProgress(k){ var p=obj("played"), l=CORNERS[k]||[], n=0; l.forEach(function(id){ if(p[id]) n++; }); return {n:n, of:l.length}; }

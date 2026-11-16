@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Sophie's Smoothie Stand · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Sophie's Smoothie Stand (The Outpost · The Workshop), Nov 15 night. Sophie's game: her animal friends order layered smoothies.
+   Blend each layer and pour it in, bottom first, then add the toppings and serve. Photo look from the start (Judy's ChatGPT pictures in sm/). */
+.bg{background:#3a2516 url("sm/bg-sm.jpg?v=1115a") 50% 30%/cover no-repeat;filter:blur(1.2px) brightness(.8) saturate(1.05)}
+@media (min-width:900px){.bg{background-image:url("sm/bg.jpg?v=1115a")}}
+.bg2{background:linear-gradient(180deg,rgba(20,10,4,.18),rgba(20,10,4,.05) 40%,rgba(20,10,4,.35))}
+#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#c0466f}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.cmsg{flex:none;min-height:22px;text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;max-width:900px;margin:0 auto;user-select:none;-webkit-user-select:none}
+/* the counter: drawn driftwood until the photo comes; runs the full screen width */
+#counter{position:absolute;left:-60vw;right:-60vw;bottom:-12px;z-index:1;
+  background:linear-gradient(180deg,#e9d3b0 0,#d8bc93 10px,#c7a67a 11px,#b48f62 13px,#a07b51 100%);box-shadow:0 -6px 18px rgba(0,0,0,.35)}
+#counter::before{content:"";position:absolute;inset:0;opacity:.35;
+  background:repeating-linear-gradient(90deg,rgba(90,60,30,0) 0 118px,rgba(90,60,30,.35) 118px 120px),repeating-linear-gradient(180deg,rgba(255,255,255,0) 0 5px,rgba(120,85,45,.12) 5px 6px)}
+#counter.ph{background:url("sm/counter.webp?v=1115a") 0 0/360px auto repeat;}
+#counter.ph::before{background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(0,0,0,0) 14px,rgba(0,0,0,.25))}
+.sign{position:relative;margin:0 auto;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.sign img{display:block;width:100%;height:auto}
+.sign span{position:absolute;left:4%;right:4%;top:47%;bottom:6%;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;
+  font-weight:800;color:#5a2e10;text-shadow:0 1px 0 rgba(255,236,200,.55),0 -1px 0 rgba(60,25,5,.35);letter-spacing:.01em}
+#mSign{width:min(330px,92%);margin-bottom:6px}
+#pSign{position:absolute;z-index:1}
+.bwp{position:absolute;left:50%;transform:translateX(-50%);font:800 11px/1 Outfit,system-ui,sans-serif;letter-spacing:.06em;color:#4a300c;z-index:2;
+  padding:3px 7px 2px;border-radius:4px;background:linear-gradient(180deg,#f6dc8e,#c99a3c);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 3px rgba(0,0,0,.5)}
+#cust{position:absolute;z-index:0;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.3,.8,.3,1),opacity .4s}
+#cust img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 8px 8px rgba(0,0,0,.45));animation:bob 3.2s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes bob{50%{transform:translateY(-2.5%) scaleY(1.015)}}
+#cust.out{transform:translateX(130%);opacity:0}
+#cust.in0{transform:translateX(-60%);opacity:0;transition:none}
+#cust.hop img{animation:hop2 .6s cubic-bezier(.3,.7,.4,1) 2}
+@keyframes hop2{40%{transform:translateY(-14%)}}
+#ticket{position:absolute;z-index:3;border-radius:14px;background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 3px 0 #b89f6e,0 12px 24px rgba(0,0,0,.45),inset 0 1px 0 #fff;
+  transform:rotate(-.6deg)}
+#ticket svg{display:block;width:100%;height:100%}
+#ticket .peek{position:absolute;right:8px;bottom:8px;z-index:2}
+#cup{position:absolute;z-index:3}
+#cup svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#cup img.glass{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#cup::after{content:"";position:absolute;left:4%;right:4%;bottom:-2.5%;height:5%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),transparent);z-index:-1}
+.tp{position:absolute;pointer-events:none;transform-origin:50% 100%}
+.tp svg,.tp img{position:static;display:block;width:100%;height:100%;object-fit:contain}
+.tp.drop{animation:tdrop .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes tdrop{0%{transform:translateY(-60%) scale(.7);opacity:0}100%{transform:none;opacity:1}}
+#blender{position:absolute;z-index:4;transform-origin:50% 50%;transition:transform .55s cubic-bezier(.4,.1,.3,1);cursor:pointer}
+#blender svg{display:block;width:100%;height:100%;overflow:visible}
+#blender.shake{animation:shk 1.3s linear}
+@keyframes shk{0%,100%{margin-left:0}10%,30%,50%,70%,90%{margin-left:-3px}20%,40%,60%,80%{margin-left:3px}}
+#blender .chunks{transform-box:view-box;transform-origin:44px 92px}
+#blender.shake .chunks{animation:spin .32s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#blender::after{content:"";position:absolute;left:10%;right:10%;bottom:-2.5%;height:5%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.5),transparent);z-index:-1}
+.strm{position:absolute;z-index:5;width:12px;margin-left:-6px;border-radius:6px;transform-origin:50% 0;transform:scaleY(0);pointer-events:none;
+  box-shadow:inset 3px 0 0 rgba(255,255,255,.35),inset -2px 0 0 rgba(0,0,0,.15)}
+.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85)!important;animation:hring .8s ease-in-out infinite}
+@keyframes hring{50%{box-shadow:0 0 0 3px rgba(255,224,138,.4),0 0 6px 2px rgba(242,190,69,.3)}}
+/* the tray */
+.tray{flex:none;width:min(720px,100%);margin:0 auto;border-radius:18px;padding:6px 6px 7px;
+  background:linear-gradient(180deg,rgba(255,250,238,.96),rgba(240,226,196,.96));box-shadow:0 4px 0 #c9b384,0 10px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:5px}
+.tabs{display:flex;gap:4px}
+.tabs button{flex:1;appearance:none;border:0;cursor:pointer;font:inherit;font-weight:800;font-size:13.5px;padding:6px 2px;border-radius:10px;color:#7a5a2a;background:rgba(120,80,20,.09)}
+.tabs button.on{color:#fff;background:linear-gradient(180deg,#f07aa0,#d24f7e);box-shadow:0 2px 0 #9c2f57}
+.ings{display:flex;gap:4px;justify-content:center}
+.ing{flex:1 1 0;max-width:92px;min-width:0;appearance:none;border:0;cursor:pointer;font:inherit;padding:2px 1px 3px;border-radius:12px;background:rgba(255,255,255,.55);
+  box-shadow:0 2px 0 rgba(150,110,50,.35);display:flex;flex-direction:column;align-items:center;gap:1px;color:#5a3c14;-webkit-tap-highlight-color:transparent;position:relative}
+.ing svg{width:100%;height:auto;aspect-ratio:1;max-height:62px;display:block}
+.ing span{font-size:11.5px;font-weight:700;line-height:1.05;text-align:center;min-height:2.1em;display:flex;align-items:center}
+.ing:active{transform:translateY(2px);box-shadow:none}
+.ing.used{opacity:.45}
+.ing.bad{animation:shk2 .35s}
+@keyframes shk2{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.acts{display:flex;gap:6px;justify-content:center}
+.acts .k-btn{flex:1;min-height:46px;padding:0 6px;font-size:17px;max-width:200px}
+.acts .k-btn:disabled{opacity:.4;cursor:default}
+.acts .k-ghost{color:#6b4a1a;background:rgba(120,80,20,.12);box-shadow:0 3px 0 rgba(120,80,20,.25)}
+.acts .go{background:linear-gradient(180deg,#f78cb0,#d24f7e);color:#fff;box-shadow:0 4px 0 #9c2f57}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.mix{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff4dc;text-shadow:0 2px 6px #000}
+@media (max-height:700px){.cmsg{font-size:14.5px;min-height:19px}.ib{min-height:36px;font-size:14px}.cday span{font-size:13px}.acts .k-btn{min-height:42px;font-size:16px}
+  .ing svg{max-height:50px}.ing span{font-size:10.5px}.tabs button{padding:4px 2px;font-size:12.5px}}
+@media (max-height:600px){.ing span{display:none}.ing svg{max-height:44px}}
+@media (prefers-reduced-motion:reduce){#cust img{animation:none}#blender.shake .chunks{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="smEmb"></svg>
+      <div class="sign" id="mSign" aria-hidden="true" style="display:none"><img alt="" id="mSignI"><span>Sophie's Smoothie Stand</span></div>
+      <h1 id="mH1">Sophie's Smoothie Stand</h1>
+      <p class="lead">Sophie's animal friends are thirsty! Make each smoothie just like the order card, layer by layer, from the bottom up.</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Today's Orders</button>
+        <button class="k-btn" id="bBonus" style="display:none">Bonus Smoothie</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b id="cday"></b><span id="cnum"></span></div>
+      <button class="ib" id="tHint">Hint</button>
+    </div>
+    <div class="cmsg" id="cmsg" aria-live="polite"></div>
+    <div id="stage">
+      <div id="counter"><span class="bwp" style="top:42%">BW</span></div>
+      <div id="cust"><img alt="" id="custImg"></div>
+      <div class="sign" id="pSign" aria-hidden="true" style="display:none"><img alt="" id="pSignI"><span>Sophie's Smoothie Stand</span></div>
+      <div id="ticket" role="img" aria-label="Order card"></div>
+      <div id="cup" aria-label="Smoothie cup"></div>
+      <div id="blender" role="button" aria-label="Blender"></div>
+    </div>
+    <div class="tray">
+      <div class="tabs" id="tabs"><button data-t="0" class="on">Fruit</button><button data-t="1">Creamy &amp; Juice</button><button data-t="2">Toppings</button></div>
+      <div class="ings" id="ings"></div>
+      <div class="acts"><button class="k-btn k-ghost" id="aEmpty">Empty</button><button class="k-btn" id="aBlend">Blend</button><button class="k-btn go" id="aPour">Pour</button></div>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1115s"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1115a";
+var ST=LS.get("smoothie",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0;
+function save(){ LS.set("smoothie",ST); }
+
+/* ---------- ingredients (Sophie's favorites + Judy's five) and toppings ---------- */
+var ING=[
+  {id:"strawberry",n:"Strawberry",s:"Strawberries",g:0,c:[226,46,72],k:"bowl"},
+  {id:"banana",n:"Banana",s:"Banana",g:0,c:[242,222,146],k:"bowl"},
+  {id:"blueberry",n:"Blueberry",s:"Blueberries",g:0,c:[92,70,168],k:"bowl"},
+  {id:"mango",n:"Mango",s:"Mango",g:0,c:[247,158,24],k:"bowl"},
+  {id:"kiwi",n:"Kiwi",s:"Kiwi",g:0,c:[126,192,52],k:"bowl"},
+  {id:"acai",n:"Acai",s:"Acai berries",g:0,c:[88,28,96],k:"bowl"},
+  {id:"icecream",n:"Ice cream",s:"Ice cream",g:1,c:[250,238,208],p:.48,k:"bowl"},
+  {id:"yogurt",n:"Yogurt",s:"Yogurt",g:1,c:[252,250,243],p:.44,k:"bowl"},
+  {id:"coconut",n:"Coconut milk",s:"Coconut milk",g:1,c:[253,251,240],p:.4,k:"coco"},
+  {id:"oj",n:"Orange juice",s:"Orange juice",g:1,c:[255,140,20],p:.34,k:"bottle",file:"oj"},
+  {id:"pine",n:"Pineapple juice",s:"Pineapple juice",g:1,c:[255,212,60],p:.34,k:"bottle",file:"pineapple"}];
+var TOP=[
+  {id:"cream",n:"Whipped cream",s:"Whipped cream"},{id:"cherry",n:"Cherry",s:"A cherry"},{id:"straw",n:"Straw",s:"A straw"},
+  {id:"umbrella",n:"Umbrella",s:"An umbrella"},{id:"mangoslice",n:"Mango slice",s:"A mango slice"},{id:"mint",n:"Mint",s:"Mint"},{id:"sprinkles",n:"Sprinkles",s:"Sprinkles"}];
+var IG={}; ING.forEach(function(x){ IG[x.id]=x; }); TOP.forEach(function(x){ IG[x.id]=x; x.top=true; });
+var FRUIT=ING.filter(function(x){ return x.g===0; }), ADD=ING.filter(function(x){ return x.g===1; });
+var ONCREAM={cherry:1,sprinkles:1,mint:1};
+
+/* ---------- Sophie's friends (the Slime Lab's animals) ---------- */
+var CUST=[["biscuit","Biscuit"],["mittens","Mittens"],["clover","Clover"],["pip","Pip"],["hazel","Hazel"],["poppy","Poppy"],["pearl","Pearl"],
+  ["pickle","Pickle"],["coco","Coco"],["rosie","Rosie"],["sunny","Sunny"],["lulu","Lulu"],["ziggy","Ziggy"]].map(function(a){ return {id:a[0],n:a[1]}; });
+
+/* ---------- photos: whatever has arrived is used; drawn art otherwise ---------- */
+var PH={}, PHN=0;
+function photo(key,file){ var im=new Image(); im.onload=function(){ PH[key]={src:im.src,w:im.naturalWidth,h:im.naturalHeight}; PHN++; refresh(); }; im.onerror=function(){}; im.src="sm/"+file+".webp?v="+AV; }
+ING.concat(TOP).forEach(function(x){ photo(x.id,x.file||x.id); });
+photo("cupglass","cup"); photo("jar","jar"); photo("base","base");
+(function(){ var im=new Image(); im.onload=function(){ PH.sign={src:im.src,w:im.naturalWidth,h:im.naturalHeight}; $("#mSignI").src=$("#pSignI").src=im.src; $("#mSign").style.display=""; $("#smEmb").style.display=$("#mH1").style.cssText=""; $("#smEmb").style.display="none"; $("#mH1").style.cssText="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"; signFont(); if(P) layout(); }; im.src="sm/sign.webp?v="+AV; })();
+function signFont(){ ["#mSign","#pSign"].forEach(function(q){ var e=$(q); if(e&&e.offsetWidth) e.querySelector("span").style.fontSize=(e.offsetWidth*.068)+"px"; }); }
+(function(){ var im=new Image(); im.onload=function(){ $("#counter").classList.add("ph"); }; im.src="sm/counter.webp?v="+AV; })();
+var rT=0; function refresh(){ clearTimeout(rT); rT=setTimeout(function(){ if(P){ drawTray(); drawTicket(); drawCup(true); drawBlender(); } },60); }
+
+/* ---------- colors ---------- */
+function mixc(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i]+(b[i]-a[i])*t); }); }
+function hex(c){ return "#"+c.map(function(v){ v=Math.max(0,Math.min(255,Math.round(v))); return (v<16?"0":"")+v.toString(16); }).join(""); }
+function shade(c,t){ return hex(t>0?mixc(c,[255,255,255],t):mixc(c,[0,0,0],-t)); }
+function layerColor(L){ var c=[0,0,0]; L.f.forEach(function(id){ var k=IG[id].c; c=[c[0]+k[0],c[1]+k[1],c[2]+k[2]]; }); c=c.map(function(v){ return v/L.f.length; });
+  if(L.a){ var a=IG[L.a]; c=mixc(c,a.c,a.p); } return c; }
+function layerName(L){ return L.f.map(function(id){ return IG[id].n; }).join("-")+(L.a?" + "+IG[L.a].n:""); }
+function same(L,items){ var f=items.filter(function(id){ return IG[id].g===0; }).sort(), a=items.filter(function(id){ return IG[id].g===1; });
+  return f.join()===L.f.slice().sort().join() && a.join()===(L.a||""); }
+
+/* ---------- drawn art (40×40), the fallback while photos load ---------- */
+function bowlArt(c,bits){ var s='<path d="M4 21h32q-1 14-16 15Q5 35 4 21z" fill="#f7f2e8" stroke="#c9bfae" stroke-width="1"/><ellipse cx="20" cy="21" rx="16" ry="3.6" fill="#e9e1d2"/>'+
+  '<path d="M7 21q2-10 13-11 11 1 13 11z" fill="'+hex(c)+'"/>';
+  for(var i=0;i<(bits||6);i++){ var x=10+(i*37%21), y=13+(i*13%7); s+='<circle cx="'+x+'" cy="'+y+'" r="3.2" fill="'+shade(c,.18)+'" stroke="'+shade(c,-.3)+'" stroke-width=".7"/>'; }
+  return s; }
+function art(id){ var x=IG[id];
+  if(x.k==="bowl") return bowlArt(x.c,x.g?0:6);
+  if(x.k==="bottle") return '<rect x="17" y="4" width="6" height="7" rx="1.5" fill="#c69a63"/><path d="M14 13q0-3 3-3h6q3 0 3 3v21q0 3-3 3h-6q-3 0-3-3z" fill="'+hex(x.c)+'" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/><rect x="16" y="14" width="2.2" height="18" rx="1" fill="#fff" opacity=".5"/>';
+  if(x.k==="coco") return '<path d="M4 18h32q-1 17-16 17Q5 35 4 18z" fill="#7a4b26" stroke="#4e2c12"/><ellipse cx="20" cy="18" rx="16" ry="5" fill="#fbf8ee" stroke="#e7dccb"/>';
+  switch(id){
+    case "cream": return '<path d="M6 34q-2-7 5-8-3-6 4-8-1-6 5-9 1 4 4 5 6 2 5 7 6 2 4 7 6 2 4 6z" fill="#fffaf0" stroke="#e6dccb" stroke-width="1"/>';
+    case "cherry": return '<path d="M20 22q1-12 9-18" fill="none" stroke="#5c7a2a" stroke-width="2"/><circle cx="18" cy="28" r="8" fill="#c8102e"/><circle cx="15" cy="25" r="2.2" fill="#fff" opacity=".6"/>';
+    case "straw": return '<defs><pattern id="smStp" width="5" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><rect width="5" height="3" fill="#f06a9a"/><rect y="3" width="5" height="3" fill="#fff"/></pattern></defs><path d="M18 38V10q0-5 5-6h7v4h-6q-2 0-2 2v28z" fill="url(#smStp)" stroke="#d2507e" stroke-width=".6"/>';
+    case "umbrella": return '<path d="M20 12L26 38" stroke="#b5874c" stroke-width="2"/><path d="M3 15q17-16 34 0q-4-3-8.5 0-4-3-8.5 0-4-3-8.5 0-4-3-8.5 0z" fill="#22b8c4" stroke="#14808a" stroke-width=".8"/>';
+    case "mangoslice": return '<path d="M5 30q15-24 31-8q-14 14-31 8z" fill="#f7a21b" stroke="#c4740c"/><path d="M5 30q14 6 31-8" fill="none" stroke="#7aa232" stroke-width="2.5"/>';
+    case "mint": return '<path d="M20 36V18" stroke="#3f7a2e" stroke-width="1.6"/><path d="M20 22q-14-2-12-14 12 2 12 14zM20 20q12-6 13-16-12 3-13 16zM20 28q-10 2-13-6 10-2 13 6z" fill="#4fae3a" stroke="#2f7a22" stroke-width=".7"/>';
+    case "sprinkles": { var s="", C=["#f06a9a","#ffd23a","#4fb3f0","#7ad04f","#b07af0","#ff8a3a"]; for(var i=0;i<14;i++){ s+='<rect x="'+(7+(i*11%26))+'" y="'+(10+(i*7%20))+'" width="6" height="2" rx="1" fill="'+C[i%6]+'" transform="rotate('+(i*47%180)+' '+(10+(i*11%26))+' '+(11+(i*7%20))+')"/>'; } return s; }
+  } return ""; }
+function icon(id){ var p=PH[id]; if(p) return '<image href="'+p.src+'" x="0" y="0" width="40" height="40" preserveAspectRatio="xMidYMid meet"/>'; return art(id); }
+
+/* ---------- the week: a gentle climb (Mon → Sun) ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+/* N layers, blended layers (two fruits), layers with a creamy/juice add-in, toppings, card mode (pic = pictures, word = names, mem = turns over) */
+var LV=[null,{N:2,b:0,a:0,t:1,m:"pic"},{N:3,b:0,a:0,t:1,m:"pic"},{N:3,b:1,a:0,t:2,m:"pic"},{N:3,b:1,a:1,t:2,m:"pic"},{N:4,b:1,a:2,t:2,m:"word"},{N:4,b:2,a:2,t:2,m:"mem"},{N:5,b:2,a:2,t:3,m:"mem"}];
+var FOOT=[null,"2 layers, with pictures. A gentle start!","3 layers.","3 layers, one of them blended.","Creamy and juicy layers.","4 layers, and the card shows names only.","4 layers. Remember the order: the card turns over!","5 layers and 3 toppings. The trickiest of the week!"];
+var ORDERS=3;
+function lvOf(wd){ return wd===0?7:wd; }
+function today(){ var d=new Date(); return {n:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5), wd:d.getDay()}; }
+function rng(seed){ var a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; var t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+function pick(r,a){ return a[Math.floor(r()*a.length)]; }
+function shuffle(r,a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function cdist(a,b){ return Math.sqrt(Math.pow(a[0]-b[0],2)*.3+Math.pow(a[1]-b[1],2)*.59+Math.pow(a[2]-b[2],2)*.11); }
+function makeOrder(lv,r,cust){ var D=LV[lv];
+  for(var tries=0;tries<400;tries++){
+    var idx=shuffle(r,[0,1,2,3,4].slice(0,D.N)), bl={}, ad={}; idx.slice(0,D.b).forEach(function(i){ bl[i]=1; }); shuffle(r,idx).slice(0,D.a).forEach(function(i){ ad[i]=1; });
+    var Ls=[], ok=true, seen={};
+    for(var i=0;i<D.N;i++){ var f=[pick(r,FRUIT).id]; if(bl[i]){ var g; do{ g=pick(r,FRUIT).id; }while(g===f[0]); f.push(g); }
+      var L={f:f,a:ad[i]?pick(r,ADD).id:null}, key=f.slice().sort().join()+"|"+L.a; if(seen[key]){ ok=false; break; } seen[key]=1;
+      L.c=layerColor(L); if(i>0&&cdist(L.c,Ls[i-1].c)<46){ ok=false; break; } Ls.push(L); }
+    if(!ok) continue;
+    var tops; if(D.t===1) tops=[pick(r,["cream","straw","umbrella","mangoslice"])];
+    else { tops=shuffle(r,TOP.map(function(x){ return x.id; })).slice(0,D.t);
+      if(tops.some(function(t){ return ONCREAM[t]; })&&tops.indexOf("cream")<0){ var k=tops.findIndex(function(t){ return !ONCREAM[t]; }); if(k<0) k=0; tops[k]="cream"; } }
+    return {L:Ls,T:tops,cu:cust}; }
+  return {L:[{f:["strawberry"],a:null,c:IG.strawberry.c},{f:["banana"],a:null,c:IG.banana.c}],T:["straw"],cu:cust}; }
+function dayOrders(lv,seed){ var r=rng(seed), cs=shuffle(r,CUST.map(function(c,i){ return i; })), o=[]; for(var i=0;i<ORDERS;i++) o.push(makeOrder(lv,r,cs[i])); return o; }
+
+/* ---------- state ---------- */
+var P=null, gen=0, busy=false, TAB=0, GEO=null, said={};
+function msg(t){ $("#cmsg").textContent=t||""; }
+function O(){ return P.orders[P.oi]; }
+function start(bonus){
+  gen++; var t=today(), lv=lvOf(t.wd);
+  document.body.className="m-play"; $("#cday").textContent=bonus?"Bonus Smoothie":(DAYN[t.wd]+"'s Orders");
+  said={}; busy=false;
+  if(!bonus&&ST.day===t.n&&ST.cur){ var c=ST.cur; P={lv:c.lv,seed:c.seed,oi:c.oi,hints:c.hints||0,done:!!c.done,bonus:false,pl:c.pl||0,tp:c.tp||[],peeks:0}; }
+  else { var seed=bonus?(Math.random()*1e9)|0:(t.n*7919+13); P={lv:lv,seed:seed,oi:0,hints:0,done:false,bonus:!!bonus,pl:0,tp:[],peeks:0}; }
+  P.orders=dayOrders(P.lv,P.seed); if(P.bonus) P.orders=P.orders.slice(0,1);
+  P.bl=[]; P.blended=false; P.cover=false; P.anim={};
+  newCustomer(true);
+  layout(); saveCur();
+  if(P.done){ msg("All done for today! Tap Menu for a Bonus Smoothie, or come back tomorrow."); return; }
+  if(bonus) BWK.say(BONUS);
+  orderHello();
+}
+function saveCur(){ if(!P||P.bonus) return; ST.day=today().n; ST.cur={lv:P.lv,seed:P.seed,oi:P.oi,hints:P.hints,done:P.done,pl:P.pl,tp:P.tp}; save(); }
+function orderHello(){ var o=O(), cu=CUST[o.cu];
+  $("#cnum").textContent=P.bonus?cu.n+"'s order":("Order "+(P.oi+1)+" of "+P.orders.length);
+  if(P.pl===0&&!P.tp.length){
+    if(LV[P.lv].m==="mem"){ msg("Remember "+cu.n+"'s order! The card turns over when you start."); BWK.say(MEM); }
+    else if(ST.n<2){ msg("Start with the bottom layer: put its fruit in the blender."); BWK.say(FIRST); }
+    else msg(cu.n+" would like this smoothie!"); }
+  else msg(P.pl<O().L.length?"Next layer!":"Now the toppings!"); }
+function newCustomer(first){ var o=O(), im=$("#custImg"); im.src="sl/c-"+CUST[o.cu].id+".webp?v="+AV; im.alt=CUST[o.cu].n;
+  var c=$("#cust"); if(!first){ c.classList.add("in0"); void c.offsetWidth; c.classList.remove("in0"); }
+  TAB=P.pl>=o.L.length?2:0; P.cover=false; P.peeks=0; }
+
+/* ---------- layout ---------- */
+var CUPAR=420/784; /* cup photo w/h */
+function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return;
+  /* two columns at every size: the order card on the left; cup, blender and customer on the counter to the right */
+  var g={W:W,H:H}, ctY=H-Math.max(22,Math.min(46,H*.09)), LW=Math.min(W*.47,360);
+  g.tk={x:0,y:0,w:LW,h:Math.min(ctY-6,LW*1.55,420)}; if(W/H>1.6) g.tk.y=Math.max(0,(ctY-g.tk.h)/2);
+  var RX=LW+8, RW=W-RX, ch=Math.min(ctY/1.2,RW*.5/CUPAR,460); g.cup={h:ch,w:ch*CUPAR}; g.cup.x=RX+RW*.33-g.cup.w/2; g.cup.y=ctY-ch;
+  var bh=Math.min(ch*.98,RW*.38*BVH/100), bw=bh*100/BVH; g.bl={w:bw,h:bh,x:Math.min(W-bw-2,RX+RW*.8-bw/2),y:ctY-bh};
+  /* the customer stands behind the counter (feet hidden), between the cup and the blender, peeking over */
+  var cs=Math.min(RW*.62,ctY*.6,240); g.cu={w:cs,h:cs,x:Math.min(W-cs,Math.max(RX,(g.cup.x+g.cup.w+g.bl.x+bw)/2-cs/2)),y:ctY+cs*.14-cs};
+  g.ctY=ctY;
+  var top=Math.min(g.cup.y-g.cup.h*.2,g.cu.y), sw=Math.min(RW*.9,330), shh=sw*297/900; g.sg=PH.sign&&top>shh+6?{x:RX+(RW-sw)/2,y:Math.max(0,(top-shh)/2-4),w:sw,h:shh}:null;
+  GEO=g;
+  function put(el,r){ el.style.left=r.x+"px"; el.style.top=r.y+"px"; el.style.width=r.w+"px"; el.style.height=r.h+"px"; }
+  put($("#ticket"),g.tk); put($("#cust"),g.cu); put($("#cup"),g.cup); put($("#blender"),g.bl);
+  var ct=$("#counter"); ct.style.top=(g.ctY-6)+"px";
+  var ps=$("#pSign"); if(g.sg){ ps.style.display=""; ps.style.left=g.sg.x+"px"; ps.style.top=g.sg.y+"px"; ps.style.width=g.sg.w+"px"; } else ps.style.display="none"; signFont();
+  drawTray(); drawTicket(); drawCup(true); drawBlender(); }
+window.addEventListener("resize",function(){ requestAnimationFrame(layout); });
+if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(layout); }).observe($("#stage"));
+
+/* ---------- the order card ---------- */
+function drawTicket(){ var tk=$("#ticket"), g=GEO; if(!g) return; var w=g.tk.w, h=g.tk.h, o=O(), D=LV[P.lv], N=o.L.length;
+  var cu=CUST[o.cu], s='<svg viewBox="0 0 '+w+' '+h+'">';
+  s+='<text x="12" y="22" font-size="'+Math.min(16,w/17)+'" font-weight="800" fill="#c0466f" font-family="Outfit,system-ui,sans-serif">'+cu.n+"'s smoothie</text>";
+  var cover=P.cover&&!P.peek;
+  if(cover){ s+='<rect x="10" y="32" width="'+(w-20)+'" height="'+(h-42)+'" rx="10" fill="#d24f7e" opacity=".9"/>'+
+      '<g opacity=".25" fill="#fff">'; for(var i=0;i<18;i++) s+='<circle cx="'+(24+(i*53)%(w-40))+'" cy="'+(46+(i*37)%(h-60))+'" r="'+(4+i%4)+'"/>'; s+='</g>'+
+      '<text x="'+w/2+'" y="'+(h/2+10)+'" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="Outfit,system-ui,sans-serif">Remember?</text></svg>';
+    tk.innerHTML=s+'<button class="ib peek" id="tPeek">Peek</button>'; $("#tPeek").onclick=peek; return; }
+  /* mini cup on the left; one row per layer to its right, lined up with it */
+  var top=32, bot=h-10, tH=Math.max(22,Math.min(34,(bot-top)*.2)), cy0=top+tH, ch=bot-cy0, cw=Math.min(w*.26,ch*.62), cx=10;
+  var lh=ch/N, pic=D.m!=="word"&&D.m!=="mem"||true;
+  s+='<defs><clipPath id="smTkC"><path d="M'+cx+' '+cy0+'L'+(cx+cw)+' '+cy0+'L'+(cx+cw*.86)+' '+bot+'L'+(cx+cw*.14)+' '+bot+'Z"/></clipPath>'+
+     '<linearGradient id="smTkG" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".35" stop-color="#fff" stop-opacity=".18"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>';
+  s+='<g clip-path="url(#smTkC)">'; for(var k=0;k<N;k++){ var y=bot-(k+1)*lh; s+='<rect x="'+cx+'" y="'+y+'" width="'+cw+'" height="'+(lh+1)+'" fill="'+hex(o.L[k].c)+'"/>'; }
+  s+='<rect x="'+cx+'" y="'+cy0+'" width="'+cw+'" height="'+ch+'" fill="url(#smTkG)"/></g>';
+  s+='<path d="M'+cx+' '+cy0+'L'+(cx+cw)+' '+cy0+'L'+(cx+cw*.86)+' '+bot+'L'+(cx+cw*.14)+' '+bot+'Z" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="1.6"/>';
+  /* toppings above the mini cup */
+  var ts=Math.min(tH,30), tx=cx+cw+6;
+  var tw=o.T.length*(ts+3), t0=Math.max(4,cx+cw/2-tw/2);
+  o.T.forEach(function(t,i){ var done=P.tp.indexOf(t)>=0; s+='<svg x="'+(t0+i*(ts+3))+'" y="'+(cy0-ts-1)+'" width="'+ts+'" height="'+ts+'" viewBox="0 0 40 40" opacity="'+(done?.4:1)+'">'+icon(t)+'</svg>'; });
+  var rx=cx+cw+10, fs=Math.max(11,Math.min(15,lh*.32,w/24)), cur=P.pl;
+  for(var j=0;j<N;j++){ var L=o.L[j], yb=bot-j*lh, yt=yb-lh, done=j<cur, isCur=j===cur;
+    if(isCur) s+='<rect x="'+(rx-4)+'" y="'+(yt+1.5)+'" width="'+(w-rx-2)+'" height="'+(lh-3)+'" rx="8" fill="#fff" opacity=".7" stroke="#f2be45" stroke-width="2"/>';
+    var items=L.f.concat(L.a?[L.a]:[]);
+    if(D.m==="pic"){ var is=Math.min(lh-8,64,(w-rx-30)/items.length-4); items.forEach(function(id,q){ s+='<svg x="'+(rx+q*(is+4))+'" y="'+(yt+(lh-is)/2)+'" width="'+is+'" height="'+is+'" viewBox="0 0 40 40">'+icon(id)+'</svg>'; }); }
+    else { var is2=L.a?Math.min(lh-8,44,w*.16):0, aw=w-rx-(is2?is2+8:0)-22, ln=L.f.map(function(id){ return IG[id].n; }), lines=ln.length>1?[ln[0]+" +",ln[1]+(L.a?" +":"")]:[ln[0]+(L.a?" +":"")];
+      var mx=Math.max.apply(null,lines.map(function(q){ return q.length; })), f2=Math.max(10.5,Math.min(15,aw/(.56*mx),lh/(lines.length*1.25)));
+      if(is2) s+='<svg x="'+(w-is2-(done?30:8))+'" y="'+(yt+(lh-is2)/2)+'" width="'+is2+'" height="'+is2+'" viewBox="0 0 40 40">'+icon(L.a)+'</svg>';
+      lines.forEach(function(q,qi){ s+='<text x="'+rx+'" y="'+(yt+lh/2+f2*.36+(qi-(lines.length-1)/2)*f2*1.15)+'" font-size="'+f2+'" font-weight="700" fill="#4a300c" font-family="Outfit,system-ui,sans-serif">'+q+'</text>'; }); }
+    if(done) s+='<text x="'+(w-16)+'" y="'+(yt+lh/2+7)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#2f9a4a">✓</text>';
+  }
+  if(ST.n<2&&cur===0&&!P.bonus) s+='<text x="'+(cx+cw/2)+'" y="'+(bot-lh/2+5)+'" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" stroke="#6b2a10" stroke-width="2.5" paint-order="stroke" font-family="Outfit,system-ui,sans-serif">1st</text>';
+  s+='</svg>'; tk.innerHTML=s+(D.m==="mem"&&P.cover?'<button class="ib peek" id="tPeek" style="display:none"></button>':""); }
+function peek(){ if(!P||P.peek) return; BWK.sfx("tap"); P.peeks++; if(P.peeks>1){ P.hints++; saveCur(); } P.peek=true; drawTicket(); var g=gen;
+  setTimeout(function(){ if(g!==gen) return; P.peek=false; drawTicket(); },2600); if(P.peeks===2) msg("Peeking again counts like a hint."); }
+
+/* ---------- the cup (photo glass over drawn layers) ---------- */
+var CW=793, CH=1481, IN="M30 74L763 74L660 1300Q396 1352 133 1300Z", LBOT=1318, LTOP=236;
+function layerTop(k,N){ return LBOT-(k+1)*(LBOT-LTOP)/N; }
+function wave(y,ph){ var s="M0 "+y; for(var x=0;x<=CW;x+=CW/6){ s+=" Q"+(x+CW/12)+" "+(y+(((x/CW*6)+ph)%2?-12:12))+" "+(x+CW/6)+" "+y; } return s; }
+function drawCup(full){ var cup=$("#cup"); if(!GEO) return; var o=O(), N=o.L.length;
+  var s='<svg viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="none"><defs><clipPath id="smIn"><path d="'+IN+'"/></clipPath>'+
+    '<linearGradient id="smShade" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".16" stop-color="#000" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".14"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".36"/></linearGradient>';
+  var lay='';
+  for(var k=Math.min(P.pl,N)-1;k>=0;k--){ var L=o.L[k], c=L.c, yt=layerTop(k,N);
+    s+='<pattern id="smFl'+k+'" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="9" cy="12" r="3" fill="'+shade(c,-.35)+'" opacity=".35"/><circle cx="41" cy="33" r="2.4" fill="'+shade(c,-.3)+'" opacity=".3"/><circle cx="24" cy="50" r="2" fill="'+shade(c,.4)+'" opacity=".35"/></pattern>';
+    lay+='<g class="ly" data-k="'+k+'"><path d="'+wave(yt,k)+' L'+CW+' '+CH+' L0 '+CH+'Z" fill="'+hex(c)+'"/><path d="'+wave(yt,k)+' L'+CW+' '+CH+' L0 '+CH+'Z" fill="url(#smFl'+k+')"/>'+
+      '<path d="'+wave(yt,k)+'" fill="none" stroke="'+shade(c,.35)+'" stroke-width="7" opacity=".7"/></g>'; }
+  s+='</defs><g clip-path="url(#smIn)" id="smLiq">'+lay+'<rect width="'+CW+'" height="'+CH+'" fill="url(#smShade)" opacity="'+(P.pl?1:0)+'"/></g>';
+  if(!PH.cupglass) s+='<path d="M8 40L785 40L680 1460L113 1460Z" fill="rgba(220,240,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="10"/>';
+  s+='</svg>'; if(PH.cupglass) s+='<img class="glass" alt="" src="'+PH.cupglass.src+'">';
+  cup.innerHTML=s; P.tp.forEach(function(t){ putTop(t,false); }); }
+/* where each topping sits, as fractions of the cup box: [x, bottom y, width, rotation] */
+function topY(){ var N=O().L.length; return P.pl>=N?(LTOP-20)/CH:.16; }
+function topSpot(t){ var y=topY(), cr=P.tp.indexOf("cream")>=0; var crTop=y-.19;
+  switch(t){ case "cream": return [.5,y+.04,.74,0];
+    case "cherry": return cr?[.52,crTop+.04,.3,0]:[.5,y+.02,.3,0];
+    case "mint": return cr?[.3,crTop+.1,.32,-18]:[.32,y+.02,.32,-18];
+    case "sprinkles": return cr?[.5,crTop+.15,.5,0]:[.5,y+.03,.6,0];
+    case "straw": return [.68,y+.3,.22,10];
+    case "umbrella": return [.22,y+.12,.5,-16];
+    case "mangoslice": return [.94,.13,.36,12]; } }
+function putTop(t,anim){ var cup=$("#cup"), sp=topSpot(t), w=GEO.cup.w*sp[2], h=w, d=document.createElement("div");
+  if(t==="straw"){ h=GEO.cup.h*.66; w=PH.straw?h*PH.straw.w/PH.straw.h:h*.22; }
+  d.className="tp"+(anim?" drop":""); d.dataset.t=t;
+  d.style.cssText="width:"+w+"px;height:"+h+"px;left:"+(GEO.cup.w*sp[0]-w/2)+"px;top:"+(GEO.cup.h*sp[1]-h)+"px;z-index:"+(t==="straw"?1:3)+";"+(sp[3]?"rotate:"+sp[3]+"deg;":"");
+  d.innerHTML=PH[t]?'<img alt="" src="'+PH[t].src+'" style="object-position:50% 100%">':'<svg viewBox="0 0 40 40" preserveAspectRatio="'+(t==="straw"?"none":"xMidYMax meet")+'">'+icon(t)+'</svg>';
+  if(t==="straw") cup.insertBefore(d,cup.querySelector("img.glass")); else cup.appendChild(d); }
+
+/* ---------- the blender ---------- */
+var JAR="M14 14L86 14L76 104L24 104Z", BVH=199, BIN="M12 30L78 30L67 112Q44 121 20 112Z";
+function drawBlender(){ var b=$("#blender"); if(!GEO) return;
+  var s='<svg viewBox="0 0 100 '+BVH+'"><defs><clipPath id="smJar"><path d="'+BIN+'"/></clipPath>'+
+    '<linearGradient id="smJG" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".2" stop-color="#fff" stop-opacity=".08"/><stop offset=".75" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".25"/></linearGradient>'+
+    '<linearGradient id="smBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6e6cf"/><stop offset="1" stop-color="#4fae8f"/></linearGradient></defs>';
+  /* the base first, so the jar's collar sits in its ring */
+  if(PH.base) s+='<image href="'+PH.base.src+'" x="2" y="133" width="83" height="65.6" preserveAspectRatio="none"/>';
+  else s+='<path d="M8 136h72l6 56q0 6-6 6H8q-6 0-6-6z" fill="url(#smBase)" stroke="#2f7a62"/><circle cx="44" cy="168" r="9" fill="#e8eef0" stroke="#8aa0a8" stroke-width="2"/>';
+  s+='<g clip-path="url(#smJar)">';
+  if(P.blended&&P.bl.length){ var c=layerColor(blendLayer()), lv=114-Math.min(78,26+P.bl.length*17);
+    s+='<rect x="0" y="'+lv+'" width="100" height="'+(122-lv)+'" fill="'+hex(c)+'"/><path d="M0 '+lv+'q12-4 25 0t25 0 25 0 25 0" fill="'+shade(c,.3)+'" opacity=".7"/>'; }
+  else { s+='<g class="chunks">'; P.bl.forEach(function(id,i){ var c=IG[id].c; for(var q=0;q<5;q++){ var x=26+((q*17+i*29)%38), y=108-i*11-(q%3)*5;
+      s+='<circle cx="'+x+'" cy="'+y+'" r="'+(IG[id].g?6:5.5)+'" fill="'+hex(c)+'" stroke="'+shade(c,-.3)+'" stroke-width=".8"/>'; } }); s+='</g>'; }
+  s+='</g>';
+  if(PH.jar) s+='<image href="'+PH.jar.src+'" x="0" y="0" width="100" height="144" preserveAspectRatio="none"/>';
+  else s+='<g transform="translate(-6 8) scale(1 1.24)"><path d="'+JAR+'" fill="rgba(220,240,255,.16)" stroke="rgba(255,255,255,.85)" stroke-width="2.2"/><path d="'+JAR+'" fill="url(#smJG)"/>'+
+    '<path d="M84 30q14 2 12 22t-16 26" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="5"/><rect x="11" y="6" width="78" height="10" rx="3" fill="#2b2b2b"/></g>';
+  s+='</svg>'; b.innerHTML=s; }
+function blendLayer(){ return {f:P.bl.filter(function(id){ return IG[id].g===0; }),a:P.bl.filter(function(id){ return IG[id].g===1; })[0]||null}; }
+
+/* ---------- the tray ---------- */
+function drawTray(){ if(!P) return; var o=O(), list=TAB===0?FRUIT:TAB===1?ADD:TOP, h='';
+  [].forEach.call($("#tabs").children,function(b,i){ b.classList.toggle("on",i===TAB); });
+  list.forEach(function(x){ var used=x.top?P.tp.indexOf(x.id)>=0:P.bl.indexOf(x.id)>=0;
+    h+='<button class="ing'+(used?" used":"")+'" data-id="'+x.id+'" aria-label="'+x.n+'"><svg viewBox="0 0 40 40">'+icon(x.id)+'</svg><span>'+x.n+'</span></button>'; });
+  $("#ings").innerHTML=h; var top=P.pl>=o.L.length;
+  $("#aBlend").disabled=top||!P.bl.length||P.blended; $("#aPour").disabled=top?false:!P.blended; $("#aEmpty").disabled=top||!P.bl.length;
+  $("#aPour").textContent=top?"Serve":"Pour";
+  if(top) $("#aPour").disabled=P.tp.length<o.T.length; }
+$("#tabs").onclick=function(e){ var b=e.target.closest("button"); if(!b) return; BWK.sfx("tap"); TAB=+b.dataset.t; clearHint(); drawTray(); };
+$("#ings").onclick=function(e){ var b=e.target.closest(".ing"); if(!b||!P||busy||P.done) return; tapIng(b.dataset.id,b); };
+
+/* ---------- sounds of its own ---------- */
+function sPlop(){ BWG.tone(520,0,.09,.05,"sine",240); BWG.noise(0,.07,.05,400,1800); }
+function sWhir(){ BWG.noise(0,1.3,.07,250,2600); BWG.tone(95,0,1.3,.025,"sawtooth",130); BWG.tone(190,.05,1.2,.012,"square",230); }
+function sPour(){ BWG.noise(0,.9,.05,200,900); for(var i=0;i<7;i++) BWG.tone(260+Math.random()*200,.05+i*.11,.08,.03,"sine",480+Math.random()*200); }
+function sTop(){ BWG.tone(880,0,.08,.04,"triangle",1320); BWG.tone(1320,.06,.12,.025,"triangle"); }
+function sWrong(){ BWG.tone(220,0,.18,.05,"sine",180); }
+function sServe(){ [523,659,784,1047].forEach(function(f,i){ BWG.tone(f,i*.08,.35,.04,"triangle"); }); BWG.noise(.4,.35,.04,1200,4000); }
+function sWin(){ [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,i*.09,.4,.045,"triangle"); }); }
+
+/* ---------- playing ---------- */
+function startedCover(){ if(LV[P.lv].m==="mem"&&!P.cover&&P.pl===0){ P.cover=true; drawTicket(); } }
+function tapIng(id,el){ var x=IG[id], o=O(), top=P.pl>=o.L.length; clearHint();
+  if(x.top){
+    if(!top){ bad(el); msg("Toppings go on last! First make all the layers."); if(!said.last){ said.last=1; BWK.say(LAST); } return; }
+    if(P.tp.indexOf(id)>=0) return;
+    if(o.T.indexOf(id)<0){ bad(el); msg("Oops! "+x.n+" isn't on the order card."); if(!said.ntop){ said.ntop=1; BWK.say(NTOP); } return; }
+    P.tp.push(id); sTop(); putTop(id,true); saveCur(); drawTray(); drawTicket();
+    if(P.tp.length===o.T.length){ msg("Ready! Tap Serve."); BWK.say(SERVE); ringOn($("#aPour")); } return; }
+  if(top){ bad(el); msg("All the layers are in! Now the toppings."); TAB=2; drawTray(); return; }
+  if(P.blended){ bad(el); msg("Pour that layer first, or tap Empty."); return; }
+  if(P.bl.indexOf(id)>=0){ msg(x.n+" is already in the blender."); return; }
+  if(P.bl.length>=3){ bad(el); msg("The blender is full! Tap Blend, or Empty to start the layer again."); return; }
+  startedCover(); P.bl.push(id); sPlop(); if(!said["i"+id]){ said["i"+id]=1; BWK.say(x.s+"!"); }
+  drawBlender(); drawTray(); var b=$("#blender"); b.animate([{transform:"translateY(-3%)"},{transform:"none"}],{duration:220,easing:"ease-out"});
+  if(ST.n<2&&P.oi===0&&P.pl===0&&!said.blend){ said.blend=1; setTimeout(function(){ msg("Anything else for this layer? Then tap Blend!"); },300); }
+}
+function bad(el){ sWrong(); if(el){ el.classList.remove("bad"); void el.offsetWidth; el.classList.add("bad"); } }
+function blend(){ if(!P||busy||!P.bl.length||P.blended) return; clearHint(); busy=true; var b=$("#blender"), g=gen; sWhir(); b.classList.add("shake");
+  setTimeout(function(){ if(g!==gen) return; b.classList.remove("shake"); busy=false; P.blended=true; drawBlender(); drawTray();
+    var L=blendLayer(); msg("Blended! That's "+layerName(L)+". Now tap Pour."); if(!said.pour){ said.pour=1; BWK.say(POUR); } },1300); }
+function empty(){ if(!P||busy||!P.bl.length) return; clearHint(); BWK.sfx("whoosh"); P.bl=[]; P.blended=false; drawBlender(); drawTray(); msg("Empty! Try that layer again."); }
+function pourOrServe(){ if(!P||busy) return; var o=O(); if(P.pl>=o.L.length){ serve(); return; } if(!P.blended) return; clearHint();
+  var L=o.L[P.pl];
+  if(!same(L,P.bl)){ sWrong(); var b=$("#blender"); b.animate([{marginLeft:"-6px"},{marginLeft:"6px"},{marginLeft:"-4px"},{marginLeft:"0"}],{duration:350});
+    msg(nudge(L,P.bl)); if(!said.nope){ said.nope=1; BWK.say(P.lv<=3?CLOSE:NOPE); } return; }
+  busy=true; var g=gen, N=o.L.length, k=P.pl, bl=$("#blender"), G=GEO, c=L.c;
+  /* tip the blender over the cup and pour */
+  var ang=-58*Math.PI/180, sx=G.bl.w*(.04-.5), sy=G.bl.h*(.08-.5), rx=sx*Math.cos(ang)-sy*Math.sin(ang), ry=sx*Math.sin(ang)+sy*Math.cos(ang);
+  var S={x:G.cup.x+G.cup.w*.5, y:Math.max(-G.bl.h*.1,G.cup.y-G.cup.h*.22)}, cx=G.bl.x+G.bl.w/2, cy=G.bl.y+G.bl.h/2;
+  bl.style.transform="translate("+(S.x-rx-cx)+"px,"+(S.y-ry-cy)+"px) rotate(-58deg)"; bl.style.zIndex=6;
+  var yLiq=G.cup.y+G.cup.h*(layerTop(k,N)/CH);
+  setTimeout(function(){ if(g!==gen) return; sPour();
+    var st=document.createElement("div"); st.className="strm"; st.style.left=S.x+"px"; st.style.top=S.y+"px"; st.style.height=Math.max(10,(G.cup.y+G.cup.h*(LBOT/CH))-S.y)+"px"; st.style.background=hex(c);
+    $("#stage").appendChild(st); st.animate([{transform:"scaleY(0)"},{transform:"scaleY(1)"}],{duration:260,fill:"forwards"});
+    P.pl++; drawCup(); var ly=$('#cup .ly[data-k="'+k+'"]'); if(ly) ly.animate([{transform:"translateY("+((LBOT-layerTop(k,N))*1)+"px)"},{transform:"none"}],{duration:900,easing:"cubic-bezier(.3,.6,.4,1)"});
+    setTimeout(function(){ if(g!==gen) return; st.style.transformOrigin="50% 100%"; st.animate([{transform:"scaleY(1)"},{transform:"scaleY(0)"}],{duration:220,fill:"forwards"});
+      bl.style.transform=""; P.bl=[]; P.blended=false; drawBlender();
+      setTimeout(function(){ if(g!==gen) return; st.remove(); bl.style.zIndex=""; busy=false; saveCur(); drawTray(); drawTicket(); afterPour(); },560); },820);
+  },560);
+}
+function afterPour(){ var o=O(); if(P.pl<o.L.length){ msg("Yum! Now the next layer up."); if(!said.next){ said.next=1; BWK.say(NEXT); } }
+  else { TAB=2; drawTray(); msg("All the layers are in! Now add the toppings."); BWK.say(TOPS); } }
+function nudge(L,items){ if(P.lv>3) return "Not quite. Check the order card for this layer.";
+  var f=items.filter(function(id){ return IG[id].g===0; }), need=L.f.concat(L.a?[L.a]:[]);
+  for(var i=0;i<need.length;i++) if(items.indexOf(need[i])<0) return "Close! This layer needs "+IG[need[i]].n.toLowerCase()+". Tap Empty and try again.";
+  for(var j=0;j<items.length;j++) if(need.indexOf(items[j])<0) return "Close! There's no "+IG[items[j]].n.toLowerCase()+" in this layer. Tap Empty and try again.";
+  return "Not quite. Tap Empty and try again."; }
+function serve(){ var o=O(); if(P.tp.length<o.T.length||busy) return; clearHint(); busy=true; var g=gen; sServe(); BWK.say(THANKS);
+  msg("Yum! Thank you, Sophie!"); var c=$("#cust"); c.classList.add("hop"); $("#cup").animate([{transform:"none"},{transform:"translateX(-8%) scale(.96)"},{transform:"none"}],{duration:700});
+  setTimeout(function(){ if(g!==gen) return; c.classList.remove("hop"); ST.n++; save();
+    if(P.oi+1<P.orders.length){ c.classList.add("out");
+      setTimeout(function(){ if(g!==gen) return; c.classList.remove("out"); P.oi++; P.pl=0; P.tp=[]; P.bl=[]; P.blended=false; saveCur(); newCustomer(); busy=false; layout(); orderHello(); },520); }
+    else { busy=false; win(); } },1300); }
+function starsOf(h){ return h===0?3:h<=2?2:1; }
+function win(){ P.done=true; saveCur(); var g=gen; var fresh=P.bonus?"":BWG.patch("smoothie"); sWin();
+  setTimeout(function(){ if(g!==gen) return; var s=starsOf(P.hints);
+    var box=BWK.sheet('<h2>'+(P.bonus?'Smoothie served!':'All the orders are done!')+'</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,s)+'<i>'+"★★★".slice(0,3-s)+'</i></div>'+
+      '<p>'+(P.bonus?'Another happy customer!':'You made '+P.orders.length+' smoothies'+(P.hints?' with '+P.hints+' hint'+(P.hints>1?'s':''):' with no hints')+'.')+'</p>'+
+      '<p>'+(P.bonus?'Want to make another one?':'Come back tomorrow for new orders.')+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="more">Bonus Smoothie</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    BWK.say(fresh?WINP:(P.bonus?WINB:WIN)); },700); }
+
+/* ---------- hints ---------- */
+var HR=[];
+function ringOn(el){ if(!el) return; el.classList.add("ring"); HR.push(el); }
+function clearHint(){ HR.forEach(function(e){ e.classList.remove("ring"); }); HR=[]; }
+function hint(){ if(!P||busy||P.done) return; clearHint(); BWK.sfx("tap"); var o=O(); P.hints++; saveCur(); BWK.say(HINT);
+  if(LV[P.lv].m==="mem"&&P.cover){ P.peeks=Math.max(P.peeks,1); P.peek=true; drawTicket(); var g=gen; setTimeout(function(){ if(g!==gen) return; P.peek=false; drawTicket(); },3000); }
+  if(P.pl>=o.L.length){ var t=o.T.filter(function(t){ return P.tp.indexOf(t)<0; })[0]; if(!t){ ringOn($("#aPour")); return; }
+    TAB=2; drawTray(); ringOn($('.ing[data-id="'+t+'"]')); msg("Sophie's tip: add "+IG[t].n.toLowerCase()+"."); return; }
+  var L=o.L[P.pl], need=L.f.concat(L.a?[L.a]:[]);
+  if(P.blended){ if(same(L,P.bl)) { ringOn($("#aPour")); msg("Sophie's tip: that's right! Tap Pour."); } else { ringOn($("#aEmpty")); msg("Sophie's tip: that's not this layer. Tap Empty."); } return; }
+  var wrong=P.bl.filter(function(id){ return need.indexOf(id)<0; }); if(wrong.length){ ringOn($("#aEmpty")); msg("Sophie's tip: there's something extra in the blender. Tap Empty."); return; }
+  var miss=need.filter(function(id){ return P.bl.indexOf(id)<0; });
+  if(!miss.length){ ringOn($("#aBlend")); msg("Sophie's tip: that's everything. Tap Blend!"); return; }
+  TAB=IG[miss[0]].g; drawTray(); miss.forEach(function(id){ ringOn($('.ing[data-id="'+id+'"]')); });
+  if(miss.some(function(id){ return IG[id].g!==TAB; })) ringOn($('#tabs [data-t="'+(TAB?0:1)+'"]'));
+  msg("Sophie's tip: this layer is "+layerName(L)+"."); }
+
+/* ---------- keys on a computer: 1-7 tray, B blend, P pour/serve, E empty, H hint ---------- */
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  var k=e.key.toLowerCase(), bs=document.querySelectorAll(".ing");
+  if(k>="1"&&k<="9"){ var b=bs[+k-1]; if(b) tapIng(b.dataset.id,b); }
+  else if(k==="b") blend(); else if(k==="p"||k==="enter") pourOrServe(); else if(k==="e") empty(); else if(k==="h") hint();
+  else if(k==="tab"){ e.preventDefault(); TAB=(TAB+1)%3; drawTray(); } });
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; busy=false; document.body.className="m-menu"; var t=today(), lv=lvOf(t.wd);
+  var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
+  $("#bPlay").textContent=doneToday?"Today's Orders ✓":"Today's Orders"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
+  $("#bBonus").style.display=doneToday?"":"none";
+  $("#mfoot").textContent=(ST.n?("Smoothies served: "+ST.n+". "):"")+DAYN[t.wd]+": "+FOOT[lv];  setTimeout(signFont,30); }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+INTRO+'</p><p>'+HOW+'</p>'+
+  '<p><b>Bottom first!</b> A smoothie is poured from the bottom of the cup up, so the bottom layer on the card is the first one you make.</p>'+
+  '<p>A layer can blend two fruits, like Strawberry-Banana. Creamy things (ice cream, yogurt, coconut milk) make a layer paler, and juices make it brighter. The card always shows them.</p>'+
+  '<p>Each day gets a little harder. On Friday the card shows names instead of pictures. On the weekend, the card turns over once you start: remember the order, or tap Peek (the first peek is free).</p>'+
+  '<p>Making a real smoothie at home? Ask a grown-up to help with the blender.</p><p>On a computer, press 1-7 for the tray, Tab to switch shelves, B to blend, P to pour, E to empty, H for a hint.</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+$("#tHint").onclick=hint; $("#aBlend").onclick=blend; $("#aPour").onclick=pourOrServe; $("#aEmpty").onclick=empty;
+$("#blender").onclick=function(){ if(P&&P.bl.length&&!P.blended) blend(); };
+
+/* the menu emblem: a little layered smoothie */
+(function(){ var c=[IG.strawberry.c,IG.banana.c,IG.kiwi.c,IG.blueberry.c], s='<defs><clipPath id="emC"><path d="M44 22H88L82 86H50Z"/></clipPath><linearGradient id="emG" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".3" stop-color="#fff" stop-opacity=".25"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs><g clip-path="url(#emC)">';
+  c.forEach(function(k,i){ s+='<rect x="40" y="'+(70-i*15)+'" width="52" height="17" fill="'+hex(k)+'"/>'; }); s+='<rect x="40" y="20" width="52" height="70" fill="url(#emG)"/></g>'+
+  '<path d="M44 22H88L82 86H50Z" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="2"/><path d="M50 22q16-16 32 0z" fill="#fffaf0"/><circle cx="66" cy="9" r="5" fill="#c8102e"/><path d="M78 30L90 2" stroke="#f06a9a" stroke-width="4" stroke-linecap="round"/>';
+  $("#smEmb").innerHTML=s; })();
+
+var INTRO="Sophie's Smoothie Stand! Sophie's animal friends are thirsty. Make each smoothie just like the order card, layer by layer, from the bottom up.";
+var HOW="Look at the order card. Start with the bottom layer: tap its fruit to put it in the blender, then tap Blend, then Pour. Make the next layer the same way, all the way to the top. Then add the toppings and tap Serve. Stuck? Tap Hint.";
+var FIRST="Start with the bottom layer! Put its fruit in the blender.", POUR="Now tap Pour!", NEXT="Yum! Now the next layer up.", TOPS="All the layers are in! Now add the toppings.";
+var SERVE="Ready! Tap Serve.", THANKS="Yum! Thank you, Sophie!", LAST="Toppings go on last!", NTOP="Oops! That topping isn't on the order card.";
+var CLOSE="Close! Check the order card for this layer.", NOPE="Not quite. Check the order card.", HINT="Here's Sophie's tip!";
+var MEM="Remember the order! The card turns over when you start. Tap Peek to look again.";
+var WIN="All the orders are done! Come back tomorrow for new orders.", WINP="All done! You earned a new patch for your badge wall!", WINB="Smoothie served! Another happy customer!";
+var BONUS="Here's a bonus smoothie order!";
+var L={"sm-intro":INTRO,"sm-how":HOW,"sm-first":FIRST,"sm-pour":POUR,"sm-next":NEXT,"sm-tops":TOPS,"sm-serve":SERVE,"sm-thanks":THANKS,"sm-last":LAST,"sm-ntop":NTOP,
+  "sm-close":CLOSE,"sm-nope":NOPE,"sm-hint":HINT,"sm-mem":MEM,"sm-win":WIN,"sm-winp":WINP,"sm-winb":WINB,"sm-bonus":BONUS};
+ING.forEach(function(x){ L["sm-i-"+x.id]=x.s+"!"; });
+BWK.lines(L);
+toMenu();
+BWK.init({here:"smoothie", voice:"outpost", intro:INTRO, noHello:true});
+window.SMO={start:start,tap:function(id){ tapIng(id,document.querySelector('.ing[data-id="'+id+'"]')); },blend:blend,pour:pourOrServe,empty:empty,hint:hint,peek:peek,
+  tab:function(t){ TAB=t; drawTray(); }, setTops:function(a){ O().T=a; drawTicket(); drawTray(); },
+  solveLayer:function(){ var o=O(); if(P.pl>=o.L.length) return; var L=o.L[P.pl]; P.bl=L.f.concat(L.a?[L.a]:[]); P.blended=true; drawBlender(); drawTray(); },
+  orders:function(lv,seed){ return dayOrders(lv,seed).map(function(o){ return {L:o.L.map(layerName),T:o.T,cu:CUST[o.cu].n}; }); },
+  state:function(){ return P&&{lv:P.lv,oi:P.oi,pl:P.pl,tp:P.tp,bl:P.bl,blended:P.blended,hints:P.hints,done:P.done,busy:busy,cover:P.cover,order:{L:O().L.map(layerName),T:O().T},geo:GEO}; },lines:L};
+})();
+</script>
+</body>
+</html>
