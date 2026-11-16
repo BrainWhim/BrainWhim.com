@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Zayden's Marble Run · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Zayden's Marble Run (The Outpost · The Workshop), Nov 16. Zayden's game, picked by Judy. A pegboard puzzle: the marble drops from the
+   chute and falls straight down through the holes; a ramp rolls it one hole over as it drops. Place the tray's ramps so the marble picks up
+   every gem and lands in the cup. Three runs a day, a gentle climb Monday to Sunday (marble-gen.js; tools/marble/check-year.js).
+   Drawn stand-ins until Judy's photos arrive (mr/; html.ph when they've loaded). */
+.bg{filter:blur(1.6px) brightness(.62) saturate(1.05)}
+#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#2f6fb8}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.top{flex:none;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cmsg{text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px}
+.gems{display:flex;gap:4px;justify-content:center;min-height:20px}
+.gems i{width:18px;height:18px;display:block;opacity:.35;filter:grayscale(1)}
+.gems i.on{opacity:1;filter:none;animation:gpop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes gpop{0%{transform:scale(.4)}100%{transform:none}}
+.gems svg,.gems img{width:100%;height:100%;display:block}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;user-select:none;-webkit-user-select:none}
+#stage.scroll{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+#stage.scroll #board{touch-action:pan-y}
+#stage.scroll::after{content:"";position:absolute;left:0;width:1px;height:8px;top:var(--sh,0)}
+/* the pegboard */
+#board{position:absolute;touch-action:none;border-radius:14px;cursor:pointer;
+  background:radial-gradient(circle at 50% 50%,rgba(60,35,12,.55) 0 9%,rgba(255,240,210,.25) 11%,transparent 13%) 0 0/var(--u) var(--u),
+    repeating-linear-gradient(90deg,rgba(120,80,40,0) 0 37px,rgba(120,80,40,.05) 37px 39px),linear-gradient(180deg,#d9b88a,#c9a573 60%,#bf9a66);
+  background-position:var(--hx) var(--hy),0 0,0 0;
+  box-shadow:inset 0 0 0 calc(var(--pad)*.35) #8a5a2b,inset 0 0 0 calc(var(--pad)*.42) #6e451f,inset 0 2px 0 calc(var(--pad)*.42) rgba(255,220,170,.25),0 14px 30px rgba(0,0,0,.55),0 3px 0 #4f2f12}
+html.ph #board{border-radius:0;background:radial-gradient(circle at 50% 50%,rgba(50,28,8,.7) 0 8%,rgba(90,55,20,.35) 10%,rgba(255,245,225,.3) 11.5%,transparent 13.5%) 0 0/var(--u) var(--u),
+    url("mr/board.jpg?v=1116a") 0 0/cover;background-position:var(--hx) var(--hy),0 0;box-shadow:0 14px 30px rgba(0,0,0,.55)}
+/* the frame reuses Style Studio's pine frame photo */
+html.ph #board::before{content:"";position:absolute;inset:0;border:calc(var(--pad)*.62) solid transparent;border-image:url("ss/st-frame.webp?v=1116a") 46 fill / calc(var(--pad)*.62) stretch;pointer-events:none;z-index:1}
+html.ph #board::before{border-image-source:url("ss/st-frame.webp?v=1116a");border-image-slice:46}
+#board .bwp{position:absolute;left:50%;bottom:calc(var(--pad)*.06);transform:translateX(-50%);font:800 10px/1 Outfit,system-ui,sans-serif;letter-spacing:.06em;color:#4a300c;z-index:6;
+  padding:3px 6px 2px;border-radius:4px;background:linear-gradient(180deg,#f6dc8e,#c99a3c);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 3px rgba(0,0,0,.5)}
+.pc{position:absolute;pointer-events:none;z-index:2}
+.pc svg,.pc img{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.pc.drop{animation:pdrop .3s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pdrop{0%{transform:translateY(-18%) scale(1.12);opacity:.4}100%{transform:none;opacity:1}}
+.pc.gem img,.pc.gem svg{animation:glint 2.8s ease-in-out infinite}
+@keyframes glint{50%{filter:brightness(1.25) drop-shadow(0 0 6px rgba(140,220,255,.9))}}
+.pc.gem.got{transition:transform .45s cubic-bezier(.3,.8,.3,1),opacity .45s;transform:translateY(-40%) scale(1.4);opacity:0}
+.pc.bad{animation:pbad .4s}
+@keyframes pbad{20%,60%{transform:translateX(-6%)}40%,80%{transform:translateX(6%)}}
+.pc.ring{z-index:5}
+.pc.ring::after{content:"";position:absolute;inset:-6%;border-radius:22%;box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
+.hole.ring{position:absolute;z-index:5;border-radius:50%;box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite;pointer-events:none}
+@keyframes hring{50%{box-shadow:0 0 0 3px rgba(255,224,138,.4),0 0 6px 2px rgba(242,190,69,.3)}}
+#marble{position:absolute;z-index:4;pointer-events:none;will-change:transform;left:0;top:0}
+#marble svg,#marble img{display:block;width:100%;height:100%}
+#marble .sh{position:absolute;left:8%;right:8%;bottom:-12%;height:22%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent)}
+/* the tray */
+.tray{flex:none;width:min(720px,100%);margin:0 auto;border-radius:18px;padding:6px 6px 7px;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 24px rgba(0,0,0,.45);display:flex;gap:6px;align-items:stretch}
+.rp{flex:1 1 0;min-width:0;appearance:none;border:0;cursor:pointer;font:inherit;padding:4px 4px 5px;border-radius:14px;background:rgba(255,255,255,.55);
+  box-shadow:0 2px 0 rgba(150,110,50,.35);display:flex;align-items:center;gap:6px;color:#5a3c14;-webkit-tap-highlight-color:transparent;position:relative}
+.rp .pic{flex:none;width:52px;height:52px;position:relative}
+.rp .pic svg,.rp .pic img{position:absolute;inset:0;width:100%;height:100%}
+.rp b{display:block;font-size:15px;line-height:1.1;text-align:left}
+.rp i{display:block;font-style:normal;font-size:12.5px;font-weight:700;color:#8a6a3a;text-align:left}
+.rp .n{position:absolute;top:-6px;right:-4px;min-width:26px;height:26px;padding:0 6px;border-radius:13px;display:grid;place-items:center;font-weight:800;font-size:15px;
+  color:#fff;background:linear-gradient(180deg,#5aa6e8,#2f6fb8);box-shadow:0 2px 0 #1d4f8a}
+.rp.on{background:#fff;box-shadow:0 0 0 3px #2f6fb8,0 2px 0 rgba(150,110,50,.35)}
+.rp.none{opacity:.45}
+.rp.none .n{background:#a99a80;box-shadow:none}
+.rp.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
+.rp:active{transform:translateY(2px)}
+.tbtn{flex:none;display:flex;flex-direction:column;gap:5px;width:118px}
+.tbtn .k-btn{min-height:0;flex:1;padding:0 6px;font-size:17px}
+.tbtn .k-ghost{color:#6b4a1a;background:rgba(120,80,20,.12);box-shadow:0 3px 0 rgba(120,80,20,.25);font-size:14.5px}
+.tbtn .go{background:linear-gradient(180deg,#6fb8f2,#2f6fb8);color:#fff;box-shadow:0 4px 0 #1d4f8a}
+.tbtn .k-btn:disabled{opacity:.45;cursor:default}
+.tbtn .go.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.how svg{display:block;width:min(300px,100%);margin:4px auto 10px}
+@media (max-width:420px){.rp .pic{width:44px;height:44px}.rp b{font-size:14px}.rp i{font-size:11.5px}.tbtn{width:96px}.tbtn .k-btn{font-size:16px}}
+@media (max-width:360px){.rp i{display:none}}
+@media (max-height:700px){.cmsg{font-size:14.5px}.ib{min-height:36px;font-size:14px}.cday span{font-size:13px}.rp .pic{width:42px;height:42px}}
+@media (prefers-reduced-motion:reduce){.pc.gem img,.pc.gem svg{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="mrEmb"></svg>
+      <h1>Zayden's Marble Run</h1>
+      <p class="lead">Put ramps on the pegboard so the marble rolls through every gem and lands in the cup!</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Today's Runs</button>
+        <button class="k-btn" id="bBonus" style="display:none">Bonus Run</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b id="cday"></b><span id="cnum"></span></div>
+      <button class="ib" id="tHint">Hint</button>
+    </div>
+    <div class="top" id="top"><div class="cmsg" id="cmsg" aria-live="polite"></div><div class="gems" id="gems" aria-hidden="true"></div></div>
+    <div id="stage"><div id="board" role="application" aria-label="The pegboard"><span class="bwp">BW</span></div><div id="marble" aria-hidden="true"><span class="sh"></span></div></div>
+    <div class="tray">
+      <button class="rp" id="rpR" data-k="R" aria-label="Right ramp"><span class="pic"></span><span><b>Right ramp</b><i>rolls it right</i></span><span class="n">0</span></button>
+      <button class="rp" id="rpL" data-k="L" aria-label="Left ramp"><span class="pic"></span><span><b>Left ramp</b><i>rolls it left</i></span><span class="n">0</span></button>
+      <div class="tbtn"><button class="k-btn go" id="aRoll">Roll!</button><button class="k-btn k-ghost" id="aClear">Take back</button></div>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1116a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script src="marble-gen.js?v=1116a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1116a";
+var ST=LS.get("marble",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0;
+function save(){ LS.set("marble",ST); }
+
+/* ---------- photos (Judy's ChatGPT pictures in mr/): html.ph once they've all loaded; the drawn art stays as the fallback ---------- */
+var PH=false, PICS=["board.jpg","ramp.webp","block.webp","gem.webp","marble.webp","cup.webp","chute.webp","../ss/st-frame.webp"];
+function pic(f){ return "mr/"+f+"?v="+AV; }
+(function(){ var n=0; PICS.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n<PICS.length) return; PH=true; document.documentElement.classList.add("ph");
+  if(P) { drawAll(); } drawTray(); }; i.src=pic(f); }); })();
+
+/* ---------- drawn art (100x100 boxes) ---------- */
+function rampSVG(k,fixed){ var w1=fixed?"#6b4424":"#e2b77a", w2=fixed?"#4a2c14":"#c08a4a", w3=fixed?"#2e1a0a":"#8a5a2a", id="rg"+(fixed?"f":"p")+Math.random().toString(36).slice(2,7);
+  var g='<g'+(k==="L"?' transform="translate(100 0) scale(-1 1)"':'')+'>'+
+    '<polygon points="4,30 96,86 96,98 4,42" fill="rgba(0,0,0,.28)" transform="translate(3 4)"/>'+
+    '<polygon points="4,18 96,74 96,88 4,32" fill="url(#'+id+')" stroke="'+w3+'" stroke-width="1.6" stroke-linejoin="round"/>'+
+    '<polygon points="4,32 96,88 96,93 4,37" fill="'+w3+'"/>'+
+    '<path d="M10 25L90 74M10 28.5L90 77.5" stroke="'+w3+'" stroke-opacity=".25" stroke-width="1"/>'+
+    '<path d="M4 18L96 74" stroke="#fff" stroke-opacity=".45" stroke-width="1.4"/>'+
+    '<rect x="88" y="62" width="8" height="26" rx="2" fill="'+w2+'" stroke="'+w3+'" stroke-width="1.2"/>'+
+    '<circle cx="22" cy="31" r="2.6" fill="'+(fixed?"#e9c46a":"#9aa0aa")+'" stroke="#333" stroke-width=".6"/><circle cx="74" cy="63" r="2.6" fill="'+(fixed?"#e9c46a":"#9aa0aa")+'" stroke="#333" stroke-width=".6"/></g>';
+  return '<svg viewBox="0 0 100 100"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+w1+'"/><stop offset="1" stop-color="'+w2+'"/></linearGradient></defs>'+g+
+    (k==="R"||k==="L"?'<path d="'+(k==="R"?"M40 48L58 59M52 51L58 59L49 61":"M60 48L42 59M48 51L42 59L51 61")+'" stroke="'+(fixed?"rgba(255,230,180,.75)":"rgba(90,50,15,.55)")+'" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>':'')+'</svg>'; }
+function blockSVG(){ return '<svg viewBox="0 0 100 100"><rect x="14" y="20" width="76" height="76" rx="6" fill="rgba(0,0,0,.3)" transform="translate(3 4)"/>'+
+  '<path d="M12 28L26 14H90V80L76 94H12Z" fill="#8a5a2a"/><rect x="12" y="28" width="64" height="66" rx="3" fill="#c98d4f" stroke="#6e451f" stroke-width="1.6"/>'+
+  '<path d="M12 28L26 14H90L76 28Z" fill="#e0aa6c" stroke="#6e451f" stroke-width="1.6" stroke-linejoin="round"/><path d="M76 28L90 14V80L76 94Z" fill="#a46b35" stroke="#6e451f" stroke-width="1.6" stroke-linejoin="round"/>'+
+  '<path d="M18 44Q44 40 70 46M18 62Q40 58 70 64M18 80Q46 76 70 82" stroke="#6e451f" stroke-opacity=".3" fill="none"/></svg>'; }
+function gemSVG(){ return '<svg viewBox="0 0 100 100"><path d="M30 26H70L86 44L50 86L14 44Z" fill="rgba(0,0,0,.25)" transform="translate(3 4)"/>'+
+  '<path d="M30 26H70L86 44L50 86L14 44Z" fill="#3fa7e8" stroke="#1b5f9a" stroke-width="2" stroke-linejoin="round"/><path d="M30 26L40 44H60L70 26M14 44H86M40 44L50 86L60 44" fill="none" stroke="#bfe8ff" stroke-opacity=".8" stroke-width="1.6"/>'+
+  '<path d="M30 26L40 44L14 44Z" fill="#9fdcff"/><path d="M60 44L70 26L86 44Z" fill="#2a86c8"/><path d="M36 30L44 30L40 38Z" fill="#fff" opacity=".85"/></svg>'; }
+function marbleSVG(){ var mid="mrM"+Math.random().toString(36).slice(2,7); return '<svg viewBox="0 0 100 100"><defs><radialGradient id="'+mid+'" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#e8f6ff"/><stop offset=".35" stop-color="#6ec0f5"/><stop offset=".8" stop-color="#1c5fa8"/><stop offset="1" stop-color="#0d3a70"/></radialGradient></defs>'+
+  '<circle cx="50" cy="50" r="46" fill="url(#'+mid+')"/><path d="M22 60Q40 40 58 62T86 50" stroke="#ff7a3c" stroke-width="7" fill="none" stroke-linecap="round" opacity=".85"/>'+
+  '<path d="M18 46Q34 30 52 40" stroke="#ffd34d" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/><ellipse cx="36" cy="28" rx="14" ry="8" fill="#fff" opacity=".75"/></svg>'; }
+function cupSVG(){ return '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="94" rx="40" ry="6" fill="rgba(0,0,0,.35)"/>'+
+  '<path d="M12 24H88L80 92H20Z" fill="#b8c0c8" stroke="#5c6670" stroke-width="2" stroke-linejoin="round"/><path d="M16 30H34L30 88H22Z" fill="#fff" opacity=".35"/>'+
+  '<ellipse cx="50" cy="24" rx="38" ry="9" fill="#3a4148" stroke="#5c6670" stroke-width="2"/><path d="M14 44H86" stroke="#7a848e" stroke-width="3"/></svg>'; }
+function chuteSVG(){ return '<svg viewBox="0 0 100 100"><path d="M6 6H94L64 66V96H36V66Z" fill="rgba(0,0,0,.28)" transform="translate(3 4)"/>'+
+  '<path d="M6 6H94L64 66V96H36V66Z" fill="#d9a35f" stroke="#6e451f" stroke-width="2" stroke-linejoin="round"/><path d="M20 14H80L58 60H42Z" fill="#6e451f" opacity=".55"/><path d="M6 6H94" stroke="#f5d29c" stroke-width="3"/></svg>'; }
+function art(kind){ if(PH){ var f={R:"ramp",L:"ramp",FR:"ramp",FL:"ramp",X:"block",G:"gem",M:"marble",C:"cup",S:"chute"}[kind];
+    var fx=kind==="FR"||kind==="FL", lr=kind==="L"||kind==="FL", st=(fx?"filter:brightness(.52) sepia(.35) saturate(1.3) contrast(1.1);":"");
+    /* the ramp photo is a straight plank: tilt it across the hole (down to the right, or to the left) */
+    if(f==="ramp") st+="inset:auto;left:-12%;top:"+RTOP+"%;width:124%;height:auto;transform:rotate("+(lr?-RANG:RANG)+"deg)"+(lr?" scaleX(-1)":"")+";";
+    return '<img alt="" src="'+pic(f+".webp")+'" style="'+st+'">'+(fx?glue(kind):''); }
+  if(kind==="R"||kind==="L") return rampSVG(kind,false); if(kind==="FR") return rampSVG("R",true); if(kind==="FL") return rampSVG("L",true);
+  return {X:blockSVG,G:gemSVG,M:marbleSVG,C:cupSVG,S:chuteSVG}[kind](); }
+var RANG=31, RTOP=40;
+function glue(k){ return '<svg viewBox="0 0 100 100"><circle cx="'+(k==="FL"?78:22)+'" cy="31" r="4.5" fill="#e9c46a" stroke="#5a3a08" stroke-width="1.2"/><circle cx="'+(k==="FL"?26:74)+'" cy="63" r="4.5" fill="#e9c46a" stroke="#5a3a08" stroke-width="1.2"/></svg>'; }
+
+/* ---------- sound of its own (the marble rumbles as it rolls) ---------- */
+var AC=null, OUT=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+    var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+    OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+  if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return;
+  if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+function on(){ return LS.get("sound",true)!==false && !!ac(); }
+function tone(f,at,d,v,type,f2){ if(!on()) return; var t=AC.currentTime+(at||0), o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+var NB=null;
+function nbuf(){ if(!NB){ NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); var c=NB.getChannelData(0); for(var i=0;i<c.length;i++) c[i]=Math.random()*2-1; } return NB; }
+function noise(at,d,v,lo,hi){ if(!on()) return; var t=AC.currentTime+(at||0), s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=nbuf();
+  f.type="bandpass"; f.frequency.value=Math.sqrt(lo*hi); f.Q.value=Math.max(.3,Math.sqrt(lo*hi)/(hi-lo)); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+d+.02); }
+function sPlace(){ tone(190,0,.08,.16,"triangle",130); noise(0,.05,.12,1200,4200); tone(620,.01,.05,.05,"square",420); }
+function sTake(){ tone(240,0,.07,.1,"triangle",300); noise(0,.04,.06,2000,5000); }
+function sPick(){ tone(880,0,.06,.05,"sine",990); }
+function sNope(){ tone(220,0,.16,.12,"sine",170); }
+function sRamp(){ tone(330,0,.06,.14,"triangle",210); noise(0,.05,.1,1500,5000); }
+function sGem(){ [1568,2093,2637].forEach(function(f,i){ tone(f,i*.06,.3,.07,"triangle"); }); }
+function sCup(){ tone(1760,0,.5,.12,"sine"); tone(2637,.02,.45,.06,"sine"); tone(3520,.05,.3,.03,"sine"); noise(0,.08,.12,3000,9000); }
+function sBonk(){ tone(140,0,.14,.22,"sine",90); noise(0,.06,.14,300,1400); }
+function sFall(){ tone(700,0,.5,.08,"sine",160); }
+function sThud(){ tone(110,0,.12,.18,"sine",80); noise(0,.05,.08,200,900); }
+function sWin(){ [523,659,784,1047,1319].forEach(function(f,i){ tone(f,i*.09,.4,.09,"triangle"); }); }
+var RUM=null;  /* the rolling rumble: a live sound that follows the marble's speed */
+function rumbleOn(){ if(!on()||RUM) return; var s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(), f2=AC.createBiquadFilter();
+  s.buffer=nbuf(); s.loop=true; f.type="lowpass"; f.frequency.value=380; f2.type="peaking"; f2.frequency.value=160; f2.gain.value=8; g.gain.value=.0001;
+  s.connect(f); f.connect(f2); f2.connect(g); g.connect(OUT); s.start(); RUM={s:s,g:g,f:f}; }
+function rumble(v){ if(!RUM) return; var t=AC.currentTime; RUM.g.gain.setTargetAtTime(Math.min(.5,.04+v*.07),t,.04); RUM.f.frequency.setTargetAtTime(260+v*90,t,.05); }
+function rumbleOff(){ if(!RUM) return; var r=RUM; RUM=null; var t=AC.currentTime; r.g.gain.setTargetAtTime(.0001,t,.05); try{ r.s.stop(t+.3); }catch(e){} }
+
+/* ---------- the day ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FOOT=["Small boards with 2 ramps. A gentle start!","Bigger boards and 2 gems.","3 ramps to place.","3 ramps, plus an extra one you might not need.",
+  "Bigger boards with 4 ramps.","Tall boards with 3 gems and extra ramps.","5 ramps and 3 gems. The trickiest of the week!"];
+function today(){ var d=new Date(); return {n:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5), wd:d.getDay()}; }
+function lvOf(wd){ return (wd+6)%7; }
+
+var P=null, B=null, gen=0, busy=false, SEL="R", GEO=null, said={};
+function msg(t){ $("#cmsg").textContent=t||""; }
+function say(t,key){ BWK.say(t); }
+function sayOnce(key,t){ if(said[key]) return; said[key]=1; say(t); }
+function start(bonus){ gen++; busy=false; said={}; clearHint(); var t=today(), lv=lvOf(t.wd);
+  document.body.className="m-play"; $("#cday").textContent=bonus?"Bonus Run":(DAYN[t.wd]+"'s Runs");
+  if(!bonus&&ST.day===t.n&&ST.cur){ var c=ST.cur; P={lv:c.lv,seed:t.n,i:c.i||0,hints:c.hints||0,done:!!c.done,bonus:false,pl:c.pl||{}}; }
+  else P={lv:lv,seed:bonus?(Math.random()*1e9)|0:t.n,i:0,hints:0,done:false,bonus:!!bonus,pl:{}};
+  P.boards=bonus?[MRG.make(P.lv,P.seed)]:MRG.day(P.lv,P.seed);
+  if(P.done){ P.i=P.boards.length-1; }
+  loadBoard(); saveCur();
+  if(P.done){ msg("All of today's runs are done! Tap Menu for a Bonus Run."); $("#aRoll").disabled=true; return; }
+  if(bonus) say(BONUS); else if(P.i===0&&!Object.keys(P.pl).length){ var ex=P.lv>=3; say(ST.n<1?FIRST:(ex?EXTRA:START)); msg(ST.n<1?"Tap a ramp in the tray, then tap a hole on the pegboard.":ex?"There are extra ramps today. You might not need them all!":"Get every gem, then land in the cup!"); } }
+function saveCur(){ if(!P||P.bonus) return; ST.day=today().n; ST.cur={lv:P.lv,i:P.i,hints:P.hints,done:P.done,pl:P.pl}; save(); }
+function loadBoard(){ B=P.boards[P.i]; $("#aRoll").disabled=false; P.got={};
+  $("#cnum").textContent=(P.bonus?"":"Run "+(P.i+1)+" of "+P.boards.length+" · ")+B.ngems+" gem"+(B.ngems>1?"s":"");
+  var used={R:0,L:0}; for(var k in P.pl) used[P.pl[k]]++;
+  if(used.R>B.inv.R||used.L>B.inv.L) P.pl={};
+  SEL=left("R")>0?"R":"L"; layout(); drawTray(); drawGems(); }
+function left(k){ var n=B.inv[k]; for(var q in P.pl) if(P.pl[q]===k) n--; return n; }
+
+/* ---------- layout: the pegboard holds a chute row on top and a cup row at the bottom ---------- */
+function layout(){ if(!B) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return;
+  var cols=B.W+.9, rows=B.H+1.6+.9, u=Math.floor(Math.min(W/cols,H/rows,92)), sc=false;
+  /* short phones on big boards: keep the holes big enough to tap and let the pegboard scroll (it follows the marble) */
+  if(u<34){ u=Math.floor(Math.min(34,W/cols)); sc=true; } st.classList.toggle("scroll",sc);
+  var pad=Math.round(u*.45), T=Math.round(u*.7), bw=B.W*u+pad*2, bh=B.H*u+T+Math.round(u*.9)+pad*2, x0=Math.round((W-bw)/2), y0=sc?4:Math.round((H-bh)/2);
+  GEO={u:u,pad:pad,T:T,x0:x0,y0:y0,bw:bw,bh:bh};
+  st.style.setProperty("--sh",(y0+bh)+"px"); var b=$("#board"); b.style.cssText="left:"+x0+"px;top:"+y0+"px;width:"+bw+"px;height:"+bh+"px;--u:"+u+"px;--pad:"+pad+"px;--hx:"+pad+"px;--hy:"+(pad+T)+"px";
+  drawAll(); }
+function cellXY(r,c){ return [GEO.pad+c*GEO.u, GEO.pad+GEO.T+r*GEO.u]; }  /* r=-1 is the chute row, r=B.H the cup row */
+function piece(kind,r,c,cls,sc){ var e=document.createElement("div"), p=cellXY(r,c), s=sc||1, u=GEO.u;
+  e.className="pc"+(cls?" "+cls:""); e.style.cssText="left:"+(p[0]+u*(1-s)/2)+"px;top:"+(p[1]+u*(1-s)/2)+"px;width:"+(u*s)+"px;height:"+(u*s)+"px";
+  e.innerHTML=art(kind); e.dataset.r=r; e.dataset.c=c; $("#board").appendChild(e); return e; }
+function drawAll(){ if(!B||!GEO) return; var b=$("#board"); [].slice.call(b.querySelectorAll(".pc,.hole")).forEach(function(e){ e.remove(); });
+  piece("S",-1,B.s,"chute",1.04); piece("C",B.H,B.g,"cup",.98);
+  for(var r=0;r<B.H;r++) for(var c=0;c<B.W;c++){ var k=r*B.W+c, v=B.cells[k], pv=P.pl[k];
+    if(v==="X") piece("X",r,c,"",.92); else if(v==="G"){ if(!P.got[k]) piece("G",r,c,"gem",.62); }
+    else if(v==="R"||v==="L") piece("F"+v,r,c,"fixed"); else if(pv) piece(pv,r,c,"mine"); }
+  placeMarble(B.s+.5,-.5); }
+function drawTray(){ if(!B) return; ["R","L"].forEach(function(k){ var e=$("#rp"+k), n=left(k);
+  e.querySelector(".pic").innerHTML=art(k); e.querySelector(".n").textContent=n; e.classList.toggle("none",n<=0); e.classList.toggle("on",SEL===k&&n>0);
+  e.style.display=B.inv[k]>0?"":"none"; }); $("#aClear").disabled=!Object.keys(P.pl).length; }
+function drawGems(){ var h=""; for(var i=0;i<B.ngems;i++) h+='<i class="'+(i<Object.keys(P.got).length?"on":"")+'">'+(PH?'<img alt="" src="'+pic("gem.webp")+'">':gemSVG())+'</i>'; $("#gems").innerHTML=h; }
+
+/* ---------- placing ramps ---------- */
+function cellAt(x,y){ var r=Math.floor((y-GEO.pad-GEO.T)/GEO.u), c=Math.floor((x-GEO.pad)/GEO.u); if(r<0||r>=B.H||c<0||c>=B.W) return null; return [r,c]; }
+function pcEl(r,c){ return $('#board .pc[data-r="'+r+'"][data-c="'+c+'"]'); }
+function tapCell(r,c){ if(!P||busy||P.done) return; clearHint(); var k=r*B.W+c, v=B.cells[k];
+  if(v==="X"){ shake(r,c); sNope(); msg("That's a wooden block."); return; }
+  if(v==="G"){ shake(r,c); sNope(); msg("Leave that hole open. The marble has to roll through the gem."); sayOnce("gem",GEMHOLE); return; }
+  if(v==="R"||v==="L"){ shake(r,c); sNope(); msg("That dark ramp is glued down. You can't move it."); sayOnce("glue",GLUED); return; }
+  if(P.pl[k]){ var was=P.pl[k]; delete P.pl[k]; sTake(); SEL=was; afterChange(); msg(""); return; }
+  if(left(SEL)<=0){ var o=SEL==="R"?"L":"R"; if(left(o)>0) SEL=o; else { sNope(); $("#aClear").classList.add("ring"); setTimeout(function(){ $("#aClear").classList.remove("ring"); },1600);
+    msg("All your ramps are on the board. Tap a ramp to take it back."); sayOnce("none",NONE); return; } }
+  P.pl[k]=SEL; sPlace(); afterChange(); var e=pcEl(r,c); if(e) e.classList.add("drop");
+  if(left("R")+left("L")===0){ msg("All your ramps are on the board. Tap Roll!"); sayOnce("ready"+P.i,READY); } else msg(""); }
+function afterChange(){ if(left(SEL)<=0){ var o=SEL==="R"?"L":"R"; if(left(o)>0) SEL=o; } drawAll(); drawTray(); saveCur(); }
+function shake(r,c){ var e=pcEl(r,c); if(!e) return; e.classList.remove("bad"); void e.offsetWidth; e.classList.add("bad"); }
+var DN=null;
+$("#board").addEventListener("pointerdown",function(e){ DN=[e.clientX,e.clientY]; });
+$("#board").addEventListener("pointerup",function(e){ if(!GEO||!DN) return; var mv=Math.hypot(e.clientX-DN[0],e.clientY-DN[1]); DN=null; if(mv>12) return;
+  var rc=$("#board").getBoundingClientRect(), q=cellAt(e.clientX-rc.left,e.clientY-rc.top); if(q) tapCell(q[0],q[1]); });
+$("#board").addEventListener("pointercancel",function(){ DN=null; });
+["R","L"].forEach(function(k){ $("#rp"+k).onclick=function(){ if(!P||busy) return; clearHint(); if(left(k)<=0){ sNope(); msg("You're out of "+(k==="R"?"right":"left")+" ramps. Tap one on the board to take it back."); return; }
+  SEL=k; sPick(); drawTray(); BWK.say(k==="R"?RNAME:LNAME); }; });
+$("#aClear").onclick=function(){ if(!P||busy||!Object.keys(P.pl).length) return; clearHint(); P.pl={}; sTake(); afterChange(); msg("All the ramps are back in the tray."); };
+
+/* ---------- rolling ---------- */
+var mx=0,my=0;
+function placeMarble(cx,cy){ mx=cx; my=cy; var m=$("#marble"), s=GEO.u*.56; m.style.width=m.style.height=s+"px";
+  var py=GEO.y0+GEO.pad+GEO.T+cy*GEO.u-s/2; m.style.transform="translate("+(GEO.x0+GEO.pad+cx*GEO.u-s/2)+"px,"+py+"px)";
+  var st=$("#stage"); if(busy&&st.classList.contains("scroll")){ var want=py-st.clientHeight*.45; st.scrollTop+=(want-st.scrollTop)*.18; }
+  var im=m.querySelector("svg,img"); if(!im||(PH!==(im.tagName==="IMG"))){ if(im) im.remove(); m.insertAdjacentHTML("afterbegin",art("M")); } }
+/* waypoints in cell units (x across, y down; the marble's center), with events at points */
+function route(res){ var w=[[B.s+.5,-.62]], ev=[];
+  res.path.forEach(function(q,i){ var r=q[0], c=q[1], k=r*B.W+c, v=P.pl[k]||B.cells[k];
+    if(v==="R"||v==="L"){ var d=v==="R"?1:-1; w.push([c+.5,r+.16]); ev[w.length-1]="ramp"; w.push([c+.5+d*.42,r+.42]); w.push([c+.5+d*.82,r+.95]); }
+    else if(v==="X"){ w.push([c+.5,r-.06]); ev[w.length-1]="stuck"; }
+    else { w.push([c+.5,r+.5]); if(v==="G") ev[w.length-1]="gem:"+k; } });
+  var last=res.path[res.path.length-1], lv=last?(P.pl[last[0]*B.W+last[1]]||B.cells[last[0]*B.W+last[1]]):"";
+  if(res.end==="cup"){ w.push([B.g+.5,B.H+.42]); ev[w.length-1]="cup"; }
+  else if(res.end==="miss"){ var c=w[w.length-1][0]; w.push([c,B.H+.62]); ev[w.length-1]="floor"; }
+  else if(res.end==="off"){ var p=w[w.length-1], dx=p[0]<B.W/2?-1:1; w.push([p[0]+dx*.5,p[1]+.6]); w.push([p[0]+dx*.7,B.H+3]); ev[w.length-2]="off"; }
+  return {w:w,ev:ev}; }
+function roll(){ if(!P||busy||P.done) return; clearHint(); busy=true; var g=gen, res=MRG.run(B,P.pl), rt=route(res), w=rt.w;
+  P.got={}; drawAll(); drawGems(); $("#aRoll").disabled=true; msg(""); noise(0,.06,.1,2000,6000); tone(500,0,.05,.06,"square",300);
+  var seg=[], tot=0; for(var i=1;i<w.length;i++){ var d=Math.hypot(w[i][0]-w[i-1][0],w[i][1]-w[i-1][1]); seg.push(d); tot+=d; }
+  var t0=null, dist=0, vel=1.4, idx=0, segPos=0; rumbleOn();
+  function fire(e){ if(!e) return;
+    if(e==="ramp") sRamp(); else if(e==="stuck"){ sBonk(); } else if(e==="cup"){ } else if(e==="floor") sThud(); else if(e==="off") sFall();
+    else if(e.indexOf("gem:")===0){ var k=+e.slice(4); P.got[k]=1; sGem(); var r=Math.floor(k/B.W), c=k%B.W, el=pcEl(r,c); if(el) el.classList.add("got"); drawGems(); } }
+  function step(ts){ if(g!==gen){ rumbleOff(); return; } if(t0===null) t0=ts; var dt=Math.min(.05,(ts-t0)/1000); t0=ts;
+    var downish=idx<w.length-1?(w[idx+1][1]-w[idx][1])/(seg[idx]||1):1; vel=Math.min(5.2,Math.max(1.6,vel+dt*(3.2*downish-.6))); rumble(vel);
+    segPos+=vel*dt;
+    while(idx<seg.length&&segPos>=seg[idx]){ segPos-=seg[idx]; idx++; fire(rt.ev[idx]); if(rt.ev[idx]==="ramp") vel*=.8; if(rt.ev[idx]==="stuck"||rt.ev[idx]==="floor") { idx=seg.length; break; } }
+    if(idx>=seg.length){ var e=w[Math.min(idx,w.length-1)]; placeMarble(e[0],e[1]); rumbleOff(); done(res); return; }
+    var a=w[idx], b=w[idx+1], f=segPos/seg[idx]; placeMarble(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f); requestAnimationFrame(step); }
+  requestAnimationFrame(step); }
+function done(res){ var g=gen, m=$("#marble");
+  if(res.end==="cup"){ sCup(); m.animate([{opacity:1},{opacity:.0}],{duration:450,fill:"forwards"}); }
+  if(res.win){ var cupE=$("#board .pc.cup"); if(cupE) cupE.animate([{transform:"none"},{transform:"translateY(-6%) scale(1.06)"},{transform:"none"}],{duration:500});
+    msg("Into the cup! Great building!"); say(GOOD); ST.n++; save();
+    setTimeout(function(){ if(g!==gen) return; m.getAnimations().forEach(function(a){ a.cancel(); });
+      if(P.i+1<P.boards.length){ P.i++; P.pl={}; saveCur(); busy=false; loadBoard(); msg("Here's the next marble run."); say(NEXTB); }
+      else { busy=false; win(); } },1500); return; }
+  var t=res.end==="cup"?"Into the cup! But the marble missed a gem. Every gem has to be picked up.":res.end==="off"?"Whoops! The marble rolled off the side.":
+    res.end==="stuck"?"Bonk! A wooden block stopped the marble.":"Whoops! The marble missed the cup.";
+  msg(t+" Move your ramps and try again."); say(res.end==="cup"?GEMSMISS:res.end==="off"?OFF:res.end==="stuck"?STUCK:MISS);
+  if(res.end==="stuck") m.animate([{transform:m.style.transform},{transform:m.style.transform+" translateY(-14%)"},{transform:m.style.transform}],{duration:300});
+  setTimeout(function(){ if(g!==gen) return; m.getAnimations().forEach(function(a){ a.cancel(); }); busy=false; P.got={}; drawAll(); drawGems(); $("#aRoll").disabled=false;
+    m.animate([{opacity:0},{opacity:1}],{duration:300}); },res.end==="off"?1300:1700); }
+$("#aRoll").onclick=roll;
+function starsOf(h){ return h===0?3:h<=2?2:1; }
+function win(){ P.done=true; saveCur(); var g=gen; var fresh=P.bonus?"":BWG.patch("marble"); sWin(); $("#aRoll").disabled=true;
+  setTimeout(function(){ if(g!==gen) return; var s=starsOf(P.hints);
+    var box=BWK.sheet('<h2>'+(P.bonus?'Bonus run done!':'All of today\'s runs are done!')+'</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,s)+'<i>'+"★★★".slice(0,3-s)+'</i></div>'+
+      '<p>'+(P.bonus?'Another marble in the cup!':'You built '+P.boards.length+' marble runs'+(P.hints?' with '+P.hints+' hint'+(P.hints>1?'s':''):' with no hints')+'.')+'</p>'+
+      '<p>'+(P.bonus?'Want to build another one?':'Come back tomorrow for new runs.')+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="more">Bonus Run</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    say(fresh?WINP:(P.bonus?WINB:WIN)); },900); }
+
+/* ---------- hints: Zayden's tip fixes one ramp at a time, toward the closest solution ---------- */
+var HR=[];
+function ringOn(el){ if(!el) return; el.classList.add("ring"); HR.push(el); }
+function clearHint(){ HR.forEach(function(e){ if(e.classList.contains("hole")) e.remove(); else e.classList.remove("ring"); }); HR=[]; }
+function hint(){ if(!P||busy||P.done) return; clearHint(); sPick(); P.hints++; saveCur(); say(HINT);
+  var all=MRG.solve(B,B.inv,24).sols, best=null, bs=1e9;
+  all.forEach(function(sl){ var path=MRG.run(B,sl).path, onp={}, wrong=0, miss=0; path.forEach(function(q){ onp[q[0]*B.W+q[1]]=1; });
+    for(var k in P.pl) if(onp[k]&&P.pl[k]!==sl[k]) wrong++; for(var k2 in sl) if(P.pl[k2]!==sl[k2]) miss++; if(wrong+miss<bs){ bs=wrong+miss; best={sl:sl,onp:onp}; } });
+  if(!best) return; var sl=best.sl;
+  for(var k in P.pl) if(best.onp[k]&&P.pl[k]!==sl[k]){ var r=Math.floor(k/B.W), c=k%B.W; ringOn(pcEl(r,c)); msg("Zayden's tip: this ramp is in the marble's way. Tap it to take it back."); return; }
+  for(var k2 in sl) if(P.pl[k2]!==sl[k2]){ var need=sl[k2];
+    if(left(need)<=0){ for(var k3 in P.pl) if(P.pl[k3]===need&&!(k3 in sl)){ ringOn(pcEl(Math.floor(k3/B.W),k3%B.W)); msg("Zayden's tip: take this ramp back. You need it somewhere else."); return; } }
+    var r2=Math.floor(k2/B.W), c2=k2%B.W, p=cellXY(r2,c2), h=document.createElement("div"); h.className="hole ring";
+    h.style.cssText="left:"+(p[0]+GEO.u*.1)+"px;top:"+(p[1]+GEO.u*.1)+"px;width:"+(GEO.u*.8)+"px;height:"+(GEO.u*.8)+"px"; $("#board").appendChild(h); HR.push(h);
+    SEL=need; drawTray(); ringOn($("#rp"+need)); msg("Zayden's tip: put a "+(need==="R"?"right":"left")+" ramp in this hole."); return; }
+  ringOn($("#aRoll")); msg("Zayden's tip: it's all set. Tap Roll!"); }
+$("#tHint").onclick=hint;
+
+/* ---------- keys on a computer: R/L pick a ramp, Space or Enter rolls, C takes back, H hint ---------- */
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return; var k=e.key.toLowerCase();
+  if(k==="r"&&left("R")>0){ SEL="R"; drawTray(); } else if(k==="l"&&left("L")>0){ SEL="L"; drawTray(); }
+  else if(k===" "||k==="enter"){ e.preventDefault(); roll(); } else if(k==="c") $("#aClear").onclick(); else if(k==="h") hint(); });
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; busy=false; rumbleOff(); clearHint(); document.body.className="m-menu"; var t=today(), lv=lvOf(t.wd);
+  var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
+  $("#bPlay").textContent=doneToday?"Today's Runs ✓":"Today's Runs"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
+  $("#bBonus").style.display=doneToday?"":"none";
+  $("#mfoot").textContent=(ST.n?("Marbles in the cup: "+ST.n+". "):"")+DAYN[t.wd]+": "+FOOT[lv]; }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
+function howPic(){ /* a look-only picture: the marble falls straight, a ramp rolls it one hole over, then into the cup */
+  var u=40, s='<svg viewBox="0 0 200 210" aria-hidden="true"><rect x="0" y="0" width="200" height="210" rx="12" fill="#d2ad7c" stroke="#6e451f" stroke-width="3"/>';
+  for(var r=0;r<5;r++) for(var c=0;c<5;c++) s+='<circle cx="'+(20+c*u)+'" cy="'+(25+r*u)+'" r="3.5" fill="#5a3812" opacity=".55"/>';
+  s+='<g transform="translate(46 8) scale(.28)">'+chuteSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>';
+  s+='<g transform="translate(40 82) scale(.4)">'+rampSVG("R",false).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>';
+  s+='<g transform="translate(86 128) scale(.28)">'+gemSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>';
+  s+='<g transform="translate(82 172) scale(.36)">'+cupSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>';
+  s+='<path d="M60 38V86L98 110V176" stroke="#2f6fb8" stroke-width="3" stroke-dasharray="5 5" fill="none"/><circle cx="60" cy="40" r="9" fill="#3c8ad8" stroke="#0d3a70" stroke-width="2"/>';
+  s+='<text x="112" y="60" font-size="12" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">falls straight</text><text x="112" y="100" font-size="12" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">ramp: one hole over</text>';
+  s+='<text x="112" y="144" font-size="12" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">grab the gem</text><text x="122" y="192" font-size="12" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">into the cup!</text></svg>';
+  return s; }
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2>'+howPic()+'<p>'+HOW+'</p>'+
+  '<p><b>Straight down:</b> with nothing in its way, the marble falls straight down through the holes.</p>'+
+  '<p><b>Ramps:</b> a right ramp rolls the marble one hole to the right as it drops, and a left ramp rolls it one hole to the left. Dark ramps are glued down; you can\'t move them.</p>'+
+  '<p><b>Gems:</b> the marble must roll through every gem before it lands in the cup. <b>Wooden blocks</b> stop it.</p>'+
+  '<p><b>Rolling is free.</b> Try as many times as you like. From Thursday you get extra ramps you might not need. Each day gets a little harder.</p>'+
+  '<p>On a computer, press R or L to pick a ramp, Space to roll, C to take all the ramps back, H for a hint.</p></div>'); say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+(function(){ var s='<g transform="translate(6 6) scale(.62)">'+chuteSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'+
+  '<g transform="translate(30 30) scale(.62)">'+rampSVG("R",false).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'+
+  '<g transform="translate(78 44) scale(.5)">'+cupSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'+
+  '<g transform="translate(44 24) scale(.26)">'+marbleSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'+
+  '<g transform="translate(96 8) scale(.26)">'+gemSVG().replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'; $("#mrEmb").innerHTML=s; })();
+var RO=null; if(window.ResizeObserver){ RO=new ResizeObserver(function(){ var t=$("#top"); t.style.minHeight=Math.max(parseFloat(t.style.minHeight)||0,t.offsetHeight)+"px"; layout(); }); RO.observe($("#stage")); RO.observe($("#top")); }
+window.addEventListener("resize",layout);
+
+var INTRO="Zayden's Marble Run! Put ramps on the pegboard so the marble rolls through every gem and lands in the cup.";
+var HOW="The marble drops from the chute and falls straight down through the holes. A ramp rolls it one hole over as it drops. Tap a ramp in the tray, then tap a hole to put it there. Tap it again to take it back. When every gem is on the marble's way to the cup, tap Roll!";
+var FIRST="Tap a ramp in the tray, then tap a hole on the pegboard.", START="Get every gem, then land in the cup!", EXTRA="There are extra ramps today. You might not need them all!";
+var READY="All your ramps are on the board. Tap Roll!", NONE="All your ramps are on the board. Tap a ramp to take it back.";
+var GLUED="That dark ramp is glued down. You can't move it.", GEMHOLE="Leave that hole open. The marble has to roll through the gem.";
+var GOOD="Into the cup! Great building!", NEXTB="Here's the next marble run.", GEMSMISS="Into the cup! But the marble missed a gem. Every gem has to be picked up.";
+var MISS="Whoops! The marble missed the cup.", OFF="Whoops! The marble rolled off the side.", STUCK="Bonk! A wooden block stopped the marble.";
+var HINT="Here's Zayden's tip!", RNAME="Right ramp!", LNAME="Left ramp!";
+var WIN="All of today's runs are done! Come back tomorrow for new runs.", WINP="All done! You earned a new patch for your badge wall!", WINB="Bonus run done! Another marble in the cup!";
+var BONUS="Here's a bonus marble run!";
+var L={"mr-intro":INTRO,"mr-how":HOW,"mr-first":FIRST,"mr-start":START,"mr-extra":EXTRA,"mr-ready":READY,"mr-none":NONE,"mr-glued":GLUED,"mr-gemhole":GEMHOLE,
+  "mr-good":GOOD,"mr-nextb":NEXTB,"mr-gemsmiss":GEMSMISS,"mr-miss":MISS,"mr-off":OFF,"mr-stuck":STUCK,"mr-hint":HINT,"mr-rname":RNAME,"mr-lname":LNAME,
+  "mr-win":WIN,"mr-winp":WINP,"mr-winb":WINB,"mr-bonus":BONUS};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"marble", voice:"outpost", intro:INTRO, noHello:true});
+window.MRO={start:start,tap:tapCell,roll:roll,hint:hint,pick:function(k){ SEL=k; drawTray(); },
+  solve:function(){ var s=MRG.solve(B,B.inv,24).sols[0]; P.pl=Object.assign({},s); afterChange(); },
+  state:function(){ return P&&{lv:P.lv,i:P.i,n:P.boards.length,pl:P.pl,hints:P.hints,done:P.done,busy:busy,board:B,geo:GEO,sel:SEL,got:P.got}; },lines:L,ph:function(){ return PH; }};
+})();
+</script>
+</body>
+</html>
