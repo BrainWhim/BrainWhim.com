@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Zayden's Challenge · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Zayden's Challenge (The Outpost · The Lab), Nov 16. Brick Towers, picked by Judy for Zayden (a deep thinker: math, science, big brick kits).
+   Build one tower of every height in each row and column of the baseplate; the edge clues say how many towers you can see from that side
+   (a taller tower hides every shorter one behind it). A daily warm-up (Mon 4x4 gentle .. Sun 5x5) and one big 6x6 Challenge a week
+   (new each Monday). towers-gen.js grades every puzzle with a step-by-step solver; tools/zchallenge/check-year.js. */
+.bg{--bgx:18%;filter:blur(1.6px) brightness(.6) saturate(1.05)}
+#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#c2402a}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.top{flex:none;min-height:46px;display:flex;align-items:center;justify-content:center}
+.cmsg{text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px;max-width:680px}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;user-select:none;-webkit-user-select:none}
+#board{position:absolute;touch-action:manipulation}
+/* the baseplate: green with studs (drawn until the photo comes) */
+.plate{position:absolute;border-radius:10px;
+  background:radial-gradient(circle at 50% 46%,#7fd67a 0 18%,#3f9a3c 21%,transparent 24%) 0 0/calc(var(--u)/2) calc(var(--u)/2),linear-gradient(180deg,#4fb04a,#3b8f37);
+  box-shadow:0 3px 0 #2a6a27,0 6px 0 #1f4f1d,0 16px 28px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.3)}
+html.ph .plate{background:url("zc/plate.webp?v=1116a") calc(var(--u)*.12) calc(var(--u)*.12)/calc(var(--u)*2) calc(var(--u)*2);box-shadow:0 3px 0 #2a6a27,0 6px 0 #1f4f1d,0 16px 28px rgba(0,0,0,.55)}
+.cell{position:absolute;appearance:none;border:0;padding:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cell::before{content:"";position:absolute;inset:3%;border-radius:12%;border:1.5px solid rgba(20,60,20,.28)}
+html.ph .cell::before{border-color:rgba(10,50,10,.35)}
+.cell.sel::before{border:3px solid #ffe08a;box-shadow:0 0 0 2px rgba(120,80,0,.35),0 0 14px 3px rgba(255,214,110,.75);z-index:3}
+.cell.peer::before{background:rgba(255,255,255,.1)}
+.cell svg,.cell canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.cell .nt{position:absolute;inset:6%;display:grid;grid-template-columns:repeat(3,1fr);font:800 calc(var(--u)*.2)/1 Outfit,system-ui,sans-serif;color:#eaffea;text-shadow:0 1px 2px rgba(0,0,0,.7);pointer-events:none}
+.cell .nt span{display:grid;place-items:center}
+.cell .dg{position:absolute;right:6%;bottom:5%;min-width:34%;height:34%;border-radius:999px;display:grid;place-items:center;font:800 calc(var(--u)*.24)/1 Outfit,system-ui,sans-serif;
+  color:#2b2116;background:rgba(255,250,235,.93);box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;z-index:2}
+.cell.bad .dg{background:#ff6b5a;color:#fff}
+.cell.giv .dg{background:#e9c46a}
+.cell.drop svg{animation:bdrop .32s cubic-bezier(.3,1.5,.5,1)}
+@keyframes bdrop{0%{transform:translateY(-22%);opacity:.3}100%{transform:none;opacity:1}}
+.cell.shk{animation:shk .4s}
+@keyframes shk{20%,60%{transform:translateX(-5%)}40%,80%{transform:translateX(5%)}}
+.cell.ring::before{border:3px solid #ffe08a;box-shadow:0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
+@keyframes hring{50%{box-shadow:0 0 6px 2px rgba(242,190,69,.3)}}
+/* clue tokens: round wooden tokens (the Outpost's token photo) */
+.clue{position:absolute;display:grid;place-items:center;font:800 calc(var(--u)*.34)/1 Outfit,system-ui,sans-serif;color:#4a2a12;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 40% 35%,#f0d29c,#d6a865 70%,#b8864a);box-shadow:0 3px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,240,210,.7);text-shadow:0 1px 0 rgba(255,236,196,.6)}
+html.ph .clue{background:url("oh/token.png?v=1116a") center/100% 100% no-repeat}
+.clue.ok{color:#14602e;box-shadow:0 0 0 3px #8fe3b4,0 3px 5px rgba(0,0,0,.5)}
+.clue.no{color:#b3261e;box-shadow:0 0 0 3px #ff8a7a,0 3px 5px rgba(0,0,0,.5)}
+.clue.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
+.clue .ar{position:absolute;width:0;height:0;border:calc(var(--u)*.07) solid transparent}
+/* the tray */
+.tray{flex:none;width:min(720px,100%);margin:0 auto;border-radius:18px;padding:6px 6px 7px;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:5px}
+.nums{display:flex;gap:5px}
+.nb{flex:1 1 0;min-width:0;appearance:none;border:0;cursor:pointer;font:inherit;padding:2px 2px 4px;border-radius:12px;background:rgba(255,255,255,.6);
+  box-shadow:0 2px 0 rgba(150,110,50,.35);display:flex;flex-direction:column;align-items:center;color:#4a2a12;-webkit-tap-highlight-color:transparent;position:relative}
+.nb svg{width:100%;max-width:56px;height:46px;display:block}
+.nb b{font-size:18px;line-height:1}
+.tw{position:absolute;inset:0;pointer-events:none}
+.tw img{position:absolute;height:auto;display:block}
+.tw i{position:absolute;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent)}
+.cell.drop .tw{animation:bdrop .32s cubic-bezier(.3,1.5,.5,1)}
+.nb .tp{position:relative;width:100%;max-width:56px;height:46px;display:block}
+.nb:active{transform:translateY(2px);box-shadow:none}
+.nb.done{opacity:.45}
+.nb.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
+.tools2{display:flex;gap:5px}
+.tools2 .k-btn{flex:1;min-height:42px;padding:0 4px;font-size:15.5px;color:#6b4a1a;background:rgba(120,80,20,.12);box-shadow:0 3px 0 rgba(120,80,20,.25)}
+.tools2 .k-btn.on{color:#fff;background:linear-gradient(180deg,#e2654f,#c2402a);box-shadow:0 3px 0 #8a2a1a}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.how svg{display:block;width:min(320px,100%);margin:4px auto 10px}
+@media (max-height:700px){.cmsg{font-size:14.5px}.ib{min-height:36px;font-size:14px}.nb svg,.nb .tp{height:34px}.nb b{font-size:16px}.tools2 .k-btn{min-height:38px;font-size:14.5px}}
+@media (max-height:600px){.nb svg,.nb .tp{display:none}.nb{padding:8px 2px}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="zcEmb"></svg>
+      <h1>Zayden's Challenge</h1>
+      <p class="lead">Build brick towers on the baseplate. The clues tell you how many towers you can see from each side!</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bWarm">Today's Warm-up</button>
+        <button class="k-btn" id="bChal">This Week's Challenge</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b id="cday"></b><span id="cnum"></span></div>
+      <button class="ib" id="tHint">Hint</button>
+    </div>
+    <div class="top" id="top"><div class="cmsg" id="cmsg" aria-live="polite"></div></div>
+    <div id="stage"><div id="board" role="grid" aria-label="The baseplate"></div></div>
+    <div class="tray">
+      <div class="nums" id="nums"></div>
+      <div class="tools2"><button class="k-btn" id="aNote" aria-pressed="false">Notes</button><button class="k-btn" id="aErase">Erase</button><button class="k-btn" id="aUndo">Undo</button></div>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1116a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script src="towers-gen.js?v=1116a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1116a";
+var ST=LS.get("zchal",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0;
+function save(){ LS.set("zchal",ST); }
+
+/* ---------- brick colors, one per height (each tower also shows its number, for kids who see colors differently) ---------- */
+var COL=[null,"#f5c518","#22b0c8","#2f5fd6","#e0402f","#f08a24","#8a5cd6"], CNAME=[null,"yellow","teal","blue","red","orange","purple"];  /* no green: the baseplate is green */
+function shade(h,k){ var n=parseInt(h.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255, f=k<0?0:255, t=Math.abs(k);
+  return "rgb("+Math.round(r+(f-r)*t)+","+Math.round(g+(f-g)*t)+","+Math.round(b+(f-b)*t)+")"; }
+/* a tower of v bricks, drawn front-on with a little top (viewBox 100x100); N = the tallest possible, so heights read true.
+   On the baseplate a tall tower rises above its square (rows below paint over rows above, so it reads like a real 3-D stack) */
+/* photo towers (Judy's white brick, tinted per height in zc/b1-6.webp): stacked bricks, each one a front face higher */
+var PH=false, BSTEP=.396;
+function towerPH(v,N,mini){ var w=mini?Math.min(.6,.92/(1.02+(N-1)*BSTEP)):Math.min(.66,1.34/(1.02+(N-1)*BSTEP)), H=w*245/240, base=mini?.04:.1, s='<div class="tw">';
+  s+='<i style="left:'+((1-w*1.05)/2*100)+'%;width:'+(w*105)+'%;bottom:'+(base*100-3)+'%"></i>';
+  for(var i=0;i<v;i++) s+='<img alt="" src="zc/b'+v+'.webp?v='+AV+'" style="left:'+((1-w)/2*100)+'%;width:'+(w*100)+'%;bottom:'+((base+i*BSTEP*H)*100)+'%">';
+  return s+'</div>'; }
+function tower(v,N,mini){ return PH?towerPH(v,N,mini):towerSVG(v,N,mini); }
+(function(){ var L=["plate.webp","b1.webp","b2.webp","b3.webp","b4.webp","b5.webp","b6.webp"], n=0; L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n<L.length) return;
+  PH=true; document.documentElement.classList.add("ph"); if(P){ drawCells(); drawNums(); } }; i.src="zc/"+f+"?v="+AV; }); })();
+function towerSVG(v,N,mini){ var c=COL[v], bh=mini?Math.min(15,78/N):Math.min(21,124/N), w=mini?60:64, x=(100-w)/2, base=mini?92:88, s='<svg viewBox="0 0 100 100" aria-hidden="true">';
+  s+='<ellipse cx="50" cy="'+(base+2)+'" rx="'+(w*.56)+'" ry="4" fill="rgba(0,0,0,.35)"/>';
+  for(var i=0;i<v;i++){ var y=base-(i+1)*bh;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+bh+'" rx="2" fill="'+c+'" stroke="'+shade(c,-.45)+'" stroke-width="1.2"/>'+
+      '<rect x="'+(x+2)+'" y="'+(y+1.4)+'" width="'+(w-4)+'" height="'+(bh*.28)+'" rx="1.4" fill="'+shade(c,.35)+'" opacity=".7"/>'+
+      '<rect x="'+(x+w-7)+'" y="'+(y+1)+'" width="5" height="'+(bh-2)+'" fill="'+shade(c,-.25)+'" opacity=".55"/>'; }
+  var ty=base-v*bh; [x+w*.27,x+w*.73].forEach(function(cx){ s+='<rect x="'+(cx-7)+'" y="'+(ty-5)+'" width="14" height="6" rx="1.5" fill="'+shade(c,-.15)+'" stroke="'+shade(c,-.45)+'" stroke-width="1"/>'+
+    '<ellipse cx="'+cx+'" cy="'+(ty-5)+'" rx="7" ry="2.4" fill="'+shade(c,.3)+'" stroke="'+shade(c,-.4)+'" stroke-width=".8"/>'; });
+  return s+'</svg>'; }
+
+/* ---------- sound of its own ---------- */
+var AC=null, OUT=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+    var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+    OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+  if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return;
+  if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+function on(){ return LS.get("sound",true)!==false && !!ac(); }
+function tone(f,at,d,v,type,f2){ if(!on()) return; var t=AC.currentTime+(at||0), o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.004); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+var NB=null;
+function noise(at,d,v,lo,hi){ if(!on()) return; if(!NB){ NB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate); var c=NB.getChannelData(0); for(var i=0;i<c.length;i++) c[i]=Math.random()*2-1; }
+  var t=AC.currentTime+(at||0), s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=NB;
+  f.type="bandpass"; f.frequency.value=Math.sqrt(lo*hi); f.Q.value=Math.max(.3,Math.sqrt(lo*hi)/(hi-lo)); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+d+.02); }
+/* bricks click together: one snap per brick in the tower, a little higher each time */
+function sSnap(v){ for(var i=0;i<v;i++){ var at=i*.055; noise(at,.03,.16,2500,7000); tone(900+i*140,at,.04,.06,"square",700+i*120); } }
+function sSel(){ tone(660,0,.05,.05,"sine",720); }
+function sNote(){ tone(1320,0,.05,.04,"triangle"); }
+function sErase(){ noise(0,.08,.1,800,3000); tone(300,0,.08,.06,"triangle",200); }
+function sBad(){ tone(220,0,.16,.12,"sine",170); }
+function sClue(){ tone(1046,0,.18,.07,"triangle"); tone(1568,.06,.22,.05,"triangle"); }
+function sWin(){ [523,659,784,1047,1319,1568].forEach(function(f,i){ tone(f,i*.08,.42,.08,"triangle"); }); for(var i=0;i<8;i++) noise(.5+i*.05,.03,.08,2500,7000); }
+
+/* ---------- the day and the week ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FOOT=["4 by 4 with lots of clues. A gentle start!","4 by 4, a few clues missing.","4 by 4, fewer clues.","4 by 4, even fewer clues.","4 by 4 with only a few clues!",
+  "5 by 5 towers.","5 by 5 with fewer clues. The trickiest warm-up!"];
+function today(){ var d=new Date(); return {n:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5), wd:d.getDay()}; }
+function lvOf(wd){ return (wd+6)%7; }
+
+var P=null, gen=0, SEL=null, NOTES=false, said={};
+function msg(t){ $("#cmsg").textContent=t||""; }
+function say(t){ BWK.say(t); }
+function sayOnce(k,t){ if(said[k]) return; said[k]=1; say(t); }
+function start(kind){ gen++; said={}; clearHint(); SEL=null; NOTES=false; var t=today(), wk=TWG.weekOf(t.n), chal=kind==="chal";
+  var key=chal?"c":"w", stamp=chal?wk:t.n, lv=chal?7:lvOf(t.wd), seed=chal?wk*7+5:t.n;
+  if(kind==="bonus"){ key="b"; lv=lvOf(t.wd); seed=(Math.random()*1e9)|0; stamp=-1; }
+  document.body.className="m-play";
+  $("#cday").textContent=chal?"This Week's Challenge":kind==="bonus"?"Bonus Warm-up":(DAYN[t.wd]+"'s Warm-up");
+  var Z=TWG.make(lv,seed), sv=ST[key];
+  P={kind:kind,key:key,stamp:stamp,lv:lv,Z:Z,N:Z.N,g:[],notes:[],hints:0,done:false,hist:[]};
+  for(var r=0;r<Z.N;r++){ P.g.push(new Array(Z.N).fill(0)); P.notes.push(new Array(Z.N).fill(0)); }
+  if(kind!=="bonus"&&sv&&sv.stamp===stamp&&sv.g&&sv.g.length===Z.N){ P.g=sv.g; P.notes=sv.notes||P.notes; P.hints=sv.hints||0; P.done=!!sv.done; P.giv=sv.giv||{}; }
+  P.giv=P.giv||{};
+  $("#cnum").textContent=Z.N+" by "+Z.N+(chal?" · the big one!":"");
+  layout(); drawNums(); $("#aNote").classList.remove("on");
+  if(P.done){ msg(chal?"You finished this week's Challenge! A new one comes on Monday.":"Today's warm-up is done! Try the Challenge, or come back tomorrow."); return; }
+  if(ST.n<1&&kind==="warm") { msg("Tap a square, then tap a tower to build it."); say(FIRST); }
+  else if(chal){ msg("The big one! Use Notes to keep track of what each square could be."); say(CHAL); }
+  else msg(""); }
+function saveCur(){ if(!P||P.kind==="bonus") return; ST[P.key]={stamp:P.stamp,g:P.g,notes:P.notes,hints:P.hints,done:P.done,giv:P.giv}; save(); }
+
+/* ---------- layout ---------- */
+var GEO=null;
+function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return; var N=P.N, m=.72;
+  var u=Math.floor(Math.min(W/(N+2*m),H/(N+2*m),88)); if(u<26) u=26;
+  var bw=Math.round(u*(N+2*m)), x0=Math.round((W-bw)/2), y0=Math.round((H-bw)/2), o=Math.round(u*m);
+  GEO={u:u,o:o}; var b=$("#board"); b.style.cssText="left:"+x0+"px;top:"+Math.max(0,y0)+"px;width:"+bw+"px;height:"+bw+"px;--u:"+u+"px";
+  var h='<div class="plate" style="left:'+(o-u*.12)+'px;top:'+(o-u*.12)+'px;width:'+(N*u+u*.24)+'px;height:'+(N*u+u*.24)+'px"></div>';
+  for(var r=0;r<N;r++) for(var c=0;c<N;c++) h+='<button class="cell" data-r="'+r+'" data-c="'+c+'" aria-label="Row '+(r+1)+', column '+(c+1)+'" style="left:'+(o+c*u)+'px;top:'+(o+r*u)+'px;width:'+u+'px;height:'+u+'px"></button>';
+  var cs=Math.round(u*.6);
+  ["top","bottom","left","right"].forEach(function(s){ for(var i=0;i<N;i++){ var k=P.Z.clues[s][i]; if(!k) continue; var x,y;
+    if(s==="top"){ x=o+i*u+u/2; y=o*.5; } else if(s==="bottom"){ x=o+i*u+u/2; y=o+N*u+o*.5; } else if(s==="left"){ x=o*.5; y=o+i*u+u/2; } else { x=o+N*u+o*.5; y=o+i*u+u/2; }
+    h+='<div class="clue" data-s="'+s+'" data-i="'+i+'" style="left:'+(x-cs/2)+'px;top:'+(y-cs/2)+'px;width:'+cs+'px;height:'+cs+'px">'+k+'</div>'; } });
+  h+='<span class="bwp" style="position:absolute;left:'+(o+N*u+o/2)+'px;top:'+(o+N*u+o/2)+'px;transform:translate(-50%,-50%);font:800 9px/1 Outfit,system-ui,sans-serif;letter-spacing:.06em;color:#4a300c;padding:2px 5px 1px;border-radius:3px;background:linear-gradient(180deg,#f6dc8e,#c99a3c);box-shadow:0 1px 2px rgba(0,0,0,.5);z-index:1">BW</span>';
+  b.innerHTML=h; [].forEach.call(b.querySelectorAll(".cell"),function(e){ e.onclick=function(){ tapCell(+e.dataset.r,+e.dataset.c); }; });
+  drawCells(); }
+function cellEl(r,c){ return $('#board .cell[data-r="'+r+'"][data-c="'+c+'"]'); }
+function drawCell(r,c,drop){ var e=cellEl(r,c); if(!e) return; var v=P.g[r][c], nt=P.notes[r][c], h="";
+  if(v) h=tower(v,P.N)+'<span class="dg">'+v+'</span>';
+  else if(nt){ h='<span class="nt">'; for(var k=1;k<=P.N;k++) h+='<span>'+(nt&(1<<k)?k:"")+'</span>'; h+='</span>'; }
+  e.innerHTML=h; e.classList.toggle("giv",!!P.giv[r+","+c]); e.classList.remove("drop"); if(drop){ void e.offsetWidth; e.classList.add("drop"); } }
+function drawCells(){ for(var r=0;r<P.N;r++) for(var c=0;c<P.N;c++) drawCell(r,c); marks(); }
+function drawNums(){ var h=""; for(var v=1;v<=P.N;v++) h+='<button class="nb" data-v="'+v+'" aria-label="Tower of '+v+'">'+(PH?'<span class="tp">'+towerPH(v,P.N,true)+'</span>':towerSVG(v,P.N,true))+'<b>'+v+'</b></button>';
+  $("#nums").innerHTML=h; [].forEach.call(document.querySelectorAll(".nb"),function(b){ b.onclick=function(){ tapNum(+b.dataset.v); }; }); doneNums(); }
+function doneNums(){ [].forEach.call(document.querySelectorAll(".nb"),function(b){ var v=+b.dataset.v, n=0; P.g.forEach(function(row){ row.forEach(function(x){ if(x===v) n++; }); }); b.classList.toggle("done",n>=P.N); }); }
+/* conflicts and clue checks */
+function lineVals(s,i){ var N=P.N, a=[]; for(var k=0;k<N;k++){ var r,c; if(s==="top"){ r=k;c=i; } else if(s==="bottom"){ r=N-1-k;c=i; } else if(s==="left"){ r=i;c=k; } else { r=i;c=N-1-k; } a.push(P.g[r][c]); } return a; }
+function marks(){ var N=P.N;
+  for(var r=0;r<N;r++) for(var c=0;c<N;c++){ var v=P.g[r][c], bad=false; if(v) for(var i=0;i<N;i++){ if((i!==c&&P.g[r][i]===v)||(i!==r&&P.g[i][c]===v)) bad=true; }
+    var e=cellEl(r,c); if(e) e.classList.toggle("bad",bad); }
+  [].forEach.call(document.querySelectorAll("#board .clue"),function(e){ var l=lineVals(e.dataset.s,+e.dataset.i), full=l.indexOf(0)<0, k=+e.textContent;
+    var was=e.classList.contains("ok"); e.classList.toggle("ok",full&&TWG.seen(l)===k); e.classList.toggle("no",full&&TWG.seen(l)!==k);
+    if(!was&&e.classList.contains("ok")&&P.live) sClue(); }); }
+function select(r,c){ SEL=[r,c]; [].forEach.call(document.querySelectorAll("#board .cell"),function(e){ var rr=+e.dataset.r, cc=+e.dataset.c;
+  e.classList.toggle("sel",rr===r&&cc===c); e.classList.toggle("peer",rr===r||cc===c); }); }
+
+/* ---------- building ---------- */
+function tapCell(r,c){ if(!P||P.done) return; clearHint(); if(P.giv[r+","+c]){ sBad(); msg("Zayden's tip built that tower. It's right!"); return; } sSel(); select(r,c);
+  if(ST.n<1&&!said.num){ msg("Now tap a tower below to build it there."); sayOnce("num",NUMS); } }
+function push(){ P.hist.push(JSON.stringify([P.g,P.notes])); if(P.hist.length>200) P.hist.shift(); }
+function tapNum(v){ if(!P||P.done) return; clearHint();
+  if(!SEL){ msg("Tap a square on the baseplate first."); sayOnce("sq",SQ); return; }
+  var r=SEL[0], c=SEL[1]; if(P.giv[r+","+c]) return; push();
+  if(NOTES){ if(P.g[r][c]) { P.hist.pop(); return; } P.notes[r][c]^=(1<<v); sNote(); drawCell(r,c); saveCur(); return; }
+  if(P.g[r][c]===v){ P.g[r][c]=0; sErase(); drawCell(r,c); P.live=true; marks(); P.live=false; doneNums(); saveCur(); return; }
+  P.g[r][c]=v; P.notes[r][c]=0;
+  /* clear this height from the notes in the same row and column (it can't go there now) */
+  for(var i=0;i<P.N;i++){ if(P.notes[r][i]&(1<<v)){ P.notes[r][i]&=~(1<<v); drawCell(r,i); } if(P.notes[i][c]&(1<<v)){ P.notes[i][c]&=~(1<<v); drawCell(i,c); } }
+  sSnap(v); drawCell(r,c,true); P.live=true; marks(); P.live=false; doneNums(); saveCur();
+  var e=cellEl(r,c); if(e&&e.classList.contains("bad")){ msg("Oops! There's already a "+v+" in that row or column."); sayOnce("dup",DUP); }
+  else msg("");
+  check(); }
+function check(){ var N=P.N; for(var r=0;r<N;r++) for(var c=0;c<N;c++) if(!P.g[r][c]) return;
+  var ok=true; for(var r2=0;r2<N;r2++) for(var c2=0;c2<N;c2++) if(P.g[r2][c2]!==P.Z.sol[r2][c2]) ok=false;
+  if(ok){ win(); return; }
+  msg("Every square has a tower, but something isn't right yet. Look for red numbers and red clues."); say(ALMOST); }
+$("#aNote").onclick=function(){ NOTES=!NOTES; this.classList.toggle("on",NOTES); this.setAttribute("aria-pressed",NOTES); sNote();
+  msg(NOTES?"Notes are on: tap towers to jot down what a square could be.":""); if(NOTES) sayOnce("notes",NOTESL); };
+$("#aErase").onclick=function(){ if(!P||!SEL||P.done) return; var r=SEL[0], c=SEL[1]; if(P.giv[r+","+c]||(!P.g[r][c]&&!P.notes[r][c])) return; push(); P.g[r][c]=0; P.notes[r][c]=0; sErase(); drawCell(r,c); marks(); doneNums(); saveCur(); };
+$("#aUndo").onclick=function(){ if(!P||!P.hist.length||P.done) return; var s=JSON.parse(P.hist.pop()); P.g=s[0]; P.notes=s[1]; sErase(); drawCells(); doneNums(); saveCur(); };
+
+/* ---------- hints: a wrong tower first; otherwise build the next tower that the clues force (and say why) ---------- */
+var HR=[];
+function ringOn(el){ if(!el) return; el.classList.add("ring"); HR.push(el); }
+function clearHint(){ HR.forEach(function(e){ e.classList.remove("ring"); }); HR=[]; }
+function hint(){ if(!P||P.done) return; clearHint(); sSel(); P.hints++; say(HINT); var N=P.N;
+  for(var r=0;r<N;r++) for(var c=0;c<N;c++) if(P.g[r][c]&&P.g[r][c]!==P.Z.sol[r][c]){ select(r,c); ringOn(cellEl(r,c)); msg("Zayden's tip: this tower isn't right. Tap Erase and think again."); saveCur(); return; }
+  var giv=[]; for(var r2=0;r2<N;r2++) for(var c2=0;c2<N;c2++) if(P.g[r2][c2]) giv.push([r2,c2,P.g[r2][c2]]);
+  var L=TWG.logic({N:N,clues:P.Z.clues,givens:giv,stopAtFirst:true}), f=L.first;
+  if(!f){ for(var r3=0;r3<N&&!f;r3++) for(var c3=0;c3<N&&!f;c3++) if(!P.g[r3][c3]) f=[r3,c3,P.Z.sol[r3][c3],"only"]; }
+  if(!f) return; push(); var r4=f[0], c4=f[1], v=f[2]; P.g[r4][c4]=v; P.notes[r4][c4]=0; P.giv[r4+","+c4]=1; select(r4,c4); sSnap(v); drawCell(r4,c4,true); marks(); doneNums(); ringOn(cellEl(r4,c4));
+  msg("Zayden's tip: "+(f[3]==="row"?"this row needs a "+v+", and this is the only square where it fits.":f[3]==="col"?"this column needs a "+v+", and this is the only square where it fits.":"the clues leave only a "+v+" for this square.")); saveCur(); check(); }
+$("#tHint").onclick=hint;
+
+function starsOf(h){ return h===0?3:h<=2?2:1; }
+function win(){ P.done=true; saveCur(); var g=gen; if(P.kind!=="bonus"){ ST.n++; save(); } var fresh=BWG.patch("challenge"); sWin();
+  [].forEach.call(document.querySelectorAll("#board .cell"),function(e,i){ setTimeout(function(){ e.classList.remove("drop"); void e.offsetWidth; e.classList.add("drop"); },i*35); });
+  setTimeout(function(){ if(g!==gen) return; var s=starsOf(P.hints), chal=P.kind==="chal";
+    var box=BWK.sheet('<h2>'+(chal?'Challenge complete!':'Warm-up done!')+'</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,s)+'<i>'+"★★★".slice(0,3-s)+'</i></div>'+
+      '<p>'+(chal?'You cracked this week\'s big one'+(P.hints?' with '+P.hints+' hint'+(P.hints>1?'s':''):' with no hints')+'! A new Challenge comes on Monday.':
+        'Every tower is in place'+(P.hints?', with '+P.hints+' hint'+(P.hints>1?'s':''):', with no hints')+'.')+'</p>'+
+      '<div class="k-row">'+(chal?'':'<button class="k-btn" data-a="chal">The Challenge</button>')+'<button class="k-btn'+(chal?'':' k-ghost')+'" data-a="more">Bonus Warm-up</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    var bc=box.querySelector('[data-a=chal]'); if(bc) bc.onclick=function(){ BWK.closeSheet(true); start("chal"); };
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start("bonus"); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    say(fresh?WINP:chal?WINC:WIN); },900); }
+
+/* ---------- keys on a computer: arrows move, 1-6 build, N notes, Backspace erases, U undo, H hint ---------- */
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")||!P) return; var k=e.key;
+  if(k>="1"&&k<="9"&&+k<=P.N){ tapNum(+k); return; }
+  if(k.indexOf("Arrow")===0){ e.preventDefault(); var s=SEL||[0,0], d={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[k];
+    select(Math.max(0,Math.min(P.N-1,s[0]+d[0])),Math.max(0,Math.min(P.N-1,s[1]+d[1]))); return; }
+  var l=k.toLowerCase(); if(l==="n") $("#aNote").onclick(); else if(k==="Backspace"||k==="Delete") $("#aErase").onclick(); else if(l==="u") $("#aUndo").onclick(); else if(l==="h") hint(); });
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; clearHint(); document.body.className="m-menu"; var t=today(), lv=lvOf(t.wd), wk=TWG.weekOf(t.n);
+  var wd=ST.w&&ST.w.stamp===t.n&&ST.w.done, cd=ST.c&&ST.c.stamp===wk&&ST.c.done;
+  $("#bWarm").textContent=wd?"Today's Warm-up ✓":"Today's Warm-up"; $("#bWarm").classList.toggle("k-ghost",!!wd);
+  $("#bChal").textContent=cd?"This Week's Challenge ✓":"This Week's Challenge"; $("#bChal").classList.toggle("k-ghost",!!cd);
+  $("#mfoot").textContent=DAYN[t.wd]+"'s warm-up: "+FOOT[lv]+" The Challenge is a big 6 by 6"+(cd?": done this week!":", new every Monday.")+(wd&&cd?" Tap a done puzzle for a Bonus Warm-up.":""); }
+$("#bWarm").onclick=function(){ BWK.sfx("open"); var t=today(); if(ST.w&&ST.w.stamp===t.n&&ST.w.done&&ST.c&&ST.c.stamp===TWG.weekOf(t.n)&&ST.c.done) start("bonus"); else start("warm"); };
+$("#bChal").onclick=function(){ BWK.sfx("open"); start("chal"); };
+function howPic(){ /* look-only: four towers seen from the left; the 4 hides the 1 and the 3, so the clue says 2 */
+  var s='<svg viewBox="0 0 320 150" aria-hidden="true"><rect x="58" y="34" width="248" height="86" rx="10" fill="#4fb04a" stroke="#2a6a27" stroke-width="2"/>';
+  [2,4,1,3].forEach(function(v,i){ var see=i<2; s+='<g transform="translate('+(66+i*60)+' 30) scale(.56)" opacity="'+(see?1:.45)+'">'+towerSVG(v,4).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'+
+    '<text x="'+(94+i*60)+'" y="140" text-anchor="middle" font-size="15" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">'+v+'</text>'; });
+  s+='<circle cx="26" cy="77" r="20" fill="#d6a865" stroke="#8a5a2a" stroke-width="2"/><text x="26" y="84" text-anchor="middle" font-size="20" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">2</text>'+
+    '<path d="M48 70L60 76L48 82" fill="#fff" opacity=".9"/><text x="186" y="20" text-anchor="middle" font-size="12.5" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">From the left you see the 2 and the 4.</text></svg>';
+  return s; }
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2>'+howPic()+'<p>'+HOW+'</p>'+
+  '<p><b>One of each:</b> every row and every column gets exactly one tower of each height. On a 4 by 4 baseplate that\'s one 1, one 2, one 3 and one 4.</p>'+
+  '<p><b>The clues:</b> a clue on the edge is how many towers you can see when you look along that row or column from that side. A taller tower hides every shorter tower behind it. So a <b>1</b> means the tallest tower is right next to the clue, and the biggest clue means the towers go up in order, 1, 2, 3...</p>'+
+  '<p><b>Notes:</b> tap Notes to jot small numbers in a square for what it could be. Red numbers mean the same height is twice in a row or column. A clue turns green when its line is right.</p>'+
+  '<p><b>Warm-ups</b> come every day, a little harder each day. <b>The Challenge</b> is one big 6 by 6 puzzle a week, new every Monday. Take all week if you like!</p>'+
+  '<p>On a computer: arrow keys move, 1-6 build, N for notes, Backspace erases, U undo, H hint.</p></div>'); say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+(function(){ var s=''; [[1,6,40],[3,32,18],[2,58,30],[4,84,6]].forEach(function(q){ s+='<g transform="translate('+q[1]+' '+(q[2]-8)+') scale(.62)">'+towerSVG(q[0],4).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'; });
+  s+='<circle cx="122" cy="72" r="9" fill="#d6a865" stroke="#8a5a2a" stroke-width="1.5"/><text x="122" y="76.5" text-anchor="middle" font-size="12" font-weight="800" fill="#4a2a12" font-family="Outfit,system-ui,sans-serif">4</text>'; $("#zcEmb").innerHTML=s; })();
+var RO=null; if(window.ResizeObserver){ RO=new ResizeObserver(function(){ var t=$("#top"); t.style.minHeight=Math.max(parseFloat(t.style.minHeight)||0,t.offsetHeight)+"px"; layout(); }); RO.observe($("#stage")); RO.observe($("#top")); }
+window.addEventListener("resize",layout);
+
+var INTRO="Zayden's Challenge! Build brick towers on the baseplate. The clues tell you how many towers you can see from each side.";
+var HOW="Every row and every column gets one tower of each height. A clue tells how many towers you can see from that side: a taller tower hides the shorter ones behind it. Tap a square, then tap a tower to build it.";
+var FIRST="Tap a square, then tap a tower to build it.", NUMS="Now tap a tower below to build it there.", SQ="Tap a square on the baseplate first.";
+var DUP="Oops! That height is already in that row or column.", ALMOST="Every square has a tower, but something isn't right yet. Look for the red ones.";
+var NOTESL="Notes are on. Tap towers to jot down what a square could be.", CHAL="The big one! Use Notes to keep track of what each square could be.";
+var HINT="Here's Zayden's tip!", WIN="Warm-up done! Every tower is in place.", WINC="Challenge complete! You cracked this week's big one!", WINP="Done! You earned a new patch for your badge wall!";
+var L={"zc-intro":INTRO,"zc-how":HOW,"zc-first":FIRST,"zc-nums":NUMS,"zc-sq":SQ,"zc-dup":DUP,"zc-almost":ALMOST,"zc-notes":NOTESL,"zc-chal":CHAL,"zc-hint":HINT,"zc-win":WIN,"zc-winc":WINC,"zc-winp":WINP};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"challenge", voice:"outpost", intro:INTRO, noHello:true});
+window.ZCO={start:start,tap:tapCell,num:tapNum,hint:hint,notes:function(){ $("#aNote").onclick(); },
+  fill:function(all){ var N=P.N; for(var r=0;r<N;r++) for(var c=0;c<N;c++) if(all||r+c>0){ P.g[r][c]=P.Z.sol[r][c]; } drawCells(); doneNums(); },
+  state:function(){ return P&&{kind:P.kind,lv:P.lv,N:P.N,g:P.g,sol:P.Z.sol,clues:P.Z.clues,score:P.Z.score,hints:P.hints,done:P.done,sel:SEL,geo:GEO}; },lines:L};
+})();
+</script>
+</body>
+</html>
