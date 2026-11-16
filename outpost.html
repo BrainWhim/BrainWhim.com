@@ -155,6 +155,22 @@
 .patch svg{transition:transform .25s}
 .patch:not(.off) svg{animation:lift 3s ease-in-out infinite}
 @keyframes lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+/* photo labels (Nov 16): html.ph is set once the pictures have loaded; the drawn look above stays as the fallback */
+html.ph .plaque{background:none;border-style:solid;border-color:transparent;border-width:0 1.6em;border-radius:0;
+  border-image:url("oh/sign.png?v=1116a") 0 70 fill / 0 1.6em stretch;box-shadow:none;padding:.62em .25em .68em;filter:drop-shadow(0 6px 7px rgba(0,0,0,.5))}
+html.ph .plaque b{text-shadow:0 1px 0 rgba(255,236,196,.6),0 0 1px rgba(60,30,10,.5)}
+html.ph .card::after{background:linear-gradient(180deg,rgba(5,12,30,0) 45%,rgba(5,12,30,.5) 100%)}
+html.ph .card .t{display:block;width:calc(100% - 8px);box-sizing:border-box;margin:0 4px 6px;padding:6px 7px 7px 6px;
+  border-style:solid;border-color:transparent;border-width:0 18px;border-image:url("oh/sign.png?v=1116a") 0 56 fill / 0 18px stretch;filter:drop-shadow(0 4px 5px rgba(0,0,0,.55))}
+html.ph .card b{font-size:17px;color:#4a2a12;text-shadow:0 1px 0 rgba(255,236,196,.6)}
+html.ph .card i{font-size:12px;color:#5e3a1c;font-weight:500}
+html.ph .card .ic,html.ph .cHead .ic{background:url("oh/token.png?v=1116a") center/100% 100% no-repeat!important;border:0;border-radius:50%;color:#5a3415;
+  box-shadow:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+html.ph .card .ic svg,html.ph .cHead .ic svg{mix-blend-mode:multiply;opacity:.9;stroke-width:2.4}
+@media (max-aspect-ratio:5/4) and (min-width:700px){html.ph .card .t{border-width:0 30px;border-image-width:0 30px;margin:0 10px 12px;width:calc(100% - 20px);padding:10px 4px 11px}html.ph .card b{font-size:24px}html.ph .card i{font-size:15px}}
+.patch img{width:80px;height:80px;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));transition:transform .25s}
+.patch:not(.off) img{animation:lift 3s ease-in-out infinite}
+.patch.off img{filter:grayscale(1) brightness(.75) drop-shadow(0 2px 3px rgba(0,0,0,.4));opacity:.5}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -192,6 +208,9 @@
 <script src="kids.js?v=1115r"></script>
 <script>
 (function(){
+  /* photo labels: switch to the pictures once they've all loaded (Nov 16) */
+  (function(){ var L=["sign","token","p-lab","p-tele","p-joke","p-work","p-mission","p-cmd"], n=0;
+    L.forEach(function(s){ var i=new Image(); i.onload=function(){ if(++n===L.length) document.documentElement.classList.add("ph"); }; i.src="oh/"+s+".png?v=1116a"; }); })();
   /* ---- the five corners (Blueprint v1). An activity opens when it gets an href. ---- */
   var IC = {
     lab:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5.5 9.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/><path d="M7.5 15h9"/></svg>',
@@ -238,6 +257,7 @@
   function badges(){ var b=BWK.store.get("badges",{}); return (b&&typeof b==="object")?b:{}; }
   function earnedCount(){ var b=badges(); return ORDER.filter(function(k){return b[k];}).length; }
   function patch(k, on){
+    if(document.documentElement.classList.contains("ph")) return '<img src="oh/p-'+k+'.png?v=1116a" alt="">';
     var col = k==="cmd" ? "#d4a52c" : C[k].col, id="opP"+k;
     var shape = k==="cmd" ? '<path d="M40 4 74 22v36L40 76 6 58V22z"' : '<circle cx="40" cy="40" r="35"';
     var ic = k==="cmd"
