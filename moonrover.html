@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Brody's Moon Rover · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Brody's Moon Rover (The Outpost · The Telescope), Nov 15 night. Brody's own game (Judy). An endless drive across the moon:
+   the rover rolls over gentle hills (wheels spin, the body tilts and bounces on its springs); tap to jump, hold for a higher jump,
+   over moon rocks, crashed saucers and fallen stars; grab energy crystals (every 10 fills a shield). It keeps getting faster.
+   5 shields; the run ends when they're gone. Best distance saved (bwk.rover). Canvas; Judy's ChatGPT photos in rv/. Test hook RVO. */
+.bg{background:#05060f url("rv/bg-sm.jpg?v=1115a") 50% 60%/cover no-repeat;filter:blur(1.5px) brightness(.7)}
+@media (min-width:900px){.bg{background-image:url("rv/bg.jpg?v=1115a")}}
+#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.cbar{width:min(900px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#169e9a}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:center}
+#cv{display:block;border-radius:22px;touch-action:none;cursor:pointer;user-select:none;-webkit-user-select:none;
+  box-shadow:0 0 0 3px rgba(150,220,255,.35),0 16px 34px rgba(0,0,0,.55)}
+.hint{flex:none;text-align:center;font-weight:700;font-size:15px;color:#dff3ff;text-shadow:0 2px 6px rgba(0,0,0,.8);min-height:20px}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.big{font-size:40px;font-weight:800;color:var(--k-warm);margin:4px 0}
+@media (max-height:640px){.ib{min-height:34px;font-size:14px}.hint{font-size:13px;min-height:16px}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="rvEmb"></svg>
+      <h1>Brody's Moon Rover</h1>
+      <p class="lead">Drive Brody's rover across the moon! Jump over moon rocks, crashed saucers and fallen stars. How far can you go?</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Drive!</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b>Brody's Moon Rover</b><span id="cbest"></span></div>
+      <button class="ib" id="tAgain">Restart</button>
+    </div>
+    <div id="stage"><canvas id="cv" role="button" aria-label="The moon. Tap to jump, hold to jump higher."></canvas></div>
+    <div class="hint" id="hint" aria-live="polite"></div>
+  </section>
+</main>
+<script src="kids.js?v=1115r"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1115a";
+var ST=LS.get("rover",{}); if(ST&&!ST.ft){ ST.best=Math.round((ST.best||0)*40/12); ST.ft=1; } if(!ST||typeof ST!=="object") ST={}; ST.best=ST.best||0; ST.runs=ST.runs||0; ST.cry=ST.cry||0;
+function save(){ LS.set("rover",ST); }
+
+/* ---------- photos ---------- */
+var IMG={};
+["rover","wheel","rock","tallrock","ship","star","crystal","flag","ground"].forEach(function(k){ var im=new Image(); im.onload=function(){ IMG[k]=im; if(k==="ground") gPat=null; }; im.src="rv/"+k+".webp?v="+AV; });
+(function(){ var im=new Image(); im.onload=function(){ IMG.bg=im; }; im.src="rv/bg"+(innerWidth>=900?"":"-sm")+".jpg?v="+AV; })();
+
+/* ---------- sound: an engine that follows the speed while driving, and the rest ---------- */
+var AC=null, OUT=null, ENG=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C(); OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(AC.destination); }
+  if(AC.state==="suspended") AC.resume(); return AC; }
+document.addEventListener("pointerdown",ac,{capture:true,passive:true});
+function on(){ return LS.get("sound",true)!==false && ac() && AC.state==="running"; }
+function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d); o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+  for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+  var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v; s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+function engOn(){ if(ENG||!on()) return; var o=AC.createOscillator(), o2=AC.createOscillator(), lp=AC.createBiquadFilter(), g=AC.createGain();
+  o.type="sawtooth"; o2.type="triangle"; o.frequency.value=55; o2.frequency.value=110; lp.type="lowpass"; lp.frequency.value=420; g.gain.value=.0001;
+  o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(OUT); o.start(); o2.start(); g.gain.exponentialRampToValueAtTime(.035,AC.currentTime+.4); ENG={o:o,o2:o2,lp:lp,g:g}; }
+function engSet(sp,air){ if(!ENG) return; var t=AC.currentTime, f=48+sp*38+(air?14:0); ENG.o.frequency.setTargetAtTime(f,t,.15); ENG.o2.frequency.setTargetAtTime(f*2.01,t,.15); ENG.lp.frequency.setTargetAtTime(300+sp*260,t,.2); }
+function engOff(){ if(!ENG) return; var e=ENG; ENG=null; var t=AC.currentTime; e.g.gain.cancelScheduledValues(t); e.g.gain.setValueAtTime(Math.max(.0001,e.g.gain.value),t); e.g.gain.exponentialRampToValueAtTime(.0001,t+.35); e.o.stop(t+.4); e.o2.stop(t+.4); }
+var SND={
+  jump:function(){ if(!on()) return; var t=AC.currentTime+.005; tone(220,t,.3,.06,"sine",520); noise(t,.25,.06,1800,.7); },
+  land:function(){ if(!on()) return; var t=AC.currentTime+.005; noise(t,.12,.12,260,.8); tone(90,t,.15,.05,"sine",60); },
+  crystal:function(k){ if(!on()) return; var t=AC.currentTime+.005, f=[1319,1480,1661,1760,1976][k%5]; tone(f,t,.3,.05,"triangle"); tone(f*2,t+.03,.25,.018); },
+  crash:function(){ if(!on()) return; var t=AC.currentTime+.005; noise(t,.45,.3,700,.6); noise(t,.2,.2,2400,1); tone(160,t,.4,.08,"square",50); },
+  shield:function(){ if(!on()) return; var t=AC.currentTime+.01; [880,1175,1568].forEach(function(f,i){ tone(f,t+i*.07,.3,.045,"triangle"); }); },
+  over:function(){ if(!on()) return; var t=AC.currentTime+.05; [523,440,349,262].forEach(function(f,i){ tone(f,t+i*.16,.4,.05,"triangle"); }); },
+  record:function(){ if(!on()) return; var t=AC.currentTime+.05; [523,659,784,1047,1319].forEach(function(f,i){ tone(f,t+i*.09,.45,.055,"triangle"); }); }
+};
+
+/* ---------- the canvas ---------- */
+var cv=$("#cv"), c=cv.getContext("2d"), W=0, H=0, DPR=1, gPat=null;
+function size(){ var s=$("#stage"), aw=s.clientWidth, ah=s.clientHeight; if(!aw||!ah) return;
+  var h=Math.min(ah,aw*.85,620), w=Math.min(aw,h*2.2); W=Math.round(w); H=Math.round(h); DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+"px"; cv.style.height=H+"px"; gPat=null; }
+window.addEventListener("resize",function(){ size(); draw(); });
+
+/* ---------- the moon's hills (y measured down from the top, in canvas heights) ---------- */
+function gy(x){ return .8+.035*Math.sin(.8*x)+.022*Math.sin(2.1*x+1.3)+.014*Math.sin(.33*x+2); }
+
+/* ---------- the run ---------- */
+var R=null, raf=0, last=0, hold=false, holdT=0;
+var KIND={rock:{w:.13,h:.11,hb:[.09,.08]},tall:{w:.1,h:.22,hb:[.065,.19]},ship:{w:.24,h:.13,hb:[.17,.08]},star:{w:.12,h:.1,hb:[.08,.07]}};
+var RW=.26, WR=.042; /* the rover's length and wheel radius (canvas heights) */
+function newRun(){ size(); R={on:false,over:false,t:0,x:0,sp:.6,y:0,vy:0,air:false,ang:0,spr:0,sprv:0,sh:5,cry:0,inv:0,obs:[],cs:[],next:2.2,fx:[],hold:0,shake:0,said:{}};
+  R.y=gy(roverX()); }
+function roverX(){ return R.x+.34*W/H; }
+function start(){ document.body.className="m-play"; newRun(); R.on=true; last=performance.now(); engOn(); hintT("Tap to jump. Hold to jump higher!");
+  if(!ST.runs) BWK.say(HOW1); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); bestLine(); }
+function bestLine(){ $("#cbest").textContent=ST.best?("Best: "+ST.best+" ft"):"Go as far as you can!"; }
+var hintTO=0; function hintT(t){ $("#hint").textContent=t; clearTimeout(hintTO); hintTO=setTimeout(function(){ $("#hint").textContent=""; },4000); }
+function press(){ if(!R||!R.on) return; hold=true; holdT=0; if(!R.air){ R.air=true; R.vy=-1.05; SND.jump(); } }
+function release(){ hold=false; }
+function loop(now){ var dt=Math.min(.04,(now-last)/1000); last=now; step(dt); draw(); if(R&&R.on) raf=requestAnimationFrame(loop); }
+function spawn(){ var t=R.t, kinds=["rock","rock","star"]; if(t>12) kinds.push("ship"); if(t>25) kinds.push("tall","ship");
+  var k=kinds[Math.floor(Math.random()*kinds.length)], x=roverX()+W/H+.4;
+  R.obs.push({k:k,x:x});
+  var r=Math.random(); /* crystals: an arc over the thing, or a row along the ground, or a high one */
+  if(r<.45){ for(var i=-1;i<=1;i++) R.cs.push({x:x+i*.12,h:.22+(i?0:.05)+(k==="tall"?.12:0)}); }
+  else if(r<.75){ for(var j=0;j<3;j++) R.cs.push({x:x+.55+j*.1,h:.05}); }
+  else R.cs.push({x:x+.5,h:.32});
+  /* the gap shrinks as the speed grows, but never below what a jump can handle */
+  var gap=Math.max(.95+R.sp*.55, 2.6-t*.03)+Math.random()*.8; if(Math.random()<.18&&t>18) gap*=.55; R.next=x+gap-(roverX()+W/H+.4)+R.x; }
+function step(dt){ R.t+=dt; R.sp=Math.min(1.75,.6+R.t*.016); R.x+=R.sp*dt; R.inv=Math.max(0,R.inv-dt); R.shake=Math.max(0,R.shake-dt);
+  if(R.x>=R.next) spawn();
+  var rx=roverX(), back=gy(rx-RW*.38), front=gy(rx+RW*.38), ground=Math.min(back,front,gy(rx));
+  if(R.air){ var g=(hold&&holdT<.32&&R.vy<0)?1.05:2.6; holdT+=dt; R.vy+=g*dt; R.y+=R.vy*dt; R.ang+=((Math.atan2(front-back,RW*.76))*.3-R.ang)*Math.min(1,dt*2);
+    if(R.y>=ground&&R.vy>0){ R.air=false; R.y=ground; R.sprv=R.vy*.6; R.vy=0; SND.land(); } }
+  else { R.y=ground; R.ang+=(Math.atan2(front-back,RW*.76)-R.ang)*Math.min(1,dt*10); }
+  /* springs */ R.sprv+=(-R.spr*90-R.sprv*9)*dt; R.spr+=R.sprv*dt;
+  engSet(R.sp,R.air);
+  /* hits */
+  var bot=R.y, top=R.y-.12, l=rx-RW*.42, r=rx+RW*.42;
+  R.obs.forEach(function(o){ if(o.hit||o.gone) return; var K=KIND[o.k], og=gy(o.x), ol=o.x-K.hb[0]/2, orr=o.x+K.hb[0]/2, ot=og-K.hb[1];
+    if(orr>l&&ol<r&&bot>ot&&R.inv<=0){ o.hit=true; R.sh--; R.inv=1.4; R.shake=.35; SND.crash(); sparks(o.x,og-K.h/2,"#ffd27a",14);
+      if(R.sh<=0){ gameOver(); } else { hintT(R.sh===1?"Last shield! Careful!":"Crash! "+R.sh+" shields left."); if(!R.said.crash){ R.said.crash=1; BWK.say(CRASH); } } }
+    if(o.x<R.x-.5) o.gone=true; });
+  R.obs=R.obs.filter(function(o){ return !o.gone; });
+  R.cs.forEach(function(k){ if(k.got) return; var cy=gy(k.x)-k.h, cx=k.x;
+    if(Math.abs(cx-rx)<RW*.5&&cy>top-.05&&cy<bot+.02){ k.got=true; R.cry++; SND.crystal(R.cry); sparks(cx,cy,"#9fe3ff",8);
+      if(R.cry%10===0&&R.sh<5){ R.sh++; SND.shield(); hintT("10 crystals: a shield is back!"); } } });
+  R.cs=R.cs.filter(function(k){ return k.x>R.x-.5&&!k.got; });
+  R.fx=R.fx.filter(function(f){ f.a+=dt; return f.a<f.life; });
+}
+function sparks(x,y,col,n){ for(var i=0;i<n;i++){ var a=Math.random()*Math.PI*2, s=.2+Math.random()*.5; R.fx.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.3,a:0,life:.5+Math.random()*.4,c:col}); } }
+function dist(){ return Math.floor(R.x*40); } /* feet (U.S. units) */
+function gameOver(){ R.on=false; R.over=true; engOff(); SND.over(); cancelAnimationFrame(raf); draw();
+  var d=dist(), rec=d>ST.best; if(rec) ST.best=d; ST.runs++; ST.cry+=R.cry; save(); var fresh=BWG.patch("rover"); bestLine();
+  setTimeout(function(){ if(rec&&d>0) SND.record();
+    var box=BWK.sheet('<h2>'+(rec&&ST.runs>1?'New record!':'Out of shields!')+'</h2>'+BWG.patchLine(fresh)+'<div class="big">'+d+' ft</div>'+
+      '<p>You grabbed <b>'+R.cry+'</b> energy crystal'+(R.cry===1?'':'s')+'.'+(rec?'':' Your best is <b>'+ST.best+' ft</b>.')+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="again">Drive again</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); start(); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    BWK.say(fresh?WINP:(rec&&ST.runs>1?REC:OVER)); },700); }
+
+/* ---------- drawing ---------- */
+function draw(){ if(!W) size(); if(!W||!R) return; c.setTransform(DPR,0,0,DPR,0,0); var u=H, cam=R.x, sx=function(wx){ return (wx-cam)*u; };
+  if(R.shake>0){ c.translate((Math.random()-.5)*8*R.shake/.35,(Math.random()-.5)*6*R.shake/.35); }
+  /* sky: the photo, still (the hills and things scroll in front of it) */
+  if(IMG.bg){ var s=Math.max(W/IMG.bg.width,H/IMG.bg.height), bw=IMG.bg.width*s, bh=IMG.bg.height*s; c.drawImage(IMG.bg,(W-bw)/2,H-bh,bw,bh); }
+  else { var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#070a1c"); g.addColorStop(.7,"#1b2246"); g.addColorStop(1,"#2a2f50"); c.fillStyle=g; c.fillRect(0,0,W,H);
+    c.fillStyle="#fff"; for(var j=0;j<60;j++){ var px=((j*137.5-cam*u*.05)%W+W)%W, py=(j*61.7)%(H*.65); c.globalAlpha=.3+.7*((j*7)%10)/10; c.fillRect(px,py,1.5,1.5); } c.globalAlpha=1;
+    c.fillStyle="#3d7bd8"; c.beginPath(); c.arc(W*.8,H*.2,H*.06,0,7); c.fill(); }
+  /* the ground, following the hills */
+  c.beginPath(); c.moveTo(0,H); for(var X=0;X<=W+8;X+=8){ c.lineTo(X,gy(cam+X/u)*u); } c.lineTo(W,H); c.closePath();
+  if(IMG.ground){ if(!gPat){ var tc=document.createElement("canvas"), ts=Math.round(H*.45); tc.width=tc.height=ts; tc.getContext("2d").drawImage(IMG.ground,0,0,ts,ts); gPat=c.createPattern(tc,"repeat"); }
+    c.save(); c.clip(); c.translate(-((cam*u)%(H*.45)),0); c.fillStyle=gPat; c.fillRect(0,0,W+H*.45,H); c.restore(); }
+  else { var gg=c.createLinearGradient(0,H*.75,0,H); gg.addColorStop(0,"#9a9aa6"); gg.addColorStop(1,"#5e5f6c"); c.fillStyle=gg; c.fill(); }
+  c.beginPath(); for(var X2=0;X2<=W+8;X2+=8){ var yy=gy(cam+X2/u)*u; if(X2===0) c.moveTo(X2,yy); else c.lineTo(X2,yy); } c.strokeStyle="rgba(230,235,255,.55)"; c.lineWidth=2; c.stroke();
+  var sh=c.createLinearGradient(0,H*.8,0,H); sh.addColorStop(0,"rgba(0,0,0,0)"); sh.addColorStop(1,"rgba(0,0,10,.35)"); c.fillStyle=sh; c.fillRect(0,H*.8,W,H*.2);
+  /* flags: BW at the start, BEST at your record distance */
+  [[.34*W/H+.25,"BW"],[ST.best>100?ST.best/40+.34*W/H:-99,"BEST"]].forEach(function(f){ var X=sx(f[0]); if(X<-u*.3||X>W+u*.3) return; var Y=gy(f[0])*u, fh=u*.36, fw=fh*557/1465;
+    c.save(); shadow(X+fw*.1,Y,fw*.3);
+    if(IMG.flag){ c.drawImage(IMG.flag,X-fw*.1,Y-fh,fw,fh); } else { c.fillStyle="#c9cdd6"; c.fillRect(X-2,Y-fh,4,fh); c.fillStyle="#f4f4f6"; c.fillRect(X,Y-fh*.9,fw*.85,fh*.26); }
+    c.font="800 "+Math.round(fh*(f[1]==="BW"?.11:.075))+"px Outfit,system-ui,sans-serif"; c.textAlign="center"; c.fillStyle=f[1]==="BW"?"#c9932c":"#169e9a";
+    c.fillText(f[1],X-fw*.1+fw*.56,Y-fh+fh*.27); c.restore(); });
+  /* things on the moon */
+  R.obs.forEach(function(o){ var K=KIND[o.k], X=sx(o.x), Y=gy(o.x)*u; if(X<-u*.3||X>W+u*.3) return; var w=K.w*u, h=K.h*u, a=o.hit?.45:1;
+    c.save(); c.globalAlpha=a; shadow(X,Y,w*.45);
+    if(o.k==="star"){ var gl=c.createRadialGradient(X,Y-h*.4,0,X,Y-h*.4,h*1.3); gl.addColorStop(0,"rgba(255,220,120,.7)"); gl.addColorStop(1,"rgba(255,200,80,0)"); c.fillStyle=gl; c.beginPath(); c.arc(X,Y-h*.4,h*1.3,0,7); c.fill(); }
+    var key=o.k==="tall"?"tallrock":o.k; if(IMG[key]) fit(IMG[key],X-w/2,Y-h+h*.06,w,h); else art(o.k,X,Y,w,h); c.restore(); });
+  R.cs.forEach(function(k){ var X=sx(k.x), Y=(gy(k.x)-k.h)*u+Math.sin(R.t*4+k.x*7)*u*.006, r=u*.03; if(X<-20||X>W+20) return;
+    var gl=c.createRadialGradient(X,Y,0,X,Y,r*2.6); gl.addColorStop(0,"rgba(170,235,255,.75)"); gl.addColorStop(1,"rgba(120,200,255,0)"); c.fillStyle=gl; c.beginPath(); c.arc(X,Y,r*2.6,0,7); c.fill();
+    if(IMG.crystal) c.drawImage(IMG.crystal,X-r*1.4,Y-r*1.4,r*2.8,r*2.8);
+    else { c.fillStyle="#bff0ff"; c.beginPath(); c.moveTo(X,Y-r*1.3); c.lineTo(X+r*.7,Y); c.lineTo(X,Y+r*1.3); c.lineTo(X-r*.7,Y); c.closePath(); c.fill(); c.fillStyle="#6cc8f2"; c.beginPath(); c.moveTo(X,Y-r*1.3); c.lineTo(X+r*.7,Y); c.lineTo(X,Y); c.closePath(); c.fill(); } });
+  /* the rover */
+  var rx=roverX(), X0=sx(rx), Y0=R.y*u, blink=R.inv>0&&Math.floor(R.inv*12)%2===0;
+  shadow(X0,gy(rx)*u,RW*u*.5*(R.air?Math.max(.3,1-(gy(rx)-R.y)*3):1));
+  if(!blink){ c.save(); c.translate(X0,Y0); c.rotate(R.ang);
+    var ph=!!IMG.rover, bwid=RW*u*1.15, wr=ph?bwid*.105:WR*u, wx=ph?[-.2985*bwid/u,-.0095*bwid/u,.2775*bwid/u]:[-RW*.36,0,RW*.36], rot=(R.x*u/wr)%(Math.PI*2);
+    wx.forEach(function(dx){ var x=dx*u, y=-wr; c.save(); c.translate(x,y); c.rotate(rot);
+      if(IMG.wheel) c.drawImage(IMG.wheel,-wr,-wr,wr*2,wr*2); else { c.fillStyle="#3a3c44"; c.beginPath(); c.arc(0,0,wr,0,7); c.fill(); c.fillStyle="#c9cdd6"; c.beginPath(); c.arc(0,0,wr*.5,0,7); c.fill(); c.strokeStyle="#6a6d78"; c.lineWidth=2; for(var s2=0;s2<5;s2++){ c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(s2*1.26)*wr*.5,Math.sin(s2*1.26)*wr*.5); c.stroke(); } }
+      c.restore(); });
+    if(!ph) bwid=RW*u*1.12; var bh=bwid*(ph?IMG.rover.height/IMG.rover.width:.55), by=(ph?-wr-.61*bwid:-wr*1.25-bh)+R.spr*u*.6;
+    if(IMG.rover) c.drawImage(IMG.rover,-bwid/2,by,bwid,bh); else roverArt(-bwid/2,by,bwid,bh);
+    /* headlight beam */ var hb=c.createLinearGradient(bwid*.45,0,bwid*1.3,0); hb.addColorStop(0,"rgba(255,250,210,.35)"); hb.addColorStop(1,"rgba(255,250,210,0)"); c.fillStyle=hb;
+    c.beginPath(); c.moveTo(bwid*.46,by+bh*.55); c.lineTo(bwid*1.3,by+bh*.3); c.lineTo(bwid*1.3,by+bh*1.0); c.closePath(); c.fill();
+    c.restore(); }
+  /* sparks */
+  R.fx.forEach(function(f){ var p=f.a/f.life, X=sx(f.x+f.vx*f.a), Y=(f.y+f.vy*f.a+.8*f.a*f.a)*u; c.globalAlpha=1-p; c.fillStyle=f.c; c.beginPath(); c.arc(X,Y,u*.008*(1-p*.5)+1,0,7); c.fill(); c.globalAlpha=1; });
+  /* the dashboard: distance, crystals, shields */
+  c.setTransform(DPR,0,0,DPR,0,0); var fs=Math.round(Math.max(14,u*.055));
+  panel(10,10,fs*6.2,fs*1.9); c.font="800 "+fs+"px Outfit,system-ui,sans-serif"; c.textAlign="left"; c.fillStyle="#fff"; c.fillText(dist()+" ft",10+fs*.6,10+fs*1.3);
+  var cxw=fs*4.4; panel(16+fs*6.2,10,cxw,fs*1.9); c.fillStyle="#bff0ff"; c.fillText("◆ "+R.cry,16+fs*6.2+fs*.6,10+fs*1.3);
+  var lw=fs*.62, pw=5*lw*1.5+fs*.6; panel(W-pw-10,10,pw,fs*1.9);
+  for(var k=0;k<5;k++){ var lx=W-pw-10+fs*.3+lw*.75+k*lw*1.5, ly=10+fs*.95, onl=k<R.sh;
+    if(onl){ var lg=c.createRadialGradient(lx,ly,0,lx,ly,lw*1.1); lg.addColorStop(0,"#eafff1"); lg.addColorStop(.45,"#4fe08a"); lg.addColorStop(1,"rgba(40,200,110,0)"); c.fillStyle=lg; c.beginPath(); c.arc(lx,ly,lw*1.1,0,7); c.fill(); }
+    c.fillStyle=onl?"#7dffb0":"rgba(255,255,255,.18)"; c.beginPath(); c.arc(lx,ly,lw*.45,0,7); c.fill(); }
+  if(!R.on&&!R.over){ c.textAlign="center"; c.font="800 "+Math.round(u*.08)+"px Outfit,system-ui,sans-serif"; c.fillStyle="#fff"; c.strokeStyle="rgba(0,0,30,.7)"; c.lineWidth=5; c.strokeText("Tap to drive!",W/2,H*.42); c.fillText("Tap to drive!",W/2,H*.42); }
+  function panel(x,y,w,h){ c.fillStyle="rgba(8,14,40,.62)"; c.strokeStyle="rgba(150,220,255,.4)"; c.lineWidth=1.5; c.beginPath(); c.roundRect?c.roundRect(x,y,w,h,h/2.4):c.rect(x,y,w,h); c.fill(); c.stroke(); }
+  function shadow(x,y,r){ c.save(); c.fillStyle="rgba(0,0,10,.35)"; c.beginPath(); c.ellipse(x,y,r,r*.16,0,0,7); c.fill(); c.restore(); }
+  function fit(im,x,y,w,h){ var s=Math.min(w/im.width,h/im.height), dw=im.width*s, dh=im.height*s; c.drawImage(im,x+(w-dw)/2,y+(h-dh),dw,dh); }
+  function art(k,X,Y,w,h){ if(k==="star"){ c.fillStyle="#ffd34d"; c.beginPath(); for(var i=0;i<10;i++){ var a=i*Math.PI/5-Math.PI/2, rr=i%2?h*.25:h*.55; c.lineTo(X+Math.cos(a)*rr,Y-h*.45+Math.sin(a)*rr); } c.fill(); return; }
+    if(k==="ship"){ c.fillStyle="#b9c0cc"; c.beginPath(); c.ellipse(X,Y-h*.4,w*.5,h*.3,-.25,0,7); c.fill(); c.fillStyle="rgba(140,255,170,.7)"; c.beginPath(); c.ellipse(X-w*.05,Y-h*.72,w*.2,h*.22,-.25,0,7); c.fill(); return; }
+    c.fillStyle=k==="tall"?"#8d8e98":"#9a9ba6"; c.beginPath(); c.moveTo(X-w*.5,Y); c.quadraticCurveTo(X-w*.45,Y-h,X,Y-h); c.quadraticCurveTo(X+w*.5,Y-h*.9,X+w*.5,Y); c.closePath(); c.fill();
+    c.fillStyle="rgba(60,60,70,.35)"; c.beginPath(); c.arc(X-w*.1,Y-h*.55,w*.08,0,7); c.fill(); }
+  function roverArt(x,y,w,h){ c.fillStyle="#eef0f4"; c.beginPath(); c.roundRect?c.roundRect(x,y+h*.35,w,h*.5,h*.15):c.rect(x,y+h*.35,w,h*.5); c.fill();
+    c.fillStyle="#f08a2c"; c.fillRect(x,y+h*.62,w,h*.07); c.fillStyle="rgba(170,220,255,.6)"; c.beginPath(); c.arc(x+w*.55,y+h*.36,h*.28,Math.PI,0); c.fill();
+    c.strokeStyle="#c9cdd6"; c.lineWidth=2; c.beginPath(); c.moveTo(x+w*.2,y+h*.35); c.lineTo(x+w*.15,y); c.stroke(); c.fillStyle="#6cf"; c.beginPath(); c.arc(x+w*.15,y,3,0,7); c.fill();
+    c.fillStyle="#fff6c0"; c.beginPath(); c.arc(x+w*.97,y+h*.5,h*.06,0,7); c.fill(); }
+}
+
+/* ---------- input: tap to jump, hold for higher ---------- */
+cv.addEventListener("pointerdown",function(e){ e.preventDefault(); if(!R||(!R.on&&!R.over)){ start(); return; } press(); });
+window.addEventListener("pointerup",release); window.addEventListener("pointercancel",release);
+document.addEventListener("keydown",function(e){ if((e.key===" "||e.key==="ArrowUp")&&document.body.classList.contains("m-play")&&!document.querySelector(".k-veil.on")){ e.preventDefault(); if(!e.repeat) press(); } });
+document.addEventListener("keyup",function(e){ if(e.key===" "||e.key==="ArrowUp") release(); });
+document.addEventListener("visibilitychange",function(){ if(document.hidden&&R&&R.on){ R.on=false; engOff(); cancelAnimationFrame(raf); R.paused=true; hintT("Paused. Tap to keep driving."); } });
+cv.addEventListener("pointerdown",function(){ if(R&&R.paused){ R.paused=false; R.on=true; engOn(); last=performance.now(); raf=requestAnimationFrame(loop); } },true);
+
+/* ---------- menu ---------- */
+function toMenu(){ if(R&&R.on){ R.on=false; engOff(); cancelAnimationFrame(raf); } document.body.className="m-menu";
+  $("#mfoot").textContent=ST.runs?("Best drive: "+ST.best+" ft · Crystals grabbed: "+ST.cry):"Every 10 crystals bring back a shield."; }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+INTRO+'</p><p>'+HOW+'</p><p>The rover gets faster the farther you go. Tall rock spires and crashed saucers show up later, and sometimes two things come close together.</p><p>On a computer, press Space or the up arrow to jump (hold it to jump higher).</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+$("#tAgain").onclick=function(){ BWK.sfx("tap"); if(R&&R.on){ R.on=false; engOff(); cancelAnimationFrame(raf); } start(); };
+(function(){ $("#rvEmb").innerHTML='<defs><radialGradient id="emM" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#eef0f6"/><stop offset="1" stop-color="#8e92a2"/></radialGradient></defs>'+
+  '<circle cx="104" cy="22" r="14" fill="#3d7bd8"/><path d="M0 78Q40 64 70 74T132 70V92H0Z" fill="url(#emM)"/>'+
+  '<rect x="34" y="44" width="56" height="20" rx="7" fill="#eef0f4"/><rect x="34" y="55" width="56" height="3" fill="#f08a2c"/><path d="M50 44a12 12 0 0 1 24 0z" fill="rgba(170,220,255,.8)"/>'+
+  '<circle cx="42" cy="68" r="7" fill="#3a3c44"/><circle cx="62" cy="68" r="7" fill="#3a3c44"/><circle cx="82" cy="68" r="7" fill="#3a3c44"/><path d="M44 44L40 32" stroke="#c9cdd6" stroke-width="2"/><circle cx="40" cy="31" r="2.5" fill="#6cf"/>'; })();
+
+var INTRO="Brody's Moon Rover! Drive Brody's rover across the moon. Jump over moon rocks, crashed saucers and fallen stars. How far can you go?";
+var HOW="Tap to jump, and hold to jump higher. Grab the blue energy crystals: every ten crystals bring back a shield. You have five shields. Each crash uses one, and when they're all gone, the drive is over.";
+var HOW1="Tap to jump. Hold to jump higher!", CRASH="Crash! That used a shield. Keep going!";
+var OVER="Out of shields! Want to drive again?", REC="A new record! Way to go!", WINP="Great drive! You earned a new patch for your badge wall!";
+BWK.lines({"rv-intro":INTRO,"rv-how":HOW,"rv-how1":HOW1,"rv-crash":CRASH,"rv-over":OVER,"rv-rec":REC,"rv-winp":WINP});
+toMenu();
+BWK.init({here:"rover", voice:"outpost", intro:INTRO, noHello:true});
+newRun();
+window.RVO={start:start,press:press,release:release,state:function(){ return R&&{on:R.on,over:R.over,t:R.t,x:R.x,sp:R.sp,sh:R.sh,cry:R.cry,air:R.air,obs:R.obs.length,W:W,H:H,dist:dist()}; },
+  auto:function(){ var id=setInterval(function(){ if(!R||!R.on){ clearInterval(id); return; } var rx=roverX(), nx=R.obs.filter(function(o){ return !o.hit&&o.x>rx-.05; })[0];
+    if(nx&&!R.air){ var d=nx.x-rx-KIND[nx.k].w/2; if(d<.18+R.sp*.12){ press(); setTimeout(release,nx.k==="tall"?260:90); } } },20); return id; },
+  shields:function(n){ R.sh=n; }};
+})();
+</script>
+</body>
+</html>
