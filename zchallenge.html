@@ -32,7 +32,7 @@
 .plate{position:absolute;border-radius:10px;
   background:radial-gradient(circle at 50% 46%,#7fd67a 0 18%,#3f9a3c 21%,transparent 24%) 0 0/calc(var(--u)/2) calc(var(--u)/2),linear-gradient(180deg,#4fb04a,#3b8f37);
   box-shadow:0 3px 0 #2a6a27,0 6px 0 #1f4f1d,0 16px 28px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.3)}
-html.ph .plate{background:url("zc/plate.webp?v=1116a") calc(var(--u)*.12) calc(var(--u)*.12)/calc(var(--u)*2) calc(var(--u)*2);box-shadow:0 3px 0 #2a6a27,0 6px 0 #1f4f1d,0 16px 28px rgba(0,0,0,.55)}
+html.ph .plate{background:linear-gradient(rgba(10,40,10,.28),rgba(10,40,10,.28)),url("zc/plate.webp?v=1116a") calc(var(--u)*.12) calc(var(--u)*.12)/var(--u) var(--u);box-shadow:0 3px 0 #2a6a27,0 6px 0 #1f4f1d,0 16px 28px rgba(0,0,0,.55)}
 .cell{position:absolute;appearance:none;border:0;padding:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .cell::before{content:"";position:absolute;inset:3%;border-radius:12%;border:1.5px solid rgba(20,60,20,.28)}
 html.ph .cell::before{border-color:rgba(10,50,10,.35)}
@@ -72,6 +72,14 @@ html.ph .clue{background:url("oh/token.png?v=1116a") center/100% 100% no-repeat}
 .tw i{position:absolute;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent)}
 .cell.drop .tw{animation:bdrop .32s cubic-bezier(.3,1.5,.5,1)}
 .nb .tp{position:relative;width:100%;max-width:56px;height:46px;display:block}
+.tw.one img{left:10%;width:80%;top:7%}
+.tw.one i{left:8%;width:84%;bottom:4%;height:12%}
+.nb .tw.one img{left:18%;width:64%;top:6%}
+.bn{position:absolute;left:10%;width:80%;top:56%;height:33%;display:grid;place-items:center;font:800 calc(var(--u)*.36)/1 Outfit,system-ui,sans-serif;color:#fff;
+  text-shadow:0 2px 0 rgba(0,0,0,.35),0 0 4px rgba(0,0,0,.45);pointer-events:none}
+.bn.dk{color:#4a3200;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.cell.bad .tw.one::after{content:"";position:absolute;inset:4%;border-radius:14%;box-shadow:0 0 0 3px #ff4b3a,0 0 12px 3px rgba(255,75,58,.7)}
+.cell.giv .tw.one::after{content:"";position:absolute;inset:4%;border-radius:14%;box-shadow:0 0 0 3px #e9c46a}
 .nb:active{transform:translateY(2px);box-shadow:none}
 .nb.done{opacity:.45}
 .nb.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
@@ -139,7 +147,9 @@ function towerPH(v,N,mini){ var w=mini?Math.min(.6,.92/(1.02+(N-1)*BSTEP)):Math.
   s+='<i style="left:'+((1-w*1.05)/2*100)+'%;width:'+(w*105)+'%;bottom:'+(base*100-3)+'%"></i>';
   for(var i=0;i<v;i++) s+='<img alt="" src="zc/b'+v+'.webp?v='+AV+'" style="left:'+((1-w)/2*100)+'%;width:'+(w*100)+'%;bottom:'+((base+i*BSTEP*H)*100)+'%">';
   return s+'</div>'; }
-function tower(v,N,mini){ return PH?towerPH(v,N,mini):towerSVG(v,N,mini); }
+/* on the board (Judy, Nov 16: stacked towers didn't read well): one big brick in the height's color with its number on the front */
+function brickPH(v,mini){ return '<div class="tw one"><i></i><img alt="" src="zc/b'+v+'.webp?v='+AV+'">'+(mini?'':'<span class="bn'+(v===1?' dk':'')+'">'+v+'</span>')+'</div>'; }
+function tower(v,N,mini){ return PH?brickPH(v,mini):towerSVG(v,N,mini); }
 (function(){ var L=["plate.webp","b1.webp","b2.webp","b3.webp","b4.webp","b5.webp","b6.webp"], n=0; L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n<L.length) return;
   PH=true; document.documentElement.classList.add("ph"); if(P){ drawCells(); drawNums(); } }; i.src="zc/"+f+"?v="+AV; }); })();
 function towerSVG(v,N,mini){ var c=COL[v], bh=mini?Math.min(15,78/N):Math.min(21,124/N), w=mini?60:64, x=(100-w)/2, base=mini?92:88, s='<svg viewBox="0 0 100 100" aria-hidden="true">';
@@ -210,13 +220,13 @@ function saveCur(){ if(!P||P.kind==="bonus") return; ST[P.key]={stamp:P.stamp,g:
 
 /* ---------- layout ---------- */
 var GEO=null;
-function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return; var N=P.N, m=.72;
+function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return; var N=P.N, m=.86;
   var u=Math.floor(Math.min(W/(N+2*m),H/(N+2*m),88)); if(u<26) u=26;
   var bw=Math.round(u*(N+2*m)), x0=Math.round((W-bw)/2), y0=Math.round((H-bw)/2), o=Math.round(u*m);
   GEO={u:u,o:o}; var b=$("#board"); b.style.cssText="left:"+x0+"px;top:"+Math.max(0,y0)+"px;width:"+bw+"px;height:"+bw+"px;--u:"+u+"px";
   var h='<div class="plate" style="left:'+(o-u*.12)+'px;top:'+(o-u*.12)+'px;width:'+(N*u+u*.24)+'px;height:'+(N*u+u*.24)+'px"></div>';
   for(var r=0;r<N;r++) for(var c=0;c<N;c++) h+='<button class="cell" data-r="'+r+'" data-c="'+c+'" aria-label="Row '+(r+1)+', column '+(c+1)+'" style="left:'+(o+c*u)+'px;top:'+(o+r*u)+'px;width:'+u+'px;height:'+u+'px"></button>';
-  var cs=Math.round(u*.6);
+  var cs=Math.round(u*.56);
   ["top","bottom","left","right"].forEach(function(s){ for(var i=0;i<N;i++){ var k=P.Z.clues[s][i]; if(!k) continue; var x,y;
     if(s==="top"){ x=o+i*u+u/2; y=o*.5; } else if(s==="bottom"){ x=o+i*u+u/2; y=o+N*u+o*.5; } else if(s==="left"){ x=o*.5; y=o+i*u+u/2; } else { x=o+N*u+o*.5; y=o+i*u+u/2; }
     h+='<div class="clue" data-s="'+s+'" data-i="'+i+'" style="left:'+(x-cs/2)+'px;top:'+(y-cs/2)+'px;width:'+cs+'px;height:'+cs+'px">'+k+'</div>'; } });
@@ -225,11 +235,11 @@ function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.cli
   drawCells(); }
 function cellEl(r,c){ return $('#board .cell[data-r="'+r+'"][data-c="'+c+'"]'); }
 function drawCell(r,c,drop){ var e=cellEl(r,c); if(!e) return; var v=P.g[r][c], nt=P.notes[r][c], h="";
-  if(v) h=tower(v,P.N)+'<span class="dg">'+v+'</span>';
+  if(v) h=tower(v,P.N)+(PH?'':'<span class="dg">'+v+'</span>');
   else if(nt){ h='<span class="nt">'; for(var k=1;k<=P.N;k++) h+='<span>'+(nt&(1<<k)?k:"")+'</span>'; h+='</span>'; }
   e.innerHTML=h; e.classList.toggle("giv",!!P.giv[r+","+c]); e.classList.remove("drop"); if(drop){ void e.offsetWidth; e.classList.add("drop"); } }
 function drawCells(){ for(var r=0;r<P.N;r++) for(var c=0;c<P.N;c++) drawCell(r,c); marks(); }
-function drawNums(){ var h=""; for(var v=1;v<=P.N;v++) h+='<button class="nb" data-v="'+v+'" aria-label="Tower of '+v+'">'+(PH?'<span class="tp">'+towerPH(v,P.N,true)+'</span>':towerSVG(v,P.N,true))+'<b>'+v+'</b></button>';
+function drawNums(){ var h=""; for(var v=1;v<=P.N;v++) h+='<button class="nb" data-v="'+v+'" aria-label="Tower of '+v+'">'+(PH?'<span class="tp">'+brickPH(v,true)+'</span>':towerSVG(v,P.N,true))+'<b>'+v+'</b></button>';
   $("#nums").innerHTML=h; [].forEach.call(document.querySelectorAll(".nb"),function(b){ b.onclick=function(){ tapNum(+b.dataset.v); }; }); doneNums(); }
 function doneNums(){ [].forEach.call(document.querySelectorAll(".nb"),function(b){ var v=+b.dataset.v, n=0; P.g.forEach(function(row){ row.forEach(function(x){ if(x===v) n++; }); }); b.classList.toggle("done",n>=P.N); }); }
 /* conflicts and clue checks */
