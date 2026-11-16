@@ -88,6 +88,7 @@
     </div>
     <div class="tools">
       <button class="k-btn" id="tFlip">Flip!</button>
+      <button class="k-btn k-ghost" id="tAuto" aria-pressed="false">Auto ▶</button>
       <button class="k-btn k-ghost" id="tMenu">Menu</button>
     </div>
   </section>
@@ -119,10 +120,10 @@ function geo(){
   tbl.style.setProperty("--cw",cw+"px");
   var gx=Math.max(12,(W-cw*3)/4);
   G={W:W,H:H,cw:cw,ch:ch,
-    dBot:[W/2-cw-gx*.35,H*.05],wBot:[W/2+gx*.35,H*.05],
-    dMe:[W/2-cw-gx*.35,H*.95-ch-10],wMe:[W/2+gx*.35,H*.95-ch-10],
+    dBot:[W/2-cw/2,H*.05],wBot:[W/2-cw/2,H*.05],
+    dMe:[W/2-cw/2,H*.95-ch-10],wMe:[W/2-cw/2,H*.95-ch-10],  /* real War (Nov 16): won cards go under your own deck, so no won piles */
     bBot:[W/2-cw-gx*.35,H/2-ch/2],bMe:[W/2+gx*.35,H/2-ch/2]};
-  ["dBot","wBot","dMe","wMe"].forEach(function(k){ var e=$("#"+k); e.style.left=G[k][0]+"px"; e.style.top=G[k][1]+"px"; e.style.width=cw+"px"; e.style.height=ch+"px"; });
+  ["dBot","wBot","dMe","wMe"].forEach(function(k){ var e=$("#"+k); e.style.left=G[k][0]+"px"; e.style.top=G[k][1]+"px"; e.style.width=cw+"px"; e.style.height=ch+"px"; if(k[0]==="w") e.style.display="none"; });
   var lb=$("#lBot"), lm=$("#lMe"); lb.style.left=lm.style.left=(W/2)+"px"; lb.style.top=(G.dBot[1]+ch+8)+"px"; lm.style.top=(G.dMe[1]-30)+"px";
   if(pot) pot.forEach(function(p){ put(p.el,p.x(),p.y(),p.r,true); });
 }
@@ -142,7 +143,7 @@ function stacks(){
     var ph=document.documentElement.classList.contains("jtp");
     e.style.background=n&&ph?'url("jt/'+(deck?'jt-back':'jt-face')+'.webp?v=1115a") center/100% 100%':n?(deck?"radial-gradient(circle at 50% 50%,#ffe27a 0 9%,transparent 10%),repeating-linear-gradient(45deg,#1f6f5a 0 6px,#18594a 6px 12px)":"linear-gradient(180deg,#fffdf6,#efe4cc)"):"";
     e.style.border=n&&!ph?"3px solid #fff4df":""; e.style.boxShadow=n?(Array.from({length:Math.min(5,Math.ceil(n/6))},function(_,i){ return (i+1)+"px "+(i+1)*1.5+"px 0 "+(deck?"#e9dcc0":"#d8c9a6"); }).join(",")+",0 8px 12px rgba(0,0,0,.35)"):""; });
-  $("#lBot").innerHTML="Brody-Bot · <b>"+wonBot+"</b> won"; $("#lMe").innerHTML=BWG.who("You")+" · <b>"+wonMe+"</b> won";
+  $("#lBot").innerHTML="Brody-Bot · <b>"+bot.length+"</b> cards"; $("#lMe").innerHTML=BWG.who("You")+" · <b>"+me.length+"</b> cards";
   var canGo=!busy&&me.length>0; $("#dMe").classList.toggle("go",canGo); $("#tFlip").disabled=!canGo;
 }
 
@@ -151,7 +152,7 @@ function deal(){
   gen++; [].slice.call(tbl.querySelectorAll(".cd")).forEach(function(e){ e.remove(); });
   var d=[]; for(var s=0;s<4;s++) for(var r=0;r<13;r++) d.push({s:s,r:r});
   for(var i=d.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=d[i]; d[i]=d[j]; d[j]=t; }
-  me=d.slice(0,26); bot=d.slice(26); wonMe=0; wonBot=0; pot=[]; busy=false; layer=0;
+  me=d.slice(0,26); bot=d.slice(26); wonMe=0; wonBot=0; pot=[]; busy=false; layer=0; setAuto(false);
   geo(); stacks(); $("#msg").textContent="Tap your deck or Flip! to start.";
 }
 var layer=0;
@@ -176,9 +177,11 @@ function compare(a,b,depth){
     var ban=$("#ban"); ban.classList.remove("on"); void ban.offsetWidth; ban.classList.add("on"); sWar();
     if(depth===0) BWK.say(WARL);
     return wait(1100).then(function(){
-      if(!me.length||!bot.length){ /* nobody can fight: everyone takes back their own cards */
-        $("#msg").textContent="No cards left for War! Everyone takes back their own cards.";
-        return wait(900).then(function(){ var mine=pot.filter(function(p){return p.who==="me";}).length; return sweep(null,mine,pot.length-mine); }); }
+      if(!me.length||!bot.length){ /* someone has no cards left to fight with: the other player takes the pile */
+        if(!me.length&&!bot.length){ $("#msg").textContent="No cards left for War! Everyone takes back their own cards.";
+          return wait(900).then(function(){ return sweep(null); }); }
+        var hw=me.length?"me":"bot"; $("#msg").textContent=hw==="me"?"Brody-Bot is out of cards for the War!":"You're out of cards for the War!";
+        return wait(900).then(function(){ return sweep(hw); }); }
       var nm=Math.min(3,me.length-1), nb=Math.min(3,bot.length-1), i;
       for(i=0;i<nm;i++) lay("me",false,i+1); for(i=0;i<nb;i++) lay("bot",false,i+1);
       sSlide(); stacks();
@@ -192,22 +195,24 @@ function compare(a,b,depth){
 }
 function sweep(who,nMe,nBot){
   sSlide();
-  pot.forEach(function(p,i){ var dest=who?(who==="me"?G.wMe:G.wBot):(p.who==="me"?G.wMe:G.wBot); p.el.style.transitionDelay=(i*.03)+"s"; put(p.el,dest[0],dest[1],0); p.el.classList.add("up"); });
+  pot.forEach(function(p,i){ var dest=who?(who==="me"?G.dMe:G.dBot):(p.who==="me"?G.dMe:G.dBot); p.el.style.transitionDelay=(i*.03)+"s"; put(p.el,dest[0],dest[1],0); p.el.classList.remove("up"); });
   return wait(480+pot.length*30).then(function(){
     pot.forEach(function(p){ p.el.remove(); });
-    if(who==="me") wonMe+=pot.length; else if(who==="bot") wonBot+=pot.length; else { wonMe+=nMe; wonBot+=nBot; }
+    var cs=pot.map(function(p){ return p; }); for(var i=cs.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), x=cs[i]; cs[i]=cs[j]; cs[j]=x; }
+    cs.forEach(function(p){ var to=who?(who==="me"?me:bot):(p.who==="me"?me:bot); to.push(p.c); });  /* under the deck */
+    if(who==="me") wonMe++; else if(who==="bot") wonBot++;
     pot=[]; layer=0; busy=false; stacks();
     if(!me.length||!bot.length) return wait(500).then(endGame);
+    if(auto) setTimeout(function(){ if(auto&&!busy) flip(); },550);
   });
 }
 function endGame(){
-  /* a war can leave one player with cards still in hand: they count as won */
-  wonMe+=me.length; wonBot+=bot.length; me=[]; bot=[]; stacks();
-  var r=wonMe>wonBot?"w":wonMe<wonBot?"l":"t", fresh=false, t, h, body;
+  setAuto(false);
+  var r=me.length>bot.length?"w":me.length<bot.length?"l":"t", fresh=false, t, h, body;
   fresh=BWG.patch("war");
-  if(r==="w"){ ST.w++; t="You won the war!"; h=fresh?WINP:WIN; body="You won "+wonMe+" cards. Brody-Bot won "+wonBot+"."; }
-  else if(r==="l"){ ST.l++; t="Brody-Bot won this time"; h=LOSE; body="Brody-Bot won "+wonBot+" cards. You won "+wonMe+"."; }
-  else { ST.t++; t="It's a tie!"; h=TIE; body="You both won 26 cards."; }
+  if(r==="w"){ ST.w++; t="You won the war!"; h=fresh?WINP:WIN; body="You have all 52 cards! You won "+wonMe+" battles; Brody-Bot won "+wonBot+"."; }
+  else if(r==="l"){ ST.l++; t="Brody-Bot won this time"; h=LOSE; body="Brody-Bot has all 52 cards. You won "+wonMe+" battles; Brody-Bot won "+wonBot+"."; }
+  else { ST.t++; t="It's a tie!"; h=TIE; body="Nobody could finish the last War."; }
   save(); sEnd(r!=="l"); $("#msg").textContent=t;
   var box=BWK.sheet('<h2>'+t+'</h2>'+BWG.patchLine(fresh)+'<p>'+body+'</p>'+
     '<div class="k-row"><button class="k-btn" data-a="again">Play Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
@@ -217,12 +222,16 @@ function endGame(){
 }
 
 /* ---------- controls ---------- */
-$("#dMe").onclick=flip; $("#tFlip").onclick=flip;
+$("#dMe").onclick=function(){ setAuto(false); flip(); }; $("#tFlip").onclick=function(){ setAuto(false); flip(); };
+/* Auto: keeps flipping by itself (a real game of War can take a few hundred flips); any tap on Flip! or the deck stops it */
+var auto=false;
+function setAuto(on){ auto=!!on; var b=$("#tAuto"); if(!b) return; b.setAttribute("aria-pressed",auto); b.textContent=auto?"Stop ■":"Auto ▶"; b.classList.toggle("k-ghost",!auto); }
+$("#tAuto").onclick=function(){ BWK.sfx("tap"); setAuto(!auto); if(auto&&!busy) flip(); };
 document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
   if(e.key===" "||e.key==="Enter"){ e.preventDefault(); flip(); } });
 window.addEventListener("resize",function(){ requestAnimationFrame(geo); });
 if(window.ResizeObserver) new ResizeObserver(function(){ if(document.body.classList.contains("m-play")) geo(); }).observe(tbl);
-function toMenu(){ gen++; busy=false; document.body.className="m-menu";
+function toMenu(){ gen++; busy=false; setAuto(false); document.body.className="m-menu";
   $("#mfoot").textContent=(ST.w+ST.l+ST.t)?("Games won: "+ST.w+" · Brody-Bot: "+ST.l+(ST.t?" · Ties: "+ST.t:"")):"On a computer, press Space to flip."; }
 $("#bPlay").onclick=function(){ document.body.className="m-play"; BWK.sfx("open"); requestAnimationFrame(deal); };
 $("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW1+'</p><p>'+HOW2+'</p><p>On a computer, press Space to flip.</p></div>'); BWK.say(HOW1+" "+HOW2); };
@@ -231,16 +240,16 @@ $("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
 
 var INTRO="War! You and Brody-Bot each flip a card. The higher card wins both. Tap your deck to flip!";
 var HOW1="Aces are the highest, then king, queen and jack, then ten, all the way down to two.";
-var HOW2="If both cards match, it's War! You each put down three cards face down and one face up. The higher card takes them all. When the decks run out, whoever won the most cards wins the game.";
+var HOW2="If both cards match, it's War! You each put down three cards face down and one face up. The higher card takes them all. The cards you win go under your deck. Keep playing until one player has all the cards!";
 var WARL="War!";
 var WIN="You won the war! Great game!", WINP="You won the war! You earned a new patch for your badge wall!";
 var LOSE="Brody-Bot won this time. Want a rematch?", TIE="It's a tie! You both won the same number of cards.";
-var L={"war-intro":INTRO,"war-how":HOW1+" "+HOW2,"war-war":WARL,"war-win":WIN,"war-win-patch":WINP,"war-lose":LOSE,"war-tie":TIE};
+var L={"war-intro":INTRO,"war-how-2":HOW1+" "+HOW2,"war-war":WARL,"war-win":WIN,"war-win-patch":WINP,"war-lose":LOSE,"war-tie":TIE};
 BWK.lines(L);
 toMenu();
 BWK.init({here:"war", voice:"outpost", intro:INTRO, noHello:true});
 window.WAO={flip:flip,deal:deal,state:function(){ return {me:me&&me.length,bot:bot&&bot.length,wonMe:wonMe,wonBot:wonBot,pot:pot&&pot.length,busy:busy}; },
-  rig:function(a,b){ me.unshift(a); bot.unshift(b); stacks(); },lines:L};
+  rig:function(a,b){ me.unshift(a); bot.unshift(b); stacks(); },auto:setAuto,lines:L};
 })();
 </script>
 <script>/* the photo look (Nov 15): html.jtp once the jt/ pictures have loaded; the drawn look stays as the fallback */

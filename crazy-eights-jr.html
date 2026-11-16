@@ -132,14 +132,18 @@ var PIPS={1:[[25,35]],2:[[25,17],[25,53]],3:[[25,15],[25,35],[25,55]],4:[[16,19]
   6:[[16,17],[34,17],[16,35],[34,35],[16,53],[34,53]],7:[[16,17],[34,17],[25,26],[16,35],[34,35],[16,53],[34,53]],
   8:[[16,16],[34,16],[25,25],[16,34],[34,34],[25,44],[16,53],[34,53]],
   9:[[16,15],[34,15],[16,28],[34,28],[25,35],[16,42],[34,42],[16,55],[34,55]],10:[[16,14],[34,14],[25,22],[16,29],[34,29],[16,41],[34,41],[25,48],[16,56],[34,56]]};
-var PS={1:26,2:15,3:14,4:13,5:12.5,6:12,7:11,8:10.5,9:10,10:9.5};
+var PS={1:26,2:15,3:14,4:13,5:12.5,6:12,7:11,8:10.5,9:10,10:9.5,11:20,12:20,13:20};
+PIPS[11]=PIPS[12]=PIPS[13]=[[25,42]];  /* jack, queen, king: a crown over one big picture (52-card deck, Nov 16) */
+function LB(r){ return r===1?"A":r===11?"J":r===12?"Q":r===13?"K":String(r); }
+function NM(r){ return r===1?"an ace":r===11?"a jack":r===12?"a queen":r===13?"a king":r===8?"an 8":"a "+r; }
 function faceSvg(c){
   var h='<svg viewBox="0 0 50 70" aria-hidden="true"><rect class="fb" x=".5" y=".5" width="49" height="69" rx="5" fill="#fffdf6" stroke="'+(c.r===8?"#e9c46a":"#d8c9a6")+'" stroke-width="'+(c.r===8?2:1)+'"/><image href="jt/jt-face.webp?v=1115a" width="50" height="70" preserveAspectRatio="none"/>';
   if(c.r===8) h+='<rect x="3" y="3" width="44" height="64" rx="3.5" fill="none" stroke="url(#ceRain)" stroke-width="1.6" opacity=".9"/>';
+  if(c.r>=11) h+='<path d="M14 30 L12.5 18 L19 23.5 L25 14 L31 23.5 L37.5 18 L36 30 Z" fill="#e9c46a" stroke="#a87700" stroke-width=".9"/><circle cx="25" cy="14" r="1.6" fill="#e2453c"/><circle cx="12.5" cy="18" r="1.3" fill="#3b82f6"/><circle cx="37.5" cy="18" r="1.3" fill="#3b82f6"/>';
   PIPS[c.r].forEach(function(p){ var s=PS[c.r]; h+='<use href="#ceS'+c.s+'" x="'+(p[0]-s/2)+'" y="'+(p[1]-s/2)+'" width="'+s+'" height="'+s+'"/>'; });
   var col=c.r===8?"url(#ceRain)":SC[c.s], st=c.r===8?' stroke="#7b2410" stroke-width=".5"':'';
-  h+='<text x="5" y="12.5" font-size="11.5" font-weight="900" fill="'+col+'"'+st+' font-family="Outfit,system-ui,sans-serif">'+c.r+'</text>';
-  h+='<text x="45" y="57.5" font-size="11.5" font-weight="900" fill="'+col+'"'+st+' text-anchor="end" transform="rotate(180 40 61)" font-family="Outfit,system-ui,sans-serif">'+c.r+'</text>';
+  h+='<text x="5" y="12.5" font-size="11.5" font-weight="900" fill="'+col+'"'+st+' font-family="Outfit,system-ui,sans-serif">'+LB(c.r)+'</text>';
+  h+='<text x="45" y="57.5" font-size="11.5" font-weight="900" fill="'+col+'"'+st+' text-anchor="end" transform="rotate(180 40 61)" font-family="Outfit,system-ui,sans-serif">'+LB(c.r)+'</text>';
   h+='<use href="#ceS'+c.s+'" x="2.5" y="15" width="6.5" height="6.5"/><use href="#ceS'+c.s+'" x="41" y="48.5" width="6.5" height="6.5" transform="rotate(180 44.25 51.75)"/>';
   return h+'</svg>';
 }
@@ -205,7 +209,7 @@ function deal(){
   P.forEach(function(id,i){ if(!i) return; var o=document.createElement("div"); o.className="opp"; o.id="op"+i;
     if(i===P.length-1&&P.length>2) o.classList.add("r");
     o.innerHTML='<div class="av">'+CAST[id].av+'</div><div class="nm"><span>'+CAST[id].n+'</span><b>5</b></div><div class="bub"></div>'; tbl.appendChild(o); });
-  deck=[]; for(var s=0;s<4;s++) for(var r=1;r<=10;r++) deck.push({s:s,r:r}); shuffle(deck);
+  deck=[]; for(var s=0;s<4;s++) for(var r=1;r<=13;r++) deck.push({s:s,r:r}); shuffle(deck);  /* all 52 cards (Judy, Nov 16) */
   hands=P.map(function(){ return []; }); pile=[];
   geo();
   for(var k=0;k<8;k++) P.forEach(function(id,i){ var c=deck.pop(); hands[i].push(c); if(!i) cardEl(c,true); });
@@ -219,7 +223,7 @@ function deal(){
 function msg(t){ $("#msg").textContent=t; }
 /* Spoken nudges: the first "Your turn!" (and the first draw tip) of a game is said right away;
    after that only if the player waits 5 s without playing or drawing (Judy, Nov 12). */
-var nagT=0, saidTurn=false, saidDraw=false;
+var nagT=0, saidTurn=false, saidDraw=false, saidAgain=false;
 function nag(line,said){ clearTimeout(nagT); if(!said){ BWK.say(line); return; }
   var g=gen; nagT=setTimeout(function(){ if(g===gen&&turn===0&&!busy&&!over&&!drewThis) BWK.say(line); },5000); }
 function myTurn(first){
@@ -231,7 +235,7 @@ function tapCard(c){
   if(turn!==0||busy||over) return;
   if(drewThis&&c!==drewThis){ sWrong(); msg("Play the card you just drew!"); return; }
   if(!legal(c)){ sWrong(); c.el.classList.remove("bad"); void c.el.offsetWidth; c.el.classList.add("bad");
-    msg(top().r===8?("Look for "+SN[suit].toLowerCase()+", or an 8!"):("Look for "+SN[suit].toLowerCase()+", a "+top().r+", or an 8!")); return; }
+    msg(top().r===8?("Look for "+SN[suit].toLowerCase()+", or an 8!"):("Look for "+SN[suit].toLowerCase()+", "+NM(top().r)+", or an 8!")); return; }
   play(0,c);
 }
 function play(i,c){
@@ -257,7 +261,8 @@ function pickSuit(){
 }
 function chooseSuit(i,random){ if(random) return Math.floor(Math.random()*4);
   var n=[0,0,0,0]; hands[i].forEach(function(c){ if(c.r!==8) n[c.s]++; }); var best=0; for(var s=1;s<4;s++) if(n[s]>n[best]) best=s; return best; }
-function refill(){ if(deck.length||pile.length<2) return; var t=pile.pop(); deck=shuffle(pile.map(function(c){ if(c.el){ c.el.remove(); c.el=null; } c.up=false; return {s:c.s,r:c.r}; })); pile=[t]; }
+function refill(){ if(deck.length||pile.length<2) return false; var t=pile.pop(); deck=shuffle(pile.map(function(c){ if(c.el){ c.el.remove(); c.el=null; } c.up=false; return {s:c.s,r:c.r}; })); pile=[t]; return true; }
+function restock(){ if(refill()){ sDraw(); layoutAll(false); stacks(); msg("The deck ran out! The pile is shuffled into a new deck."); } }
 function drawMe(){
   if(turn!==0||busy||over||drewThis) return;
   clearTimeout(nagT);
@@ -265,7 +270,8 @@ function drawMe(){
   refill(); if(!deck.length){ msg("No cards left to draw. Next player!"); busy=true; wait(900).then(next).catch(function(){}); return; }
   var c=deck.pop(); cardEl(c,true); put(c,G.deck[0],G.deck[1],0,80,true); hands[0].push(c); sDraw();
   if(legal(c)){ drewThis=c; layoutHand(); stacks(); msg("You drew a match! Tap it to play."); }
-  else { busy=true; layoutHand(); stacks(); msg("No match this time. Next player!"); wait(1000).then(next).catch(function(){}); }
+  else { layoutHand(); stacks(); msg("No match yet. Tap the deck to draw again!"); if(!saidAgain){ saidAgain=true; BWK.say(AGAIN); } }  /* draw until you can play (Judy, Nov 16) */
+  if(!deck.length) restock();
 }
 function next(){ if(over) return; turn=(turn+1)%P.length; drewThis=false; if(turn===0){ myTurn(); return; } busy=true; layoutHand(); stacks();
   msg(CAST[P[turn]].n+" is thinking..."); wait(800).then(botMove).catch(function(){}); }
@@ -279,18 +285,22 @@ function botMove(){
         else non.sort(function(a,b){ return b.r-a.r; }); pick=non[0]; }
       else pick=L[0]; }
     var cs=CAST[id].say; bubble(i,cs[Math.floor(Math.random()*cs.length)]); sVoice(id);
-    msg(CAST[id].n+" played a "+pick.r+(pick.r===8?"!":" of "+SN[pick.s].toLowerCase()+"."));
+    msg(CAST[id].n+" played "+NM(pick.r)+(pick.r===8?"!":" of "+SN[pick.s].toLowerCase()+"."));
     return play(i,pick);
   }
+  return botDraw(i,0);
+}
+function botDraw(i,n){ /* draw until a card can be played (Judy, Nov 16) */
+  var id=P[i], h=hands[i];
   refill();
   if(!deck.length){ msg(CAST[id].n+" can't play. Next!"); return wait(800).then(next); }
   var c=deck.pop(); h.push(c); sDraw(); cardEl(c,false); put(c,G.deck[0],G.deck[1],0,80,true);
   var o=$("#op"+i), r=o.getBoundingClientRect(), tr=tbl.getBoundingClientRect();
-  requestAnimationFrame(function(){ put(c,r.left-tr.left+r.width/2-G.cw/2,r.top-tr.top+10,0,80); });
-  stacks(); msg(CAST[id].n+" drew a card.");
-  return wait(560).then(function(){ c.el.remove(); c.el=null; c.up=false;
-    if(legal(c)&&!(id==="grandpa"&&Math.random()<.3)){ bubble(i,"Ooh, a match!"); return wait(500).then(function(){ msg(CAST[id].n+" played a "+c.r+(c.r===8?"!":" of "+SN[c.s].toLowerCase()+".")); return play(i,c); }); }
-    return wait(300).then(next); });
+  requestAnimationFrame(function(){ if(c.el) put(c,r.left-tr.left+r.width/2-G.cw/2,r.top-tr.top+10,0,80); });
+  stacks(); msg(CAST[id].n+(n?" drew "+(n+1)+" cards.":" drew a card."));
+  return wait(n?380:560).then(function(){ c.el.remove(); c.el=null; c.up=false; if(!deck.length) restock();
+    if(legal(c)){ bubble(i,"Ooh, a match!"); return wait(500).then(function(){ msg(CAST[id].n+" played "+NM(c.r)+(c.r===8?"!":" of "+SN[c.s].toLowerCase()+".")); return play(i,c); }); }
+    return botDraw(i,n+1); });
 }
 function end(i){
   over=true; busy=true; stacks(); layoutHand();
@@ -327,10 +337,10 @@ $("#bBack").onclick=BWG.toOutpost;
 $("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
 
 var INTRO="Crazy Eights, Goofy Edition! Match the picture or the number to get rid of all your cards. Pick who you want to play with!";
-var HOW="Everyone gets eight cards. On your turn, play a card that matches the picture or the number on the top card. Eights are crazy! You can play an eight any time, then pick the new picture. If you can't play, tap the deck to draw a card. The first one with no cards left wins!";
-var PICK="Pick a picture!", DRAW="No match? Tap the deck to draw a card.";
+var HOW="Everyone gets eight cards. On your turn, play a card that matches the picture or the number on the top card. Eights are crazy! You can play an eight any time, then pick the new picture. If you can't play, keep drawing from the deck until you get a card you can play. When the deck runs out, the pile is shuffled into a new deck. The first one with no cards left wins!";
+var PICK="Pick a picture!", DRAW="No match? Tap the deck to draw a card.", AGAIN="No match yet. Keep drawing!";
 var WIN="You got rid of all your cards! You win!", WINP="You win! You earned a new patch for your badge wall!";
-var L={"ce-intro":INTRO,"ce-how-2":HOW,"ce-pick":PICK,"ce-draw":DRAW,"ce-turn":"Your turn!","ce-win":WIN,"ce-win-patch":WINP,
+var L={"ce-intro":INTRO,"ce-how-3":HOW,"ce-again":AGAIN,"ce-pick":PICK,"ce-draw":DRAW,"ce-turn":"Your turn!","ce-win":WIN,"ce-win-patch":WINP,
   "ce-lose-brody":CAST.brody.lose,"ce-lose-lulu":CAST.lulu.lose,"ce-lose-grandpa":CAST.grandpa.lose,
   "ce-s-banana":"Bananas!","ce-s-sock":"Socks!","ce-s-frog":"Frogs!","ce-s-balloon":"Balloons!",
   "ce-n-brody":"Brody-Bot!","ce-n-lulu":"Lulu the Llama!","ce-n-grandpa":"Grandpa Wobble!","ce-go":"Let's play!"};
