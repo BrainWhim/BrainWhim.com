@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Chore Chart · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+
+/* (shared look copied from launchtimer.html) Launch Timer note: Count down any job like a rocket launch: pick a job and its minutes, tap Launch,
+   and the job's time fuels the rocket. When the fuel is full (or you tap "Done early!"), it's liftoff. A Mission Log keeps every launch.
+   The clock runs from an end time (right even if the phone sleeps), and the screen is kept awake while it counts. Pictures: lt/ (html.ph*). */
+.bg{background-image:url("cb/bg-sm.jpg?v=1117a");filter:blur(1.4px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.bg{background-image:url("cb/bg.jpg?v=1117a")}}
+body.m-plan #plan{display:flex}
+#plan,#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#109a6e}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.cmsg{text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px;min-height:42px;display:flex;align-items:center;justify-content:center}
+/* planning: job cards and the minutes dial */
+.pbox{width:min(720px,100%);margin:0 auto;flex:0 1 auto;min-height:0;overflow:auto;border-radius:18px;padding:12px;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 24px rgba(0,0,0,.45);color:#3a2306;display:flex;flex-direction:column;gap:10px}
+.pbox h2{margin:0;font-size:17px;color:#109a6e;text-align:center}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:7px}
+@media (max-height:700px){.job{padding:5px 3px}.pbox{gap:7px;padding:9px}}
+.job{appearance:none;border:0;font:inherit;cursor:pointer;border-radius:14px;padding:8px 4px 7px;background:rgba(255,255,255,.6);box-shadow:0 2px 0 rgba(150,110,50,.35);
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:#4a300c;-webkit-tap-highlight-color:transparent}
+.job svg{width:40px;height:40px}
+.job b{font-size:13.5px;line-height:1.15;text-align:center}
+.job i{font-style:normal;font-size:11.5px;font-weight:700;color:#8a6a3a}
+.job.on{background:#fff;box-shadow:0 0 0 3px #109a6e,0 2px 0 rgba(150,110,50,.35)}
+.job:active{transform:translateY(2px)}
+.dial{display:flex;align-items:center;justify-content:center;gap:12px}
+.dial button{appearance:none;border:0;font:inherit;font-weight:800;font-size:26px;width:52px;height:52px;border-radius:50%;cursor:pointer;color:#fff;
+  background:linear-gradient(180deg,#3fc495,#109a6e);box-shadow:0 3px 0 #0a6a4b}
+.dial button:active{transform:translateY(2px);box-shadow:0 1px 0 #0a6a4b}
+.dial .mn{min-width:120px;text-align:center;font-weight:800;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;color:#2b2116}
+.dial .mn small{display:block;font-size:13px;font-weight:700;color:#8a6a3a;margin-top:3px}
+.pbtns{display:flex;gap:8px;justify-content:center}
+.pbtns{flex:none;width:min(720px,100%);margin:0 auto}.pbtns .k-btn{flex:1;max-width:340px;min-height:52px;font-size:19px}
+.go{background:linear-gradient(180deg,#ff8a5c,#e0482a)!important;color:#fff!important;box-shadow:0 4px 0 #9a2a12!important}
+/* the job board (Nov 17, Judy): photo walnut board, carved sign, plank tiles with the job etched in, wooden tokens (the Outpost home's oh/ pictures) */
+.bsign{align-self:center;display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:.55em 1.6em .62em;min-width:min(78%,330px);
+  border:0 solid transparent;border-width:0 1.6em;border-image:url("oh/sign.png?v=1116a") 0 70 fill / 0 1.6em stretch;filter:drop-shadow(0 6px 7px rgba(0,0,0,.5))}
+.bsign b{font-size:19px;font-weight:800;color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6),0 -1px 0 rgba(40,20,5,.35)}
+.bsign i{font-style:normal;font-size:13px;font-weight:700;color:#5e3a1c;text-shadow:0 1px 0 rgba(255,230,190,.5)}
+.bsign.sm{min-width:min(62%,260px)}.bsign.sm b{font-size:16px}
+.pbox{background:linear-gradient(180deg,rgba(18,8,2,.1),rgba(18,8,2,.35)),url("oh/walnut.jpg?v=1116a") 0 0/360px repeat!important;
+  box-shadow:0 0 0 3px #3a2210,0 0 0 6px #8a5a2b,0 14px 30px rgba(0,0,0,.6),inset 0 2px 10px rgba(0,0,0,.5)!important}
+.job{background:none!important;border:0 solid transparent;border-width:0 14px;border-image:url("oh/plank.webp?v=1116a") 0 60 fill / 0 14px stretch;box-shadow:none!important;
+  padding:8px 0 7px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));transition:transform .15s,filter .15s}
+.job .tk{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:url("oh/token.png?v=1116a") center/100% 100% no-repeat;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.job .tk svg{width:28px;height:28px;mix-blend-mode:multiply;opacity:.92}
+.job b{color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6),0 -1px 0 rgba(40,20,5,.3)}
+.job i{color:#5e3a1c}
+.job.on{transform:translateY(-3px) scale(1.04);filter:drop-shadow(0 0 7px rgba(255,214,90,.95)) drop-shadow(0 6px 6px rgba(0,0,0,.5))}
+.dial button{background:url("oh/token.png?v=1116a") center/100% 100% no-repeat!important;box-shadow:none!important;color:#3b2210!important;font-size:30px!important;
+  text-shadow:0 1px 0 rgba(255,230,190,.6);filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}
+.dial .mn{border:0 solid transparent;border-width:0 14px;border-image:url("oh/plank.webp?v=1116a") 0 60 fill / 0 14px stretch;padding:8px 6px 7px;min-width:110px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+.dial .mn span,.dial .mn small{color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6),0 -1px 0 rgba(40,20,5,.3)}
+.dial .mn small{color:#5e3a1c}
+@media (max-width:520px){.job{padding:5px 0 5px}.job .tk{width:36px;height:36px}.job .tk svg{width:22px;height:22px}.job b{font-size:12.5px}.jobs{gap:5px}.bsign b{font-size:17px}.dial button{width:46px!important;height:46px!important}}
+/* the launch pad */
+#stage{position:relative;flex:1 1 auto;min-height:0;width:min(720px,100%);margin:0 auto;border-radius:18px;overflow:hidden;
+  background:linear-gradient(180deg,#0c1a3a,#1d3a6a 55%,#3d5f8e 80%,#6d7f8f);box-shadow:0 0 0 3px #3a4250,0 14px 30px rgba(0,0,0,.55)}
+html.phpad #stage{background:#1e2a5c}
+#scene{position:absolute;inset:0;width:100%;height:100%}
+.clock{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:6px 16px 7px;border-radius:14px;text-align:center;z-index:3;
+  background:linear-gradient(180deg,#1a1f27,#0b0e12);box-shadow:0 0 0 2px #3a4250,0 6px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)}
+.clock b{display:block;font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums;color:#7dffb0;text-shadow:0 0 12px rgba(80,255,150,.6);letter-spacing:.02em}
+.clock span{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#9fb7c9;margin-top:3px}
+.clock.paused b{color:#ffd66b;text-shadow:0 0 12px rgba(255,200,80,.6);animation:blink 1s steps(2) infinite}
+.clock.ten b{color:#ff8a5c;text-shadow:0 0 14px rgba(255,120,60,.8)}
+@keyframes blink{50%{opacity:.35}}
+.abar{flex:none;width:min(720px,100%);margin:0 auto;display:flex;gap:8px}
+.abar .k-btn{flex:1;min-height:48px;font-size:16px;padding:0 6px}
+#rocket{transition:transform .2s linear}
+#rocket.lift{transition:transform 3.2s cubic-bezier(.55,0,.8,.4)}
+#rocket.shake{animation:rshake .09s linear infinite}
+@keyframes rshake{50%{transform:translate(1.2px,0)}}
+.flame{transform-origin:50% 0;animation:fl .12s ease-in-out infinite alternate}
+@keyframes fl{to{transform:scaleY(1.2) scaleX(.9)}}
+.smoke{opacity:0;transition:opacity .6s}
+.lifting .smoke{opacity:1}
+.log{display:flex;flex-direction:column;gap:6px;max-height:min(52vh,420px);overflow:auto;margin:8px 0 12px;text-align:left}
+.log div{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.08);font-size:15px}
+.log svg{width:30px;height:30px;flex:none}
+.log b{flex:1}
+.log i{font-style:normal;font-size:12.5px;color:#a9bad0;white-space:nowrap}
+.tot{font-size:15px;margin:2px 0}
+.how svg{display:block;width:min(240px,100%);margin:4px auto 10px}
+@media (max-height:700px){.cmsg{font-size:14.5px;min-height:36px}.ib{min-height:36px;font-size:14px}.clock b{font-size:36px}.job svg{width:32px;height:32px}.dial .mn{font-size:34px}}
+@media (prefers-reduced-motion:reduce){.flame,#rocket.shake{animation:none}}
+
+/* Chore Chart (The Outpost · Mission Control), Nov 17. A weekly chart of the kid's own chores (up to 6, from a list); tap a day's box when a
+   chore is done and pretend coins clink into the jar. Pretend money only: grown-ups set the pay (behind a Grown-ups check) and can do
+   Payday (the jar empties when they hand over the real money). A saving goal shows how close the jar is. Nothing leaves the device. */
+body.m-pick #pick{display:flex}
+#pick{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.chart{display:grid;grid-template-columns:minmax(96px,1.7fr) repeat(7,minmax(0,1fr));gap:5px;align-items:stretch}
+.dh{text-align:center;font-weight:800;font-size:13px;color:#ffe7a6;text-shadow:0 1px 2px rgba(0,0,0,.7);padding:2px 0;border-radius:8px}
+.dh.today{background:rgba(255,214,90,.25);box-shadow:0 0 0 2px rgba(255,214,90,.7)}
+.cn{display:flex;align-items:center;gap:5px;border:0 solid transparent;border-width:0 10px;border-image:url("oh/plank.webp?v=1116a") 0 60 fill / 0 10px stretch;
+  padding:5px 0;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));min-width:0}
+.cn .tk{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:url("oh/token.png?v=1116a") center/100% 100% no-repeat}
+.cn .tk svg{width:19px;height:19px;mix-blend-mode:multiply}
+.cn span{min-width:0;line-height:1.1}
+.cn b{display:block;font-size:12.5px;color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6);overflow:hidden;text-overflow:ellipsis}
+.cn i{font-style:normal;font-size:11px;font-weight:800;color:#2f7a3a}
+.bx{appearance:none;border:0;cursor:pointer;border-radius:9px;min-height:44px;position:relative;padding:0;
+  background:linear-gradient(160deg,#f6ecd2,#e3cfa3);box-shadow:inset 0 1px 0 #fffaf0,inset 0 -2px 0 rgba(120,80,30,.25),0 2px 3px rgba(0,0,0,.4);-webkit-tap-highlight-color:transparent}
+.bx.today{box-shadow:0 0 0 2px #ffd65a,inset 0 1px 0 #fffaf0,0 2px 3px rgba(0,0,0,.4)}
+.bx:disabled{opacity:.42;cursor:default}
+.bx svg{position:absolute;inset:8%;width:84%;height:84%}
+.bx.on svg{animation:stamp .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes stamp{0%{transform:scale(1.6) rotate(-20deg);opacity:0}100%{transform:none;opacity:1}}
+.bank{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:14px;background:rgba(10,5,0,.28);box-shadow:inset 0 1px 6px rgba(0,0,0,.4)}
+.bank svg.jar{flex:none;width:86px;height:100px}
+.bank .nums{flex:1;color:#fff4dc;line-height:1.25}
+.bank .nums div{font-size:14px;font-weight:700;color:#e9d6b0}
+.bank .nums b{font-size:24px;font-weight:800;color:#ffe7a6;font-variant-numeric:tabular-nums;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.goal{margin-top:5px}
+.goal .bar{height:12px;border-radius:6px;background:rgba(0,0,0,.45);box-shadow:inset 0 1px 3px rgba(0,0,0,.6);overflow:hidden}
+.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,#e9a514,#ffd65a);border-radius:6px;transition:width .5s}
+.goal small{display:block;font-size:12.5px;font-weight:700;color:#e9d6b0;margin-top:3px}
+.coin{position:fixed;z-index:60;width:26px;height:26px;pointer-events:none}
+.pbar{flex:none;width:min(720px,100%);margin:0 auto;display:flex;gap:8px}
+.pbar .k-btn{flex:1;min-height:48px;font-size:16px;padding:0 6px}
+#jobs .job{position:relative}
+#jobs .job:not(.on){filter:grayscale(.55) brightness(.72) drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+#jobs .job.on::after{content:"✓";position:absolute;top:-6px;right:-10px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;
+  background:linear-gradient(180deg,#3fc495,#109a6e);box-shadow:0 2px 0 #0a6a4b,0 0 0 2px #fff4dc}
+#jobs .job.edit{filter:none}
+.payc{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:9px;font-size:11.5px;font-weight:800;color:#fff;background:#2f7a3a}
+.job.edit .payc{background:#c9472c;box-shadow:0 0 0 2px #ffe08a}
+.gl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
+.gl button,.amts button{appearance:none;border:0;font:inherit;cursor:pointer;border-radius:12px;padding:8px 4px;background:rgba(255,255,255,.1);color:#fff4dc;font-weight:700;font-size:13.5px;
+  display:flex;flex-direction:column;align-items:center;gap:4px}
+.gl button svg{width:34px;height:34px}
+.gl button.on,.amts button.on{background:rgba(125,255,176,.18);box-shadow:0 0 0 2px #7dffb0}
+.amts{display:flex;gap:8px;justify-content:center;margin:6px 0 12px}
+.amts button{padding:9px 14px;font-size:16px}
+@media (max-width:420px){.chart{grid-template-columns:minmax(84px,1.5fr) repeat(7,minmax(0,1fr));gap:4px}.cn .tk{display:none}.cn{border-width:0 7px;border-image-width:0 7px}.bx{min-height:40px}}
+@media (max-height:700px){.bank svg.jar{width:64px;height:76px}.bank .nums b{font-size:20px}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="ccEmb"></svg>
+      <h1>Chore Chart</h1>
+      <p class="lead">Check off your chores each day and fill your jar with pretend coins. Save up for something special!</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bChart">My Chore Chart</button>
+        <button class="k-btn k-ghost" id="bPick">Pick My Chores</button>
+        <button class="k-btn k-ghost" id="bGoal">My Saving Goal</button>
+        <button class="k-btn k-ghost" id="bHow">How It Works</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="pick">
+    <div class="cbar"><button class="ib gh" id="kMenu">Menu</button><div class="cday"><b>Mission Control</b><span>Pick my chores</span></div><button class="ib gh" id="kPay">Set pay</button></div>
+    <div class="pbox" data-bws="off">
+      <div class="bsign"><b>Pick My Chores</b><i>Choose up to 6</i></div>
+      <div class="jobs" id="jobs"></div>
+    </div>
+    <div class="pbtns"><button class="k-btn go" id="kDone">Done</button></div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar"><button class="ib gh" id="tMenu">Menu</button><div class="cday"><b>Chore Chart</b><span id="cweek"></span></div><button class="ib gh" id="tPick">Chores</button></div>
+    <div class="cmsg" id="cmsg" aria-live="polite"></div>
+    <div class="pbox" data-bws="off" id="board">
+      <div class="bsign"><b>My Chore Chart</b><i id="bweek"></i></div>
+      <div class="chart" id="chart"></div>
+      <div class="bank" id="bank"></div>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1117a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1117a";
+var ST=LS.get("chores",{}); if(!ST||typeof ST!=="object") ST={};
+ST.on=ST.on||["bed","room","pet","dishes"]; ST.pay=ST.pay||{}; ST.marks=ST.marks||{}; ST.bank=ST.bank||0; ST.hist=ST.hist||[];
+function save(){ LS.set("chores",ST); }
+
+/* ---------- the chores (pretend pay in cents; grown-ups can change it) ---------- */
+var CH=[
+ ["bed","Make my bed",25,'<path d="M5 30V12M5 22h30v8M35 30v-6M9 22v-5h9v5"/>'],
+ ["room","Tidy my room",50,'<path d="M8 16h24v16H8zM6 11h28v5H6zM16 21h8"/>'],
+ ["pet","Feed my pet",25,'<circle cx="11" cy="15" r="3"/><circle cx="17" cy="10" r="3"/><circle cx="24" cy="10" r="3"/><circle cx="30" cy="15" r="3"/><path d="M20 18c-6 0-10 6-9 10 1 3 5 2 9 2s8 1 9-2c1-4-3-10-9-10z"/>'],
+ ["dishes","Help with dishes",50,'<circle cx="18" cy="21" r="11"/><circle cx="18" cy="21" r="5"/><path d="M33 8v24M30 8v7c0 2 3 2 3 0"/>'],
+ ["table","Set the table",25,'<path d="M8 10v8c0 2 3 2 3 0v-8M9.5 18v14M30 10c-3 0-4 4-4 8h4v14"/><circle cx="20" cy="21" r="5"/>'],
+ ["laundry","Put away laundry",50,'<path d="M14 7l-8 5 4 7 4-2v16h12V17l4 2 4-7-8-5c-1 3-3 4-6 4s-5-1-6-4z"/>'],
+ ["plants","Water the plants",25,'<path d="M20 33V18M20 22c-6 0-9-4-9-9 5 0 9 3 9 9zM20 19c5 0 8-3 8-8-5 0-8 3-8 8M12 33h16"/>'],
+ ["trash","Take out the trash",50,'<path d="M9 12h22M16 12V8h8v4M11 12l2 21h14l2-21M17 17v11M23 17v11"/>'],
+ ["toys","Put toys away",25,'<rect x="7" y="18" width="26" height="14" rx="2"/><path d="M12 18l3-8h10l3 8M17 24h6"/>'],
+ ["homework","Finish homework",25,'<path d="M28 6l6 6-17 17-8 2 2-8z M24 10l6 6"/>'],
+ ["reading","Read for 20 minutes",25,'<path d="M20 11c-4-3-9-3-14-2v20c5-1 10-1 14 2 4-3 9-3 14-2V9c-5-1-10-1-14 2zM20 11v20"/>'],
+ ["teeth","Brush my teeth",10,'<rect x="7" y="17" width="26" height="6" rx="3"/><path d="M25 17v-6h8v6M27 11v-3M30 11v-3"/>']];
+var CB={}; CH.forEach(function(c){ CB[c[0]]={id:c[0],n:c[1],p:c[2],ic:c[3]}; });
+function pay(id){ return ST.pay[id]!=null?ST.pay[id]:CB[id].p; }
+function icon(id,col){ return '<svg viewBox="0 0 40 40" fill="none" stroke="'+(col||"#3b2210")+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+CB[id].ic+'</svg>'; }
+function money(c){ return c<100?c+"¢":"$"+(c/100).toFixed(2); }
+function dollars(c){ return "$"+(c/100).toFixed(2); }
+
+/* ---------- sound ---------- */
+
+/* ---------- sound of its own ---------- */
+var AC=null, OUT=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+    var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+    OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+  if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return;
+  if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+function on(){ return LS.get("sound",true)!==false && !!ac(); }
+function tone(f,at,d,v,type,f2){ if(!on()) return; var t=AC.currentTime+(at||0), o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+var NB=null;
+function nbuf(){ if(!NB){ NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); var c=NB.getChannelData(0); for(var i=0;i<c.length;i++) c[i]=Math.random()*2-1; } return NB; }
+function noise(at,d,v,lo,hi){ if(!on()) return; var t=AC.currentTime+(at||0), s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=nbuf();
+  f.type="bandpass"; f.frequency.value=Math.sqrt(lo*hi); f.Q.value=Math.max(.3,Math.sqrt(lo*hi)/(hi-lo)); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+d+.05); }
+
+
+function sTap(){ tone(880,0,.05,.05,"triangle"); }
+function sCoin(k){ var f=[2093,2349,2637,2794][k%4]; tone(f,0,.18,.07,"triangle"); tone(f*1.5,.05,.25,.05,"triangle"); noise(.05,.06,.06,5000,10000); }
+function sStamp(){ noise(0,.05,.2,300,2000); tone(150,0,.08,.15,"sine",90); }
+function sUndo(){ tone(600,0,.12,.05,"triangle",400); }
+function sGoal(){ [523,659,784,1047,1319,1568].forEach(function(f,i){ tone(f,i*.08,.45,.08,"triangle"); }); }
+function sRegister(){ tone(1568,0,.08,.08,"square"); tone(2093,.09,.4,.08,"square"); noise(.12,.3,.1,2000,8000); }
+
+/* ---------- the week (Monday to Sunday) ---------- */
+var DN=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], MO=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function dayN(){ var d=new Date(); return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5); }
+function weekOf(n){ return Math.floor((n+3)/7); }          /* day 0 (Jan 1 1970) was a Thursday */
+function todayI(){ return (new Date().getDay()+6)%7; }
+function weekLabel(){ var n=dayN()-todayI(), d=new Date(n*864e5); return "Week of "+MO[d.getUTCMonth()]+" "+d.getUTCDate(); }
+/* a new week: keep last week's total for the log, start a fresh chart (the jar keeps its coins) */
+function rollWeek(){ var w=weekOf(dayN()); if(ST.wk===w) return; if(ST.wk!=null){ var t=weekTotal(); if(t) ST.hist.unshift({wk:ST.wk,c:t}); if(ST.hist.length>12) ST.hist.length=12; }
+  ST.wk=w; ST.marks={}; save(); }
+function weekTotal(){ var t=0; for(var id in ST.marks) if(CB[id]) ST.marks[id].forEach(function(on){ if(on) t+=pay(id); }); return t; }
+
+/* ---------- the chart ---------- */
+var P=false;
+function msg(t){ $("#cmsg").textContent=t||""; }
+function stampSVG(){ return '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#e9a514" opacity=".18"/><path d="M20 6l4.2 8.6 9.5 1.4-6.9 6.7 1.6 9.5L20 27.7l-8.4 4.5 1.6-9.5-6.9-6.7 9.5-1.4z" fill="#f2be45" stroke="#a86d06" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 15l3-.5" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/></svg>'; }
+function drawChart(){ rollWeek(); var ti=todayI(), h='<div></div>';
+  DN.forEach(function(d,i){ h+='<div class="dh'+(i===ti?" today":"")+'">'+d+'</div>'; });
+  ST.on.forEach(function(id){ var c=CB[id]; if(!c) return; var m=ST.marks[id]||[];
+    h+='<div class="cn"><span class="tk">'+icon(id)+'</span><span><b>'+c.n+'</b><i>'+money(pay(id))+'</i></span></div>';
+    for(var i=0;i<7;i++) h+='<button class="bx'+(m[i]?" on":"")+(i===ti?" today":"")+'" data-c="'+id+'" data-d="'+i+'"'+(i>ti?' disabled':'')+' aria-label="'+c.n+', '+DN[i]+(m[i]?", done":"")+'">'+(m[i]?stampSVG():'')+'</button>'; });
+  $("#chart").innerHTML=h; $("#bweek").textContent=weekLabel(); $("#cweek").textContent=weekLabel(); drawBank(); }
+function jarSVG(c){ var n=Math.min(36,Math.round(c/25)), s='<svg class="jar" viewBox="0 0 86 100"><defs><linearGradient id="ccG" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".25" stop-color="#fff" stop-opacity=".05"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".25"/></linearGradient>'+
+  '<radialGradient id="ccC" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e9b43a"/><stop offset="1" stop-color="#a8740c"/></radialGradient></defs>';
+  if(PHJ) s+='<image href="ch/jar.webp?v='+AV+'" x="0" y="0" width="86" height="100" preserveAspectRatio="xMidYMax meet"/>';
+  else s+='<path d="M16 24Q12 30 12 40V86Q12 96 22 96H64Q74 96 74 86V40Q74 30 70 24Z" fill="rgba(200,230,255,.12)" stroke="rgba(235,248,255,.7)" stroke-width="2"/><rect x="20" y="10" width="46" height="14" rx="4" fill="#b8892e" stroke="#7a5a18" stroke-width="1.5"/><rect x="35" y="13" width="16" height="3" rx="1.5" fill="#3a2a08"/>';
+  for(var i=0;i<n;i++){ var row=Math.floor(i/6), col=i%6, x=19+col*8.8+(row%2?4:0), y=90-row*6.5; s+=PHC?'<image href="ch/coin.webp?v='+AV+'" x="'+(x-6)+'" y="'+(y-4)+'" width="13" height="8"/>':'<ellipse cx="'+(x+1)+'" cy="'+y+'" rx="6" ry="3.2" fill="url(#ccC)" stroke="#8a5f12" stroke-width=".8"/>'; }
+  if(!PHJ) s+='<path d="M16 24Q12 30 12 40V86Q12 96 22 96H64Q74 96 74 86V40Q74 30 70 24Z" fill="url(#ccG)"/>';
+  return s+'</svg>'; }
+function drawBank(){ var w=weekTotal(), g=ST.goal, h=jarSVG(ST.bank)+'<div class="nums"><div>This week</div><b>'+dollars(w)+'</b><div>In my jar: <b style="font-size:17px">'+dollars(ST.bank)+'</b></div>';
+  if(g){ var p=Math.min(1,ST.bank/g.c); h+='<div class="goal"><div class="bar"><i style="width:'+(p*100).toFixed(1)+'%"></i></div><small>'+(p>=1?'Goal reached: '+GOALS[g.k][0]+'!':'Saving for '+GOALS[g.k][0].toLowerCase()+': '+dollars(ST.bank)+' of '+dollars(g.c))+'</small></div>'; }
+  else h+='<div class="goal"><small>Tap "My Saving Goal" on the menu to save up for something.</small></div>';
+  $("#bank").innerHTML=h+'</div>'; }
+$("#chart").addEventListener("click",function(e){ var b=e.target.closest(".bx"); if(!b||b.disabled) return; mark(b.dataset.c,+b.dataset.d,b); });
+function mark(id,d,el){ var m=ST.marks[id]=ST.marks[id]||[0,0,0,0,0,0,0], was=!!m[d], hadGoal=ST.goal&&ST.bank>=ST.goal.c;
+  m[d]=was?0:1; ST.bank=Math.max(0,ST.bank+(was?-1:1)*pay(id)); save();
+  if(was){ sUndo(); msg("Taken back."); drawChart(); return; }
+  sStamp(); fly(el); setTimeout(function(){ sCoin(Math.floor(Math.random()*4)); },380);
+  var fresh=BWG.patch("chores"); if(fresh){ setTimeout(function(){ BWK.sheet('<h2>Great job!</h2>'+BWG.patchLine(fresh)+'<p>Keep checking off your chores to fill your jar.</p>'); BWK.say(WINP); },700); }
+  drawChart(); var ti=todayI(), all=ST.on.every(function(c){ return (ST.marks[c]||[])[ti]; });
+  if(ST.goal&&!hadGoal&&ST.bank>=ST.goal.c){ setTimeout(goalReached,700); }
+  else if(all&&d===ti){ msg("Every chore is done today! Great work!"); BWK.say(ALLDONE); }
+  else { msg("+"+money(pay(id))+" for "+CB[id].n.toLowerCase()+"!"); if(!P){ P=true; } } }
+/* a coin hops from the box into the jar */
+function fly(el){ var a=el.getBoundingClientRect(), j=$("#bank svg.jar"); if(!j) return; var b=j.getBoundingClientRect(), c=document.createElement("div"); c.className="coin";
+  c.innerHTML='<svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="#f2be45" stroke="#a86d06" stroke-width="2"/><circle cx="13" cy="13" r="7" fill="none" stroke="#fff2b0" stroke-width="1.4" opacity=".7"/></svg>';
+  document.body.appendChild(c); var x0=a.left+a.width/2-13, y0=a.top+a.height/2-13, x1=b.left+b.width/2-13, y1=b.top+b.height*.3-13;
+  c.animate([{transform:"translate("+x0+"px,"+y0+"px) scale(1)"},{transform:"translate("+((x0+x1)/2)+"px,"+(Math.min(y0,y1)-60)+"px) scale(1.2)",offset:.5},{transform:"translate("+x1+"px,"+y1+"px) scale(.7)"}],{duration:480,easing:"ease-in-out"}).onfinish=function(){ c.remove(); }; }
+function goalReached(){ sGoal(); var g=ST.goal; BWK.say(GOALSAY);
+  var box=BWK.sheet('<h2>Goal reached!</h2><div style="width:70px;height:70px;margin:4px auto">'+gicon(g.k,"#7dffb0")+'</div><p>Your jar has '+dollars(ST.bank)+'. That\'s enough for '+GOALS[g.k][0].toLowerCase()+'!</p><p>Show a grown-up your jar. When they hand you the real money, they can do <b>Payday</b> to empty the jar.</p>'+
+    '<div class="k-row"><button class="k-btn" data-a="new">New Goal</button><button class="k-btn k-ghost" data-a="ok">Okay!</button></div>');
+  box.querySelector('[data-a=new]').onclick=goalSheet; box.querySelector('[data-a=ok]').onclick=function(){ BWK.closeSheet(true); }; }
+
+/* ---------- picking chores (up to 6) and setting pay (grown-ups) ---------- */
+var EDIT=false;
+function drawJobs(){ $("#jobs").innerHTML=CH.map(function(c){ var on=ST.on.indexOf(c[0])>=0; return '<button class="job'+(on?" on":"")+(EDIT?" edit":"")+'" data-j="'+c[0]+'" aria-label="'+c[1]+'"><span class="tk">'+icon(c[0])+'</span><b>'+c[1]+'</b><span class="payc">'+money(pay(c[0]))+'</span></button>'; }).join("");
+  $("#kPay").textContent=EDIT?"Pay: done":"Set pay"; }
+var PAYS=[5,10,25,50,75,100,150,200];
+$("#jobs").addEventListener("click",function(e){ var b=e.target.closest(".job"); if(!b) return; var id=b.dataset.j;
+  if(EDIT){ var p=pay(id), i=PAYS.indexOf(p); ST.pay[id]=PAYS[(i+1)%PAYS.length]; save(); sCoin(0); drawJobs(); return; }
+  var k=ST.on.indexOf(id); if(k>=0){ if(ST.on.length<=1){ msg(""); return; } ST.on.splice(k,1); sUndo(); }
+  else { if(ST.on.length>=6){ sTap(); BWK.sheet('<h2>Six is plenty!</h2><p>Your chart holds 6 chores. Tap one you picked to take it off first.</p>'); return; } ST.on.push(id); sTap(); BWK.say(CB[id].n); }
+  save(); drawJobs(); });
+$("#kPay").onclick=function(){ if(EDIT){ EDIT=false; drawJobs(); return; } gate(function(){ EDIT=true; drawJobs(); BWK.sheet('<h2>Setting pay</h2><p>Tap a chore\'s price to change it (5¢ up to $2). Tap <b>Pay: done</b> when you\'re finished.</p>'); }); };
+function toPick(){ EDIT=false; document.body.className="m-pick"; drawJobs(); }
+function toChart(){ document.body.className="m-play"; drawChart(); msg(ST.n?"":"Tap a box when you finish a chore!"); if(!ST.n){ ST.n=1; save(); BWK.say(FIRST); } }
+
+/* ---------- a Grown-ups check: a sum in words, like the kit's own gate ---------- */
+var W=["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+function gate(then){ var a=2+Math.floor(Math.random()*8), b=2+Math.floor(Math.random()*8), c=1+Math.floor(Math.random()*9);
+  var box=BWK.sheet('<h2>For Grown-ups</h2><p>What is '+W[a]+' times '+W[b]+', plus '+W[c]+'?</p><input class="k-in" id="ccSum" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="Answer">'+
+    '<div class="k-row"><button class="k-btn k-cool" id="ccGo">Continue</button></div>');
+  var inp=box.querySelector("#ccSum"); setTimeout(function(){ inp.focus(); },50);
+  function chk(){ if(parseInt(inp.value,10)===a*b+c){ BWK.closeSheet(true); then(); } else { BWK.closeSheet(true); BWK.sfx("nope"); } }
+  box.querySelector("#ccGo").onclick=chk; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") chk(); }); }
+
+/* ---------- the saving goal ---------- */
+var GOALS=[["A new book",'<path d="M20 11c-4-3-9-3-14-2v20c5-1 10-1 14 2 4-3 9-3 14-2V9c-5-1-10-1-14 2zM20 11v20"/>'],["Art supplies",'<path d="M26 6l8 8-16 16-9 2 2-9z M9 31l3-3"/><circle cx="12" cy="12" r="4"/>'],
+  ["A toy",'<rect x="9" y="16" width="22" height="16" rx="3"/><path d="M14 16v-4h12v4M15 24h10M20 19v10"/>'],["A game",'<rect x="5" y="13" width="30" height="16" rx="8"/><path d="M12 18v6M9 21h6"/><circle cx="26" cy="19" r="1.6"/><circle cx="29" cy="23" r="1.6"/>'],
+  ["A special treat",'<path d="M13 18h14l-3 15h-8z"/><circle cx="20" cy="12" r="6"/>'],["Something special",'<path d="M20 5l4.4 9 9.6 1.4-7 6.8 1.7 9.6-8.7-4.6-8.7 4.6 1.7-9.6-7-6.8 9.6-1.4z"/>']];
+var AMTS=[500,1000,2000,5000];
+function gicon(k,col){ return '<svg viewBox="0 0 40 40" fill="none" stroke="'+(col||"#ffe7a6")+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+GOALS[k][1]+'</svg>'; }
+function goalSheet(){ var g=ST.goal||{k:0,c:1000}, k=g.k, c=g.c;
+  function draw(box){ box.querySelector(".gl").innerHTML=GOALS.map(function(x,i){ return '<button class="'+(i===k?"on":"")+'" data-k="'+i+'">'+gicon(i)+x[0]+'</button>'; }).join("");
+    box.querySelector(".amts").innerHTML=AMTS.map(function(a){ return '<button class="'+(a===c?"on":"")+'" data-c="'+a+'">'+dollars(a).replace(".00","")+'</button>'; }).join(""); }
+  var box=BWK.sheet('<h2>My Saving Goal</h2><p style="margin:0">What are you saving for?</p><div class="gl"></div><p style="margin:0">How much does it cost?</p><div class="amts"></div>'+
+    '<div class="k-row"><button class="k-btn" data-a="set">Save for it!</button>'+(ST.bank>0?'<button class="k-btn k-ghost" data-a="pay">Payday (grown-ups)</button>':'')+'</div>');
+  draw(box);
+  box.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return;
+    if(b.dataset.k!=null){ k=+b.dataset.k; sTap(); draw(box); }
+    else if(b.dataset.c!=null){ c=+b.dataset.c; sTap(); draw(box); }
+    else if(b.dataset.a==="set"){ ST.goal={k:k,c:c}; save(); BWK.closeSheet(true); sGoal(); if(document.body.classList.contains("m-play")) drawBank(); toMenu(); }
+    else if(b.dataset.a==="pay") payday(); }); }
+function payday(){ gate(function(){ var amt=ST.bank; var box=BWK.sheet('<h2>Payday</h2><p>The jar has <b>'+dollars(amt)+'</b>. When you hand over the real money (or put it in a real bank), tap <b>Pay out</b> and the jar starts again at $0.00.</p>'+
+  '<div class="k-row"><button class="k-btn" data-a="go">Pay out '+dollars(amt)+'</button><button class="k-btn k-ghost" data-a="no">Not yet</button></div>');
+  box.querySelector('[data-a=go]').onclick=function(){ ST.hist.unshift({paid:amt,d:Date.now()}); ST.bank=0; save(); sRegister(); BWK.closeSheet(true); BWK.say(PAYDAY); if(document.body.classList.contains("m-play")) drawBank(); toMenuFoot(); };
+  box.querySelector('[data-a=no]').onclick=function(){ BWK.closeSheet(true); }; }); }
+
+/* ---------- menu ---------- */
+function toMenuFoot(){ rollWeek(); $("#mfoot").textContent="This week: "+dollars(weekTotal())+" · In my jar: "+dollars(ST.bank)+(ST.goal?" · Saving for "+GOALS[ST.goal.k][0].toLowerCase():""); }
+function toMenu(){ document.body.className="m-menu"; toMenuFoot(); }
+$("#bChart").onclick=function(){ BWK.sfx("open"); toChart(); };
+$("#bPick").onclick=function(){ BWK.sfx("open"); toPick(); }; $("#tPick").onclick=function(){ sTap(); toPick(); };
+$("#kDone").onclick=function(){ sTap(); toChart(); };
+$("#bGoal").onclick=goalSheet;
+$("#kMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); }; $("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How It Works</h2><p>'+HOW+'</p>'+
+  '<p><b>Pick your chores</b> (up to 6). Each one pays a little pretend money.</p><p><b>Tap today\'s box</b> when you finish a chore: you get a gold star and coins clink into your jar. Tapped by mistake? Tap it again to take it back.</p>'+
+  '<p><b>Saving goal:</b> pick something to save for and watch your jar fill up.</p>'+
+  '<p><b>For grown-ups:</b> the money is pretend. You set what each chore pays (Set pay, behind a grown-ups check), and when you hand over the real money, use <b>Payday</b> on the Saving Goal screen to empty the jar. Each new week starts a fresh chart; the jar keeps its coins. Nothing leaves this device.</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+(function(){ $("#ccEmb").innerHTML='<g transform="translate(22 4)">'+jarSVG(400).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g><g transform="translate(80 40) scale(1.1)"><path d="M20 6l4.2 8.6 9.5 1.4-6.9 6.7 1.6 9.5L20 27.7l-8.4 4.5 1.6-9.5-6.9-6.7 9.5-1.4z" fill="#f2be45" stroke="#a86d06" stroke-width="1.6"/></g>'; })();
+
+/* photos (ch/): a glass jar and a coin, used as soon as they're here */
+var PHJ=false, PHC=false;
+(function(){ var j=new Image(); j.onload=function(){ PHJ=true; if(document.body.classList.contains("m-play")) drawBank(); }; j.src="ch/jar.webp?v="+AV;
+  var c=new Image(); c.onload=function(){ PHC=true; if(document.body.classList.contains("m-play")) drawBank(); }; c.src="ch/coin.webp?v="+AV; })();
+
+var INTRO="Chore Chart! Check off your chores each day and fill your jar with pretend coins. Save up for something special!";
+var HOW="Pick your chores, then tap today's box each time you finish one. You'll get a gold star, and pretend coins go into your jar. Save up for a goal!";
+var FIRST="Tap a box when you finish a chore!", ALLDONE="Every chore is done today! Great work!", GOALSAY="Goal reached! Show a grown-up your jar!";
+var PAYDAY="Payday! Your jar starts again.", WINP="Great job! You earned a new patch for your badge wall!";
+var L={"cc-intro":INTRO,"cc-how":HOW,"cc-first":FIRST,"cc-alldone":ALLDONE,"cc-goal":GOALSAY,"cc-payday":PAYDAY,"cc-winp":WINP};
+CH.forEach(function(c){ L["cc-j-"+c[0]]=c[1]; });
+BWK.lines(L);
+toMenu();
+BWK.init({here:"chores", voice:"outpost", intro:INTRO, noHello:true});
+window.CCO={chart:toChart,pick:toPick,mark:function(id,d){ mark(id,d==null?todayI():d,document.querySelector('.bx[data-c="'+id+'"][data-d="'+(d==null?todayI():d)+'"]')||document.body); },
+  goal:function(k,c){ ST.goal={k:k,c:c}; save(); },state:function(){ return {on:ST.on,marks:ST.marks,bank:ST.bank,week:weekTotal(),goal:ST.goal,wk:ST.wk}; },lines:L};
+})();
+</script>
+</body>
+</html>
