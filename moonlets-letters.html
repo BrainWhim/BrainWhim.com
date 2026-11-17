@@ -112,10 +112,13 @@ html.llsl .slate svg{background:none;box-shadow:none}
   "use strict";
   var AV="1117a", NS="http://www.w3.org/2000/svg";
   /* ---------- the alphabet: word, the sound as Finn says it, a picture (a photo where one fits, else a stand-in) ---------- */
-  var W={A:["apple","ah","🍎"],B:["bunny","buh","sl:clover"],C:["cat","kuh","sl:mittens"],D:["duck","duh","sl:sunny"],E:["egg","eh","🥚"],F:["frog","fff","sl:pickle"],
-    G:["goat","guh","🐐"],H:["hamster","hhh","sl:pip"],I:["insect","ih","🐞"],J:["juice","juh","🧃"],K:["koala","kuh","sl:coco"],L:["llama","lll","sl:lulu"],M:["monkey","mmm","sl:ziggy"],
-    N:["nest","nnn","🪺"],O:["octopus","aw","🐙"],P:["puppy","puh","sl:biscuit"],Q:["queen bee","kwuh","🐝"],R:["rainbow","rrr","🌈"],S:["sun","sss","☀️"],T:["turtle","tuh","🐢"],
-    U:["umbrella","uh","☂️"],V:["van","vvv","🚐"],X:["fox","ks","sl:hazel"],Y:["yo-yo","yuh","🪀"],Z:["zebra","zzz","🦓"],W:["whale","wuh","🐳"]};
+  /* the sounds are spelled the way a voice reads them well ("huh", not "hhh": a voice reads "hhh" as letters, Nov 17); retest each with Finn's voice on recording day */
+  var W={A:["apple","ah","🍎"],B:["bunny","buh","sl:clover"],C:["cat","kuh","sl:mittens"],D:["duck","duh","sl:sunny"],E:["egg","eh","🥚"],F:["frog","fuh","sl:pickle"],
+    G:["goat","guh","🐐"],H:["hamster","huh","sl:pip"],I:["insect","ih","🐞"],J:["juice","juh","🧃"],K:["koala","kuh","sl:coco"],L:["llama","luh","sl:lulu"],M:["monkey","muh","sl:ziggy"],
+    N:["nest","nuh","🪺"],O:["octopus","aw","🐙"],P:["puppy","puh","sl:biscuit"],Q:["queen bee","kwuh","🐝"],R:["rainbow","ruh","🌈"],S:["sun","suh","☀️"],T:["turtle","tuh","🐢"],
+    U:["umbrella","uh","☂️"],V:["van","vuh","🚐"],X:["fox","","sl:hazel"],Y:["yo-yo","yuh","🪀"],Z:["zebra","zuh","🦓"],W:["whale","wuh","🐳"]};
+  /* letter names, so a voice never says "capital B" for a single letter */
+  var NAME={A:"ay",B:"bee",C:"see",D:"dee",E:"ee",F:"eff",G:"gee",H:"aitch",I:"eye",J:"jay",K:"kay",L:"el",M:"em",N:"en",O:"oh",P:"pee",Q:"cue",R:"are",S:"ess",T:"tee",U:"you",V:"vee",W:"double-you",X:"ex",Y:"why",Z:"zee"};
   var ABC="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   function picHTML(L){ var p=W[L][2]; if(p.indexOf("sl:")===0) return '<img src="sl/c-'+p.slice(3)+'.webp?v=1115a" alt="'+W[L][0]+'">';
     return '<img src="ll/p-'+L.toLowerCase()+'.webp?v='+AV+'" alt="'+W[L][0]+'" onerror="this.replaceWith(document.createTextNode(\''+p+'\'))">'; }
@@ -192,7 +195,7 @@ html.llsl .slate svg{background:none;box-shadow:none}
   var HI="Let's light up the letters! Trace the glowing line with your finger. Start at the green dot!",
       START="Start at the green dot, and follow the arrow!", NEXT="Now the next line!", ALL="You lit up every letter! You're a letter star!", GO="Tap a little light to pick a letter!";
   var LN={"ll-hi":HI,"ll-start":START,"ll-next":NEXT,"ll-all":ALL,"ll-go":GO};
-  function line(L){ return L+"! "+L+" says "+W[L][1]+", as in "+W[L][0]+"."; }
+  function line(L){ return L==="X" ? "X! X makes the sound at the end of fox." : L+"! "+L+" says "+W[L][1]+", as in "+W[L][0]+"."; }
   ABC.forEach(function(L){ LN["ll-"+L.toLowerCase()]=line(L); });
   BWK.lines(LN);
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
@@ -306,7 +309,7 @@ html.llsl .slate svg{background:none;box-shadow:none}
 
   /* ---------- the 26 little lights (tap one to pick that letter) ---------- */
   function lights(){ var h="", done=big?S.lo:S.up, at=big?S.atLo:S.at;
-    ABC.forEach(function(L,i){ var k=big?L.toLowerCase():L; h+='<button class="'+(done[k]?'on':'')+(i===at?' cur':'')+'" data-i="'+i+'" data-say="'+L+'" aria-label="Letter '+L+(done[k]?', lit':'')+'">'+k+'</button>'; });
+    ABC.forEach(function(L,i){ var k=big?L.toLowerCase():L; h+='<button class="'+(done[k]?'on':'')+(i===at?' cur':'')+'" data-i="'+i+'" data-say="'+NAME[L]+'" aria-label="Letter '+NAME[L]+(done[k]?', lit':'')+'">'+k+'</button>'; });
     $("lights").innerHTML=h; }
   $("lights").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; BWK.sfx("tap"); BWK.finnStop(); humOff();
     if(big) S.atLo=+b.dataset.i; else S.at=+b.dataset.i; save(); setup(); });
