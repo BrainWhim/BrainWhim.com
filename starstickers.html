@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Star Stickers · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Star Stickers (The Outpost · The Telescope), Nov 17. Connect the stars of a real constellation, just like its star card, to win its sticker
+   for the Sticker Book (29 to collect). Three constellations a day, a gentle climb Monday to Sunday (faint guide lines Mon-Tue).
+   Star data: stickers-sky.js (from the Observatory's d3-celestial data; keep its license notice). Pictures in sk/ (html.ph once loaded). */
+.bg{filter:blur(1.2px) brightness(.66) saturate(1.05)}
+#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#2f6fb8}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.top{flex:none;min-height:96px;width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:10px;padding:0 4px}
+.cmsg{flex:1;text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 4px}
+/* the star card: the pattern to copy, inked on a parchment card */
+#card{flex:none;width:92px;height:92px;border-radius:10px;position:relative;margin-bottom:16px;background:linear-gradient(160deg,#f6ecd2,#e3cfa3);
+  box-shadow:0 3px 0 #a8875a,0 8px 16px rgba(0,0,0,.45),inset 0 1px 0 #fffaf0}
+html.phcard #card{background:url("sk/card.webp?v=1117a") center/100% 100%;box-shadow:0 6px 14px rgba(0,0,0,.45)}
+#card svg{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);overflow:visible}
+html.phcard #card svg{inset:12px;width:calc(100% - 24px);height:calc(100% - 24px)}
+#card b{position:absolute;left:0;right:0;bottom:-17px;text-align:center;font-size:11.5px;font-weight:800;color:#fff4dc;text-shadow:0 1px 4px #000;white-space:nowrap}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;user-select:none;-webkit-user-select:none}
+/* the sky */
+#sky{position:absolute;border-radius:18px;overflow:hidden;touch-action:none;
+  background:radial-gradient(120% 80% at 70% 20%,rgba(120,80,170,.28),transparent 60%),radial-gradient(90% 70% at 20% 90%,rgba(40,90,160,.3),transparent 60%),linear-gradient(170deg,#0d1838,#060b1f 70%,#03060f);
+  box-shadow:0 0 0 3px #7a5a2a,0 0 0 6px #c9a052,0 0 0 8px #6b4a1c,0 14px 30px rgba(0,0,0,.6)}
+html.phsky #sky{background:url("sk/sky.jpg?v=1117a") center/cover}
+#sky svg{position:absolute;inset:0;width:100%;height:100%}
+#sky .bwp{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font:800 10px/1 Outfit,system-ui,sans-serif;letter-spacing:.06em;color:#4a300c;z-index:6;
+  padding:3px 6px 2px;border-radius:4px;background:linear-gradient(180deg,#f6dc8e,#c99a3c);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 3px rgba(0,0,0,.5)}
+.tw{animation:twk 3s ease-in-out infinite}
+@keyframes twk{50%{opacity:.35}}
+.st{cursor:pointer}
+.st .ring{opacity:0;transition:opacity .15s}
+.st.sel .ring{opacity:1}
+.st.hint .ring{opacity:1;animation:hpul .8s ease-in-out infinite}
+@keyframes hpul{50%{opacity:.3}}
+.ln{stroke-linecap:round}
+.ln.bad{animation:lbad .6s forwards}
+@keyframes lbad{0%{opacity:1}100%{opacity:0}}
+#stk{position:absolute;pointer-events:none;opacity:0;transform:scale(.4);transition:transform .55s cubic-bezier(.3,1.5,.5,1),opacity .35s}
+#stk.on{opacity:1;transform:none}
+#stk img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.how svg{display:block;width:min(260px,100%);margin:4px auto 10px}
+/* the found sheet and the Sticker Book */
+.fnd{display:flex;flex-direction:column;align-items:center;text-align:center}
+.fnd .pic{width:150px;height:150px;margin:2px auto 6px}
+.fnd .pic img,.fnd .pic svg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))}
+.fnd .new{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#3a2306;background:linear-gradient(180deg,#ffe7a6,#e9c46a);border-radius:20px;padding:3px 10px;margin-bottom:4px}
+.book{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;max-height:min(58vh,460px);overflow:auto;margin:8px 0 12px;padding:10px;border-radius:14px;
+  background:linear-gradient(180deg,#f6ecd2,#e8d6ae);box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
+html.phpage .book{background:url("sk/page.jpg?v=1117a") 0 0/215px 215px repeat;box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
+.slot{appearance:none;border:0;font:inherit;cursor:pointer;background:rgba(120,90,40,.1);border-radius:12px;padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#5a3c14}
+.slot .p{width:64px;height:64px;display:grid;place-items:center}
+.slot .p img,.slot .p svg{width:100%;height:100%;object-fit:contain}
+.slot i{font-style:normal;font-size:11.5px;font-weight:800;line-height:1.15;text-align:center}
+.slot.no{cursor:default}
+.slot.no .p{border:2px dashed rgba(120,90,40,.35);border-radius:50%;width:54px;height:54px;font-size:22px;font-weight:800;color:rgba(120,90,40,.45)}
+.slot .x{font-size:10.5px;color:#8a6a3a}
+@media (max-width:400px){#card{width:80px;height:80px}.cmsg{font-size:15px}}
+@media (max-height:700px){.cmsg{font-size:14.5px}.ib{min-height:36px;font-size:14px}.cday span{font-size:13px}}
+</style>
+
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="skEmb"></svg>
+      <h1>Star Stickers</h1>
+      <p class="lead">Connect the stars to find real constellations in the night sky, and collect a sticker for each one!</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Tonight's Stars</button>
+        <button class="k-btn" id="bBonus" style="display:none">Bonus Stars</button>
+        <button class="k-btn k-ghost" id="bBook">My Sticker Book</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b id="cday"></b><span id="cnum"></span></div>
+      <button class="ib" id="tHint">Hint</button>
+    </div>
+    <div class="top" id="top"><div id="card" aria-label="The star card"></div><div class="cmsg" id="cmsg" aria-live="polite"></div></div>
+    <div id="stage"><div id="sky" role="application" aria-label="The night sky"></div><div id="stk" aria-hidden="true"></div></div>
+  </section>
+</main>
+<script src="kids.js?v=1117a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script src="stickers-sky.js?v=1117a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1117a";
+var ST=LS.get("stickers",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0; ST.book=ST.book||{};
+function save(){ LS.set("stickers",ST); }
+var SKY=SK_SKY, BYID={}; SKY.forEach(function(c){ BYID[c.id]=c; });
+
+/* ---------- photos: the sky, the star card, the book page, and one sticker per constellation (each used as soon as it arrives) ---------- */
+var PH=false, STK={};
+function pic(f){ return "sk/"+f+"?v="+AV; }
+(function(){ [["sky.jpg","phsky"],["card.webp","phcard"],["page.jpg","phpage"]].forEach(function(f){ var i=new Image(); i.onload=function(){ document.documentElement.classList.add(f[1]); }; i.src=pic(f[0]); });
+  SKY.forEach(function(c){ var i=new Image(); i.onload=function(){ STK[c.st]=true; }; i.src=pic(c.st+".webp"); }); })();
+var UID=0;
+/* a drawn stand-in sticker: the constellation's own lines in gold on a navy disc with a white die-cut border */
+function badge(c){ var id="skB"+(UID++), b=bbox(c), s=Math.max(b.w,b.h)||1, sc=56/s, ox=50-(b.x+b.w/2)*sc, oy=50-(b.y+b.h/2)*sc, g="";
+  c.e.forEach(function(e){ var p=c.n[e[0]], q=c.n[e[1]]; g+='<line x1="'+(p[0]*sc+ox).toFixed(1)+'" y1="'+(p[1]*sc+oy).toFixed(1)+'" x2="'+(q[0]*sc+ox).toFixed(1)+'" y2="'+(q[1]*sc+oy).toFixed(1)+'"/>'; });
+  var d=""; c.n.forEach(function(p){ d+='<circle cx="'+(p[0]*sc+ox).toFixed(1)+'" cy="'+(p[1]*sc+oy).toFixed(1)+'" r="'+Math.max(1.6,3.6-p[2]*.4).toFixed(1)+'"/>'; });
+  return '<svg viewBox="0 0 100 100"><defs><radialGradient id="'+id+'" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#2b4a8e"/><stop offset="1" stop-color="#0c1736"/></radialGradient></defs>'+
+    '<circle cx="51" cy="53" r="47" fill="rgba(0,0,0,.25)"/><circle cx="50" cy="50" r="47" fill="#fff"/><circle cx="50" cy="50" r="41" fill="url(#'+id+')"/>'+
+    '<g stroke="#f2c860" stroke-width="2.2" stroke-linecap="round">'+g+'</g><g fill="#fff8e0">'+d+'</g><path d="M20 30A38 38 0 0 1 60 12" stroke="#fff" stroke-opacity=".35" stroke-width="4" fill="none" stroke-linecap="round"/></svg>'; }
+function sticker(c){ return STK[c.st]?'<img alt="" src="'+pic(c.st+".webp")+'">':badge(c); }
+function bbox(c){ var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; c.n.forEach(function(p){ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]); x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); }); return {x:x0,y:y0,w:x1-x0,h:y1-y0}; }
+function short(c){ return c.nm.split(",")[0]; }
+function what(c){ return c.nm.split(", ")[1]||c.nm; }
+
+/* ---------- sound ---------- */
+/* ---------- sound of its own ---------- */
+var AC=null, OUT=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+    var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+    OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+  if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return;
+  if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+function on(){ return LS.get("sound",true)!==false && !!ac(); }
+function tone(f,at,d,v,type,f2){ if(!on()) return; var t=AC.currentTime+(at||0), o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+var NB=null;
+function nbuf(){ if(!NB){ NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); var c=NB.getChannelData(0); for(var i=0;i<c.length;i++) c[i]=Math.random()*2-1; } return NB; }
+function noise(at,d,v,lo,hi){ if(!on()) return; var t=AC.currentTime+(at||0), s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=nbuf();
+  f.type="bandpass"; f.frequency.value=Math.sqrt(lo*hi); f.Q.value=Math.max(.3,Math.sqrt(lo*hi)/(hi-lo)); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+d+.05); }
+
+function sStar(k){ var f=[1047,1175,1319,1568,1760,2093][k%6]; tone(f,0,.25,.05,"sine"); tone(f*2,.01,.18,.02,"sine"); }
+function sLine(k){ var f=[784,880,988,1047,1175,1319,1397,1568][k%8]; tone(f,0,.3,.07,"triangle"); tone(f*1.5,.06,.35,.05,"triangle"); noise(0,.12,.04,4000,10000); }
+function sNope(){ tone(260,0,.18,.1,"sine",190); }
+function sStick(){ noise(0,.07,.22,800,3000); tone(140,.02,.12,.18,"sine",90); }
+function sFound(){ [1047,1319,1568,2093,2637].forEach(function(f,i){ tone(f,i*.07,.5,.06,"triangle"); }); noise(0,.6,.03,5000,12000); }
+function sWin(){ [523,659,784,1047,1319,1568].forEach(function(f,i){ tone(f,i*.08,.45,.08,"triangle"); }); }
+
+/* ---------- the week: three constellations a day ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var LVD=[{c:[1,1,1],g:1},{c:[1,1,2],g:1},{c:[1,2,2],g:0},{c:[2,2,3],g:0},{c:[2,3,3],g:0},{c:[3,3,4],g:0},{c:[3,4,5],g:0}];
+var FOOT=["Small constellations, with faint guide lines to help. A gentle start!","A bigger one too, still with guide lines.","No guide lines now: follow the star card.",
+  "Bigger constellations.","Bigger still!","Big ones with lots of lines.","The biggest: the Great Bear or Orion. The trickiest of the week!"];
+function today(){ var d=new Date(); return {n:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5), wd:d.getDay()}; }
+function lvOf(wd){ return (wd+6)%7; }
+function rng(s){ s=(s>>>0)||1; return function(){ s^=s<<13; s>>>=0; s^=s>>>17; s^=s<<5; s>>>=0; return s/4294967296; }; }
+function dayPicks(lv,seed){ var R=rng(seed*2654435761+17), out=[];
+  LVD[lv].c.forEach(function(l){ var pool=SKY.filter(function(c){ return c.lv===l&&out.indexOf(c.id)<0; }); out.push(pool[Math.floor(R()*pool.length)].id); }); return out; }
+function bonusPick(lv){ var mx=Math.max.apply(null,LVD[lv].c), pool=SKY.filter(function(c){ return c.lv<=mx&&!ST.book[c.id]; }); if(!pool.length) pool=SKY.filter(function(c){ return c.lv<=mx; });
+  return [pool[Math.floor(Math.random()*pool.length)].id]; }
+
+var P=null, C=null, gen=0, busy=false, GEO=null, said={}, SEL=-1, DR={}, HR=[];
+function msg(t){ $("#cmsg").textContent=t||""; }
+function say(t){ BWK.say(t); }
+function sayOnce(k,t){ if(said[k]) return; said[k]=1; say(t); }
+function ek(a,b){ return a<b?a+"-"+b:b+"-"+a; }
+function start(bonus){ gen++; busy=false; said={}; SEL=-1; var t=today(), lv=lvOf(t.wd);
+  document.body.className="m-play"; $("#cday").textContent=bonus?"Bonus Stars":(DAYN[t.wd]+"'s Stars");
+  if(!bonus&&ST.day===t.n&&ST.cur){ var c=ST.cur; P={lv:c.lv,i:c.i||0,hints:c.hints||0,done:!!c.done,bonus:false,ids:dayPicks(c.lv,t.n),dr:c.dr||[]}; }
+  else P={lv:lv,i:0,hints:0,done:false,bonus:!!bonus,ids:bonus?bonusPick(lv):dayPicks(lv,t.n),dr:[]};
+  P.guide=!bonus&&LVD[P.lv].g===1||(bonus&&LVD[P.lv].g===1);
+  if(P.done) P.i=P.ids.length-1;
+  load(); saveCur();
+  if(P.done){ C.e.forEach(function(e){ DR[ek(e[0],e[1])]=1; }); drawSky(); msg("All of tonight's stars are found! Tap Menu for Bonus Stars."); return; }
+  if(bonus) say(BONUS); else if(P.i===0&&!P.dr.length){ say(ST.n<1?FIRST:START); msg(ST.n<1?"Tap a star, then tap the star it's joined to on the star card. Or drag from star to star!":"Match the star card!"); } }
+function saveCur(){ if(!P||P.bonus) return; ST.day=today().n; ST.cur={lv:P.lv,i:P.i,hints:P.hints,done:P.done,dr:Object.keys(DR)}; save(); }
+function load(){ C=BYID[P.ids[P.i]]; DR={}; (P.dr||[]).forEach(function(k){ DR[k]=1; }); P.dr=[]; SEL=-1; clearHint();
+  $("#cnum").textContent=(P.bonus?"":"Constellation "+(P.i+1)+" of "+P.ids.length+" · ")+C.e.length+" lines";
+  $("#stk").classList.remove("on"); layout(); drawCard(); }
+
+/* ---------- layout and drawing ---------- */
+function layout(){ if(!C) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return;
+  var S=Math.floor(Math.min(W-12,H-10,640)), x0=Math.round((W-S)/2), y0=Math.max(2,Math.round((H-S)/2));
+  var b=bbox(C), m=S*.13, sc=Math.min((S-2*m)/(b.w||1),(S-2*m)/(b.h||1));
+  GEO={S:S,x0:x0,y0:y0,sc:sc,ox:(S-b.w*sc)/2-b.x*sc,oy:(S-b.h*sc)/2-b.y*sc,hit:Math.max(24,S*.065)};
+  var k=$("#sky"); k.style.cssText="left:"+x0+"px;top:"+y0+"px;width:"+S+"px;height:"+S+"px"; drawSky(); }
+function XY(p){ return [p[0]*GEO.sc+GEO.ox, p[1]*GEO.sc+GEO.oy]; }
+function drawSky(){ if(!GEO) return; var S=GEO.S, s='<svg viewBox="0 0 '+S+' '+S+'"><defs><radialGradient id="skGlow"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".3" stop-color="#cfe0ff" stop-opacity=".55"/><stop offset="1" stop-color="#9fc0ff" stop-opacity="0"/></radialGradient></defs>';
+  /* faint background stars: the real ones nearby, plus a scatter */
+  var R=rng(C.id.charCodeAt(0)*977+C.id.charCodeAt(1)*31+7);
+  for(var i=0;i<70;i++){ var x=R()*S, y=R()*S, r=.5+R()*1.1; s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r.toFixed(2)+'" fill="#dfe8ff" opacity="'+(.25+R()*.45).toFixed(2)+'"'+(i%7===0?' class="tw" style="animation-delay:-'+(R()*3).toFixed(2)+'s"':'')+'/>'; }
+  C.bg.forEach(function(p){ var q=XY(p); s+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+Math.max(.8,2.4-p[2]*.28).toFixed(2)+'" fill="#e8eeff" opacity=".6"/>'; });
+  /* guide lines (Monday, Tuesday) */
+  if(P.guide) C.e.forEach(function(e){ var a=XY(C.n[e[0]]), b=XY(C.n[e[1]]); s+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="#bcd2ff" stroke-opacity=".28" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>'; });
+  /* drawn lines */
+  s+='<g id="skLines">'; for(var k in DR){ var ab=k.split("-"); s+=lineSVG(+ab[0],+ab[1],""); } s+='</g><line id="skRub" x1="0" y1="0" x2="0" y2="0" stroke="#ffe9a8" stroke-opacity="0" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>';
+  /* the constellation's stars */
+  C.n.forEach(function(p,i){ var q=XY(p), r=Math.max(3.2,7.4-p[2]*.9)*Math.min(1.25,S/420);
+    s+='<g class="st" data-i="'+i+'"><circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+(GEO.hit*.9).toFixed(1)+'" fill="#000" opacity="0"/>'+
+      '<circle class="ring" cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+(r+9).toFixed(1)+'" fill="none" stroke="#ffe08a" stroke-width="2.5"/>'+
+      '<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+(r*3.2).toFixed(1)+'" fill="url(#skGlow)" opacity=".75"/>'+
+      '<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+r.toFixed(1)+'" fill="#fffdf2"/></g>'; });
+  s+='</svg><span class="bwp">BW</span>'; $("#sky").innerHTML=s; selShow(); }
+function lineSVG(a,b,cls){ var p=XY(C.n[a]), q=XY(C.n[b]); return '<g class="ln '+cls+'"><line x1="'+p[0].toFixed(1)+'" y1="'+p[1].toFixed(1)+'" x2="'+q[0].toFixed(1)+'" y2="'+q[1].toFixed(1)+'" stroke="'+(cls?"#ff6b6b":"#ffd66b")+'" stroke-opacity=".35" stroke-width="9" stroke-linecap="round"/>'+
+  '<line x1="'+p[0].toFixed(1)+'" y1="'+p[1].toFixed(1)+'" x2="'+q[0].toFixed(1)+'" y2="'+q[1].toFixed(1)+'" stroke="'+(cls?"#ffb0b0":"#fff3c4")+'" stroke-width="2.6" stroke-linecap="round"/></g>'; }
+function drawCard(){ var b=bbox(C), s2=Math.max(b.w,b.h)||1, sc=72/s2, ox=40-(b.x+b.w/2)*sc, oy=40-(b.y+b.h/2)*sc, g="";
+  C.e.forEach(function(e){ var p=C.n[e[0]], q=C.n[e[1]], on=DR[ek(e[0],e[1])]; g+='<line x1="'+(p[0]*sc+ox).toFixed(1)+'" y1="'+(p[1]*sc+oy).toFixed(1)+'" x2="'+(q[0]*sc+ox).toFixed(1)+'" y2="'+(q[1]*sc+oy).toFixed(1)+'" stroke="'+(on?"#c98a12":"#4a3216")+'" stroke-width="'+(on?2.4:1.8)+'" stroke-linecap="round"/>'; });
+  C.n.forEach(function(p){ g+='<circle cx="'+(p[0]*sc+ox).toFixed(1)+'" cy="'+(p[1]*sc+oy).toFixed(1)+'" r="'+Math.max(1.8,3.8-p[2]*.45).toFixed(1)+'" fill="#2a1a08"/>'; });
+  $("#card").innerHTML='<svg viewBox="0 0 80 80">'+g+'</svg><b>'+short(C)+'</b>'; }
+function selShow(){ [].slice.call(document.querySelectorAll("#sky .st")).forEach(function(e){ e.classList.toggle("sel",+e.dataset.i===SEL); }); }
+
+/* ---------- connecting stars: tap-tap or drag ---------- */
+function starAt(x,y){ var best=-1, bd=GEO.hit; C.n.forEach(function(p,i){ var q=XY(p), d=Math.hypot(q[0]-x,q[1]-y); if(d<bd){ bd=d; best=i; } }); return best; }
+function local(e){ var r=$("#sky").getBoundingClientRect(); return [(e.clientX-r.left)*GEO.S/r.width,(e.clientY-r.top)*GEO.S/r.height]; }
+var DRAG=null;
+$("#sky").addEventListener("pointerdown",function(e){ if(!P||busy||P.done) return; var q=local(e), i=starAt(q[0],q[1]); clearHint();
+  if(i<0){ SEL=-1; selShow(); return; }
+  try{ $("#sky").setPointerCapture(e.pointerId); }catch(er){}
+  DRAG={i:i,prev:SEL,x:q[0],y:q[1],moved:false}; SEL=i; selShow(); sStar(i); });
+$("#sky").addEventListener("pointermove",function(e){ if(!DRAG) return; var q=local(e), rb=$("#skRub"), a=XY(C.n[DRAG.i]);
+  if(Math.hypot(q[0]-DRAG.x,q[1]-DRAG.y)>8) DRAG.moved=true;
+  if(DRAG.moved){ rb.setAttribute("x1",a[0]); rb.setAttribute("y1",a[1]); rb.setAttribute("x2",q[0]); rb.setAttribute("y2",q[1]); rb.setAttribute("stroke-opacity",".8"); } });
+function endDrag(e){ if(!DRAG) return; var d=DRAG; DRAG=null; var rb=$("#skRub"); if(rb) rb.setAttribute("stroke-opacity","0");
+  if(!d.moved){ if(d.prev>=0&&d.prev!==d.i) join(d.prev,d.i); return; }
+  var q=local(e), j=starAt(q[0],q[1]); if(j>=0&&j!==d.i) join(d.i,j); }
+$("#sky").addEventListener("pointerup",endDrag); $("#sky").addEventListener("pointercancel",function(){ DRAG=null; var rb=$("#skRub"); if(rb) rb.setAttribute("stroke-opacity","0"); });
+function isEdge(a,b){ for(var k=0;k<C.e.length;k++){ var e=C.e[k]; if((e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a)) return true; } return false; }
+function join(a,b){ var k=ek(a,b);
+  if(DR[k]){ SEL=b; selShow(); sStar(b); return; }
+  if(!isEdge(a,b)){ sNope(); var g=document.createElementNS("http://www.w3.org/2000/svg","g"); g.innerHTML=lineSVG(a,b,"bad"); var el=g.firstChild; $("#skLines").appendChild(el); setTimeout(function(){ el.remove(); },650);
+    msg("Those two stars aren't joined on the star card. Look again!"); sayOnce("nope",NOPE); SEL=b; selShow(); return; }
+  DR[k]=1; var n=Object.keys(DR).length; sLine(n); var g2=document.createElementNS("http://www.w3.org/2000/svg","g"); g2.innerHTML=lineSVG(a,b,""); $("#skLines").appendChild(g2.firstChild);
+  SEL=b; selShow(); drawCard(); saveCur();
+  if(n===C.e.length){ found(); return; }
+  msg(n+" of "+C.e.length+" lines!"); if(n===1) sayOnce("one",ONE); }
+
+/* ---------- a constellation found: its sticker appears over it, then the found card ---------- */
+function found(){ busy=true; SEL=-1; selShow(); var g=gen, c=C, b=bbox(c), first=!ST.book[c.id];
+  ST.book[c.id]=(ST.book[c.id]||0)+1; ST.n++; save();
+  var w=Math.max(b.w,b.h)*GEO.sc*1.05, cx=(b.x+b.w/2)*GEO.sc+GEO.ox, cy=(b.y+b.h/2)*GEO.sc+GEO.oy, sk=$("#stk"); w=Math.min(GEO.S*.85,Math.max(GEO.S*.45,w));
+  sk.style.cssText="left:"+(GEO.x0+cx-w/2)+"px;top:"+(GEO.y0+cy-w/2)+"px;width:"+w+"px;height:"+w+"px"; sk.innerHTML=sticker(c); sk.classList.remove("on"); void sk.offsetWidth;
+  sFound(); msg("You found "+short(c)+"!");
+  setTimeout(function(){ if(g!==gen) return; sk.classList.add("on"); sStick(); },450);
+  setTimeout(function(){ if(g!==gen) return; var last=P.i+1>=P.ids.length;
+    foundSheet(c,first,last?(P.bonus?"Done":"Done"):"Next constellation",function(){ if(g!==gen) return;
+      if(last){ win(); return; } busy=false; P.i++; saveCur(); load(); saveCur(); msg("Here's the next star card."); say(NEXTC); }); },1700); }
+function foundSheet(c,first,btn,then){ var box=BWK.sheet('<div class="fnd">'+(first?'<span class="new">New sticker!</span>':'')+'<h2 style="margin:2px 0 4px">'+c.nm+'</h2><div class="pic">'+sticker(c)+'</div><p>'+c.fact+'</p>'+
+    (btn?'<div class="k-row"><button class="k-btn" data-a="go">'+btn+'</button></div>':'')+'</div>',then);
+  var b=box.querySelector('[data-a=go]'); if(b) b.onclick=function(){ BWK.closeSheet(true); }; say("You found "+c.nm+"! "+c.fact); return box; }
+function starsOf(h){ return h===0?3:h<=2?2:1; }
+function win(){ P.done=true; saveCur(); var g=gen; var fresh=P.bonus?"":BWG.patch("stickers"); sWin();
+  setTimeout(function(){ if(g!==gen) return; var s=starsOf(P.hints), have=Object.keys(ST.book).length;
+    var box=BWK.sheet('<h2>'+(P.bonus?'Bonus stars found!':'All of tonight\'s stars are found!')+'</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,s)+'<i>'+"★★★".slice(0,3-s)+'</i></div>'+
+      '<p>'+(P.bonus?'Another constellation for your book!':'You found '+P.ids.length+' constellations'+(P.hints?' with '+P.hints+' hint'+(P.hints>1?'s':''):' with no hints')+'.')+' Your Sticker Book has '+have+' of '+SKY.length+'.</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="more">Bonus Stars</button><button class="k-btn k-ghost" data-a="book">Sticker Book</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
+    box.querySelector('[data-a=book]').onclick=function(){ book(); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    say(fresh?WINP:(P.bonus?WINB:WIN)); },300); }
+
+/* ---------- the Sticker Book ---------- */
+function book(){ var have=Object.keys(ST.book).length, h='<h2>My Sticker Book</h2><p style="margin:0">'+have+' of '+SKY.length+' stickers. Tap one to read about it.</p><div class="book" data-bws="off">';
+  SKY.forEach(function(c){ var got=ST.book[c.id];
+    h+=got?'<button class="slot" data-id="'+c.id+'"><span class="p">'+sticker(c)+'</span><i>'+short(c)+'</i><span class="x">'+what(c)+'</span></button>':'<div class="slot no"><span class="p">?</span><i>?</i></div>'; });
+  var box=BWK.sheet(h+'</div>'); BWK.sfx("open");
+  [].slice.call(box.querySelectorAll(".slot[data-id]")).forEach(function(b){ b.onclick=function(){ BWK.sfx("tap"); foundSheet(BYID[b.dataset.id],false,"Back to my book",function(){ setTimeout(book,30); }); }; }); }
+
+/* ---------- hints: ring the next two stars to join ---------- */
+function clearHint(){ HR.forEach(function(e){ e.classList.remove("hint"); }); HR=[]; }
+function hint(){ if(!P||busy||P.done||!C) return; clearHint(); P.hints++; saveCur(); say(HINT); var pick=null, touched={};
+  for(var k in DR){ var ab=k.split("-"); touched[ab[0]]=1; touched[ab[1]]=1; }
+  C.e.forEach(function(e){ if(DR[ek(e[0],e[1])]) return; var sc=(e[0]===SEL||e[1]===SEL?4:0)+(touched[e[0]]||touched[e[1]]?2:0); if(!pick||sc>pick.sc) pick={e:e,sc:sc}; });
+  if(!pick) return; [pick.e[0],pick.e[1]].forEach(function(i){ var el=$('#sky .st[data-i="'+i+'"]'); if(el){ el.classList.add("hint"); HR.push(el); } });
+  SEL=-1; selShow(); msg("Star tip: join the two blinking stars."); }
+$("#tHint").onclick=hint;
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; busy=false; clearHint(); document.body.className="m-menu"; var t=today(), lv=lvOf(t.wd);
+  var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
+  $("#bPlay").textContent=doneToday?"Tonight's Stars ✓":"Tonight's Stars"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
+  $("#bBonus").style.display=doneToday?"":"none";
+  $("#bBook").textContent="My Sticker Book ("+Object.keys(ST.book).length+" of "+SKY.length+")";
+  $("#mfoot").textContent=DAYN[t.wd]+": "+FOOT[lv]; }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
+$("#bBook").onclick=book;
+function howPic(){ /* look-only: the star card, and the same stars in the sky with two lines joined and a finger dragging the third */
+  var c=BYID.Cas, b=bbox(c), sc=150/b.w, s='<svg viewBox="0 0 260 150" aria-hidden="true"><rect x="70" y="0" width="190" height="150" rx="12" fill="#0b1530"/><rect x="0" y="30" width="62" height="62" rx="7" fill="#efe1bd"/>';
+  var cs=50/b.w; c.e.forEach(function(e){ var p=c.n[e[0]], q=c.n[e[1]]; s+='<line x1="'+(6+(p[0]-b.x)*cs)+'" y1="'+(45+(p[1]-b.y)*cs)+'" x2="'+(6+(q[0]-b.x)*cs)+'" y2="'+(45+(q[1]-b.y)*cs)+'" stroke="#4a3216" stroke-width="1.6"/>'; });
+  var P2=c.n.map(function(p){ return [90+(p[0]-b.x)*sc,40+(p[1]-b.y)*sc]; });
+  c.e.forEach(function(e,i){ var p=P2[e[0]], q=P2[e[1]]; if(i<2) s+='<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+q[0]+'" y2="'+q[1]+'" stroke="#fff3c4" stroke-width="2.4"/>'; else if(i===2) s+='<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+((p[0]+q[0])/2)+'" y2="'+((p[1]+q[1])/2)+'" stroke="#ffe9a8" stroke-width="2.4" stroke-dasharray="5 5"/>'; });
+  P2.forEach(function(p){ s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="9" fill="#cfe0ff" opacity=".35"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.6" fill="#fffdf2"/>'; });
+  s+='<text x="31" y="108" text-anchor="middle" font-size="10.5" font-weight="800" fill="#fff6d8" font-family="Outfit,system-ui,sans-serif">star card</text></svg>'; return s; }
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2>'+howPic()+'<p>'+HOW+'</p>'+
+  '<p><b>Two ways to join stars:</b> tap one star and then the next, or drag your finger from star to star. Joining stars is free, so try as much as you like.</p>'+
+  '<p><b>The star card</b> shows the constellation\'s shape. If two stars aren\'t joined on the card, the line fades away.</p>'+
+  '<p><b>Stickers:</b> every constellation you finish gives you its sticker for your Sticker Book. There are '+SKY.length+' to collect!</p>'+
+  '<p>Each day gets a little harder. Monday and Tuesday have faint guide lines in the sky. On a computer, press H for a hint.</p></div>'); say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+(function(){ var c=BYID.UMi; $("#skEmb").innerHTML='<rect x="16" y="6" width="100" height="80" rx="12" fill="#0b1530"/><g transform="translate(36 6) scale(.8)">'+badge(c).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g>'; })();
+var RO=null; if(window.ResizeObserver){ RO=new ResizeObserver(function(){ var t=$("#top"); t.style.minHeight=Math.max(parseFloat(t.style.minHeight)||0,t.offsetHeight)+"px"; layout(); }); RO.observe($("#stage")); RO.observe($("#top")); }
+window.addEventListener("resize",layout);
+
+var INTRO="Star Stickers! Connect the stars to find real constellations in the night sky, and collect a sticker for each one.";
+var HOW="Each constellation has a star card that shows its shape. Join the stars in the sky the same way. Tap a star, then tap the star it's joined to, or drag from star to star. Finish every line to win the constellation's sticker!";
+var FIRST="Tap a star, then tap the star it's joined to on the star card. Or drag from star to star!", START="Match the star card!";
+var NOPE="Those two stars aren't joined on the star card. Look again!", ONE="That's one line! Keep going.", NEXTC="Here's the next star card.";
+var HINT="Here's a star tip!";
+var WIN="All of tonight's stars are found! Come back tomorrow for new constellations.", WINP="All done! You earned a new patch for your badge wall!", WINB="Bonus stars found! Another sticker for your book!";
+var BONUS="Here's a bonus constellation!";
+var L={"sk-intro":INTRO,"sk-how":HOW,"sk-first":FIRST,"sk-start":START,"sk-nope":NOPE,"sk-one":ONE,"sk-nextc":NEXTC,"sk-hint":HINT,"sk-win":WIN,"sk-winp":WINP,"sk-winb":WINB,"sk-bonus":BONUS};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"stickers", voice:"outpost", intro:INTRO, noHello:true});
+window.SKO={start:start,join:join,hint:hint,book:book,
+  solve:function(){ C.e.forEach(function(e){ if(!DR[ek(e[0],e[1])]) join(e[0],e[1]); }); },
+  almost:function(){ C.e.slice(0,-1).forEach(function(e){ DR[ek(e[0],e[1])]=1; }); drawSky(); drawCard(); },
+  xy:function(i){ var q=XY(C.n[i]), r=$("#sky").getBoundingClientRect(); return [r.left+q[0]*r.width/GEO.S, r.top+q[1]*r.height/GEO.S]; },
+  state:function(){ return P&&{lv:P.lv,i:P.i,ids:P.ids,hints:P.hints,done:P.done,busy:busy,id:C&&C.id,lines:Object.keys(DR).length,need:C&&C.e.length,book:ST.book,guide:P.guide,geo:GEO}; },lines:L};
+})();
+</script>
+</body>
+</html>
