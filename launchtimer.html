@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Launch Timer · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Launch Timer (The Outpost · Mission Control), Nov 17. Count down any job like a rocket launch: pick a job and its minutes, tap Launch,
+   and the job's time fuels the rocket. When the fuel is full (or you tap "Done early!"), it's liftoff. A Mission Log keeps every launch.
+   The clock runs from an end time (right even if the phone sleeps), and the screen is kept awake while it counts. Pictures: lt/ (html.ph*). */
+.bg{background-image:url("cb/bg-sm.jpg?v=1117a");filter:blur(1.4px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.bg{background-image:url("cb/bg.jpg?v=1117a")}}
+body.m-plan #plan{display:flex}
+#plan,#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#109a6e}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.cmsg{text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px;min-height:42px;display:flex;align-items:center;justify-content:center}
+/* planning: job cards and the minutes dial */
+.pbox{width:min(720px,100%);margin:0 auto;flex:0 1 auto;min-height:0;overflow:auto;border-radius:18px;padding:12px;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 24px rgba(0,0,0,.45);color:#3a2306;display:flex;flex-direction:column;gap:10px}
+.pbox h2{margin:0;font-size:17px;color:#109a6e;text-align:center}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:7px}
+@media (max-height:700px){.job{padding:5px 3px}.pbox{gap:7px;padding:9px}}
+.job{appearance:none;border:0;font:inherit;cursor:pointer;border-radius:14px;padding:8px 4px 7px;background:rgba(255,255,255,.6);box-shadow:0 2px 0 rgba(150,110,50,.35);
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:#4a300c;-webkit-tap-highlight-color:transparent}
+.job svg{width:40px;height:40px}
+.job b{font-size:13.5px;line-height:1.15;text-align:center}
+.job i{font-style:normal;font-size:11.5px;font-weight:700;color:#8a6a3a}
+.job.on{background:#fff;box-shadow:0 0 0 3px #109a6e,0 2px 0 rgba(150,110,50,.35)}
+.job:active{transform:translateY(2px)}
+.dial{display:flex;align-items:center;justify-content:center;gap:12px}
+.dial button{appearance:none;border:0;font:inherit;font-weight:800;font-size:26px;width:52px;height:52px;border-radius:50%;cursor:pointer;color:#fff;
+  background:linear-gradient(180deg,#3fc495,#109a6e);box-shadow:0 3px 0 #0a6a4b}
+.dial button:active{transform:translateY(2px);box-shadow:0 1px 0 #0a6a4b}
+.dial .mn{min-width:120px;text-align:center;font-weight:800;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;color:#2b2116}
+.dial .mn small{display:block;font-size:13px;font-weight:700;color:#8a6a3a;margin-top:3px}
+.pbtns{display:flex;gap:8px;justify-content:center}
+.pbtns{flex:none;width:min(720px,100%);margin:0 auto}.pbtns .k-btn{flex:1;max-width:340px;min-height:52px;font-size:19px}
+.go{background:linear-gradient(180deg,#ff8a5c,#e0482a)!important;color:#fff!important;box-shadow:0 4px 0 #9a2a12!important}
+/* the launch pad */
+#stage{position:relative;flex:1 1 auto;min-height:0;width:min(720px,100%);margin:0 auto;border-radius:18px;overflow:hidden;
+  background:linear-gradient(180deg,#0c1a3a,#1d3a6a 55%,#3d5f8e 80%,#6d7f8f);box-shadow:0 0 0 3px #3a4250,0 14px 30px rgba(0,0,0,.55)}
+html.phpad #stage{background:url("lt/pad.jpg?v=1117a") center bottom/cover}
+#scene{position:absolute;inset:0;width:100%;height:100%}
+.clock{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:6px 16px 7px;border-radius:14px;text-align:center;z-index:3;
+  background:linear-gradient(180deg,#1a1f27,#0b0e12);box-shadow:0 0 0 2px #3a4250,0 6px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)}
+.clock b{display:block;font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums;color:#7dffb0;text-shadow:0 0 12px rgba(80,255,150,.6);letter-spacing:.02em}
+.clock span{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#9fb7c9;margin-top:3px}
+.clock.paused b{color:#ffd66b;text-shadow:0 0 12px rgba(255,200,80,.6);animation:blink 1s steps(2) infinite}
+.clock.ten b{color:#ff8a5c;text-shadow:0 0 14px rgba(255,120,60,.8)}
+@keyframes blink{50%{opacity:.35}}
+.abar{flex:none;width:min(720px,100%);margin:0 auto;display:flex;gap:8px}
+.abar .k-btn{flex:1;min-height:48px;font-size:16px;padding:0 6px}
+#rocket{transition:transform .2s linear}
+#rocket.lift{transition:transform 3.2s cubic-bezier(.55,0,.8,.4)}
+#rocket.shake{animation:rshake .09s linear infinite}
+@keyframes rshake{50%{transform:translate(1.2px,0)}}
+.flame{transform-origin:50% 0;animation:fl .12s ease-in-out infinite alternate}
+@keyframes fl{to{transform:scaleY(1.2) scaleX(.9)}}
+.smoke{opacity:0;transition:opacity .6s}
+.lifting .smoke{opacity:1}
+.log{display:flex;flex-direction:column;gap:6px;max-height:min(52vh,420px);overflow:auto;margin:8px 0 12px;text-align:left}
+.log div{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.08);font-size:15px}
+.log svg{width:30px;height:30px;flex:none}
+.log b{flex:1}
+.log i{font-style:normal;font-size:12.5px;color:#a9bad0;white-space:nowrap}
+.tot{font-size:15px;margin:2px 0}
+.how svg{display:block;width:min(240px,100%);margin:4px auto 10px}
+@media (max-height:700px){.cmsg{font-size:14.5px;min-height:36px}.ib{min-height:36px;font-size:14px}.clock b{font-size:36px}.job svg{width:32px;height:32px}.dial .mn{font-size:34px}}
+@media (prefers-reduced-motion:reduce){.flame,#rocket.shake{animation:none}}
+</style>
+
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="ltEmb"></svg>
+      <h1>Launch Timer</h1>
+      <p class="lead">Count down any job like a rocket launch! Pick a job, tap Launch, and your work fuels the rocket.</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlan">Plan a Mission</button>
+        <button class="k-btn k-ghost" id="bLog">Mission Log</button>
+        <button class="k-btn k-ghost" id="bHow">How It Works</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="plan">
+    <div class="cbar"><button class="ib gh" id="pMenu">Menu</button><div class="cday"><b>Mission Control</b><span>Plan a mission</span></div><button class="ib gh" id="pLog">Log</button></div>
+    <div class="pbox" data-bws="off">
+      <h2>1. Pick a job</h2>
+      <div class="jobs" id="jobs"></div>
+      <h2>2. How many minutes?</h2>
+      <div class="dial"><button id="mDown" aria-label="Fewer minutes">−</button><div class="mn"><span id="mVal">10</span><small>minutes</small></div><button id="mUp" aria-label="More minutes">+</button></div>
+    </div>
+    <div class="pbtns"><button class="k-btn go" id="bGo">Launch!</button></div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar"><button class="ib gh" id="tMenu">Menu</button><div class="cday"><b id="cday">Countdown</b><span id="cjob"></span></div><button class="ib gh" id="tLog">Log</button></div>
+    <div class="cmsg" id="cmsg" aria-live="polite"></div>
+    <div id="stage"><svg id="scene" viewBox="0 -90 400 590" preserveAspectRatio="xMidYMax meet" aria-hidden="true"></svg>
+      <div class="clock" id="clock"><b id="cTime">10:00</b><span id="cFuel">Fuel 0%</span></div></div>
+    <div class="abar"><button class="k-btn k-ghost" id="aPause">Pause</button><button class="k-btn go" id="aDone">Done early!</button><button class="k-btn k-ghost" id="aStop">Stop</button></div>
+  </section>
+</main>
+<script src="kids.js?v=1117a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1117a";
+var ST=LS.get("launch",{}); if(!ST||typeof ST!=="object") ST={}; ST.log=ST.log||[]; ST.min=ST.min||{};
+function save(){ LS.set("launch",ST); }
+
+/* ---------- the jobs (icons drawn: 40x40, stroke) ---------- */
+var JOBS=[
+ ["teeth","Brush teeth",2,'<rect x="7" y="17" width="26" height="6" rx="3"/><path d="M25 17v-6h8v6M27 11v-3M30 11v-3"/>'],
+ ["dress","Get dressed",5,'<path d="M14 7l-8 5 4 7 4-2v16h12V17l4 2 4-7-8-5c-1 3-3 4-6 4s-5-1-6-4z"/>'],
+ ["bed","Make my bed",5,'<path d="M5 30V12M5 22h30v8M35 30v-6M9 22v-5h9v5"/>'],
+ ["tidy","Tidy my room",10,'<path d="M8 16h24v16H8zM6 11h28v5H6zM16 21h8"/>'],
+ ["homework","Homework",20,'<path d="M28 6l6 6-17 17-8 2 2-8z M24 10l6 6"/>'],
+ ["read","Reading",20,'<path d="M20 11c-4-3-9-3-14-2v20c5-1 10-1 14 2 4-3 9-3 14-2V9c-5-1-10-1-14 2zM20 11v20"/>'],
+ ["practice","Practice music",15,'<path d="M15 29V9l16-3v19"/><circle cx="11" cy="29" r="4"/><circle cx="27" cy="25" r="4"/>'],
+ ["pets","Care for my pet",10,'<circle cx="11" cy="15" r="3"/><circle cx="17" cy="10" r="3"/><circle cx="24" cy="10" r="3"/><circle cx="30" cy="15" r="3"/><path d="M20 18c-6 0-10 6-9 10 1 3 5 2 9 2s8 1 9-2c1-4-3-10-9-10z"/>'],
+ ["chores","Chores",15,'<path d="M27 5l-9 17M12 21l8 4-4 10c-3 0-7-2-9-5z"/>'],
+ ["own","My own job",10,'<path d="M20 5l4.4 9 9.6 1.4-7 6.8 1.7 9.6-8.7-4.6-8.7 4.6 1.7-9.6-7-6.8 9.6-1.4z"/>']];
+var JB={}; JOBS.forEach(function(j){ JB[j[0]]={id:j[0],n:j[1],m:j[2],ic:j[3]}; });
+function icon(id,col){ return '<svg viewBox="0 0 40 40" fill="none" stroke="'+(col||"#109a6e")+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+JB[id].ic+'</svg>'; }
+
+/* ---------- photos (lt/): the launch pad and the rocket; drawn stand-ins until then ---------- */
+var PHR=false;
+(function(){ var a=new Image(); a.onload=function(){ document.documentElement.classList.add("phpad"); drawScene(); }; a.src="lt/pad.jpg?v="+AV;
+  var r=new Image(); r.onload=function(){ PHR={w:r.naturalWidth,h:r.naturalHeight}; drawScene(); }; r.src="lt/rocket.webp?v="+AV; })();
+
+/* ---------- sound ---------- */
+/* ---------- sound of its own ---------- */
+var AC=null, OUT=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+    var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+    OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+  if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return;
+  if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+function on(){ return LS.get("sound",true)!==false && !!ac(); }
+function tone(f,at,d,v,type,f2){ if(!on()) return; var t=AC.currentTime+(at||0), o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+var NB=null;
+function nbuf(){ if(!NB){ NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); var c=NB.getChannelData(0); for(var i=0;i<c.length;i++) c[i]=Math.random()*2-1; } return NB; }
+function noise(at,d,v,lo,hi){ if(!on()) return; var t=AC.currentTime+(at||0), s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=nbuf();
+  f.type="bandpass"; f.frequency.value=Math.sqrt(lo*hi); f.Q.value=Math.max(.3,Math.sqrt(lo*hi)/(hi-lo)); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+d+.05); }
+
+function sTap(){ tone(880,0,.05,.05,"triangle"); }
+function sMin(){ tone(1320,0,.12,.04,"sine"); }
+function sBeep(last){ tone(last?1568:988,0,last?.5:.14,.09,"square"); }
+function sIgnite(){ tone(220,0,.5,.08,"sawtooth",440); noise(0,.6,.15,200,2000); }
+var RUM=null;
+function liftSound(){ if(!on()) return; var s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=nbuf(); s.loop=true; f.type="lowpass"; f.frequency.value=180;
+  var t=AC.currentTime; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.7,t+.4); g.gain.exponentialRampToValueAtTime(.3,t+2.6); g.gain.exponentialRampToValueAtTime(.0001,t+4);
+  f.frequency.setValueAtTime(140,t); f.frequency.exponentialRampToValueAtTime(900,t+1.2); f.frequency.exponentialRampToValueAtTime(240,t+4);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+4.1);
+  [523,659,784,1047].forEach(function(fq,i){ tone(fq,1.4+i*.1,.5,.06,"triangle"); }); }
+
+/* ---------- the scene: sky, gantry, rocket, fuel tank ---------- */
+var GY=455;
+function drawScene(){ var s='<defs><linearGradient id="ltBody" x1="0" x2="1"><stop offset="0" stop-color="#b9c2cc"/><stop offset=".35" stop-color="#ffffff"/><stop offset=".7" stop-color="#e6ebf0"/><stop offset="1" stop-color="#9aa5b1"/></linearGradient>'+
+  '<linearGradient id="ltRed" x1="0" x2="1"><stop offset="0" stop-color="#a8261a"/><stop offset=".4" stop-color="#f05a3c"/><stop offset="1" stop-color="#8f1c12"/></linearGradient>'+
+  '<linearGradient id="ltFuel" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff9a3c"/><stop offset="1" stop-color="#ffd65a"/></linearGradient>'+
+  '<linearGradient id="ltFlame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0"/><stop offset=".3" stop-color="#ffd24a"/><stop offset=".7" stop-color="#ff6a1a"/><stop offset="1" stop-color="#ff3a0a" stop-opacity="0"/></linearGradient>'+
+  '<radialGradient id="ltSmoke"><stop offset="0" stop-color="#eef0f3"/><stop offset="1" stop-color="#c6ccd4" stop-opacity="0"/></radialGradient></defs>';
+  if(!document.documentElement.classList.contains("phpad")){
+    for(var i=0;i<90;i++){ var x=(i*97)%1200-400, y=(i*61)%300-80; s+='<circle cx="'+x+'" cy="'+y+'" r="'+(i%3?.9:1.5)+'" fill="#fff" opacity="'+(.3+(i%4)*.15)+'"/>'; }
+    s+='<rect x="-1000" y="'+GY+'" width="2400" height="60" fill="#4a4f57"/><rect x="-1000" y="'+GY+'" width="2400" height="3" fill="#7a818b"/>'; }
+  /* gantry tower */
+  s+='<g stroke="#c9472c" stroke-width="4" fill="none"><path d="M118 '+GY+'V150M146 '+GY+'V150"/>';
+  for(var y=GY;y>160;y-=30) s+='<path d="M118 '+y+'L146 '+(y-30)+'M146 '+y+'L118 '+(y-30)+'"/>';
+  s+='</g><path d="M146 250H192M146 330H192" stroke="#9aa0aa" stroke-width="5"/><rect x="110" y="140" width="44" height="12" fill="#c9472c"/>';
+  /* pad */
+  s+='<rect x="168" y="'+(GY-14)+'" width="124" height="14" rx="3" fill="#6b717b"/><rect x="168" y="'+(GY-14)+'" width="124" height="3" fill="#9aa0aa"/>';
+  s+='<rect x="214" y="'+(GY-10)+'" width="32" height="10" rx="2" fill="#e9c46a"/><text x="230" y="'+(GY-2)+'" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif">BW</text>';
+  /* smoke (shown at liftoff) */
+  s+='<g class="smoke">'; [[150,0,60],[200,-10,70],[260,-6,75],[320,0,60],[110,6,50],[360,6,50]].forEach(function(q){ s+='<circle cx="'+q[0]+'" cy="'+(GY-20+q[1])+'" r="'+q[2]+'" fill="url(#ltSmoke)"/>'; }); s+='</g>';
+  /* the rocket (photo if it's here) */
+  s+='<g id="rocket"><g id="flames" opacity="0"><path class="flame" d="M214 '+(GY-24)+'Q230 '+(GY+60)+' 246 '+(GY-24)+'Z" fill="url(#ltFlame)"/></g>';
+  if(PHR){ var h=290, w=h*PHR.w/PHR.h; s+='<image href="lt/rocket.webp?v='+AV+'" x="'+(230-w/2)+'" y="'+(GY-14-h)+'" width="'+w+'" height="'+h+'"/>'; }
+  else { s+='<path d="M196 '+(GY-70)+'L176 '+(GY-24)+'H204Z M264 '+(GY-70)+'L284 '+(GY-24)+'H256Z" fill="url(#ltRed)"/>'+
+    '<path d="M204 '+(GY-24)+'V200Q204 150 230 112Q256 150 256 200V'+(GY-24)+'Z" fill="url(#ltBody)" stroke="#7d8894" stroke-width="1.5"/>'+
+    '<path d="M215 160Q230 120 230 112Q230 120 245 160Z" fill="url(#ltRed)"/><path d="M204 200Q204 150 230 112Q256 150 256 200Q242 186 230 186Q218 186 204 200Z" fill="url(#ltRed)"/>'+
+    '<circle cx="230" cy="240" r="15" fill="#2d6fae" stroke="#9aa5b1" stroke-width="4"/><circle cx="225" cy="235" r="5" fill="#fff" opacity=".6"/>'+
+    '<rect x="204" y="330" width="52" height="8" fill="url(#ltRed)"/><path d="M226 '+(GY-24)+'V200" stroke="#9aa5b1" stroke-width="4" opacity=".7"/>'+
+    '<rect x="210" y="'+(GY-28)+'" width="40" height="8" rx="2" fill="#5a616b"/>'; }
+  s+='</g>';
+  /* the fuel tank: fills as the job's time runs */
+  s+='<g transform="translate(318 170)"><rect x="-4" y="-4" width="40" height="'+(GY-170-6)+'" rx="18" fill="#2a2f38" stroke="#9aa0aa" stroke-width="3"/>'+
+    '<clipPath id="ltTankC"><rect x="2" y="2" width="28" height="'+(GY-170-18)+'" rx="13"/></clipPath><g clip-path="url(#ltTankC)"><rect id="fuel" x="2" y="'+(GY-170-16)+'" width="28" height="0" fill="url(#ltFuel)"/></g>'+
+    '<rect x="6" y="6" width="5" height="'+(GY-170-28)+'" rx="2.5" fill="#fff" opacity=".18"/><text x="16" y="'+(GY-170+8)+'" text-anchor="middle" font-size="11" font-weight="800" fill="#ffd65a" font-family="Outfit,system-ui,sans-serif">FUEL</text></g>';
+  $("#scene").innerHTML=s; if(P) show(); }
+
+/* ---------- planning ---------- */
+var SEL=ST.last||"teeth", MIN=ST.min[SEL]||JB[SEL].m;
+function drawJobs(){ $("#jobs").innerHTML=JOBS.map(function(j){ return '<button class="job'+(j[0]===SEL?" on":"")+'" data-j="'+j[0]+'" aria-label="'+j[1]+'">'+icon(j[0])+'<b>'+j[1]+'</b><i>'+(ST.min[j[0]]||j[2])+' min</i></button>'; }).join("");
+  $("#mVal").textContent=MIN; }
+$("#jobs").addEventListener("click",function(e){ var b=e.target.closest(".job"); if(!b) return; sTap(); SEL=b.dataset.j; MIN=ST.min[SEL]||JB[SEL].m; drawJobs(); BWK.say(JB[SEL].n); });
+function setMin(v){ MIN=Math.max(1,Math.min(60,v)); $("#mVal").textContent=MIN; sTap(); }
+$("#mDown").onclick=function(){ setMin(MIN-(MIN>10?5:1)); }; $("#mUp").onclick=function(){ setMin(MIN+(MIN>=10?5:1)); };
+function toPlan(){ stopTick(); document.body.className="m-plan"; drawJobs(); }
+
+/* ---------- the countdown (from an end time, so it stays right if the phone sleeps) ---------- */
+var P=null, TK=0, WL=null, said={}, stopArm=0;
+function now(){ return Date.now(); }
+function launch(){ ST.last=SEL; ST.min[SEL]=MIN; P={j:SEL,min:MIN,total:MIN*60000,end:now()+MIN*60000,paused:false,left:0,start:now()}; ST.run=P; save();
+  said={}; sIgnite(); begin(); msg("Countdown started! Get to work, crew!"); BWK.say(GO); }
+function begin(){ document.body.className="m-play"; $("#cjob").textContent=JB[P.j].n+" · "+P.min+" min"; drawScene(); $("#rocket").setAttribute("class",""); $("#rocket").style.transform="";
+  $("#stage").classList.remove("lifting"); $("#aPause").textContent=P.paused?"Resume":"Pause"; ["aPause","aDone","aStop"].forEach(function(id){ $("#"+id).disabled=false; });
+  stopTick(); TK=setInterval(tick,250); tick(); wake(true); }
+function rem(){ return P.paused?P.left:Math.max(0,P.end-now()); }
+var lastSec=-1, lastMin=-1;
+function tick(){ if(!P) return; var r=rem(), sec=Math.ceil(r/1000); if(r<=0&&!P.paused){ liftoff(false); return; }
+  if(sec!==lastSec){ lastSec=sec; if(sec<=10&&sec>0&&!P.paused) sBeep(false); var m=Math.floor(sec/60); if(m!==lastMin&&lastMin>=0&&!P.paused&&sec>10) sMin(); lastMin=m; }
+  var p=1-r/P.total; if(p>=.5&&!said.half&&P.total>=120000){ said.half=1; msg("Halfway there! Keep going!"); BWK.say(HALF); }
+  if(sec<=10&&!said.ten&&!P.paused){ said.ten=1; msg("Ten seconds to launch!"); BWK.say(TEN); }
+  show(); }
+function show(){ if(!P) return; var r=rem(), sec=Math.ceil(r/1000), p=Math.min(1,1-r/P.total);
+  $("#cTime").textContent=Math.floor(sec/60)+":"+("0"+sec%60).slice(-2); $("#cFuel").textContent=P.paused?"Paused":"Fuel "+Math.floor(p*100)+"%";
+  var c=$("#clock"); c.classList.toggle("paused",P.paused); c.classList.toggle("ten",sec<=10&&!P.paused);
+  var f=$("#fuel"); if(f){ var H=GY-170-18; f.setAttribute("height",(H*p).toFixed(1)); f.setAttribute("y",(2+H*(1-p)).toFixed(1)); }
+  var fl=$("#flames"); if(fl) fl.setAttribute("opacity",sec<=10&&!P.paused?(.35+(10-sec)*.06).toFixed(2):"0");
+  var rk=$("#rocket"); if(rk&&!rk.classList.contains("lift")) rk.classList.toggle("shake",sec<=5&&!P.paused); }
+function stopTick(){ clearInterval(TK); TK=0; lastSec=-1; lastMin=-1; }
+function pause(){ if(!P) return; sTap(); if(P.paused){ P.end=now()+P.left; P.paused=false; msg("Back to work!"); } else { P.left=rem(); P.paused=true; msg("Mission paused. Tap Resume when you're ready."); }
+  ST.run=P; save(); $("#aPause").textContent=P.paused?"Resume":"Pause"; wake(!P.paused); show(); }
+function stopMission(){ if(!P) return; var b=$("#aStop");
+  if(!stopArm){ stopArm=setTimeout(function(){ stopArm=0; b.textContent="Stop"; },3000); b.textContent="Tap again to stop"; sTap(); return; }
+  clearTimeout(stopArm); stopArm=0; b.textContent="Stop"; P=null; ST.run=null; save(); wake(false); BWK.sfx("close"); toPlan(); }
+function liftoff(early){ if(!P) return; stopTick(); var g=P, spent=early?Math.max(1,Math.round((g.total-rem())/60000)):g.min; P.paused=false;
+  ["aPause","aDone","aStop"].forEach(function(id){ $("#"+id).disabled=true; });
+  ST.log.unshift({j:g.j,m:spent,d:now(),e:early?1:0}); if(ST.log.length>60) ST.log.length=60; ST.run=null; save();
+  msg(early?"Done early! Liftoff!":"Liftoff! Mission complete!"); liftSound(); var rk=$("#rocket"), fl=$("#flames"); if(fl) fl.setAttribute("opacity","1");
+  $("#cTime").textContent="0:00"; $("#cFuel").textContent="Liftoff!"; var f=$("#fuel"); if(f){ var H=GY-170-18; f.setAttribute("height",H); f.setAttribute("y",2); }
+  $("#stage").classList.add("lifting"); rk.classList.remove("shake"); rk.classList.add("shake");
+  setTimeout(function(){ rk.classList.remove("shake"); rk.classList.add("lift"); rk.style.transform="translateY(-760px)"; },700);
+  wake(false); var fresh=BWG.patch("timer");
+  setTimeout(function(){ P=null; var box=BWK.sheet('<h2>Mission complete!</h2>'+BWG.patchLine(fresh)+'<div style="width:64px;height:64px;margin:4px auto">'+icon(g.j,"#7dffb0")+'</div>'+
+      '<p>You finished <b>'+JB[g.j].n.toLowerCase()+'</b>'+(early?' early':'')+'. Great work, crew!</p><p class="tot">Missions launched: '+ST.log.length+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="again">New Mission</button><button class="k-btn k-ghost" data-a="log">Mission Log</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); toPlan(); };
+    box.querySelector('[data-a=log]').onclick=function(){ showLog(); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    BWK.say(fresh?WINP:LIFT); },3600); }
+function msg(t){ $("#cmsg").textContent=t||""; }
+
+/* keep the screen awake while counting down (where the browser allows it) */
+function wake(onq){ try{ if(onq&&navigator.wakeLock&&!WL){ navigator.wakeLock.request("screen").then(function(l){ WL=l; l.addEventListener("release",function(){ WL=null; }); }).catch(function(){}); }
+  else if(!onq&&WL){ WL.release(); WL=null; } }catch(e){} }
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible"&&P&&!P.paused){ wake(true); tick(); } });
+
+/* ---------- the mission log ---------- */
+function showLog(){ var n=ST.log.length, mins=ST.log.reduce(function(a,x){ return a+x.m; },0), MO=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var h='<h2>Mission Log</h2><p class="tot">Missions: <b>'+n+'</b> · Minutes of work: <b>'+mins+'</b></p>';
+  h+=n?'<div class="log" data-bws="off">'+ST.log.map(function(x){ var d=new Date(x.d); return '<div>'+icon(x.j,"#7dffb0")+'<b>'+JB[x.j].n+'</b><i>'+x.m+' min'+(x.e?' · early':'')+' · '+MO[d.getMonth()]+' '+d.getDate()+'</i></div>'; }).join("")+'</div>'
+    :'<p>No missions yet. Plan one and launch it!</p>';
+  BWK.sheet(h); }
+
+/* ---------- menu and buttons ---------- */
+function toMenu(){ document.body.className="m-menu"; var n=ST.log.length; $("#mfoot").textContent=n?("Missions launched: "+n+"."):"Ready when you are, crew!"; }
+$("#bPlan").onclick=function(){ BWK.sfx("open"); if(P) begin(); else toPlan(); };
+$("#bLog").onclick=showLog; $("#pLog").onclick=showLog; $("#tLog").onclick=showLog;
+$("#bGo").onclick=launch; $("#aPause").onclick=pause; $("#aDone").onclick=function(){ liftoff(true); }; $("#aStop").onclick=stopMission;
+$("#pMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); $("#bPlan").textContent=P?"Back to My Mission":"Plan a Mission"; };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How It Works</h2><svg viewBox="0 0 400 500" aria-hidden="true">'+$("#scene").innerHTML.replace(/id="[^"]*"/g,"")+'</svg><p>'+HOW+'</p>'+
+  '<p><b>Pause</b> if you need a break, and <b>Resume</b> when you\'re back. <b>Done early?</b> Tap it for an early liftoff!</p>'+
+  '<p>The last ten seconds count down out loud. Every launch goes in your <b>Mission Log</b>.</p>'+
+  '<p>Grown-ups: the timer keeps time even if the screen turns off, and the screen stays awake while it counts where the browser allows it.</p></div>'); BWK.say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+(function(){ $("#ltEmb").innerHTML='<g transform="translate(36 0) scale(.19)">'+'<path d="M196 385L176 431H204Z M264 385L284 431H256Z" fill="#e0482a"/><path d="M204 431V200Q204 150 230 112Q256 150 256 200V431Z" fill="#f4f6f8" stroke="#7d8894" stroke-width="4"/><path d="M204 200Q204 150 230 112Q256 150 256 200Q242 186 230 186Q218 186 204 200Z" fill="#e0482a"/><circle cx="230" cy="240" r="15" fill="#2d6fae" stroke="#9aa5b1" stroke-width="5"/><path d="M214 440Q230 520 246 440Z" fill="#ffb03a"/></g>'+
+  '<g fill="#fff" opacity=".7"><circle cx="20" cy="20" r="1.5"/><circle cx="110" cy="14" r="1.2"/><circle cx="100" cy="60" r="1.5"/><circle cx="26" cy="70" r="1.1"/></g>'; })();
+
+var INTRO="Launch Timer! Count down any job like a rocket launch. Pick a job, tap Launch, and your work fuels the rocket.";
+var HOW="Pick a job and how many minutes it takes, then tap Launch. While you work, the rocket's fuel tank fills up. When the time is up, it's liftoff!";
+var GO="Countdown started! Get to work, crew!", HALF="Halfway there! Keep going!", TEN="Ten seconds to launch!", LIFT="Liftoff! Mission complete. Great work, crew!";
+var WINP="Liftoff! You earned a new patch for your badge wall!";
+var L={"lt-intro":INTRO,"lt-how":HOW,"lt-go":GO,"lt-half":HALF,"lt-ten":TEN,"lt-lift":LIFT,"lt-winp":WINP};
+JOBS.forEach(function(j){ L["lt-j-"+j[0]]=j[1]; });
+BWK.lines(L);
+drawScene();
+/* a mission still running (the page was closed or reloaded): pick it up again */
+if(ST.run&&ST.run.j&&JB[ST.run.j]){ P=ST.run; begin(); msg(rem()>0?"Your mission is still counting down!":""); } else toMenu();
+BWK.init({here:"timer", voice:"outpost", intro:INTRO, noHello:true});
+window.LTO={launch:function(j,m){ SEL=j; MIN=m; launch(); },pause:pause,done:function(){ liftoff(true); },stop:stopMission,plan:toPlan,
+  skip:function(ms){ if(P&&!P.paused){ P.end-=ms; ST.run=P; save(); } tick(); },state:function(){ return {P:P,log:ST.log.length,rem:P?rem():0}; },lines:L};
+})();
+</script>
+</body>
+</html>
