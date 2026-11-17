@@ -26,7 +26,8 @@
 .ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
 .top{flex:none;min-height:46px;display:flex;align-items:center;justify-content:center}
 .cmsg{text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px;max-width:680px}
-#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;user-select:none;-webkit-user-select:none}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;user-select:none;-webkit-user-select:none;touch-action:none;cursor:grab}
+#stage:active{cursor:grabbing}
 #board{position:absolute;touch-action:manipulation;transform-style:preserve-3d;transform:rotateX(var(--tilt,52deg)) rotateZ(var(--yaw,0deg));
   transition:transform .75s cubic-bezier(.3,.75,.25,1)}
 .plate.under{transform:translateZ(calc(var(--u)*-.16));background:#1d4f1b!important;box-shadow:0 0 0 calc(var(--u)*.04) #163d14,0 calc(var(--u)*.3) calc(var(--u)*.5) rgba(0,0,0,.6)!important}
@@ -260,10 +261,10 @@ function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.cli
     if(s==="top"){ x=o+i*u+u/2; y=o*.5; } else if(s==="bottom"){ x=o+i*u+u/2; y=o+N*u+o*.5; } else if(s==="left"){ x=o*.5; y=o+i*u+u/2; } else { x=o+N*u+o*.5; y=o+i*u+u/2; }
     h+='<div class="clue" data-s="'+s+'" data-i="'+i+'" style="left:'+(x-cs/2)+'px;top:'+(y-cs/2)+'px;width:'+cs+'px;height:'+cs+'px">'+k+'</div>'; } });
   h+='<span class="bwp3" style="left:'+(o+N*u+o/2)+'px;top:'+(o+N*u+o/2)+'px">BW</span>';
-  b.innerHTML=h; b.onclick=function(ev){ var q=ev.target.closest("[data-r]"); if(q) tapCell(+q.dataset.r,+q.dataset.c); };
+  b.innerHTML=h; b.onclick=function(ev){ if(DRAG.moved) return; var q=ev.target.closest("[data-r]"); if(q) tapCell(+q.dataset.r,+q.dataset.c); };
   view(true); drawCells(); if(SEL) select(SEL[0],SEL[1]); }
 function view(now){ var b=$("#board"); if(!b) return; if(now) b.style.transition="none";
-  b.style.setProperty("--yaw",VIEW.yaw+"deg"); b.style.setProperty("--tilt",VIEW.tilt+"deg"); b.style.setProperty("--tz",VIEW.tilt>60?-.62:.34);
+  b.style.setProperty("--yaw",VIEW.yaw+"deg"); b.style.setProperty("--tilt",VIEW.tilt+"deg"); b.style.setProperty("--tz",VIEW.tilt>64?-.62:.34);
   if(now){ void b.offsetWidth; b.style.transition=""; } $("#vEye").classList.toggle("on",VIEW.tilt>60); }
 function cellEl(r,c){ return $('#board .cell[data-r="'+r+'"][data-c="'+c+'"]'); }
 function twEl(r,c){ return $("#tw"+r+"_"+c); }
@@ -292,8 +293,18 @@ function marks(){ var N=P.N;
 function select(r,c){ SEL=[r,c]; [].forEach.call(document.querySelectorAll("#board .cell,#board .tw3"),function(e){ var rr=+e.dataset.r, cc=+e.dataset.c;
   e.classList.toggle("sel",rr===r&&cc===c); if(e.classList.contains("cell")) e.classList.toggle("peer",rr===r||cc===c); }); }
 /* turning the board and eye level */
-function turn(d){ VIEW.yaw+=d*90; view(); sTurn(); }
+function turn(d){ VIEW.yaw=Math.round(VIEW.yaw/90)*90+d*90; view(); sTurn(); }
 function eye(){ VIEW.tilt=VIEW.tilt>60?50:80; view(); sTurn(); if(VIEW.tilt>60) sayOnce("eye",EYE); msg(VIEW.tilt>60?"Eye level! Look along a row: which towers can you see from this side?":""); }
+/* drag anywhere on the table to spin the board freely (sideways) and tilt it (up and down), from looking straight down to eye level (Judy, Nov 16) */
+var DRAG={on:false,moved:false};
+$("#stage").addEventListener("pointerdown",function(e){ if(e.target.closest(".vbtns")) return; DRAG={on:true,moved:false,x:e.clientX,y:e.clientY,yaw:VIEW.yaw,tilt:VIEW.tilt,id:e.pointerId}; });
+$("#stage").addEventListener("pointermove",function(e){ if(!DRAG.on||e.pointerId!==DRAG.id) return; var dx=e.clientX-DRAG.x, dy=e.clientY-DRAG.y;
+  if(!DRAG.moved&&Math.hypot(dx,dy)<9) return;
+  if(!DRAG.moved){ DRAG.moved=true; $("#board").style.transition="none"; try{ $("#stage").setPointerCapture(e.pointerId); }catch(er){} }
+  VIEW.yaw=DRAG.yaw-dx*.45; VIEW.tilt=Math.max(0,Math.min(84,DRAG.tilt-dy*.35)); view(); if(!DRAG.snd){ DRAG.snd=1; sTurn(); } });
+function dragEnd(){ if(!DRAG.on) return; DRAG.on=false; $("#board").style.transition=""; setTimeout(function(){ DRAG.moved=false; },30);
+  if(VIEW.tilt>64) sayOnce("eye",EYE); }
+$("#stage").addEventListener("pointerup",dragEnd); $("#stage").addEventListener("pointercancel",dragEnd);
 $("#vL").onclick=function(){ turn(1); }; $("#vR").onclick=function(){ turn(-1); }; $("#vEye").onclick=eye;
 
 /* ---------- building ---------- */
@@ -372,6 +383,7 @@ function howPic(){ /* look-only: four towers seen from the left; the 4 hides the
 $("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2>'+howPic()+'<p>'+HOW+'</p>'+
   '<p><b>One of each:</b> every row and every column gets exactly one tower of each height. On a 4 by 4 baseplate that\'s one 1, one 2, one 3 and one 4.</p>'+
   '<p><b>The clues:</b> a clue on the edge is how many towers you can see when you look along that row or column from that side. A taller tower hides every shorter tower behind it. So a <b>1</b> means the tallest tower is right next to the clue, and the biggest clue means the towers go up in order, 1, 2, 3...</p>'+
+  '<p><b>Look around:</b> drag the table to spin the board and tilt it, from straight down to eye level. ⟲ and ⟳ turn it a quarter, and Eye level drops your view to the table edge so you can see which towers hide which.</p>'+
   '<p><b>Notes:</b> tap Notes to jot small numbers in a square for what it could be. Red numbers mean the same height is twice in a row or column. A clue turns green when its line is right.</p>'+
   '<p><b>Warm-ups</b> come every day, a little harder each day. <b>The Challenge</b> is one big 6 by 6 puzzle a week, new every Monday. Take all week if you like!</p>'+
   '<p>On a computer: arrow keys move, 1-6 build, N for notes, Backspace erases, U undo, H hint.</p></div>'); say(HOW); };
@@ -386,10 +398,11 @@ var INTRO="Zayden's Challenge! Build brick towers on the baseplate. The clues te
 var HOW="Every row and every column gets one tower of each height. A clue tells how many towers you can see from that side: a taller tower hides the shorter ones behind it. Tap a square, then tap a tower to build it.";
 var FIRST="Tap a square, then tap a tower to build it.", NUMS="Now tap a tower below to build it there.", SQ="Tap a square on the baseplate first.";
 var DUP="Oops! That height is already in that row or column.", ALMOST="Every square has a tower, but something isn't right yet. Look for the red ones.";
+var DRAGL="Drag the table to spin the board and tilt it.";
 var EYE="Eye level! Look along a row. Which towers can you see from this side?";
 var NOTESL="Notes are on. Tap towers to jot down what a square could be.", CHAL="The big one! Use Notes to keep track of what each square could be.";
 var HINT="Here's Zayden's tip!", WIN="Warm-up done! Every tower is in place.", WINC="Challenge complete! You cracked this week's big one!", WINP="Done! You earned a new patch for your badge wall!";
-var L={"zc-intro":INTRO,"zc-how":HOW,"zc-first":FIRST,"zc-nums":NUMS,"zc-sq":SQ,"zc-dup":DUP,"zc-almost":ALMOST,"zc-notes":NOTESL,"zc-chal":CHAL,"zc-hint":HINT,"zc-eye":EYE,"zc-win":WIN,"zc-winc":WINC,"zc-winp":WINP};
+var L={"zc-intro":INTRO,"zc-how":HOW,"zc-first":FIRST,"zc-nums":NUMS,"zc-sq":SQ,"zc-dup":DUP,"zc-almost":ALMOST,"zc-notes":NOTESL,"zc-chal":CHAL,"zc-hint":HINT,"zc-eye":EYE,"zc-drag":DRAGL,"zc-win":WIN,"zc-winc":WINC,"zc-winp":WINP};
 BWK.lines(L);
 toMenu();
 BWK.init({here:"challenge", voice:"outpost", intro:INTRO, noHello:true});
