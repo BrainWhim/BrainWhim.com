@@ -105,6 +105,7 @@ html.ph .clue{background:url("oh/token.png?v=1116a") center/100% 100% no-repeat}
 .cell.bad .tw.one::after{content:"";position:absolute;inset:4%;border-radius:14%;box-shadow:0 0 0 3px #ff4b3a,0 0 12px 3px rgba(255,75,58,.7)}
 .cell.giv .tw.one::after{content:"";position:absolute;inset:4%;border-radius:14%;box-shadow:0 0 0 3px #e9c46a}
 .nb:active{transform:translateY(2px);box-shadow:none}
+.nb.on{background:#fff;box-shadow:0 0 0 3px #c2402a,0 2px 0 rgba(150,110,50,.35)}
 .nb.done{opacity:.45}
 .nb.ring{box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite}
 .tools2{display:flex;gap:5px}
@@ -226,7 +227,7 @@ var P=null, gen=0, SEL=null, NOTES=false, said={};
 function msg(t){ $("#cmsg").textContent=t||""; }
 function say(t){ BWK.say(t); }
 function sayOnce(k,t){ if(said[k]) return; said[k]=1; say(t); }
-function start(kind){ gen++; said={}; clearHint(); SEL=null; NOTES=false; var t=today(), wk=TWG.weekOf(t.n), chal=kind==="chal";
+function start(kind){ gen++; said={}; clearHint(); SEL=null; NOTES=false; BR=0; var t=today(), wk=TWG.weekOf(t.n), chal=kind==="chal";
   var key=chal?"c":"w", stamp=chal?wk:t.n, lv=chal?7:lvOf(t.wd), seed=chal?wk*7+5:t.n;
   if(kind==="bonus"){ key="b"; lv=lvOf(t.wd); seed=(Math.random()*1e9)|0; stamp=-1; }
   document.body.className="m-play";
@@ -239,7 +240,7 @@ function start(kind){ gen++; said={}; clearHint(); SEL=null; NOTES=false; var t=
   $("#cnum").textContent=Z.N+" by "+Z.N+(chal?" · the big one!":"");
   layout(); drawNums(); $("#aNote").classList.remove("on");
   if(P.done){ msg(chal?"You finished this week's Challenge! A new one comes on Monday.":"Today's warm-up is done! Try the Challenge, or come back tomorrow."); return; }
-  if(ST.n<1&&kind==="warm") { msg("Tap a square, then tap a tower to build it."); say(FIRST); }
+  if(ST.n<1&&kind==="warm") { msg("Pick a tower below, then tap a square to build it."); say(FIRST); }
   else if(chal){ msg("The big one! Use Notes to keep track of what each square could be."); say(CHAL); }
   else msg(""); }
 function saveCur(){ if(!P||P.kind==="bonus") return; ST[P.key]={stamp:P.stamp,g:P.g,notes:P.notes,hints:P.hints,done:P.done,giv:P.giv}; save(); }
@@ -280,7 +281,7 @@ function drawCell(r,c,drop){ var e=cellEl(r,c), tw=twEl(r,c); if(!e||!tw) return
   tw.classList.remove("drop"); if(drop&&v){ void tw.offsetWidth; tw.classList.add("drop"); } }
 function drawCells(){ for(var r=0;r<P.N;r++) for(var c=0;c<P.N;c++) drawCell(r,c); marks(); }
 function drawNums(){ var h=""; for(var v=1;v<=P.N;v++) h+='<button class="nb" data-v="'+v+'" aria-label="Tower of '+v+'">'+towerSVG(v,P.N,true)+'<b>'+v+'</b></button>';
-  $("#nums").innerHTML=h; [].forEach.call(document.querySelectorAll(".nb"),function(b){ b.onclick=function(){ tapNum(+b.dataset.v); }; }); doneNums(); }
+  $("#nums").innerHTML=h; [].forEach.call(document.querySelectorAll(".nb"),function(b){ b.onclick=function(){ tapNum(+b.dataset.v); }; }); doneNums(); brushOn(); }
 function doneNums(){ [].forEach.call(document.querySelectorAll(".nb"),function(b){ var v=+b.dataset.v, n=0; P.g.forEach(function(row){ row.forEach(function(x){ if(x===v) n++; }); }); b.classList.toggle("done",n>=P.N); }); }
 /* conflicts and clue checks */
 function lineVals(s,i){ var N=P.N, a=[]; for(var k=0;k<N;k++){ var r,c; if(s==="top"){ r=k;c=i; } else if(s==="bottom"){ r=N-1-k;c=i; } else if(s==="left"){ r=i;c=k; } else { r=i;c=N-1-k; } a.push(P.g[r][c]); } return a; }
@@ -308,11 +309,17 @@ $("#stage").addEventListener("pointerup",dragEnd); $("#stage").addEventListener(
 $("#vL").onclick=function(){ turn(1); }; $("#vR").onclick=function(){ turn(-1); }; $("#vEye").onclick=eye;
 
 /* ---------- building ---------- */
-function tapCell(r,c){ if(!P||P.done) return; clearHint(); if(P.giv[r+","+c]){ sBad(); msg("Zayden's tip built that tower. It's right!"); return; } sSel(); select(r,c);
-  if(ST.n<1&&!said.num){ msg("Now tap a tower below to build it there."); sayOnce("num",NUMS); } }
+/* pick a tower in the tray first, then tap squares to build it (Judy, Nov 16: piece first feels natural). The tower stays picked,
+   so you can build several. Tapping a square with no tower picked just selects it (for Erase). */
+var BR=0;
+function tapCell(r,c){ if(!P||P.done) return; clearHint(); if(P.giv[r+","+c]){ sBad(); msg("Zayden's tip built that tower. It's right!"); return; } select(r,c);
+  if(BR){ placeAt(BR); return; } sSel();
+  if(!P.g[r][c]&&!P.notes[r][c]){ msg("Pick a tower below first, then tap a square."); sayOnce("sq",SQ); } }
+function tapNum(v){ if(!P||P.done) return; clearHint(); BR=(BR===v?0:v); sSel(); brushOn();
+  if(BR&&ST.n<1&&!said.num){ msg("Now tap a square to build it there."); sayOnce("num",NUMS); } else if(BR) msg(""); }
+function brushOn(){ [].forEach.call(document.querySelectorAll(".nb"),function(b){ b.classList.toggle("on",+b.dataset.v===BR); }); }
 function push(){ P.hist.push(JSON.stringify([P.g,P.notes])); if(P.hist.length>200) P.hist.shift(); }
-function tapNum(v){ if(!P||P.done) return; clearHint();
-  if(!SEL){ msg("Tap a square on the baseplate first."); sayOnce("sq",SQ); return; }
+function placeAt(v){ if(!P||P.done||!SEL) return;
   var r=SEL[0], c=SEL[1]; if(P.giv[r+","+c]) return; push();
   if(NOTES){ if(P.g[r][c]) { P.hist.pop(); return; } P.notes[r][c]^=(1<<v); sNote(); drawCell(r,c); saveCur(); return; }
   if(P.g[r][c]===v){ P.g[r][c]=0; sErase(); drawCell(r,c); P.live=true; marks(); P.live=false; doneNums(); saveCur(); return; }
@@ -360,7 +367,7 @@ function win(){ P.done=true; saveCur(); var g=gen; if(P.kind!=="bonus"){ ST.n++;
 
 /* ---------- keys on a computer: arrows move, 1-6 build, N notes, Backspace erases, U undo, H hint ---------- */
 document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")||!P) return; var k=e.key;
-  if(k>="1"&&k<="9"&&+k<=P.N){ tapNum(+k); return; }
+  if(k>="1"&&k<="9"&&+k<=P.N){ if(SEL) placeAt(+k); else tapNum(+k); return; }
   if(k.indexOf("Arrow")===0){ e.preventDefault(); var s=SEL||[0,0], d={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[k];
     select(Math.max(0,Math.min(P.N-1,s[0]+d[0])),Math.max(0,Math.min(P.N-1,s[1]+d[1]))); return; }
   var l=k.toLowerCase(); if(l==="q") turn(1); else if(l==="e") turn(-1); else if(l==="v") eye(); else if(l==="n") $("#aNote").onclick(); else if(k==="Backspace"||k==="Delete") $("#aErase").onclick(); else if(l==="u") $("#aUndo").onclick(); else if(l==="h") hint(); });
@@ -395,8 +402,8 @@ var RO=null; if(window.ResizeObserver){ RO=new ResizeObserver(function(){ var t=
 window.addEventListener("resize",layout);
 
 var INTRO="Zayden's Challenge! Build brick towers on the baseplate. The clues tell you how many towers you can see from each side.";
-var HOW="Every row and every column gets one tower of each height. A clue tells how many towers you can see from that side: a taller tower hides the shorter ones behind it. Tap a square, then tap a tower to build it.";
-var FIRST="Tap a square, then tap a tower to build it.", NUMS="Now tap a tower below to build it there.", SQ="Tap a square on the baseplate first.";
+var HOW="Every row and every column gets one tower of each height. A clue tells how many towers you can see from that side: a taller tower hides the shorter ones behind it. Pick a tower in the tray, then tap a square to build it.";
+var FIRST="Pick a tower below, then tap a square to build it.", NUMS="Now tap a square to build it there.", SQ="Pick a tower below first, then tap a square.";
 var DUP="Oops! That height is already in that row or column.", ALMOST="Every square has a tower, but something isn't right yet. Look for the red ones.";
 var DRAGL="Drag the table to spin the board and tilt it.";
 var EYE="Eye level! Look along a row. Which towers can you see from this side?";
@@ -408,7 +415,7 @@ toMenu();
 BWK.init({here:"challenge", voice:"outpost", intro:INTRO, noHello:true});
 window.ZCO={start:start,tap:tapCell,num:tapNum,hint:hint,notes:function(){ $("#aNote").onclick(); },
   fill:function(all){ var N=P.N; for(var r=0;r<N;r++) for(var c=0;c<N;c++) if(all||r+c>0){ P.g[r][c]=P.Z.sol[r][c]; } drawCells(); doneNums(); },
-  state:function(){ return P&&{kind:P.kind,lv:P.lv,N:P.N,g:P.g,sol:P.Z.sol,clues:P.Z.clues,score:P.Z.score,hints:P.hints,done:P.done,sel:SEL,geo:GEO}; },lines:L};
+  state:function(){ return P&&{br:BR,kind:P.kind,lv:P.lv,N:P.N,g:P.g,sol:P.Z.sol,clues:P.Z.clues,score:P.Z.score,hints:P.hints,done:P.done,sel:SEL,geo:GEO}; },lines:L};
 })();
 </script>
 </body>
