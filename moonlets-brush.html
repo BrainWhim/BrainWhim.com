@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Brush-Brush Timer · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Brush-Brush Timer (Nov 17, 2026), a two-minute toothbrushing timer. A sunny little bathroom in the Moonlets world.
+   A big friendly smile in a round mirror: four parts (top/bottom, this side/that side), 30 seconds each. The brush scrubs the part
+   to do; little sugar bugs pop off its teeth one by one; a ring fills for the two minutes; a music box plays. No tapping needed
+   while brushing (hands are busy). Each brushing puts a sun (morning) or a moon (night) on the week chart.
+   Big Moonlet: a fifth step (brush your tongue, 15 s), a big countdown, and "little circles" tips.
+   Keeps the screen awake while brushing (Wake Lock). Saved: bwk.brush {days:{"YYYY-MM-DD":{am,pm}}, n}. Lines bb-*. Test hook BBO.
+   Judy's photos (bb/): bg, mirror frame, toothbrush; drawn stand-ins until then.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#cfe8ef linear-gradient(180deg,#dff2f6,#bfe0ea 55%,#9fcbd8) center/cover;filter:blur(1.2px) brightness(.95)}
+html.bbbg .bg{background:#cfe8ef url("bb/bg-sm.jpg?v=1117a") center 55%/cover}
+@media (min-width:1100px){html.bbbg .bg{background-image:url("bb/bg.jpg?v=1117a")}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
+@media (max-height:600px){.top{min-height:84px}}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+#stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
+#mir{height:100%;max-height:560px;aspect-ratio:1;max-width:100%;display:block;filter:drop-shadow(0 12px 18px rgba(30,60,80,.35))}
+.count{position:absolute;right:max(4%,calc(50% - 300px));top:4%;font:700 44px Outfit,system-ui,sans-serif;color:#fff;text-shadow:0 2px 6px rgba(20,60,90,.6);display:none}
+body.big .count{display:block}
+/* the mirror and the smile (drawn) */
+.ring-bg{fill:none;stroke:rgba(255,255,255,.55);stroke-width:7}
+.ring{fill:none;stroke:#ffcf4a;stroke-width:7;stroke-linecap:round;transform:rotate(-90deg);transform-origin:100px 100px}
+.tick{stroke:#fff;stroke-width:2;opacity:.8}
+.tooth{fill:url(#bbTooth);stroke:#d9d2c4;stroke-width:.8}
+.tooth.dim{opacity:.55}
+.tooth.clean{fill:url(#bbClean)}
+.zone-glow{fill:rgba(255,236,150,.0);transition:fill .4s}
+.zone-glow.on{fill:rgba(255,236,150,.28)}
+.bug{transform-box:fill-box;transform-origin:center;animation:wig 1.2s ease-in-out infinite}
+.bug.gone{animation:bye .5s ease-in forwards}
+@keyframes wig{50%{transform:rotate(12deg) translateY(-1px)}}
+@keyframes bye{to{transform:translateY(-14px) scale(.2);opacity:0}}
+.spk{fill:#fff;transform-box:fill-box;transform-origin:center;animation:tw 1s ease-out both}
+@keyframes tw{from{transform:scale(.2);opacity:1}to{transform:scale(1.5);opacity:0}}
+.brush{transition:transform .5s cubic-bezier(.3,1.2,.4,1)}
+.brush .scrub{animation:scrub .32s ease-in-out infinite alternate}
+.brush.rest .scrub{animation:none}
+@keyframes scrub{from{transform:translateX(-7px)}to{transform:translateX(7px)}}
+.tongue-on{animation:tg 1s ease-in-out infinite alternate}
+@keyframes tg{to{fill:#ff9fae}}
+/* the week chart */
+.week{flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:min(100%,520px);padding:8px 10px;border-radius:18px;background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 6px 14px rgba(30,60,80,.25)}
+.week div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.week b{font-size:12px;color:#7a5a30}
+.week div.today b{color:#c26a12}
+.week i{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:15px;background:rgba(120,90,50,.15);box-shadow:inset 0 1px 2px rgba(0,0,0,.2);color:transparent}
+.week i.on{color:inherit;background:radial-gradient(circle at 35% 30%,#fffbe0,#ffd95a 60%,#e5a52a);box-shadow:0 0 8px rgba(255,200,80,.7)}
+.week i.on.pm{background:radial-gradient(circle at 35% 30%,#efe8ff,#b9a6f0 60%,#7a64c8);box-shadow:0 0 8px rgba(160,140,240,.7)}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}.week{gap:3px;padding:6px}.week i{width:20px;height:20px;font-size:13px}.count{font-size:34px}}
+@media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}.week i{width:18px;height:18px;font-size:11px}.week b{font-size:11px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.bug,.brush .scrub{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div id="stage"><svg id="mir" viewBox="0 0 200 200" aria-label="Brushing timer"></svg><div class="count" id="count" aria-live="off"></div></div>
+  <div class="week" id="week" aria-label="My brushing week"></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1117b"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1117a", NS="http://www.w3.org/2000/svg";
+  /* ---------- Finn's lines (clips bb-*) ---------- */
+  var HI="Time to brush! Tap Start, and brush along with me for two whole minutes!",
+      Z=["Brush your top teeth over here!","Now the top teeth over there!","Now the bottom teeth down here!","Last part! The bottom teeth over there!","Now brush your tongue, gently!"],
+      HALF="Halfway there! Keep on brushing!", DONE="Sparkly clean! What a bright, shiny smile!", TIP="Brush in little circles, like tiny bubbles!", PAUSE="Paused. Tap Go when you're ready!";
+  var LN={"bb-hi":HI,"bb-z1":Z[0],"bb-z2":Z[1],"bb-z3":Z[2],"bb-z4":Z[3],"bb-tongue":Z[4],"bb-half":HALF,"bb-done":DONE,"bb-tip":TIP,"bb-pause":PAUSE};
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("bbS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"bb-hi"); });
+  ["bb-hi","bb-z1","bb-z2","bb-z3","bb-z4","bb-done","bg-on","bg-off"].forEach(BWK.preload);
+
+  var S=BWK.store.get("brush",null)||{}; S.days=S.days||{}; S.n=S.n||0;
+  function save(){ BWK.store.set("brush",S); }
+  function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+  /* ---------- sound: a music box while brushing, a little swish, a chime per part ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+  function on(){ return BWK.store.get("sound",true) && !!ac(); }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  /* a gentle music-box tune (C major pentatonic), one note every beat, 16 notes round and round */
+  var TUNE=[523,659,784,659,880,784,659,587,523,587,659,784,659,587,523,392], beat=0, nextT=0;
+  function music(){ if(!on()) return; var now=AC.currentTime; if(nextT<now) nextT=now+.05;
+    while(nextT<now+.25){ var f=TUNE[beat%16]; tone(f,nextT,.9,.035,"triangle"); tone(f*2,nextT+.005,.5,.012); if(beat%4===0) tone(f/2,nextT,1.2,.02,"sine"); beat++; nextT+=.42; } }
+  var SND={
+    swish:function(){ if(!on()) return; noise(AC.currentTime+.01,.25,.05,4200,.7); },
+    chime:function(){ if(!on()) return; var t=AC.currentTime+.01; [1047,1319,1568].forEach(function(f,i){ tone(f,t+i*.08,.5,.05,"triangle"); }); },
+    pop:function(){ if(!on()) return; var t=AC.currentTime+.003; tone(900,t,.08,.08,"sine",300); tone(1800,t+.04,.12,.02); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.6,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); }); }
+  };
+
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("bbbg"); }; im.src="bb/bg-sm.jpg?v="+AV; })();
+
+  /* ---------- the smile in the mirror (drawn; 200×200) ---------- */
+  var sv=$("mir");
+  function el(n,a,p){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e; }
+  /* teeth: 6 on top along an arc, 6 below; part 0 = top-left on screen, 1 = top-right, 2 = bottom-left, 3 = bottom-right */
+  var TEETH=[], RING_LEN=2*Math.PI*94;
+  function drawMirror(){
+    sv.innerHTML='<defs><radialGradient id="bbGlass" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#f4fbff"/><stop offset=".7" stop-color="#d9eef5"/><stop offset="1" stop-color="#b9d9e6"/></radialGradient>'+
+      '<linearGradient id="bbFrame" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#e2b44c"/><stop offset="1" stop-color="#a87422"/></linearGradient>'+
+      '<linearGradient id="bbTooth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#ece4d2"/></linearGradient>'+
+      '<linearGradient id="bbClean" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f4f8ff"/></linearGradient>'+
+      '<linearGradient id="bbLip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f08a8a"/><stop offset="1" stop-color="#d4606a"/></linearGradient></defs>';
+    el("circle",{cx:100,cy:100,r:99,fill:"url(#bbFrame)"},sv); el("circle",{cx:100,cy:100,r:88,fill:"url(#bbGlass)"},sv);
+    el("circle",{cx:100,cy:100,r:94,"class":"ring-bg"},sv);
+    var ring=el("circle",{cx:100,cy:100,r:94,"class":"ring","stroke-dasharray":RING_LEN,"stroke-dashoffset":RING_LEN,id:"ring"},sv);
+    for(var q=0;q<4;q++){ var a=q*Math.PI/2-Math.PI/2; el("line",{x1:100+Math.cos(a)*89,y1:100+Math.sin(a)*89,x2:100+Math.cos(a)*99,y2:100+Math.sin(a)*99,"class":"tick"},sv); }
+    /* the mouth */
+    el("path",{d:"M34 92 Q100 70 166 92 Q160 160 100 166 Q40 160 34 92Z",fill:"url(#bbLip)"},sv);
+    el("path",{d:"M42 96 Q100 80 158 96 Q152 150 100 156 Q48 150 42 96Z",fill:"#6e1f2c"},sv);
+    var tg=el("path",{d:"M66 146 Q100 120 134 146 Q100 160 66 146Z",fill:"#f07a8c",id:"tongue"},sv);
+    el("path",{d:"M42 96 Q100 80 158 96 L156 102 Q100 88 44 102Z",fill:"#f59aa5"},sv);   // top gum
+    el("path",{d:"M52 140 Q100 152 148 140 L146 136 Q100 147 54 136Z",fill:"#f59aa5"},sv); // bottom gum
+    var zg=el("g",{},sv);
+    [[44,82,56,30],[100,82,56,30],[50,112,50,30],[100,112,50,30]].forEach(function(r,i){ el("rect",{x:r[0],y:r[1],width:r[2],height:r[3],rx:10,"class":"zone-glow",id:"zg"+i},zg); });
+    TEETH=[];
+    var w=[15,16,18,18,16,15], x0=51;   /* the teeth touch, with a hair between them */
+    w.forEach(function(ww,i){ var x=x0+ww/2; x0+=ww+.6; var y=91+Math.pow((x-100)/50,2)*7, h=i===2||i===3?22:19; TEETH.push({p:i<3?0:1, el:el("rect",{x:x-ww/2,y:y,width:ww,height:h,rx:5,"class":"tooth"},sv)}); });
+    [64.5,78.5,92.5,107.5,121.5,135.5].forEach(function(x,i){ var h=17, y=118+Math.pow((x-100)/50,2)*-4; TEETH.push({p:i<3?2:3, el:el("rect",{x:x-6.7,y:y,width:13.4,height:h,rx:4.5,"class":"tooth"},sv)}); });
+    el("ellipse",{cx:72,cy:60,rx:20,ry:8,fill:"#fff",opacity:.35,transform:"rotate(-25 72 60)"},sv);  // a glint on the glass
+    var bugs=el("g",{id:"bugs"},sv); var fx=el("g",{id:"fx"},sv);
+    /* the toothbrush: a wrapper moves it to the part, the inner group scrubs (a CSS animation can't share an SVG transform) */
+    var br=el("g",{"class":"brush rest",id:"brush"},sv), sc=el("g",{"class":"scrub"},br);
+    el("rect",{x:-6,y:-4,width:62,height:9,rx:4.5,fill:"#7cc6ee",stroke:"#3f8fbe","stroke-width":1},sc);
+    el("rect",{x:-30,y:-6,width:26,height:13,rx:4,fill:"#7cc6ee",stroke:"#3f8fbe","stroke-width":1},sc);
+    for(var k=0;k<6;k++) el("rect",{x:-28+k*4.2,y:-14,width:3,height:9,rx:1.4,fill:k%2?"#e9f6ff":"#ffffff",stroke:"#bcd6e6","stroke-width":.5},sc);
+    brushTo(-1);
+  }
+  var BPOS=[[66,74,0],[134,74,0],[70,150,180],[130,150,180],[100,128,0]];
+  function brushTo(p){ var b=$("brush"); if(!b) return; var pos=p<0?[150,178,-20]:BPOS[p]; b.setAttribute("transform","translate("+pos[0]+" "+pos[1]+") rotate("+pos[2]+")"); }
+  var BUGS=[];
+  function addBugs(){ var g=$("bugs"); g.innerHTML=""; BUGS=[];
+    var spots={0:[[58,104],[72,98],[88,108],[64,95]],1:[[112,108],[128,98],[143,104],[136,95]],2:[[66,129],[79,124],[92,130],[72,121]],3:[[108,130],[121,124],[134,129],[128,121]]};
+    for(var p=0;p<4;p++) spots[p].forEach(function(s,i){ var w=el("g",{transform:"translate("+s[0]+" "+s[1]+")"},g), b=el("g",{"class":"bug"},w), c=["#a78bfa","#7dd3a8","#f6a7c1","#93c5fd"][(p+i)%4];
+      el("circle",{r:4,fill:c,stroke:"rgba(60,30,90,.45)","stroke-width":.6},b); el("circle",{cx:-1.4,cy:-.6,r:1,fill:"#fff"},b); el("circle",{cx:1.4,cy:-.6,r:1,fill:"#fff"},b);
+      el("circle",{cx:-1.3,cy:-.4,r:.45,fill:"#222"},b); el("circle",{cx:1.5,cy:-.4,r:.45,fill:"#222"},b); el("path",{d:"M-1.2 1.6 q1.2 1 2.4 0",stroke:"#3a1f4a","stroke-width":.5,fill:"none"},b);
+      b.style.animationDelay=(-Math.random()*1.2).toFixed(2)+"s"; BUGS.push({p:p,el:b,x:s[0],y:s[1],gone:false}); }); }
+  function popBug(b){ b.gone=true; b.el.classList.add("gone"); SND.pop(); var fx=$("fx");
+    for(var k=0;k<3;k++){ var w=el("g",{transform:"translate("+(b.x+(k-1)*5)+" "+(b.y-4-k*2)+")"},fx); el("path",{d:"M0 -3l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z","class":"spk"},w); setTimeout(w.remove.bind(w),1100); } }
+
+  /* ---------- the timer ---------- */
+  var big=BWK.big(), T=null, raf=0, lock=null;
+  function parts(){ return big?[30,30,30,30,15]:[30,30,30,30]; }
+  function total(){ return parts().reduce(function(a,b){return a+b;},0); }
+  function reset(){ stop(); T={el:0, run:false, done:false, part:-1, half:false, tip:false}; drawMirror(); addBugs(); paint(); bar(); week(); $("count").textContent=fmt(total()); document.body.classList.toggle("big",big); }
+  function fmt(s){ s=Math.ceil(s); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+  function partAt(t){ var P=parts(), a=0; for(var i=0;i<P.length;i++){ if(t<a+P[i]) return {i:i, t:t-a, len:P[i]}; a+=P[i]; } return {i:P.length, t:0, len:0}; }
+  function start(){ if(T.done) reset(); T.run=true; T.last=performance.now(); beat=0; nextT=0; wake(true); bar(); $("brush").classList.remove("rest"); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
+  function stop(){ cancelAnimationFrame(raf); raf=0; if(T) T.run=false; wake(false); var b=$("brush"); if(b) b.classList.add("rest"); }
+  function loop(now){ if(!T||!T.run) return; var dt=Math.min(.25,(now-T.last)/1000); T.last=now; T.el+=dt; music(); paint();
+    if(T.el>=total()){ finish(); return; } raf=requestAnimationFrame(loop); }
+  function paint(){ var tt=total(), pa=partAt(T.el);
+    $("ring").setAttribute("stroke-dashoffset",(RING_LEN*(1-Math.min(1,T.el/tt))).toFixed(1));
+    $("count").textContent=fmt(Math.max(0,tt-T.el));
+    if(pa.i!==T.part && T.run){ T.part=pa.i; if(pa.i<parts().length){ brushTo(pa.i); SND.swish(); if(pa.i>0) SND.chime();
+        say(Z[pa.i],pa.i<4?"bb-z"+(pa.i+1):"bb-tongue");
+        TEETH.forEach(function(th){ th.el.classList.toggle("dim",pa.i<4&&th.p!==pa.i&&!th.clean); });
+        for(var z=0;z<4;z++) $("zg"+z).classList.toggle("on",z===pa.i);
+        $("tongue").classList.toggle("tongue-on",pa.i===4); } }
+    /* the bugs of this part pop one by one across its 30 seconds; earlier parts are all clean */
+    if(T.run&&pa.i<4){ var mine=BUGS.filter(function(b){ return b.p===pa.i; }), want=Math.floor(pa.t/pa.len*(mine.length+.6));
+      mine.forEach(function(b,k){ if(k<want&&!b.gone) popBug(b); });
+      BUGS.forEach(function(b){ if(b.p<pa.i&&!b.gone) popBug(b); });
+      TEETH.forEach(function(th){ if(th.p<pa.i&&!th.clean){ th.clean=true; th.el.classList.add("clean"); th.el.classList.remove("dim"); } }); }
+    if(T.run&&!T.half&&T.el>=tt/2&&T.el<tt/2+1.5&&!big){ T.half=true; }
+    if(T.run&&big&&!T.tip&&pa.i===1&&pa.t>8){ T.tip=true; say(TIP,"bb-tip"); } }
+  function finish(){ stop(); T.done=true; T.el=total(); paint(); BUGS.forEach(function(b){ if(!b.gone) popBug(b); });
+    TEETH.forEach(function(th){ th.clean=true; th.el.classList.add("clean"); th.el.classList.remove("dim"); }); for(var z=0;z<4;z++) $("zg"+z).classList.remove("on"); $("tongue").classList.remove("tongue-on");
+    brushTo(-1); SND.win();
+    var k=dayKey(), h=new Date().getHours(), slot=h<14?"am":"pm"; S.days[k]=S.days[k]||{}; S.days[k][slot]=1; S.n++; save(); BWK.played&&BWK.played("brush");
+    var fx=$("fx"); for(var i=0;i<14;i++){ var a=i/14*Math.PI*2, w=el("g",{transform:"translate("+(100+Math.cos(a)*70).toFixed(0)+" "+(118+Math.sin(a)*40).toFixed(0)+")"},fx), s=el("path",{d:"M0 -4l1 2.8 2.8 1-2.8 1-1 2.8-1-2.8-2.8-1 2.8-1z","class":"spk"},w); s.style.animationDelay=(i*.05)+"s"; setTimeout(w.remove.bind(w),1800); }
+    say(DONE,"bb-done"); week(); bar(); }
+  async function wake(onoff){ try{ if(onoff&&navigator.wakeLock&&!lock){ lock=await navigator.wakeLock.request("screen"); lock.addEventListener("release",function(){ lock=null; }); } else if(!onoff&&lock){ lock.release(); lock=null; } }catch(e){} }
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden&&T&&T.run){ wake(true); T.last=performance.now(); } });
+
+  /* ---------- the week chart: this week, Sunday to Saturday ---------- */
+  function week(){ var now=new Date(), d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay()), h="", N=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    for(var i=0;i<7;i++){ var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i), k=dayKey(d), r=S.days[k]||{};
+      h+='<div class="'+(i===now.getDay()?'today':'')+'"><b>'+N[i]+'</b><i class="'+(r.am?'on':'')+'" aria-label="'+N[i]+' morning'+(r.am?', brushed':'')+'">☀</i><i class="pm '+(r.pm?'on':'')+'" aria-label="'+N[i]+' night'+(r.pm?', brushed':'')+'">☾</i></div>'; }
+    $("week").innerHTML=h; }
+
+  /* ---------- the bottom row ---------- */
+  function bar(){ var run=T&&T.run;
+    $("bar").innerHTML='<button class="chip go'+(run?'':' pulse')+'" data-a="go" data-say="'+(run?'Pause':'Start')+'"><em>'+(run?'❚❚':(T&&T.done?'↺':'▶'))+'</em><span>'+(run?'Pause':(T&&T.done?'Brush again':(T&&T.el>0?'Go':'Start')))+'</span></button>'+
+      (T&&T.el>0&&!T.done&&!run?'<button class="chip" data-a="over" data-say="Start over"><em>↺</em><span>Start over</span></button>':'')+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games" data-say="More games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="go"){ if(T.run){ stop(); say(PAUSE,"bb-pause"); bar(); } else { BWK.finnStop(); start(); } }
+    else if(b.dataset.a==="over"){ reset(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); reset(); }
+    else if(b.dataset.a==="games"){ stop(); BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; reset(); } });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest("#stage,.chip,.week,.k-head,.k-sheet,.k-veil")) return; say(HI,"bb-hi"); });
+
+  reset();
+  window.BBO={state:function(){ return T&&{run:T.run,done:T.done,el:T.el,part:T.part,bugs:BUGS.filter(function(b){return !b.gone;}).length,total:total(),n:S.n}; },
+    start:start, skip:function(s){ T.el+=s; }, finish:function(){ T.el=total()-.01; }, big:function(on){ big=!!on; BWK.setBig(big); reset(); }};
+})();
+</script>
+</body>
+</html>
