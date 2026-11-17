@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Circuit Builder · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Circuit Builder (The Outpost · Mission Control), Nov 17. Judy's pick ("turn wire tiles so the battery lights every bulb").
+   Every tile's wires make one network from the battery; tap a tile to turn it a quarter turn. Power flows along wires that meet,
+   and a bulb lights when power reaches it. Light every bulb! Three boards a day, a gentle climb Monday to Sunday
+   (circuit-gen.js; tools/circuit/check-year.js). Drawn stand-ins until Judy's photos arrive (cb/; html.ph when they've loaded). */
+.bg{background-image:url("cb/bg-sm.jpg?v=1117a");filter:blur(1.2px) brightness(.7) saturate(1.05)}
+@media (min-width:1100px){.bg{background-image:url("cb/bg.jpg?v=1117a")}}
+#play{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px}
+.cbar{width:min(720px,100%);margin:0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 4px 0 #b89f6e,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#2f6fb8}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.top{flex:none;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.cmsg{text-align:center;font-weight:700;font-size:16px;line-height:1.3;color:#fff4dc;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 2px #000;padding:0 6px}
+/* the lamp strip: one lamp per bulb on the board */
+.lamps{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:5px 9px;border-radius:12px;background:linear-gradient(180deg,#2a2f38,#171a20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 0 #0b0d10,0 6px 14px rgba(0,0,0,.45);max-width:94%}
+.lamps i{width:14px;height:14px;border-radius:50%;display:block;background:radial-gradient(circle at 35% 30%,#6a6050,#2a241c 70%);box-shadow:inset 0 -1px 2px rgba(0,0,0,.6)}
+.lamps i.on{background:radial-gradient(circle at 35% 30%,#fffbe0,#ffd84a 45%,#e8a316 80%);box-shadow:0 0 8px 2px rgba(255,210,80,.75);animation:lpop .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes lpop{0%{transform:scale(.5)}100%{transform:none}}
+#stage{position:relative;flex:1 1 auto;min-height:0;width:100%;user-select:none;-webkit-user-select:none}
+/* the board: a wooden frame round a green circuit board */
+#board{position:absolute;border-radius:16px;touch-action:none;
+  background:linear-gradient(180deg,#c99a62,#a8763f 55%,#8e602f);box-shadow:0 14px 30px rgba(0,0,0,.55),0 3px 0 #4f2f12,inset 0 2px 0 rgba(255,225,180,.45),inset 0 -3px 0 rgba(60,30,8,.4)}
+#board .pcb{position:absolute;border-radius:8px;background:
+   radial-gradient(circle at 50% 50%,rgba(210,180,90,.55) 0 4%,transparent 5%) 0 0/var(--u) var(--u),
+   linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/calc(var(--u)/4) calc(var(--u)/4),
+   linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px) 0 0/calc(var(--u)/4) calc(var(--u)/4),
+   linear-gradient(160deg,#1f6b4a,#165a3d 60%,#0f4630);
+  box-shadow:inset 0 3px 8px rgba(0,0,0,.55),inset 0 0 0 2px rgba(0,0,0,.35)}
+#board .bwp{position:absolute;left:50%;transform:translateX(-50%);font:800 10px/1 Outfit,system-ui,sans-serif;letter-spacing:.06em;color:#4a300c;z-index:6;
+  padding:3px 6px 2px;border-radius:4px;background:linear-gradient(180deg,#f6dc8e,#c99a3c);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 3px rgba(0,0,0,.5)}
+.screw{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c8,#c9a24a 50%,#7a5a18);box-shadow:0 1px 1px rgba(0,0,0,.5)}
+.screw::after{content:"";position:absolute;left:1px;right:1px;top:4px;height:1.2px;background:#5a4210;transform:rotate(35deg)}
+/* tiles */
+.tl{position:absolute;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tl .plate{position:absolute;inset:3%;border-radius:12%;background:linear-gradient(145deg,#f4e3c2,#dcc193 60%,#c9a979);box-shadow:inset 0 1px 0 #fff8e6,inset 0 -2px 0 rgba(120,80,30,.35),0 2px 3px rgba(0,0,0,.45)}
+html.ph .tl .plate{background:url("cb/tile.webp?v=1117a") center/100% 100%;box-shadow:0 2px 3px rgba(0,0,0,.4)}
+.tl.lock .plate{filter:brightness(.9) saturate(.85)}
+.tl .w{position:absolute;inset:0;transition:transform .17s cubic-bezier(.3,1.3,.5,1);will-change:transform}
+.tl .w svg,.tl .fx svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tl .gl{opacity:0;transition:opacity .25s}
+.tl.on .gl{opacity:1}
+.tl .halo{position:absolute;inset:-40%;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(closest-side,rgba(255,236,150,.85),rgba(255,200,70,.35) 45%,rgba(255,190,60,0))}
+.tl.bulb.on .halo{opacity:1}
+.tl.bulb.on{z-index:2}
+.tl .fx{position:absolute;inset:0;pointer-events:none}
+.tl .bp{position:absolute;left:19%;top:19%;width:62%;height:62%;display:block}
+.tl .bpg{position:absolute;left:31%;top:31%;width:38%;height:38%;border-radius:50%;opacity:0;transition:opacity .3s;mix-blend-mode:screen;
+  background:radial-gradient(circle at 45% 42%,#fffef0 0,#fff2a0 28%,#ffcf45 62%,rgba(255,180,40,0) 100%)}
+.tl.bulb.on .bpg{opacity:1}
+.tl.bulb.on .bp{filter:brightness(1.15) saturate(1.2)}
+.tl .pin{position:absolute;right:9%;top:9%;width:15%;height:15%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c8,#c9a24a 50%,#7a5a18);box-shadow:0 1px 1px rgba(0,0,0,.6)}
+.tl.bad{animation:tbad .35s}
+@keyframes tbad{25%,75%{translate:-4% 0}50%{translate:4% 0}}
+.tl.ring::after{content:"";position:absolute;inset:0;border-radius:14%;box-shadow:0 0 0 3px #ffe08a,0 0 16px 5px rgba(242,190,69,.85);animation:hring .8s ease-in-out infinite;z-index:4}
+.tl.kf::before{content:"";position:absolute;inset:-2px;border-radius:14%;box-shadow:0 0 0 3px #6fb8f2;z-index:4}
+@keyframes hring{50%{box-shadow:0 0 0 3px rgba(255,224,138,.4),0 0 6px 2px rgba(242,190,69,.3)}}
+#board.won .tl.on .gl{animation:wpulse .9s ease-in-out 2}
+@keyframes wpulse{50%{opacity:.35}}
+.stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
+.stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.how svg{display:block;width:min(260px,100%);margin:4px auto 10px}
+@media (max-height:700px){.cmsg{font-size:14.5px}.ib{min-height:36px;font-size:14px}.cday span{font-size:13px}.lamps i{width:12px;height:12px}}
+@media (prefers-reduced-motion:reduce){.tl .w{transition:none}}
+</style>
+
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="cbEmb"></svg>
+      <h1>Circuit Builder</h1>
+      <p class="lead">Mission Control needs power! Turn the wire tiles so power runs from the battery to every bulb.</p>
+      <div class="mbtns">
+        <button class="k-btn" id="bPlay">Today's Circuits</button>
+        <button class="k-btn" id="bBonus" style="display:none">Bonus Circuit</button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="cbar">
+      <button class="ib gh" id="tMenu">Menu</button>
+      <div class="cday"><b id="cday"></b><span id="cnum"></span></div>
+      <button class="ib" id="tHint">Hint</button>
+    </div>
+    <div class="top" id="top"><div class="cmsg" id="cmsg" aria-live="polite"></div><div class="lamps" id="lamps" aria-hidden="true"></div></div>
+    <div id="stage"><div id="board" role="application" aria-label="The circuit board"></div></div>
+  </section>
+</main>
+<script src="kids.js?v=1117a"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script src="circuit-gen.js?v=1117a"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store, AV="1117a";
+var ST=LS.get("circuit",{}); if(!ST||typeof ST!=="object") ST={}; ST.n=ST.n||0;
+function save(){ LS.set("circuit",ST); }
+var G=CBG;
+
+/* ---------- photos (Judy's ChatGPT pictures in cb/): html.ph once they've all loaded; the drawn art stays as the fallback ---------- */
+var PH=false, PICS=["tile.webp","battery.webp","bulb.webp"];
+function pic(f){ return "cb/"+f+"?v="+AV; }
+(function(){ var n=0; PICS.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n<PICS.length) return; PH=true; document.documentElement.classList.add("ph"); if(B) drawAll(); }; i.src=pic(f); }); })();
+
+/* ---------- drawn art (100x100 tiles; light from the top left) ---------- */
+var UID=0;
+function wireSVG(m){ var id="cw"+(UID++), s='<svg viewBox="0 0 100 100"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0b27a"/><stop offset=".5" stop-color="#c8743a"/><stop offset="1" stop-color="#8f4a1d"/></linearGradient></defs>', p="";
+  for(var d=0;d<4;d++) if(m&(1<<d)){ var x=[50,100,50,0][d], y=[0,50,100,50][d]; p+="M50 50L"+x+" "+y; }
+  s+='<path d="'+p+'" stroke="rgba(0,0,0,.28)" stroke-width="16" stroke-linecap="round" fill="none" transform="translate(1.5 2.5)"/>';
+  s+='<path d="'+p+'" stroke="#6b3412" stroke-width="15" stroke-linecap="round" fill="none"/>';
+  s+='<path d="'+p+'" stroke="url(#'+id+')" stroke-width="11" stroke-linecap="round" fill="none"/>';
+  s+='<path d="'+p+'" stroke="#ffe0b8" stroke-opacity=".55" stroke-width="2.4" stroke-linecap="round" fill="none" transform="translate(-2 -2)"/>';
+  /* when the power runs: a bright gold core and a soft glow */
+  s+='<g class="gl"><path d="'+p+'" stroke="rgba(255,214,90,.42)" stroke-width="26" stroke-linecap="round" fill="none"/><path d="'+p+'" stroke="#fff3b0" stroke-width="5" stroke-linecap="round" fill="none"/></g>';
+  return s+'</svg>'; }
+function hubSVG(){ return '<circle cx="50" cy="50" r="11" fill="#7a5a18"/><circle cx="50" cy="50" r="9" fill="#d9b25a"/><circle cx="47" cy="47" r="3.5" fill="#fff3c8" opacity=".8"/>'; }
+function bulbSVG(){ var id="cb"+(UID++);
+  return '<defs><radialGradient id="'+id+'" cx=".38" cy=".34" r=".7"><stop offset="0" stop-color="#ffffff" stop-opacity=".9"/><stop offset=".5" stop-color="#d9e4ea" stop-opacity=".75"/><stop offset="1" stop-color="#8fa2ae" stop-opacity=".85"/></radialGradient>'+
+    '<radialGradient id="'+id+'l" cx=".42" cy=".4" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#fff2a8"/><stop offset=".8" stop-color="#ffc935"/><stop offset="1" stop-color="#e89a10"/></radialGradient></defs>'+
+    '<circle cx="51.5" cy="53" r="27" fill="rgba(0,0,0,.3)"/><circle cx="50" cy="50" r="28" fill="#8a6a28"/><circle cx="50" cy="50" r="25.5" fill="#d8b45a"/>'+
+    '<path d="M28 50A22 22 0 0 1 72 50" stroke="#f6e3a8" stroke-width="1.5" fill="none" opacity=".7"/>'+
+    '<circle cx="50" cy="50" r="20" fill="url(#'+id+')" stroke="#5c6a72" stroke-width="1.2"/>'+
+    '<g class="gl"><circle cx="50" cy="50" r="20" fill="url(#'+id+'l)"/></g>'+
+    '<path d="M41 54Q44 44 47 54T53 54T59 54" stroke="#6a4a2a" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M41 54L38 60M59 54L62 60" stroke="#6a4a2a" stroke-width="1.4"/>'+
+    '<g class="gl"><path d="M41 54Q44 44 47 54T53 54T59 54" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>'+
+    '<ellipse cx="42" cy="41" rx="7" ry="4" fill="#fff" opacity=".75" transform="rotate(-30 42 41)"/>'; }
+function batterySVG(){ var q="cbB"+(UID++); return batteryRaw().replace(/cbBat|cbBand|cbCap/g,function(x){ return x+q; }); }
+function batteryRaw(){ return '<svg viewBox="0 0 100 100"><defs><linearGradient id="cbBat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4f58"/><stop offset=".35" stop-color="#22252b"/><stop offset="1" stop-color="#0d0f12"/></linearGradient>'+
+  '<linearGradient id="cbBand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset=".5" stop-color="#e9a514"/><stop offset="1" stop-color="#a86d06"/></linearGradient>'+
+  '<linearGradient id="cbCap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f4f6"/><stop offset=".5" stop-color="#a9adb6"/><stop offset="1" stop-color="#6c707a"/></linearGradient></defs>'+
+  '<rect x="16" y="33" width="70" height="38" rx="9" fill="rgba(0,0,0,.35)" transform="translate(2 3)"/>'+
+  '<rect x="14" y="31" width="68" height="38" rx="9" fill="url(#cbBat)"/><rect x="58" y="31" width="24" height="38" rx="0" fill="url(#cbBand)"/><rect x="72" y="31" width="10" height="38" rx="0" fill="url(#cbBand)"/>'+
+  '<path d="M73 31H73A9 9 0 0 1 82 40V60A9 9 0 0 1 73 69" fill="url(#cbBand)"/>'+
+  '<rect x="82" y="42" width="7" height="16" rx="2.5" fill="url(#cbCap)"/><rect x="11" y="38" width="5" height="24" rx="2" fill="url(#cbCap)"/>'+
+  '<text x="69" y="56" text-anchor="middle" font-size="14" font-weight="800" fill="#3a2600" font-family="Outfit,system-ui,sans-serif">+</text>'+
+  '<rect x="18" y="35" width="38" height="5" rx="2.5" fill="#fff" opacity=".18"/><circle cx="26" cy="61" r="3" fill="#5dff9a"/><circle cx="26" cy="61" r="6" fill="#5dff9a" opacity=".3"/></svg>'; }
+function tileHTML(c){ var m=G.cur(B,c,0), isB=c===B.bat, bulb=!isB&&G.bits(B.sol[c])===1, s='';
+  s+='<div class="plate"></div>';
+  if(isB){ s+='<div class="w">'+wireSVG(B.sol[c]).replace('</svg>','')+'</svg></div><div class="fx">'+(PH?'<img alt="" src="'+pic("battery.webp")+'" style="position:absolute;left:8%;top:22%;width:84%;height:56%;object-fit:contain">':batterySVG())+'</div>'; }
+  else { s+='<div class="halo"></div><div class="w" style="transform:rotate('+(P.ang[c]||0)+'deg)">'+wireSVG(B.sol[c]).replace('</svg>',(bulb?(PH?'':bulbSVG()):hubSVG())+'</svg>')+
+      (bulb&&PH?'<img class="bp" alt="" src="'+pic("bulb.webp")+'"><div class="bpg"></div>':'')+'</div>'; }
+  if(B.fixed[c]&&!isB) s+='<div class="pin"></div>';
+  return s; }
+
+/* ---------- sound of its own ---------- */
+var AC=null, OUT=null;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+    var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+    OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+  if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return;
+  if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+function on(){ return LS.get("sound",true)!==false && !!ac(); }
+function tone(f,at,d,v,type,f2){ if(!on()) return; var t=AC.currentTime+(at||0), o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+var NB=null;
+function nbuf(){ if(!NB){ NB=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate); var c=NB.getChannelData(0); for(var i=0;i<c.length;i++) c[i]=Math.random()*2-1; } return NB; }
+function noise(at,d,v,lo,hi){ if(!on()) return; var t=AC.currentTime+(at||0), s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=nbuf();
+  f.type="bandpass"; f.frequency.value=Math.sqrt(lo*hi); f.Q.value=Math.max(.3,Math.sqrt(lo*hi)/(hi-lo)); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(OUT); s.start(t); s.stop(t+d+.05); }
+function sTurn(){ noise(0,.035,.22,1800,6000); tone(900,0,.03,.06,"square",600); noise(.05,.03,.12,1200,4000); }   /* a ratchety click */
+function sNope(){ tone(220,0,.16,.12,"sine",170); }
+function sZap(){ noise(0,.09,.12,3000,9000); tone(1200,0,.08,.04,"sawtooth",2400); }   /* power reaching new wires */
+var NOTES=[523,587,659,784,880,988,1047,1175,1319,1568,1760,1976,2093,2349,2637];
+function sBulb(k){ var f=NOTES[Math.min(k,NOTES.length-1)]; tone(f,0,.35,.09,"triangle"); tone(f*2,.01,.25,.03,"sine"); }
+function sWin(){ [523,659,784,1047,1319,1568].forEach(function(f,i){ tone(f,i*.08,.4,.08,"triangle"); }); tone(110,0,.6,.1,"sawtooth",220); }
+var HUM=null;   /* a soft electric hum while power flows; louder as more of the board lights */
+function humSet(frac){ if(!on()){ return; } if(!HUM){ var o=AC.createOscillator(), o2=AC.createOscillator(), g=AC.createGain(), f=AC.createBiquadFilter();
+    o.type="sawtooth"; o.frequency.value=60; o2.type="sine"; o2.frequency.value=120; f.type="lowpass"; f.frequency.value=320; g.gain.value=.0001;
+    o.connect(f); o2.connect(f); f.connect(g); g.connect(OUT); o.start(); o2.start(); HUM={o:o,o2:o2,g:g}; }
+  HUM.g.gain.setTargetAtTime(frac>0?.012+frac*.03:.0001,AC.currentTime,.15); }
+function humOff(){ if(!HUM) return; var h=HUM; HUM=null; var t=AC.currentTime; h.g.gain.setTargetAtTime(.0001,t,.08); try{ h.o.stop(t+.5); h.o2.stop(t+.5); }catch(e){} }
+
+/* ---------- the day ---------- */
+var DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var FOOT=["Small boards, and some tiles are pinned in place. A gentle start!","Bigger boards and more bulbs.","Fewer pinned tiles.",
+  "Big boards with lots of bulbs.","Bigger boards, hardly any pins.","The biggest boards.","Big boards and no pins. The trickiest of the week!"];
+function today(){ var d=new Date(); return {n:Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5), wd:d.getDay()}; }
+function lvOf(wd){ return (wd+6)%7; }
+
+var P=null, B=null, gen=0, busy=false, GEO=null, said={}, KF=-1, LIT=null;
+function msg(t){ $("#cmsg").textContent=t||""; }
+function say(t){ BWK.say(t); }
+function sayOnce(key,t){ if(said[key]) return; said[key]=1; say(t); }
+function start(bonus){ gen++; busy=false; said={}; clearHint(); KF=-1; var t=today(), lv=lvOf(t.wd);
+  document.body.className="m-play"; $("#cday").textContent=bonus?"Bonus Circuit":(DAYN[t.wd]+"'s Circuits");
+  if(!bonus&&ST.day===t.n&&ST.cur){ var c=ST.cur; P={lv:c.lv,seed:t.n,i:c.i||0,hints:c.hints||0,done:!!c.done,bonus:false,turns:c.turns||null,locks:c.locks||[]}; }
+  else P={lv:lv,seed:bonus?(Math.random()*1e9)|0:t.n,i:0,hints:0,done:false,bonus:!!bonus,turns:null,locks:[]};
+  P.boards=bonus?[G.make(P.lv,P.seed,G.LV[P.lv].sz[2])]:G.day(P.lv,P.seed);
+  if(P.done) P.i=P.boards.length-1;
+  loadBoard(); saveCur();
+  if(P.done){ msg("All of today's circuits are done! Tap Menu for a Bonus Circuit."); return; }
+  if(bonus) say(BONUS); else if(P.i===0&&!P.turns){ say(ST.n<1?FIRST:START); msg(ST.n<1?"Tap a tile to turn it. Get power from the battery to every bulb!":"Light every bulb!"); } }
+function saveCur(){ if(!P||P.bonus) return; ST.day=today().n; ST.cur={lv:P.lv,i:P.i,hints:P.hints,done:P.done,turns:B?B.turn.slice():null,locks:P.locks}; save(); }
+function loadBoard(){ B=P.boards[P.i]; if(P.turns&&P.turns.length===B.turn.length){ B.turn=P.turns.slice(); (P.locks||[]).forEach(function(c){ B.fixed[c]=true; }); }
+  if(P.done) B.turn=B.turn.map(function(){ return 0; });
+  P.turns=null; P.ang=B.turn.map(function(k){ return k*90; }); LIT=null;
+  $("#cnum").textContent=(P.bonus?"":"Board "+(P.i+1)+" of "+P.boards.length+" · ")+B.bulbs+" bulb"+(B.bulbs>1?"s":"");
+  $("#board").classList.remove("won"); layout(); }
+
+/* ---------- layout ---------- */
+function layout(){ if(!B) return; var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return;
+  var fr=.36, u=Math.floor(Math.min((W-6)/(B.W+fr*2),(H-6)/(B.H+fr*2),128)), pad=Math.round(u*fr), bw=B.W*u+pad*2, bh=B.H*u+pad*2;
+  GEO={u:u,pad:pad,x0:Math.round((W-bw)/2),y0:Math.max(0,Math.round((H-bh)/2)),bw:bw,bh:bh};
+  var b=$("#board"); b.style.cssText="left:"+GEO.x0+"px;top:"+GEO.y0+"px;width:"+bw+"px;height:"+bh+"px;--u:"+u+"px";
+  drawAll(); }
+function drawAll(){ if(!B||!GEO) return; var b=$("#board"), u=GEO.u, pad=GEO.pad, h='<div class="pcb" style="left:'+(pad*.55)+'px;top:'+(pad*.55)+'px;right:'+(pad*.55)+'px;bottom:'+(pad*.55)+'px"></div>';
+  [[.25,.25],[.75,.25],[.25,.75],[.75,.75]].forEach(function(q){ h+='<span class="screw" style="left:'+(q[0]<.5?pad*.2:GEO.bw-pad*.2-9)+'px;top:'+(q[1]<.5?pad*.2:GEO.bh-pad*.2-9)+'px"></span>'; });
+  for(var c=0;c<B.W*B.H;c++){ var r=Math.floor(c/B.W), q=c%B.W, bulb=c!==B.bat&&G.bits(B.sol[c])===1;
+    h+='<div class="tl'+(bulb?" bulb":"")+(B.fixed[c]&&c!==B.bat?" lock":"")+(c===B.bat?" bat":"")+'" data-c="'+c+'" style="left:'+(pad+q*u)+'px;top:'+(pad+r*u)+'px;width:'+u+'px;height:'+u+'px" role="button" aria-label="'+(c===B.bat?"Battery":bulb?"Bulb":"Wire")+'">'+tileHTML(c)+'</div>'; }
+  h+='<span class="bwp" style="bottom:'+Math.max(2,pad*.12)+'px">BW</span>';
+  b.innerHTML=h; LIT=null; flow(false); if(KF>=0) kf(KF); }
+function tileEl(c){ return $('#board .tl[data-c="'+c+'"]'); }
+
+/* ---------- power ---------- */
+function masks(){ return B.sol.map(function(x,c){ return G.cur(B,c); }); }
+function flow(sound){ var m=masks(), pw=G.power(B.W,B.H,m,B.bat), lit=0, newly=0, newWire=false;
+  for(var c=0;c<pw.length;c++){ var e=tileEl(c); if(!e) continue; var was=e.classList.contains("on"); e.classList.toggle("on",pw[c]);
+    if(pw[c]&&!was) newWire=true;
+    if(e.classList.contains("bulb")&&pw[c]){ lit++; if(!was) newly++; } }
+  var lh=""; for(var i=0;i<B.bulbs;i++) lh+='<i class="'+(i<lit?"on":"")+'"></i>'; $("#lamps").innerHTML=lh;
+  if(sound){ if(newly) sBulb(lit-1); else if(newWire) sZap(); humSet(pw.filter(Boolean).length/pw.length); }
+  var prev=LIT; LIT=lit; return {lit:lit,newly:newly,first:prev===0&&lit>0}; }
+
+/* ---------- turning tiles ---------- */
+function turn(c){ if(!P||busy||P.done||!B) return; clearHint(); var e=tileEl(c);
+  if(c===B.bat){ nope(e); msg("The battery stays put. Turn the wires around it."); sayOnce("bat",BATSTAY); return; }
+  if(B.fixed[c]){ nope(e); msg("That tile has a brass pin. It's already right!"); sayOnce("pin",PINNED); return; }
+  B.turn[c]=(B.turn[c]+1)%4; P.ang[c]=(P.ang[c]||0)+90; e.querySelector(".w").style.transform="rotate("+P.ang[c]+"deg)"; sTurn();
+  var f=flow(true); saveCur();
+  if(f.lit===B.bulbs){ boardDone(); return; }
+  if(f.newly) msg(f.lit===1?"A bulb lit up! Keep going.":f.lit+" of "+B.bulbs+" bulbs are lit!");
+  if(f.newly&&f.lit===1) sayOnce("first",ONE); }
+function nope(e){ sNope(); if(!e) return; e.classList.remove("bad"); void e.offsetWidth; e.classList.add("bad"); }
+function boardDone(){ busy=true; var g=gen; $("#board").classList.add("won"); setTimeout(function(){ if(g===gen) sWin(); },200); ST.n++; save();
+  msg("Power on! Every bulb is lit!");
+  if(P.bonus||P.i+1>=P.boards.length){ setTimeout(function(){ if(g!==gen) return; humOff(); win(); },1500); return; }
+  say(GOOD);
+  setTimeout(function(){ if(g!==gen) return; busy=false; humOff(); P.i++; P.locks=[]; saveCur(); loadBoard(); saveCur(); msg("Here's the next board."); say(NEXTB); },2200); }
+function starsOf(h){ return h===0?3:h<=2?2:1; }
+function win(){ P.done=true; saveCur(); var g=gen; var fresh=P.bonus?"":BWG.patch("circuit");
+  setTimeout(function(){ if(g!==gen) return; var s=starsOf(P.hints);
+    var box=BWK.sheet('<h2>'+(P.bonus?'Bonus circuit done!':'All of today\'s circuits are done!')+'</h2>'+BWG.patchLine(fresh)+'<div class="stars">'+"★★★".slice(0,s)+'<i>'+"★★★".slice(0,3-s)+'</i></div>'+
+      '<p>'+(P.bonus?'Every bulb is shining!':'You powered up '+P.boards.length+' boards'+(P.hints?' with '+P.hints+' hint'+(P.hints>1?'s':''):' with no hints')+'.')+'</p>'+
+      '<p>'+(P.bonus?'Want to build another one?':'Come back tomorrow for new circuits.')+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="more">Bonus Circuit</button><button class="k-btn k-ghost" data-a="out">The Outpost</button></div>');
+    box.querySelector('[data-a=more]').onclick=function(){ BWK.closeSheet(true); start(true); };
+    box.querySelector('[data-a=out]').onclick=BWG.toOutpost;
+    say(fresh?WINP:(P.bonus?WINB:WIN)); },300); }
+
+/* ---------- hints: Mission Control's tip turns one tile the right way and pins it (next to the power if it can) ---------- */
+var HR=[];
+function ringOn(el){ if(!el) return; el.classList.add("ring"); HR.push(el); }
+function clearHint(){ HR.forEach(function(e){ e.classList.remove("ring"); }); HR=[]; }
+function hint(){ if(!P||busy||P.done||!B) return; clearHint(); P.hints++; say(HINT);
+  var m=masks(), pw=G.power(B.W,B.H,m,B.bat), best=-1, bs=-1;
+  for(var c=0;c<m.length;c++){ if(B.fixed[c]||m[c]===B.sol[c]) continue; var r=Math.floor(c/B.W), q=c%B.W, near=0;
+    for(var d=0;d<4;d++){ var r2=r+G.DR[d], q2=q+G.DC[d]; if(r2<0||r2>=B.H||q2<0||q2>=B.W) continue; if(pw[r2*B.W+q2]&&(B.sol[c]&(1<<d))) near=1; }
+    var sc=near*10+(G.bits(B.sol[c])===1?0:1); if(sc>bs){ bs=sc; best=c; } }
+  if(best<0){ msg("Everything looks right!"); return; }
+  var k=0; while(G.cur(B,best,(B.turn[best]+k)%4)!==B.sol[best]&&k<4) k++;
+  B.turn[best]=(B.turn[best]+k)%4; P.ang[best]=(P.ang[best]||0)+k*90; B.fixed[best]=true; P.locks.push(best);
+  var e=tileEl(best); e.querySelector(".w").style.transform="rotate("+P.ang[best]+"deg)"; e.classList.add("lock"); if(!e.querySelector(".pin")) e.insertAdjacentHTML("beforeend",'<div class="pin"></div>');
+  ringOn(e); sTurn(); msg("Mission tip: this tile goes this way. It's pinned now."); var f=flow(true); saveCur(); if(f.lit===B.bulbs) boardDone(); }
+$("#tHint").onclick=hint;
+
+/* ---------- taps and keys ---------- */
+$("#board").addEventListener("click",function(e){ var t=e.target.closest(".tl"); if(!t) return; KF=-1; kf(-1); turn(+t.dataset.c); });
+function kf(c){ [].slice.call(document.querySelectorAll(".tl.kf")).forEach(function(e){ e.classList.remove("kf"); }); if(c>=0){ var e=tileEl(c); if(e) e.classList.add("kf"); } }
+document.addEventListener("keydown",function(e){ if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")||!B) return; var k=e.key;
+  var mv={ArrowUp:-B.W,ArrowDown:B.W,ArrowLeft:-1,ArrowRight:1}[k];
+  if(mv!=null){ e.preventDefault(); if(KF<0) KF=0; else { var n=KF+mv; if(n>=0&&n<B.W*B.H&&!(mv===1&&n%B.W===0)&&!(mv===-1&&KF%B.W===0)) KF=n; } kf(KF); }
+  else if(k===" "||k==="Enter"){ e.preventDefault(); if(KF>=0) turn(KF); } else if(k.toLowerCase()==="h") hint(); });
+
+/* ---------- menu ---------- */
+function toMenu(){ gen++; busy=false; humOff(); clearHint(); document.body.className="m-menu"; var t=today(), lv=lvOf(t.wd);
+  var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
+  $("#bPlay").textContent=doneToday?"Today's Circuits ✓":"Today's Circuits"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
+  $("#bBonus").style.display=doneToday?"":"none";
+  $("#mfoot").textContent=(ST.n?("Boards powered up: "+ST.n+". "):"")+DAYN[t.wd]+": "+FOOT[lv]; }
+$("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
+$("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
+function inner(svg){ return svg.replace(/^<svg[^>]*>|<\/svg>$/g,""); }
+function howPic(){ /* look-only: a 3x2 board, power running from the battery; one tile turned the wrong way, with its turn arrow */
+  var u=60, s='<svg viewBox="0 0 200 140" aria-hidden="true"><rect x="0" y="0" width="200" height="140" rx="12" fill="#a8763f"/><rect x="8" y="8" width="184" height="124" rx="8" fill="#1a6244"/>';
+  var cells=[[0,0,2,"bat"],[1,0,14,""],[2,0,12,""],[0,1,0,""],[1,1,1,"bulb"],[2,1,4,"off"]];
+  cells.forEach(function(q){ if(!q[2]) return; var x=10+q[0]*u, y=10+q[1]*u, on=q[3]!=="off";
+    s+='<rect x="'+(x+2)+'" y="'+(y+2)+'" width="'+(u-4)+'" height="'+(u-4)+'" rx="7" fill="#e8d2a8"/>';
+    var w=inner(wireSVG(q[2])); if(on) w=w.replace('class="gl"','class="gl" style="opacity:1"'); s+='<g transform="translate('+x+' '+y+') scale(.6)">'+w+(q[3]==="bulb"?inner('<svg>'+bulbSVG().replace(/class="gl"/g,'class="gl" style="opacity:1"')+'</svg>'):q[3]==="off"?inner('<svg>'+bulbSVG().replace(/class="gl"/g,'class="gl" style="opacity:0"')+'</svg>'):q[3]==="bat"?'':hubSVG())+'</g>';
+    if(q[3]==="bat") s+='<g transform="translate('+x+' '+y+') scale(.6)">'+inner(batterySVG())+'</g>'; });
+  s+='<path d="M162 96A16 16 0 1 1 146 80" stroke="#ffe08a" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M146 72L139 81L149 86" stroke="#ffe08a" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  s+='<text x="130" y="134" font-size="11" font-weight="800" fill="#fff6d8" font-family="Outfit,system-ui,sans-serif">tap to turn</text></svg>'; return s; }
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2>'+howPic()+'<p>'+HOW+'</p>'+
+  '<p><b>One tap = one quarter turn.</b> Tap as many times as you like; turning is free.</p>'+
+  '<p><b>Power flows</b> only where two wires meet, end to end. Wires glow gold when power reaches them, and a bulb lights up.</p>'+
+  '<p><b>Brass pins:</b> a tile with a brass pin is already right, and the battery never moves. Tip: wires can\'t point off the edge of the board!</p>'+
+  '<p>Each day gets a little harder: bigger boards, more bulbs, fewer pins. On a computer, use the arrow keys and Space to turn, and H for a hint.</p></div>'); say(HOW); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+(function(){ var s='<g transform="translate(4 18) scale(.56)">'+inner(batterySVG())+'</g>'+
+  '<g transform="translate(46 18) scale(.56)">'+inner(wireSVG(10)).replace('class="gl"','class="gl" style="opacity:1"')+hubSVG()+'</g>'+
+  '<g transform="translate(78 4) scale(.62)"><circle cx="50" cy="50" r="40" fill="rgba(255,220,110,.35)"/>'+inner('<svg>'+bulbSVG().replace(/class="gl"/g,'class="gl" style="opacity:1"')+'</svg>')+'</g>'; $("#cbEmb").innerHTML=s; })();
+var RO=null; if(window.ResizeObserver){ RO=new ResizeObserver(function(){ var t=$("#top"); t.style.minHeight=Math.max(parseFloat(t.style.minHeight)||0,t.offsetHeight)+"px"; layout(); }); RO.observe($("#stage")); RO.observe($("#top")); }
+window.addEventListener("resize",layout);
+
+var INTRO="Circuit Builder! Mission Control needs power. Turn the wire tiles so power runs from the battery to every bulb.";
+var HOW="Tap a tile to turn it a quarter turn. Power runs from the battery along wires that meet end to end. When power reaches a bulb, it lights up. Light every bulb to finish the board!";
+var FIRST="Tap a tile to turn it. Get power from the battery to every bulb!", START="Light every bulb!";
+var BATSTAY="The battery stays put. Turn the wires around it.", PINNED="That tile has a brass pin. It's already right!";
+var ONE="A bulb lit up! Keep going.", GOOD="Power on! Every bulb is lit!", NEXTB="Here's the next board.";
+var HINT="Here's a Mission Control tip!";
+var WIN="All of today's circuits are done! Come back tomorrow for new circuits.", WINP="All done! You earned a new patch for your badge wall!", WINB="Bonus circuit done! Every bulb is shining!";
+var BONUS="Here's a bonus circuit!";
+var L={"cb-intro":INTRO,"cb-how":HOW,"cb-first":FIRST,"cb-start":START,"cb-batstay":BATSTAY,"cb-pinned":PINNED,"cb-one":ONE,"cb-good":GOOD,"cb-nextb":NEXTB,
+  "cb-hint":HINT,"cb-win":WIN,"cb-winp":WINP,"cb-winb":WINB,"cb-bonus":BONUS};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"circuit", voice:"outpost", intro:INTRO, noHello:true});
+window.CBO={start:start,turn:turn,hint:hint,
+  solve:function(){ B.sol.forEach(function(x,c){ if(c===B.bat) return; var k=0; while(G.cur(B,c,(B.turn[c]+k)%4)!==x&&k<4) k++; B.turn[c]=(B.turn[c]+k)%4; P.ang[c]=(P.ang[c]||0)+k*90; }); drawAll(); var f=flow(true); if(f.lit===B.bulbs) boardDone(); },
+  almost:function(){ var left=-1; B.sol.forEach(function(x,c){ if(c===B.bat||B.fixed[c]) return; if(left<0&&G.bits(x)>1&&G.rots(x).length>1){ left=c; return; } var k=0; while(G.cur(B,c,(B.turn[c]+k)%4)!==x&&k<4) k++; B.turn[c]=(B.turn[c]+k)%4; P.ang[c]=(P.ang[c]||0)+k*90; });
+    if(left>=0&&G.cur(B,left)===B.sol[left]){ B.turn[left]=(B.turn[left]+1)%4; P.ang[left]+=90; } drawAll(); flow(false); return left; },
+  state:function(){ return P&&{lv:P.lv,i:P.i,n:P.boards.length,hints:P.hints,done:P.done,busy:busy,W:B.W,H:B.H,bat:B.bat,bulbs:B.bulbs,lit:LIT,turn:B.turn.slice(),geo:GEO,grade:B.grade}; },lines:L,ph:function(){ return PH; }};
+})();
+</script>
+</body>
+</html>
