@@ -105,6 +105,23 @@ html.phpad #stage{background:#1e2a5c}
 /* Chore Chart (The Outpost · Mission Control), Nov 17. A weekly chart of the kid's own chores (up to 6, from a list); tap a day's box when a
    chore is done and pretend coins clink into the jar. Pretend money only: grown-ups set the pay (behind a Grown-ups check) and can do
    Payday (the jar empties when they hand over the real money). A saving goal shows how close the jar is. Nothing leaves the device. */
+body.m-pick #pick,body.m-sched #sched{display:flex}
+#sched{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.sh{display:grid;grid-template-columns:minmax(90px,1.6fr) repeat(7,minmax(0,1fr)) auto;gap:5px;align-items:center;margin-bottom:6px}
+.sd{appearance:none;border:0;cursor:pointer;height:38px;border-radius:9px;font:inherit;font-weight:800;font-size:17px;color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.sd.on{background:linear-gradient(180deg,#3fc495,#109a6e);box-shadow:0 2px 0 #0a6a4b}
+.se{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:800;font-size:11.5px;line-height:1.1;padding:6px 6px;border-radius:9px;color:#3b2210;width:52px;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 2px 0 #a97a1c}
+.se.on{opacity:.55}
+.bx.off{background:rgba(255,255,255,.08);box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.bx.off.today{box-shadow:0 0 0 2px rgba(255,214,90,.5),inset 0 1px 3px rgba(0,0,0,.4)}
+.bx .nd{color:rgba(255,231,166,.45);font-weight:800;font-size:18px}
+.bx.off:disabled{opacity:1}
+#play .pbox{flex:1 1 auto;overflow:hidden}
+#chart{flex:1 1 auto;min-height:0;overflow:auto;align-content:start;padding:2px 2px 4px}
+#chart .dh{position:sticky;top:0;z-index:2;background:rgba(40,20,6,.85)}
+#chart>div:first-child{position:sticky;top:0;z-index:2;background:rgba(40,20,6,.85);border-radius:8px}
+.bank{flex:none}
 body.m-pick #pick{display:flex}
 #pick{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
 .chart{display:grid;grid-template-columns:minmax(96px,1.7fr) repeat(7,minmax(0,1fr));gap:5px;align-items:stretch}
@@ -180,10 +197,18 @@ body.m-pick #pick{display:flex}
   <section class="scr" id="pick">
     <div class="cbar"><button class="ib gh" id="kMenu">Menu</button><div class="cday"><b>Mission Control</b><span>Pick my chores</span></div><button class="ib gh" id="kGu">Grown-ups</button></div>
     <div class="pbox" data-bws="off">
-      <div class="bsign"><b>Pick My Chores</b><i>Choose up to 6</i></div>
+      <div class="bsign"><b>Pick My Chores</b><i>Pick as many as you like</i></div>
       <div class="jobs" id="jobs"></div>
     </div>
     <div class="pbtns"><button class="k-btn go" id="kDone">Done</button></div>
+  </section>
+  <section class="scr" id="sched">
+    <div class="cbar"><button class="ib gh" id="sMenu">Menu</button><div class="cday"><b>For Grown-ups</b><span>The weekly schedule</span></div><span style="width:64px"></span></div>
+    <div class="pbox" data-bws="off">
+      <div class="bsign"><b>Chore Schedule</b><i>Tap the days each chore is due</i></div>
+      <div id="sgrid"></div>
+    </div>
+    <div class="pbtns"><button class="k-btn go" id="sDone">Done</button></div>
   </section>
   <section class="scr" id="play">
     <div class="cbar"><button class="ib gh" id="tMenu">Menu</button><div class="cday"><b>Chore Chart</b><span id="cweek"></span></div><button class="ib gh" id="tPick">Chores</button><button class="ib gh" id="tGu">Grown-ups</button></div>
@@ -227,6 +252,8 @@ var ICS={star:'<path d="M20 5l4.4 9 9.6 1.4-7 6.8 1.7 9.6-8.7-4.6-8.7 4.6 1.7-9.
 ST.custom=ST.custom||[];
 function addCB(c){ CB[c.id]={id:c.id,n:c.n,p:25,ic:ICS[c.ic]||ICS.star,own:1}; }
 ST.custom.forEach(addCB);
+ST.days=ST.days||{};
+function due(id,d){ var s=ST.days[id]; return !s||!!s[d]; }   /* every day unless a grown-up set a schedule */
 function pay(id){ var p=ST.pay[id]!=null?ST.pay[id]:CB[id].p; return Math.max(25,Math.round(p/25)*25); }   /* every coin is a quarter */
 function icon(id,col){ return '<svg viewBox="0 0 40 40" fill="none" stroke="'+(col||"#3b2210")+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+CB[id].ic+'</svg>'; }
 function money(c){ if(ST.free) return (c/25)+" coin"+(c===25?"":"s"); return c<100?c+"¢":"$"+(c/100).toFixed(2); }
@@ -280,7 +307,7 @@ function drawChart(){ rollWeek(); var ti=todayI(), h='<div></div>';
   DN.forEach(function(d,i){ h+='<div class="dh'+(i===ti?" today":"")+'">'+d+'</div>'; });
   ST.on.forEach(function(id){ var c=CB[id]; if(!c) return; var m=ST.marks[id]||[];
     h+='<div class="cn"><span class="tk">'+icon(id)+'</span><span><b>'+esc(c.n)+'</b><i>'+(ST.free?"":money(pay(id)))+'</i></span></div>';
-    for(var i=0;i<7;i++) h+='<button class="bx'+(m[i]?" on":"")+(i===ti?" today":"")+'" data-c="'+id+'" data-d="'+i+'"'+(i>ti?' disabled':'')+' aria-label="'+esc(c.n)+', '+DN[i]+(m[i]?", done":"")+'">'+(m[i]?stampSVG():'')+'</button>'; });
+    for(var i=0;i<7;i++){ var dd=due(id,i)||m[i]; h+='<button class="bx'+(m[i]?" on":"")+(i===ti?" today":"")+(dd?"":" off")+'" data-c="'+id+'" data-d="'+i+'"'+(i>ti||!dd?' disabled':'')+' aria-label="'+esc(c.n)+', '+DN[i]+(dd?(m[i]?", done":""):", not today")+'">'+(m[i]?stampSVG():(dd?'':'<span class="nd">–</span>'))+'</button>'; } });
   $("#chart").innerHTML=h; $("#bweek").textContent=weekLabel(); $("#cweek").textContent=weekLabel(); drawBank(); }
 function jarSVG(c){ var n=Math.min(PHJ?56:60,Math.round(c/25)), s='<svg class="jar" viewBox="0 0 86 100"><defs><linearGradient id="ccG" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".25" stop-color="#fff" stop-opacity=".05"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".25"/></linearGradient>'+
   '<radialGradient id="ccC" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#e9b43a"/><stop offset="1" stop-color="#a8740c"/></radialGradient></defs>';
@@ -300,7 +327,7 @@ function mark(id,d,el){ var m=ST.marks[id]=ST.marks[id]||[0,0,0,0,0,0,0], was=!!
   if(was){ sUndo(); msg("Taken back."); drawChart(); return; }
   sStamp(); var nc=Math.round(pay(id)/25); for(var q=0;q<nc;q++) (function(q){ setTimeout(function(){ fly(el); setTimeout(function(){ sCoin(q); },400); },q*170); })(q);
   var fresh=BWG.patch("chores"); if(fresh){ setTimeout(function(){ BWK.sheet('<h2>Great job!</h2>'+BWG.patchLine(fresh)+'<p>Keep checking off your chores to fill your jar.</p>'); BWK.say(WINP); },700); }
-  drawChart(); var ti=todayI(), all=ST.on.every(function(c){ return (ST.marks[c]||[])[ti]; });
+  drawChart(); var ti=todayI(), all=ST.on.every(function(c){ return !due(c,ti)||(ST.marks[c]||[])[ti]; });
   if(ST.goal&&!hadGoal&&ST.bank>=ST.goal.c){ setTimeout(goalReached,700); }
   else if(all&&d===ti){ msg("Every chore is done today! Great work!"); BWK.say(ALLDONE); }
   else { msg("+"+money(pay(id))+" for "+CB[id].n.charAt(0).toLowerCase()+CB[id].n.slice(1)+"!"); if(!P){ P=true; } } }
@@ -329,11 +356,11 @@ $("#jobs").addEventListener("click",function(e){ var b=e.target.closest(".job");
   var rm=e.target.closest("[data-rm]"); if(rm&&EDIT){ removeChore(rm.dataset.rm); return; }
   if(EDIT){ var p=pay(id), i=PAYS.indexOf(p); ST.pay[id]=PAYS[(i+1)%PAYS.length]; save(); sCoin(0); drawJobs(); return; }
   var k=ST.on.indexOf(id); if(k>=0){ if(ST.on.length<=1){ msg(""); return; } ST.on.splice(k,1); sUndo(); }
-  else { if(ST.on.length>=6){ sTap(); BWK.sheet('<h2>Six is plenty!</h2><p>Your chart holds 6 chores. Tap one you picked to take it off first.</p>'); return; } ST.on.push(id); sTap(); BWK.say(CB[id].n); }
+  else { ST.on.push(id); sTap(); BWK.say(CB[id].n); }
   save(); drawJobs(); });
 $("#kGu").onclick=function(){ if(EDIT){ EDIT=false; drawJobs(); return; } grown(); }; $("#tGu").onclick=grown;
 function addChore(eid){ var old=eid?ST.custom.filter(function(c){ return c.id===eid; })[0]:null;
-  if(!old&&ST.custom.length>=8){ BWK.sheet('<h2>That\'s a lot of chores!</h2><p>You can make up to 8 of your own. A grown-up can remove one with the Grown-ups button.</p>'); return; }
+  if(!old&&ST.custom.length>=30){ BWK.sheet('<h2>That\'s a lot of chores!</h2><p>You can make up to 30 of your own. Fix or remove one with its pencil button.</p>'); return; }
   var ic=old?old.ic:"star", box=BWK.sheet('<h2>'+(old?'Fix my chore':'Add a chore')+'</h2><p style="margin:0">What\'s the chore?</p><input class="k-in" id="ccName" maxlength="24" autocomplete="off" placeholder="Like: Walk the dog">'+
     '<p style="margin:8px 0 0">Pick a picture:</p><div class="gl" id="ccIcs"></div><div class="k-row"><button class="k-btn" id="ccAdd">'+(old?'Save it':'Add it!')+'</button>'+(old?'<button class="k-btn k-ghost" id="ccDel">Remove it</button>':'')+'</div>');
   if(old){ box.querySelector("#ccName").value=old.n; box.querySelector("#ccDel").onclick=function(){ BWK.closeSheet(true); removeChore(old.id); }; }
@@ -342,16 +369,30 @@ function addChore(eid){ var old=eid?ST.custom.filter(function(c){ return c.id===
   var inp=box.querySelector("#ccName"); setTimeout(function(){ inp.focus(); },60);
   function go(){ var n=inp.value.replace(/\s+/g," ").trim().slice(0,24); if(!n){ inp.focus(); return; } n=n.charAt(0).toUpperCase()+n.slice(1);
     if(old){ old.n=n; old.ic=ic; var keepP=CB[old.id]; addCB(old); save(); BWK.closeSheet(true); sCoin(1); drawJobs(); return; }
-    var c={id:"own"+Date.now().toString(36),n:n,ic:ic}; ST.custom.push(c); addCB(c); if(ST.on.length<6) ST.on.push(c.id); save(); BWK.closeSheet(true); sCoin(1); drawJobs();
+    var c={id:"own"+Date.now().toString(36),n:n,ic:ic}; ST.custom.push(c); addCB(c); ST.on.push(c.id); save(); BWK.closeSheet(true); sCoin(1); drawJobs();
     msg(""); BWK.say(PRICE); }
   box.querySelector("#ccAdd").onclick=go; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); }); }
 function removeChore(id){ ST.custom=ST.custom.filter(function(c){ return c.id!==id; }); ST.on=ST.on.filter(function(x){ return x!==id; }); if(!ST.on.length) ST.on=["bed"];
   delete ST.marks[id]; delete ST.pay[id]; delete CB[id]; save(); sUndo(); drawJobs(); }
+/* the weekly schedule (grown-ups): which days each chore is due */
+function toSched(){ document.body.className="m-sched"; drawSched(); }
+function drawSched(){ var h='<div class="sh"><div></div>'+DN.map(function(d){ return '<div class="dh">'+d.charAt(0)+'</div>'; }).join("")+'<div style="width:52px"></div></div>';
+  ST.on.forEach(function(id){ var c=CB[id]; if(!c) return; var s=ST.days[id]||[1,1,1,1,1,1,1], all=s.every(Boolean);
+    h+='<div class="sh"><div class="cn"><span class="tk">'+icon(id)+'</span><span><b>'+esc(c.n)+'</b></span></div>'+
+      s.map(function(on,i){ return '<button class="sd'+(on?" on":"")+'" data-s="'+id+'" data-d="'+i+'" aria-label="'+esc(c.n)+' on '+DN[i]+(on?", yes":", no")+'">'+(on?"✓":"")+'</button>'; }).join("")+
+      '<button class="se'+(all?" on":"")+'" data-e="'+id+'">Every day</button></div>'; });
+  $("#sgrid").innerHTML=h; }
+$("#sgrid").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.s){ var id=b.dataset.s, d=+b.dataset.d, s=(ST.days[id]||[1,1,1,1,1,1,1]).slice(); s[d]=s[d]?0:1; if(!s.some(Boolean)) s[d]=1; ST.days[id]=s; }
+  else if(b.dataset.e){ var id2=b.dataset.e; ST.days[id2]=[1,1,1,1,1,1,1]; }
+  save(); sTap(); drawSched(); });
+$("#sDone").onclick=function(){ sTap(); toChart(); }; $("#sMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
 /* the Grown-ups panel (on every Chore Chart screen) */
 function grown(){ gate(function(){ var box=BWK.sheet('<h2>For Grown-ups</h2>'+NOTE_GU+
-    '<div class="k-row" style="flex-wrap:wrap"><button class="k-btn" data-a="pay">Set prices</button><button class="k-btn k-ghost" data-a="payday">Payday</button>'+
+    '<div class="k-row" style="flex-wrap:wrap"><button class="k-btn" data-a="sched">Set the schedule</button><button class="k-btn k-ghost" data-a="pay">Set prices</button><button class="k-btn k-ghost" data-a="payday">Payday</button>'+
     '<button class="k-btn k-ghost" data-a="free">'+(ST.free?"Show money again":"Play without money")+'</button><button class="k-btn k-ghost" data-a="reset">Start this week over</button></div>');
   box.querySelector('[data-a=pay]').onclick=function(){ BWK.closeSheet(true); toPick(); EDIT=true; drawJobs(); msg(""); BWK.sheet('<h2>Setting prices</h2><p>Tap a chore\'s price to change it, a quarter at a time (25¢ up to $2). Each quarter drops one coin in the jar. Your own chores can be removed here too. Tap <b>Prices: done</b> when you\'re finished.</p>'); };
+  box.querySelector('[data-a=sched]').onclick=function(){ BWK.closeSheet(true); toSched(); };
   box.querySelector('[data-a=payday]').onclick=function(){ BWK.closeSheet(true); paydayNow(); };
   box.querySelector('[data-a=free]').onclick=function(){ ST.free=!ST.free; save(); BWK.closeSheet(true); refresh(); };
   box.querySelector('[data-a=reset]').onclick=function(){ ST.bank=Math.max(0,ST.bank-weekTotal()); ST.marks={}; save(); BWK.closeSheet(true); sUndo(); refresh(); }; }); }
@@ -405,7 +446,7 @@ $("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How It Works</h2>
   '<p><b>Saving goal:</b> pick something to save for and watch your jar fill up.</p>'+
   '<p><b>Prices:</b> ask a grown-up to help you set the price for each chore. Every coin in the jar is a quarter, so a $1 chore drops in four coins.</p>'+
   '<p><b>Helping at home:</b> '+FAMILY+'</p>'+
-  '<p><b>For grown-ups:</b> the money is pretend. Use the <b>Grown-ups</b> button (on every screen here) to set prices, do <b>Payday</b> when you hand over real money, start the week over, or <b>play without money</b> (the jar fills with helper coins instead). Each new week starts a fresh chart; the jar keeps its coins. Nothing leaves this device.</p></div>'); BWK.say(HOW+" "+PRICE); };
+  '<p><b>For grown-ups:</b> the money is pretend. Use the <b>Grown-ups</b> button (on every screen here) to set prices, do <b>Payday</b> when you hand over real money, set the <b>schedule</b> (which days each chore is due), start the week over, or <b>play without money</b> (the jar fills with helper coins instead). Each new week starts a fresh chart; the jar keeps its coins. Nothing leaves this device.</p></div>'); BWK.say(HOW+" "+PRICE); };
 $("#bBack").onclick=BWG.toOutpost;
 (function(){ $("#ccEmb").innerHTML='<g transform="translate(22 4)">'+jarSVG(400).replace(/^<svg[^>]*>|<\/svg>$/g,"")+'</g><g transform="translate(80 40) scale(1.1)"><path d="M20 6l4.2 8.6 9.5 1.4-6.9 6.7 1.6 9.5L20 27.7l-8.4 4.5 1.6-9.5-6.9-6.7 9.5-1.4z" fill="#f2be45" stroke="#a86d06" stroke-width="1.6"/></g>'; })();
 
