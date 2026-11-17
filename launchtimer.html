@@ -72,7 +72,7 @@ body.m-plan #plan{display:flex}
 /* the launch pad */
 #stage{position:relative;flex:1 1 auto;min-height:0;width:min(720px,100%);margin:0 auto;border-radius:18px;overflow:hidden;
   background:linear-gradient(180deg,#0c1a3a,#1d3a6a 55%,#3d5f8e 80%,#6d7f8f);box-shadow:0 0 0 3px #3a4250,0 14px 30px rgba(0,0,0,.55)}
-html.phpad #stage{background:url("lt/pad.jpg?v=1117a") center bottom/cover}
+html.phpad #stage{background:#1e2a5c}
 #scene{position:absolute;inset:0;width:100%;height:100%}
 .clock{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:6px 16px 7px;border-radius:14px;text-align:center;z-index:3;
   background:linear-gradient(180deg,#1a1f27,#0b0e12);box-shadow:0 0 0 2px #3a4250,0 6px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)}
@@ -206,21 +206,27 @@ function drawScene(){ var s='<defs><linearGradient id="ltBody" x1="0" x2="1"><st
   '<linearGradient id="ltFuel" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff9a3c"/><stop offset="1" stop-color="#ffd65a"/></linearGradient>'+
   '<linearGradient id="ltFlame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0"/><stop offset=".3" stop-color="#ffd24a"/><stop offset=".7" stop-color="#ff6a1a"/><stop offset="1" stop-color="#ff3a0a" stop-opacity="0"/></linearGradient>'+
   '<radialGradient id="ltSmoke"><stop offset="0" stop-color="#eef0f3"/><stop offset="1" stop-color="#c6ccd4" stop-opacity="0"/></radialGradient></defs>';
-  if(!document.documentElement.classList.contains("phpad")){
+  var PHP=document.documentElement.classList.contains("phpad");
+  if(PHP){ /* Judy's launch pad photo: the platform deck (photo y 1145) sits at the pad line, the flame trench (x 590) under the rocket */
+    var H=760, sc=H/1536, iy=(GY-14)-1145*sc, ix=230-590*sc;
+    s+='<filter id="ltBlur"><feGaussianBlur stdDeviation="14"/></filter><image href="lt/pad.jpg?v='+AV+'" x="-700" y="'+iy.toFixed(1)+'" width="1800" height="'+H+'" preserveAspectRatio="none" filter="url(#ltBlur)" opacity=".85"/>'+
+      '<image href="lt/pad.jpg?v='+AV+'" x="'+ix.toFixed(1)+'" y="'+iy.toFixed(1)+'" width="'+(1024*sc).toFixed(1)+'" height="'+H+'"/>'; }
+  if(!PHP){
     for(var i=0;i<90;i++){ var x=(i*97)%1200-400, y=(i*61)%300-80; s+='<circle cx="'+x+'" cy="'+y+'" r="'+(i%3?.9:1.5)+'" fill="#fff" opacity="'+(.3+(i%4)*.15)+'"/>'; }
     s+='<rect x="-1000" y="'+GY+'" width="2400" height="60" fill="#4a4f57"/><rect x="-1000" y="'+GY+'" width="2400" height="3" fill="#7a818b"/>'; }
-  /* gantry tower */
-  s+='<g stroke="#c9472c" stroke-width="4" fill="none"><path d="M118 '+GY+'V150M146 '+GY+'V150"/>';
+  /* gantry tower and pad (drawn only until the photo is here) */
+  if(!PHP){ s+='<g stroke="#c9472c" stroke-width="4" fill="none"><path d="M118 '+GY+'V150M146 '+GY+'V150"/>';
   for(var y=GY;y>160;y-=30) s+='<path d="M118 '+y+'L146 '+(y-30)+'M146 '+y+'L118 '+(y-30)+'"/>';
   s+='</g><path d="M146 250H192M146 330H192" stroke="#9aa0aa" stroke-width="5"/><rect x="110" y="140" width="44" height="12" fill="#c9472c"/>';
   /* pad */
   s+='<rect x="168" y="'+(GY-14)+'" width="124" height="14" rx="3" fill="#6b717b"/><rect x="168" y="'+(GY-14)+'" width="124" height="3" fill="#9aa0aa"/>';
-  s+='<rect x="214" y="'+(GY-10)+'" width="32" height="10" rx="2" fill="#e9c46a"/><text x="230" y="'+(GY-2)+'" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif">BW</text>';
+  }
+  s+='<rect x="214" y="'+(GY-10+(PHP?24:0))+'" width="32" height="10" rx="2" fill="#e9c46a"/><text x="230" y="'+(GY-2+(PHP?24:0))+'" text-anchor="middle" font-size="9" font-weight="800" fill="#4a300c" font-family="Outfit,system-ui,sans-serif">BW</text>';
   /* smoke (shown at liftoff) */
   s+='<g class="smoke">'; [[150,0,60],[200,-10,70],[260,-6,75],[320,0,60],[110,6,50],[360,6,50]].forEach(function(q){ s+='<circle cx="'+q[0]+'" cy="'+(GY-20+q[1])+'" r="'+q[2]+'" fill="url(#ltSmoke)"/>'; }); s+='</g>';
   /* the rocket (photo if it's here) */
-  s+='<g id="rocket"><g id="flames" opacity="0"><path class="flame" d="M214 '+(GY-24)+'Q230 '+(GY+60)+' 246 '+(GY-24)+'Z" fill="url(#ltFlame)"/></g>';
-  if(PHR){ var h=290, w=h*PHR.w/PHR.h; s+='<image href="lt/rocket.webp?v='+AV+'" x="'+(230-w/2)+'" y="'+(GY-14-h)+'" width="'+w+'" height="'+h+'"/>'; }
+  s+='<g id="rocket"><g id="flames" opacity="0"><path class="flame" d="M'+(PHR?217:214)+' '+(GY-(PHR?14:24))+'Q230 '+(GY+70)+' '+(PHR?243:246)+' '+(GY-(PHR?14:24))+'Z" fill="url(#ltFlame)"/></g>';
+  if(PHR){ var h=335, w=h*PHR.w/PHR.h; s+='<image href="lt/rocket.webp?v='+AV+'" x="'+(230-w/2)+'" y="'+(GY-10-h)+'" width="'+w+'" height="'+h+'"/>'; }
   else { s+='<path d="M196 '+(GY-70)+'L176 '+(GY-24)+'H204Z M264 '+(GY-70)+'L284 '+(GY-24)+'H256Z" fill="url(#ltRed)"/>'+
     '<path d="M204 '+(GY-24)+'V200Q204 150 230 112Q256 150 256 200V'+(GY-24)+'Z" fill="url(#ltBody)" stroke="#7d8894" stroke-width="1.5"/>'+
     '<path d="M215 160Q230 120 230 112Q230 120 245 160Z" fill="url(#ltRed)"/><path d="M204 200Q204 150 230 112Q256 150 256 200Q242 186 230 186Q218 186 204 200Z" fill="url(#ltRed)"/>'+
