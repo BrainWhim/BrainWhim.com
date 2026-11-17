@@ -48,6 +48,27 @@ body.m-plan #plan{display:flex}
 .pbtns{display:flex;gap:8px;justify-content:center}
 .pbtns{flex:none;width:min(720px,100%);margin:0 auto}.pbtns .k-btn{flex:1;max-width:340px;min-height:52px;font-size:19px}
 .go{background:linear-gradient(180deg,#ff8a5c,#e0482a)!important;color:#fff!important;box-shadow:0 4px 0 #9a2a12!important}
+/* the job board (Nov 17, Judy): photo walnut board, carved sign, plank tiles with the job etched in, wooden tokens (the Outpost home's oh/ pictures) */
+.bsign{align-self:center;display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:.55em 1.6em .62em;min-width:min(78%,330px);
+  border:0 solid transparent;border-width:0 1.6em;border-image:url("oh/sign.png?v=1116a") 0 70 fill / 0 1.6em stretch;filter:drop-shadow(0 6px 7px rgba(0,0,0,.5))}
+.bsign b{font-size:19px;font-weight:800;color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6),0 -1px 0 rgba(40,20,5,.35)}
+.bsign i{font-style:normal;font-size:13px;font-weight:700;color:#5e3a1c;text-shadow:0 1px 0 rgba(255,230,190,.5)}
+.bsign.sm{min-width:min(62%,260px)}.bsign.sm b{font-size:16px}
+.pbox{background:linear-gradient(180deg,rgba(18,8,2,.1),rgba(18,8,2,.35)),url("oh/walnut.jpg?v=1116a") 0 0/360px repeat!important;
+  box-shadow:0 0 0 3px #3a2210,0 0 0 6px #8a5a2b,0 14px 30px rgba(0,0,0,.6),inset 0 2px 10px rgba(0,0,0,.5)!important}
+.job{background:none!important;border:0 solid transparent;border-width:0 14px;border-image:url("oh/plank.webp?v=1116a") 0 60 fill / 0 14px stretch;box-shadow:none!important;
+  padding:8px 0 7px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));transition:transform .15s,filter .15s}
+.job .tk{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:url("oh/token.png?v=1116a") center/100% 100% no-repeat;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.job .tk svg{width:28px;height:28px;mix-blend-mode:multiply;opacity:.92}
+.job b{color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6),0 -1px 0 rgba(40,20,5,.3)}
+.job i{color:#5e3a1c}
+.job.on{transform:translateY(-3px) scale(1.04);filter:drop-shadow(0 0 7px rgba(255,214,90,.95)) drop-shadow(0 6px 6px rgba(0,0,0,.5))}
+.dial button{background:url("oh/token.png?v=1116a") center/100% 100% no-repeat!important;box-shadow:none!important;color:#3b2210!important;font-size:30px!important;
+  text-shadow:0 1px 0 rgba(255,230,190,.6);filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}
+.dial .mn{border:0 solid transparent;border-width:0 14px;border-image:url("oh/plank.webp?v=1116a") 0 60 fill / 0 14px stretch;padding:8px 6px 7px;min-width:110px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+.dial .mn span,.dial .mn small{color:#3b2210;text-shadow:0 1px 0 rgba(255,230,190,.6),0 -1px 0 rgba(40,20,5,.3)}
+.dial .mn small{color:#5e3a1c}
+@media (max-width:520px){.job{padding:5px 0 5px}.job .tk{width:36px;height:36px}.job .tk svg{width:22px;height:22px}.job b{font-size:12.5px}.jobs{gap:5px}.bsign b{font-size:17px}.dial button{width:46px!important;height:46px!important}}
 /* the launch pad */
 #stage{position:relative;flex:1 1 auto;min-height:0;width:min(720px,100%);margin:0 auto;border-radius:18px;overflow:hidden;
   background:linear-gradient(180deg,#0c1a3a,#1d3a6a 55%,#3d5f8e 80%,#6d7f8f);box-shadow:0 0 0 3px #3a4250,0 14px 30px rgba(0,0,0,.55)}
@@ -103,9 +124,9 @@ html.phpad #stage{background:url("lt/pad.jpg?v=1117a") center bottom/cover}
   <section class="scr" id="plan">
     <div class="cbar"><button class="ib gh" id="pMenu">Menu</button><div class="cday"><b>Mission Control</b><span>Plan a mission</span></div><button class="ib gh" id="pLog">Log</button></div>
     <div class="pbox" data-bws="off">
-      <h2>1. Pick a job</h2>
+      <div class="bsign"><b>Mission Control</b><i>Pick a job</i></div>
       <div class="jobs" id="jobs"></div>
-      <h2>2. How many minutes?</h2>
+      <div class="bsign sm"><b>How many minutes?</b></div>
       <div class="dial"><button id="mDown" aria-label="Fewer minutes">−</button><div class="mn"><span id="mVal">10</span><small>minutes</small></div><button id="mUp" aria-label="More minutes">+</button></div>
     </div>
     <div class="pbtns"><button class="k-btn go" id="bGo">Launch!</button></div>
@@ -215,7 +236,7 @@ function drawScene(){ var s='<defs><linearGradient id="ltBody" x1="0" x2="1"><st
 
 /* ---------- planning ---------- */
 var SEL=ST.last||"teeth", MIN=ST.min[SEL]||JB[SEL].m;
-function drawJobs(){ $("#jobs").innerHTML=JOBS.map(function(j){ return '<button class="job'+(j[0]===SEL?" on":"")+'" data-j="'+j[0]+'" aria-label="'+j[1]+'">'+icon(j[0])+'<b>'+j[1]+'</b><i>'+(ST.min[j[0]]||j[2])+' min</i></button>'; }).join("");
+function drawJobs(){ $("#jobs").innerHTML=JOBS.map(function(j){ return '<button class="job'+(j[0]===SEL?" on":"")+'" data-j="'+j[0]+'" aria-label="'+j[1]+'"><span class="tk">'+icon(j[0],"#3b2210")+'</span><b>'+j[1]+'</b><i>'+(ST.min[j[0]]||j[2])+' min</i></button>'; }).join("");
   $("#mVal").textContent=MIN; }
 $("#jobs").addEventListener("click",function(e){ var b=e.target.closest(".job"); if(!b) return; sTap(); SEL=b.dataset.j; MIN=ST.min[SEL]||JB[SEL].m; drawJobs(); BWK.say(JB[SEL].n); });
 function setMin(v){ MIN=Math.max(1,Math.min(60,v)); $("#mVal").textContent=MIN; sTap(); }
