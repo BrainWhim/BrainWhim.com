@@ -186,6 +186,7 @@ html.ph .act .st{background:rgba(74,42,18,.85);color:#ffe2a0}
 html.ph .act .st.later{background:rgba(74,42,18,.16);color:#4a2a12}
 html.ph .act .st.go{background:linear-gradient(180deg,#ffe3a1,#e9b949);color:#2a1a00;box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 2px 3px rgba(60,30,0,.35)}
 html.ph .act .pd{color:#14402e;background:#8fe3b4}
+.act .pd.nw,html.ph .act .pd.nw{color:#3a2306;background:linear-gradient(180deg,#ffe7a6,#e9c46a)}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -220,7 +221,7 @@ html.ph .act .pd{color:#14402e;background:#8fe3b4}
   <div class="cards" id="cards"></div>
 </main>
 
-<script src="kids.js?v=1117a"></script>
+<script src="kids.js?v=1117b"></script>
 <script>
 (function(){
   /* photo labels: switch to the pictures once they've all loaded (Nov 16) */
@@ -253,7 +254,8 @@ html.ph .act .pd{color:#14402e;background:#8fe3b4}
       acts:[{id:"ttt", n:"Tic-Tac-Toe", d:"Three in a row against Brody-Bot or a friend", s:"soon", href:"tictactoe.html"},
             {id:"war", n:"War", d:"Flip cards with Brody-Bot. High card wins!", s:"soon", href:"war.html"},
             {id:"jokeaday", n:"Joke-a-Day", d:"Crack the secret code on a brand-new joke every day", s:"soon", href:"jokeaday.html"},
-            {id:"eights", n:"Crazy Eights, Goofy Edition", d:"Cards with Lulu the Llama, Brody-Bot and Grandpa Wobble", s:"soon", href:"crazy-eights-jr.html"}]},
+            {id:"eights", n:"Crazy Eights, Goofy Edition", d:"Cards with Lulu the Llama, Brody-Bot and Grandpa Wobble", s:"soon", href:"crazy-eights-jr.html"},
+            {id:"four", n:"Four in a Row", d:"Drop discs and line up four before Brody-Bot does", s:"soon", href:"fourinarow.html", nw:"2026-11-17"}]},
     work:{name:"The Workshop", line:"Make it, mix it, build it", col:"#7c52e0",
       say:"Welcome to The Workshop! Grab your tools and make something.",
       acts:[{id:"sophie", n:"Sophie's Style Studio", d:"Style the looks for Sophie's fashion show", s:"soon", href:"stylestudio.html"},
@@ -301,13 +303,15 @@ html.ph .act .pd{color:#14402e;background:#8fe3b4}
     BWK.say("This is your badge wall. Play every game in a corner to earn its patch. Collect all five to become Commander!");
   }
 
+  /* a game added to a corner wears a "New!" tag for three weeks, until it's played (Nov 17: corners keep growing) */
+  function isNew(a){ if(!a.nw) return false; var d=(Date.now()-new Date(a.nw+"T00:00:00").getTime())/864e5; return d>=0&&d<21; }
   function openCorner(k){
     if(k==="badges"){ openWall(); return; }
     var c=C[k], rows="", pl=BWK.store.get("played",{})||{}, g=BWK.cornerProgress(k), pn=c.name.replace("The ",""), got=!!badges()[k];
     BWK.store.set("corner",k);
     c.acts.forEach(function(a,i){
       var st = a.href ? '<span class="st go">Play</span>' : '<span class="st'+(a.s==="later"?" later":"")+'">'+STATUS[a.s]+'</span>';
-      rows+='<button class="act" data-i="'+i+'"><span class="tx"><b>'+a.n+(pl[a.id]?'<em class="pd">✓ Played</em>':'')+'</b><i>'+a.d+'</i></span>'+st+'</button>';
+      rows+='<button class="act" data-i="'+i+'"><span class="tx"><b>'+a.n+(pl[a.id]?'<em class="pd">✓ Played</em>':(isNew(a)?'<em class="pd nw">New!</em>':''))+'</b><i>'+a.d+'</i></span>'+st+'</button>';
     });
     var box=BWK.sheet('<div class="cHead"><span class="ic" style="background:linear-gradient(180deg,'+c.col+','+c.col+'bb)">'+IC[k]+'</span>'+
       '<div><h2>'+c.name+'</h2><p>'+c.line+'</p></div></div>'+

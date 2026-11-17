@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Four in a Row · The Outpost · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<link rel="stylesheet" href="kids-games.css?v=1110a">
+<style>
+/* Four in a Row (The Outpost · The Joke Shack), Nov 17. You (red) vs Brody-Bot (blue), or two players on one device.
+   An upright wooden frame (drawn on a canvas from the Joke Shack's wood photo, the holes cut out so you see through them);
+   discs fall behind the front of the frame and bounce as they land. ("Connect Four" is Hasbro's name: we say Four in a Row.) */
+:root{--bgx:62%;--bgy:55%}
+.top{display:flex;align-items:center;gap:10px;width:min(560px,100%);justify-content:center;min-height:64px;flex:none}
+.bot{width:62px;height:62px;flex:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.bot .eye{transition:transform .25s}
+.bot.think .eye{animation:look 1s ease-in-out infinite}
+@keyframes look{0%,100%{transform:translateX(-2.5px)}50%{transform:translateX(2.5px)}}
+.bot .ant{transform-box:fill-box;transform-origin:50% 100%;animation:ant 2.4s ease-in-out infinite}
+@keyframes ant{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.bot .led{animation:led 1.6s steps(2) infinite}
+@keyframes led{50%{fill:#ffe27a}}
+.bot.sad .mouth{d:path("M23 44 Q31 39 39 44")}
+.bot.happy .mouth{d:path("M23 41 Q31 49 39 41")}
+.bot.two{display:none}
+.msg{font-weight:700;font-size:20px;color:var(--k-warm);text-shadow:0 2px 6px rgba(0,0,0,.6);text-align:center;min-height:2.6em;display:flex;flex-direction:column;justify-content:center}
+.msg span{display:block;font-weight:400;font-size:14.5px;color:#cfe0f0}
+.msg .dot{display:inline-block;width:.8em;height:.8em;border-radius:50%;vertical-align:-.08em;margin-right:.3em;box-shadow:inset 0 -2px 3px rgba(0,0,0,.35)}
+.msg .dot.r{background:#e0533f}.msg .dot.b{background:#2f7fd6}
+/* the stage takes all the room between the turn line and the buttons */
+.stage{flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+.board{position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;
+  --cs:60px;--p:19px;--lane:57px;--d:52px;width:calc(var(--cs)*7 + var(--p)*2);height:calc(var(--lane) + var(--cs)*6 + var(--p)*2 + var(--cs)*.36)}
+.board.wait{cursor:default}
+.discs,.marks{position:absolute;inset:0;pointer-events:none}
+.frame{position:absolute;left:0;top:var(--lane);pointer-events:none;filter:drop-shadow(0 calc(var(--cs)*.12) calc(var(--cs)*.16) rgba(0,0,0,.5))}
+/* a disc: drawn as a ridged checker (the photo discs replace it when they arrive) */
+.dk{position:absolute;width:var(--d);height:var(--d);border-radius:50%;will-change:transform;
+  left:calc(var(--p) + var(--cs)*var(--c) + (var(--cs) - var(--d))/2);top:calc(var(--lane) + var(--p) + var(--cs)*var(--r) + (var(--cs) - var(--d))/2)}
+.dk.r{background:radial-gradient(circle at 36% 30%,#ff9a85 0,#e0533f 30%,#b8321f 62%,#7d1a12 100%);
+  box-shadow:inset 0 0 0 calc(var(--d)*.08) rgba(120,20,10,.35),inset 0 0 0 calc(var(--d)*.16) rgba(255,160,140,.18),inset 0 calc(var(--d)*-.05) calc(var(--d)*.08) rgba(0,0,0,.35)}
+.dk.b{background:radial-gradient(circle at 36% 30%,#a6d6ff 0,#2f7fd6 30%,#1c58a8 62%,#0f2f66 100%);
+  box-shadow:inset 0 0 0 calc(var(--d)*.08) rgba(10,30,90,.35),inset 0 0 0 calc(var(--d)*.16) rgba(160,210,255,.18),inset 0 calc(var(--d)*-.05) calc(var(--d)*.08) rgba(0,0,0,.35)}
+.dk.ghost{top:calc((var(--lane) - var(--d))/2 - var(--cs)*.04);opacity:.92;filter:drop-shadow(0 6px 6px rgba(0,0,0,.4));transition:left .12s ease-out}
+.dk.ghost.lift{animation:hover 1.4s ease-in-out infinite}
+@keyframes hover{50%{translate:0 calc(var(--cs)*-.06)}}
+/* first game: little arrows in the lane say "drop here" */
+.arrows{position:absolute;left:var(--p);top:0;width:calc(var(--cs)*7);height:var(--lane);display:flex;pointer-events:none}
+.arrows i{flex:1;display:flex;align-items:center;justify-content:center;animation:bob 1.1s ease-in-out infinite}
+.arrows i:nth-child(odd){animation-delay:.2s}
+.arrows svg{width:calc(var(--cs)*.42);height:calc(var(--cs)*.42);filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+@keyframes bob{50%{transform:translateY(calc(var(--cs)*.12))}}
+/* the winning four */
+.ring{position:absolute;width:calc(var(--cs)*.9);height:calc(var(--cs)*.9);border-radius:50%;
+  left:calc(var(--p) + var(--cs)*var(--c) + var(--cs)*.05);top:calc(var(--lane) + var(--p) + var(--cs)*var(--r) + var(--cs)*.05);
+  box-shadow:0 0 0 calc(var(--cs)*.06) #ffe27a,0 0 calc(var(--cs)*.3) #ffe27a;animation:ring 1s ease-in-out infinite alternate}
+@keyframes ring{from{opacity:.55}to{opacity:1}}
+.strike{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+.strike path{fill:none;stroke:#ffe27a;stroke-linecap:round;filter:drop-shadow(0 0 3px #fff4c8);stroke-dasharray:1000;stroke-dashoffset:1000;animation:strike .6s ease-out .15s forwards}
+@keyframes strike{to{stroke-dashoffset:0}}
+.colhi{position:absolute;top:var(--lane);height:calc(var(--cs)*6 + var(--p)*2);width:var(--cs);left:calc(var(--p) + var(--cs)*var(--c));
+  background:linear-gradient(180deg,rgba(255,236,190,.0),rgba(255,236,190,.13) 30%,rgba(255,236,190,.0));border-radius:calc(var(--cs)*.3);opacity:0;transition:opacity .15s,left .12s}
+.colhi.on{opacity:1}
+.kbc{outline:3px solid #ffd98a;outline-offset:2px}
+/* BW plate on the bottom rail */
+.plate{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--lane) + var(--cs)*6 + var(--p)*2 - var(--p)*.78);font-size:calc(var(--p)*.52);font-weight:700;letter-spacing:.08em;
+  color:#f6dca0;padding:.1em .7em;border-radius:.4em;background:linear-gradient(180deg,rgba(60,30,8,.55),rgba(40,18,4,.65));box-shadow:inset 0 1px 0 rgba(255,220,160,.25),0 1px 0 rgba(255,220,160,.2);text-shadow:0 1px 0 rgba(0,0,0,.5)}
+.score{display:flex;gap:8px;justify-content:center;flex:none}
+.score div{min-width:84px;padding:6px 10px;border-radius:14px;text-align:center;background:rgba(14,26,52,.72);border:1px solid var(--k-line);font-size:13px;color:#b9c9dc;font-weight:700}
+.score b{display:block;font-size:22px;color:#fff}
+.score .me b{color:#ff8a73}.score .op b{color:#8fc8ff}
+.tools{flex:none}
+@media (max-height:640px){.top{min-height:52px}.bot{width:50px;height:50px}.msg{font-size:18px}.msg span{font-size:13.5px}.score div{padding:4px 8px}.score b{font-size:19px}.tools .k-btn{min-height:42px}}
+/* the photo look (the Joke Shack room behind) */
+.jtp .bg{background-image:url("jt/jt-bg-sm.jpg?v=1115a");background-position:42% 40%;filter:blur(1.5px) brightness(.62) saturate(1.05)}
+@media (min-width:1100px){.jtp .bg{background-image:url("jt/jt-bg.jpg?v=1115a")}}
+/* photo discs (fo/), once they're made */
+html.fop .dk.r,html.fop .dk.b{background:var(--img) center/100% 100% no-repeat;box-shadow:none;border-radius:0}
+html.fop .dk.r{--img:url("fo/fo-red.webp?v=1117a")}
+html.fop .dk.b{--img:url("fo/fo-blue.webp?v=1117a")}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body class="m-menu">
+<div class="bg"></div><div class="bg2"></div>
+<main id="app">
+  <section class="scr" id="menu">
+    <div class="mcard">
+      <svg class="emb" viewBox="0 0 132 92" aria-hidden="true">
+        <defs><linearGradient id="foEmbW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9a066"/><stop offset="1" stop-color="#8d5626"/></linearGradient></defs>
+        <rect x="20" y="14" width="92" height="70" rx="9" fill="url(#foEmbW)" stroke="#5e3614" stroke-width="2"/>
+        <g fill="#0e1a34" opacity=".55"><circle cx="34" cy="30" r="6"/><circle cx="50" cy="30" r="6"/><circle cx="66" cy="30" r="6"/><circle cx="82" cy="30" r="6"/><circle cx="98" cy="30" r="6"/><circle cx="34" cy="49" r="6"/><circle cx="50" cy="49" r="6"/><circle cx="98" cy="49" r="6"/><circle cx="34" cy="68" r="6"/></g>
+        <g><circle cx="66" cy="49" r="6.5" fill="#e0533f"/><circle cx="82" cy="49" r="6.5" fill="#2f7fd6"/><circle cx="50" cy="68" r="6.5" fill="#2f7fd6"/><circle cx="66" cy="68" r="6.5" fill="#e0533f"/><circle cx="82" cy="68" r="6.5" fill="#e0533f"/><circle cx="98" cy="68" r="6.5" fill="#e0533f"/></g>
+        <circle cx="66" cy="6" r="6.5" fill="#e0533f"/><path d="M66 13v5" stroke="#ffe27a" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <h1>Four in a Row</h1>
+      <p class="lead">Drop your discs and line up four before Brody-Bot does! Or play a friend on this device.</p>
+      <p class="seg-l">Brody-Bot level</p>
+      <div class="seg" id="lvl"><button data-l="easy">Easy</button><button data-l="medium">Medium</button><button data-l="hard">Hard</button></div>
+      <div class="mbtns">
+        <button class="k-btn" id="bBot">Play Brody-Bot<small id="bBotL"></small></button>
+        <button class="k-btn k-cool" id="bTwo">Two Players<small>one device</small></button>
+        <button class="k-btn k-ghost" id="bHow">How to Play</button>
+        <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
+      </div>
+      <p class="mfoot" id="mfoot"></p>
+    </div>
+  </section>
+  <section class="scr" id="play">
+    <div class="top">
+      <svg class="bot" id="bot" viewBox="0 0 62 62" aria-hidden="true">
+        <g class="ant"><path d="M31 12V4" stroke="#9aa9bd" stroke-width="2.5"/><circle class="led" cx="31" cy="4" r="3.5" fill="#ff6b5a"/></g>
+        <rect x="9" y="12" width="44" height="40" rx="12" fill="url(#foBotG)" stroke="#3b4a63" stroke-width="2"/>
+        <rect x="15" y="19" width="32" height="18" rx="8" fill="#13233f"/>
+        <g class="eye"><circle cx="24" cy="28" r="4" fill="#7ff0ff"/><circle cx="38" cy="28" r="4" fill="#7ff0ff"/></g>
+        <path class="mouth" d="M23 43 Q31 46 39 43" fill="none" stroke="#13233f" stroke-width="2.6" stroke-linecap="round"/>
+        <rect x="4" y="26" width="6" height="12" rx="3" fill="#8a9ab0"/><rect x="52" y="26" width="6" height="12" rx="3" fill="#8a9ab0"/>
+        <defs><linearGradient id="foBotG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6edf6"/><stop offset="1" stop-color="#9fb0c6"/></linearGradient></defs>
+      </svg>
+      <div class="msg" id="msg">Your turn!</div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="board" id="board" role="group" aria-label="Four in a Row board">
+        <div class="colhi" id="colhi"></div>
+        <div class="discs" id="discs"></div>
+        <canvas class="frame" id="frame" aria-hidden="true"></canvas>
+        <div class="marks" id="marks"></div>
+        <div class="plate" aria-hidden="true">BW</div>
+      </div>
+    </div>
+    <div class="score" id="score"></div>
+    <div class="tools">
+      <button class="k-btn" id="tNew">New Game</button>
+      <button class="k-btn k-ghost" id="tMenu">Menu</button>
+    </div>
+  </section>
+</main>
+<script src="kids.js?v=1117b"></script>
+<script src="kids-games.js?v=1110b"></script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s);}, LS=BWK.store;
+var ST=LS.get("fiar",{}); if(!ST||typeof ST!=="object") ST={};
+ST.lvl=ST.lvl||"easy"; ST.w=ST.w||{easy:0,medium:0,hard:0}; ST.t=ST.t||{easy:0,medium:0,hard:0}; ST.l=ST.l||{easy:0,medium:0,hard:0};
+function save(){ LS.set("fiar",ST); }
+var LVLN={easy:"Easy",medium:"Medium",hard:"Hard"};
+
+/*ENGINE*/
+var COLS=7, ROWS=6, ORDER=[3,2,4,1,5,0,6], DIRS=[[0,1],[1,0],[1,1],[1,-1]];
+function fresh(){ var b=[]; for(var r=0;r<ROWS;r++){ b.push([0,0,0,0,0,0,0]); } return b; }
+function dropRow(b,c){ for(var r=ROWS-1;r>=0;r--) if(!b[r][c]) return r; return -1; }
+function full(b){ for(var c=0;c<COLS;c++) if(!b[0][c]) return false; return true; }
+function lineAt(b,r,c,p){
+  for(var i=0;i<4;i++){ var d=DIRS[i], cells=[[r,c]], k;
+    for(k=1;k<4;k++){ var rr=r+d[0]*k, cc=c+d[1]*k; if(rr<0||rr>=ROWS||cc<0||cc>=COLS||b[rr][cc]!==p) break; cells.push([rr,cc]); }
+    for(k=1;k<4;k++){ var r2=r-d[0]*k, c2=c-d[1]*k; if(r2<0||r2>=ROWS||c2<0||c2>=COLS||b[r2][c2]!==p) break; cells.unshift([r2,c2]); }
+    if(cells.length>=4) return cells; }
+  return null;
+}
+function winsNow(b,p){ var out=[]; for(var c=0;c<COLS;c++){ var r=dropRow(b,c); if(r<0) continue; b[r][c]=p; if(lineAt(b,r,c,p)) out.push(c); b[r][c]=0; } return out; }
+function openCols(b){ var o=[]; for(var c=0;c<COLS;c++) if(dropRow(b,c)>=0) o.push(c); return o; }
+/* does dropping p in c hand the other player a win right on top of it? */
+function givesWin(b,c,p){ var r=dropRow(b,c); if(r<1) return false; b[r][c]=p; b[r-1][c]=3-p; var w=!!lineAt(b,r-1,c,3-p); b[r-1][c]=0; b[r][c]=0; return w; }
+function evalBoard(b,p){
+  var s=0, q=3-p, r, c, k;
+  for(r=0;r<ROWS;r++) if(b[r][3]===p) s+=4; else if(b[r][3]===q) s-=4;
+  for(r=0;r<ROWS;r++) for(c=0;c<COLS;c++) for(k=0;k<4;k++){
+    var d=DIRS[k], er=r+d[0]*3, ec=c+d[1]*3; if(er<0||er>=ROWS||ec<0||ec>=COLS) continue;
+    var mine=0, theirs=0; for(var i=0;i<4;i++){ var v=b[r+d[0]*i][c+d[1]*i]; if(v===p) mine++; else if(v===q) theirs++; }
+    if(mine&&theirs) continue;
+    if(mine===3) s+=12; else if(mine===2) s+=3; else if(theirs===3) s-=14; else if(theirs===2) s-=3;
+  }
+  return s;
+}
+function negamax(b,depth,alpha,beta,p,ply){
+  if(full(b)) return 0;
+  if(depth===0) return evalBoard(b,p);
+  var best=-1e9;
+  for(var i=0;i<COLS;i++){ var c=ORDER[i], r=dropRow(b,c); if(r<0) continue;
+    b[r][c]=p; var v;
+    if(lineAt(b,r,c,p)) v=100000-ply; else v=-negamax(b,depth-1,-beta,-alpha,3-p,ply+1);
+    b[r][c]=0;
+    if(v>best) best=v; if(best>alpha) alpha=best; if(alpha>=beta) break; }
+  return best;
+}
+function scoreCols(b,p,depth){ var out=[];
+  ORDER.forEach(function(c){ var r=dropRow(b,c); if(r<0) return; b[r][c]=p;
+    var v=lineAt(b,r,c,p)?100000:-negamax(b,depth-1,-1e9,1e9,3-p,1); b[r][c]=0; out.push({c:c,v:v}); });
+  return out; }
+function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+function centerish(cols){ var w=[1,2,3,4,3,2,1], t=0, i; for(i=0;i<cols.length;i++) t+=w[cols[i]]; var x=Math.random()*t; for(i=0;i<cols.length;i++){ x-=w[cols[i]]; if(x<0) return cols[i]; } return cols[0]; }
+/* Brody-Bot (p) picks a column. lvl: easy | medium | hard. st: per-game state {slipped, moves} */
+var LEVEL={ easy:{win:.7, block:.35, depth:0}, medium:{win:1, block:.8, depth:2, loose:.4}, hard:{win:1, block:1, depth:6} };
+var SLIP_P=.5;
+function botCol(b,p,lvl,st){
+  var open=openCols(b); if(!open.length) return -1;
+  var L=LEVEL[lvl], w=winsNow(b,p), k=winsNow(b,3-p);
+  if(w.length && Math.random()<L.win) return w[0];
+  if(k.length && Math.random()<L.block) return k[0];
+  var safe=open.filter(function(c){ return !givesWin(b,c,p); }); if(!safe.length) safe=open;
+  if(lvl==="easy") return centerish(Math.random()<.5?safe:open);
+  if(lvl==="medium" && Math.random()<L.loose) return centerish(safe);
+  var sc=scoreCols(b,p,L.depth).filter(function(x){ return safe.indexOf(x.c)>=0 || safe.length===open.length; });
+  if(!sc.length) sc=scoreCols(b,p,L.depth);
+  sc.sort(function(a,b2){ return b2.v-a.v; });
+  var top=sc[0].v;
+  /* Hard (Judy, Nov 10: hard to beat, never impossible): plays its best, but once in about half its games,
+     early on, it makes one ordinary-looking slip (a weaker drop that doesn't hand over a win right away). */
+  if(lvl==="hard" && st && !st.slipped && st.moves>=2 && st.moves<=9 && Math.abs(top)<50000 && Math.random()<SLIP_P/4){
+    var weaker=sc.filter(function(x){ return x.v<top-6 && x.v>-50000; });
+    if(weaker.length){ st.slipped=true; return rnd(weaker).c; } }
+  var near=sc.filter(function(x){ return x.v>=top-(Math.abs(top)>50000?0:2); });
+  return rnd(near).c;
+}
+/*/ENGINE*/
+
+/* ---------- sounds of its own: a wooden clack when a disc lands, a tick as you aim ---------- */
+function sClack(r,soft){ var p=1+(5-r)*.035, v=soft?.35:1;
+  BWG.noise(0,.05,.16*v,900,3200); BWG.tone(210*p,0,.12,.08*v,"triangle",160*p); BWG.tone(640*p,.005,.04,.025*v,"sine"); }
+function sSlide(){ BWG.noise(0,.09,.035,1800,5200); }
+function sTick(c){ BWG.tone(900+c*60,0,.03,.012,"sine"); }
+function sWin(){ [523,659,784,1047,1319].forEach(function(f,i){ BWG.tone(f,i*.09,.42,.05,"triangle"); }); BWG.noise(.4,.4,.04,4000,9000); }
+function sLose(){ BWG.tone(392,0,.22,.05,"triangle"); BWG.tone(330,.18,.26,.05,"triangle"); BWG.tone(262,.38,.42,.05,"triangle"); }
+function sTie(){ BWG.tone(523,0,.25,.045,"triangle"); BWG.tone(523,.2,.35,.045,"triangle"); BWG.tone(659,.2,.35,.03,"sine"); }
+function sBeep(){ BWG.tone(1200,0,.05,.025,"square"); BWG.tone(1600,.07,.05,.02,"square"); }
+
+/* ---------- the board: sizes, the wooden frame ---------- */
+var board=$("#board"), discs=$("#discs"), marks=$("#marks"), cv=$("#frame"), colhi=$("#colhi");
+var CS=60, P=19, LANE=57, D=52, wood=null;
+(function(){ var im=new Image(); im.onload=function(){ wood=im; drawFrame(); }; im.src="jt/jt-table.jpg?v=1115a"; })();
+function fit(){
+  var st=$("#stage"), W=st.clientWidth, H=st.clientHeight; if(!W||!H) return;
+  var cs=Math.floor(Math.min(W/7.66, H/7.95, 84)); cs=Math.max(cs,30);
+  CS=cs; P=Math.round(cs*.33); LANE=Math.round(cs*.95); D=Math.round(cs*.86);
+  board.style.setProperty("--cs",CS+"px"); board.style.setProperty("--p",P+"px"); board.style.setProperty("--lane",LANE+"px"); board.style.setProperty("--d",D+"px");
+  drawFrame();
+}
+function rr(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r); x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
+function drawFrame(){
+  var dpr=Math.min(2,window.devicePixelRatio||1), W=CS*7+P*2, H=CS*6+P*2, FT=Math.round(CS*.36), HH=H+FT;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(HH*dpr); cv.style.width=W+"px"; cv.style.height=HH+"px";
+  var x=cv.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,HH);
+  /* the feet (two little wooden stands) */
+  [[CS*.55],[W-CS*.55-CS*1.3]].forEach(function(f){ var fx=f[0];
+    x.save(); rr(x,fx,H-CS*.3,CS*1.3,CS*.3+FT,CS*.12); x.clip(); paintWood(x,fx-20,H-CS*.4,CS*1.3+40,FT+CS*.5,.72);
+    var g=x.createLinearGradient(0,H,0,HH); g.addColorStop(0,"rgba(0,0,0,.45)"); g.addColorStop(.35,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(0,0,0,.35)"); x.fillStyle=g; x.fillRect(fx,H-CS*.3,CS*1.3,CS*.3+FT); x.restore(); });
+  /* the front of the frame */
+  x.save(); rr(x,0,0,W,H,CS*.22); x.clip(); paintWood(x,0,0,W,H,.9);
+  /* a soft light from the top left across the whole face */
+  var lg=x.createLinearGradient(0,0,W,H); lg.addColorStop(0,"rgba(255,226,170,.22)"); lg.addColorStop(.5,"rgba(255,226,170,0)"); lg.addColorStop(1,"rgba(40,18,4,.28)"); x.fillStyle=lg; x.fillRect(0,0,W,H);
+  /* cut the holes (opaque fill, so destination-out cuts all the way) */
+  var hr=CS*.4; x.globalCompositeOperation="destination-out"; x.fillStyle="#000";
+  for(var r=0;r<6;r++) for(var c=0;c<7;c++){ x.beginPath(); x.arc(P+CS*c+CS/2,P+CS*r+CS/2,hr,0,Math.PI*2); x.fill(); }
+  x.globalCompositeOperation="source-over";
+  /* each hole's bevel: shaded on its top-left inside edge, lit on the bottom right (light from the top left) */
+  for(r=0;r<6;r++) for(c=0;c<7;c++){ var cx=P+CS*c+CS/2, cy=P+CS*r+CS/2;
+    var g2=x.createLinearGradient(cx-hr,cy-hr,cx+hr,cy+hr); g2.addColorStop(0,"rgba(30,12,2,.75)"); g2.addColorStop(.5,"rgba(60,28,8,.25)"); g2.addColorStop(1,"rgba(255,226,170,.55)");
+    x.strokeStyle=g2; x.lineWidth=Math.max(2,CS*.06); x.beginPath(); x.arc(cx,cy,hr+x.lineWidth/2-.5,0,Math.PI*2); x.stroke();
+    x.strokeStyle="rgba(255,230,180,.18)"; x.lineWidth=1; x.beginPath(); x.arc(cx,cy,hr+CS*.075,Math.PI*.15,Math.PI*.85); x.stroke(); }
+  /* the outer bevel */
+  x.lineWidth=Math.max(2,CS*.05); var eg=x.createLinearGradient(0,0,0,H); eg.addColorStop(0,"rgba(255,232,190,.55)"); eg.addColorStop(.08,"rgba(255,232,190,0)"); eg.addColorStop(.92,"rgba(40,16,2,0)"); eg.addColorStop(1,"rgba(40,16,2,.6)");
+  x.strokeStyle=eg; rr(x,x.lineWidth/2,x.lineWidth/2,W-x.lineWidth,H-x.lineWidth,CS*.2); x.stroke();
+  x.restore();
+}
+/* the Joke Shack's plank photo, turned so the boards run across, warmed and darkened a touch so the discs stand out */
+function paintWood(x,a,b,w,h,shade){
+  if(wood){ x.save(); x.translate(a+w/2,b+h/2); x.rotate(Math.PI/2); var s=Math.max(h/wood.width,w/wood.height)*1.02; x.drawImage(wood,-wood.width*s/2,-wood.height*s/2,wood.width*s,wood.height*s); x.restore(); }
+  else { var g=x.createLinearGradient(a,b,a,b+h); g.addColorStop(0,"#c98d52"); g.addColorStop(1,"#8d5626"); x.fillStyle=g; x.fillRect(a,b,w,h); }
+  x.fillStyle="rgba(70,32,6,"+(1-shade+.12)+")"; x.fillRect(a,b,w,h);
+}
+if(window.ResizeObserver) new ResizeObserver(function(){ fit(); }).observe($("#stage")); else window.addEventListener("resize",fit);
+
+/* ---------- the game ---------- */
+var B, mode="bot", turn=1, first=1, over=false, busy=false, sess={1:0,2:0,t:0}, aim=3, gst={slipped:false,moves:0}, ghost=null;
+function face(c){ var bot=$("#bot"); bot.classList.remove("think","sad","happy"); if(c) bot.classList.add(c); }
+function myTurn(){ return !over && !busy && (mode==="two" || turn===1); }
+function colAt(e){ var b=board.getBoundingClientRect(); return Math.max(0,Math.min(6,Math.floor((e.clientX-b.left-P)/CS))); }
+var fine=matchMedia("(hover:hover) and (pointer:fine)");
+function showGhost(c){ if(!myTurn()) { hideGhost(); return; }
+  if(!ghost){ ghost=document.createElement("i"); ghost.className="dk ghost lift"; marks.appendChild(ghost); }
+  ghost.className="dk ghost lift "+(turn===1?"r":"b"); ghost.style.setProperty("--c",c); ghost.style.setProperty("--r",0);
+  colhi.style.setProperty("--c",c); colhi.classList.toggle("on",dropRow(B,c)>=0); }
+function hideGhost(){ if(ghost){ ghost.remove(); ghost=null; } colhi.classList.remove("on"); }
+board.addEventListener("pointermove",function(e){ if(e.pointerType!=="mouse"&&!fine.matches) return; var c=colAt(e); if(c!==aim){ aim=c; if(myTurn()) sTick(c); } showGhost(aim); });
+board.addEventListener("pointerleave",function(e){ if(e.pointerType==="mouse") hideGhost(); });
+board.addEventListener("click",function(e){ var c=colAt(e); tap(c); });
+function tap(c){ if(!myTurn()) return; if(dropRow(B,c)<0){ BWK.sfx("nope"); return; } go(c,turn); }
+
+/* a disc falls from the lane, slips behind the frame and bounces to a stop */
+function go(c,p){
+  var r=dropRow(B,c); if(r<0) return; busy=true; B[r][c]=p; hideGhost(); arrowsOff();
+  var el=document.createElement("i"); el.className="dk "+(p===1?"r":"b"); el.style.setProperty("--c",c); el.style.setProperty("--r",r);
+  el.setAttribute("aria-hidden","true"); discs.appendChild(el);
+  var startY=Math.round((LANE-D)/2-CS*.04-(LANE+P+CS*r+(CS-D)/2)), T=.18+.06*Math.sqrt(r+1)*1.4, g=2*(-startY)/(T*T), t0=null, k=-1, v0=0, bounces=[.24,.09];
+  el.style.transform="translateY("+startY+"px)"; sSlide();
+  function step(ts){
+    if(t0===null) t0=ts; var t=(ts-t0)/1000, y;
+    if(k<0){ y=startY+.5*g*t*t; if(y>=0){ y=0; v0=g*t; k=0; t0=ts; sClack(r); } }
+    else { var bv=v0*bounces[k]; if(t>=2*bv/g){ y=0; k++; t0=ts; if(k>=bounces.length){ el.style.transform=""; landed(r,c,p); return; } sClack(r,true); } else y=-(bv*t-.5*g*t*t); }
+    el.style.transform="translateY("+y+"px)"; requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function landed(r,c,p){
+  busy=false; el_aria();
+  var w=lineAt(B,r,c,p); if(w){ end(p,w); return; } if(full(B)){ end(0); return; }
+  turn=3-turn; status();
+  if(mode==="bot"&&turn===2){ busy=true; face("think"); board.classList.add("wait");
+    setTimeout(function(){ var m=botCol(B,2,ST.lvl,gst); gst.moves++; face(""); board.classList.remove("wait"); busy=false; if(!over){ sBeep(); go(m,2); } },560+Math.random()*420); }
+  else if(fine.matches) showGhost(aim);
+}
+function el_aria(){ var n=0; for(var r=0;r<6;r++) for(var c=0;c<7;c++) if(B[r][c]) n++; board.setAttribute("aria-label","Four in a Row board, "+n+" discs played"); }
+function status(){
+  var m=$("#msg");
+  if(over) return;
+  if(mode==="bot") m.innerHTML=turn===1?'Your turn!<span><i class="dot r"></i>Tap a column to drop your red disc</span>':"Brody-Bot is thinking…<span>"+LVLN[ST.lvl]+"</span>";
+  else m.innerHTML=(turn===1?'<span style="display:inline;font-size:inherit;color:inherit"><i class="dot r"></i></span>Red\'s turn':'<span style="display:inline;font-size:inherit;color:inherit"><i class="dot b"></i></span>Blue\'s turn')+"<span>Pass the device to your friend</span>";
+}
+function score(){
+  var me=mode==="bot"?BWG.who("You"):"Red", op=mode==="bot"?"Brody-Bot":"Blue";
+  $("#score").innerHTML='<div class="me">'+me+'<b>'+sess[1]+'</b></div><div>Ties<b>'+sess.t+'</b></div><div class="op">'+op+'<b>'+sess[2]+'</b></div>';
+}
+function arrowsOn(){ if(ST.seen) return; var a=document.createElement("div"); a.className="arrows"; a.id="arrows";
+  for(var i=0;i<7;i++) a.innerHTML+='<i><svg viewBox="0 0 24 24"><path d="M12 3v14M5.5 11.5 12 18l6.5-6.5" fill="none" stroke="#ffe27a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>';
+  marks.appendChild(a); }
+function arrowsOff(){ var a=$("#arrows"); if(a){ a.remove(); ST.seen=1; save(); } }
+function newGame(){
+  B=fresh(); over=false; busy=false; turn=first; first=3-first; gst={slipped:false,moves:0};
+  discs.innerHTML=""; marks.innerHTML=""; ghost=null; colhi.classList.remove("on"); board.classList.remove("wait");
+  face(""); status(); score(); el_aria();
+  if(mode==="bot"&&turn===2){ busy=true; face("think"); board.classList.add("wait");
+    setTimeout(function(){ busy=false; face(""); board.classList.remove("wait"); sBeep(); var m=botCol(B,2,ST.lvl,gst); gst.moves++; go(m,2); },800); }
+  else { arrowsOn(); if(fine.matches) showGhost(aim); }
+}
+function end(p,cells){
+  over=true; hideGhost(); arrowsOff();
+  if(cells){ var pts=cells.map(function(rc){ return [P+CS*rc[1]+CS/2, LANE+P+CS*rc[0]+CS/2]; });
+    cells.forEach(function(rc){ var g=document.createElement("i"); g.className="ring"; g.style.setProperty("--c",rc[1]); g.style.setProperty("--r",rc[0]); marks.appendChild(g); });
+    var a=pts[0], b=pts[pts.length-1], dx=b[0]-a[0], dy=b[1]-a[1], n=Math.hypot(dx,dy), e=CS*.3;
+    marks.insertAdjacentHTML("beforeend",'<svg class="strike" aria-hidden="true"><path stroke-width="'+(CS*.1)+'" d="M'+(a[0]-dx/n*e)+' '+(a[1]-dy/n*e)+'L'+(b[0]+dx/n*e)+' '+(b[1]+dy/n*e)+'"/></svg>'); }
+  if(p) sess[p]++; else sess.t++; score();
+  var t, h, fresh2=BWG.patch("four");
+  if(mode==="bot"){
+    if(p===1){ ST.w[ST.lvl]++; face("sad"); sWin(); t="You beat Brody-Bot!"; h=fresh2?WINP:(ST.lvl==="hard"?WINH:WIN); }
+    else if(p===2){ ST.l[ST.lvl]++; face("happy"); sLose(); t="Brody-Bot wins!"; h=LOSE; }
+    else { ST.t[ST.lvl]++; face(""); sTie(); t="It's a tie!"; h=TIE; }
+    save();
+  } else {
+    if(!p){ sTie(); t="It's a tie!"; h=TIE; } else { sWin(); t=p===1?"Red wins!":"Blue wins!"; h=p===1?RW:BW2; }
+  }
+  $("#msg").innerHTML=t+"<span>&nbsp;</span>";
+  setTimeout(function(){
+    var box=BWK.sheet('<h2>'+t+'</h2>'+BWG.patchLine(fresh2)+'<p>'+BODY[h]+'</p>'+
+      '<div class="k-row"><button class="k-btn" data-a="again">Play Again</button><button class="k-btn k-ghost" data-a="menu">Menu</button></div>');
+    box.querySelector('[data-a=again]').onclick=function(){ BWK.closeSheet(true); newGame(); };
+    box.querySelector('[data-a=menu]').onclick=function(){ BWK.closeSheet(true); toMenu(); };
+    BWK.say(h);
+  }, p?1500:800);
+}
+
+/* ---------- keyboard (computers): 1-7 drops, arrows aim, Enter/Space/Down drops ---------- */
+document.addEventListener("keydown",function(e){
+  if(!document.body.classList.contains("m-play")||document.querySelector(".k-veil.on")) return;
+  var k=e.key;
+  if(k>="1"&&k<="7"){ tap(+k-1); return; }
+  if(k==="ArrowLeft"||k==="ArrowRight"){ e.preventDefault(); aim=Math.max(0,Math.min(6,aim+(k==="ArrowLeft"?-1:1))); sTick(aim); showGhost(aim); return; }
+  if(k==="Enter"||k===" "||k==="ArrowDown"){ e.preventDefault(); tap(aim); }
+});
+
+/* ---------- menu ---------- */
+function lvlUI(){ [].forEach.call($("#lvl").children,function(b){ b.classList.toggle("on",b.dataset.l===ST.lvl); }); $("#bBotL").textContent=LVLN[ST.lvl]; foot(); }
+function foot(){ var w=ST.w;
+  $("#mfoot").innerHTML="Wins against Brody-Bot: Easy "+w.easy+" · Medium "+w.medium+" · Hard "+w.hard+"<br>On Hard he's sharp, but he can slip up. Can you beat him?"; }
+$("#lvl").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; ST.lvl=b.dataset.l; save(); BWK.sfx("tap"); BWK.say(LVSAY[ST.lvl]); lvlUI(); });
+function toMenu(){ document.body.className="m-menu"; hideGhost(); lvlUI(); }
+function play(m){ if(m!==mode){ sess={1:0,2:0,t:0}; first=1; } mode=m; document.body.className="m-play"; $("#bot").classList.toggle("two",m==="two"); BWK.sfx("open");
+  requestAnimationFrame(function(){ fit(); newGame(); }); }
+$("#bBot").onclick=function(){ if(mode==="bot") sess={1:0,2:0,t:0}; play("bot"); };
+$("#bTwo").onclick=function(){ play("two"); };
+$("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+HOW+'</p><p>'+HOW2+'</p><p><b>Brody-Bot levels:</b> Easy makes silly moves, Medium tries to block you, and on Hard he plans ahead. Watch for his slip-ups!</p><p>On a computer, press 1 to 7, or use the arrow keys and Enter.</p></div>'); BWK.say(HOW+" "+HOW2); };
+$("#bBack").onclick=BWG.toOutpost;
+$("#tNew").onclick=function(){ BWK.sfx("tap"); if(!busy) newGame(); };
+$("#tMenu").onclick=function(){ BWK.sfx("tap"); toMenu(); };
+/* the buttons a pre-reader taps get a spoken name */
+[["#bBot","Play Brody-Bot"],["#bTwo","Two players"],["#bHow","How to play"],["#tNew","New game"]].forEach(function(a){ $(a[0]).setAttribute("data-say",a[1]); });
+
+var INTRO="Four in a Row! Drop your discs and line up four before Brody-Bot does. Pick Easy, Medium or Hard, or play with a friend.";
+var HOW="Take turns dropping a disc into a column. It falls all the way down to the lowest empty spot.";
+var HOW2="The first one to get four in a row wins. A row can go across, up and down, or slanted. If the board fills up and nobody has four, it's a tie.";
+var WIN="You beat Brody-Bot! Four in a row!";
+var WINH="You beat Brody-Bot on Hard! That's some big-time thinking!";
+var WINP="You beat Brody-Bot! You earned a new patch for your badge wall!";
+var LOSE="Brody-Bot got four in a row. Try again!";
+var TIE="It's a tie! The board filled up and nobody got four.";
+var RW="Red wins! Great game!", BW2="Blue wins! Great game!";
+var LVSAY={easy:"Easy",medium:"Medium",hard:"Hard"};
+var BODY={}; BODY[WIN]="Nice moves!"; BODY[WINH]="That's some big-time thinking!"; BODY[WINP]="Four in a row!"; BODY[LOSE]="He got four in a row. Look for his rows, and block them before he gets three!";
+BODY[TIE]="The board filled up and nobody got four."; BODY[RW]="Great game!"; BODY[BW2]="Great game!";
+var L={"four-intro":INTRO,"four-how":HOW,"four-how2":HOW2,"four-win":WIN,"four-win-hard":WINH,"four-win-patch":WINP,"four-lose":LOSE,"four-tie":TIE,"four-red":RW,"four-blue":BW2};
+BWK.lines(L);
+toMenu();
+BWK.init({here:"four", voice:"outpost", intro:INTRO, noHello:true});
+window.FRO4={play:play,go:go,tap:tap,B:function(){return B;},bot:function(){ return botCol(B,2,ST.lvl,gst); },lines:L,
+  state:function(){ return {B:B,turn:turn,over:over,busy:busy,mode:mode,ST:ST,CS:CS}; }, rig:function(b,t){ B=b; turn=t; discs.innerHTML="";
+    for(var r=0;r<6;r++) for(var c=0;c<7;c++) if(B[r][c]){ var el=document.createElement("i"); el.className="dk "+(B[r][c]===1?"r":"b"); el.style.setProperty("--c",c); el.style.setProperty("--r",r); discs.appendChild(el); } status(); }};
+})();
+</script>
+<script>/* the photo look: html.jtp once the Joke Shack room has loaded; html.fop once the photo discs have (drawn discs until then) */
+(function(){ var i=new Image(); i.onload=function(){ document.documentElement.classList.add("jtp"); }; i.src="jt/jt-bg-sm.jpg?v=1115a";
+  var L=["fo-red.webp","fo-blue.webp"], n=0; L.forEach(function(f){ var j=new Image(); j.onload=function(){ if(++n===L.length) document.documentElement.classList.add("fop"); }; j.src="fo/"+f+"?v=1117a"; }); })();</script>
+</body>
+</html>
