@@ -92,6 +92,11 @@
 .acts .k-btn:disabled{opacity:.4;cursor:default}
 .acts .k-ghost{color:#6b4a1a;background:rgba(120,80,20,.12);box-shadow:0 3px 0 rgba(120,80,20,.25)}
 .acts .go{background:linear-gradient(180deg,#f78cb0,#d24f7e);color:#fff;box-shadow:0 4px 0 #9c2f57}
+.rc{text-align:left;max-height:min(52vh,430px);overflow:auto;margin:6px 0 10px;padding:2px 4px 2px 2px}
+.rc h3{font-size:15px;margin:10px 0 4px;color:#c0466f;display:flex;align-items:center;gap:6px}.rc h3 i{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:inset 0 -2px 3px rgba(0,0,0,.25)}
+.rc ul{margin:0;padding:0;list-style:none}.rc li{display:flex;align-items:center;gap:8px;font-size:15px;line-height:1.25;margin:3px 0}.rc li svg{width:30px;height:30px;flex:none}
+.rc ol{margin:4px 0 0;padding-left:22px}.rc ol li{display:list-item;font-size:15px;margin:4px 0}.rc .mk{font-size:13.5px;color:#6b5a3a;margin:8px 0 0}
+.rbox{display:flex;flex-direction:column;gap:8px;max-height:min(55vh,440px);overflow:auto;margin:8px 0 12px}.rbox .k-btn{min-height:44px;font-size:15px;text-align:left;justify-content:flex-start}
 .stars{font-size:34px;letter-spacing:4px;color:#f2be45;text-shadow:0 2px 0 #8a5f12;margin:2px 0 4px}
 .stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
 .mix{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff4dc;text-shadow:0 2px 6px #000}
@@ -114,6 +119,7 @@
       <div class="mbtns">
         <button class="k-btn" id="bPlay">Today's Orders</button>
         <button class="k-btn" id="bBonus" style="display:none">Bonus Smoothie</button>
+        <button class="k-btn k-ghost" id="bBox" style="display:none">Recipe Box</button>
         <button class="k-btn k-ghost" id="bHow">How to Play</button>
         <button class="k-btn k-ghost" id="bBack">Back to The Outpost</button>
       </div>
@@ -293,6 +299,59 @@ function layout(){ if(!P) return; var st=$("#stage"), W=st.clientWidth, H=st.cli
 window.addEventListener("resize",function(){ requestAnimationFrame(layout); });
 if(window.ResizeObserver) new ResizeObserver(function(){ requestAnimationFrame(layout); }).observe($("#stage"));
 
+/* ---------- real-looking smoothie (Nov 17, Sophie: "the liquids look fake") ----------
+   Each layer gets a blended texture of its own (swirls of each ingredient's color, seeds and flecks, tiny air bubbles, grain),
+   soft edges where two layers meet, smears of the upper layer down the glass, and a frothy top. */
+var TEX={};
+function rnd(seed){ seed=seed%2147483646+1; return function(){ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; }; }
+function hashS(s){ var h=7; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%2147483000; return h; }
+function rgba(c,a){ return "rgba("+c.map(function(v){ return Math.max(0,Math.min(255,Math.round(v))); }).join(",")+","+a+")"; }
+function texURL(L){ var items=L.f.concat(L.a?[L.a]:[]), key=items.join("+"); if(TEX[key]) return TEX[key];
+  var S=200, cv=document.createElement("canvas"); cv.width=cv.height=S; var x=cv.getContext("2d"), R=rnd(hashS(key)), c=L.c;
+  if(!x) return "";
+  x.fillStyle=hex(c); x.fillRect(0,0,S,S);
+  function wrap(fn){ for(var dx=-S;dx<=S;dx+=S) for(var dy=-S;dy<=S;dy+=S) fn(dx,dy); }
+  var cols=items.map(function(id){ return IG[id].c; });
+  for(var i=0;i<110;i++){ (function(){ var px=R()*S, py=R()*S, r=6+R()*26, src=R()<.55?cols[Math.floor(R()*cols.length)]:c, tt=R()*.44-.2,
+      col=tt>0?mixc(src,[255,255,255],tt):mixc(src,[0,0,0],-tt), a=.16+R()*.22, rot=R()*3;
+    wrap(function(dx,dy){ var g=x.createRadialGradient(px+dx,py+dy,0,px+dx,py+dy,r*1.6); g.addColorStop(0,rgba(col,a)); g.addColorStop(1,rgba(col,0)); x.fillStyle=g; x.beginPath(); x.ellipse(px+dx,py+dy,r*1.6,r,rot,0,7); x.fill(); }); })(); }
+  var sp=[]; items.forEach(function(id){ if(id==="kiwi") sp.push([80,"#1b140c",1.3,.75]); if(id==="strawberry") sp.push([50,"#8a2a22",1,.7],[30,"#e0bf5a",.8,.6]);
+    if(id==="blueberry") sp.push([55,"#2a1c48",1.7,.9]); if(id==="acai") sp.push([55,"#22071d",1.6,.9]); if(id==="banana") sp.push([22,"#7a6630",.7,.5]); if(id==="mango") sp.push([16,"#e9a020",2.2,1]); });
+  var div=items.length>2?2:items.length>1?1.4:1;
+  sp.forEach(function(q){ x.fillStyle=q[1]; for(var j=0;j<q[0]*.55/div;j++){ (function(){ var px=R()*S, py=R()*S, rr=q[2]*2.1*(.6+R()*.8), al=.55+R()*.4, rot=R()*3;
+      x.globalAlpha=al; wrap(function(dx,dy){ x.beginPath(); x.ellipse(px+dx,py+dy,rr,rr*q[3],rot,0,7); x.fill(); }); })(); } x.globalAlpha=1; });
+  for(var b=0;b<16;b++){ (function(){ var bx=R()*S, by=R()*S, br=1.6+R()*3;
+    wrap(function(dx,dy){ x.strokeStyle="rgba(255,255,255,.32)"; x.lineWidth=.8; x.beginPath(); x.arc(bx+dx,by+dy,br,0,7); x.stroke(); x.fillStyle="rgba(255,255,255,.22)"; x.beginPath(); x.arc(bx+dx-br*.3,by+dy-br*.3,br*.38,0,7); x.fill(); }); })(); }
+  var d=x.getImageData(0,0,S,S), pp=d.data; for(var k=0;k<pp.length;k+=4){ var n=(R()-.5)*16; pp[k]+=n; pp[k+1]+=n; pp[k+2]+=n; } x.putImageData(d,0,0);
+  return TEX[key]=cv.toDataURL("image/jpeg",.86); }
+/* the glass's inside edges (cup units) */
+function xl(y){ return 30+103*(y-74)/1226; } function xr(y){ return CW-xl(y); }
+/* the liquid: layers 0..n-1 of order o, in cup units; Y maps a cup y to the picture's y; pre keeps ids unique */
+function liquid(o,n,Y,pre){ var N=o.L.length, defs='', lay='';
+  function front(y,ry,ph){ return "M-20 "+y+" C"+(CW*.25)+" "+(y+ry*1.33+ph)+" "+(CW*.75)+" "+(y+ry*1.33-ph)+" "+(CW+20)+" "+y; }
+  for(var k=n-1;k>=0;k--){ var L=o.L[k], c=L.c, y0=layerTop(k,N), yt=Y(y0), rx=(xr(y0)-xl(y0))/2, ry=rx*.09, ph=((k*37)%11-5)*2, tu=texURL(L), id=pre+"T"+k, deep=Y(LBOT)+60;
+    defs+=tu?'<pattern id="'+id+'" width="260" height="260" patternUnits="userSpaceOnUse"><image href="'+tu+'" width="260" height="260"/></pattern>':'';
+    var fill=tu?'url(#'+id+')':hex(c), top=k===n-1;
+    var g='<g class="ly" data-k="'+k+'">';
+    g+='<path d="'+front(yt,ry,ph)+' L'+(CW+20)+' '+deep+' L-20 '+deep+'Z" fill="'+fill+'"/>';
+    /* depth: a little darker toward the bottom of each layer */
+    var yb=k?Y(layerTop(k-1,N)):Y(LBOT);
+    defs+='<linearGradient id="'+id+'d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".13"/></linearGradient>';
+    g+='<rect x="-20" y="'+yt+'" width="'+(CW+40)+'" height="'+Math.max(1,yb-yt+ry)+'" fill="url(#'+id+'d)"/>';
+    if(!top){ var U=o.L[k+1].c, bid=id+"b";
+      defs+='<linearGradient id="'+bid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+hex(U)+'" stop-opacity=".9"/><stop offset=".45" stop-color="'+hex(mixc(U,c,.5))+'" stop-opacity=".45"/><stop offset="1" stop-color="'+hex(c)+'" stop-opacity="0"/></linearGradient>';
+      g+='<path d="'+front(yt-4,ry,ph)+' L'+(CW+20)+' '+(yt+44)+' L-20 '+(yt+44)+'Z" fill="url(#'+bid+')"/>';
+      /* smears of the upper layer running down the glass */
+      var Rr=rnd(hashS(pre+k+"d")); for(var q=0;q<3;q++){ var side=(q+k)%2, wx=side?xr(y0)-25-Rr()*120:xl(y0)+25+Rr()*120, dl=18+Rr()*(q?50:120), dw=16+Rr()*34, y1=yt+ry*.6;
+        g+='<path d="M'+(wx-dw/2)+' '+(y1-6)+' C'+(wx-dw/2)+' '+(y1+dl*.6)+' '+(wx-dw*.3)+' '+(y1+dl)+' '+wx+' '+(y1+dl)+' C'+(wx+dw*.3)+' '+(y1+dl)+' '+(wx+dw/2)+' '+(y1+dl*.6)+' '+(wx+dw/2)+' '+(y1-6)+'Z" fill="'+hex(mixc(U,c,.25))+'" opacity="'+(.3+Rr()*.3).toFixed(2)+'"/>'; } }
+    else { /* the frothy top, seen a little from above */
+      g+='<ellipse cx="'+(CW/2)+'" cy="'+yt+'" rx="'+(rx+4)+'" ry="'+ry+'" fill="'+fill+'"/><ellipse cx="'+(CW/2)+'" cy="'+yt+'" rx="'+(rx+4)+'" ry="'+ry+'" fill="'+shade(c,.22)+'" opacity=".55"/>';
+      var Rf=rnd(hashS(pre+"f"+k)); for(var f2=0;f2<26;f2++){ var a=Rf()*Math.PI*2, rr=Math.sqrt(Rf())*.92, bx=CW/2+Math.cos(a)*rx*rr, by=yt+Math.sin(a)*ry*rr, br=3+Rf()*7;
+        g+='<circle cx="'+bx.toFixed(1)+'" cy="'+by.toFixed(1)+'" r="'+br.toFixed(1)+'" fill="'+shade(c,.45)+'" opacity=".45" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/>'; }
+      g+='<path d="M'+(CW/2-rx)+' '+yt+' A'+rx+' '+ry+' 0 0 0 '+(CW/2+rx)+' '+yt+'" fill="none" stroke="'+shade(c,.4)+'" stroke-width="5" opacity=".6"/>'; }
+    lay+=g+'</g>'; }
+  return {defs:defs,body:lay}; }
+
 /* ---------- the order card ---------- */
 function drawTicket(){ var tk=$("#ticket"), g=GEO; if(!g) return; var w=g.tk.w, h=g.tk.h, o=O(), D=LV[P.lv], N=o.L.length;
   var cu=CUST[o.cu], s='<svg viewBox="0 0 '+w+' '+h+'">';
@@ -302,19 +361,13 @@ function drawTicket(){ var tk=$("#ticket"), g=GEO; if(!g) return; var w=g.tk.w, 
       '<g opacity=".25" fill="#fff">'; for(var i=0;i<18;i++) s+='<circle cx="'+(24+(i*53)%(w-40))+'" cy="'+(46+(i*37)%(h-60))+'" r="'+(4+i%4)+'"/>'; s+='</g>'+
       '<text x="'+w/2+'" y="'+(h/2+10)+'" text-anchor="middle" font-size="16" font-weight="800" fill="#fff" font-family="Outfit,system-ui,sans-serif">Remember?</text></svg>';
     tk.innerHTML=s+'<button class="ib peek" id="tPeek">Peek</button>'; $("#tPeek").onclick=peek; return; }
-  /* mini cup on the left; one row per layer to its right, lined up with it */
-  var top=32, bot=h-10, tH=Math.max(22,Math.min(34,(bot-top)*.2)), cy0=top+tH, ch=bot-cy0, cw=Math.min(w*.26,ch*.62), cx=10;
-  var lh=ch/N, pic=D.m!=="word"&&D.m!=="mem"||true;
-  s+='<defs><clipPath id="smTkC"><path d="M'+cx+' '+cy0+'L'+(cx+cw)+' '+cy0+'L'+(cx+cw*.86)+' '+bot+'L'+(cx+cw*.14)+' '+bot+'Z"/></clipPath>'+
-     '<linearGradient id="smTkG" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".35" stop-color="#fff" stop-opacity=".18"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>';
-  s+='<g clip-path="url(#smTkC)">'; for(var k=0;k<N;k++){ var y=bot-(k+1)*lh; s+='<rect x="'+cx+'" y="'+y+'" width="'+cw+'" height="'+(lh+1)+'" fill="'+hex(o.L[k].c)+'"/>'; }
-  s+='<rect x="'+cx+'" y="'+cy0+'" width="'+cw+'" height="'+ch+'" fill="url(#smTkG)"/></g>';
-  s+='<path d="M'+cx+' '+cy0+'L'+(cx+cw)+' '+cy0+'L'+(cx+cw*.86)+' '+bot+'L'+(cx+cw*.14)+' '+bot+'Z" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="1.6"/>';
-  /* toppings above the mini cup */
-  var ts=Math.min(tH,30), tx=cx+cw+6;
-  var tw=o.T.length*(ts+3), t0=Math.max(4,cx+cw/2-tw/2);
-  o.T.forEach(function(t,i){ var done=P.tp.indexOf(t)>=0; s+='<svg x="'+(t0+i*(ts+3))+'" y="'+(cy0-ts-1)+'" width="'+ts+'" height="'+ts+'" viewBox="0 0 40 40" opacity="'+(done?.4:1)+'">'+icon(t)+'</svg>'; });
-  var rx=cx+cw+10, fs=Math.max(11,Math.min(15,lh*.32,w/24)), cur=P.pl;
+  /* a real glass on the left (Nov 17, Sophie): the cup photo, made taller by stretching its middle, with the layers and the toppings
+     placed just as on the big cup; one row per layer to its right, lined up with the glass's layers */
+  var mg=miniGlass(o,{x:4,y:6,w:w*.4,h:h-12}), cy0=mg.top, bot=mg.bot, cx=mg.x, cw=mg.w, lh=(bot-cy0)/N, pic=true;
+  s+=mg.svg;
+  var tx0=cw+cx+6, tfs=Math.max(10,Math.min(15,(w-tx0-8)/(.6*(cu.n.length+12))));
+  s=s.replace(/<text x="12" y="22" font-size="[^"]*"/,'<text x="'+((tx0+w)/2)+'" y="22" text-anchor="middle" font-size="'+tfs.toFixed(1)+'"');
+  var rx=cx+cw+8, fs=Math.max(11,Math.min(15,lh*.32,w/24)), cur=P.pl;
   for(var j=0;j<N;j++){ var L=o.L[j], yb=bot-j*lh, yt=yb-lh, done=j<cur, isCur=j===cur;
     if(isCur) s+='<rect x="'+(rx-4)+'" y="'+(yt+1.5)+'" width="'+(w-rx-2)+'" height="'+(lh-3)+'" rx="8" fill="#fff" opacity=".7" stroke="#f2be45" stroke-width="2"/>';
     var items=L.f.concat(L.a?[L.a]:[]);
@@ -325,8 +378,33 @@ function drawTicket(){ var tk=$("#ticket"), g=GEO; if(!g) return; var w=g.tk.w, 
       lines.forEach(function(q,qi){ s+='<text x="'+rx+'" y="'+(yt+lh/2+f2*.36+(qi-(lines.length-1)/2)*f2*1.15)+'" font-size="'+f2+'" font-weight="700" fill="#4a300c" font-family="Outfit,system-ui,sans-serif">'+q+'</text>'; }); }
     if(done) s+='<text x="'+(w-16)+'" y="'+(yt+lh/2+7)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#2f9a4a">✓</text>';
   }
-  if(ST.n<2&&cur===0&&!P.bonus) s+='<text x="'+(cx+cw/2)+'" y="'+(bot-lh/2+5)+'" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" stroke="#6b2a10" stroke-width="2.5" paint-order="stroke" font-family="Outfit,system-ui,sans-serif">1st</text>';
+  if(ST.n<2&&cur===0&&!P.bonus) s+='<text x="'+mg.mid+'" y="'+(bot-lh/2+5)+'" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" stroke="#6b2a10" stroke-width="2.5" paint-order="stroke" font-family="Outfit,system-ui,sans-serif">1st</text>';
   s+='</svg>'; tk.innerHTML=s+(D.m==="mem"&&P.cover?'<button class="ib peek" id="tPeek" style="display:none"></button>':""); }
+function miniGlass(o,box){ var A=250, B=1200, X0=-.1*CW, XW=1.26*CW, OV=340, N=o.L.length;
+  var want=box.h*XW/box.w-OV, f=Math.max(1,Math.min(1.9,(want-(A+CH-B))/(B-A))), Hm=A+(B-A)*f+(CH-B), s=Math.min(box.w/XW,box.h/(OV+Hm));
+  function Y(y){ return y<=A?y:y<=B?A+(y-A)*f:A+(B-A)*f+(y-B); }
+  var gx=box.x+(box.w-XW*s)/2-X0*s, gy=box.y+box.h-Hm*s-Math.max(0,(box.h-(OV+Hm)*s)*.45), cid="smTkC";
+  var clip='M30 74L763 74L'+xr(A)+' '+A+'L'+xr(B)+' '+Y(B)+'L660 '+Y(1300)+'Q396 '+Y(1352)+' 133 '+Y(1300)+'L'+xl(B)+' '+Y(B)+'L'+xl(A)+' '+A+'Z';
+  var lq=liquid(o,N,Y,"smK"), sv='<defs><clipPath id="'+cid+'"><path d="'+clip+'"/></clipPath>'+lq.defs+
+    '<linearGradient id="smKSh" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset=".16" stop-color="#000" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".14"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>'+
+    '<radialGradient id="smKSd"><stop offset="0" stop-color="#000" stop-opacity=".4"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>';
+  sv+='<g transform="translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') scale('+s.toFixed(5)+')">';
+  sv+='<ellipse cx="'+(CW/2)+'" cy="'+(Hm-10)+'" rx="'+(CW*.48)+'" ry="40" fill="url(#smKSd)"/>';
+  sv+='<g clip-path="url(#'+cid+')">'+lq.body+'<rect x="0" y="0" width="'+CW+'" height="'+Hm+'" fill="url(#smKSh)"/></g>';
+  var y=(LTOP-20)/CH, cr=o.T.indexOf("cream")>=0;
+  function topImg(tp){ var sp=topSpot(tp,y,cr), w=CW*sp[2], bt=Y(sp[1]*CH), h=w, x0=sp[0]*CW-w/2, y0=bt-h;
+    if(tp==="straw"){ var top=sp[1]*CH-CH*.66; h=bt-top; w=PH.straw?h*PH.straw.w/PH.straw.h:h*.22; x0=sp[0]*CW-w/2; y0=top; }
+    var tr=sp[3]?' transform="rotate('+sp[3]+' '+(sp[0]*CW)+' '+bt+')"':'';
+    if(PH[tp]) return '<image href="'+PH[tp].src+'" x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" preserveAspectRatio="xMidYMax meet"'+tr+'/>';
+    return '<svg x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+h+'" viewBox="0 0 40 40" preserveAspectRatio="'+(tp==="straw"?"none":"xMidYMax meet")+'"'+'><g'+tr.replace(/rotate\([^)]*\)/,"")+'>'+icon(tp)+'</g></svg>'; }
+  if(o.T.indexOf("straw")>=0) sv+=topImg("straw");
+  if(PH.cupglass){ var href=PH.cupglass.src;
+    [[0,A,0],[A,B,A],[B,CH,Y(B)]].forEach(function(sl){ var h0=sl[1]-sl[0], h1=Y(sl[1])-Y(sl[0]);
+      sv+='<svg x="0" y="'+sl[2]+'" width="'+CW+'" height="'+(h1+.6)+'" viewBox="0 '+sl[0]+' '+CW+' '+h0+'" preserveAspectRatio="none"><image href="'+href+'" width="'+CW+'" height="'+CH+'" preserveAspectRatio="none"/></svg>'; }); }
+  else sv+='<path d="M8 40L785 40L'+(xr(B)+20)+' '+Y(B)+'L680 '+(Hm-20)+'L113 '+(Hm-20)+'L'+(xl(B)-20)+' '+Y(B)+'Z" fill="rgba(220,240,255,.12)" stroke="rgba(255,255,255,.8)" stroke-width="12"/>';
+  ["cream","mangoslice","umbrella","cherry","mint","sprinkles"].forEach(function(tp){ if(o.T.indexOf(tp)>=0) sv+=topImg(tp); });
+  sv+='</g>';
+  return {svg:sv, top:gy+Y(LTOP)*s, bot:gy+Y(LBOT)*s, x:Math.max(0,gx+X0*s), w:XW*s, mid:gx+CW/2*s}; }
 function peek(){ if(!P||P.peek) return; BWK.sfx("tap"); P.peeks++; if(P.peeks>1){ P.hints++; saveCur(); } P.peek=true; drawTicket(); var g=gen;
   setTimeout(function(){ if(g!==gen) return; P.peek=false; drawTicket(); },2600); if(P.peeks===2) msg("Peeking again counts like a hint."); }
 
@@ -337,18 +415,14 @@ function wave(y,ph){ var s="M0 "+y; for(var x=0;x<=CW;x+=CW/6){ s+=" Q"+(x+CW/12
 function drawCup(full){ var cup=$("#cup"); if(!GEO) return; var o=O(), N=o.L.length;
   var s='<svg viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="none"><defs><clipPath id="smIn"><path d="'+IN+'"/></clipPath>'+
     '<linearGradient id="smShade" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".16" stop-color="#000" stop-opacity=".05"/><stop offset=".3" stop-color="#fff" stop-opacity=".14"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".36"/></linearGradient>';
-  var lay='';
-  for(var k=Math.min(P.pl,N)-1;k>=0;k--){ var L=o.L[k], c=L.c, yt=layerTop(k,N);
-    s+='<pattern id="smFl'+k+'" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="9" cy="12" r="3" fill="'+shade(c,-.35)+'" opacity=".35"/><circle cx="41" cy="33" r="2.4" fill="'+shade(c,-.3)+'" opacity=".3"/><circle cx="24" cy="50" r="2" fill="'+shade(c,.4)+'" opacity=".35"/></pattern>';
-    lay+='<g class="ly" data-k="'+k+'"><path d="'+wave(yt,k)+' L'+CW+' '+CH+' L0 '+CH+'Z" fill="'+hex(c)+'"/><path d="'+wave(yt,k)+' L'+CW+' '+CH+' L0 '+CH+'Z" fill="url(#smFl'+k+')"/>'+
-      '<path d="'+wave(yt,k)+'" fill="none" stroke="'+shade(c,.35)+'" stroke-width="7" opacity=".7"/></g>'; }
-  s+='</defs><g clip-path="url(#smIn)" id="smLiq">'+lay+'<rect width="'+CW+'" height="'+CH+'" fill="url(#smShade)" opacity="'+(P.pl?1:0)+'"/></g>';
+  var lq=liquid(o,Math.min(P.pl,N),function(y){ return y; },"smC");
+  s+=lq.defs+'</defs><g clip-path="url(#smIn)" id="smLiq">'+lq.body+'<rect width="'+CW+'" height="'+CH+'" fill="url(#smShade)" opacity="'+(P.pl?1:0)+'"/></g>';
   if(!PH.cupglass) s+='<path d="M8 40L785 40L680 1460L113 1460Z" fill="rgba(220,240,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="10"/>';
   s+='</svg>'; if(PH.cupglass) s+='<img class="glass" alt="" src="'+PH.cupglass.src+'">';
   cup.innerHTML=s; P.tp.forEach(function(t){ putTop(t,false); }); }
 /* where each topping sits, as fractions of the cup box: [x, bottom y, width, rotation] */
 function topY(){ var N=O().L.length; return P.pl>=N?(LTOP-20)/CH:.16; }
-function topSpot(t){ var y=topY(), cr=P.tp.indexOf("cream")>=0; var crTop=y-.19;
+function topSpot(t,yy,crm){ var y=yy==null?topY():yy, cr=crm==null?P.tp.indexOf("cream")>=0:crm; var crTop=y-.19;
   switch(t){ case "cream": return [.5,y+.04,.74,0];
     case "cherry": return cr?[.52,crTop+.04,.3,0]:[.5,y+.02,.3,0];
     case "mint": return cr?[.3,crTop+.1,.32,-18]:[.32,y+.02,.32,-18];
@@ -455,10 +529,64 @@ function nudge(L,items){ if(P.lv>3) return "Not quite. Check the order card for 
   return "Not quite. Tap Empty and try again."; }
 function serve(){ var o=O(); if(P.tp.length<o.T.length||busy) return; clearHint(); busy=true; var g=gen; sServe(); BWK.say(THANKS);
   msg("Yum! Thank you, Sophie!"); var c=$("#cust"); c.classList.add("hop"); $("#cup").animate([{transform:"none"},{transform:"translateX(-8%) scale(.96)"},{transform:"none"}],{duration:700});
-  setTimeout(function(){ if(g!==gen) return; c.classList.remove("hop"); ST.n++; save();
+  setTimeout(function(){ if(g!==gen) return; c.classList.remove("hop"); ST.n++; keepRecipe(o); save();
+    recipeSheet(o,P.oi+1<P.orders.length?"Next customer":"Done",function(){ if(g!==gen) return; afterServe(); }); },1300);
+  function afterServe(){
     if(P.oi+1<P.orders.length){ c.classList.add("out");
       setTimeout(function(){ if(g!==gen) return; c.classList.remove("out"); P.oi++; P.pl=0; P.tp=[]; P.bl=[]; P.blended=false; saveCur(); newCustomer(); busy=false; layout(); orderHello(); },520); }
-    else { busy=false; win(); } },1300); }
+    else { busy=false; win(); } } }
+
+/* ---------- real recipes (Nov 17, Sophie): each smoothie served comes with a make-it-at-home card, kept in the Recipe Box ---------- */
+var CUPS=[[1,"1 cup"],[.75,"3/4 cup"],[2/3,"2/3 cup"],[.5,"1/2 cup"],[1/3,"1/3 cup"],[.25,"1/4 cup"]];
+function cups(v){ var b=null; CUPS.forEach(function(q){ if(!b||Math.abs(q[0]-v)<Math.abs(b[0]-v)) b=q; }); return v<.2?Math.max(2,Math.round(v*16))+" tablespoons":b[1]; }
+function half(v){ var r=Math.max(.5,Math.round(v*2)/2), w=Math.floor(r), h=r-w>0; return (w?w:"")+(h?(w?" ":"")+"1/2":""); }
+function fruitAmt(id,v){ switch(id){
+  case "banana": var b=half(v); return b+(b==="1/2"?" ripe banana":(+b>1||b.indexOf(" ")>0?" ripe bananas":" ripe banana"));
+  case "kiwi": var k=half(v*3); return k+(k==="1"||k==="1/2"?" kiwi":" kiwis")+", peeled and cut up";
+  case "acai": var a=half(v*2); var one=a==="1"||a==="1/2"; return a+" frozen acai packet"+(one?" (3.5 oz)":"s (3.5 oz each)")+", broken up";
+  case "strawberry": return cups(v)+" frozen strawberries";
+  case "blueberry": return cups(v)+" frozen blueberries";
+  case "mango": return cups(v)+" frozen mango chunks"; } }
+function addAmt(id,N){ var sm=N>2; switch(id){
+  case "icecream": return (sm?"1 small scoop":"1 scoop")+" vanilla ice cream";
+  case "yogurt": return (sm?"2 tablespoons":"1/4 cup")+" vanilla yogurt";
+  case "coconut": return (sm?"2 tablespoons":"1/4 cup")+" coconut milk";
+  case "oj": return (sm?"2 tablespoons":"1/4 cup")+" orange juice";
+  case "pine": return (sm?"2 tablespoons":"1/4 cup")+" pineapple juice"; } }
+function recipeName(o){ var cu=CUST[o.cu].n, fr=[]; o.L.forEach(function(L){ L.f.forEach(function(id){ if(fr.indexOf(id)<0) fr.push(id); }); });
+  var nm=fr.map(function(id){ return IG[id].n; });
+  return cu+"'s "+(fr.length>3?"Rainbow Layer Smoothie":(nm.length>1?nm.slice(0,-1).join(", ")+" & "+nm[nm.length-1]:nm[0])+" Smoothie"); }
+function recipeHTML(o){ var N=o.L.length, per=N<=2?.75:N===3?.5:1/3, dry=0, h='<div class="rc" data-bws="off">';
+  o.L.forEach(function(L,i){ var v=per/L.f.length, items=L.f.map(function(id){ return [id,fruitAmt(id,v)]; });
+    if(L.a) items.push([L.a,addAmt(L.a,N)]);
+    var wet=L.a==="oj"||L.a==="pine"||L.a==="coconut";
+    h+='<h3><i style="background:'+hex(L.c)+'"></i>'+(N>1?"Layer "+(i+1)+(i===0?" (bottom)":i===N-1?" (top)":""):"The smoothie")+'</h3><ul>';
+    items.forEach(function(it){ h+='<li><svg viewBox="0 0 40 40" aria-hidden="true">'+icon(it[0])+'</svg>'+it[1]+'</li>'; });
+    if(!wet) dry++;
+    h+='</ul>'; });
+  if(dry) h+='<h3>Also</h3><ul><li><svg viewBox="0 0 40 40" aria-hidden="true"></svg><span>A little milk, 1 to 2 tablespoons at a time, only if '+(N>1?'a layer needs':'it needs')+' help blending</span></li></ul>';
+  if(o.T.length){ h+='<h3>Toppings</h3><ul>'; o.T.forEach(function(tp){ h+='<li><svg viewBox="0 0 40 40" aria-hidden="true">'+icon(tp)+'</svg>'+
+    ({cream:"Whipped cream",cherry:"1 cherry",straw:"A straw",umbrella:"A paper umbrella",mangoslice:"1 slice of fresh mango",mint:"1 sprig of fresh mint",sprinkles:"Rainbow sprinkles"})[tp]+'</li>'; }); h+='</ul>'; }
+  h+='<h3>How to make it</h3><ol><li>Ask a grown-up to help with the blender.</li>';
+  if(N>1) h+='<li>Pop a tall glass in the freezer for 10 minutes. A cold glass helps the layers stay neat.</li>';
+  o.L.forEach(function(L,i){ h+=i===0?'<li>Blend '+(N>1?'layer 1':'everything')+' until it\'s smooth and thick. Pour it into the glass.</li>':
+    '<li>Rinse the blender. Blend layer '+(i+1)+' and spoon it gently on top'+(i===1?', so it doesn\'t sink into the layer below':'')+'.</li>'; });
+  var on=o.T.filter(function(tp){ return tp==="cream"||tp==="cherry"||tp==="sprinkles"||tp==="mint"; }).map(function(tp){ return {cream:"whipped cream",cherry:"a cherry",sprinkles:"sprinkles",mint:"a mint leaf"}[tp]; });
+  if(on.length) h+='<li>Top it with '+(on.length>1?on.slice(0,-1).join(", ")+" and "+on[on.length-1]:on[0])+'.</li>';
+  if(o.T.indexOf("mangoslice")>=0) h+='<li>Cut a small slit in a mango slice and hang it on the rim.</li>';
+  var st=o.T.filter(function(tp){ return tp==="straw"||tp==="umbrella"; });
+  if(st.length) h+='<li>Add '+(st.length>1?"a straw and a paper umbrella":st[0]==="straw"?"a straw":"a paper umbrella")+'.</li>';
+  h+='<li>Enjoy it right away!</li></ol><p class="mk">Makes 1 big smoothie. Frozen fruit makes thick layers that stay in stripes.</p></div>';
+  return h; }
+function recipeSheet(o,btn,then){ var box=BWK.sheet('<h2>'+recipeName(o)+'</h2><p style="margin:0">Make it at home!</p>'+recipeHTML(o)+
+    '<div class="k-row"><button class="k-btn" data-a="go">'+btn+'</button></div>',then);
+  box.querySelector('[data-a=go]').onclick=function(){ BWK.closeSheet(true); }; return box; }
+function keepRecipe(o){ var r={cu:o.cu,L:o.L.map(function(L){ return {f:L.f.slice(),a:L.a||null,c:L.c}; }),T:o.T.slice()}, key=JSON.stringify([r.L.map(function(L){ return [L.f,L.a]; }),r.T]);
+  ST.rb=(ST.rb||[]).filter(function(x){ return JSON.stringify([x.L.map(function(L){ return [L.f,L.a]; }),x.T])!==key; }); ST.rb.unshift(r); if(ST.rb.length>40) ST.rb.length=40; }
+function recipeBox(){ var rb=ST.rb||[]; if(!rb.length) return;
+  var box=BWK.sheet('<h2>Recipe Box</h2><p style="margin:0">Every smoothie you\'ve served, ready to make at home.</p><div class="rbox" data-bws="off">'+
+    rb.map(function(r,i){ return '<button class="k-btn k-ghost" data-i="'+i+'">'+recipeName(r)+'</button>'; }).join("")+'</div>');
+  Array.prototype.forEach.call(box.querySelectorAll("[data-i]"),function(b){ b.onclick=function(){ BWK.sfx("tap"); recipeSheet(rb[+b.dataset.i],"Back to the Recipe Box",function(){ setTimeout(recipeBox,30); }); }; }); }
 function starsOf(h){ return h===0?3:h<=2?2:1; }
 function win(){ P.done=true; saveCur(); var g=gen; var fresh=P.bonus?"":BWG.patch("smoothie"); sWin();
   setTimeout(function(){ if(g!==gen) return; var s=starsOf(P.hints);
@@ -498,10 +626,11 @@ document.addEventListener("keydown",function(e){ if(!document.body.classList.con
 function toMenu(){ gen++; busy=false; document.body.className="m-menu"; var t=today(), lv=lvOf(t.wd);
   var doneToday=ST.day===t.n&&ST.cur&&ST.cur.done;
   $("#bPlay").textContent=doneToday?"Today's Orders ✓":"Today's Orders"; $("#bPlay").classList.toggle("k-ghost",!!doneToday);
-  $("#bBonus").style.display=doneToday?"":"none";
+  $("#bBonus").style.display=doneToday?"":"none"; $("#bBox").style.display=(ST.rb&&ST.rb.length)?"":"none";
   $("#mfoot").textContent=(ST.n?("Smoothies served: "+ST.n+". "):"")+DAYN[t.wd]+": "+FOOT[lv];  setTimeout(signFont,30); }
 $("#bPlay").onclick=function(){ BWK.sfx("open"); start(false); };
 $("#bBonus").onclick=function(){ BWK.sfx("open"); start(true); };
+$("#bBox").onclick=function(){ BWK.sfx("open"); recipeBox(); };
 $("#bHow").onclick=function(){ BWK.sheet('<div class="how"><h2>How to Play</h2><p>'+INTRO+'</p><p>'+HOW+'</p>'+
   '<p><b>Bottom first!</b> A smoothie is poured from the bottom of the cup up, so the bottom layer on the card is the first one you make.</p>'+
   '<p>A layer can blend two fruits, like Strawberry-Banana. Creamy things (ice cream, yogurt, coconut milk) make a layer paler, and juices make it brighter. The card always shows them.</p>'+
@@ -532,7 +661,7 @@ ING.forEach(function(x){ L["sm-i-"+x.id]=x.s+"!"; });
 BWK.lines(L);
 toMenu();
 BWK.init({here:"smoothie", voice:"outpost", intro:INTRO, noHello:true});
-window.SMO={start:start,tap:function(id){ tapIng(id,document.querySelector('.ing[data-id="'+id+'"]')); },blend:blend,pour:pourOrServe,empty:empty,hint:hint,peek:peek,
+window.SMO={start:start,recipe:function(){ return recipeSheet(O(),"Next customer",function(){}); },box:recipeBox,tap:function(id){ tapIng(id,document.querySelector('.ing[data-id="'+id+'"]')); },blend:blend,pour:pourOrServe,empty:empty,hint:hint,peek:peek,
   tab:function(t){ TAB=t; drawTray(); }, setTops:function(a){ O().T=a; drawTicket(); drawTray(); },
   solveLayer:function(){ var o=O(); if(P.pl>=o.L.length) return; var L=o.L[P.pl]; P.bl=L.f.concat(L.a?[L.a]:[]); P.blended=true; drawBlender(); drawTray(); },
   orders:function(lv,seed){ return dayOrders(lv,seed).map(function(o){ return {L:o.L.map(layerName),T:o.T,cu:CUST[o.cu].n}; }); },

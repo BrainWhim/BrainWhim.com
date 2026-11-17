@@ -175,6 +175,9 @@ var RAW=[
  ["shoes-sneakers","Chunky sneakers","shoes",0,"white","casual sporty"],["shoes-loafers","Loafers","shoes",0,"brown","preppy"],["shoes-deckshoes","Deck shoes","shoes",0,"tan","preppy summer"],
  ["shoes-sandals","Platform sandals","shoes",1,"","summer","S"],["shoes-balletflats","Ballet flats","shoes",1,"","preppy glam"],["shoes-maryjanes","Mary Janes","shoes",0,"black","preppy glam"],
  ["shoes-shearlingtan","Shearling boots","shoes",0,"tan","winter","W"],["shoes-shearlingcream","Cream shearling boots","shoes",0,"cream","winter","W"],
+ /* Sophie, Nov 17: "nobody wears Mary Janes unless they're like five"; she asked for these */
+ ["shoes-corksandals","Cork sandals","shoes",1,"","casual summer","S"],["shoes-foamclogs","Foam clogs","shoes",1,"","casual sporty"],
+ ["shoes-ridingcognac","Tall riding boots","shoes",0,"cognac","preppy glam winter","W"],["shoes-ridingblack","Black riding boots","shoes",0,"black","preppy glam winter","W"],["shoes-chelsea","Chelsea boots","shoes",0,"tan","casual preppy"],
  ["hat-cap","Ball cap","hat",1,"","sporty casual"],["hat-bucket","Bucket hat","hat",1,"","casual summer"],["hat-beanie","Beanie","hat",1,"","winter","W"],["hat-straw","Straw sun hat","hat",0,"straw","summer glam","S",1],
  ["hair-bow","Hair bow","hat",1,"","preppy glam","",1],["scarf-knit","Knit scarf","scarf",1,"","winter","W"],["scarf-silk","Silk neck scarf","scarf",0,"navy","preppy glam"],
  ["sunnies-tortoise","Tortoise sunglasses","eyes",0,"","casual preppy"],["sunnies-cateye","Cat-eye sunglasses","eyes",0,"","glam","",1],["sunnies-tinted","Pink tinted sunglasses","eyes",0,"","summer glam"],
@@ -183,7 +186,7 @@ var RAW=[
  ["jewel-bangles","Gold bangles","wristR",0,"","glam","",0,"gold"],["jewel-beads","Beaded bracelets","wristL",0,"","summer casual"],
  ["bag-backpack","Mini backpack","bag",1,"","sporty casual"],["bag-shoulder","Shoulder bag","bag",1,"","glam preppy"],["bag-straw","Straw tote","bag",0,"straw","summer"]];
 /* pieces whose pictures are made (all 53 since Nov 14 afternoon) */
-var BUILT=RAW.map(function(r){ return r[0]; }).filter(function(id){ return id!=="hair-bow"; });
+var BUILT=RAW.map(function(r){ return r[0]; }).filter(function(id){ return id!=="hair-bow"&&id!=="shoes-maryjanes"; });
 var ALL=RAW.map(function(r){ return {id:r[0],n:r[1],sl:r[2],w:!!r[3],col:r[4]||"",v:r[5].split(" "),se:r[6]||"",st:!!r[7],m:r[8]||""}; });
 var PC=ALL.filter(function(p){ return BUILT.indexOf(p.id)>=0; }), BY={}; PC.forEach(function(p){ BY[p.id]=p; });
 var TABS=[["top","Tops",["top"]],["bottom","Bottoms",["bottom"]],["dress","Dresses",["dress"]],["layer","Layers",["layer"]],["shoes","Shoes",["shoes"]],
@@ -205,8 +208,8 @@ function patsFor(p){ if(!p||!p.w) return []; if(p.sl==="shoes") return ["solid",
 /* picking a pattern while the piece is white switches to a color that shows it off (white animal print stays: snow leopard) */
 var PDEF={plaid:"cherry",stripes:"navy",tiedye:"lilac",polka:"navy",floral:"blush"};
 function patN(s){ var n=0; for(var k in s) if(s[k]&&BY[s[k].id]&&BY[s[k].id].w&&s[k].pt) n++; return n; }
-var FIXN={denim:"Denim",champagne:"Champagne",camel:"Camel",tan:"Tan",brown:"Brown",straw:"Straw"};
-var NEUTRAL={white:1,cream:1,black:1,navy:1,denim:1,champagne:1,camel:1,tan:1,brown:1,straw:1};
+var FIXN={cognac:"Cognac",denim:"Denim",champagne:"Champagne",camel:"Camel",tan:"Tan",brown:"Brown",straw:"Straw"};
+var NEUTRAL={cognac:1,white:1,cream:1,black:1,navy:1,denim:1,champagne:1,camel:1,tan:1,brown:1,straw:1};
 var POPS=["sage","butter","cherry","blush","lilac","sky"];
 function colName(k){ return CN[k]?CN[k][1]:FIXN[k]||k; }
 function pieces(sel){ var out=[]; ORDER.forEach(function(s){ if(sel[s]) out.push({s:s,p:BY[sel[s].id],c:colorOf(sel[s])}); }); return out; }
@@ -280,7 +283,7 @@ function makeLooks(lv,seed,n,show){ var R=rng(seed), out=[];
   return out; }
 
 /* ---------- pictures: each piece is a cut-out (ss/<id>.webp, sized in board pixels); the look is laid out as an outfit board ---------- */
-var AV="1115a", BW=900, BH=1050, IMG={}, TINTED={}, NOISE=null;
+var AV="1117a", BW=900, BH=1050, IMG={}, TINTED={}, NOISE=null;
 function img(src){ if(IMG[src]) return IMG[src]; var p=new Promise(function(ok){ var i=new Image(); i.onload=function(){ ok(i); }; i.onerror=function(){ ok(null); }; i.src=src; }); IMG[src]=p; return p; }
 function layer(id){ return img("ss/"+id+".webp?v="+AV); }
 function thumb(id){ return img("ss/t-"+id+".webp?v="+AV); }

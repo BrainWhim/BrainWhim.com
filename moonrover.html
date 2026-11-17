@@ -11,7 +11,7 @@
 <style>
 /* Brody's Moon Rover (The Outpost · The Telescope), Nov 15 night. Brody's own game (Judy). An endless drive across the moon:
    the rover rolls over gentle hills (wheels spin, the body tilts and bounces on its springs); tap to jump, hold for a higher jump,
-   over moon rocks, crashed saucers and fallen stars; grab energy crystals (every 10 fills a shield). It keeps getting faster.
+   over moon rocks, crashed saucers and craters; grab energy crystals (every 10 fills a shield). It keeps getting faster.
    5 shields; the run ends when they're gone. Best distance saved (bwk.rover). Canvas; Judy's ChatGPT photos in rv/. Test hook RVO. */
 .bg{background:#05060f url("rv/bg-sm.jpg?v=1115a") 50% 60%/cover no-repeat;filter:blur(1.5px) brightness(.7)}
 @media (min-width:900px){.bg{background-image:url("rv/bg.jpg?v=1115a")}}
@@ -41,7 +41,7 @@
     <div class="mcard">
       <svg class="emb" viewBox="0 0 132 92" aria-hidden="true" id="rvEmb"></svg>
       <h1>Brody's Moon Rover</h1>
-      <p class="lead">Drive Brody's rover across the moon! Jump over moon rocks, crashed saucers and fallen stars. How far can you go?</p>
+      <p class="lead">Drive Brody's rover across the moon! Jump over moon rocks, crashed saucers and craters. How far can you go?</p>
       <div class="mbtns">
         <button class="k-btn" id="bPlay">Drive!</button>
         <button class="k-btn k-ghost" id="bHow">How to Play</button>
@@ -71,7 +71,7 @@ function save(){ LS.set("rover",ST); }
 
 /* ---------- photos ---------- */
 var IMG={};
-["rover","wheel","rock","tallrock","ship","star","crystal","flag","ground"].forEach(function(k){ var im=new Image(); im.onload=function(){ IMG[k]=im; if(k==="ground") gPat=null; }; im.src="rv/"+k+".webp?v="+AV; });
+["rover","wheel","rock","tallrock","ship","crystal","flag","ground"].forEach(function(k){ var im=new Image(); im.onload=function(){ IMG[k]=im; if(k==="ground") gPat=null; }; im.src="rv/"+k+".webp?v="+AV; });
 (function(){ var im=new Image(); im.onload=function(){ IMG.bg=im; }; im.src="rv/bg"+(innerWidth>=900?"":"-sm")+".jpg?v="+AV; })();
 
 /* ---------- sound: an engine that follows the speed while driving, and the rest ---------- */
@@ -112,7 +112,7 @@ function gy(x){ return .8+.035*Math.sin(.8*x)+.022*Math.sin(2.1*x+1.3)+.014*Math
 
 /* ---------- the run ---------- */
 var R=null, raf=0, last=0, hold=false, holdT=0;
-var KIND={rock:{w:.13,h:.11,hb:[.09,.08]},tall:{w:.1,h:.22,hb:[.065,.19]},ship:{w:.24,h:.13,hb:[.17,.08]},star:{w:.12,h:.1,hb:[.08,.07]}};
+var KIND={rock:{w:.13,h:.11,hb:[.09,.08]},tall:{w:.1,h:.22,hb:[.065,.19]},ship:{w:.24,h:.13,hb:[.17,.08]},crater:{w:.25,h:.075,hb:[.13,.03]}};
 var RW=.26, WR=.042; /* the rover's length and wheel radius (canvas heights) */
 function newRun(){ size(); R={on:false,over:false,t:0,x:0,sp:.6,y:0,vy:0,air:false,ang:0,spr:0,sprv:0,sh:5,cry:0,inv:0,obs:[],cs:[],next:2.2,fx:[],hold:0,shake:0,said:{}};
   R.y=gy(roverX()); }
@@ -124,7 +124,7 @@ var hintTO=0; function hintT(t){ $("#hint").textContent=t; clearTimeout(hintTO);
 function press(){ if(!R||!R.on) return; hold=true; holdT=0; if(!R.air){ R.air=true; R.vy=-1.05; SND.jump(); } }
 function release(){ hold=false; }
 function loop(now){ var dt=Math.min(.04,(now-last)/1000); last=now; step(dt); draw(); if(R&&R.on) raf=requestAnimationFrame(loop); }
-function spawn(){ var t=R.t, kinds=["rock","rock","star"]; if(t>12) kinds.push("ship"); if(t>25) kinds.push("tall","ship");
+function spawn(){ var t=R.t, kinds=["rock","rock","crater"]; if(t>12) kinds.push("ship"); if(t>25) kinds.push("tall","ship");
   var k=kinds[Math.floor(Math.random()*kinds.length)], x=roverX()+W/H+.4;
   R.obs.push({k:k,x:x});
   var r=Math.random(); /* crystals: an arc over the thing, or a row along the ground, or a high one */
@@ -189,8 +189,8 @@ function draw(){ if(!W) size(); if(!W||!R) return; c.setTransform(DPR,0,0,DPR,0,
     c.fillText(f[1],X-fw*.1+fw*.56,Y-fh+fh*.27); c.restore(); });
   /* things on the moon */
   R.obs.forEach(function(o){ var K=KIND[o.k], X=sx(o.x), Y=gy(o.x)*u; if(X<-u*.3||X>W+u*.3) return; var w=K.w*u, h=K.h*u, a=o.hit?.45:1;
-    c.save(); c.globalAlpha=a; shadow(X,Y,w*.45);
-    if(o.k==="star"){ var gl=c.createRadialGradient(X,Y-h*.4,0,X,Y-h*.4,h*1.3); gl.addColorStop(0,"rgba(255,220,120,.7)"); gl.addColorStop(1,"rgba(255,200,80,0)"); c.fillStyle=gl; c.beginPath(); c.arc(X,Y-h*.4,h*1.3,0,7); c.fill(); }
+    c.save(); c.globalAlpha=a;
+    if(o.k==="crater"){ crater(X,Y,w,h); c.restore(); return; } shadow(X,Y,w*.45);
     var key=o.k==="tall"?"tallrock":o.k; if(IMG[key]) fit(IMG[key],X-w/2,Y-h+h*.06,w,h); else art(o.k,X,Y,w,h); c.restore(); });
   R.cs.forEach(function(k){ var X=sx(k.x), Y=(gy(k.x)-k.h)*u+Math.sin(R.t*4+k.x*7)*u*.006, r=u*.03; if(X<-20||X>W+20) return;
     var gl=c.createRadialGradient(X,Y,0,X,Y,r*2.6); gl.addColorStop(0,"rgba(170,235,255,.75)"); gl.addColorStop(1,"rgba(120,200,255,0)"); c.fillStyle=gl; c.beginPath(); c.arc(X,Y,r*2.6,0,7); c.fill();
@@ -223,7 +223,15 @@ function draw(){ if(!W) size(); if(!W||!R) return; c.setTransform(DPR,0,0,DPR,0,
   function panel(x,y,w,h){ c.fillStyle="rgba(8,14,40,.62)"; c.strokeStyle="rgba(150,220,255,.4)"; c.lineWidth=1.5; c.beginPath(); c.roundRect?c.roundRect(x,y,w,h,h/2.4):c.rect(x,y,w,h); c.fill(); c.stroke(); }
   function shadow(x,y,r){ c.save(); c.fillStyle="rgba(0,0,10,.35)"; c.beginPath(); c.ellipse(x,y,r,r*.16,0,0,7); c.fill(); c.restore(); }
   function fit(im,x,y,w,h){ var s=Math.min(w/im.width,h/im.height), dw=im.width*s, dh=im.height*s; c.drawImage(im,x+(w-dw)/2,y+(h-dh),dw,dh); }
-  function art(k,X,Y,w,h){ if(k==="star"){ c.fillStyle="#ffd34d"; c.beginPath(); for(var i=0;i<10;i++){ var a=i*Math.PI/5-Math.PI/2, rr=i%2?h*.25:h*.55; c.lineTo(X+Math.cos(a)*rr,Y-h*.45+Math.sin(a)*rr); } c.fill(); return; }
+  /* a crater: a dark hole sunk into the ground with a raised, sunlit rim and a few pebbles */
+  function crater(X,Y,w,h){ var rx=w*.5, ry=h*.5, cy=Y+ry*.25;
+    var m=c.createRadialGradient(X,cy-ry*.6,rx*.2,X,cy,rx*1.3); m.addColorStop(0,"rgba(120,120,130,.5)"); m.addColorStop(.55,"rgba(200,200,208,.35)"); m.addColorStop(1,"rgba(150,152,162,0)");
+    c.fillStyle=m; c.beginPath(); c.ellipse(X,cy-ry*.15,rx*1.32,ry*1.75,0,0,7); c.fill();
+    var g=c.createLinearGradient(0,cy-ry,0,cy+ry); g.addColorStop(0,"#06070b"); g.addColorStop(.6,"#20222b"); g.addColorStop(1,"#5a5c68");
+    c.fillStyle=g; c.beginPath(); c.ellipse(X,cy,rx,ry,0,0,7); c.fill();
+    c.lineWidth=Math.max(1,h*.06); c.strokeStyle="rgba(230,230,236,.45)"; c.beginPath(); c.ellipse(X,cy+ry*.05,rx*1.02,ry*1.05,0,.15,Math.PI-.15); c.stroke();
+    [[-1.2,.05,.06],[1.18,-.1,.05],[-.55,-1.3,.035],[.7,-1.25,.045],[1.35,.35,.03]].forEach(function(p){ var pr=w*p[2]; c.fillStyle="#9fa0ab"; c.beginPath(); c.ellipse(X+p[0]*rx,cy+p[1]*ry,pr,pr*.62,.3,0,7); c.fill(); c.fillStyle="rgba(255,255,255,.4)"; c.beginPath(); c.ellipse(X+p[0]*rx-pr*.3,cy+p[1]*ry-pr*.25,pr*.42,pr*.22,0,0,7); c.fill(); }); }
+  function art(k,X,Y,w,h){
     if(k==="ship"){ c.fillStyle="#b9c0cc"; c.beginPath(); c.ellipse(X,Y-h*.4,w*.5,h*.3,-.25,0,7); c.fill(); c.fillStyle="rgba(140,255,170,.7)"; c.beginPath(); c.ellipse(X-w*.05,Y-h*.72,w*.2,h*.22,-.25,0,7); c.fill(); return; }
     c.fillStyle=k==="tall"?"#8d8e98":"#9a9ba6"; c.beginPath(); c.moveTo(X-w*.5,Y); c.quadraticCurveTo(X-w*.45,Y-h,X,Y-h); c.quadraticCurveTo(X+w*.5,Y-h*.9,X+w*.5,Y); c.closePath(); c.fill();
     c.fillStyle="rgba(60,60,70,.35)"; c.beginPath(); c.arc(X-w*.1,Y-h*.55,w*.08,0,7); c.fill(); }
@@ -254,7 +262,7 @@ $("#tAgain").onclick=function(){ BWK.sfx("tap"); if(R&&R.on){ R.on=false; engOff
   '<rect x="34" y="44" width="56" height="20" rx="7" fill="#eef0f4"/><rect x="34" y="55" width="56" height="3" fill="#f08a2c"/><path d="M50 44a12 12 0 0 1 24 0z" fill="rgba(170,220,255,.8)"/>'+
   '<circle cx="42" cy="68" r="7" fill="#3a3c44"/><circle cx="62" cy="68" r="7" fill="#3a3c44"/><circle cx="82" cy="68" r="7" fill="#3a3c44"/><path d="M44 44L40 32" stroke="#c9cdd6" stroke-width="2"/><circle cx="40" cy="31" r="2.5" fill="#6cf"/>'; })();
 
-var INTRO="Brody's Moon Rover! Drive Brody's rover across the moon. Jump over moon rocks, crashed saucers and fallen stars. How far can you go?";
+var INTRO="Brody's Moon Rover! Drive Brody's rover across the moon. Jump over moon rocks, crashed saucers and craters. How far can you go?";
 var HOW="Tap to jump, and hold to jump higher. Grab the blue energy crystals: every ten crystals bring back a shield. You have five shields. Each crash uses one, and when they're all gone, the drive is over.";
 var HOW1="Tap to jump. Hold to jump higher!", CRASH="Crash! That used a shield. Keep going!";
 var OVER="Out of shields! Want to drive again?", REC="A new record! Way to go!", WINP="Great drive! You earned a new patch for your badge wall!";

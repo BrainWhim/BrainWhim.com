@@ -399,6 +399,35 @@ function build(){
 }
 /* draw the bowl's contents from the state */
 function moundPath(h,w){ var y=BASE; return "M"+(CX-w)+" "+(y+8)+"C"+(CX-w)+" "+(y-h*.85)+" "+(CX-w*.45)+" "+(y-h)+" "+CX+" "+(y-h)+"C"+(CX+w*.45)+" "+(y-h)+" "+(CX+w)+" "+(y-h*.85)+" "+(CX+w)+" "+(y+8)+"Z"; }
+/* ---------- real-looking slime (Nov 17, Sophie: the slime looked fake) ----------
+   A lumpy, low blob that settles into the bowl, with folds, a wet gloss, a soft glow inside and tiny bubbles. */
+function prof(x){ return Math.pow(Math.max(0,1-x*x),.55); }
+function lumpY(x,h,f){ return BASE-h*f*prof(x)*(1+.1*Math.sin(x*4.2+1.3)+.06*Math.sin(x*9.3+.4)); }
+function smooth(pts){ var s="M"+pts[0][0].toFixed(1)+" "+pts[0][1].toFixed(1);
+  for(var i=0;i<pts.length-1;i++){ var p0=pts[Math.max(0,i-1)], p1=pts[i], p2=pts[i+1], p3=pts[Math.min(pts.length-1,i+2)];
+    s+="C"+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+" "+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+" "+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+" "+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+" "+p2[0].toFixed(1)+" "+p2[1].toFixed(1); }
+  return s; }
+function ridge(a,b,f,h,w,dy){ var pts=[]; for(var i=0;i<=10;i++){ var x=a+(b-a)*i/10; pts.push([CX+x*w,lumpY(x,h,f)+(dy||0)]); } return smooth(pts); }
+function blobPath(h,w){ var pts=[[CX-w-2,BASE+10]]; for(var i=0;i<=26;i++){ var x=-1+2*i/26; pts.push([CX+x*w,lumpY(x,h,1)]); } pts.push([CX+w+2,BASE+10]); return smooth(pts)+"Z"; }
+function slimeArt(h,w,c){ var bp=blobPath(h,w), s='', dk=shade(c,-.4), lt=shade(c,.55);
+  s+='<path d="'+bp+'" fill="url(#slG)"/>';
+  s+='<ellipse cx="'+CX+'" cy="'+(BASE-h*.18)+'" rx="'+(w*.55)+'" ry="'+(h*.3)+'" fill="'+lt+'" opacity=".28"/>';
+  return {fill:s, gloss:function(){ var g='';
+    /* folds: a soft dark crease with a lit edge above it */
+    [[-.78,.15,.62,4],[-.2,.72,.4,3],[.25,.86,.78,-3]].forEach(function(r){
+      g+='<path d="'+ridge(r[0],r[1],r[2],h,w,r[3])+'" fill="none" stroke="'+dk+'" stroke-opacity=".42" stroke-width="3" stroke-linecap="round"/>'+
+         '<path d="'+ridge(r[0]+.04,r[1]-.04,r[2]+.035,h,w,r[3]-1)+'" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" stroke-linecap="round"/>'; });
+    g+='<path d="'+bp+'" fill="url(#slShadeV)"/>';
+    /* the wet gloss: a long streak across the top left, a smaller one, a rim light and a few sharp glints */
+    g+='<path d="'+ridge(-.72,-.05,.9,h,w,0)+'" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="4.2" stroke-linecap="round"/>';
+    g+='<path d="'+ridge(-.5,-.2,.94,h,w,1)+'" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width="1.6" stroke-linecap="round"/>';
+    g+='<path d="'+ridge(.18,.55,.84,h,w,0)+'" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2.2" stroke-linecap="round"/>';
+    g+='<path d="'+ridge(.6,.97,.8,h,w,1)+'" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.4" stroke-linecap="round"/>';
+    [[.38,.8,2],[.45,.7,1.1],[-.15,.98,1.4]].forEach(function(q){ g+='<circle cx="'+(CX+q[0]*w).toFixed(1)+'" cy="'+(lumpY(q[0],h,q[1])).toFixed(1)+'" r="'+q[2]+'" fill="#fff" opacity=".85"/>'; });
+    /* tiny air bubbles caught inside */
+    [[-.5,.35,1.6],[-.3,.22,1],[.12,.45,1.3],[.55,.3,1.8],[.7,.5,1],[-.05,.15,1.1]].forEach(function(q){ var x=CX+q[0]*w, y=lumpY(q[0],h,q[1]);
+      g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+q[2]+'" fill="'+lt+'" fill-opacity=".35" stroke="#fff" stroke-opacity=".55" stroke-width=".6"/><circle cx="'+(x-q[2]*.35).toFixed(1)+'" cy="'+(y-q[2]*.35).toFixed(1)+'" r="'+(q[2]*.35).toFixed(2)+'" fill="#fff" opacity=".8"/>'; });
+    return g; }}; }
 function render(){
   if(!svg||!S) return; var c=mixRGB(S.c), o=O(), p=S.set, html="";
   svg.querySelector("#slL0").setAttribute("stop-color",shade(c,.12)); svg.querySelector("#slL1").setAttribute("stop-color",shade(c,-.18));
@@ -411,15 +440,22 @@ function render(){
       '<path d="M60 0A60 60 0 0 1 -30 52"/><path d="M-80 0A80 80 0 0 1 40 -69"/><path d="M28 0A28 28 0 0 1 -14 -24"/></g>'; }
     html+=specks(false,0,0)+'</g>'; }
   /* slime: a mound that rises as it's stirred */
-  if(p>0){ var h=18+p*58, w=96-p*20, pull=S.pull;
-    html+='<g opacity="'+Math.min(1,p*1.6).toFixed(3)+'"><g clip-path="url(#slInUp)"><path d="'+moundPath(h,w)+'" fill="url(#slG)"/>'+specks(true,h,w)+'<path d="'+moundPath(h,w)+'" fill="url(#slShadeV)"/><path d="'+moundPath(h,w)+'" fill="none" stroke="'+shade(c,.55)+'" stroke-opacity=".6" stroke-width="1.6"/>'+
-      '<circle cx="'+(CX+w*.36).toFixed(1)+'" cy="'+(BASE-h*.62).toFixed(1)+'" r="2.3" fill="#fff" opacity=".7"/><circle cx="'+(CX+w*.44).toFixed(1)+'" cy="'+(BASE-h*.5).toFixed(1)+'" r="1.1" fill="#fff" opacity=".6"/>'+
-      '<ellipse cx="'+(CX-w*.32)+'" cy="'+(BASE-h*.72)+'" rx="'+(w*.26)+'" ry="'+(h*.1+2)+'" fill="#fff" opacity=".45" transform="rotate(-14 '+(CX-w*.32)+' '+(BASE-h*.72)+')"/></g></g>';
-    if(pull){ var top=BASE-h+6, dx=pull[0]-CX, dy=pull[1]-top, d=Math.sqrt(dx*dx+dy*dy), nw=Math.max(7,22-d*.09), r=Math.max(13,21-d*.04);
-      var ux=-dy/(d||1), uy=dx/(d||1), mx=CX+dx*.5, my=top+dy*.5;
-      var neck="M"+(CX-24)+" "+(top+10)+"Q"+(mx+ux*nw*.6)+" "+(my+uy*nw*.6)+" "+(pull[0]+ux*nw)+" "+(pull[1]+uy*nw)+"L"+(pull[0]-ux*nw)+" "+(pull[1]-uy*nw)+"Q"+(mx-ux*nw*.6)+" "+(my-uy*nw*.6)+" "+(CX+24)+" "+(top+10)+"Z";
-      gTop.innerHTML='<path d="'+neck+'" fill="url(#slG)"/><circle cx="'+pull[0]+'" cy="'+pull[1]+'" r="'+r+'" fill="url(#slG)"/>'+
-        '<ellipse cx="'+(pull[0]-r*.35)+'" cy="'+(pull[1]-r*.4)+'" rx="'+(r*.4)+'" ry="'+(r*.2)+'" fill="#fff" opacity=".5"/>'+
+  if(p>0){ var h=16+p*46, w=86-p*6, pull=S.pull, sa=slimeArt(h,w,c);
+    html+='<g opacity="'+Math.min(1,p*1.6).toFixed(3)+'"><g clip-path="url(#slInUp)">'+sa.fill+specks(true,h,w)+sa.gloss()+'</g></g>';
+    if(pull){ var top=BASE-h+8, dx=pull[0]-CX, dy=pull[1]-top, d=Math.sqrt(dx*dx+dy*dy), nw=Math.max(2.5,11-d*.06), r=Math.max(10,17-d*.035), bw=30;
+      var ux=dy/(d||1), uy=-dx/(d||1), vx=dx/(d||1), vy=dy/(d||1), mx=CX+dx*.5+ux*d*.04, my=top+dy*.5+Math.min(14,d*.06);
+      /* the strand: wide at the blob in the bowl, thin in the middle (sagging a little), wide again where it's pinched at the top */
+      var A=[CX-bw,lumpY(-bw/w,h,1)+4], B=[CX+bw,lumpY(bw/w,h,1)+4], tl=[pull[0]+ux*r*.75-vx*r*.4,pull[1]+uy*r*.75-vy*r*.4], tr=[pull[0]-ux*r*.75-vx*r*.4,pull[1]-uy*r*.75-vy*r*.4];
+      var neck="M"+A[0]+" "+A[1]+"C"+(CX-bw*.3)+" "+(top-2)+" "+(mx+ux*nw*2)+" "+(my+uy*nw*2-d*.12)+" "+(mx+ux*nw)+" "+(my+uy*nw)+
+        "C"+(mx+ux*nw+vx*d*.2)+" "+(my+uy*nw+vy*d*.2)+" "+(tl[0]-vx*r*.8)+" "+(tl[1]-vy*r*.8)+" "+tl[0]+" "+tl[1]+
+        "L"+tr[0]+" "+tr[1]+"C"+(tr[0]-vx*r*.8)+" "+(tr[1]-vy*r*.8)+" "+(mx-ux*nw+vx*d*.2)+" "+(my-uy*nw+vy*d*.2)+" "+(mx-ux*nw)+" "+(my-uy*nw)+
+        "C"+(mx-ux*nw*2)+" "+(my-uy*nw*2-d*.12)+" "+(CX+bw*.3)+" "+(top-2)+" "+B[0]+" "+B[1]+ridge(bw/w,-bw/w,1,h,w,4).replace(/^M[^C]*/,"L"+B[0]+" "+B[1])+"Z";
+      var ang=Math.atan2(vy,vx)*57.3+90, lt=shade(c,.55);
+      gTop.innerHTML='<path d="'+neck+'" fill="url(#slG)"/><ellipse cx="'+pull[0]+'" cy="'+pull[1]+'" rx="'+(r*.95)+'" ry="'+(r*1.15)+'" transform="rotate('+ang.toFixed(1)+' '+pull[0]+' '+pull[1]+')" fill="url(#slG)"/>'+
+        '<path d="M'+(A[0]+8)+' '+(A[1]-6)+'C'+(CX-bw*.2)+' '+(top-6)+' '+(mx+ux*nw*1.2)+' '+(my+uy*nw*1.2-d*.1)+' '+(mx+ux*nw*.5)+' '+(my+uy*nw*.5)+'" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/>'+
+        '<path d="M'+(mx+ux*nw*.3+vx*6)+' '+(my+uy*nw*.3+vy*6)+'L'+(tl[0]-ux*3-vx*6)+' '+(tl[1]-uy*3-vy*6)+'" stroke="#fff" stroke-opacity=".4" stroke-width="1.2" stroke-linecap="round"/>'+
+        '<ellipse cx="'+(pull[0]-r*.35)+'" cy="'+(pull[1]-r*.45)+'" rx="'+(r*.38)+'" ry="'+(r*.16)+'" transform="rotate(-25 '+(pull[0]-r*.35)+' '+(pull[1]-r*.45)+')" fill="#fff" opacity=".7"/>'+
+        '<circle cx="'+(pull[0]+r*.42)+'" cy="'+(pull[1]-r*.1)+'" r="1.3" fill="#fff" opacity=".8"/><ellipse cx="'+pull[0]+'" cy="'+(pull[1]+r*.35)+'" rx="'+(r*.5)+'" ry="'+(r*.3)+'" fill="'+lt+'" opacity=".3"/>'+
         (o.glit?speck(pull[0]+4,pull[1]+5,1.2,glitCol(o.glit,1))+speck(pull[0]-6,pull[1]+2,1,glitCol(o.glit,2))+speck(mx,my,1.1,glitCol(o.glit,4)):"")+
         (S.bits.length?bitArt(S.bits[0],pull[0]+6,pull[1]-4,1.1,1,1):"");
     } else gTop.innerHTML=""; }
@@ -695,7 +731,7 @@ window.SLO={start:start,hint:hint,drop:function(k){ addDrop(k); },pour:function(
   tap:function(k){ var b=document.querySelector('.ing[data-k="'+k+'"]'); if(b&&!b.disabled) b.click(); },
   stir:function(){ addStir(Math.PI*2*2.6); }, stretch:function(){ S.stretch=2; stretchTap(); },
   solveColor:function(){ var d=O().col.d; S.c=d.slice(); render(); checkColor(); },
-  orders:makeOrders, mix:mixRGB, cols:COLS, lines:L,
+  orders:makeOrders, mix:mixRGB, pose:function(set,pull,bits){ S.set=set; S.pull=pull||null; if(bits){ S.bits=bits; bits.forEach(function(b){ S.bitA[b]=1; }); } render(); }, cols:COLS, lines:L,
   state:function(){ return P&&{i:P.i,hints:P.hints,done:P.done,lv:P.lv,bonus:P.bonus,order:S&&{col:O().col.id,d:O().col.d,glit:O().glit,bits:O().bits,steps:O().steps},s:S&&{c:S.c,step:S.step,stir:S.stir,set:S.set,stretch:S.stretch,glit:S.glit,bits:S.bits},busy:busy}; }};
 })();
 </script>
