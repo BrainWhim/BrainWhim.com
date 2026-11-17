@@ -144,6 +144,8 @@ body.m-pick #pick{display:flex}
 .payc{display:inline-block;margin-top:2px;padding:1px 7px;border-radius:9px;font-size:11.5px;font-weight:800;color:#fff;background:#2f7a3a}
 .job.add{filter:none!important;opacity:.95}.job.add b{color:#2f6a3a}
 .payc.rm{background:#8a2020!important}
+.pen{position:absolute;top:-7px;left:-11px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#5aa6e8,#2f6fb8);box-shadow:0 2px 0 #1d4f8a,0 0 0 2px #fff4dc;z-index:2}
+.pen svg{width:15px;height:15px}
 .job.edit .payc{background:#c9472c;box-shadow:0 0 0 2px #ffe08a}
 .gl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
 .gl button,.amts button{appearance:none;border:0;font:inherit;cursor:pointer;border-radius:12px;padding:8px 4px;background:rgba(255,255,255,.1);color:#fff4dc;font-weight:700;font-size:13.5px;
@@ -317,25 +319,29 @@ var EDIT=false;
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function drawJobs(){ var ids=CH.map(function(c){ return c[0]; }).concat(ST.custom.map(function(c){ return c.id; }));
   $("#jobs").innerHTML=ids.map(function(id){ var c=CB[id], on=ST.on.indexOf(id)>=0; return '<button class="job'+(on?" on":"")+(EDIT?" edit":"")+'" data-j="'+id+'" aria-label="'+esc(c.n)+'"><span class="tk">'+icon(id)+'</span><b>'+esc(c.n)+'</b>'+
-    (EDIT&&c.own?'<span class="payc rm" data-rm="'+id+'">Remove</span> ':'')+(ST.free?'':'<span class="payc">'+money(pay(id))+'</span>')+'</button>'; }).join("")+
+    (EDIT&&c.own?'<span class="payc rm" data-rm="'+id+'">Remove</span> ':'')+(!EDIT&&c.own?'<span class="pen" data-ed="'+id+'" role="button" aria-label="Edit this chore"><svg viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M27 7l6 6-17 17-8 2 2-8z"/></svg></span>':'')+(ST.free?'':'<span class="payc">'+money(pay(id))+'</span>')+'</button>'; }).join("")+
     (EDIT?'':'<button class="job add" id="kAdd" aria-label="Add a chore"><span class="tk"><svg viewBox="0 0 40 40" fill="none" stroke="#3b2210" stroke-width="3.2" stroke-linecap="round"><path d="M20 10v20M10 20h20"/></svg></span><b>Add a chore</b></button>');
   $("#kGu").textContent=EDIT?"Prices: done":"Grown-ups"; }
 var PAYS=[25,50,75,100,125,150,175,200];
 $("#jobs").addEventListener("click",function(e){ var b=e.target.closest(".job"); if(!b) return; var id=b.dataset.j;
   if(b.id==="kAdd"){ addChore(); return; }
+  var ed=e.target.closest("[data-ed]"); if(ed){ addChore(ed.dataset.ed); return; }
   var rm=e.target.closest("[data-rm]"); if(rm&&EDIT){ removeChore(rm.dataset.rm); return; }
   if(EDIT){ var p=pay(id), i=PAYS.indexOf(p); ST.pay[id]=PAYS[(i+1)%PAYS.length]; save(); sCoin(0); drawJobs(); return; }
   var k=ST.on.indexOf(id); if(k>=0){ if(ST.on.length<=1){ msg(""); return; } ST.on.splice(k,1); sUndo(); }
   else { if(ST.on.length>=6){ sTap(); BWK.sheet('<h2>Six is plenty!</h2><p>Your chart holds 6 chores. Tap one you picked to take it off first.</p>'); return; } ST.on.push(id); sTap(); BWK.say(CB[id].n); }
   save(); drawJobs(); });
 $("#kGu").onclick=function(){ if(EDIT){ EDIT=false; drawJobs(); return; } grown(); }; $("#tGu").onclick=grown;
-function addChore(){ if(ST.custom.length>=8){ BWK.sheet('<h2>That\'s a lot of chores!</h2><p>You can make up to 8 of your own. A grown-up can remove one with the Grown-ups button.</p>'); return; }
-  var ic="star", box=BWK.sheet('<h2>Add a chore</h2><p style="margin:0">What\'s the chore?</p><input class="k-in" id="ccName" maxlength="24" autocomplete="off" placeholder="Like: Walk the dog">'+
-    '<p style="margin:8px 0 0">Pick a picture:</p><div class="gl" id="ccIcs"></div><div class="k-row"><button class="k-btn" id="ccAdd">Add it!</button></div>');
+function addChore(eid){ var old=eid?ST.custom.filter(function(c){ return c.id===eid; })[0]:null;
+  if(!old&&ST.custom.length>=8){ BWK.sheet('<h2>That\'s a lot of chores!</h2><p>You can make up to 8 of your own. A grown-up can remove one with the Grown-ups button.</p>'); return; }
+  var ic=old?old.ic:"star", box=BWK.sheet('<h2>'+(old?'Fix my chore':'Add a chore')+'</h2><p style="margin:0">What\'s the chore?</p><input class="k-in" id="ccName" maxlength="24" autocomplete="off" placeholder="Like: Walk the dog">'+
+    '<p style="margin:8px 0 0">Pick a picture:</p><div class="gl" id="ccIcs"></div><div class="k-row"><button class="k-btn" id="ccAdd">'+(old?'Save it':'Add it!')+'</button>'+(old?'<button class="k-btn k-ghost" id="ccDel">Remove it</button>':'')+'</div>');
+  if(old){ box.querySelector("#ccName").value=old.n; box.querySelector("#ccDel").onclick=function(){ BWK.closeSheet(true); removeChore(old.id); }; }
   function draw(){ box.querySelector("#ccIcs").innerHTML=Object.keys(ICS).map(function(k){ return '<button class="'+(k===ic?"on":"")+'" data-ic="'+k+'"><svg viewBox="0 0 40 40" fill="none" stroke="#ffe7a6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+ICS[k]+'</svg></button>'; }).join(""); }
   draw(); box.querySelector("#ccIcs").onclick=function(e){ var b=e.target.closest("[data-ic]"); if(b){ ic=b.dataset.ic; sTap(); draw(); } };
   var inp=box.querySelector("#ccName"); setTimeout(function(){ inp.focus(); },60);
   function go(){ var n=inp.value.replace(/\s+/g," ").trim().slice(0,24); if(!n){ inp.focus(); return; } n=n.charAt(0).toUpperCase()+n.slice(1);
+    if(old){ old.n=n; old.ic=ic; var keepP=CB[old.id]; addCB(old); save(); BWK.closeSheet(true); sCoin(1); drawJobs(); return; }
     var c={id:"own"+Date.now().toString(36),n:n,ic:ic}; ST.custom.push(c); addCB(c); if(ST.on.length<6) ST.on.push(c.id); save(); BWK.closeSheet(true); sCoin(1); drawJobs();
     msg(""); BWK.say(PRICE); }
   box.querySelector("#ccAdd").onclick=go; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); }); }
