@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>How Do I Feel? · My Moon Day · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets · My Moon Day: How Do I Feel? (Nov 17, 2026)
+   Clover the bunny (the Slime Lab bunny, sl/c-clover) helps little ones name feelings. Two ways to play:
+   1) How I feel: tap the face that feels like you. Clover shows it, Finn says it's okay to feel that way and offers one small
+      thing to try (a hug for sad, dragon breaths for mad, counting to five for scared, three jumps for excited...). Today's
+      feeling goes on the week row as a little colored face (no right or wrong, nothing to lose).
+   2) Stories: Finn tells a tiny story about Clover; tap how Clover feels. The expected feeling gets "Yes!"; any other gets
+      "Hmm, could be! I think Clover feels…" (feelings are never wrong). Three stories a round, then "More stories".
+   Little: happy, sad, mad, scared, surprised, tired. Big Moonlet adds proud, worried, shy, excited (and their stories).
+   Faces are drawn stand-ins until Judy's photos (hf/<feeling>.webp, Clover with each feeling; hf/bg). Lines hf-*. Hook HFO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#f3e6ff linear-gradient(180deg,#f8d9e8,#efe3ff 50%,#dff0ff) center/cover;filter:blur(1.2px) brightness(.95)}
+html.hfbg .bg{background:#f3e6ff url("hf/bg-sm.jpg?v=1117a") center 60%/cover}
+@media (min-width:1100px){html.hfbg .bg{background-image:url("hf/bg.jpg?v=1117a")}}
+.fe{height:100svh;min-height:540px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
+@media (max-height:600px){.top{min-height:84px}}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+
+/* the stage: the story card (story mode) and Clover, big, with a glow in the feeling's color */
+#stage{flex:1;min-height:0;width:min(100%,760px);display:flex;align-items:center;justify-content:center;gap:14px;position:relative}
+#story{display:none;flex:1;max-width:340px;padding:14px 16px;border-radius:22px;background:linear-gradient(180deg,#fffaf0,#f6ead2);
+  box-shadow:0 8px 18px rgba(90,50,90,.22);border:3px solid #e6cfa0;color:#4a2c10;font-size:clamp(15px,2.2svh,20px);font-weight:700;line-height:1.3}
+#story small{display:block;font-size:.72em;color:#8a6a40;font-weight:700;margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase}
+#story .nx{display:none;margin-top:10px;appearance:none;border:0;cursor:pointer;border-radius:16px;padding:10px 16px;font:inherit;font-size:.85em;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+#story.ans .nx{display:inline-block;animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+body.stories #story{display:block}
+#heroW{position:relative;height:min(100%,300px);aspect-ratio:1;flex:none;display:flex;align-items:center;justify-content:center}
+#glow{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle,var(--fc,#fff3c4) 0,rgba(255,255,255,0) 68%);opacity:.85;transition:background .5s}
+#hero{position:relative;width:88%;height:88%;border:0;padding:0;background:none;cursor:pointer;transform-origin:50% 90%}
+#hero svg,#hero img{width:100%;height:100%;display:block;filter:drop-shadow(0 10px 12px rgba(80,40,80,.28))}
+#hero.pop{animation:hpop .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes hpop{from{transform:scale(.8)}}
+#hero.hug{animation:hug 1.6s ease-in-out 2}
+@keyframes hug{30%{transform:scale(1.08,.94)}60%{transform:scale(.96,1.04) rotate(-3deg)}}
+#hero.breathe{animation:breathe 6s ease-in-out 2}
+@keyframes breathe{0%,100%{transform:scale(.9)}45%,55%{transform:scale(1.12)}}
+#hero.jump{animation:jump .7s cubic-bezier(.3,.6,.5,1) 3}
+@keyframes jump{40%{transform:translateY(-18%) scaleY(1.05)}80%{transform:translateY(0) scaleY(.92)}}
+#hero.wig{animation:wig .9s ease-in-out 2}
+@keyframes wig{30%{transform:rotate(-5deg)}70%{transform:rotate(5deg)}}
+#hint{position:absolute;left:0;right:0;bottom:-2%;text-align:center;font-weight:700;font-size:clamp(16px,2.6svh,24px);color:#5a3a7a;text-shadow:0 1px 0 #fff;pointer-events:none;min-height:1.3em}
+.fx{position:absolute;pointer-events:none;font-style:normal;animation:fly 1.8s ease-out forwards}
+@keyframes fly{from{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:1}to{transform:translate(var(--dx),-120px) scale(1.1);opacity:0}}
+.num{position:absolute;top:6%;right:4%;width:22%;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%,#fff,#d9c8ff 60%,#a98bf0);color:#3a2060;font-weight:700;font-size:clamp(26px,5svh,46px);box-shadow:0 0 18px rgba(170,140,240,.7);animation:hpop .4s cubic-bezier(.3,1.6,.5,1)}
+
+/* the faces to pick from */
+#faces{flex:none;width:min(100%,760px);display:grid;gap:8px;grid-template-columns:repeat(var(--cols,6),minmax(0,1fr))}
+.fc{appearance:none;border:0;cursor:pointer;border-radius:20px;padding:6px 4px 8px;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:linear-gradient(180deg,#fffdf8,#f7eedf);box-shadow:0 4px 0 var(--fd,#dcc49a),0 6px 12px rgba(90,50,90,.15);transition:transform .12s;-webkit-tap-highlight-color:transparent}
+.fc:active{transform:translateY(3px)}
+.fc .pf{width:100%;max-width:92px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,var(--fc) 0,rgba(255,255,255,0) 70%)}
+.fc .pf svg,.fc .pf img{width:100%;height:100%;display:block}
+.fc b{font-size:clamp(13px,1.9svh,17px);color:#4a2c10}
+.fc.on{background:linear-gradient(180deg,#fff,#fff3d6);box-shadow:0 4px 0 var(--fd),0 0 0 3px var(--fc),0 0 16px var(--fc)}
+.week{flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:center;width:min(100%,460px);padding:6px 10px;border-radius:18px;background:linear-gradient(180deg,#f6eef8,#e9ddf0);box-shadow:0 6px 14px rgba(90,50,90,.18)}
+.week div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.week b{font-size:12px;color:#6a4a7a}
+.week div.today b{color:#b0408a}
+.week i{width:24px;height:24px;border-radius:50%;background:rgba(120,90,130,.15);box-shadow:inset 0 1px 2px rgba(0,0,0,.2);overflow:hidden}
+.week i svg{width:100%;height:100%;display:block}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.25)}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.3)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 6px}.chip span{font-size:11.5px}.bar{width:100%;flex-wrap:nowrap}
+  #stage{flex-direction:column;gap:6px}#story{max-width:none;width:100%;flex:none;padding:10px 12px}#heroW{height:auto;flex:1;min-height:0;max-height:240px}
+  #faces{gap:6px}.fc{padding:4px 2px 5px;border-radius:16px}.fc .pf{max-width:62px}body.stories .week{display:none}.week{gap:3px;padding:5px}.week i{width:20px;height:20px}.week b{font-size:11px}}
+@media (max-height:640px){.fe{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}.week{display:none}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}.fe{gap:12px}}
+@media (prefers-reduced-motion:reduce){#hero.hug,#hero.breathe,#hero.jump,#hero.wig,.fx{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="hfHead" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fffdf8"/><stop offset=".65" stop-color="#f3e9da"/><stop offset="1" stop-color="#d9c8b0"/></radialGradient>
+  <linearGradient id="hfEar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc4d2"/><stop offset="1" stop-color="#f29ab0"/></linearGradient>
+</defs></svg>
+<div class="bg" aria-hidden="true"></div>
+<main class="fe" id="fe">
+  <section class="top" id="finnHere"></section>
+  <div id="stage">
+    <div id="story" aria-live="polite"><small>Clover's story</small><span id="stTxt"></span><br><button class="nx" id="stNext">Next story ▶</button></div>
+    <div id="heroW"><i id="glow"></i><button id="hero" aria-label="Clover the bunny"></button><div id="hint"></div></div>
+  </div>
+  <div id="faces" role="group" aria-label="Feelings"></div>
+  <div class="week" id="week" aria-label="My feelings this week"></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1117b"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1117a";
+  /* ---------- the feelings: name, colors, the drawn face, what Finn says, and one small thing to try ---------- */
+  var F={
+    happy:{n:"Happy", c:"#ffd34a", d:"#d9a520", eyes:"happy", mouth:"grin", act:"hearts",
+      say:"Hooray, you feel happy! Happy feels warm and bright, like sunshine. Can you share your smile with someone?"},
+    sad:{n:"Sad", c:"#7fb2ff", d:"#4a7fd0", eyes:"open", brows:"worried", mouth:"frown", x:"tear", act:"hug",
+      say:"It's okay to feel sad. Everybody does sometimes. A big hug, a soft cuddle, or telling a grown-up can help."},
+    mad:{n:"Mad", c:"#ff7a6a", d:"#c84a3a", eyes:"open", brows:"angry", mouth:"flat", x:"puff", act:"breathe",
+      say:"It's okay to feel mad. Let's blow it away! Breathe in through your nose, and blow out slowly, like a dragon."},
+    scared:{n:"Scared", c:"#b39bf2", d:"#7a5ac8", eyes:"wide", brows:"worried", mouth:"wavy", x:"drop", act:"count",
+      say:"Feeling scared is okay. You are safe. Let's hold on tight and count to five together."},
+    surprised:{n:"Surprised", c:"#ffae5a", d:"#d07a20", eyes:"wide", brows:"up", mouth:"bigo", act:"wig",
+      say:"Whoa! Surprises make our eyes go big! Was it a happy surprise?"},
+    tired:{n:"Tired", c:"#a9bdd4", d:"#6f87a6", eyes:"half", mouth:"o", x:"zzz", act:"wig",
+      say:"Feeling tired? A cozy rest, a drink of water, or a quiet story can help you feel better."},
+    proud:{n:"Proud", c:"#5fd6a0", d:"#2f9a6a", big:1, eyes:"happy", brows:"up", mouth:"smile", x:"stars", act:"stars",
+      say:"You feel proud! That's the feeling when you work hard and do something great. High five!"},
+    worried:{n:"Worried", c:"#8fd3d9", d:"#4a9aa2", big:1, eyes:"open", brows:"worried", mouth:"wavy", x:"drop", act:"hug",
+      say:"Worries can feel big. Telling a grown-up about a worry can make it feel smaller."},
+    shy:{n:"Shy", c:"#ffb0cc", d:"#d0608a", big:1, eyes:"side", mouth:"small", x:"blush", act:"wig",
+      say:"Feeling shy is okay. You can take your time. A little wave is a great hello."},
+    excited:{n:"Excited", c:"#ff8ae0", d:"#c84aa8", big:1, eyes:"sparkle", brows:"up", mouth:"grin", x:"stars", act:"jump",
+      say:"You feel excited! Your whole body wants to jump! Let's do three big jumps. One, two, three!"}};
+  var ORDER=["happy","sad","mad","scared","surprised","tired","proud","worried","shy","excited"];
+  /* tiny stories about Clover: the feeling most people would have */
+  var STORIES=[
+    ["Clover's grandma came to visit, with a big hug and a story.","happy"],["The sun came out, and Clover got to play on the swings.","happy"],["Clover's friend shared her crayons with Clover.","happy"],
+    ["Clover's ice cream fell on the ground. Splat!","sad"],["Clover's best friend moved far away.","sad"],["Clover's red balloon floated up, up and away.","sad"],
+    ["Someone knocked down Clover's block tower, on purpose!","mad"],["Clover waited and waited, but nobody gave Clover a turn on the slide.","mad"],["Clover's little brother scribbled all over Clover's picture.","mad"],
+    ["A loud thunderstorm went BOOM in the night.","scared"],["A big dog barked very loudly at Clover.","scared"],["Clover couldn't find Mama at the busy store, just for a minute.","scared"],
+    ["Clover opened the door, and everyone shouted, Happy birthday!","surprised"],["A frog jumped right out of the flower pot!","surprised"],["Clover woke up, and the whole yard was covered in snow!","surprised"],
+    ["Clover ran and jumped at the park all day long.","tired"],["It was way past bedtime, and Clover's eyes felt heavy.","tired"],["Clover swam and swam at the pool all afternoon.","tired"],
+    ["Clover rode a bike without training wheels for the very first time!","proud",1],["Clover tied both shoes, all alone!","proud",1],
+    ["Tomorrow is Clover's first day at a new school.","worried",1],["Clover's kitten was sick and had to go to the vet.","worried",1],
+    ["Clover went to a party where Clover didn't know anybody.","shy",1],["The teacher asked Clover to sing in front of the whole class.","shy",1],
+    ["Tomorrow, Clover is going to the beach!","excited",1],["Clover is getting a new puppy today!","excited",1]];
+  var HI="How do you feel right now? Tap the face that feels like you!",
+      SHI="Story time! Listen to what happens to Clover, then tap how Clover feels.",
+      SDONE="Great listening! You're a super feelings detective!", PIC="That's Clover the bunny! Clover has lots of feelings, just like you.";
+  var LN={"hf-hi":HI,"hf-shi":SHI,"hf-sdone":SDONE,"hf-clover":PIC};
+  ORDER.forEach(function(k){ LN["hf-"+k]=F[k].say; LN["hf-yes-"+k]="Yes! Clover feels "+F[k].n.toLowerCase()+"."; LN["hf-mb-"+k]="Hmm, could be! I think Clover feels "+F[k].n.toLowerCase()+"."; });
+  STORIES.forEach(function(s,i){ LN["hf-st"+(i+1)]=s[0]+" How does Clover feel?"; });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("hfS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(mode==="stories"?SHI:HI, mode==="stories"?"hf-shi":"hf-hi"); });
+  ["hf-hi","hf-shi","hf-happy","hf-sad","hf-mad","hf-scared"].forEach(BWK.preload);
+
+  /* ---------- saved: today's feeling for the week row ---------- */
+  var S=BWK.store.get("feel",null)||{}; S.days=S.days||{};
+  function save(){ BWK.store.set("feel",S); }
+  function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+  /* ---------- sound (own AudioContext, woken inside a tap) ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+  function on(){ return BWK.store.get("sound",true) && !!ac(); }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="lowpass"; fl.frequency.value=f; g.gain.value=v; s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var PITCH={happy:784,sad:440,mad:392,scared:494,surprised:880,tired:349,proud:659,worried:466,shy:587,excited:988};
+  var SND={
+    pick:function(k){ if(!on()) return; var t=AC.currentTime+.01, f=PITCH[k]||660; tone(f,t,.45,.07,"triangle"); tone(f*1.5,t+.06,.4,.03,"sine"); },
+    yes:function(){ if(!on()) return; var t=AC.currentTime+.02; [659,784,1047].forEach(function(f,i){ tone(f,t+i*.09,.5,.06,"triangle"); }); },
+    maybe:function(){ if(!on()) return; var t=AC.currentTime+.02; tone(587,t,.35,.05,"sine"); tone(523,t+.18,.45,.05,"sine"); },
+    hug:function(){ if(!on()) return; var t=AC.currentTime+.02; [262,330,392,523].forEach(function(f){ tone(f,t,1.6,.03,"sine"); }); },
+    whoosh:function(d){ if(!on()) return; noise(AC.currentTime+.02,d,.08,700); },
+    count:function(n){ if(!on()) return; var t=AC.currentTime+.01; tone([523,587,659,698,784][n-1]||784,t,.4,.06,"triangle"); },
+    boing:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(220,t,.35,.07,"sine",660); },
+    done:function(){ if(!on()) return; var t=AC.currentTime+.05; [523,659,784,1047,1319].forEach(function(f,i){ tone(f,t+i*.1,.6,.05,"triangle"); }); }
+  };
+
+  /* ---------- Judy's photos switch on as they load (hf/) ---------- */
+  var PH={};
+  function loadPh(k,src,cb){ var im=new Image(); im.onload=function(){ PH[k]=src; if(cb) cb(); }; im.src=src; }
+  loadPh("bg","hf/bg-sm.jpg?v="+AV,function(){ document.documentElement.classList.add("hfbg"); });
+  ORDER.concat(["think"]).forEach(function(k){ loadPh(k,"hf/"+k+".webp?v="+AV,function(){ faces(); if(cur===k||(k==="think"&&cur==="think")) showHero(cur); week(); }); });
+
+  /* ---------- Clover's drawn face (stand-in): viewBox 120 ---------- */
+  function bunny(k){ var f=F[k]||{eyes:"open",mouth:"small",think:1}, s='<svg viewBox="0 0 120 120" aria-hidden="true">';
+    if(PH[k]) return '<img src="'+PH[k]+'" alt="" draggable="false">';
+    var tired=k==="tired", shy=k==="shy";
+    s+='<g transform="rotate('+(tired?-6:shy?4:0)+' 60 70)">';
+    s+='<ellipse cx="42" cy="28" rx="10" ry="25" fill="url(#hfHead)" stroke="#cdb99a" stroke-width="1.2" transform="rotate(-12 42 28)"/><ellipse cx="42" cy="30" rx="5" ry="18" fill="url(#hfEar)" transform="rotate(-12 42 28)"/>';
+    s+='<ellipse cx="78" cy="'+(tired?32:28)+'" rx="10" ry="25" fill="url(#hfHead)" stroke="#cdb99a" stroke-width="1.2" transform="rotate('+(tired?40:12)+' 78 28)"/><ellipse cx="78" cy="'+(tired?34:30)+'" rx="5" ry="18" fill="url(#hfEar)" transform="rotate('+(tired?40:12)+' 78 28)"/>';
+    s+='<circle cx="60" cy="70" r="40" fill="url(#hfHead)" stroke="#cdb99a" stroke-width="1.2"/>';
+    var bl=(f.x==="blush"||k==="mad")?.75:.42; s+='<ellipse cx="36" cy="80" rx="8" ry="5" fill="#ff8aa0" opacity="'+bl+'"/><ellipse cx="84" cy="80" rx="8" ry="5" fill="#ff8aa0" opacity="'+bl+'"/>';
+    function eye(x){ var y=64, o="";
+      if(f.eyes==="happy") o='<path d="M'+(x-6)+' '+(y+2)+' q6 -8 12 0" stroke="#3b2a20" stroke-width="3" fill="none" stroke-linecap="round"/>';
+      else if(f.eyes==="half") o='<ellipse cx="'+x+'" cy="'+(y+2)+'" rx="5" ry="3" fill="#3b2a20"/><path d="M'+(x-7)+' '+y+' h14" stroke="#3b2a20" stroke-width="2.4" stroke-linecap="round"/>';
+      else if(f.eyes==="wide") o='<circle cx="'+x+'" cy="'+y+'" r="8" fill="#fff" stroke="#3b2a20" stroke-width="1.6"/><circle cx="'+x+'" cy="'+(y+1)+'" r="4" fill="#3b2a20"/><circle cx="'+(x-1.3)+'" cy="'+(y-.6)+'" r="1.4" fill="#fff"/>';
+      else if(f.eyes==="sparkle") o='<ellipse cx="'+x+'" cy="'+y+'" rx="6.5" ry="7.5" fill="#3b2a20"/><circle cx="'+(x-2)+'" cy="'+(y-3)+'" r="2.4" fill="#fff"/><circle cx="'+(x+2.4)+'" cy="'+(y+2.6)+'" r="1.2" fill="#fff"/>';
+      else { var dx=f.eyes==="side"?3:0, dy=f.eyes==="side"?3:0; o='<ellipse cx="'+(x+dx)+'" cy="'+(y+dy)+'" rx="4.6" ry="5.8" fill="#3b2a20"/><circle cx="'+(x+dx-1.4)+'" cy="'+(y+dy-2)+'" r="1.5" fill="#fff"/>'; }
+      return o; }
+    s+=eye(46)+eye(74);
+    if(f.brows==="angry") s+='<path d="M37 52 l13 6 M83 52 l-13 6" stroke="#6a4a30" stroke-width="3" stroke-linecap="round"/>';
+    else if(f.brows==="worried") s+='<path d="M38 57 l12 -6 M82 57 l-12 -6" stroke="#6a4a30" stroke-width="2.6" stroke-linecap="round"/>';
+    else if(f.brows==="up") s+='<path d="M39 51 q7 -5 14 0 M67 51 q7 -5 14 0" stroke="#6a4a30" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    s+='<path d="M56 74 h8 l-4 4z" fill="#f08aa0" stroke="#d06a80" stroke-width="1" stroke-linejoin="round"/>';
+    var m={smile:'<path d="M50 84 q10 10 20 0" stroke="#3b2a20" stroke-width="3" fill="none" stroke-linecap="round"/>',
+      grin:'<path d="M47 82 q13 17 26 0z" fill="#9a3e30" stroke="#3b2a20" stroke-width="2.4" stroke-linejoin="round"/><path d="M53 89 q7 4 14 0 q-7 5 -14 0z" fill="#f08aa0"/>',
+      frown:'<path d="M50 91 q10 -9 20 0" stroke="#3b2a20" stroke-width="3" fill="none" stroke-linecap="round"/>',
+      flat:'<path d="M50 89 q10 -3 20 0" stroke="#3b2a20" stroke-width="3.2" fill="none" stroke-linecap="round"/>',
+      wavy:'<path d="M48 88 q3 -3 6 0 t6 0 t6 0 t6 0" stroke="#3b2a20" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
+      bigo:'<ellipse cx="60" cy="89" rx="6" ry="8" fill="#7a2e24" stroke="#3b2a20" stroke-width="2"/>',
+      o:'<ellipse cx="60" cy="88" rx="4" ry="5" fill="#7a2e24" stroke="#3b2a20" stroke-width="1.8"/>',
+      small:'<path d="M54 85 q6 5 12 0" stroke="#3b2a20" stroke-width="2.6" fill="none" stroke-linecap="round"/>'};
+    s+=m[f.mouth]||m.small;
+    if(f.x==="tear") s+='<path d="M44 72 q-3 6 0 9 q3 -3 0 -9z" fill="#7fc4ff" stroke="#4a9ae0" stroke-width=".8"/>';
+    if(f.x==="drop") s+='<path d="M92 46 q-4 7 0 10 q4 -3 0 -10z" fill="#bfe6ff" stroke="#7fbfe8" stroke-width=".8"/>';
+    if(f.x==="puff") s+='<path d="M28 38 l-6 -5 M32 32 l-3 -7 M92 38 l6 -5 M88 32 l3 -7" stroke="#ff6a5a" stroke-width="2.6" stroke-linecap="round"/>';
+    s+='</g>';
+    if(f.x==="zzz") s+='<text x="92" y="38" font-size="13" font-weight="700" fill="#7a6ab0">z</text><text x="100" y="26" font-size="17" font-weight="700" fill="#7a6ab0">Z</text>';
+    if(f.x==="stars") s+='<path d="M18 40 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z M100 46 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6z" fill="#ffd34a" stroke="#d9a520" stroke-width=".8"/>';
+    if(f.think) s+='<circle cx="98" cy="30" r="13" fill="#fff" stroke="#cdb99a" stroke-width="1.2"/><circle cx="86" cy="46" r="4" fill="#fff" stroke="#cdb99a" stroke-width="1"/><text x="98" y="36" font-size="18" font-weight="700" fill="#7a5ac8" text-anchor="middle">?</text>';
+    return s+'</svg>'; }
+
+  /* ---------- the game ---------- */
+  var big=BWK.big(), mode="me", cur=null, story=null, round=0, seen=[], busy=0;
+  function feels(){ return ORDER.filter(function(k){ return big||!F[k].big; }); }
+  function faces(){ var ks=feels(), h="", fs=$("faces");
+    var W=fs.clientWidth||340, n=ks.length, cols=W<520? (n>6?5:3) : n; if(W<520&&n>6) cols=5; fs.style.setProperty("--cols",cols);
+    ks.forEach(function(k){ var f=F[k]; h+='<button class="fc'+(mode==="me"&&cur===k?' on':'')+'" data-k="'+k+'" aria-label="'+f.n+'" style="--fc:'+f.c+';--fd:'+f.d+'"><span class="pf">'+bunny(k)+'</span><b>'+f.n+'</b></button>'; });
+    fs.innerHTML=h; }
+  function showHero(k){ cur=k; var h=$("hero"); h.innerHTML=bunny(k); $("glow").style.setProperty("--fc",(F[k]||{c:"#fff3c4"}).c); h.className=""; void h.offsetWidth; h.className="pop"; }
+  function fx(sym,n,col){ var w=$("heroW"); for(var i=0;i<n;i++) (function(i){ setTimeout(function(){ var e=document.createElement("i"); e.className="fx"; e.textContent=sym; e.style.color=col;
+      e.style.left=(20+Math.random()*60)+"%"; e.style.top=(30+Math.random()*30)+"%"; e.style.fontSize=(22+Math.random()*16)+"px"; e.style.setProperty("--dx",((Math.random()-.5)*60)+"px");
+      w.appendChild(e); setTimeout(function(){ e.remove(); },1900); },i*160); })(i); }
+  function act(k){ var f=F[k], h=$("hero"), hint=$("hint"); clearTimeout(act.t); clearTimeout(act.t2); hint.textContent=""; var old=$("heroW").querySelector(".num"); if(old) old.remove();
+    function cls(c){ h.className=""; void h.offsetWidth; h.className=c; }
+    if(f.act==="hearts"){ fx("♥",7,"#ff6a8a"); }
+    else if(f.act==="stars"){ fx("★",7,"#ffc93c"); }
+    else if(f.act==="hug"){ cls("hug"); SND.hug(); fx("♥",5,"#ff8aa0"); }
+    else if(f.act==="jump"){ cls("jump"); [0,700,1400].forEach(function(d){ setTimeout(SND.boing,d); }); fx("✦",6,"#ff8ae0"); }
+    else if(f.act==="breathe"){ cls("breathe"); var ph=0; (function step(){ if(ph>=4){ hint.textContent=""; return; } hint.textContent=ph%2?"Blow out slowly…":"Breathe in…"; SND.whoosh(ph%2?2.6:2.2); ph++; act.t=setTimeout(step,3000); })(); }
+    else if(f.act==="count"){ var n=0; (function step(){ var o=$("heroW").querySelector(".num"); if(o) o.remove(); if(n>=5){ return; } n++; var e=document.createElement("div"); e.className="num"; e.textContent=n; $("heroW").appendChild(e); SND.count(n); act.t2=setTimeout(step,1000); })(); }
+    else cls("wig"); }
+  function pickMe(k){ var t=dayKey(); S.days[t]={f:k}; save(); SND.pick(k); showHero(k);
+    [].forEach.call($("faces").children,function(b){ b.classList.toggle("on",b.dataset.k===k); }); week(); BWK.played&&BWK.played("feel");
+    say(F[k].say,"hf-"+k); setTimeout(function(){ act(k); },350); }
+
+  /* stories */
+  function pool(){ return STORIES.map(function(s,i){ return i; }).filter(function(i){ return big||!STORIES[i][2]; }); }
+  function nextStory(){ var p=pool().filter(function(i){ return seen.indexOf(i)<0; }); if(!p.length){ seen=[]; p=pool(); }
+    story=p[Math.floor(Math.random()*p.length)]; seen.push(story); $("story").classList.remove("ans"); $("stTxt").textContent=STORIES[story][0]+" How does Clover feel?";
+    $("stNext").textContent=round>=2?"More stories ▶":"Next story ▶"; showHero("think"); faces(); say(STORIES[story][0]+" How does Clover feel?","hf-st"+(story+1)); }
+  function pickStory(k){ if(story==null||$("story").classList.contains("ans")) { SND.pick(k); return; }
+    var want=STORIES[story][1]; showHero(want); $("story").classList.add("ans"); round++;
+    if(k===want){ SND.yes(); fx("★",5,"#ffc93c"); say("Yes! Clover feels "+F[want].n.toLowerCase()+".","hf-yes-"+want,{onend:endRound}); }
+    else { SND.maybe(); say("Hmm, could be! I think Clover feels "+F[want].n.toLowerCase()+".","hf-mb-"+want,{onend:endRound}); }
+    $("stNext").textContent=round>=3?"More stories ▶":"Next story ▶"; }
+  function endRound(){ if(round>=3){ round=0; SND.done(); fx("★",8,"#ffc93c"); say(SDONE,"hf-sdone"); BWK.played&&BWK.played("feel"); } }
+  $("stNext").addEventListener("click",function(){ BWK.sfx("tap"); nextStory(); });
+
+  $("faces").addEventListener("click",function(e){ var b=e.target.closest(".fc"); if(!b) return; if(mode==="me") pickMe(b.dataset.k); else pickStory(b.dataset.k); });
+  $("hero").addEventListener("click",function(){ if(mode==="stories"&&story!=null&&!$("story").classList.contains("ans")){ say(STORIES[story][0]+" How does Clover feel?","hf-st"+(story+1)); return; }
+    if(cur&&F[cur]) act(cur); else say(PIC,"hf-clover"); });
+
+  function week(){ var now=new Date(), d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay()), h="", N=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    for(var i=0;i<7;i++){ var dd=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i), r=S.days[dayKey(dd)]||{}, f=r.f&&F[r.f];
+      h+='<div class="'+(i===now.getDay()?'today':'')+'"><b>'+N[i]+'</b><i style="'+(f?'background:'+f.c:'')+'" aria-label="'+N[i]+(f?', '+f.n:'')+'">'+(f?bunny(r.f):'')+'</i></div>'; }
+    $("week").innerHTML=h; }
+  function bar(){ $("bar").innerHTML=(mode==="me"?'<button class="chip go" data-a="stories" aria-label="Stories"><em>✦</em><span>Stories</span></button>':'<button class="chip go" data-a="me" aria-label="How I feel"><em>♡</em><span>How I feel</span></button>')+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="day" data-say="My Moon Day"><em>☾</em><span>My Moon Day</span></button>'; }
+  function setMode(m){ mode=m; document.body.classList.toggle("stories",m==="stories"); clearTimeout(act.t); clearTimeout(act.t2); $("hint").textContent="";
+    if(m==="stories"){ round=0; say(SHI,"hf-shi",{onend:function(){ if(mode==="stories"&&story==null) nextStory(); }}); story=null; showHero("think"); setTimeout(function(){ if(mode==="stories"&&story==null) nextStory(); },5200); }
+    else { story=null; var r=S.days[dayKey()]; showHero(r&&r.f?r.f:"happy"); say(HI,"hf-hi"); }
+    faces(); bar(); }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap"); var a=b.dataset.a;
+    if(a==="stories"||a==="me") setMode(a);
+    else if(a==="big"){ big=!big; talked=true; BWK.setBig(big,top); faces(); bar(); }
+    else if(a==="day"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-day.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; faces(); } });
+  document.addEventListener("click",function(e){ if(talked || !e.target.isConnected || e.target.closest("#faces,.chip,#hero,#story,.k-head,.k-sheet,.k-veil")) return; say(HI,"hf-hi"); });
+  if(window.ResizeObserver) new ResizeObserver(function(){ faces(); }).observe($("faces"));
+
+  var r0=S.days[dayKey()]; showHero(r0&&r0.f?r0.f:"happy"); faces(); week(); bar();
+  window.HFO={state:function(){ return {mode:mode, big:big, cur:cur, story:story, round:round, feels:feels(), today:(S.days[dayKey()]||{}).f}; },
+    pick:function(k){ if(mode==="me") pickMe(k); else pickStory(k); }, mode:setMode, next:nextStory, want:function(){ return story!=null?STORIES[story][1]:null; },
+    big:function(o){ big=!!o; BWK.setBig(big); faces(); }};
+})();
+</script>
+</body>
+</html>

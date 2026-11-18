@@ -13,7 +13,7 @@
    The story: the sun is still asleep behind the hills. Each morning job the child finishes (tap its picture), the sun rises a
    little and the sky warms; the buddy (the same animal as the Brush-Brush buddy, shared in bwk.brush.buddy) holds up that job's
    thing and cheers. All done: the sun is all the way up and smiling, the buddy dances, a gold sun goes on today in the week row.
-   Jobs: wake up, wash face, get dressed, breakfast, brush teeth, shoes on. Big Moonlet adds make the bed and comb your hair.
+   Jobs: wake up, wash face, get dressed, breakfast, brush teeth, shoes on. Big Moonlet adds make the bed and brush your hair (its own list for the day: bigDone/bigAll).
    Any order is fine (the next one in order glows); tap a done job again to take it back. Brushing with the Brush-Brush Timer
    in the morning ticks "Brush your teeth" by itself. New chart every day; "Do it again" afterwards (the week's sun stays).
    Pictures: drawn stand-ins until Judy's photos (mo/: bg, sun + sun-sleepy, and one per job, each switching on when its file loads).
@@ -133,7 +133,7 @@ html.mobg .bg{background:#ffe9c7 url("mo/bg-sm.jpg?v=1117a") center 60%/cover}
     {id:"dress", n:"Get dressed", say:"Shirt, pants and socks. You're all dressed!"},
     {id:"eat", n:"Eat breakfast", say:"Yum! A good breakfast gives you lots of energy!"},
     {id:"brush", n:"Brush your teeth", say:"Sparkly teeth! Bye-bye, sugar bugs!"},
-    {id:"hair", n:"Comb your hair", big:1, say:"Comb, comb. Your hair looks lovely!"},
+    {id:"hair", n:"Brush your hair", big:1, say:"Brush, brush. Your hair looks lovely!"},
     {id:"shoes", n:"Put on your shoes", say:"Shoes on! You're ready to go!"}];
   var HI="Good morning! The sun is still sleepy. Each time you finish a job, tap its picture, and the sun will rise!",
       ALL="The sun is all the way up, and so are you! You're ready for a wonderful day!",
@@ -167,11 +167,13 @@ html.mobg .bg{background:#ffe9c7 url("mo/bg-sm.jpg?v=1117a") center 60%/cover}
   function save(){ BWK.store.set("morning",S); }
   function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function today(){ var k=dayKey(); S.days[k]=S.days[k]||{done:[]}; return S.days[k]; }
+  /* Little and Big Moonlets keep their own lists for the day (Judy, Nov 17): done / all, and bigDone / bigAll */
+  function list(){ var t=today(); if(big){ t.bigDone=t.bigDone||[]; return t.bigDone; } return t.done; }
   /* the buddy is shared with the Brush-Brush Timer */
   function buddyI(){ var b=BWK.store.get("brush",null)||{}; return b.buddy==null?2:b.buddy; }
   function setBuddy(i){ var b=BWK.store.get("brush",null)||{}; b.buddy=i; BWK.store.set("brush",b); }
   /* brushing in the morning with the Brush-Brush Timer ticks "Brush your teeth" */
-  (function(){ var b=BWK.store.get("brush",null)||{}, r=b.days&&b.days[dayKey()]; if(r&&r.am){ var t=today(); if(t.done.indexOf("brush")<0) t.done.push("brush"); save(); } })();
+  (function(){ var b=BWK.store.get("brush",null)||{}, r=b.days&&b.days[dayKey()]; if(r&&r.am){ var t=today(); t.bigDone=t.bigDone||[]; [t.done,t.bigDone].forEach(function(L){ if(L.indexOf("brush")<0) L.push("brush"); }); save(); } })();
 
   /* ---------- sound (own AudioContext, woken inside a tap: the Moonlets phone rule) ---------- */
   var AC=null, OUT=null;
@@ -264,14 +266,14 @@ html.mobg .bg{background:#ffe9c7 url("mo/bg-sm.jpg?v=1117a") center 60%/cover}
   /* ---------- the game ---------- */
   var big=BWK.big(), last=-1;
   function jobs(){ return JOBS.filter(function(j){ return big||!j.big; }); }
-  function doneList(){ var d=today().done; return jobs().filter(function(j){ return d.indexOf(j.id)>=0; }); }
+  function doneList(){ var d=list(); return jobs().filter(function(j){ return d.indexOf(j.id)>=0; }); }
   function progress(){ return doneList().length/jobs().length; }
-  function board(){ var js=jobs(), d=today().done, nx=js.filter(function(j){ return d.indexOf(j.id)<0; })[0], h="";
+  function board(){ var js=jobs(), d=list(), nx=js.filter(function(j){ return d.indexOf(j.id)<0; })[0], h="";
     /* one row or two: whichever makes the cards closest to square-ish */
     var bd=$("board"), W=bd.clientWidth||300, H=bd.clientHeight||200, n=js.length, a1=(W/n)/H, a2=(W/(n/2))/(H/2);
     bd.style.setProperty("--cols", Math.abs(Math.log(a1/.85))<Math.abs(Math.log(a2/.85)) ? n : n/2);
     js.forEach(function(j,i){ var dn=d.indexOf(j.id)>=0;
-      h+='<button class="job'+(dn?' done':'')+(nx&&nx.id===j.id?' next':'')+'" role="listitem" data-id="'+j.id+'" data-say="'+j.n+'" aria-pressed="'+dn+'" aria-label="'+j.n+(dn?', done':'')+'">'+
+      h+='<button class="job'+(dn?' done':'')+(nx&&nx.id===j.id?' next':'')+'" role="listitem" data-id="'+j.id+'" aria-pressed="'+dn+'" aria-label="'+j.n+(dn?', done':'')+'">'+
         '<i class="n" aria-hidden="true">'+(i+1)+'</i><span class="pic">'+pic(j.id)+'</span><b>'+j.n+'</b>'+OK+'</button>'; });
     bd.innerHTML=h; }
   function paint(quiet){ var p=progress(), sg=$("sunG"); if(!sg) return;
@@ -281,25 +283,25 @@ html.mobg .bg{background:#ffe9c7 url("mo/bg-sm.jpg?v=1117a") center 60%/cover}
     sunFace(p); }
   function week(){ var now=new Date(), d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay()), h="", N=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     for(var i=0;i<7;i++){ var dd=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i), r=S.days[dayKey(dd)]||{};
-      h+='<div class="'+(i===now.getDay()?'today':'')+'"><b>'+N[i]+'</b><i class="'+(r.all?'on':'')+'" aria-label="'+N[i]+(r.all?', all done':'')+'"></i></div>'; }
+      h+='<div class="'+(i===now.getDay()?'today':'')+'"><b>'+N[i]+'</b><i class="'+(r.all||r.bigAll?'on':'')+'" aria-label="'+N[i]+(r.all||r.bigAll?', all done':'')+'"></i></div>'; }
     $("week").innerHTML=h; }
   function bar(){ var all=progress()>=1;
-    $("bar").innerHTML=(all||today().done.length?'<button class="chip" data-a="again" data-say="Do it again"><em>↺</em><span>Do it again</span></button>':'')+
+    $("bar").innerHTML=(all||list().length?'<button class="chip" data-a="again" data-say="Do it again"><em>↺</em><span>Do it again</span></button>':'')+
       '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
       '<button class="chip" data-a="day" data-say="My Moon Day"><em>☾</em><span>My Moon Day</span></button>'; }
   function holdUp(id){ var h=$("hold"); h.innerHTML=pic(id); h.classList.remove("on"); void h.offsetWidth; h.classList.add("on");
     var bd=$("buddy"); bd.className=""; void bd.offsetWidth; bd.className="cheer"; setTimeout(function(){ if(progress()<1) bd.className=""; },800); }
-  function tap(id){ var t=today(), i=t.done.indexOf(id), j=JOBS.filter(function(x){ return x.id===id; })[0];
-    if(i>=0){ t.done.splice(i,1); if(progress()<1) t.all=t.all; save(); SND.undo(); say(UNDO,"mo-undo"); $("buddy").className=""; board(); paint(); bar(); return; }
-    t.done.push(id); save(); var n=doneList().length; SND.tick(n-1); setTimeout(SND.rise,250); holdUp(id); board(); paint(); bar();
+  function tap(id){ var L=list(), i=L.indexOf(id), j=JOBS.filter(function(x){ return x.id===id; })[0];
+    if(i>=0){ L.splice(i,1); save(); SND.undo(); say(UNDO,"mo-undo"); $("buddy").className=""; board(); paint(); bar(); return; }
+    L.push(id); save(); var n=doneList().length; SND.tick(n-1); setTimeout(SND.rise,250); holdUp(id); board(); paint(); bar();
     if(progress()>=1){ allDone(); return; }
     say(j.say,"mo-"+id); }
-  function allDone(){ var t=today(), first=!t.all; t.all=1; save(); week(); BWK.played&&BWK.played("morning");
+  function allDone(){ var t=today(); t[big?"bigAll":"all"]=1; save(); week(); BWK.played&&BWK.played("morning");
     setTimeout(function(){ SND.all(); $("buddy").className="dance"; },500);
     say(ALL,"mo-all",{onend:function(){ setTimeout(function(){ if(progress()>=1) $("buddy").className=""; },3000); }}); }
   $("board").addEventListener("click",function(e){ var b=e.target.closest(".job"); if(!b) return; tap(b.dataset.id); });
   $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap"); var a=b.dataset.a;
-    if(a==="again"){ today().done=[]; save(); $("buddy").className=""; board(); paint(); bar(); say(AGAIN,"mo-again"); }
+    if(a==="again"){ list().length=0; save(); $("buddy").className=""; board(); paint(); bar(); say(AGAIN,"mo-again"); }
     else if(a==="big"){ big=!big; talked=true; BWK.setBig(big,top); board(); paint(); bar(); }
     else if(a==="day"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-day.html"; },200); } });
   window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; board(); paint(); bar(); } });
@@ -316,8 +318,8 @@ html.mobg .bg{background:#ffe9c7 url("mo/bg-sm.jpg?v=1117a") center 60%/cover}
 
   drawSky(); buddyPic(); board(); paint(true); week(); bar();
   if(progress()>=1) $("buddy").className="";
-  window.MOC={state:function(){ return {big:big, jobs:jobs().map(function(j){return j.id;}), done:today().done.slice(), p:progress(), all:!!today().all}; },
-    tap:tap, all:function(){ jobs().forEach(function(j){ if(today().done.indexOf(j.id)<0) tap(j.id); }); }, big:function(o){ big=!!o; BWK.setBig(big); board(); paint(); bar(); }};
+  window.MOC={state:function(){ return {big:big, jobs:jobs().map(function(j){return j.id;}), done:list().slice(), p:progress(), all:!!today()[big?"bigAll":"all"]}; },
+    tap:tap, all:function(){ jobs().forEach(function(j){ if(list().indexOf(j.id)<0) tap(j.id); }); }, big:function(o){ big=!!o; BWK.setBig(big); board(); paint(); bar(); }};
 })();
 </script>
 </body>
