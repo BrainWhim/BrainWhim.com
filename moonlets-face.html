@@ -25,7 +25,7 @@
 .bg{position:fixed;inset:-12px;z-index:-1;background:#f3dcc0 linear-gradient(180deg,#f7e3c8,#efd2b0 55%,#c99a72 56%,#b8875e) center/cover;filter:blur(1.2px) brightness(.93)}
 html.mfbg .bg{background:#f3dcc0 url("mf/bg-sm.jpg?v=1118a") center 55%/cover}
 @media (min-width:1100px){html.mfbg .bg{background-image:url("mf/bg.jpg?v=1118a")}}
-.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:6px;
+.md{touch-action:manipulation;height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:6px;
   padding:calc(84px + var(--k-safe-t)) 10px calc(10px + var(--k-safe-b))}
 .top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
 @media (max-height:600px){.top{min-height:84px}}
@@ -236,11 +236,12 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
 
   /* ---------- sound ---------- */
   var AC=null, OUT=null;
-  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+  function ac(force){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
       var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
       OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
-    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
-  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+    /* iPhone: only a tap resumes an "interrupted" context (resuming mid-line cuts the device voice off) */
+    if(AC.state!=="running"&&(force||AC.state!=="interrupted")){ try{ AC.resume(); }catch(e){} } return AC; }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(true); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
   ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
   function on(){ return BWK.store.get("sound",true) && !!ac(); }
   function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
