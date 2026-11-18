@@ -9,17 +9,22 @@
 <link rel="stylesheet" href="kids.css?v=1113a">
 <style>
 /* ==========================================================================
-   BrainWhim · Moonlets: Brush-Brush Timer (Nov 17, 2026), a two-minute toothbrushing timer. A sunny little bathroom in the Moonlets world.
-   A big friendly smile in a round mirror: four parts (top/bottom, this side/that side), 30 seconds each. The brush scrubs the part
-   to do; little sugar bugs pop off its teeth one by one; a ring fills for the two minutes; a music box plays. No tapping needed
-   while brushing (hands are busy). Each brushing puts a sun (morning) or a moon (night) on the week chart.
-   Big Moonlet: a fifth step (brush your tongue, 15 s), a big countdown, and "little circles" tips.
-   Keeps the screen awake while brushing (Wake Lock). Saved: bwk.brush {days:{"YYYY-MM-DD":{am,pm}}, n}. Lines bb-*. Test hook BBO.
-   Judy's photos (bb/): bg, mirror frame, toothbrush; drawn stand-ins until then.
+   BrainWhim · Moonlets: Brush-Brush Timer (Nov 17, 2026; v2 the same evening, Judy: "feeling pretty basic… what can we do?").
+   A little Moonlets bathroom (sunny by day, moonlit at bedtime). A brushing buddy (one of the 13 Slime Lab animals, picked by the
+   child) stands by the sink and bounces to the song. 1) Squeeze a pea-sized dab of toothpaste (tap the tube). 2) Brush for two
+   minutes: four parts of 30 s; the brush scrubs that part in the mirror's big drawn smile, foam bubbles build up, the part's sugar
+   bugs giggle and pop off (the last is a wobbly boss bug), a gold ring fills; pick the song (music box, ukulele, lullaby).
+   3) Spit and rinse (tap the cup): the foam floats away, the teeth sparkle, the buddy dances, a sun or moon goes on the week chart.
+   A full week (all 14) brings the Tooth Fairy and a sticker (nothing is ever taken away: no streaks in Moonlets).
+   Big Moonlet: a tongue step, a countdown, a "little circles" tip. Wake Lock while brushing.
+   Saved: bwk.brush {days:{date:{am,pm}}, n, buddy, song, fairy:{weekStart:1}}. Lines bb-*. Test hook BBO.
+   Judy's photos (bb/): bg-day, bg-night, mirror, brush, tube, cup; drawn stand-ins until then. Foam = Bubble Pop's bubble photo.
    ========================================================================== */
-.bg{position:fixed;inset:-12px;z-index:-1;background:#cfe8ef linear-gradient(180deg,#dff2f6,#bfe0ea 55%,#9fcbd8) center/cover;filter:blur(1.2px) brightness(.95)}
-html.bbbg .bg{background:#cfe8ef url("bb/bg-sm.jpg?v=1117a") center 55%/cover}
-@media (min-width:1100px){html.bbbg .bg{background-image:url("bb/bg.jpg?v=1117a")}}
+.bg{position:fixed;inset:-12px;z-index:-1;background:#cfe8ef linear-gradient(180deg,#e4f4f7,#c4e2ea 55%,#a9cfd9) center/cover;filter:blur(1.2px) brightness(.95)}
+html.night .bg{background:#1f2a4a linear-gradient(180deg,#2a3560,#1d2747 60%,#151d38) center/cover}
+html.bbd .bg{background:#cfe8ef url("bb/bg-day-sm.jpg?v=1117a") center 60%/cover}
+html.bbn.night .bg{background:#1f2a4a url("bb/bg-night-sm.jpg?v=1117a") center 60%/cover;filter:blur(1.2px) brightness(.9)}
+@media (min-width:1100px){html.bbd .bg{background-image:url("bb/bg-day.jpg?v=1117a")}html.bbn.night .bg{background-image:url("bb/bg-night.jpg?v=1117a")}}
 .md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
 .top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
@@ -28,39 +33,90 @@ html.bbbg .bg{background:#cfe8ef url("bb/bg-sm.jpg?v=1117a") center 55%/cover}
 .top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
 .top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
 .top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
-#stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
-#mir{height:100%;max-height:560px;aspect-ratio:1;max-width:100%;display:block;filter:drop-shadow(0 12px 18px rgba(30,60,80,.35))}
-.count{position:absolute;right:max(4%,calc(50% - 300px));top:4%;font:700 44px Outfit,system-ui,sans-serif;color:#fff;text-shadow:0 2px 6px rgba(20,60,90,.6);display:none}
+/* the counter scene: mirror in the middle, buddy on the left, tube and cup on the right */
+#stage{flex:1;min-height:0;width:min(100%,820px);position:relative}
+#mir{position:absolute;left:50%;top:0;height:calc(100% - var(--cb,0px));max-height:540px;aspect-ratio:1;max-width:100%;transform:translateX(-50%);display:block;filter:drop-shadow(0 12px 18px rgba(30,60,80,.35))}
+.ledge{position:absolute;left:0;right:0;bottom:0;height:var(--lh,40px);border-radius:14px;background:linear-gradient(180deg,#e8c48c,#c99a5c 40%,#a87a44);box-shadow:0 8px 16px rgba(60,30,8,.35),inset 0 2px 0 rgba(255,240,210,.6)}
+/* the little wooden shelf stays (on phones the photo's counter is cropped away, and the buddy, tube and cup need something to stand on) */
+.count{position:absolute;right:2%;top:2%;font:700 40px Outfit,system-ui,sans-serif;color:#fff;text-shadow:0 2px 6px rgba(20,60,90,.6);display:none;z-index:3}
 body.big .count{display:block}
+#buddy{position:absolute;left:1%;bottom:calc(var(--lh,40px)*.45);width:var(--bw,120px);border:0;padding:0;background:none;cursor:pointer;z-index:4;-webkit-tap-highlight-color:transparent;transform-origin:50% 100%}
+#buddy img{width:100%;display:block;filter:drop-shadow(0 8px 8px rgba(40,20,0,.35))}
+#buddy.bob{animation:bob var(--beat,.84s) ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) scaleY(1)}40%{transform:translateY(-6%) scaleY(1.02)}80%{transform:translateY(0) scaleY(.96)}}
+#buddy.cheer{animation:cheer .7s cubic-bezier(.3,1.6,.5,1)}
+@keyframes cheer{40%{transform:translateY(-22%) rotate(-6deg)}70%{transform:translateY(-4%) rotate(4deg)}}
+#buddy.dance{animation:dance .6s ease-in-out infinite}
+@keyframes dance{0%,100%{transform:rotate(-8deg) translateY(0)}50%{transform:rotate(8deg) translateY(-10%)}}
+.tool{position:absolute;bottom:calc(var(--lh,40px)*.45);border:0;padding:0;background:none;cursor:pointer;z-index:4;-webkit-tap-highlight-color:transparent;transform-origin:50% 100%}
+#tube{right:calc(var(--tw,60px)*1.25);width:var(--tw,60px)}
+#cup{right:1%;width:calc(var(--tw,60px)*1.05)}
+.tool img{width:100%;display:block;filter:drop-shadow(0 6px 6px rgba(40,20,0,.35))}
+.tool svg{width:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 6px rgba(40,20,0,.35))}
+.tool.pulse{animation:tpulse 1.1s ease-in-out infinite}
+@keyframes tpulse{50%{transform:scale(1.1)}}
+.tool.pulse::after{content:"";position:absolute;inset:-12%;border-radius:50%;box-shadow:0 0 0 3px #fff6c8,0 0 22px #ffe07a;opacity:.85;animation:ring2 1.1s ease-out infinite}
+@keyframes ring2{from{transform:scale(.8);opacity:.9}to{transform:scale(1.25);opacity:0}}
+#tube.squeeze{animation:sq .5s ease-in-out}
+@keyframes sq{40%{transform:scaleX(1.12) scaleY(.86)}}
+#cup.tip{animation:tip 1s ease-in-out}
+@keyframes tip{40%{transform:rotate(-24deg) translateY(-18%)}}
 /* the mirror and the smile (drawn) */
-.ring-bg{fill:none;stroke:rgba(255,255,255,.55);stroke-width:7}
-.ring{fill:none;stroke:#ffcf4a;stroke-width:7;stroke-linecap:round;transform:rotate(-90deg);transform-origin:100px 100px}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.45);stroke-width:6}
+.ring{fill:none;stroke:#ffcf4a;stroke-width:6;filter:drop-shadow(0 0 2px rgba(255,220,120,.8));stroke-linecap:round;transform:rotate(-90deg);transform-origin:100px 100px}
 .tick{stroke:#fff;stroke-width:2;opacity:.8}
-.tooth{fill:url(#bbTooth);stroke:#d9d2c4;stroke-width:.8}
+.tooth{fill:url(#bbTooth);stroke:#d9d2c4;stroke-width:.8;transition:opacity .4s}
 .tooth.dim{opacity:.55}
 .tooth.clean{fill:url(#bbClean)}
-.zone-glow{fill:rgba(255,236,150,.0);transition:fill .4s}
+.zone-glow{fill:rgba(255,236,150,0);transition:fill .4s}
 .zone-glow.on{fill:rgba(255,236,150,.28)}
 .bug{transform-box:fill-box;transform-origin:center;animation:wig 1.2s ease-in-out infinite}
-.bug.gone{animation:bye .5s ease-in forwards}
+.bug.boss.next{animation:boss .35s ease-in-out infinite}
+@keyframes boss{25%{transform:rotate(-14deg) scale(1.08)}75%{transform:rotate(14deg) scale(1.08)}}
+.bug.gone{animation:bye .55s ease-in forwards}
 @keyframes wig{50%{transform:rotate(12deg) translateY(-1px)}}
-@keyframes bye{to{transform:translateY(-14px) scale(.2);opacity:0}}
+@keyframes bye{30%{transform:translateY(-4px) scale(1.2)}to{transform:translateY(-18px) scale(.2);opacity:0}}
 .spk{fill:#fff;transform-box:fill-box;transform-origin:center;animation:tw 1s ease-out both}
 @keyframes tw{from{transform:scale(.2);opacity:1}to{transform:scale(1.5);opacity:0}}
-.brush{transition:transform .5s cubic-bezier(.3,1.2,.4,1)}
+.foam{transform-box:fill-box;transform-origin:center;animation:fin .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes fin{from{transform:scale(0)}}
+.foam.away{animation:faway 1.2s ease-in forwards}
+@keyframes faway{to{transform:translateY(-60px) scale(1.3);opacity:0}}
 .brush .scrub{animation:scrub .32s ease-in-out infinite alternate}
 .brush.rest .scrub{animation:none}
 @keyframes scrub{from{transform:translateX(-7px)}to{transform:translateX(7px)}}
+.dab{transform-box:fill-box;transform-origin:50% 100%;transform:scale(0);transition:transform .6s cubic-bezier(.3,1.6,.5,1)}
+.dab.on{transform:scale(1)}
 .tongue-on{animation:tg 1s ease-in-out infinite alternate}
 @keyframes tg{to{fill:#ff9fae}}
+/* the Tooth Fairy */
+#fairy{position:fixed;inset:0;z-index:30;pointer-events:none;display:none}
+#fairy.on{display:block}
+#fairy .f{position:absolute;width:140px;height:auto;max-height:160px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,236,160,.9));left:-140px;top:30%;animation:fly 3.4s ease-in-out forwards}
+@keyframes fly{0%{transform:translate(0,0)}30%{transform:translate(45vw,-12vh)}55%{transform:translate(calc(50vw + 10px),6vh)}100%{transform:translate(calc(100vw + 160px),-20vh)}}
+#fairy .tr{position:absolute;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#fff,#ffe27a 50%,rgba(255,226,122,0) 70%);animation:fade 1.4s ease-out forwards}
+@keyframes fade{to{opacity:0;transform:translateY(30px) scale(.3)}}
+.stk{display:flex;flex-direction:column;align-items:center;gap:6px}
+.stk svg{width:150px;height:150px;animation:spin 6s linear infinite}
+.stk img.st{width:min(170px,48vw);animation:stpop .7s cubic-bezier(.2,1.6,.4,1) both,stw 2.6s ease-in-out .7s infinite;filter:drop-shadow(0 8px 10px rgba(60,30,90,.35))}
+@keyframes stpop{from{transform:scale(.2) rotate(-30deg);opacity:0}}
+@keyframes stw{50%{transform:rotate(6deg) scale(1.04)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* buddy picker */
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;margin-top:8px}
+.pick button{appearance:none;border:2px solid transparent;border-radius:18px;background:rgba(255,255,255,.5);padding:6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font:700 12px Outfit,system-ui,sans-serif;color:#5a3410}
+.pick button.on{border-color:#e5a52a;background:#fff4d0}
+.pick img{height:64px;object-fit:contain}
 /* the week chart */
-.week{flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:min(100%,520px);padding:8px 10px;border-radius:18px;background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 6px 14px rgba(30,60,80,.25)}
+.week{flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) auto;gap:6px;align-items:center;width:min(100%,560px);padding:8px 10px;border-radius:18px;background:linear-gradient(180deg,#f4ead3,#e6d6b2);box-shadow:0 6px 14px rgba(30,60,80,.25)}
 .week div{display:flex;flex-direction:column;align-items:center;gap:3px}
 .week b{font-size:12px;color:#7a5a30}
 .week div.today b{color:#c26a12}
 .week i{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:15px;background:rgba(120,90,50,.15);box-shadow:inset 0 1px 2px rgba(0,0,0,.2);color:transparent}
 .week i.on{color:inherit;background:radial-gradient(circle at 35% 30%,#fffbe0,#ffd95a 60%,#e5a52a);box-shadow:0 0 8px rgba(255,200,80,.7)}
 .week i.on.pm{background:radial-gradient(circle at 35% 30%,#efe8ff,#b9a6f0 60%,#7a64c8);box-shadow:0 0 8px rgba(160,140,240,.7)}
+.week .fp{font-size:11px;font-weight:700;color:#7a5a30;text-align:center;line-height:1.1;padding-left:4px;border-left:1px solid rgba(120,90,50,.25)}
+.week .fp em{display:block;font-style:normal;font-size:20px}
 .bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
 .chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
@@ -79,11 +135,11 @@ body.big .count{display:block}
 .chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
 .chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
 @media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
-  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}.week{gap:3px;padding:6px}.week i{width:20px;height:20px;font-size:13px}.count{font-size:34px}}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 6px}.chip span{font-size:11.5px}.bar{width:100%;flex-wrap:nowrap}.week{gap:3px;padding:6px}.week i{width:20px;height:20px;font-size:13px}.count{font-size:30px}}
 @media (max-height:600px){.md{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
   .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}.week i{width:18px;height:18px;font-size:11px}.week b{font-size:11px}}
 @media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}}
-@media (prefers-reduced-motion:reduce){.chip.go.pulse,.bug,.brush .scrub{animation:none}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.bug,.brush .scrub,#buddy.bob{animation:none}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -91,21 +147,38 @@ body.big .count{display:block}
 <div class="bg" aria-hidden="true"></div>
 <main class="md">
   <section class="top" id="finnHere"></section>
-  <div id="stage"><svg id="mir" viewBox="0 0 200 200" aria-label="Brushing timer"></svg><div class="count" id="count" aria-live="off"></div></div>
+  <div id="stage">
+    <div class="ledge" aria-hidden="true"></div>
+    <svg id="mir" viewBox="0 0 200 200" aria-label="Brushing timer"></svg>
+    <button id="buddy" aria-label="Your brushing buddy. Tap to pick a new one." data-say="Pick a buddy"></button>
+    <button class="tool" id="tube" aria-label="Toothpaste" data-say="Toothpaste"></button>
+    <button class="tool" id="cup" aria-label="Rinse cup" data-say="Rinse cup"></button>
+    <div class="count" id="count" aria-live="off"></div>
+  </div>
   <div class="week" id="week" aria-label="My brushing week"></div>
   <div class="bar" id="bar"></div>
 </main>
+<div id="fairy" aria-hidden="true"></div>
 
 <script src="kids.js?v=1117b"></script>
 <script>
 (function(){
   "use strict";
   var AV="1117a", NS="http://www.w3.org/2000/svg";
+  var AN=[["biscuit","puppy"],["mittens","kitten"],["clover","bunny"],["pip","hamster"],["hazel","fox"],["poppy","panda"],["pearl","unicorn"],["pickle","frog"],["coco","koala"],["rosie","piglet"],["sunny","duckling"],["lulu","llama"],["ziggy","monkey"]];
   /* ---------- Finn's lines (clips bb-*) ---------- */
-  var HI="Time to brush! Tap Start, and brush along with me for two whole minutes!",
+  var HI="Time to brush! Tap Start, and brush along with me and your buddy!",
+      PICK="Pick a brushing buddy to brush with you!",
+      PASTE="First, tap the toothpaste! Just a little dot, as small as a pea.",
+      GOOD="Perfect! Now let's brush!",
       Z=["Brush your top teeth over here!","Now the top teeth over there!","Now the bottom teeth down here!","Last part! The bottom teeth over there!","Now brush your tongue, gently!"],
-      HALF="Halfway there! Keep on brushing!", DONE="Sparkly clean! What a bright, shiny smile!", TIP="Brush in little circles, like tiny bubbles!", PAUSE="Paused. Tap Go when you're ready!";
-  var LN={"bb-hi":HI,"bb-z1":Z[0],"bb-z2":Z[1],"bb-z3":Z[2],"bb-z4":Z[3],"bb-tongue":Z[4],"bb-half":HALF,"bb-done":DONE,"bb-tip":TIP,"bb-pause":PAUSE};
+      RINSE="All done brushing! Now spit and rinse. Tap the cup!",
+      DONE="Sparkly clean! What a bright, shiny smile!", TIP="Brush in little circles, like tiny bubbles!", PAUSE="Paused. Tap Go when you're ready!",
+      FAIRY="The Tooth Fairy came! You brushed every morning and every night this week. Here's a sparkly sticker!",
+      NIGHT="Sparkly clean! Now you're all ready for bed. Goodnight!";
+  var SONGS=[["Music box","bb-s1"],["Ukulele","bb-s2"],["Lullaby","bb-s3"]];
+  var LN={"bb-hi":HI,"bb-pick":PICK,"bb-paste":PASTE,"bb-good":GOOD,"bb-z1":Z[0],"bb-z2":Z[1],"bb-z3":Z[2],"bb-z4":Z[3],"bb-tongue":Z[4],"bb-rinse":RINSE,"bb-done":DONE,"bb-night":NIGHT,"bb-tip":TIP,"bb-pause":PAUSE,"bb-fairy":FAIRY,
+    "bb-s1":"Music box!","bb-s2":"Ukulele!","bb-s3":"Lullaby!"};
   BWK.lines(LN);
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
@@ -125,13 +198,17 @@ body.big .count{display:block}
   var talked=false;
   function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"bb-hi"); });
-  ["bb-hi","bb-z1","bb-z2","bb-z3","bb-z4","bb-done","bg-on","bg-off"].forEach(BWK.preload);
+  ["bb-hi","bb-paste","bb-good","bb-z1","bb-z2","bb-z3","bb-z4","bb-rinse","bb-done","bg-on","bg-off"].forEach(BWK.preload);
 
-  var S=BWK.store.get("brush",null)||{}; S.days=S.days||{}; S.n=S.n||0;
+  var S=BWK.store.get("brush",null)||{}; S.days=S.days||{}; S.n=S.n||0; S.fairy=S.fairy||{};
+  var night=(function(){ var h=new Date().getHours(); return h>=17||h<5; })();
+  if(night) document.documentElement.classList.add("night");
+  if(S.song==null) S.song=night?2:0;
   function save(){ BWK.store.set("brush",S); }
   function dayKey(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function weekStart(){ var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()-n.getDay()); }
 
-  /* ---------- sound: a music box while brushing, a little swish, a chime per part ---------- */
+  /* ---------- sound ---------- */
   var AC=null, OUT=null;
   function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
       var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
@@ -147,125 +224,212 @@ body.big .count{display:block}
     for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);
     var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
     s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
-  /* a gentle music-box tune (C major pentatonic), one note every beat, 16 notes round and round */
-  var TUNE=[523,659,784,659,880,784,659,587,523,587,659,784,659,587,523,392], beat=0, nextT=0;
-  function music(){ if(!on()) return; var now=AC.currentTime; if(nextT<now) nextT=now+.05;
-    while(nextT<now+.25){ var f=TUNE[beat%16]; tone(f,nextT,.9,.035,"triangle"); tone(f*2,nextT+.005,.5,.012); if(beat%4===0) tone(f/2,nextT,1.2,.02,"sine"); beat++; nextT+=.42; } }
+  /* three brushing songs, each a loop played one step at a time just ahead of the clock */
+  var TUNES=[
+    {beat:.42, notes:[523,659,784,659,880,784,659,587,523,587,659,784,659,587,523,392], play:function(f,t,i){ tone(f,t,.9,.035,"triangle"); tone(f*2,t+.005,.5,.012); if(i%4===0) tone(f/2,t,1.2,.02,"sine"); }},
+    {beat:.27, notes:[392,0,523,659,0,523,659,0,440,0,523,698,0,523,698,0,392,0,494,587,0,494,587,0,523,0,659,784,0,659,523,0], play:function(f,t,i){
+        if(i%8===0){ var r=[[262,330,392],[262,330,392],[220,262,349],[196,247,294]][(i/8|0)%4]; r.forEach(function(x,k){ tone(x,t+k*.018,.5,.022,"triangle",x*.995); }); }
+        if(f){ tone(f,t,.28,.04,"triangle",f*.99); tone(f*2,t,.12,.01,"sine"); } }},
+    {beat:.62, notes:[392,330,262,330,392,440,392,330,349,294,247,294,349,392,349,294], play:function(f,t,i){ tone(f,t,1.6,.03,"sine"); tone(f*2,t+.01,.8,.008,"sine"); if(i%3===0) tone(f/2,t,2,.018,"sine"); }}];
+  var beat=0, nextT=0;
+  function music(){ if(!on()) return; var T_=TUNES[S.song], now=AC.currentTime; if(nextT<now) nextT=now+.05;
+    while(nextT<now+.25){ T_.play(T_.notes[beat%T_.notes.length],nextT,beat); beat++; nextT+=T_.beat; } }
+  function preview(){ if(!on()) return; beat=0; nextT=AC.currentTime+.05; var T_=TUNES[S.song]; for(var i=0;i<6;i++){ T_.play(T_.notes[i%T_.notes.length],nextT,i); nextT+=T_.beat; } beat=0; nextT=0; }
   var SND={
     swish:function(){ if(!on()) return; noise(AC.currentTime+.01,.25,.05,4200,.7); },
     chime:function(){ if(!on()) return; var t=AC.currentTime+.01; [1047,1319,1568].forEach(function(f,i){ tone(f,t+i*.08,.5,.05,"triangle"); }); },
-    pop:function(){ if(!on()) return; var t=AC.currentTime+.003; tone(900,t,.08,.08,"sine",300); tone(1800,t+.04,.12,.02); },
-    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.6,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); }); }
+    giggle:function(boss){ if(!on()) return; var t=AC.currentTime+.003, b=boss?.7:1; [0,.07,.14].forEach(function(d,i){ tone((1300+i*180)*b,t+d,.06,.05,"sine",(1700+i*180)*b); }); tone(600*b,t+.2,.1,.05,"sine",250*b); },
+    squeeze:function(){ if(!on()) return; var t=AC.currentTime+.01; noise(t,.35,.06,700,2); tone(220,t,.3,.03,"sine",140); },
+    rinse:function(){ if(!on()) return; var t=AC.currentTime+.01; noise(t,.9,.08,900,.6); noise(t+.3,.7,.05,1800,.8); for(var i=0;i<6;i++) tone(500+Math.random()*700,t+.2+i*.1,.08,.02,"sine",900); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.6,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); }); },
+    fairy:function(){ if(!on()) return; var t=AC.currentTime+.02; for(var i=0;i<22;i++) tone(1568*Math.pow(2,((i*5)%12)/12),t+i*.08,.6,.03,"sine"); }
   };
 
-  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("bbbg"); }; im.src="bb/bg-sm.jpg?v="+AV; })();
+  /* ---------- pictures: Judy's photos when they're there, drawn stand-ins until then ---------- */
+  var PH={};
+  function loadPh(k,src,cb){ var im=new Image(); im.onload=function(){ PH[k]=src; if(cb) cb(); }; im.src=src; }
+  loadPh("day","bb/bg-day-sm.jpg?v="+AV,function(){ document.documentElement.classList.add("bbd"); });
+  loadPh("night","bb/bg-night-sm.jpg?v="+AV,function(){ document.documentElement.classList.add("bbn"); });
+  loadPh("mirror","bb/mirror.webp?v="+AV,function(){ if(T) drawMirror(); });
+  loadPh("brush","bb/brush.webp?v="+AV,function(){ if(T) drawMirror(); });
+  loadPh("tube","bb/tube.webp?v="+AV,tools); loadPh("cup","bb/cup.webp?v="+AV,tools); loadPh("bubble","bp/bubble.webp?v=1116a"); loadPh("fairy","bb/fairy.webp?v="+AV,function(){ if(T) week(); }); loadPh("sticker","bb/sticker.webp?v="+AV);
+  function tools(){
+    $("tube").innerHTML=PH.tube?'<img src="'+PH.tube+'" alt="" draggable="false">':'<svg viewBox="0 0 40 80"><rect x="11" y="62" width="18" height="14" rx="3" fill="#f4f4f4" stroke="#bbb"/><path d="M8 62 L10 8 Q20 2 30 8 L32 62Z" fill="#9ee3c8" stroke="#5fb894"/><rect x="12" y="24" width="16" height="22" rx="3" fill="#fff" opacity=".8"/></svg>';
+    $("cup").innerHTML=PH.cup?'<img src="'+PH.cup+'" alt="" draggable="false">':'<svg viewBox="0 0 50 60"><path d="M6 8 L44 8 L40 56 Q25 60 10 56Z" fill="#ffe28a" stroke="#d4a840"/><path d="M8.5 28 L41.5 28 L40 54 Q25 58 10 54Z" fill="#9fd8f0" opacity=".7"/><ellipse cx="25" cy="8" rx="19" ry="4" fill="#fff3c4" stroke="#d4a840"/></svg>'; }
+  tools();
+  function buddyPic(){ var a=AN[S.buddy==null?2:S.buddy]; $("buddy").innerHTML='<img src="sl/c-'+a[0]+'.webp?v=1115a" alt="'+a[1]+'" draggable="false">'; $("buddy").setAttribute("aria-label","Your brushing buddy, the "+a[1]+". Tap to pick a new one."); }
 
-  /* ---------- the smile in the mirror (drawn; 200×200) ---------- */
+  /* ---------- the mirror and the smile (drawn; 200×200) ---------- */
   var sv=$("mir");
   function el(n,a,p){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e; }
-  /* teeth: 6 on top along an arc, 6 below; part 0 = top-left on screen, 1 = top-right, 2 = bottom-left, 3 = bottom-right */
-  var TEETH=[], RING_LEN=2*Math.PI*94;
+  var TEETH=[], BUGS=[], RING_LEN=2*Math.PI*94;
   function drawMirror(){
     sv.innerHTML='<defs><radialGradient id="bbGlass" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#f4fbff"/><stop offset=".7" stop-color="#d9eef5"/><stop offset="1" stop-color="#b9d9e6"/></radialGradient>'+
       '<linearGradient id="bbFrame" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#e2b44c"/><stop offset="1" stop-color="#a87422"/></linearGradient>'+
       '<linearGradient id="bbTooth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#ece4d2"/></linearGradient>'+
       '<linearGradient id="bbClean" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f4f8ff"/></linearGradient>'+
-      '<linearGradient id="bbLip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f08a8a"/><stop offset="1" stop-color="#d4606a"/></linearGradient></defs>';
-    el("circle",{cx:100,cy:100,r:99,fill:"url(#bbFrame)"},sv); el("circle",{cx:100,cy:100,r:88,fill:"url(#bbGlass)"},sv);
-    el("circle",{cx:100,cy:100,r:94,"class":"ring-bg"},sv);
-    var ring=el("circle",{cx:100,cy:100,r:94,"class":"ring","stroke-dasharray":RING_LEN,"stroke-dashoffset":RING_LEN,id:"ring"},sv);
-    for(var q=0;q<4;q++){ var a=q*Math.PI/2-Math.PI/2; el("line",{x1:100+Math.cos(a)*89,y1:100+Math.sin(a)*89,x2:100+Math.cos(a)*99,y2:100+Math.sin(a)*99,"class":"tick"},sv); }
-    /* the mouth */
+      '<linearGradient id="bbLip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f08a8a"/><stop offset="1" stop-color="#d4606a"/></linearGradient>'+
+      '<radialGradient id="bbFoam" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="rgba(240,250,255,.85)"/><stop offset="1" stop-color="rgba(200,230,255,.55)"/></radialGradient></defs>';
+    /* Judy's wooden ring (bb/mirror.webp, squared to 800: its inner edge sits at r ≈ 77-81 of 100): the glass goes under it, the gold timer ring rides on the wood */
+    var RR=PH.mirror?90:91;
+    if(PH.mirror){ el("circle",{cx:100,cy:100,r:83,fill:"url(#bbGlass)"},sv); el("image",{href:PH.mirror,x:0,y:0,width:200,height:200,preserveAspectRatio:"xMidYMid meet"},sv); }
+    else { el("circle",{cx:100,cy:100,r:99,fill:"url(#bbFrame)"},sv); el("circle",{cx:100,cy:100,r:86,fill:"url(#bbGlass)"},sv); }
+    el("circle",{cx:100,cy:100,r:RR,"class":"ring-bg"},sv);
+    el("circle",{cx:100,cy:100,r:RR,"class":"ring","stroke-dasharray":2*Math.PI*RR,"stroke-dashoffset":2*Math.PI*RR,id:"ring"},sv); RING_LEN=2*Math.PI*RR;
+    for(var q=0;q<4;q++){ var a=q*Math.PI/2-Math.PI/2; el("line",{x1:100+Math.cos(a)*(RR-5),y1:100+Math.sin(a)*(RR-5),x2:100+Math.cos(a)*(RR+5),y2:100+Math.sin(a)*(RR+5),"class":"tick"},sv); }
     el("path",{d:"M34 92 Q100 70 166 92 Q160 160 100 166 Q40 160 34 92Z",fill:"url(#bbLip)"},sv);
     el("path",{d:"M42 96 Q100 80 158 96 Q152 150 100 156 Q48 150 42 96Z",fill:"#6e1f2c"},sv);
-    var tg=el("path",{d:"M66 146 Q100 120 134 146 Q100 160 66 146Z",fill:"#f07a8c",id:"tongue"},sv);
-    el("path",{d:"M42 96 Q100 80 158 96 L156 102 Q100 88 44 102Z",fill:"#f59aa5"},sv);   // top gum
-    el("path",{d:"M52 140 Q100 152 148 140 L146 136 Q100 147 54 136Z",fill:"#f59aa5"},sv); // bottom gum
+    el("path",{d:"M66 146 Q100 120 134 146 Q100 160 66 146Z",fill:"#f07a8c",id:"tongue"},sv);
+    el("path",{d:"M42 96 Q100 80 158 96 L156 102 Q100 88 44 102Z",fill:"#f59aa5"},sv);
+    el("path",{d:"M52 140 Q100 152 148 140 L146 136 Q100 147 54 136Z",fill:"#f59aa5"},sv);
     var zg=el("g",{},sv);
     [[44,82,56,30],[100,82,56,30],[50,112,50,30],[100,112,50,30]].forEach(function(r,i){ el("rect",{x:r[0],y:r[1],width:r[2],height:r[3],rx:10,"class":"zone-glow",id:"zg"+i},zg); });
     TEETH=[];
-    var w=[15,16,18,18,16,15], x0=51;   /* the teeth touch, with a hair between them */
+    var w=[15,16,18,18,16,15], x0=51;
     w.forEach(function(ww,i){ var x=x0+ww/2; x0+=ww+.6; var y=91+Math.pow((x-100)/50,2)*7, h=i===2||i===3?22:19; TEETH.push({p:i<3?0:1, el:el("rect",{x:x-ww/2,y:y,width:ww,height:h,rx:5,"class":"tooth"},sv)}); });
     [64.5,78.5,92.5,107.5,121.5,135.5].forEach(function(x,i){ var h=17, y=118+Math.pow((x-100)/50,2)*-4; TEETH.push({p:i<3?2:3, el:el("rect",{x:x-6.7,y:y,width:13.4,height:h,rx:4.5,"class":"tooth"},sv)}); });
-    el("ellipse",{cx:72,cy:60,rx:20,ry:8,fill:"#fff",opacity:.35,transform:"rotate(-25 72 60)"},sv);  // a glint on the glass
-    var bugs=el("g",{id:"bugs"},sv); var fx=el("g",{id:"fx"},sv);
-    /* the toothbrush: a wrapper moves it to the part, the inner group scrubs (a CSS animation can't share an SVG transform) */
+    el("ellipse",{cx:72,cy:56,rx:20,ry:8,fill:"#fff",opacity:.35,transform:"rotate(-25 72 56)"},sv);
+    el("g",{id:"foam"},sv); el("g",{id:"bugs"},sv); el("g",{id:"fx"},sv);
     var br=el("g",{"class":"brush rest",id:"brush"},sv), sc=el("g",{"class":"scrub"},br);
-    el("rect",{x:-6,y:-4,width:62,height:9,rx:4.5,fill:"#7cc6ee",stroke:"#3f8fbe","stroke-width":1},sc);
-    el("rect",{x:-30,y:-6,width:26,height:13,rx:4,fill:"#7cc6ee",stroke:"#3f8fbe","stroke-width":1},sc);
-    for(var k=0;k<6;k++) el("rect",{x:-28+k*4.2,y:-14,width:3,height:9,rx:1.4,fill:k%2?"#e9f6ff":"#ffffff",stroke:"#bcd6e6","stroke-width":.5},sc);
-    brushTo(-1);
+    if(PH.brush) el("image",{href:PH.brush,x:-22,y:-14.5,width:92,height:13.3,preserveAspectRatio:"xMinYMid meet"},sc);  /* Judy's brush (720×104): bristles over x -22…-6, where the dab sits */
+    else { el("rect",{x:-6,y:-4,width:62,height:9,rx:4.5,fill:"#7cc6ee",stroke:"#3f8fbe","stroke-width":1},sc);
+      el("rect",{x:-30,y:-6,width:26,height:13,rx:4,fill:"#7cc6ee",stroke:"#3f8fbe","stroke-width":1},sc);
+      for(var k=0;k<6;k++) el("rect",{x:-28+k*4.2,y:-14,width:3,height:9,rx:1.4,fill:k%2?"#e9f6ff":"#ffffff",stroke:"#bcd6e6","stroke-width":.5},sc); }
+    var dab=el("g",{"class":"dab"+(T&&T.pasted?" on":""),id:"dab"},sc);
+    el("path",{d:"M-24 -14 q2 -6 8 -6 q4 -4 8 0 q6 0 6 6z",fill:"#e8fbf4",stroke:"#9ed9c2","stroke-width":.8},dab); el("path",{d:"M-20 -15 q6 -4 12 0",stroke:"#7cd3b4","stroke-width":1.4,fill:"none"},dab);
+    FOAM=[]; if(T){ addBugs(); paint(true); brushTo(T.run&&T.part>=0?T.part:-1); if(T.run) $("brush").classList.remove("rest"); }
   }
   var BPOS=[[66,74,0],[134,74,0],[70,150,180],[130,150,180],[100,128,0]];
-  function brushTo(p){ var b=$("brush"); if(!b) return; var pos=p<0?[150,178,-20]:BPOS[p]; b.setAttribute("transform","translate("+pos[0]+" "+pos[1]+") rotate("+pos[2]+")"); }
-  var BUGS=[];
-  function addBugs(){ var g=$("bugs"); g.innerHTML=""; BUGS=[];
+  function brushTo(p){ var b=$("brush"); if(!b) return; var pos=p<0?[130,56,-14]:BPOS[p];  /* resting up in the glass, clear of the buddy, tube and cup */ b.setAttribute("transform","translate("+pos[0]+" "+pos[1]+") rotate("+pos[2]+")"); }
+  function addBugs(){ var g=$("bugs"); g.innerHTML=""; var keep=BUGS; BUGS=[];
     var spots={0:[[58,104],[72,98],[88,108],[64,95]],1:[[112,108],[128,98],[143,104],[136,95]],2:[[66,129],[79,124],[92,130],[72,121]],3:[[108,130],[121,124],[134,129],[128,121]]};
-    for(var p=0;p<4;p++) spots[p].forEach(function(s,i){ var w=el("g",{transform:"translate("+s[0]+" "+s[1]+")"},g), b=el("g",{"class":"bug"},w), c=["#a78bfa","#7dd3a8","#f6a7c1","#93c5fd"][(p+i)%4];
-      el("circle",{r:4,fill:c,stroke:"rgba(60,30,90,.45)","stroke-width":.6},b); el("circle",{cx:-1.4,cy:-.6,r:1,fill:"#fff"},b); el("circle",{cx:1.4,cy:-.6,r:1,fill:"#fff"},b);
+    for(var p=0;p<4;p++) spots[p].forEach(function(s,i){ var old=keep.filter(function(b){ return b.p===p&&b.i===i; })[0]; if(old&&old.gone){ BUGS.push(old); return; }
+      var boss=i===3, wr=el("g",{transform:"translate("+s[0]+" "+s[1]+") scale("+(boss?1.55:1)+")"},g), b=el("g",{"class":"bug"+(boss?" boss":"")},wr), c=["#a78bfa","#7dd3a8","#f6a7c1","#93c5fd"][(p+i)%4];
+      el("circle",{r:4,fill:boss?"#8b5cf6":c,stroke:"rgba(60,30,90,.45)","stroke-width":.6},b);
+      if(boss){ el("path",{d:"M-3 -3 L-2 -5.5 L-1 -3.4 L0 -5.8 L1 -3.4 L2 -5.5 L3 -3",fill:"#ffd75a",stroke:"#b98a1a","stroke-width":.3},b); }
+      el("circle",{cx:-1.4,cy:-.6,r:1,fill:"#fff"},b); el("circle",{cx:1.4,cy:-.6,r:1,fill:"#fff"},b);
       el("circle",{cx:-1.3,cy:-.4,r:.45,fill:"#222"},b); el("circle",{cx:1.5,cy:-.4,r:.45,fill:"#222"},b); el("path",{d:"M-1.2 1.6 q1.2 1 2.4 0",stroke:"#3a1f4a","stroke-width":.5,fill:"none"},b);
-      b.style.animationDelay=(-Math.random()*1.2).toFixed(2)+"s"; BUGS.push({p:p,el:b,x:s[0],y:s[1],gone:false}); }); }
-  function popBug(b){ b.gone=true; b.el.classList.add("gone"); SND.pop(); var fx=$("fx");
-    for(var k=0;k<3;k++){ var w=el("g",{transform:"translate("+(b.x+(k-1)*5)+" "+(b.y-4-k*2)+")"},fx); el("path",{d:"M0 -3l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z","class":"spk"},w); setTimeout(w.remove.bind(w),1100); } }
+      b.style.animationDelay=(-Math.random()*1.2).toFixed(2)+"s"; BUGS.push({p:p,i:i,el:b,x:s[0],y:s[1],gone:false,boss:boss}); }); }
+  function popBug(b,quiet){ b.gone=true; b.el.classList.remove("next"); b.el.classList.add("gone"); if(!quiet) SND.giggle(b.boss); var fx=$("fx");
+    for(var k=0;k<(b.boss?6:3);k++){ var w=el("g",{transform:"translate("+(b.x+(k%3-1)*5)+" "+(b.y-4-k*2)+")"},fx); el("path",{d:"M0 -3l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z","class":"spk"},w); setTimeout(w.remove.bind(w),1100); } }
+  /* foam bubbles build up on the part being brushed */
+  var FOAM=[];
+  function addFoam(p){ var g=$("foam"); if(!g) return; var box=[[48,92,46,24],[106,92,46,24],[56,118,40,20],[104,118,40,20],[74,126,52,16]][p];
+    var x=box[0]+Math.random()*box[2], y=box[1]+Math.random()*box[3], r=2.4+Math.random()*3.2, wr=el("g",{transform:"translate("+x.toFixed(1)+" "+y.toFixed(1)+")"},g);
+    if(PH.bubble) el("image",{href:PH.bubble,x:-r,y:-r,width:2*r,height:2*r,"class":"foam"},wr); else el("circle",{r:r,fill:"url(#bbFoam)",stroke:"rgba(255,255,255,.9)","stroke-width":.4,"class":"foam"},wr);
+    FOAM.push(wr); }
 
-  /* ---------- the timer ---------- */
-  var big=BWK.big(), T=null, raf=0, lock=null;
+  /* ---------- the routine: ready → paste → brush → rinse → done ---------- */
+  var big=BWK.big(), T=null, raf=0, lock=null, rinseT=0;
   function parts(){ return big?[30,30,30,30,15]:[30,30,30,30]; }
   function total(){ return parts().reduce(function(a,b){return a+b;},0); }
-  function reset(){ stop(); T={el:0, run:false, done:false, part:-1, half:false, tip:false}; drawMirror(); addBugs(); paint(); bar(); week(); $("count").textContent=fmt(total()); document.body.classList.toggle("big",big); }
+  function reset(){ stop(); clearTimeout(rinseT); T={ph:"ready", el:0, run:false, part:-1, tip:false, pasted:false, foamT:0}; BUGS=[]; FOAM=[];
+    drawMirror(); brushTo(-1); paint(true); bar(); week(); $("count").textContent=fmt(total()); document.body.classList.toggle("big",big);
+    $("tube").classList.remove("pulse"); $("cup").classList.remove("pulse"); $("buddy").className=""; }
   function fmt(s){ s=Math.ceil(s); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
   function partAt(t){ var P=parts(), a=0; for(var i=0;i<P.length;i++){ if(t<a+P[i]) return {i:i, t:t-a, len:P[i]}; a+=P[i]; } return {i:P.length, t:0, len:0}; }
-  function start(){ if(T.done) reset(); T.run=true; T.last=performance.now(); beat=0; nextT=0; wake(true); bar(); $("brush").classList.remove("rest"); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
-  function stop(){ cancelAnimationFrame(raf); raf=0; if(T) T.run=false; wake(false); var b=$("brush"); if(b) b.classList.add("rest"); }
-  function loop(now){ if(!T||!T.run) return; var dt=Math.min(.25,(now-T.last)/1000); T.last=now; T.el+=dt; music(); paint();
-    if(T.el>=total()){ finish(); return; } raf=requestAnimationFrame(loop); }
-  function paint(){ var tt=total(), pa=partAt(T.el);
-    $("ring").setAttribute("stroke-dashoffset",(RING_LEN*(1-Math.min(1,T.el/tt))).toFixed(1));
+  function begin(){ if(S.buddy==null){ pickBuddy(true); return; } T.ph="paste"; $("tube").classList.add("pulse"); say(PASTE,"bb-paste"); bar(); }
+  function squeeze(){ if(T.ph!=="paste") return; var tb=$("tube"); tb.classList.remove("pulse","squeeze"); void tb.offsetWidth; tb.classList.add("squeeze"); SND.squeeze();
+    T.pasted=true; $("dab").classList.add("on"); T.ph="brush"; bar(); say(GOOD,"bb-good"); setTimeout(function(){ if(T.ph==="brush"&&!T.run) start(); },1300); }
+  function start(){ T.run=true; T.last=performance.now(); beat=0; nextT=0; wake(true); bar(); $("brush").classList.remove("rest"); $("buddy").className="bob";
+    document.documentElement.style.setProperty("--beat",(TUNES[S.song].beat*2)+"s"); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
+  function stop(){ cancelAnimationFrame(raf); raf=0; if(T) T.run=false; wake(false); var b=$("brush"); if(b) b.classList.add("rest"); if(T&&T.ph==="brush") $("buddy").className=""; }
+  function loop(now){ if(!T||!T.run) return; var dt=Math.min(.25,(now-T.last)/1000); T.last=now; T.el+=dt; music(); paint(false);
+    if(T.el>=total()){ toRinse(); return; } raf=requestAnimationFrame(loop); }
+  function paint(quiet){ var tt=total(), pa=partAt(T.el), r=$("ring"); if(!r) return;
+    r.setAttribute("stroke-dashoffset",(RING_LEN*(1-Math.min(1,T.el/tt))).toFixed(1));
     $("count").textContent=fmt(Math.max(0,tt-T.el));
-    if(pa.i!==T.part && T.run){ T.part=pa.i; if(pa.i<parts().length){ brushTo(pa.i); SND.swish(); if(pa.i>0) SND.chime();
+    if(T.ph!=="brush"&&T.ph!=="rinse"&&T.ph!=="done") return;
+    if(pa.i!==T.part && T.run){ T.part=pa.i; if(pa.i<parts().length){ brushTo(pa.i); SND.swish(); if(pa.i>0){ SND.chime(); var bd=$("buddy"); bd.className=""; void bd.offsetWidth; bd.className="cheer"; setTimeout(function(){ if(T.run) bd.className="bob"; },700); }
         say(Z[pa.i],pa.i<4?"bb-z"+(pa.i+1):"bb-tongue");
         TEETH.forEach(function(th){ th.el.classList.toggle("dim",pa.i<4&&th.p!==pa.i&&!th.clean); });
         for(var z=0;z<4;z++) $("zg"+z).classList.toggle("on",z===pa.i);
         $("tongue").classList.toggle("tongue-on",pa.i===4); } }
-    /* the bugs of this part pop one by one across its 30 seconds; earlier parts are all clean */
+    if(T.run&&pa.i<parts().length){ T.foamT-=1/60; if(T.foamT<=0&&FOAM.length<40){ addFoam(pa.i); T.foamT=.9+Math.random()*.8; } }
     if(T.run&&pa.i<4){ var mine=BUGS.filter(function(b){ return b.p===pa.i; }), want=Math.floor(pa.t/pa.len*(mine.length+.6));
-      mine.forEach(function(b,k){ if(k<want&&!b.gone) popBug(b); });
-      BUGS.forEach(function(b){ if(b.p<pa.i&&!b.gone) popBug(b); });
+      mine.forEach(function(b,k){ if(k<want&&!b.gone) popBug(b,quiet); if(k===want&&b.boss&&!b.gone) b.el.classList.add("next"); });
+      BUGS.forEach(function(b){ if(b.p<pa.i&&!b.gone) popBug(b,true); });
       TEETH.forEach(function(th){ if(th.p<pa.i&&!th.clean){ th.clean=true; th.el.classList.add("clean"); th.el.classList.remove("dim"); } }); }
-    if(T.run&&!T.half&&T.el>=tt/2&&T.el<tt/2+1.5&&!big){ T.half=true; }
     if(T.run&&big&&!T.tip&&pa.i===1&&pa.t>8){ T.tip=true; say(TIP,"bb-tip"); } }
-  function finish(){ stop(); T.done=true; T.el=total(); paint(); BUGS.forEach(function(b){ if(!b.gone) popBug(b); });
+  function toRinse(){ stop(); T.ph="rinse"; T.el=total(); paint(true); BUGS.forEach(function(b){ if(!b.gone) popBug(b,true); });
     TEETH.forEach(function(th){ th.clean=true; th.el.classList.add("clean"); th.el.classList.remove("dim"); }); for(var z=0;z<4;z++) $("zg"+z).classList.remove("on"); $("tongue").classList.remove("tongue-on");
-    brushTo(-1); SND.win();
+    brushTo(-1); $("cup").classList.add("pulse"); $("buddy").className=""; say(RINSE,"bb-rinse"); bar();
+    rinseT=setTimeout(function(){ if(T.ph==="rinse") say(RINSE,"bb-rinse"); },15000); }
+  function rinse(){ if(T.ph!=="rinse") return; clearTimeout(rinseT); var c=$("cup"); c.classList.remove("pulse","tip"); void c.offsetWidth; c.classList.add("tip"); SND.rinse();
+    FOAM.forEach(function(f,i){ var b=f.firstChild; setTimeout(function(){ b.classList.add("away"); },i*25); }); setTimeout(function(){ var g=$("foam"); if(g) g.innerHTML=""; FOAM=[]; },1500);
+    setTimeout(finish,900); }
+  function finish(){ T.ph="done"; SND.win(); $("buddy").className="dance"; setTimeout(function(){ if(T.ph==="done") $("buddy").className=""; },4200);
     var k=dayKey(), h=new Date().getHours(), slot=h<14?"am":"pm"; S.days[k]=S.days[k]||{}; S.days[k][slot]=1; S.n++; save(); BWK.played&&BWK.played("brush");
     var fx=$("fx"); for(var i=0;i<14;i++){ var a=i/14*Math.PI*2, w=el("g",{transform:"translate("+(100+Math.cos(a)*70).toFixed(0)+" "+(118+Math.sin(a)*40).toFixed(0)+")"},fx), s=el("path",{d:"M0 -4l1 2.8 2.8 1-2.8 1-1 2.8-1-2.8-2.8-1 2.8-1z","class":"spk"},w); s.style.animationDelay=(i*.05)+"s"; setTimeout(w.remove.bind(w),1800); }
-    say(DONE,"bb-done"); week(); bar(); }
+    week(); bar();
+    var fairy=weekCount()===14&&!S.fairy[dayKey(weekStart())];
+    say(night?NIGHT:DONE,night?"bb-night":"bb-done",{onend:function(){ if(fairy) toothFairy(); }});
+    if(fairy) setTimeout(function(){ if(!S.fairy[dayKey(weekStart())]) toothFairy(); },6000); }
   async function wake(onoff){ try{ if(onoff&&navigator.wakeLock&&!lock){ lock=await navigator.wakeLock.request("screen"); lock.addEventListener("release",function(){ lock=null; }); } else if(!onoff&&lock){ lock.release(); lock=null; } }catch(e){} }
   document.addEventListener("visibilitychange",function(){ if(!document.hidden&&T&&T.run){ wake(true); T.last=performance.now(); } });
+  $("tube").addEventListener("click",function(){ if(T.ph==="paste") squeeze(); else if(T.ph==="ready"){ BWK.sfx("tap"); begin(); } else SND.squeeze(); });
+  $("cup").addEventListener("click",function(){ if(T.ph==="rinse") rinse(); else BWK.sfx("tap"); });
+  $("buddy").addEventListener("click",function(){ if(T.run) return; pickBuddy(false); });
 
-  /* ---------- the week chart: this week, Sunday to Saturday ---------- */
-  function week(){ var now=new Date(), d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay()), h="", N=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  /* ---------- the Tooth Fairy: a full week of suns and moons (never taken away) ---------- */
+  function toothFairy(){ if(S.fairy[dayKey(weekStart())]) return; S.fairy[dayKey(weekStart())]=1; S.stickers=(S.stickers||0)+1; save(); SND.fairy();
+    var f=$("fairy"); f.innerHTML=PH.fairy?'<img class="f" src="'+PH.fairy+'" alt="">':'<svg class="f" viewBox="0 0 100 100"><defs><radialGradient id="tfG"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff2b0"/><stop offset="1" stop-color="rgba(255,226,122,0)"/></radialGradient></defs>'+
+      '<ellipse cx="34" cy="40" rx="22" ry="14" fill="rgba(220,240,255,.75)" stroke="#fff" transform="rotate(-25 34 40)"/><ellipse cx="66" cy="40" rx="22" ry="14" fill="rgba(220,240,255,.75)" stroke="#fff" transform="rotate(25 66 40)"/>'+
+      '<circle cx="50" cy="52" r="30" fill="url(#tfG)"/><circle cx="50" cy="52" r="11" fill="#fff8dc"/><path d="M50 22l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fff"/></svg>';
+    f.classList.add("on"); var fe=f.querySelector(".f"), n=0, iv=setInterval(function(){ var r=fe.getBoundingClientRect(), d=document.createElement("i"); d.className="tr"; d.style.left=(r.left+r.width/2)+"px"; d.style.top=(r.top+r.height/2)+"px"; f.appendChild(d); setTimeout(d.remove.bind(d),1500); if(++n>40) clearInterval(iv); },80);
+    setTimeout(function(){ f.classList.remove("on"); f.innerHTML="";
+      BWK.sheet('<div class="stk"><h2>The Tooth Fairy came!</h2>'+(PH.sticker?'<img class="st" src="'+PH.sticker+'" alt="Tooth Fairy sticker">':'<svg viewBox="0 0 100 100"><defs><radialGradient id="tsG" cx="35%" cy="30%"><stop offset="0" stop-color="#fffbe6"/><stop offset=".6" stop-color="#ffd95a"/><stop offset="1" stop-color="#e5a52a"/></radialGradient></defs>'+
+        '<path d="M50 6l12 30 32 2-25 20 9 31-28-18-28 18 9-31-25-20 32-2z" fill="url(#tsG)" stroke="#fff" stroke-width="2"/><path d="M42 44q8-8 16 0v14q-4 6-8 0-4 6-8 0z" fill="#fff" stroke="#e0d6c0"/></svg>')+
+        '<p>A sparkly Tooth Fairy sticker for brushing every morning and every night this week!</p><p><b>Tooth Fairy stickers: '+S.stickers+'</b></p></div>');
+      say(FAIRY,"bb-fairy"); },3400); }
+
+  /* ---------- buddy picker ---------- */
+  function pickBuddy(thenBegin){ var h='<h2>Pick a brushing buddy</h2><div class="pick">';
+    AN.forEach(function(a,i){ h+='<button data-i="'+i+'" data-say="'+a[1]+'" class="'+(S.buddy===i?'on':'')+'"><img src="sl/c-'+a[0]+'.webp?v=1115a" alt="">'+a[1]+'</button>'; });
+    var box=BWK.sheet(h+'</div>'); say(PICK,"bb-pick");
+    box.querySelector(".pick").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; S.buddy=+b.dataset.i; save(); buddyPic(); BWK.sfx("yay"); BWK.closeSheet(true);
+      var bd=$("buddy"); bd.className=""; void bd.offsetWidth; bd.className="cheer"; setTimeout(function(){ bd.className=""; },800); if(thenBegin) setTimeout(begin,500); }); }
+
+  /* ---------- the week chart: this week, Sunday to Saturday, and the Tooth Fairy count ---------- */
+  function weekCount(){ var d0=weekStart(), c=0; for(var i=0;i<7;i++){ var r=S.days[dayKey(new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i))]||{}; c+=(r.am?1:0)+(r.pm?1:0); } return c; }
+  function week(){ var now=new Date(), d0=weekStart(), h="", N=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     for(var i=0;i<7;i++){ var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i), k=dayKey(d), r=S.days[k]||{};
       h+='<div class="'+(i===now.getDay()?'today':'')+'"><b>'+N[i]+'</b><i class="'+(r.am?'on':'')+'" aria-label="'+N[i]+' morning'+(r.am?', brushed':'')+'">☀</i><i class="pm '+(r.pm?'on':'')+'" aria-label="'+N[i]+' night'+(r.pm?', brushed':'')+'">☾</i></div>'; }
+    h+='<div class="fp" aria-label="Tooth Fairy: '+weekCount()+' of 14"><em>'+(PH.fairy?'<img src="'+PH.fairy+'" alt="" style="height:30px;display:block;margin:0 auto">':'🧚')+'</em>'+weekCount()+'/14</div>';
     $("week").innerHTML=h; }
 
   /* ---------- the bottom row ---------- */
-  function bar(){ var run=T&&T.run;
-    $("bar").innerHTML='<button class="chip go'+(run?'':' pulse')+'" data-a="go" data-say="'+(run?'Pause':'Start')+'"><em>'+(run?'❚❚':(T&&T.done?'↺':'▶'))+'</em><span>'+(run?'Pause':(T&&T.done?'Brush again':(T&&T.el>0?'Go':'Start')))+'</span></button>'+
-      (T&&T.el>0&&!T.done&&!run?'<button class="chip" data-a="over" data-say="Start over"><em>↺</em><span>Start over</span></button>':'')+
+  function bar(){ var run=T&&T.run, ph=T?T.ph:"ready", go;
+    if(run) go='<em>❚❚</em><span>Pause</span>'; else if(ph==="done") go='<em>↺</em><span>Brush again</span>'; else if(ph==="brush"&&T.el>0) go='<em>▶</em><span>Go</span>'; else if(ph==="paste"||ph==="rinse") go='<em>'+(ph==="paste"?'🪥':'🥤')+'</em><span>'+(ph==="paste"?'Toothpaste':'Rinse')+'</span>'; else go='<em>▶</em><span>Start</span>';
+    $("bar").innerHTML='<button class="chip go'+(run?'':' pulse')+'" data-a="go" data-say="'+(run?'Pause':'Start')+'">'+go+'</button>'+
+      (T&&T.el>0&&ph==="brush"&&!run?'<button class="chip" data-a="over" data-say="Start over"><em>↺</em><span>Start over</span></button>':'')+
+      '<button class="chip" data-a="song" data-say="'+SONGS[S.song][0]+'"><em>♪</em><span>'+SONGS[S.song][0]+'</span></button>'+
       '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
       '<button class="chip" data-a="games" data-say="More games"><em>☾</em><span>More games</span></button>'; }
   $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
-    if(b.dataset.a==="go"){ if(T.run){ stop(); say(PAUSE,"bb-pause"); bar(); } else { BWK.finnStop(); start(); } }
-    else if(b.dataset.a==="over"){ reset(); }
-    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); reset(); }
-    else if(b.dataset.a==="games"){ stop(); BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
-  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; reset(); } });
+    var a=b.dataset.a;
+    if(a==="go"){ if(T.run){ stop(); say(PAUSE,"bb-pause"); bar(); }
+      else if(T.ph==="ready") { BWK.finnStop(); begin(); }
+      else if(T.ph==="paste") squeeze();
+      else if(T.ph==="rinse") rinse();
+      else if(T.ph==="done") { reset(); begin(); }
+      else { BWK.finnStop(); start(); } }
+    else if(a==="over"){ reset(); }
+    else if(a==="song"){ S.song=(S.song+1)%3; save(); document.documentElement.style.setProperty("--beat",(TUNES[S.song].beat*2)+"s"); if(!T.run) preview(); say(SONGS[S.song][0]+"!",SONGS[S.song][1]); bar(); }
+    else if(a==="big"){ if(T.run) return; big=!big; talked=true; BWK.setBig(big,top); reset(); }
+    else if(a==="games"){ stop(); BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big&&!(T&&T.run)){ big=!!e.detail; reset(); } });
   document.addEventListener("click",function(e){ if(talked || e.target.closest("#stage,.chip,.week,.k-head,.k-sheet,.k-veil")) return; say(HI,"bb-hi"); });
 
-  reset();
-  window.BBO={state:function(){ return T&&{run:T.run,done:T.done,el:T.el,part:T.part,bugs:BUGS.filter(function(b){return !b.gone;}).length,total:total(),n:S.n}; },
-    start:start, skip:function(s){ T.el+=s; }, finish:function(){ T.el=total()-.01; }, big:function(on){ big=!!on; BWK.setBig(big); reset(); }};
+  /* ---------- sizes: buddy, tube and cup scale with the scene ---------- */
+  function layout(){ var st=$("stage"), W=st.clientWidth, H=st.clientHeight, s=Math.min(W,H*1.15);
+    st.style.setProperty("--lh",Math.round(Math.max(26,Math.min(48,H*.12)))+"px"); st.style.setProperty("--bw",Math.round(s*.3)+"px"); st.style.setProperty("--tw",Math.round(s*.13)+"px");
+    st.style.setProperty("--cb",Math.round(Math.max(26,Math.min(48,H*.12))*.25)+"px"); }
+  if(window.ResizeObserver) new ResizeObserver(layout).observe($("stage")); else window.addEventListener("resize",layout);
+  layout(); buddyPic(); reset();
+  window.BBO={state:function(){ return T&&{ph:T.ph,run:T.run,el:T.el,part:T.part,bugs:BUGS.filter(function(b){return !b.gone;}).length,foam:FOAM.length,total:total(),n:S.n,buddy:S.buddy,song:S.song,week:weekCount(),fairy:S.stickers||0}; },
+    begin:begin, squeeze:squeeze, start:start, rinse:rinse, skip:function(s){ T.el+=s; }, finish:function(){ T.el=total()-.01; }, big:function(on){ big=!!on; BWK.setBig(big); reset(); },
+    buddy:function(i){ S.buddy=i; save(); buddyPic(); }, fillWeek:function(){ var d0=weekStart(); for(var i=0;i<7;i++){ var k=dayKey(new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+i)); S.days[k]={am:1,pm:1}; } var t=dayKey(), h=new Date().getHours(); delete S.days[t][h<14?"am":"pm"]; save(); week(); }};
 })();
 </script>
 </body>
