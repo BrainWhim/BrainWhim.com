@@ -40,7 +40,8 @@ html.dwbg .bg{background:#e9d6b8 url("dw/bg-sm.jpg?v=1118a") center/cover}
 .top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
 /* the scene: the window, the buddy, the outfit board */
 #scene{flex:1;min-height:0;width:min(100%,1000px);position:relative;display:grid;gap:10px;align-items:stretch;
-  grid-template-columns:minmax(0,1.25fr) minmax(0,.8fr) auto;grid-template-areas:"win me board"}
+  grid-template-columns:minmax(0,1.25fr) minmax(0,.8fr) auto;grid-template-rows:minmax(0,1fr);grid-template-areas:"win me board"}
+#scene>*{min-height:0}
 #win{grid-area:win;position:relative;border-radius:18px;overflow:hidden;min-height:0;
   background:#7fb6e6;box-shadow:inset 0 0 0 10px #f4ead8,inset 0 0 0 12px #c9a874,0 10px 22px rgba(60,40,20,.35)}
 html.dwframe #win{box-shadow:0 10px 22px rgba(60,40,20,.35)}
@@ -57,14 +58,14 @@ html.dwframe #therm{right:calc(var(--fw,34px) + 6px);top:calc(var(--fw,34px) + 6
 body.big #therm{display:flex}
 #therm svg{width:24px;height:70px}
 #therm b{font-size:14px;color:#a0281e;font-variant-numeric:lining-nums}
-#me{grid-area:me;position:relative;min-height:0;display:flex;align-items:flex-end;justify-content:center}
+#me{grid-area:me;position:relative;min-height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
 #me .rug{position:absolute;left:6%;right:6%;bottom:2%;height:16%;border-radius:50%;background:radial-gradient(ellipse at center,#c8584a 0 55%,#a8403a 56% 62%,#e8c66a 63% 70%,rgba(0,0,0,0) 71%);opacity:.9}
 html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-gradient(ellipse at center,rgba(70,35,10,.45),rgba(70,35,10,0) 70%);opacity:1}
 #buddy{position:relative;z-index:2;height:78%;max-width:96%;border:0;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #buddy img{height:100%;max-width:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}
 #buddy.hop{animation:hop .6s ease-out}
 @keyframes hop{30%{transform:translateY(-12%)}60%{transform:translateY(0)}80%{transform:translateY(-4%)}}
-#board{grid-area:board;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:10px 8px;border-radius:18px;
+#board{grid-area:board;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:10px 8px;border-radius:18px;
   background:linear-gradient(180deg,rgba(255,250,238,.88),rgba(244,230,204,.88));box-shadow:0 8px 18px rgba(60,40,20,.3),inset 0 0 0 2px rgba(255,255,255,.6)}
 .sl{width:var(--sl,64px);height:var(--sl,64px);border-radius:16px;display:flex;align-items:center;justify-content:center;position:relative;
   background:rgba(180,150,110,.16);box-shadow:inset 0 2px 5px rgba(80,50,20,.25);border:2px dashed rgba(150,110,70,.45)}
@@ -310,9 +311,10 @@ html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-grad
     var line=big?W[k].bsay:W[k].say, clip=(big?"dw-bw-":"dw-w-")+k;
     if(G.first){ G.first=false; say(line,clip,{onend:function(){ if(G.ph==="pick"&&!Object.keys(G.got).length) setTimeout(function(){ if(G.ph==="pick"&&!Object.keys(G.got).length) say(PICK,"dw-pick"); },300); }}); }
     else say(line,clip); }
+  var DWfit=function(){};
   function drawBoard(){ var h=""; ["head","body","legs","feet","extra"].forEach(function(s){ if(G.need.indexOf(s)<0) return; var c=G.got[s];
       h+='<div class="sl'+(c?' on':'')+'" data-s="'+s+'" aria-label="'+SLOTN[s]+'">'+(c?itHTML(c,64):'<span class="ghost">'+SLOTS[s]+'</span>')+'</div>'; });
-    $("board").innerHTML=h; }
+    $("board").innerHTML=h; DWfit(); }
   function drawShelf(){ $("shelf").innerHTML=G.shelf.map(function(c,i){ var used=G.got[c.slot]===c; return '<button class="cl'+(used?' used':'')+'" data-i="'+i+'" aria-label="'+c.n+'">'+itHTML(c)+'<b>'+c.n+'</b></button>'; }).join(""); }
   function therm(){ var f=W[G.w].f, lv=Math.max(.08,Math.min(1,(f-0)/100));
     $("therm").innerHTML='<svg viewBox="0 0 24 70"><rect x="8" y="3" width="8" height="52" rx="4" fill="#fff" stroke="#9aa4b0" stroke-width="1.5"/><rect x="10" y="'+(5+48*(1-lv)).toFixed(1)+'" width="4" height="'+(48*lv+4).toFixed(1)+'" rx="2" fill="#e0402e"/><circle cx="12" cy="60" r="8" fill="#e0402e" stroke="#9aa4b0" stroke-width="1.5"/></svg><b>'+f+'°F</b>'; }
@@ -375,6 +377,11 @@ html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-grad
   newGame();
   (function(){ function fw(){ var w=$("win"), m=Math.min(w.clientWidth,w.clientHeight); w.style.setProperty("--fw",Math.max(14,Math.min(44,Math.round(m*.085)))+"px"); }
     fw(); if(window.ResizeObserver) new ResizeObserver(fw).observe($("win")); else window.addEventListener("resize",fw); })();
+  (function(){ function fitBoard(){ var b=$("board"), sc=$("scene"); if(!b||!G) return; var sls=[].slice.call(b.querySelectorAll(".sl")); sls.forEach(function(e){ e.style.removeProperty("--sl"); });
+      var col=getComputedStyle(b).flexDirection==="column", n=Math.max(1,G.need.length), gap=col?8:6, pad=col?20:12;
+      var room=col? sc.clientHeight-pad : (b.clientWidth||sc.clientWidth)-pad, base=parseFloat(getComputedStyle(b.querySelector(".sl")||b).getPropertyValue("--sl"))||64;
+      var fit=Math.floor((room-(n-1)*gap)/n); if(fit<base) sls.forEach(function(e){ e.style.setProperty("--sl",Math.max(34,fit)+"px"); }); }
+    window.addEventListener("resize",fitBoard); if(window.ResizeObserver) new ResizeObserver(fitBoard).observe($("scene")); DWfit=fitBoard; })();
   window.DWO={state:function(){ return G&&{ph:G.ph, w:G.w, r:G.r, need:G.need, got:Object.keys(G.got), shelf:G.shelf&&G.shelf.map(function(c){return c.id;}), done:Object.keys(G.done)}; },
     pickRight:function(){ for(var i=0;i<G.shelf.length;i++){ var c=G.shelf[i]; if(c.ok.indexOf(G.w)>=0&&!G.got[c.slot]&&G.need.indexOf(c.slot)>=0){ tapItem(i,$("shelf").querySelector('.cl[data-i="'+i+'"]')); return c.id; } } },
     pickWrong:function(){ for(var i=0;i<G.shelf.length;i++){ var c=G.shelf[i]; if(c.ok.indexOf(G.w)<0){ tapItem(i,$("shelf").querySelector('.cl[data-i="'+i+'"]')); return c.id; } } },
