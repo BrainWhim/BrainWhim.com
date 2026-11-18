@@ -69,6 +69,7 @@ html.sybg .bg{background:#141a3a url("sy/bg-sm.jpg?v=1117a") center 60%/cover}
 .toy{position:absolute;z-index:3;pointer-events:none;transition:transform .7s cubic-bezier(.4,1.6,.6,1),opacity .4s}
 #t1{left:54%;top:80%;width:9%;height:15%}#t2{left:63%;top:76%;width:10%;height:19%}#t3{left:70%;top:84%;width:8%;height:12%}
 .toy.away{opacity:0}
+#box img,#box svg,.toy img,.toy svg{width:100%;height:100%;object-fit:contain;display:block}
 /* the breathing moon */
 #breath{position:absolute;inset:0;z-index:8;display:none;align-items:center;justify-content:center;flex-direction:column;gap:3%;background:radial-gradient(circle,rgba(20,24,70,.55),rgba(5,6,26,.85))}
 #breath.on{display:flex}
@@ -113,6 +114,29 @@ html.sybg .bg{background:#141a3a url("sy/bg-sm.jpg?v=1117a") center 60%/cover}
 @media (max-height:600px){.sy{gap:6px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
   .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}.week{display:none}}
 @media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}.sy{gap:12px}}
+/* Judy's night bedroom photo (sy/bg) becomes the room itself: the moon, lamp and bed are the photo's own;
+   the buddy is tucked in under a clipped copy of the photo's quilt; the lamp "turns off" with a dark wash over its corner */
+html.syroom #room{aspect-ratio:3/2;background:#0e1330 url("sy/bg-sm.jpg?v=1117a") center/cover}
+html.syroom #room::before{background:radial-gradient(circle at 9% 30%,rgba(255,200,120,.28),transparent 28%)}
+html.syroom #room::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity 1.2s;
+  background:radial-gradient(ellipse 30% 40% at 10% 30%,rgba(8,10,30,.62),transparent 70%)}
+html.syroom #room.lampoff::after{opacity:1}
+html.syroom #win{left:54%;top:0;width:17%;height:22%;background:none;box-shadow:none;border-radius:50%;overflow:visible}
+html.syroom .bg{filter:blur(8px) brightness(.5)}
+html.syroom #win.glow::after{display:block;content:"";position:absolute;inset:-6%;height:auto;background:none;border-radius:50%;z-index:3;box-shadow:0 0 0 3px rgba(255,240,180,.85),0 0 24px rgba(255,226,140,.9);animation:ring 1.5s ease-in-out infinite}
+html.syroom #win::before,html.syroom #win::after,html.syroom #stars,html.syroom #stand,html.syroom #bed{display:none}
+html.syroom #moon{left:28%;top:6%;width:46%;opacity:0;transition:opacity 1s}
+html.syroom #moon.smile{opacity:1}
+html.syroom #lamp{left:4%;top:18%;width:11%;height:20%}
+html.syroom #lamp svg{display:none}
+html.syroom #quilt{left:0;top:0;width:100%;height:100%;background:url("sy/bg-sm.jpg?v=1117a") center/cover;clip-path:polygon(0 47%,10% 46%,20% 52%,27% 61%,26% 74%,25% 92%,0 92%)}
+html.syroom #quilt img{display:none}
+html.syroom #buddy{left:32%;top:50%;width:18%;height:32%}
+html.syroom #buddy.inbed{left:1%;top:28%;width:19%;height:34%}
+html.syroom #zz{left:16%;top:20%}
+html.syroom #box{left:62%;top:74%;width:15%;height:17%}
+html.syroom #toys{left:50%;top:70%;width:28%;height:24%}
+html.syroom #t1{left:52%;top:82%}html.syroom #t2{left:56%;top:74%}html.syroom #t3{left:46%;top:85%}
 @media (prefers-reduced-motion:reduce){.it.glow::after,.star,#buddy.inbed img,#zz.on{animation:none}#bm{transition:none}}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
@@ -230,7 +254,7 @@ html.sybg .bg{background:#141a3a url("sy/bg-sm.jpg?v=1117a") center 60%/cover}
   function drawThings(){ $("lamp").innerHTML=pic("lamp"); $("box").innerHTML=pic("box"); $("t1").innerHTML=pic("ball"); $("t2").innerHTML=pic("bear"); $("t3").innerHTML=pic("blocks");
     $("moon").innerHTML=ART.moon(done.moon); $("bed").innerHTML='<img src="mo/bed.webp?v=1117a" alt="" draggable="false">'; $("quilt").innerHTML='<img src="mo/bed.webp?v=1117a" alt="" draggable="false">';
     var a=AN[buddyI()]; $("buddy").innerHTML='<img src="sl/c-'+a[0]+'.webp?v=1115a" alt="" draggable="false">'; }
-  loadPh("bg","sy/bg-sm.jpg?v="+AV,function(){ document.documentElement.classList.add("sybg"); });
+  loadPh("bg","sy/bg-sm.jpg?v="+AV,function(){ document.documentElement.classList.add("sybg","syroom"); });
   ["lamp","box","ball","bear","blocks"].forEach(function(k){ loadPh(k,"sy/"+k+".webp?v="+AV,drawThings); });
   (function(){ var h=""; [[10,14],[24,30],[14,62],[38,70],[8,84],[30,8],[44,40]].forEach(function(p,i){ h+='<i class="star" style="left:'+p[0]+'%;top:'+p[1]+'%;animation-delay:-'+(i*.4)+'s"></i>'; }); $("stars").innerHTML=h; })();
 
@@ -241,8 +265,9 @@ html.sybg .bg{background:#141a3a url("sy/bg-sm.jpg?v=1117a") center 60%/cover}
   function darkness(){ var n=Object.keys(done).length; $("dark").style.opacity=(n*.09).toFixed(2); }
   function goodnight(k){ if(ph!=="night"||done[k]) return; done[k]=1;
     if(k==="lamp"){ SND.click(); $("room").classList.add("lampoff"); }
-    else if(k==="toys"){ ["t1","t2","t3"].forEach(function(id,i){ setTimeout(function(){ var t=$(id); t.style.transform="translate("+(i===0?"170%":i===1?"80%":"60%")+",-40%) scale(.7)"; SND.plunk(i); setTimeout(function(){ t.classList.add("away"); },500); },i*350); }); }
-    else if(k==="moon"){ SND.chime(); $("moon").innerHTML=ART.moon(true); $("win").classList.add("twinkle"); setTimeout(function(){ $("win").classList.remove("twinkle"); },2500); }
+    else if(k==="toys"){ ["t1","t2","t3"].forEach(function(id,i){ setTimeout(function(){ var t=$(id), bx=$("box").getBoundingClientRect(), tr=t.getBoundingClientRect();  /* hop into the middle of the toy box */
+          t.style.transform="translate("+Math.round(bx.left+bx.width*(.3+.2*i)-tr.left-tr.width/2)+"px,"+Math.round(bx.top+bx.height*.08-tr.top-tr.height/2)+"px) scale(.7)"; SND.plunk(i); },i*350); }); }  /* they stay peeking over the rim of the box */
+    else if(k==="moon"){ SND.chime(); $("moon").innerHTML=ART.moon(true); $("moon").classList.add("smile"); $("win").classList.add("twinkle"); setTimeout(function(){ $("win").classList.remove("twinkle"); },2500); }
     else if(k==="buddy"){ SND.hop(); $("buddy").classList.add("inbed"); setTimeout(function(){ $("zz").classList.add("on"); },1100); }
     glows(); darkness();
     var left=THINGS.filter(function(x){ return !done[x]; }).length;
@@ -265,7 +290,7 @@ html.sybg .bg{background:#141a3a url("sy/bg-sm.jpg?v=1117a") center 60%/cover}
   function sleep(){ if(ph==="dream") return; ph="dream"; $("good").classList.remove("on"); $("breath").classList.remove("on"); $("dark").style.opacity=".45";
     S.days[dayKey()]=1; save(); week(); BWK.played&&BWK.played("sleepy"); bar();
     say(NIGHT,"sy-night",{onend:function(){ lullaby(); $("shade").classList.add("on"); }}); }
-  function reset(){ hush(); ph="night"; done={}; picked=[]; clearTimeout(bTimer); $("room").classList.remove("lampoff"); $("buddy").classList.remove("inbed"); $("zz").classList.remove("on");
+  function reset(){ hush(); ph="night"; done={}; picked=[]; clearTimeout(bTimer); $("room").classList.remove("lampoff"); $("moon").classList.remove("smile"); $("buddy").classList.remove("inbed"); $("zz").classList.remove("on");
     ["t1","t2","t3"].forEach(function(id){ var t=$(id); t.style.transform=""; t.classList.remove("away"); }); $("breath").classList.remove("on"); $("good").classList.remove("on"); $("shade").classList.remove("on");
     drawThings(); glows(); darkness(); bar(); }
   function week(){ var now=new Date(), d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay()), h="", N=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
