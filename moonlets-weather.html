@@ -22,7 +22,12 @@
    Saved: bwk.weather {games, dressed}. Lines dw-*. Test hook DWO.
    ========================================================================== */
 .bg{position:fixed;inset:-12px;z-index:-1;background:#e9d6b8 linear-gradient(180deg,#f3e3c6,#d9bb90) center/cover;filter:blur(1.2px) brightness(.92)}
-html.dwshelf #shelf{background:#a86e3a url("dw/shelf.jpg?v=1118a") center/cover}
+html.dwshelf #shelf{background:none;box-shadow:none;padding-bottom:calc(var(--sh,52px)*.72)}
+html.dwshelf #shelf::before{content:"";position:absolute;z-index:0;left:0;right:0;bottom:0;height:var(--sh,52px);border-style:solid;border-width:0 calc(var(--sh,52px)*1.12);
+  border-image:url("dw/shelf.webp?v=1118a") 0 150 fill / 0 calc(var(--sh,52px)*1.12) stretch;filter:drop-shadow(0 6px 6px rgba(60,30,10,.35))}   /* Judy's shelf board: the clothes stand on it */
+.cl{position:relative;z-index:1}
+@media (max-width:700px),(orientation:portrait){#shelf{--sh:38px}}
+@media (orientation:portrait) and (min-width:700px){#shelf{--sh:56px}}
 html.dwbg .bg{background:#e9d6b8 url("dw/bg-sm.jpg?v=1118a") center/cover}
 @media (min-width:1100px){html.dwbg .bg{background-image:url("dw/bg.jpg?v=1118a")}}
 .md{height:100svh;min-height:500px;display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -43,13 +48,18 @@ html.dwframe #win{box-shadow:0 10px 22px rgba(60,40,20,.35)}
 #win canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #win .fr{position:absolute;inset:0;pointer-events:none;border-radius:18px;
   background:linear-gradient(#f4ead8,#f4ead8) center/10px 100% no-repeat,linear-gradient(#f4ead8,#f4ead8) center/100% 10px no-repeat}
-html.dwframe #win .fr{background:none;border:solid transparent;border-width:var(--fw,34px);border-image:url("dw/frame.webp?v=1118a") 120 / var(--fw,34px) stretch;border-radius:0}
+html.dwframe #win{border-radius:6px}
+html.dwframe #win .fr{border:solid transparent;border-width:var(--fw,34px);border-image:url("dw/frame.webp?v=1118a") 72 69 77 68 / var(--fw,34px) stretch;border-radius:0;
+  background:linear-gradient(90deg,#d3c9c4,#ece6e3 45%,#e2dbd8 60%,#cdc3be) center/calc(var(--fw,34px)*.47) 100% no-repeat,linear-gradient(180deg,#e6dfdc,#efe9e6 45%,#d6ccc8) center/100% calc(var(--fw,34px)*.47) no-repeat;
+  background-origin:padding-box;background-clip:padding-box;filter:drop-shadow(0 2px 3px rgba(60,40,20,.25))}   /* Judy's frame around the edge; the crossbars drawn to match it */
+html.dwframe #therm{right:calc(var(--fw,34px) + 6px);top:calc(var(--fw,34px) + 6px)}
 #therm{position:absolute;right:16px;top:16px;width:46px;z-index:3;display:none;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:14px;background:rgba(255,253,245,.92);box-shadow:0 3px 8px rgba(0,0,0,.3)}
 body.big #therm{display:flex}
 #therm svg{width:24px;height:70px}
 #therm b{font-size:14px;color:#a0281e;font-variant-numeric:lining-nums}
 #me{grid-area:me;position:relative;min-height:0;display:flex;align-items:flex-end;justify-content:center}
 #me .rug{position:absolute;left:6%;right:6%;bottom:2%;height:16%;border-radius:50%;background:radial-gradient(ellipse at center,#c8584a 0 55%,#a8403a 56% 62%,#e8c66a 63% 70%,rgba(0,0,0,0) 71%);opacity:.9}
+html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-gradient(ellipse at center,rgba(70,35,10,.45),rgba(70,35,10,0) 70%);opacity:1}
 #buddy{position:relative;z-index:2;height:78%;max-width:96%;border:0;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #buddy img{height:100%;max-width:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}
 #buddy.hop{animation:hop .6s ease-out}
@@ -93,7 +103,8 @@ body.big #therm{display:flex}
 #out .pal.play{animation:play 1s ease-in-out infinite}
 @keyframes play{50%{transform:translateX(-50%) translateY(-8%) rotate(3deg)}}
 #out .hat{position:absolute;left:50%;transform:translateX(-50%);z-index:3;display:flex;justify-content:center}
-#out .umb{position:absolute;left:50%;transform:translateX(-50%);z-index:3;display:flex;justify-content:center}
+#out .pal>img{position:relative;z-index:2}
+#out .umb{position:absolute;left:50%;transform:translateX(-50%);z-index:1;display:flex;justify-content:center}
 #out .kite{position:absolute;right:8%;top:6%;width:18%;z-index:3;animation:kite 2.4s ease-in-out infinite}
 @keyframes kite{50%{transform:translate(-8%,6%) rotate(-8deg)}}
 #out svg.str{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
@@ -256,7 +267,7 @@ body.big #therm{display:flex}
   var PH={};
   CL.forEach(function(c){ var im=new Image(); im.onload=function(){ PH[c.id]=im.src; [].forEach.call(document.querySelectorAll('.it[data-id="'+c.id+'"]'),function(e){ e.innerHTML='<img src="'+im.src+'" alt="">'; }); }; im.src="dw/"+c.id+".webp?v="+AV; });
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwbg"); }; im.src="dw/bg-sm.jpg?v="+AV; })();
-  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwshelf"); }; im.src="dw/shelf.jpg?v="+AV; })();
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwshelf"); }; im.src="dw/shelf.webp?v="+AV; })();
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwframe"); }; im.src="dw/frame.webp?v="+AV; })();
   var SKY={}; WK.forEach(function(k){ var im=new Image(); im.onload=function(){ SKY[k]=1; if(G&&G.w===k) showSky(); }; im.src=W[k].sky; });
   function itHTML(c,sz){ return '<span class="it" data-id="'+c.id+'" style="--s:'+(sz||60)+'px">'+(PH[c.id]?'<img src="'+PH[c.id]+'" alt="">':'<span class="em '+c.tint+'">'+c.em+'</span>')+'</span>'; }
@@ -331,8 +342,9 @@ body.big #therm{display:flex}
     setTimeout(function(){ say(W[k].out,"dw-out-"+k,{onend:function(){ if(last) setTimeout(function(){ if(G.ph==="out") allDone(); },700); }}); },500);
     if(last) setTimeout(function(){ if(G.ph==="out") allDone(); },7000); }
   function dressUp(pal,hat,ex){ var im=pal.querySelector("img"), w=im.offsetWidth, h=im.offsetHeight;
-    if(ex&&ex.id==="umbrella"){ var u=document.createElement("div"); u.className="umb"; u.style.width=(w*1.25)+"px"; u.style.height=(w*1.1)+"px"; u.style.bottom=(h*.62)+"px"; u.innerHTML=itHTML(ex,w*1.2); u.firstChild.style.width="100%"; u.firstChild.style.height="100%"; pal.appendChild(u); }
-    if(hat){ var t=document.createElement("div"); t.className="hat"; t.style.width=(w*.62)+"px"; t.style.height=(w*.5)+"px"; t.style.bottom=(h*.8)+"px"; t.innerHTML=itHTML(hat,w*.6); t.firstChild.style.width="100%"; t.firstChild.style.height="100%"; pal.appendChild(t); }
+    if(ex&&ex.id==="umbrella"){ var u=document.createElement("div"); u.className="umb"; u.style.width=(w*1.35)+"px"; u.style.height=(w*1.08)+"px"; u.style.bottom=(h*.74)+"px";   /* above the head, the handle tucked behind the buddy */ u.innerHTML=itHTML(ex,w*1.2); u.firstChild.style.width="100%"; u.firstChild.style.height="100%"; pal.appendChild(u); }
+    if(hat){ var hp={sunhat:[.98,.8],rainhat:[.9,.84],woolhat:[.64,.8]}[hat.id]||[.7,.8];   /* [width × the buddy's width, bottom × its height]: brims sit higher so eyes show */
+      var t=document.createElement("div"); t.className="hat"; t.style.width=(w*hp[0])+"px"; t.style.height=(w*hp[0]*.72)+"px"; t.style.bottom=(h*hp[1])+"px"; t.innerHTML=itHTML(hat,w*.6); t.firstChild.style.width="100%"; t.firstChild.style.height="100%"; pal.appendChild(t); }
     if(ex&&ex.id==="kite"){ var o=$("oin"), kd=document.createElement("div"); kd.className="kite"; kd.innerHTML=itHTML(ex,90); kd.firstChild.style.width="100%"; kd.firstChild.style.aspectRatio="1"; o.appendChild(kd);
       o.insertAdjacentHTML("beforeend",'<svg class="str" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M60 62 Q75 40 83 18" stroke="rgba(255,255,255,.9)" stroke-width=".5" fill="none"/></svg>'); } }
   function allDone(){ if(G.ph==="all") return; G.ph="all"; S.games++; save(); BWK.played&&BWK.played("weather"); week(); bar(); SND.win();
@@ -361,6 +373,8 @@ body.big #therm{display:flex}
   G={order:[],r:-1,done:{},need:[],got:{},ph:"intro",first:true,w:null};
   $("buddy").innerHTML='<img src="'+buddyImg()+'" alt="">';
   newGame();
+  (function(){ function fw(){ var w=$("win"), m=Math.min(w.clientWidth,w.clientHeight); w.style.setProperty("--fw",Math.max(14,Math.min(44,Math.round(m*.085)))+"px"); }
+    fw(); if(window.ResizeObserver) new ResizeObserver(fw).observe($("win")); else window.addEventListener("resize",fw); })();
   window.DWO={state:function(){ return G&&{ph:G.ph, w:G.w, r:G.r, need:G.need, got:Object.keys(G.got), shelf:G.shelf&&G.shelf.map(function(c){return c.id;}), done:Object.keys(G.done)}; },
     pickRight:function(){ for(var i=0;i<G.shelf.length;i++){ var c=G.shelf[i]; if(c.ok.indexOf(G.w)>=0&&!G.got[c.slot]&&G.need.indexOf(c.slot)>=0){ tapItem(i,$("shelf").querySelector('.cl[data-i="'+i+'"]')); return c.id; } } },
     pickWrong:function(){ for(var i=0;i<G.shelf.length;i++){ var c=G.shelf[i]; if(c.ok.indexOf(G.w)<0){ tapItem(i,$("shelf").querySelector('.cl[data-i="'+i+'"]')); return c.id; } } },
