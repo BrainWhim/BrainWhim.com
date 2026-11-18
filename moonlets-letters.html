@@ -257,7 +257,7 @@ html.llsl .slate svg{background:none;box-shadow:inset 0 4px 10px rgba(0,0,0,.4);
   var big=BWK.big(), cur=null, sv=$("sv"), drag=null, misses=0;
   function el(n,a,p){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e; }
   function key(){ return big?ABC[S.atLo].toLowerCase():ABC[S.at]; }
-  function setup(){
+  function setup(keepFinn){
     var k=key(), strokes=(big?LO:UP)[k];
     cur={k:k, L:k.toUpperCase(), st:strokes.map(function(s){ var pts=sample(s), cum=[0]; for(var i=1;i<pts.length;i++) cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1])); return {pts:pts, cum:cum, len:cum[cum.length-1], i:0}; }), s:0, done:false};
     sv.innerHTML=""; $("stage").classList.remove("won"); $("card").innerHTML="";
@@ -272,7 +272,10 @@ html.llsl .slate svg{background:none;box-shadow:inset 0 4px 10px rgba(0,0,0,.4);
       s.core=el("path",{d:d,"class":"core","stroke-dasharray":s.len+" "+(s.len+5),"stroke-dashoffset":s.len},g); });
     cur.mk=el("g",{},sv); cur.spark=el("path",{d:"M0 -3.4l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9z","class":"spark",opacity:0},sv);
     marker(); lights(); bar();
+    /* a new letter: Finn's bubble stops showing the last letter's sound (quietly; tapping Finn still talks) */
+    if(setup.n++ && !keepFinn){ talked=true; BWK.finnStop(); top.innerHTML='<div class="k-finn k-finn-in">'+face("llS"+setup.n)+'<p class="k-fb">Now trace '+(big?'little ':'')+k+'! Start at the green dot.</p></div>'; }
   }
+  setup.n=0;
   /* the green start dot (numbered when there's more than one line) and an arrow showing the way */
   function marker(){ var m=cur.mk; m.innerHTML=""; if(cur.done) return; var s=cur.st[cur.s], p=s.pts[s.i];
     var j=Math.min(s.pts.length-1, s.i+Math.max(4,Math.round(9/1.2))), q=s.pts[j], ang=Math.atan2(q[1]-p[1],q[0]-p[0])*180/Math.PI;
@@ -327,11 +330,11 @@ html.llsl .slate svg{background:none;box-shadow:inset 0 4px 10px rgba(0,0,0,.4);
   $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
     if(b.dataset.a==="next") step(1);
     else if(b.dataset.a==="back") step(-1);
-    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); setup(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); setup(1); }
     else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
-  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; setup(); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; setup(1); } });
   window.addEventListener("resize",function(){ if(cur&&cur.done) sizeCard(); });
-  document.addEventListener("click",function(e){ if(talked || e.target.closest("#stage,.chip,.lights,.k-head,.k-sheet,.k-veil")) return; say(HI,"ll-hi"); });
+  document.addEventListener("click",function(e){ if(talked || !e.target.isConnected || e.target.closest("#stage,.chip,.lights,.k-head,.k-sheet,.k-veil")) return; say(HI,"ll-hi"); });
 
   setup();
   /* test hook: LLO.trace() runs the finger along every line of the letter */
