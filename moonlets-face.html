@@ -228,8 +228,15 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
   (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
   var big=BWK.big();
   top.innerHTML='<div class="k-finn k-finn-in">'+finnFace("mfS")+'<p class="k-fb">'+(big?BHI:HI)+'</p></div>';
-  var talked=false, talking=0;
-  function say(t,clip,o){ talked=true; o=o||{}; var f=o.onend; talking=Date.now(); o.onend=function(){ talking=0; if(f) f(); }; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  /* Nov 18 pm: a line counts as going until its onend or a time worked out from its length (nothing can get stuck) */
+  var talked=false, line=null;
+  function est(t){ return 2500+String(t).length*110; }
+  function busy(){ return !!(line&&Date.now()-line.t0<line.est); }
+  /* a new line waits for Finn's current one to finish (only the newest waits), so nothing is cut off */
+  var nextL=null, nT=0;
+  function speak(t,clip,o){ o=o||{}; var f=o.onend, me={t0:Date.now(), est:est(t)}; line=me; o.onend=function(){ if(line===me) line=null; if(f) f(); flush(); }; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  function flush(){ clearTimeout(nT); if(!nextL) return; if(busy()){ nT=setTimeout(flush,200); return; } var q=nextL; nextL=null; setTimeout(function(){ speak(q[0],q[1],q[2]); },200); }
+  function say(t,clip,o){ talked=true; if(busy()){ nextL=[t,clip,o]; flush(); } else speak(t,clip,o); }
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(big?BHI:HI,big?"mf-bhi":"mf-hi"); });
   ["mf-hi","mf-bhi","mf-tada","mf-yes","bg-on","bg-off"].forEach(BWK.preload);
 
@@ -246,7 +253,8 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
     if(AC.state!=="running"&&(force||AC.state!=="interrupted")){ try{ AC.resume(); }catch(e){} } return AC; }
   function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(true); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
   ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
-  function on(){ return BWK.store.get("sound",true) && !!ac(); }
+  /* while the iPhone voice has web audio "interrupted", skip sounds (they would pile up and burst out later) */
+  function on(){ return BWK.store.get("sound",true) && !!ac() && AC.state!=="interrupted"; }
   function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
     o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
@@ -299,12 +307,13 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
     h+='</g></g>'+(F.h?'<g filter="url(#mfSh)" class="'+(popped==="h"?"wig":"")+'">'+slotSvg("h",F.h)+'</g>':'')+'</g>';
     $("face").innerHTML=h; popped=null; }
   var cur="e";
-  function tabs(){ $("tabs").innerHTML=TABS.map(function(s){ return '<button class="tab" role="tab" data-s="'+s+'" data-say="'+SLOT[s].say+'" aria-selected="'+(s===cur)+'">'+SLOT[s].n+'</button>'; }).join(""); }
+  function tabs(){ $("tabs").innerHTML=TABS.map(function(s){ return '<button class="tab" role="tab" data-s="'+s+'" aria-label="'+SLOT[s].say+'" aria-selected="'+(s===cur)+'">'+SLOT[s].n+'</button>'; }).join(""); }
   function tray(){ var s=cur, h="";
     if(SLOT[s].none) h+='<button class="pc none" data-k="" aria-label="No '+SLOT[s].n.toLowerCase()+'" aria-pressed="'+(!F[s])+'">✕</button>';
     ORDER[s].forEach(function(k){ h+='<button class="pc" data-k="'+k+'" aria-label="'+k+'" aria-pressed="'+(F[s]===k)+'"><svg viewBox="'+SLOT[s].vb+'" overflow="visible">'+piece(s,k)+'</svg></button>'; });
     $("tray").innerHTML=h; }
-  $("tabs").addEventListener("click",function(e){ var b=e.target.closest(".tab"); if(!b) return; cur=b.dataset.s; SND.tab();
+  var stepT=0;  /* the tray's own step to the next kind; a tab the child taps wins */
+  $("tabs").addEventListener("click",function(e){ var b=e.target.closest(".tab"); if(!b) return; clearTimeout(stepT); cur=b.dataset.s; SND.tab();
     [].forEach.call($("tabs").children,function(t){ t.setAttribute("aria-selected",t===b); }); tray(); $("tray").scrollLeft=0; });
   var placed=0;
   $("tray").addEventListener("click",function(e){ var b=e.target.closest(".pc"); if(!b) return; var k=b.dataset.k, s=cur;
@@ -312,9 +321,9 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
     else if(F[s]===k&&SLOT[s].none){ delete F[s]; SND.off(); }
     else { F[s]=k; popped=s; SND.stick(); placed++; }
     save(); draw(); [].forEach.call($("tray").children,function(c){ c.setAttribute("aria-pressed",(c.dataset.k||"")===(F[s]||"")); });
-    if(F.e&&F.m&&!saidTada&&!big&&!talking){ saidTada=true; say(TADA,"mf-tada"); }
+    if(F.e&&F.m&&!saidTada&&!big&&!busy()){ saidTada=true; say(TADA,"mf-tada"); }
     /* step the tray on to the next kind once eyes or a mouth are picked the first time */
-    if(placed<=3&&k&&(s==="e"||s==="n"||s==="m")&&!G.auto){ var nx={e:"b",n:"m",m:"c"}[s]; if(nx&&!F[nx]) setTimeout(function(){ cur=nx; tabs(); tray(); },650); } });
+    if(placed<=3&&k&&(s==="e"||s==="n"||s==="m")&&!G.auto){ var nx={e:"b",n:"m",m:"c"}[s]; if(nx&&!F[nx]){ clearTimeout(stepT); stepT=setTimeout(function(){ cur=nx; tabs(); tray(); },650); } } });
   var saidTada=false;
 
   /* ---------- reactions ---------- */
@@ -360,7 +369,7 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
       '<button class="chip" data-a="games" aria-label="More games"><em>☾</em><span>More games</span></button>'; }
   $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap"); var a=b.dataset.a;
     if(a==="tada") tada();
-    else if(a==="mix"){ mix(); if(!talking) say(MIX,"mf-mix"); bar(); }
+    else if(a==="mix"){ mix(); if(!busy()) say(MIX,"mf-mix"); bar(); }
     else if(a==="fresh"){ F={}; save(); SND.off(); draw(); cur="e"; tabs(); tray(); say(FRESH,"mf-fresh"); bar(); }
     else if(a==="again"){ startBig(); bar(); nextAsk(); }
     else if(a==="big"){ big=!big; talked=true; BWK.setBig(big,top); setMode(); }
@@ -369,7 +378,8 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
   var _draw=draw; draw=function(){ _draw(); var t=$("bar").querySelector('[data-a="tada"]'); if(t) t.classList.toggle("pulse",!!(F.e&&F.m)); };
   function setMode(){ if(big){ startBig(); bar(); setTimeout(nextAsk,big&&talked?2600:0); } else { G={auto:false}; goal(); bar(); } }
   window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; setMode(); } });
-  document.addEventListener("click",function(e){ if(talked||!e.target.isConnected||e.target.closest("#tray,#tabs,.chip,.k-head,.k-sheet,.k-veil")) return; say(big?BHI:HI,big?"mf-bhi":"mf-hi"); });
+  document.addEventListener("pointerdown",function(e){ if(talked||!e.target.isConnected||e.target.closest(".k-head,.k-sheet,.k-veil,[data-a=big],[data-a=games]")) return;
+    talked=true; setTimeout(function(){ if(big&&G.list&&!G.want&&G.i===0) say(BHI,"mf-bhi",{onend:function(){ setTimeout(nextAsk,400); }}); else if(!busy()) say(HI,"mf-hi"); },250); },true);
 
   /* tray tiles: as big as fit */
   function fit(){ var w=window.innerWidth, h=window.innerHeight, land=w>=820&&w>h, tw=land?Math.min(96,Math.max(70,(h-360)/4)):Math.max(56,Math.min(84,h*.11,w/5.4));
@@ -377,7 +387,6 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
   window.addEventListener("resize",fit); fit();
   tabs(); tray(); draw(); bar(); if(big){ startBig(); G.want=null; goal(); }
   /* Big starts its first ask with the first tap anywhere (sound and voice need a tap) */
-  if(big) document.addEventListener("pointerdown",function f(){ document.removeEventListener("pointerdown",f,true); setTimeout(function(){ if(big&&G.list&&!G.want&&G.i===0) nextAsk(); },1200); },true);
   window.MFO={face:function(){ return JSON.parse(JSON.stringify(F)); }, set:function(o){ F=o||{}; save(); draw(); tray(); }, feeling:function(o){ return feeling(o||F); },
     tada:tada, big:function(v){ big=!!v; BWK.setBig(big); setMode(); }, state:function(){ return {big:big, want:G.want||null, i:G.i||0, got:G.got||0, cur:cur}; }, P:P, ORDER:ORDER};
 })();

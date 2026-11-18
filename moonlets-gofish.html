@@ -228,16 +228,24 @@ html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;bor
   var big=BWK.big();
   top.innerHTML='<div class="k-finn k-finn-in">'+face("gfS")+'<p class="k-fb">'+(big?BHI:HI)+'</p></div>';
   var talked=false;
-  /* lines that come by themselves (sayQ) wait for Finn's current line; a line from a tap (say) speaks at once and drops the queue (Nov 18: lines were cut off on the iPhone) */
-  var talking=0, Q=[];
-  function say(t,clip,o){ talked=true; o=o||{}; var f=o.onend; talking=Date.now(); Q=o._q?Q:[];
-    o.onend=function(){ talking=0; if(f) f(); if(Q.length){ var q=Q.shift(); setTimeout(function(){ q[2]._q=1; say(q[0],q[1],q[2]); },250); } };
+  /* Finn's lines (Nov 18 pm, back to the simple way): every line waits for the one before it to end. A line counts as
+     still going until its onend, or until a time worked out from its length runs out (so nothing can get stuck).
+     Phones start the device voice late (they first look for a recorded clip), so the game always waits on the line. */
+  var line=null, Q=[], qT=0;
+  function est(t){ return 2500+String(t).length*110; }
+  function busy(){ return !!(line&&Date.now()-line.t0<line.est); }
+  function say(t,clip,o){ talked=true; o=o||{}; var f=o.onend, me={t0:Date.now(), est:est(t)}; line=me;
+    o.onend=function(){ if(line===me) line=null; if(f) f(); pump(); };
     o.into=top; o.clip=clip; BWK.finn(t,o); }
-  function sayQ(t,clip,o){ o=o||{}; if(talking&&Date.now()-talking<9000){ if(Q.length>=3) Q.shift(); Q.push([t,clip,o]); } else { o._q=1; say(t,clip,o); } }
-  /* say a line, then go on when it ends (or after max ms, in case it is cut off; longer if it has to wait its turn) */
-  function sayThen(t,clip,fn,max,now){ var done=false, my=G&&G.id, wait=!now&&talking&&Date.now()-talking<9000;
+  function pump(){ clearTimeout(qT); if(!Q.length) return; if(busy()){ qT=setTimeout(pump,200); return; } var q=Q.shift(); setTimeout(function(){ say(q[0],q[1],q[2]); },200); }
+  /* a line that comes by itself: after Finn's current line */
+  function sayQ(t,clip,o){ if(busy()||Q.length){ if(Q.length>=3) Q.shift(); Q.push([t,clip,o||{}]); pump(); } else say(t,clip,o); }
+  /* say a line (from a tap: at once; otherwise after the current one), then go on when it ends */
+  function sayThen(t,clip,fn,max,now){ var done=false, my=G&&G.id, wait=0;
+    if(busy()) wait=line.est-(Date.now()-line.t0)+(now?0:Q.length*4000);
     function go(){ if(done||!G||G.id!==my) return; done=true; fn(); }
-    (now?say:sayQ)(t,clip,{onend:function(){ later(go,250); }}); later(go,(max||5000)+(wait?7000:0)); }
+    if(now){ Q=[]; sayQ(t,clip,{onend:function(){ later(go,300); }}); } else sayQ(t,clip,{onend:function(){ later(go,300); }});
+    later(go,wait+est(t)+900); }
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(big?BHI:HI,big?"gf-bhi":"gf-hi"); });
   ["gf-hi","gf-bhi","gf-you","gf-yours","gf-yes","gf-fish","gf-gofish","gf-pair","bg-on","bg-off"].forEach(BWK.preload);
 
@@ -258,7 +266,8 @@ html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;bor
     if(AC.state!=="running"&&(force||AC.state!=="interrupted")){ try{ AC.resume(); }catch(e){} } return AC; }
   function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(true); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
   ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
-  function on(){ return BWK.store.get("sound",true) && !!ac(); }
+  /* while the iPhone voice has web audio "interrupted", skip sounds (they would pile up and burst out later) */
+  function on(){ return BWK.store.get("sound",true) && !!ac() && AC.state!=="interrupted"; }
   function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
     o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
