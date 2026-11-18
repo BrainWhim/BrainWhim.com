@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Peekaboo Animals · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Peekaboo Animals (Nov 17, 2026), a Moon Games hide-and-seek game. A bright summer backyard at midday.
+   Story: Finn's animal friends (the 13 photo animals, sl/c-*.webp) want to play hide-and-seek. Tap Go: they hop in and
+   duck behind the bush, the haystack, the barrel, the stump, the flowerpot and the crate while Finn counts to three.
+   Little: watch them hide, then tap the hiding spots; a friend pops up ("Peekaboo! It's Biscuit the puppy!"), an empty
+   spot lets out a butterfly. Find all 3. Big Moonlet: eyes closed while they hide (the yard goes dark), 6 spots and 4
+   friends, ears or a tail peek out, and Finn asks for one friend at a time ("Where is Hazel the fox?"); the wrong friend
+   pops up, says who it is and ducks back down. Idle 6 s: a spot with a friend behind it rustles (no voice).
+   Pictures (Judy, ChatGPT; BrainWhim-Peekaboo-Prompts): pk/bg(.jpg, -sm), pk/bush, hay, barrel, stump, pot, crate,
+   butterfly (.webp); each switches on when its file loads. Drawn stand-ins until then.
+   Saved: bwk.peekaboo {games, found}. Lines pk-*. Test hook PKO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#9fd0f2 linear-gradient(180deg,#8cc8f4,#cfeaf8 55%,#a8d48a 56%,#7cb85a) center/cover;filter:blur(1.2px) brightness(.95)}
+html.pkbg .bg{background:#9fd0f2 url("pk/bg-sm.jpg?v=1117a") center 60%/cover}
+@media (min-width:1100px){html.pkbg .bg{background-image:url("pk/bg.jpg?v=1117a")}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:calc(84px + var(--k-safe-t)) 12px calc(12px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
+@media (max-height:600px){.top{min-height:84px}}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+/* the friends row: who is hiding (and, in Big, who to find) */
+.goal{flex:none;display:flex;align-items:center;gap:6px;min-height:50px;padding:4px 8px;border-radius:26px;background:rgba(255,255,255,.6);box-shadow:0 4px 10px rgba(30,60,40,.2)}
+.goal:empty{visibility:hidden}
+.goal .who{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#e6f3ff);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.25);transition:transform .25s}
+.goal .who img{height:92%;opacity:0;transition:opacity .3s}
+.goal .who::after{content:"?";position:absolute;font-weight:700;font-size:20px;color:#5a8a4a;align-self:center}
+.goal .who{position:relative}
+.goal .who.got img,.goal .who.want img{opacity:1}
+.goal .who.got::after,.goal .who.want::after{content:none}
+.goal .who.got{background:radial-gradient(circle at 35% 30%,#fffbe0,#ffe08a)}
+.goal .who.want{transform:scale(1.18);box-shadow:0 0 0 3px #ffcf4a,0 0 14px rgba(255,200,60,.8);animation:wantp 1.4s ease-in-out infinite}
+@keyframes wantp{50%{box-shadow:0 0 0 3px #ffcf4a,0 0 22px rgba(255,200,60,1)}}
+#yardW{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#yard{position:relative;border-radius:24px;overflow:hidden;touch-action:manipulation;
+  background:#9fd0f2 linear-gradient(180deg,#8fcaf2 0,#d6eefa 46%,#b8dc8e 47%,#86c060 70%,#6eaa4c 100%);
+  box-shadow:0 10px 26px rgba(20,50,30,.35),inset 0 0 0 3px rgba(255,255,255,.35)}
+#yard.tall{background:#9fd0f2 linear-gradient(180deg,#8fcaf2 0,#d6eefa 26%,#b8dc8e 27%,#86c060 60%,#6eaa4c 100%)}
+html.pkbg #yard{background:#9fd0f2 url("pk/bg-sm.jpg?v=1117a") center/cover}
+@media (min-width:1100px){html.pkbg #yard{background-image:url("pk/bg.jpg?v=1117a")}}
+#yard::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 8%,rgba(255,250,220,.35),transparent 45%);pointer-events:none}
+.slot{position:absolute;margin:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.slot .prop{position:absolute;inset:0;z-index:2;pointer-events:none;transform-origin:50% 100%}
+.slot .prop img,.slot .prop svg{width:100%;height:100%;display:block;object-fit:contain;object-position:50% 100%}
+.slot .prop img{filter:drop-shadow(0 6px 5px rgba(30,40,20,.35))}
+.slot .sh{position:absolute;left:8%;right:8%;bottom:-3%;height:12%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(20,40,10,.38),rgba(20,40,10,0) 70%);z-index:0;pointer-events:none}
+.slot .an{position:absolute;left:0;right:0;bottom:4%;height:60%;z-index:1;display:flex;justify-content:center;align-items:flex-end;pointer-events:none;
+  transform:translate(var(--tx,0),var(--ty,0));transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.slot .an img{height:100%;width:auto;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}
+.slot .an.hop{transition:transform .8s cubic-bezier(.4,0,.3,1)}
+.slot .an.out img{animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5%) rotate(2deg)}}
+.slot .an.dance img{animation:dance .5s ease-in-out infinite}
+@keyframes dance{25%{transform:translateY(-10%) rotate(-6deg)}75%{transform:translateY(-10%) rotate(6deg)}}
+.slot .prop.rus{animation:rus .6s ease-in-out}
+@keyframes rus{20%{transform:rotate(-3deg)}40%{transform:rotate(3deg)}60%{transform:rotate(-2deg)}80%{transform:rotate(1deg)}}
+.slot .prop.tap{animation:tap .3s ease-out}
+@keyframes tap{40%{transform:scale(1.04,.96)}}
+.slot:focus-visible{outline:3px solid #ffcf4a;outline-offset:2px;border-radius:12px}
+.pb{position:absolute;z-index:5;left:50%;bottom:100%;padding:4px 10px;border-radius:14px;background:#fffdf3;color:#5a3a10;font-weight:700;font-size:15px;white-space:nowrap;
+  box-shadow:0 3px 8px rgba(0,0,0,.25);pointer-events:none;animation:pbu 1.6s ease-out forwards}
+@keyframes pbu{0%{opacity:0;transform:translate(-50%,10px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}25%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-8px)}}
+.bf{position:absolute;z-index:6;left:50%;top:10%;width:34%;max-width:70px;aspect-ratio:1;pointer-events:none;animation:bfly 2.2s ease-in forwards}
+.bf img,.bf svg{width:100%;height:100%;display:block}
+.bf .w{animation:flap .18s ease-in-out infinite alternate;transform-origin:50% 50%}
+@keyframes flap{to{transform:scaleX(.35)}}
+@keyframes bfly{0%{transform:translate(-50%,20%) scale(.5);opacity:0}15%{opacity:1;transform:translate(-50%,-20%) scale(1)}40%{transform:translate(-10%,-120%) rotate(10deg)}70%{transform:translate(-80%,-220%) rotate(-10deg)}100%{transform:translate(0,-340%) rotate(8deg);opacity:0}}
+html.pkbfly .bf .w{animation:none}
+html.pkbfly .bf img{animation:flap2 .22s ease-in-out infinite alternate}
+@keyframes flap2{to{transform:scaleX(.7)}}
+/* Big Moonlet: eyes closed while they hide */
+#eyes{position:absolute;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(14,20,48,.92);opacity:0;pointer-events:none;transition:opacity .4s}
+#eyes.on{opacity:1}
+#num{position:absolute;inset:0;z-index:201;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#num b{font-size:min(30vw,150px);font-weight:800;color:#fff7d0;text-shadow:0 4px 0 #c99a2a,0 10px 24px rgba(0,0,0,.45);animation:nump .8s ease-out forwards}
+@keyframes nump{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:0}}
+#eyes p{margin:0;color:#fff7d0;font-size:22px;font-weight:700;position:absolute;bottom:14%;text-align:center;width:100%}
+.spk{position:absolute;z-index:7;pointer-events:none;color:#ffd84a;font-size:22px;text-shadow:0 0 6px #fff;animation:spk 1s ease-out forwards}
+@keyframes spk{to{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 8px}.bar{width:100%;flex-wrap:nowrap}.goal .who{width:36px;height:36px}.pb{font-size:13px}}
+@media (max-height:600px){.md{gap:5px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}.goal{min-height:40px}.goal .who{width:32px;height:32px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}.goal .who{width:52px;height:52px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,.slot .an.out img,.slot .an.dance img,.goal .who.want{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div class="goal" id="goal" aria-live="polite"></div>
+  <div id="yardW"><div id="yard" aria-label="The backyard"><div id="eyes"><p>Eyes closed! No peeking!</p></div><div id="num"></div></div></div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1117b"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1117a";
+  var AN=[["biscuit","puppy"],["mittens","kitten"],["clover","bunny"],["pip","hamster"],["hazel","fox"],["poppy","panda"],["pearl","unicorn"],["pickle","frog"],["coco","koala"],["rosie","piglet"],["sunny","duckling"],["lulu","llama"],["ziggy","monkey"]]
+    .map(function(a){ return {id:a[0], kind:a[1], name:a[0].charAt(0).toUpperCase()+a[0].slice(1)}; });
+  function aimg(a){ return "sl/c-"+a.id+".webp?v=1115a"; }
+
+  /* ---------- Finn's lines (clips pk-*) ---------- */
+  var HI="Let's play Peekaboo! My animal friends want to hide. Tap Go, and watch where they go!",
+      BHI="Let's play Peekaboo, Big Moonlet! Close your eyes while my friends hide. Then find them!",
+      WATCH="Watch them hide! One, two, three…", SHUT="Close your eyes! One, two, three…",
+      READY="Ready or not, here I come! Who is hiding? Tap a hiding spot!", BREADY="Ready or not! Look for ears and tails peeking out.",
+      NONE="Nobody here. Just a butterfly!", ALL="Peekaboo! You found everyone!", BALL="Wow, Big Moonlet! You found every friend!", AGAIN="Let's hide again!";
+  var LN={"pk-hi":HI,"pk-bhi":BHI,"pk-watch":WATCH,"pk-shut":SHUT,"pk-ready":READY,"pk-bready":BREADY,"pk-none":NONE,"pk-all":ALL,"pk-ball":BALL,"pk-again":AGAIN};
+  function FOUND(a){ return "Peekaboo! It's "+a.name+" the "+a.kind+"!"; }
+  function WHERE(a){ return "Where is "+a.name+" the "+a.kind+"?"; }
+  AN.forEach(function(a){ LN["pk-f-"+a.id]=FOUND(a); LN["pk-w-"+a.id]=WHERE(a); });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
+  var big=BWK.big();
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("pkS")+'<p class="k-fb">'+(big?BHI:HI)+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(big?BHI:HI,big?"pk-bhi":"pk-hi"); });
+  ["pk-hi","pk-bhi","pk-watch","pk-shut","pk-ready","pk-bready","pk-none","bg-on","bg-off"].forEach(BWK.preload);
+
+  var S=BWK.store.get("peekaboo",null)||{}; S.games=S.games||0; S.found=S.found||0;
+  function save(){ BWK.store.set("peekaboo",S); }
+
+  /* ---------- sound ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }  /* also "interrupted" (iPhone, after other audio) */
+  /* iPhones/iPads only let sound start from a real tap (touchend/click), and the first sound must be started inside it:
+     wake the sound on every kind of tap and play a silent blip there until it runs (Nov 16; the maze was silent on phones) */
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+  function on(){ return BWK.store.get("sound",true) && !!ac(); }  // sounds queue while the iPhone wakes its audio (Nov 16)
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SND={
+    hop:function(i){ if(!on()) return; var t=AC.currentTime+.01+i*.0; tone(330,t,.14,.05,"sine",620); },
+    patter:function(){ if(!on()) return; var t=AC.currentTime+.01; for(var i=0;i<8;i++) noise(t+i*.09,.05,.07,1500+Math.random()*800,2); },
+    rustle:function(){ if(!on()) return; var t=AC.currentTime+.01; for(var i=0;i<6;i++) noise(t+i*.07,.12,.09,2600+Math.random()*1800,.8); },
+    peek:function(k){ if(!on()) return; var t=AC.currentTime+.01; tone(300,t,.22,.12,"sine",780); tone(196,t,.3,.05,"triangle",392);
+      [0,1,2,3].forEach(function(i){ tone(880+((k*3+i)%5)*90,t+.16+i*.07,.09,.03,"sine",1180+((k+i)%4)*80); }); },   // a boing and a little giggle
+    duck:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(620,t,.25,.06,"sine",260); },
+    chime:function(n){ if(!on()) return; var t=AC.currentTime+.01, f=[523,659,784,1047][Math.min(3,n)]; tone(f,t,.6,.07,"triangle"); tone(f*2,t+.01,.4,.02); },
+    count:function(n){ if(!on()) return; var t=AC.currentTime+.01; tone([392,494,587][n%3],t,.5,.08,"triangle"); },
+    tinkle:function(){ if(!on()) return; var t=AC.currentTime+.01; [1568,1760,2093,2349].forEach(function(f,i){ tone(f,t+i*.06,.25,.025,"sine"); }); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); });
+      for(var i=0;i<10;i++) (function(i){ noise(t+.7+i*.08,.04,.08,2000+Math.random()*1500,1); })(i); }
+  };
+
+  /* ---------- the hiding spots (drawn stand-ins until Judy's photos load) ---------- */
+  var PROPS=[
+    {id:"bush", cov:0.8,  n:"bush",      ar:1.25, svg:'<svg viewBox="0 0 125 100"><defs><radialGradient id="pkBu" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#8fd46a"/><stop offset=".6" stop-color="#4f9a3a"/><stop offset="1" stop-color="#2f6a24"/></radialGradient></defs><g fill="url(#pkBu)"><circle cx="34" cy="60" r="30"/><circle cx="62" cy="42" r="34"/><circle cx="92" cy="60" r="30"/><rect x="10" y="60" width="105" height="40" rx="18"/></g><g fill="#ff8ab0"><circle cx="40" cy="40" r="4"/><circle cx="80" cy="30" r="4"/><circle cx="96" cy="62" r="4"/><circle cx="58" cy="70" r="4"/><circle cx="24" cy="74" r="4"/></g></svg>'},
+    {id:"hay", cov:0.7,   n:"haystack",  ar:1.2,  svg:'<svg viewBox="0 0 120 100"><defs><linearGradient id="pkHa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#c9952e"/></linearGradient></defs><path d="M6 100 Q8 30 60 6 Q112 30 114 100z" fill="url(#pkHa)"/><g stroke="#b5832a" stroke-width="1.6" fill="none" opacity=".7"><path d="M30 92 q6-40 26-70"/><path d="M60 96 q2-40 0-84"/><path d="M90 92 q-6-40-26-70"/><path d="M14 80 q20-8 40 0"/><path d="M66 70 q20-8 40 0"/></g></svg>'},
+    {id:"barrel", cov:0.95,n:"barrel",    ar:.82,  svg:'<svg viewBox="0 0 82 100"><defs><linearGradient id="pkBa" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6a3c1c"/><stop offset=".45" stop-color="#b8743a"/><stop offset="1" stop-color="#5a3014"/></linearGradient></defs><path d="M10 4 h62 q12 46 0 92 h-62 q-12-46 0-92z" fill="url(#pkBa)"/><g fill="#4a4a50"><rect x="4" y="18" width="74" height="6" rx="3"/><rect x="4" y="76" width="74" height="6" rx="3"/></g><ellipse cx="41" cy="5" rx="31" ry="4" fill="#8a5428"/></svg>'},
+    {id:"stump", cov:0.85, n:"tree stump",ar:1.3,  svg:'<svg viewBox="0 0 130 100"><defs><linearGradient id="pkSt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3a1e"/><stop offset=".5" stop-color="#946236"/><stop offset="1" stop-color="#4a2e16"/></linearGradient></defs><path d="M14 22 h102 l4 70 q8 6 6 8 h-122 q-2-2 6-8z" fill="url(#pkSt)"/><ellipse cx="65" cy="22" rx="51" ry="13" fill="#d8b07a"/><ellipse cx="65" cy="22" rx="34" ry="8" fill="none" stroke="#a87a44" stroke-width="2"/><ellipse cx="65" cy="22" rx="16" ry="4" fill="none" stroke="#a87a44" stroke-width="2"/></svg>'},
+    {id:"pot", cov:0.5,   n:"flowerpot", ar:.8,   svg:'<svg viewBox="0 0 80 100"><g stroke="#3f8a2a" stroke-width="3"><path d="M26 50 L22 14"/><path d="M40 50 L40 6"/><path d="M54 50 L58 16"/></g><g fill="#ffcc2a"><circle cx="22" cy="14" r="11"/><circle cx="40" cy="8" r="12"/><circle cx="58" cy="16" r="11"/></g><g fill="#6a3a12"><circle cx="22" cy="14" r="4.5"/><circle cx="40" cy="8" r="5"/><circle cx="58" cy="16" r="4.5"/></g><path d="M8 46 h64 l-8 54 h-48z" fill="#d8784a"/><rect x="4" y="44" width="72" height="12" rx="4" fill="#e8895a"/></svg>'},
+    {id:"crate", cov:0.85, n:"crate",     ar:1.2,  svg:'<svg viewBox="0 0 120 100"><g fill="#d8a868" stroke="#9a6a34" stroke-width="2"><rect x="6" y="20" width="108" height="78" rx="4"/></g><g fill="#c49050"><rect x="6" y="38" width="108" height="6"/><rect x="6" y="62" width="108" height="6"/></g><g fill="#e04a3a"><circle cx="30" cy="16" r="10"/><circle cx="52" cy="12" r="10"/><circle cx="76" cy="15" r="10"/><circle cx="96" cy="18" r="9"/></g><g fill="#fff" opacity=".5"><circle cx="27" cy="13" r="3"/><circle cx="49" cy="9" r="3"/><circle cx="73" cy="12" r="3"/></g></svg>'}];
+  var PH={};   // the photo props that have loaded
+  PROPS.forEach(function(p){ var im=new Image(); im.onload=function(){ PH[p.id]=im.src; p.ar=im.naturalWidth/im.naturalHeight; if(G) layout(); }; im.src="pk/"+p.id+".webp?v="+AV; });
+  (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("pkbg"); }; im.src="pk/bg-sm.jpg?v="+AV; })();
+  var BFLY=null; (function(){ var im=new Image(); im.onload=function(){ BFLY=im.src; document.documentElement.classList.add("pkbfly"); }; im.src="pk/butterfly.webp?v="+AV; })();
+  function bflyArt(){ if(BFLY) return '<img src="'+BFLY+'" alt="">';
+    return '<svg viewBox="0 0 60 60"><g class="w"><path d="M30 30 C14 6 2 14 8 28 C2 40 18 48 30 32z" fill="#ff9ad0" stroke="#c0508a" stroke-width="1.5"/><path d="M30 30 C46 6 58 14 52 28 C58 40 42 48 30 32z" fill="#ffb84a" stroke="#c0802a" stroke-width="1.5"/><circle cx="16" cy="22" r="3" fill="#fff"/><circle cx="44" cy="22" r="3" fill="#fff"/></g><rect x="28.5" y="20" width="3" height="20" rx="1.5" fill="#4a2a1a"/></svg>'; }
+
+  /* where the spots stand, as % of the yard: [x center, y of the ground line, width]; back row first so the front draws on top */
+  var SPOTS={
+    wide:[[15,62,16],[39,55,14],[61,55,14],[85,62,16],[29,93,20],[71,93,20]],
+    tall:[[19,57,25],[50,54,23],[81,57,25],[27,78,28],[73,78,28],[50,98,30]]};
+
+  /* ---------- the game ---------- */
+  var G=null, shape="wide", idleT=0, rusT=0;
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function cfg(){ return big?{spots:6,hide:4}:{spots:5,hide:3}; }
+  function newGame(){ clearTimers(); var c=cfg(), props=shuffle(PROPS.slice()).slice(0,c.spots), who=shuffle(AN.slice()).slice(0,c.hide);
+    var at=shuffle(props.map(function(_,i){ return i; })).slice(0,c.hide);
+    G={c:c, props:props, who:who, at:{}, found:[], ph:"ready", want:null, order:[], busy:false};
+    who.forEach(function(a,k){ G.at[at[k]]=a; });
+    build(); goal(); bar(); }
+  function clearTimers(){ clearTimeout(idleT); clearInterval(rusT); if(G) (G.tm||[]).forEach(clearTimeout); }
+  function later(f,ms){ var t=setTimeout(f,ms); (G.tm=G.tm||[]).push(t); return t; }
+
+  function fit(){ var w=$("yardW"), W=w.clientWidth, H=w.clientHeight; if(!W||!H) return; var A, s=W/H<1.05?"tall":"wide"; A=s==="tall"?.8:1.6;
+    var ww=Math.min(W,H*A,1100), hh=ww/A; $("yard").style.width=Math.round(ww)+"px"; $("yard").style.height=Math.round(hh)+"px";
+    shape=s; $("yard").classList.toggle("tall",s==="tall"); if(G) layout(); }
+  function spots(){ var L=SPOTS[shape]; return G.c.spots===6?L:(shape==="tall"?L.slice(0,5):[L[0],L[1],L[2],L[3],[50,93,22]]); }
+  function build(){ var y=$("yard"); [].slice.call(y.querySelectorAll(".slot")).forEach(function(e){ e.remove(); });
+    G.props.forEach(function(p,i){ var b=document.createElement("button"); b.className="slot"; b.dataset.i=i; b.setAttribute("aria-label",p.n);
+      var a=G.at[i]; b.innerHTML='<span class="sh"></span>'+(a?'<span class="an"><img src="'+aimg(a)+'" alt="" draggable="false"></span>':'')+'<span class="prop">'+(PH[p.id]?'<img src="'+PH[p.id]+'" alt="" draggable="false">':p.svg)+'</span>';
+      y.insertBefore(b,$("eyes")); });
+    layout(); }
+  function layout(){ var L=spots(), Y=$("yard"), A=shape==="tall"?.8:1.6;
+    [].forEach.call(Y.querySelectorAll(".slot"),function(b){ var i=+b.dataset.i, p=G.props[i], s=L[i], hPct=s[2]*A/p.ar;   // height as % of the yard's height
+      b.style.left=(s[0]-s[2]/2)+"%"; b.style.width=s[2]+"%"; b.style.top=(s[1]-hPct)+"%"; b.style.height=hPct+"%"; b.style.zIndex=Math.round(s[1]);
+      /* every friend is about the same size (60% of the spot's width), and never taller than the solid part of the prop */
+      var an=b.querySelector(".an"); if(an){ var Wp=Y.clientWidth*s[2]/100, Hp=Y.clientHeight*hPct/100; var aH=Math.min(Wp*.6,Hp*p.cov*.92), solid=Hp*p.cov-Hp*.04; an.style.height=Math.round(aH)+"px";
+        b.style.setProperty("--pop",-Math.round(solid-aH*.2)+"px");          /* found: stands on top of the prop, its feet just behind it */
+        b.style.setProperty("--peek",-Math.round(solid-aH+aH*.22)+"px"); }  /* Big: the top 22% (ears) shows over the prop */
+      var pr=b.querySelector(".prop"); if(PH[p.id]&&!pr.querySelector("img")) pr.innerHTML='<img src="'+PH[p.id]+'" alt="" draggable="false">'; }); }
+  function slotEl(i){ return $("yard").querySelector('.slot[data-i="'+i+'"]'); }
+  function anEl(i){ var s=slotEl(i); return s&&s.querySelector(".an"); }
+  function setAn(i,tx,ty,cls){ var e=anEl(i); if(!e) return; e.style.setProperty("--tx",tx); e.style.setProperty("--ty",ty); if(cls!=null) e.className="an "+cls; }
+
+  /* hide: Little watches them hop in and duck; Big closes its eyes and they leave a peek (ears up top, or a tail at the side) */
+  function go(){ if(!G||G.ph!=="ready") newGame(); BWK.finnStop(); G.ph="hiding"; bar(); var keys=Object.keys(G.at).map(Number);
+    keys.forEach(function(i){ var L=spots()[i]; setAn(i,(L[0]<50?"-260%":"260%"),"var(--pop)","hop"); });
+    if(big) $("eyes").classList.add("on");
+    say(big?SHUT:WATCH,big?"pk-shut":"pk-watch");
+    later(function(){ SND.patter(); keys.forEach(function(i,k){ later(function(){ setAn(i,"0","var(--pop)","hop"); SND.hop(k); },k*260); }); },350);
+    [0,1,2].forEach(function(n){ later(function(){ var nm=$("num"); nm.innerHTML="<b>"+(n+1)+"</b>"; SND.count(n); },900+n*1000); });
+    later(function(){ keys.forEach(function(i,k){ later(function(){ var pk=big?(Math.random()<.5?["0","var(--peek)"]:[(spots()[i][0]<50?"-40%":"40%"),"0"]):["0","0"]; G.at[i].peek=pk; setAn(i,pk[0],pk[1],""); SND.duck(); },k*200); }); },2300);
+    later(function(){ $("num").innerHTML=""; $("eyes").classList.remove("on"); G.ph="seek"; bar();
+      if(big){ G.order=shuffle(G.who.slice()); say(BREADY,"pk-bready",{onend:function(){ askNext(); }}); later(function(){ if(!G.want&&G.ph==="seek") askNext(); },6000); }
+      else say(READY,"pk-ready");
+      idle(); },3700); }
+  function askNext(){ if(G.ph!=="seek") return; G.want=G.order.filter(function(a){ return G.found.indexOf(a)<0; })[0]||null; goal(); if(G.want) say(WHERE(G.want),"pk-w-"+G.want.id); }
+  function idle(){ clearTimeout(idleT); clearInterval(rusT); idleT=setTimeout(function(){ rustle(); rusT=setInterval(rustle,6000); },6000); }
+  function rustle(){ if(!G||G.ph!=="seek") return; var ks=Object.keys(G.at).map(Number).filter(function(i){ return G.found.indexOf(G.at[i])<0&&(!G.want||G.at[i]===G.want); }); if(!ks.length) return;
+    var i=ks[Math.floor(Math.random()*ks.length)], pr=slotEl(i).querySelector(".prop"); pr.classList.remove("rus"); void pr.offsetWidth; pr.classList.add("rus"); SND.rustle(); }
+  function bubble(i,txt){ var s=slotEl(i), e=document.createElement("span"), an=s.querySelector(".an"); e.className="pb"; e.textContent=txt;
+    if(an) e.style.bottom=Math.round(s.clientHeight*.04+an.offsetHeight-parseFloat(getComputedStyle(s).getPropertyValue("--pop")||0)+6)+"px"; s.appendChild(e); setTimeout(e.remove.bind(e),1700); }
+  function sparkle(i){ var s=slotEl(i); for(var k=0;k<8;k++){ var e=document.createElement("i"), an=k/8*6.28; e.className="spk"; e.textContent="✦"; e.style.left="45%"; e.style.top="-30%";
+      e.style.setProperty("--dx",(Math.cos(an)*60).toFixed(0)+"px"); e.style.setProperty("--dy",(Math.sin(an)*50).toFixed(0)+"px"); s.appendChild(e); setTimeout(e.remove.bind(e),1050); } }
+  function tap(i){ if(!G||G.ph!=="seek"||G.busy) return; idle(); var pr=slotEl(i).querySelector(".prop"); pr.classList.remove("tap","rus"); void pr.offsetWidth; pr.classList.add("tap");
+    var a=G.at[i];
+    if(!a){ SND.rustle(); var b=document.createElement("span"); b.className="bf"; b.innerHTML=bflyArt(); slotEl(i).appendChild(b); setTimeout(b.remove.bind(b),2300); SND.tinkle(); say(NONE,"pk-none"); return; }
+    if(G.found.indexOf(a)>=0){ SND.peek(AN.indexOf(a)); bubble(i,"Peekaboo!"); return; }
+    if(big&&G.want&&a!==G.want){   // the wrong friend pops up, says who it is, and ducks back down
+      G.busy=true; setAn(i,"0","var(--pop)","out"); SND.peek(AN.indexOf(a)); bubble(i,"Peekaboo!");
+      var w=G.want; say(FOUND(a),"pk-f-"+a.id,{onend:function(){ later(function(){ if(G.ph==="seek"&&G.want===w) say(WHERE(w),"pk-w-"+w.id); },300); }});
+      later(function(){ setAn(i,a.peek[0],a.peek[1],""); SND.duck(); G.busy=false; },1700); return; }
+    G.found.push(a); S.found++; save(); setAn(i,"0","var(--pop)","out"); SND.peek(AN.indexOf(a)); later(function(){ SND.chime(G.found.length); },350); bubble(i,"Peekaboo!"); sparkle(i); goal();
+    if(G.found.length>=G.who.length){ G.ph="won"; G.want=null; clearTimeout(idleT); clearInterval(rusT); say(FOUND(a),"pk-f-"+a.id,{onend:function(){ later(win,250); }}); later(function(){ if(G.ph==="won"&&!G.wonDone) win(); },6500); return; }
+    if(big){ G.want=null; goal(); say(FOUND(a),"pk-f-"+a.id,{onend:function(){ later(askNext,300); }}); later(function(){ if(!G.want&&G.ph==="seek") askNext(); },6000); }
+    else say(FOUND(a),"pk-f-"+a.id); }
+  function win(){ if(G.wonDone) return; G.wonDone=true; S.games++; save(); BWK.played&&BWK.played("peekaboo"); SND.win();
+    Object.keys(G.at).forEach(function(i){ setAn(+i,"0","var(--pop)","dance"); sparkle(+i); }); bar(); say(big?BALL:ALL,big?"pk-ball":"pk-all"); }
+  function goal(){ if(!G){ $("goal").innerHTML=""; return; } var h="";
+    G.who.forEach(function(a){ var got=G.found.indexOf(a)>=0, want=big&&G.want===a&&!got; h+='<span class="who'+(got?' got':'')+(want?' want':'')+'"><img src="'+aimg(a)+'" alt="'+(got||want?a.kind:"")+'"></span>'; });
+    $("goal").innerHTML=h; }
+  $("yard").addEventListener("click",function(e){ var s=e.target.closest(".slot"); if(s) tap(+s.dataset.i); });
+
+  /* ---------- the bottom row (no data-say: Go makes Finn talk, Nov 17) ---------- */
+  function bar(){ var ph=G?G.ph:"ready", lbl=ph==="won"?["↺","Play again"]:ph==="ready"?["▶","Go!"]:["↺","Hide again"];
+    $("bar").innerHTML='<button class="chip go'+(ph==="ready"||ph==="won"?' pulse':'')+'" data-a="go" aria-label="'+lbl[1]+'"><em>'+lbl[0]+'</em><span>'+lbl[1]+'</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games" aria-label="More games"><em>☾</em><span>More games</span></button>'; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap");
+    if(b.dataset.a==="go"){ if(G.ph==="hiding") return; newGame(); go(); }
+    else if(b.dataset.a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(b.dataset.a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  document.addEventListener("click",function(e){ if(talked||!e.target.isConnected||e.target.closest("#yard,.chip,.k-head,.k-sheet,.k-veil")) return; say(big?BHI:HI,big?"pk-bhi":"pk-hi"); });
+  window.addEventListener("resize",fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($("yardW"));
+
+  newGame(); fit();
+  window.PKO={go:go, newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); },
+    state:function(){ return G&&{ph:G.ph, spots:G.props.length, hiders:G.who.map(function(a){return a.id;}), found:G.found.map(function(a){return a.id;}), want:G.want&&G.want.id, at:Object.keys(G.at).map(Number), busy:G.busy, shape:shape}; },
+    tapHider:function(){ var ks=Object.keys(G.at).map(Number).filter(function(i){ return G.found.indexOf(G.at[i])<0&&(!G.want||G.at[i]===G.want); }); if(ks.length) tap(ks[0]); return ks[0]; },
+    tapWrong:function(){ var ks=Object.keys(G.at).map(Number).filter(function(i){ return G.found.indexOf(G.at[i])<0&&G.want&&G.at[i]!==G.want; }); if(ks.length) tap(ks[0]); return ks[0]; },
+    tapEmpty:function(){ for(var i=0;i<G.props.length;i++) if(!G.at[i]){ tap(i); return i; } }};
+})();
+</script>
+</body>
+</html>

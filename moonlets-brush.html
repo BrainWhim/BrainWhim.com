@@ -200,7 +200,7 @@ body.big .count{display:block}
      she is saying (sayQ keeps only the newest waiting line), and the music ducks while she talks */
   var talking=0, Q=null;
   function say(t,clip,o){ talked=true; o=o||{}; var f=o.onend; talking=Date.now(); duck(true);
-    o.onend=function(){ talking=0; duck(false); if(f) f(); if(Q){ var q=Q; Q=null; setTimeout(function(){ say(q[0],q[1]); },300); } };
+    o.onend=function(){ talking=0; duck(false); wakeMusic(); if(f) f(); if(Q){ var q=Q; Q=null; setTimeout(function(){ say(q[0],q[1]); },300); } };
     o.into=top; o.clip=clip; BWK.finn(t,o); }
   function sayQ(t,clip){ if(talking&&Date.now()-talking<10000) Q=[t,clip]; else { Q=null; say(t,clip); } }
   function duck(d){ if(!AC||!OUT) return; try{ var t=AC.currentTime; OUT.gain.cancelScheduledValues(t); OUT.gain.setTargetAtTime(d?.4:.9,t,.2); }catch(e){} }
@@ -374,7 +374,13 @@ body.big .count{display:block}
     T.pasted=true; $("dab").classList.add("on"); T.ph="brush"; bar();
     function go(){ if(T.ph==="brush"&&!T.run) start(); } say(GOOD,"bb-good",{onend:function(){ setTimeout(go,300); }}); setTimeout(go,7000); }
   /* a backup clock for the music: on phones the frame loop can stall while the device voice talks */
-  var mT=setInterval(function(){ if(T&&(T.run||T.mus)){ try{ music(); }catch(e){} } },120);
+  var mT=setInterval(function(){ if(T&&(T.run||T.mus)){ wakeMusic(); try{ music(); }catch(e){} } },120);
+  /* iPhone: the built-in voice pauses ("interrupts") web audio and leaves it paused. Once Finn has finished talking,
+     wake it again by itself (Nov 18: the music only came back when Judy tapped the Big Moonlet switch). With Finn's
+     recorded clips (from Dec 8) the music can play under her. */
+  var wkT=0;
+  function wakeMusic(){ if(!AC||AC.state==="running") return; var sp=false; try{ sp="speechSynthesis" in window&&speechSynthesis.speaking; }catch(e){}
+    if(sp) return; var now=Date.now(); if(now-wkT<400) return; wkT=now; try{ var p=AC.resume(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
   function start(){ T.run=true; T.last=performance.now(); if(!T.mus){ T.mus=true; beat=0; nextT=0; } wake(true); bar(); $("brush").classList.remove("rest"); $("buddy").className="bob";
     document.documentElement.style.setProperty("--beat",(TUNES[S.song].beat*2)+"s"); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
   function stop(){ cancelAnimationFrame(raf); raf=0; if(T){ T.run=false; T.mus=false; } wake(false); var b=$("brush"); if(b) b.classList.add("rest"); if(T&&T.ph==="brush") $("buddy").className=""; }
