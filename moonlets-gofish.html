@@ -195,8 +195,8 @@ html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;bor
   function aimg(k){ return "sl/c-"+AN[k].id+".webp?v=1115a"; }
 
   /* ---------- Finn's lines (clips gf-*) ---------- */
-  var HI="Let's play Go Fish! Make pairs of animal cards with my friend. Tap Deal!",
-      BHI="Let's play Go Fish, Big Moonlet! Collect all four of each animal. Tap Deal!",
+  var HI="Let's play Go Fish! Make pairs of animal cards with my friend.",
+      BHI="Let's play Go Fish, Big Moonlet! Collect all four of each animal.",
       YOU="Your turn! Tap one of your cards to ask for that animal.", BYOU="Your turn! Tap one of your cards, then tap the friend you want to ask.",
       YOURS="Your turn!", WHO="Who do you want to ask?", YES="Yes! Here you go!", AGAIN="You got it! Go again!",
       FISH="Go fish! Tap a card in the pond.", LUCKY="You fished the one you asked for! Go again!", PAIR="A pair!", BOOK="All four! A whole set!",
@@ -454,8 +454,9 @@ html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;bor
 
   /* ---------- taps ---------- */
   var lastPd=0;
-  function onTap(el,fn){ el.addEventListener("pointerdown",function(e){ if(e.button>0) return; lastPd=Date.now(); fn(e); });
-    el.addEventListener("click",function(e){ if(Date.now()-lastPd<800) return; fn(e); }); }
+  /* taps act on click, like every other Moonlets game (Nov 18 pm): acting on pointerdown made Finn's line cancel the kit's
+     quiet first-tap voice unlock, and iPhones then kept her silent */
+  function onTap(el,fn){ el.addEventListener("click",fn); }
   onTap($("hand"),function(e){ var b=e.target.closest(".grp"); if(!b||!G) return; var k=+b.dataset.k; lastAct=Date.now();
     if(G.ph==="ask"&&G.cur===0){
       if(!big){ BWK.sfx("tap"); ask(0,1,k); return; }
@@ -491,7 +492,7 @@ html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;bor
       '<button class="chip" data-a="games" aria-label="More games"><em>☾</em><span>More games</span></button>';
     $("bar").innerHTML=h; }
   $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b||!G) return; BWK.sfx("tap"); lastAct=Date.now(); var a=b.dataset.a;
-    if(a==="deal"){ BWK.finnStop(); if(!S.seen) how(); else deal(); }
+    if(a==="deal"){ if(!S.seen){ BWK.finnStop(); how(); } else { if(!talked) say(big?BHI:HI,big?"gf-bhi":"gf-hi"); else BWK.finnStop(); deal(); } }
     else if(a==="again"){ newGame(); deal(); }
     else if(a==="gofish") myGoFish();
     else if(a==="how") how();
