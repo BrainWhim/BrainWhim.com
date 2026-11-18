@@ -99,7 +99,9 @@ html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-grad
 #out.on{opacity:1;pointer-events:auto}
 #out .sky{position:absolute;inset:0;background-size:cover;background-position:center 65%}
 #out canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#out .pal{position:absolute;left:50%;bottom:6%;height:52%;transform:translateX(-50%);z-index:2}
+#out .wear{position:absolute;display:flex;pointer-events:none}
+#out .wear img{filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+#out .pal{position:absolute;left:50%;bottom:6%;height:60%;transform:translateX(-50%);z-index:2}
 #out .pal>img{height:100%;filter:drop-shadow(0 8px 6px rgba(0,0,0,.35))}
 #out .pal.play{animation:play 1s ease-in-out infinite}
 @keyframes play{50%{transform:translateX(-50%) translateY(-8%) rotate(3deg)}}
@@ -265,8 +267,8 @@ html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-grad
   };
 
   /* ---------- pictures: each switches on when its file loads ---------- */
-  var PH={};
-  CL.forEach(function(c){ var im=new Image(); im.onload=function(){ PH[c.id]=im.src; [].forEach.call(document.querySelectorAll('.it[data-id="'+c.id+'"]'),function(e){ e.innerHTML='<img src="'+im.src+'" alt="">'; }); }; im.src="dw/"+c.id+".webp?v="+AV; });
+  var PH={}, AR={};
+  CL.forEach(function(c){ var im=new Image(); im.onload=function(){ PH[c.id]=im.src; AR[c.id]=im.naturalHeight/im.naturalWidth; [].forEach.call(document.querySelectorAll('.it[data-id="'+c.id+'"]'),function(e){ e.innerHTML='<img src="'+im.src+'" alt="">'; }); }; im.src="dw/"+c.id+".webp?v="+AV; });
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwbg"); }; im.src="dw/bg-sm.jpg?v="+AV; })();
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwshelf"); }; im.src="dw/shelf.webp?v="+AV; })();
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("dwframe"); }; im.src="dw/frame.webp?v="+AV; })();
@@ -280,7 +282,7 @@ html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-grad
     $("osky").style.background=bgi; $("osky").style.backgroundSize="cover"; $("osky").style.backgroundPosition="center 65%"; }
   function fxStart(){ cancelAnimationFrame(FX.raf); FX.p=[]; FX.last=performance.now(); FX.raf=requestAnimationFrame(fxLoop); }
   function fxLoop(now){ var dt=Math.min(.05,(now-FX.last)/1000); FX.last=now; [FX.c,FX.o].forEach(function(cv){ if(!cv.offsetWidth) return;
-      var r=window.devicePixelRatio||1, w=cv.offsetWidth, h=cv.offsetHeight; if(cv.width!==Math.round(w*r)){ cv.width=Math.round(w*r); cv.height=Math.round(h*r); }
+      var r=window.devicePixelRatio||1, w=cv.offsetWidth, h=cv.offsetHeight; if(cv.width!==Math.round(w*r)||cv.height!==Math.round(h*r)){ cv.width=Math.round(w*r); cv.height=Math.round(h*r); }
       var x=cv.getContext("2d"); x.setTransform(r,0,0,r,0,0); x.clearRect(0,0,w,h); draw(x,w,h,dt,cv===FX.o); });
     FX.raf=requestAnimationFrame(fxLoop); }
   function draw(x,w,h,dt,outside){ var k=G&&G.w; if(!k) return; var P=outside?(FX.po=FX.po||[]):FX.p, n={rainy:70,snowy:55,windy:14,sunny:10}[k]*(outside?1.4:1);
@@ -337,16 +339,29 @@ html.dwbg #me .rug{left:18%;right:18%;height:9%;bottom:1%;background:radial-grad
     var k=G.w, o=$("oin"), h='<div class="pal play"><img src="'+buddyImg()+'" alt=""></div>';
     o.innerHTML=h; var pal=o.querySelector(".pal"), hat=G.got.head, ex=G.got.extra;
     // the hat on the head, the umbrella above, the kite in the sky (the rest stays on the outfit board)
-    pal.querySelector("img").onload=pal.querySelector("img").complete?null:function(){ dressUp(pal,hat,ex); };
-    if(pal.querySelector("img").complete) dressUp(pal,hat,ex);
+    pal.querySelector("img").onload=pal.querySelector("img").complete?null:function(){ dressUp(pal,G.got); };
+    if(pal.querySelector("img").complete) dressUp(pal,G.got);
     $("out").classList.add("on"); setTimeout(function(){ SND.win(); },300); week(); bar();
     var last=G.r>=G.order.length-1;
     setTimeout(function(){ say(W[k].out,"dw-out-"+k,{onend:function(){ if(last) setTimeout(function(){ if(G.ph==="out") allDone(); },700); }}); },500);
     if(last) setTimeout(function(){ if(G.ph==="out") allDone(); },7000); }
-  function dressUp(pal,hat,ex){ var im=pal.querySelector("img"), w=im.offsetWidth, h=im.offsetHeight;
-    if(ex&&ex.id==="umbrella"){ var u=document.createElement("div"); u.className="umb"; u.style.width=(w*1.35)+"px"; u.style.height=(w*1.08)+"px"; u.style.bottom=(h*.74)+"px";   /* above the head, the handle tucked behind the buddy */ u.innerHTML=itHTML(ex,w*1.2); u.firstChild.style.width="100%"; u.firstChild.style.height="100%"; pal.appendChild(u); }
-    if(hat){ var hp={sunhat:[.98,.8],rainhat:[.9,.84],woolhat:[.64,.8]}[hat.id]||[.7,.8];   /* [width × the buddy's width, bottom × its height]: brims sit higher so eyes show */
-      var t=document.createElement("div"); t.className="hat"; t.style.width=(w*hp[0])+"px"; t.style.height=(w*hp[0]*.72)+"px"; t.style.bottom=(h*hp[1])+"px"; t.innerHTML=itHTML(hat,w*.6); t.firstChild.style.width="100%"; t.firstChild.style.height="100%"; pal.appendChild(t); }
+  /* the buddy wears the whole outfit outside. Per animal: [head center x, hat brim y, head width (× the buddy's width), neck y]
+     as fractions of its picture, measured by eye (Nov 18: a plain hat placement sat over the frog's eyes) */
+  var HEAD={biscuit:[.5,.1,.62,.46],mittens:[.52,.16,.58,.46],clover:[.5,.07,.46,.42],pip:[.5,.12,.56,.4],hazel:[.5,.15,.56,.46],poppy:[.5,.13,.52,.48],
+    pearl:[.57,.16,.46,.46],pickle:[.5,.07,.34,.55],coco:[.5,.1,.48,.48],rosie:[.5,.11,.52,.48],sunny:[.5,.09,.5,.43],lulu:[.5,.15,.5,.46],ziggy:[.5,.13,.5,.46]};
+  function wear(pal,c,x,top,wd,z){ var r=AR[c.id]||1, d=document.createElement("div"); d.className="wear"; d.style.left=Math.round(x-wd/2)+"px"; d.style.top=Math.round(top)+"px";
+    d.style.width=Math.round(wd)+"px"; d.style.height=Math.round(wd*r)+"px"; d.style.zIndex=z; d.innerHTML=itHTML(c,wd); d.firstChild.style.width="100%"; d.firstChild.style.height="100%"; pal.appendChild(d); return wd*r; }
+  function dressUp(pal,got){ var im=pal.querySelector("img"), w=im.offsetWidth, h=im.offsetHeight, H=HEAD[AN[buddyI][0]]||[.5,.12,.5,.42], cx=H[0]*w, hw=H[2]*w, neck=H[3]*h, R=function(c){ return AR[c.id]||1; };
+    if(got.legs){ var lw=w*.5; wear(pal,got.legs,w/2,neck+(h*.94-neck)*.45,lw,3); }
+    if(got.body){ var bw=Math.min(w*.8,(h*.97-neck)*1.05/R(got.body)); wear(pal,got.body,w/2,neck-bw*R(got.body)*.08,bw,4); }
+    if(got.feet){ var fw=w*.44; wear(pal,got.feet,w/2,h*1.0-fw*R(got.feet)*.86,fw,6); }
+    var ex=got.extra;
+    if(ex&&ex.id==="scarf"){ var sw=w*.56; wear(pal,ex,cx,neck-sw*R(ex)*.14,sw,5); }
+    if(ex&&ex.id==="mittens"){ var mw=w*.62; wear(pal,ex,w/2,neck+(h*.95-neck)*.3,mw,5); }
+    if(ex&&ex.id==="sunglasses"){ var gw=hw*1.08; wear(pal,ex,cx,(H[1]+.09)*h-gw*R(ex)/2,gw,7); }
+    if(got.head){ var k={sunhat:1.45,rainhat:1.25,woolhat:.95}[got.head.id]||1.2, tw=hw*k; wear(pal,got.head,cx,H[1]*h-tw*R(got.head)*.86,tw,8); }
+    if(ex&&ex.id==="umbrella"){ var uw=w*1.35, u=document.createElement("div"); u.className="umb"; u.style.width=uw+"px"; u.style.height=(uw*R(ex))+"px"; u.style.left=(cx-uw/2)+"px"; u.style.transform="none";
+      u.style.top=(H[1]*h-uw*R(ex)*(got.head?1.05:.8))+"px"; u.innerHTML=itHTML(ex,uw); u.firstChild.style.width="100%"; u.firstChild.style.height="100%"; pal.appendChild(u); }   /* above the head, the handle tucked behind */
     if(ex&&ex.id==="kite"){ var o=$("oin"), kd=document.createElement("div"); kd.className="kite"; kd.innerHTML=itHTML(ex,90); kd.firstChild.style.width="100%"; kd.firstChild.style.aspectRatio="1"; o.appendChild(kd);
       o.insertAdjacentHTML("beforeend",'<svg class="str" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M60 62 Q75 40 83 18" stroke="rgba(255,255,255,.9)" stroke-width=".5" fill="none"/></svg>'); } }
   function allDone(){ if(G.ph==="all") return; G.ph="all"; S.games++; save(); BWK.played&&BWK.played("weather"); week(); bar(); SND.win();
