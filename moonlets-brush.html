@@ -150,9 +150,9 @@ body.big .count{display:block}
   <div id="stage">
     <div class="ledge" aria-hidden="true"></div>
     <svg id="mir" viewBox="0 0 200 200" aria-label="Brushing timer"></svg>
-    <button id="buddy" aria-label="Your brushing buddy. Tap to pick a new one." data-say="Pick a buddy"></button>
-    <button class="tool" id="tube" aria-label="Toothpaste" data-say="Toothpaste"></button>
-    <button class="tool" id="cup" aria-label="Rinse cup" data-say="Rinse cup"></button>
+    <button id="buddy" aria-label="Your brushing buddy. Tap to pick a new one."></button>
+    <button class="tool" id="tube" aria-label="Toothpaste"></button>
+    <button class="tool" id="cup" aria-label="Rinse cup"></button>
     <div class="count" id="count" aria-live="off"></div>
   </div>
   <div class="week" id="week" aria-label="My brushing week"></div>
@@ -196,7 +196,14 @@ body.big .count{display:block}
   (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
   top.innerHTML='<div class="k-finn k-finn-in">'+face("bbS")+'<p class="k-fb">'+HI+'</p></div>';
   var talked=false;
-  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  /* Finn's lines never cut each other off: lines that come by themselves (a new part, the tip, rinse) wait for the one
+     she is saying (sayQ keeps only the newest waiting line), and the music ducks while she talks */
+  var talking=0, Q=null;
+  function say(t,clip,o){ talked=true; o=o||{}; var f=o.onend; talking=Date.now(); duck(true);
+    o.onend=function(){ talking=0; duck(false); if(f) f(); if(Q){ var q=Q; Q=null; setTimeout(function(){ say(q[0],q[1]); },300); } };
+    o.into=top; o.clip=clip; BWK.finn(t,o); }
+  function sayQ(t,clip){ if(talking&&Date.now()-talking<10000) Q=[t,clip]; else { Q=null; say(t,clip); } }
+  function duck(d){ if(!AC||!OUT) return; try{ var t=AC.currentTime; OUT.gain.cancelScheduledValues(t); OUT.gain.setTargetAtTime(d?.4:.9,t,.2); }catch(e){} }
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"bb-hi"); });
   ["bb-hi","bb-paste","bb-good","bb-z1","bb-z2","bb-z3","bb-z4","bb-rinse","bb-done","bg-on","bg-off"].forEach(BWK.preload);
 
@@ -210,11 +217,12 @@ body.big .count{display:block}
 
   /* ---------- sound ---------- */
   var AC=null, OUT=null;
-  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+  function ac(force){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
       var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
       OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
-    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
-  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+    /* iPhone "interrupts" web audio while the device voice talks: resuming it then would cut Finn off, so only a tap resumes an interrupted context */
+    if(AC.state!=="running"&&(force||AC.state!=="interrupted")){ try{ AC.resume(); }catch(e){} } return AC; }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(true); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
   ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
   function on(){ return BWK.store.get("sound",true) && !!ac(); }
   function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
@@ -232,7 +240,7 @@ body.big .count{display:block}
         if(f){ tone(f,t,.28,.04,"triangle",f*.99); tone(f*2,t,.12,.01,"sine"); } }},
     {beat:.62, notes:[392,330,262,330,392,440,392,330,349,294,247,294,349,392,349,294], play:function(f,t,i){ tone(f,t,1.6,.03,"sine"); tone(f*2,t+.01,.8,.008,"sine"); if(i%3===0) tone(f/2,t,2,.018,"sine"); }}];
   var beat=0, nextT=0;
-  function music(){ if(!on()) return; var T_=TUNES[S.song], now=AC.currentTime; if(nextT<now) nextT=now+.05;
+  function music(){ if(!on()||AC.state!=="running") return; var T_=TUNES[S.song], now=AC.currentTime; if(nextT<now) nextT=now+.05;
     while(nextT<now+.6){ T_.play(T_.notes[beat%T_.notes.length],nextT,beat); beat++; nextT+=T_.beat; } }
   function preview(){ if(!on()) return; beat=0; nextT=AC.currentTime+.05; var T_=TUNES[S.song]; for(var i=0;i<6;i++){ T_.play(T_.notes[i%T_.notes.length],nextT,i); nextT+=T_.beat; } beat=0; nextT=0; }
   var SND={
@@ -361,14 +369,15 @@ body.big .count{display:block}
     $("tube").classList.remove("pulse"); $("cup").classList.remove("pulse"); $("buddy").className=""; }
   function fmt(s){ s=Math.ceil(s); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
   function partAt(t){ var P=parts(), a=0; for(var i=0;i<P.length;i++){ if(t<a+P[i]) return {i:i, t:t-a, len:P[i]}; a+=P[i]; } return {i:P.length, t:0, len:0}; }
-  function begin(){ if(S.buddy==null){ pickBuddy(true); return; } T.ph="paste"; $("tube").classList.add("pulse"); say(PASTE,"bb-paste"); bar(); }
+  function begin(){ if(S.buddy==null){ pickBuddy(true); return; } T.ph="paste"; if(!T.mus){ T.mus=true; beat=0; nextT=0; } $("tube").classList.add("pulse"); say(PASTE,"bb-paste"); bar(); }
   function squeeze(){ if(T.ph!=="paste") return; var tb=$("tube"); tb.classList.remove("pulse","squeeze"); void tb.offsetWidth; tb.classList.add("squeeze"); SND.squeeze();
-    T.pasted=true; $("dab").classList.add("on"); T.ph="brush"; bar(); say(GOOD,"bb-good"); setTimeout(function(){ if(T.ph==="brush"&&!T.run) start(); },1300); }
+    T.pasted=true; $("dab").classList.add("on"); T.ph="brush"; bar();
+    function go(){ if(T.ph==="brush"&&!T.run) start(); } say(GOOD,"bb-good",{onend:function(){ setTimeout(go,300); }}); setTimeout(go,7000); }
   /* a backup clock for the music: on phones the frame loop can stall while the device voice talks */
-  var mT=setInterval(function(){ if(T&&T.run){ try{ music(); }catch(e){} } },120);
-  function start(){ T.run=true; T.last=performance.now(); beat=0; nextT=0; wake(true); bar(); $("brush").classList.remove("rest"); $("buddy").className="bob";
+  var mT=setInterval(function(){ if(T&&(T.run||T.mus)){ try{ music(); }catch(e){} } },120);
+  function start(){ T.run=true; T.last=performance.now(); if(!T.mus){ T.mus=true; beat=0; nextT=0; } wake(true); bar(); $("brush").classList.remove("rest"); $("buddy").className="bob";
     document.documentElement.style.setProperty("--beat",(TUNES[S.song].beat*2)+"s"); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
-  function stop(){ cancelAnimationFrame(raf); raf=0; if(T) T.run=false; wake(false); var b=$("brush"); if(b) b.classList.add("rest"); if(T&&T.ph==="brush") $("buddy").className=""; }
+  function stop(){ cancelAnimationFrame(raf); raf=0; if(T){ T.run=false; T.mus=false; } wake(false); var b=$("brush"); if(b) b.classList.add("rest"); if(T&&T.ph==="brush") $("buddy").className=""; }
   function loop(now){ if(!T||!T.run) return; var dt=Math.min(.25,(now-T.last)/1000); T.last=now; T.el+=dt; music(); paint(false);
     if(T.el>=total()){ toRinse(); return; } raf=requestAnimationFrame(loop); }
   function paint(quiet){ var tt=total(), pa=partAt(T.el), r=$("ring"); if(!r) return;
@@ -376,7 +385,7 @@ body.big .count{display:block}
     $("count").textContent=fmt(Math.max(0,tt-T.el));
     if(T.ph!=="brush"&&T.ph!=="rinse"&&T.ph!=="done") return;
     if(pa.i!==T.part && T.run){ T.part=pa.i; if(pa.i<parts().length){ brushTo(pa.i); if(pa.i>0) $("dab").classList.remove("on"); SND.swish(); if(pa.i>0){ SND.chime(); var bd=$("buddy"); bd.className=""; void bd.offsetWidth; bd.className="cheer"; setTimeout(function(){ if(T.run) bd.className="bob"; },700); }
-        say(Z[pa.i],pa.i<4?"bb-z"+(pa.i+1):"bb-tongue");
+        sayQ(Z[pa.i],pa.i<4?"bb-z"+(pa.i+1):"bb-tongue");
         
         for(var z=0;z<4;z++) $("zg"+z).classList.toggle("on",z===pa.i);
         $("tongue").classList.toggle("tongue-on",pa.i===4); } }
@@ -385,11 +394,11 @@ body.big .count{display:block}
       mine.forEach(function(b,k){ if(k<want&&!b.gone) popBug(b,quiet); if(k===want&&b.boss&&!b.gone) b.el.classList.add("next"); });
       BUGS.forEach(function(b){ if(b.p<pa.i&&!b.gone) popBug(b,true); });
       TEETH.forEach(function(th){ if(th.p<pa.i&&!th.clean){ th.clean=true; th.el.classList.add("clean"); th.el.classList.remove("dim"); } }); }
-    if(T.run&&big&&!T.tip&&pa.i===1&&pa.t>8){ T.tip=true; say(TIP,"bb-tip"); } }
+    if(T.run&&big&&!T.tip&&pa.i===1&&pa.t>8){ T.tip=true; sayQ(TIP,"bb-tip"); } }
   function toRinse(){ stop(); T.ph="rinse"; T.el=total(); paint(true); BUGS.forEach(function(b){ if(!b.gone) popBug(b,true); });
     TEETH.forEach(function(th){ th.clean=true; th.el.classList.add("clean"); th.el.classList.remove("dim"); }); for(var z=0;z<4;z++) $("zg"+z).classList.remove("on"); $("tongue").classList.remove("tongue-on");
-    brushTo(-1); $("cup").classList.add("pulse"); $("buddy").className=""; say(RINSE,"bb-rinse"); bar();
-    rinseT=setTimeout(function(){ if(T.ph==="rinse") say(RINSE,"bb-rinse"); },15000); }
+    brushTo(-1); $("cup").classList.add("pulse"); $("buddy").className=""; sayQ(RINSE,"bb-rinse"); bar();
+    rinseT=setTimeout(function(){ if(T.ph==="rinse") sayQ(RINSE,"bb-rinse"); },15000); }
   function rinse(){ if(T.ph!=="rinse") return; clearTimeout(rinseT); var c=$("cup"); c.classList.remove("pulse","tip"); void c.offsetWidth; c.classList.add("tip"); SND.rinse();
     FOAM.forEach(function(f,i){ var b=f.firstChild; setTimeout(function(){ b.classList.add("away"); },i*25); }); setTimeout(function(){ var g=$("foam"); if(g) g.innerHTML=""; FOAM=[]; },1500);
     setTimeout(finish,900); }
@@ -436,7 +445,7 @@ body.big .count{display:block}
   /* ---------- the bottom row ---------- */
   function bar(){ var run=T&&T.run, ph=T?T.ph:"ready", go;
     if(run) go='<em>❚❚</em><span>Pause</span>'; else if(ph==="done") go='<em>↺</em><span>Brush again</span>'; else if(ph==="brush"&&T.el>0) go='<em>▶</em><span>Go</span>'; else if(ph==="paste"||ph==="rinse") go='<em>'+(ph==="paste"?'🪥':'🥤')+'</em><span>'+(ph==="paste"?'Toothpaste':'Rinse')+'</span>'; else go='<em>▶</em><span>Start</span>';
-    $("bar").innerHTML='<button class="chip go'+(run?'':' pulse')+'" data-a="go" data-say="'+(run?'Pause':'Start')+'">'+go+'</button>'+
+    $("bar").innerHTML='<button class="chip go'+(run?'':' pulse')+'" data-a="go" aria-label="'+(run?'Pause':'Start')+'">'+go+'</button>'+
       (T&&T.el>0&&ph==="brush"&&!run?'<button class="chip" data-a="over" data-say="Start over"><em>↺</em><span>Start over</span></button>':'')+
       '<button class="chip" data-a="song" aria-label="Song: '+SONGS[S.song][0]+'"><em>♪</em><span>'+SONGS[S.song][0]+'</span></button>'+
       '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
