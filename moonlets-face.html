@@ -236,7 +236,8 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
   var nextL=null, nT=0;
   function speak(t,clip,o){ o=o||{}; var f=o.onend, me={t0:Date.now(), est:est(t)}; line=me; o.onend=function(){ if(line===me) line=null; if(f) f(); flush(); }; o.into=top; o.clip=clip; BWK.finn(t,o); }
   function flush(){ clearTimeout(nT); if(!nextL) return; if(busy()){ nT=setTimeout(flush,200); return; } var q=nextL; nextL=null; setTimeout(function(){ speak(q[0],q[1],q[2]); },200); }
-  function say(t,clip,o){ talked=true; if(busy()){ nextL=[t,clip,o]; flush(); } else speak(t,clip,o); }
+  /* Nov 18 3:30 pm: like Peekaboo, a tap's line speaks at once (waiting got stuck when the iPhone voice failed quietly) */
+  function say(t,clip,o){ talked=true; nextL=null; speak(t,clip,o); }
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(big?BHI:HI,big?"mf-bhi":"mf-hi"); });
   ["mf-hi","mf-bhi","mf-tada","mf-yes","bg-on","bg-off"].forEach(BWK.preload);
 
@@ -378,8 +379,8 @@ html.mftr #tray{background:none;box-shadow:none;border:18px solid transparent;bo
   var _draw=draw; draw=function(){ _draw(); var t=$("bar").querySelector('[data-a="tada"]'); if(t) t.classList.toggle("pulse",!!(F.e&&F.m)); };
   function setMode(){ if(big){ startBig(); bar(); setTimeout(nextAsk,big&&talked?2600:0); } else { G={auto:false}; goal(); bar(); } }
   window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; setMode(); } });
-  document.addEventListener("click",function(e){ if(talked||!e.target.isConnected||e.target.closest(".k-head,.k-sheet,.k-veil,[data-a=big],[data-a=games]")) return;
-    talked=true; setTimeout(function(){ if(big&&G.list&&!G.want&&G.i===0) say(BHI,"mf-bhi",{onend:function(){ setTimeout(nextAsk,400); }}); else if(!busy()) say(HI,"mf-hi"); },250); },true);
+  document.addEventListener("click",function(e){ if(talked||!e.target.isConnected||e.target.closest(".k-head,.k-sheet,.k-veil,.chip")) return;
+    if(big&&G.list&&!G.want&&G.i===0) say(BHI,"mf-bhi",{onend:function(){ setTimeout(nextAsk,400); }}); else say(HI,"mf-hi"); },true);
 
   /* tray tiles: as big as fit */
   function fit(){ var w=window.innerWidth, h=window.innerHeight, land=w>=820&&w>h, tw=land?Math.min(96,Math.max(70,(h-360)/4)):Math.max(56,Math.min(84,h*.11,w/5.4));
