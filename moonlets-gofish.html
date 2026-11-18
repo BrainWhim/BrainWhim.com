@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Go Fish · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Go Fish (Nov 18, 2026), a Moon Games card game by a sunny lily pond in the late afternoon.
+   Story: Finn's animal friends sit on the dock by the pond with a deck of animal cards (the 13 photo animals,
+   sl/c-*.webp). The face-down cards float in the pond. Real Go Fish rules:
+   Little: you and one friend, 8 animals x 2 cards, 5 cards each; make PAIRS. Tap a card to ask "Do you have a fox?".
+     The friend gives you all of them (go again), or says "Go fish!": tap the pond to fish a card. Fish the one you
+     asked for: go again. When a friend asks you, your matching cards glow: tap them to give, or tap Go fish.
+   Big Moonlet: you and two friends, all 13 animals x 4 = 52 cards, 7 each; make SETS of four. Tap a card, then
+     tap the friend to ask. No glow when a friend asks you (honesty check: "Look again!"). Each friend's last ask
+     shows under them (the memory trick). Friends remember asks 3 times in 10 (sim: a kid with a good memory wins
+     ~1 in 3 against two friends; Little is luck, ~1 in 2).
+   An empty hand fishes one card first. Most sets wins. First game: a look-only How to play (3 pictures).
+   Pictures (Judy, ChatGPT; BrainWhim-GoFish-Prompts): gf/bg(.jpg, -sm), gf/water(.jpg, -sm), gf/back, gf/face,
+   gf/dock, gf/basket, gf/fish (.webp); each switches on when its file loads. Drawn stand-ins until then.
+   Saved: bwk.gofish {games, wins, seen}. Lines gf-*. Test hook GFO.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:#9fd6e8 linear-gradient(180deg,#ffd9a0,#ffe9c2 30%,#9fd0c8 45%,#5fa9a0 70%,#4c8f6e) center/cover;filter:blur(1.2px) brightness(.93)}
+html.gfbg .bg{background:#9fd6e8 url("gf/bg-sm.jpg?v=1118a") center 60%/cover}
+@media (min-width:1100px){html.gfbg .bg{background-image:url("gf/bg.jpg?v=1118a")}}
+.md{height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:calc(84px + var(--k-safe-t)) 10px calc(10px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
+@media (max-height:600px){.top{min-height:84px}}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+:root{--cw:72px;--pw:52px}
+/* ---- cards ---- */
+.cd{position:relative;width:var(--cw);aspect-ratio:3/4;border-radius:calc(var(--cw)*.11);flex:none;box-sizing:border-box}
+.cd.f{background:linear-gradient(160deg,#fffdf6,#f6ead0);border:2px solid #e2cc96;box-shadow:0 4px 7px rgba(40,30,10,.3),inset 0 0 0 3px #fffaf0}
+html.gff .cd.f{background:url("gf/face.webp?v=1118a") center/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 4px 5px rgba(40,30,10,.32))}
+.cd.f img{position:absolute;left:12%;width:76%;top:8%;height:68%;object-fit:contain;object-position:50% 100%;pointer-events:none}
+.cd.f b{position:absolute;left:0;right:0;bottom:6%;text-align:center;font-size:calc(var(--cw)*.15);line-height:1;font-weight:700;color:#5a3a10;pointer-events:none}
+.cd.b{background:radial-gradient(circle at 50% 42%,#3a7fc0,#1d4a86 70%,#163a6c);border:2px solid #f2d27a;box-shadow:0 4px 7px rgba(10,20,40,.35),inset 0 0 0 3px #1d4a86,inset 0 0 0 4px rgba(242,210,122,.6)}
+.cd.b::after{content:"";position:absolute;inset:18%;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cpath d='M38 12a16 16 0 1 0 8 30a13 13 0 1 1-8-30z' fill='%23f6dc8a'/%3E%3Cpath d='M14 34c6-7 15-7 21 0c-6 7-15 7-21 0zm21 0l7-5v10z' fill='%23ffb04a'/%3E%3Ccircle cx='20' cy='33' r='1.6' fill='%231d4a86'/%3E%3C/svg%3E")}
+html.gfb .cd.b{background:url("gf/back.webp?v=1118a") center/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 4px 5px rgba(10,20,40,.35))}
+html.gfb .cd.b::after{content:none}
+/* ---- the friends ---- */
+#opp{flex:none;display:flex;gap:8px;justify-content:center;width:min(100%,760px)}
+.fr{position:relative;flex:1;max-width:380px;min-width:0;display:flex;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:24px;
+  background:rgba(255,253,243,.72);box-shadow:0 4px 12px rgba(30,50,40,.25);border:2px solid transparent;transition:border-color .2s,box-shadow .2s;cursor:default}
+.fr .av{flex:none;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#d9f0e6);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.25)}
+.fr .av img{height:94%}
+.fr .nm{display:flex;flex-direction:column;min-width:0;gap:3px}
+.fr .nm b{font-size:15px;color:#4a3210;white-space:nowrap}
+.fan{display:flex;height:calc(var(--pw)*.62);align-items:flex-end}
+.fan .cd{--cw:calc(var(--pw)*.46);margin-right:calc(var(--pw)*-.34)}
+.fan i{font-style:normal;font-size:12px;font-weight:700;color:#6a5230;margin-left:calc(var(--pw)*.36)}
+.fr.turn{border-color:#ffcf4a;box-shadow:0 0 0 3px rgba(255,207,74,.45),0 4px 12px rgba(30,50,40,.25)}
+.fr.pick{cursor:pointer;border-color:#ffcf4a;animation:frp 1.2s ease-in-out infinite}
+@keyframes frp{50%{box-shadow:0 0 0 5px rgba(255,207,74,.65),0 0 18px rgba(255,207,74,.8)}}
+.asked{display:flex;align-items:center;gap:3px;font-size:11px;color:#6a5230;font-weight:700}
+.asked span{width:22px;height:22px;border-radius:50%;background:#fff;display:inline-flex;align-items:flex-end;justify-content:center;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)}
+.asked span img{height:92%}
+/* ---- baskets (sets) ---- */
+.bk{position:relative;flex:none;width:64px;height:50px;margin-left:auto}
+.bk .bs{position:absolute;inset:auto 0 0 0;height:66%;border-radius:6px 6px 16px 16px;
+  background:repeating-linear-gradient(90deg,#b07a3a 0 5px,#9a662c 5px 7px),#a06a30;box-shadow:inset 0 3px 0 #c8924e,inset 0 -4px 6px rgba(60,30,0,.4),0 4px 6px rgba(40,20,0,.3)}
+.bk .bs::before{content:"";position:absolute;left:12%;right:12%;top:-60%;height:80%;border:4px solid #9a662c;border-bottom:0;border-radius:30px 30px 0 0}
+html.gfk .bk .bs{background:url("gf/basket.webp?v=1118a") center bottom/contain no-repeat;box-shadow:none;inset:0;height:auto}
+html.gfk .bk .bs::before{content:none}
+.bk .in{position:absolute;left:8%;right:8%;bottom:44%;height:44%;display:flex;justify-content:center;align-items:flex-end;z-index:1}
+html.gfk .bk .in{bottom:40%}
+.bk .in span{width:22px;height:22px;margin:0 -5px;border-radius:50%;background:#fffaf0;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.bk .in span img{height:92%}
+.bk .n{position:absolute;right:-6px;top:-6px;z-index:3;min-width:24px;height:24px;padding:0 4px;border-radius:12px;background:#ffcf4a;color:#3a2306;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.bk.pop{animation:bkp .5s ease-out}
+@keyframes bkp{40%{transform:scale(1.18)}}
+/* ---- the pond ---- */
+#pondW{flex:1;min-height:0;width:min(100%,760px);display:flex}
+#pond{position:relative;flex:1;border-radius:34px;overflow:hidden;touch-action:manipulation;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.35),transparent 40%),radial-gradient(ellipse at 50% 50%,#5fb3c4,#2f7f96 70%,#22687d);
+  box-shadow:0 10px 26px rgba(10,40,50,.35),inset 0 0 0 4px rgba(255,255,255,.3),inset 0 0 40px rgba(0,30,40,.45)}
+html.gfw #pond{background:#2f7f96 url("gf/water-sm.jpg?v=1118a") center/cover}
+@media (min-width:1100px){html.gfw #pond{background-image:url("gf/water.jpg?v=1118a")}}
+#pond::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 20% 10%,rgba(255,240,200,.3),transparent 50%)}
+#pond .pc{position:absolute;margin:0;padding:0;border:0;background:none;cursor:default;transform:translate(-50%,-50%) rotate(var(--r));-webkit-tap-highlight-color:transparent}
+#pond .pc .cd{--cw:var(--pcw);animation:float 3.6s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes float{50%{transform:translateY(-4%) rotate(1.5deg)}}
+#pond.fish .pc{cursor:pointer}
+#pond.fish .pc .cd{box-shadow:0 0 0 3px #ffcf4a,0 0 16px rgba(255,220,100,.9)}
+html.gfb #pond.fish .pc .cd{filter:drop-shadow(0 0 3px #ffcf4a) drop-shadow(0 0 8px rgba(255,220,100,.9))}
+#pond .cnt:empty{display:none}
+#pond .cnt{position:absolute;right:12px;bottom:10px;z-index:40;padding:3px 10px;border-radius:12px;background:rgba(255,253,243,.8);color:#2a4a50;font-weight:700;font-size:13px}
+.rip{position:absolute;width:60px;height:24px;margin:-12px 0 0 -30px;border-radius:50%;border:2px solid rgba(255,255,255,.7);pointer-events:none;animation:rip 1s ease-out forwards}
+@keyframes rip{to{transform:scale(2.4);opacity:0}}
+#fish{position:absolute;z-index:4;width:22%;max-width:110px;aspect-ratio:1;pointer-events:none;opacity:0}
+#fish.jump{animation:fj 1.1s ease-in-out forwards}
+@keyframes fj{0%{opacity:0;transform:translate(-50%,40%) rotate(40deg) scale(.6)}15%{opacity:1}50%{transform:translate(-50%,-90%) rotate(-10deg) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,40%) rotate(-60deg) scale(.6)}}
+#fish img,#fish svg{width:100%;height:100%;display:block}
+/* ---- my hand on the dock ---- */
+#mine{flex:none;width:min(100%,760px);display:flex;align-items:flex-end;gap:8px;padding:10px 10px 10px 12px;border-radius:20px;position:relative;box-sizing:border-box;
+  background:repeating-linear-gradient(90deg,#b98a5a 0 46px,#a87a4c 46px 48px),#b98a5a;box-shadow:0 8px 18px rgba(40,20,0,.35),inset 0 3px 0 rgba(255,230,190,.4),inset 0 -6px 10px rgba(60,30,0,.35)}
+html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;border-image:url("gf/dock.webp?v=1118a") 60 fill / 22px stretch;padding:0 2px;filter:drop-shadow(0 8px 14px rgba(40,20,0,.35))}
+#mine.turn{box-shadow:0 0 0 3px rgba(255,207,74,.6),0 8px 18px rgba(40,20,0,.35)}
+#hand{flex:1;min-width:0;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:8px 7px;min-height:calc(var(--cw)*1.34)}
+.grp{position:relative;margin:0;padding:0;border:0;background:none;cursor:default;-webkit-tap-highlight-color:transparent;transition:transform .2s}
+.grp .cd+.cd{position:absolute;top:0}
+.grp .x{position:absolute;right:-7px;top:-7px;z-index:5;min-width:22px;height:22px;border-radius:11px;background:#2a5a8a;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+#hand.ask .grp,#hand.give .grp{cursor:pointer}
+#hand.ask .grp:hover{transform:translateY(-6px)}
+.grp.sel{transform:translateY(-12px)}
+.grp.sel .cd:last-of-type,.grp.glow .cd:last-of-type{box-shadow:0 0 0 3px #ffcf4a,0 0 16px rgba(255,220,100,.95)}
+html.gff .grp.sel .cd:last-of-type,html.gff .grp.glow .cd:last-of-type{filter:drop-shadow(0 0 3px #ffcf4a) drop-shadow(0 0 9px rgba(255,220,100,.95))}
+.grp.glow{animation:glw 1.2s ease-in-out infinite}
+@keyframes glw{50%{transform:translateY(-8px)}}
+.nudge{animation:ndg .6s ease-in-out 2!important}
+@keyframes ndg{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+.grp.no{animation:no .4s}
+@keyframes no{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#mine .bk{align-self:center}
+/* ---- speech bubbles ---- */
+.sb{position:absolute;z-index:20;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;background:#fffdf3;color:#4a3210;font-weight:700;font-size:15px;white-space:nowrap;
+  box-shadow:0 4px 10px rgba(0,0,0,.28);pointer-events:none;animation:sbin .3s ease-out}
+.sb::after{content:"";position:absolute;left:50%;top:100%;margin-left:-7px;border:7px solid transparent;border-top-color:#fffdf3}
+.sb.dn{bottom:auto;top:calc(100% + 6px)}
+.sb.dn::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#fffdf3}
+.sb span{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#e6f3ff);display:inline-flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.sb span img{height:92%}
+@keyframes sbin{from{opacity:0;transform:translateX(-50%) scale(.6)}}
+/* ---- flying cards ---- */
+#fly{position:fixed;inset:0;z-index:300;pointer-events:none}
+#fly .cd{position:fixed;left:0;top:0;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+/* ---- How to play (look-only) ---- */
+#how{position:fixed;inset:0;z-index:250;display:flex;align-items:center;justify-content:center;background:rgba(14,30,40,.55);padding:16px}
+#how[hidden]{display:none}
+#how .pn{width:min(100%,620px);border-radius:26px;padding:18px 16px 16px;background:linear-gradient(180deg,#fffdf4,#f6ecd2);box-shadow:0 20px 40px rgba(0,0,0,.4);text-align:center;color:#4a3210}
+#how h2{margin:0 0 10px;font-size:22px}
+#how .st{display:flex;gap:10px;justify-content:center}
+#how .st>div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:18px;background:rgba(255,255,255,.7)}
+#how .st p{margin:0;font-size:14.5px;font-weight:700;line-height:1.25}
+#how .pic{height:96px;display:flex;align-items:center;justify-content:center;gap:4px;--cw:52px;position:relative}
+#how .pic .q{position:absolute;top:-6px;right:-10px;width:30px;height:30px;border-radius:50%;background:#ffcf4a;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center}
+#how .mini-pond{width:92px;height:70px;border-radius:24px;background:radial-gradient(ellipse,#5fb3c4,#2f7f96);display:flex;align-items:center;justify-content:center;--cw:30px;gap:2px}
+#how .mini-pond .cd:nth-child(2){transform:rotate(12deg) translateY(-6px)}
+#how button{margin:14px auto 0}
+@media (max-width:520px){#how .st{flex-direction:column}#how .st>div{flex-direction:row;text-align:left}#how .pic{height:70px;--cw:40px;flex:none;width:110px}#how .mini-pond{width:84px;height:60px}}
+/* ---- the bottom row ---- */
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.go.pulse{animation:pls 1.3s ease-in-out infinite}
+@keyframes pls{50%{transform:scale(1.06)}}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 6px}.bar{width:100%;flex-wrap:nowrap}
+  .fr{gap:5px;padding:4px 8px 4px 4px}.fr .av{width:44px;height:44px}.fr .nm b{font-size:13.5px}.bk{width:54px;height:44px}.sb{font-size:13.5px}}
+@media (max-height:600px){.md{gap:4px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}.fr .av{width:40px;height:40px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:120px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}.fr .av{width:64px;height:64px}.fr .nm b{font-size:17px}}
+@media (prefers-reduced-motion:reduce){.chip.go.pulse,#pond .pc .cd,.grp.glow,.fr.pick{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div id="opp" aria-live="polite"></div>
+  <div id="pondW"><div id="pond" aria-label="The pond"><div id="fish" aria-hidden="true"></div></div></div>
+  <div id="mine"><div id="hand" aria-label="Your cards"></div><div class="bk" id="myBk"></div></div>
+  <div class="bar" id="bar"></div>
+</main>
+<div id="how" hidden><div class="pn" role="dialog" aria-label="How to play Go Fish"><h2>How to play</h2><div class="st" id="howSt"></div>
+  <button class="chip go" id="howGo" aria-label="Got it"><em>👍</em><span>Got it!</span></button></div></div>
+<div id="fly"></div>
+
+<script src="kids.js?v=1117b"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1118a";
+  var AN=[["biscuit","puppy"],["mittens","kitten"],["clover","bunny"],["pip","hamster"],["hazel","fox"],["poppy","panda"],["pearl","unicorn"],["pickle","frog"],["coco","koala"],["rosie","piglet"],["sunny","duckling"],["lulu","llama"],["ziggy","monkey"]]
+    .map(function(a,i){ return {i:i, id:a[0], kind:a[1], name:a[0].charAt(0).toUpperCase()+a[0].slice(1)}; });
+  function aimg(k){ return "sl/c-"+AN[k].id+".webp?v=1115a"; }
+
+  /* ---------- Finn's lines (clips gf-*) ---------- */
+  var HI="Let's play Go Fish! Make pairs of animal cards with my friend. Tap Deal!",
+      BHI="Let's play Go Fish, Big Moonlet! Collect all four of each animal. Tap Deal!",
+      YOU="Your turn! Tap one of your cards to ask for that animal.", BYOU="Your turn! Tap one of your cards, then tap the friend you want to ask.",
+      YOURS="Your turn!", WHO="Who do you want to ask?", YES="Yes! Here you go!", AGAIN="You got it! Go again!",
+      FISH="Go fish! Tap a card in the pond.", LUCKY="You fished the one you asked for! Go again!", PAIR="A pair!", BOOK="All four! A whole set!",
+      GIVE="Tap your cards to give them.", NONE="Don't have one? Tap Go fish!", LOOK="Look again! You have one.", NOTIT="Not that one. Look for the same animal.",
+      GOFISH="Go fish!", FLUCKY="Lucky! They fished the one they asked for.", EMPTY="Your hand is empty! Fish a card from the pond.",
+      WIN="You won! You have the most! Great game!", TIE="It's a tie! Great game!", READY="Here are your cards!",
+      H1="Tap a card to ask a friend for that animal.", H2="Got it? Make a pair!", BH2="Got all four? A whole set!", H3="No? Go fish! Fish a card from the pond.";
+  function ASK(k){ return "Do you have a "+AN[k].kind+"?"; }
+  function LOSE(a){ return "Good game! "+a.name+" won this time."; }
+  var LN={"gf-hi":HI,"gf-bhi":BHI,"gf-you":YOU,"gf-byou":BYOU,"gf-yours":YOURS,"gf-who":WHO,"gf-yes":YES,"gf-again":AGAIN,"gf-fish":FISH,"gf-lucky":LUCKY,"gf-pair":PAIR,"gf-book":BOOK,
+    "gf-give":GIVE,"gf-none":NONE,"gf-look":LOOK,"gf-notit":NOTIT,"gf-gofish":GOFISH,"gf-flucky":FLUCKY,"gf-empty":EMPTY,"gf-win":WIN,"gf-tie":TIE,"gf-ready":READY,
+    "gf-h1":H1,"gf-h2":H2,"gf-bh2":BH2,"gf-h3":H3};
+  AN.forEach(function(a){ LN["gf-a-"+a.kind]=ASK(a.i); LN["gf-l-"+a.id]=LOSE(a); });
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
+  var big=BWK.big();
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("gfS")+'<p class="k-fb">'+(big?BHI:HI)+'</p></div>';
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  /* say a line, then go on when it ends (or after max ms, in case it is cut off) */
+  function sayThen(t,clip,fn,max){ var done=false, my=G&&G.id; function go(){ if(done||!G||G.id!==my) return; done=true; fn(); }
+    say(t,clip,{onend:function(){ later(go,250); }}); later(go,max||5000); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(big?BHI:HI,big?"gf-bhi":"gf-hi"); });
+  ["gf-hi","gf-bhi","gf-you","gf-yours","gf-yes","gf-fish","gf-gofish","gf-pair","bg-on","bg-off"].forEach(BWK.preload);
+
+  var S=BWK.store.get("gofish",null)||{}; S.games=S.games||0; S.wins=S.wins||0;
+  function save(){ BWK.store.set("gofish",S); }
+
+  /* ---------- pictures: each switches on when its file loads ---------- */
+  [["bg-sm.jpg","gfbg"],["water-sm.jpg","gfw"],["back.webp","gfb"],["face.webp","gff"],["dock.webp","gfd"],["basket.webp","gfk"],["fish.webp","gffi"]].forEach(function(p){
+    var im=new Image(); im.onload=function(){ document.documentElement.classList.add(p[1]); if(p[1]==="gffi") $("fish").innerHTML='<img src="gf/fish.webp?v='+AV+'" alt="">'; }; im.src="gf/"+p[0]+"?v="+AV; });
+  $("fish").innerHTML='<svg viewBox="0 0 100 100"><path d="M18 50c18-22 48-22 62 0c-14 22-44 22-62 0z" fill="#ff9a2e"/><path d="M80 50l16-14v28z" fill="#ffb34f"/><path d="M40 33q8-12 20-4" fill="#ffb34f"/><circle cx="32" cy="46" r="5" fill="#fff"/><circle cx="31" cy="46" r="2.6" fill="#222"/><path d="M50 40q6 10 0 20" stroke="#e07a10" stroke-width="2" fill="none"/></svg>';
+
+  /* ---------- sound ---------- */
+  var AC=null, OUT=null;
+  function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    if(AC.state!=="running"){ try{ AC.resume(); }catch(e){} } return AC; }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+  function on(){ return BWK.store.get("sound",true) && !!ac(); }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q,type){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type=type||"bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SND={
+    flick:function(d){ if(!on()) return; var t=AC.currentTime+.01+(d||0); noise(t,.07,.12,3200,.9); tone(900,t,.04,.015,"triangle",500); },
+    shuffle:function(n){ if(!on()) return; var t=AC.currentTime+.01; for(var i=0;i<(n||14);i++) noise(t+i*.05,.05,.08,2600+Math.random()*1400,.9); },
+    splash:function(){ if(!on()) return; var t=AC.currentTime+.01; noise(t,.45,.18,900,.6,"lowpass"); noise(t+.02,.3,.07,2400,.8);
+      for(var i=0;i<6;i++) tone(500+Math.random()*700,t+.12+i*.06,.08,.03,"sine",900+Math.random()*900); },
+    plop:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(420,t,.14,.08,"sine",900); noise(t,.12,.05,700,1); },
+    ask:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(520,t,.12,.05,"triangle",640); tone(660,t+.12,.16,.05,"triangle",820); },
+    no:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(330,t,.18,.05,"triangle",250); },
+    pair:function(){ if(!on()) return; var t=AC.currentTime+.01; [659,880,1175].forEach(function(f,i){ tone(f,t+i*.08,.45,.06,"triangle"); tone(f*2,t+i*.08,.25,.015); }); },
+    book:function(){ if(!on()) return; var t=AC.currentTime+.01; [523,659,784,1047,1319].forEach(function(f,i){ tone(f,t+i*.08,.6,.06,"triangle"); tone(f*2,t+i*.08,.3,.015); }); },
+    win:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784,1047,1319,1568,2093].forEach(function(f,i){ tone(f,t+i*.1,.55,.06,"triangle"); tone(f*2,t+i*.1+.01,.3,.015); });
+      for(var i=0;i<10;i++) noise(t+.7+i*.08,.04,.08,2000+Math.random()*1500,1); },
+    soft:function(){ if(!on()) return; var t=AC.currentTime+.02; [523,659,784].forEach(function(f,i){ tone(f,t+i*.14,.6,.05,"triangle"); }); } };
+
+  /* ---------- the game ---------- */
+  var G=null, gid=0, idleT=0, lastAct=Date.now();
+  function later(fn,ms){ if(!G) return; var my=G.id, h=setTimeout(function(){ if(G&&G.id===my) fn(); },ms); G.tm.push(h); return h; }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.random()*(i+1)|0, x=a[i]; a[i]=a[j]; a[j]=x; } return a; }
+  function newGame(){ if(G) G.tm.forEach(clearTimeout); BWK.finnStop&&BWK.finnStop(); $("fly").innerHTML="";
+    var setN=big?4:2, nK=big?13:8, kinds=shuffle(AN.map(function(a){return a.i;})).slice(0,nK), deck=[];
+    kinds.forEach(function(k){ for(var c=0;c<setN;c++) deck.push(k); }); shuffle(deck);
+    var fr=shuffle(AN.slice()).slice(0,big?2:1);
+    G={id:++gid, tm:[], setN:setN, nK:nK, deck:deck, ph:"ready", cur:0, sel:null, want:null, know:{}, myTurns:0,
+      P:[{me:true, hand:[], sets:[]}].concat(fr.map(function(a){ return {a:a, hand:[], sets:[], asked:null}; }))};
+    pondLayout(); render(); fit(); }
+  function count(p,k){ var n=0; p.hand.forEach(function(x){ if(x===k) n++; }); return n; }
+  function setsMade(){ var n=0; G.P.forEach(function(p){ n+=p.sets.length; }); return n; }
+  /* the order my cards sit in: in the order I first got each animal */
+  function groups(p){ var o=[], seen={}; p.hand.forEach(function(k){ if(!seen[k]){ seen[k]=1; o.push(k); } }); return o; }
+
+  /* ---------- drawing ---------- */
+  function cardF(k,lbl){ return '<div class="cd f"><img src="'+aimg(k)+'" alt="" draggable="false">'+(lbl!==false&&big?'<b>'+AN[k].kind+'</b>':'')+'</div>'; }
+  function cardB(){ return '<div class="cd b"></div>'; }
+  function basket(p){ var h='<div class="bs"></div><div class="in">', s=p.sets.slice(-4);
+    s.forEach(function(k){ h+='<span><img src="'+aimg(k)+'" alt=""></span>'; }); h+='</div>';
+    if(p.sets.length) h+='<i class="n" aria-label="'+p.sets.length+(G.setN===2?' pairs':' sets')+'">'+p.sets.length+'</i>'; return h; }
+  function render(){ var h="";
+    for(var i=1;i<G.P.length;i++){ var p=G.P[i], nf=Math.min(p.hand.length,6), fan="";
+      for(var j=0;j<nf;j++) fan+=cardB(); if(p.hand.length) fan+='<i>'+p.hand.length+'</i>';
+      var ak=big&&p.asked!=null&&count(p,p.asked)>0?'<span class="asked">asked:<span><img src="'+aimg(p.asked)+'" alt="'+AN[p.asked].kind+'"></span></span>':'';
+      h+='<div class="fr'+(G.cur===i&&G.ph!=="ready"&&G.ph!=="done"?' turn':'')+(G.ph==="pick"&&p.hand.length?' pick':'')+'" data-p="'+i+'"><span class="av"><img src="'+aimg(p.a.i)+'" alt=""></span>'+
+        '<span class="nm"><b>'+p.a.name+'</b><span class="fan">'+fan+'</span>'+ak+'</span><div class="bk">'+basket(p)+'</div></div>'; }
+    $("opp").innerHTML=h;
+    var me=G.P[0], gs=groups(me), wk=G.ph==="give"&&G.want?G.want.kind:null; h="";
+    gs.forEach(function(k){ var n=count(me,k), c="";
+      for(var j=0;j<n;j++) c+=cardF(k).replace('class="cd f"','class="cd f" style="'+(j?'left:'+(j*7)+'px;top:'+(-j*3)+'px;z-index:'+j:'')+'"');
+      var cls="grp"+(G.sel===k?" sel":"")+(wk===k&&!big?" glow":"");
+      h+='<button class="'+cls+'" data-k="'+k+'" aria-label="'+n+' '+AN[k].kind+'" style="padding-right:'+((n-1)*7)+'px">'+c+(n>1?'<i class="x">'+n+'</i>':'')+'</button>'; });
+    $("hand").innerHTML=h; $("hand").className=(G.ph==="ask"||G.ph==="pick")?"ask":G.ph==="give"?"give":"";
+    $("mine").classList.toggle("turn",G.cur===0&&(G.ph==="ask"||G.ph==="pick"||G.ph==="fish"));
+    $("myBk").innerHTML=basket(me);
+    $("pond").classList.toggle("fish",G.ph==="fish");
+    var pcs=$("pond").querySelectorAll(".pc"); for(var q=0;q<pcs.length;q++) pcs[q].style.display=q<Math.min(G.deck.length,G.spots.length)?"":"none";
+    var cnt=$("pond").querySelector(".cnt"); if(cnt) cnt.textContent=G.deck.length?G.deck.length+(G.deck.length===1?" card":" cards"):"";
+    bar(); }
+  /* the pond: up to 16 face-down cards on a jittered grid */
+  function pondLayout(){ var pd=$("pond"); [].slice.call(pd.querySelectorAll(".pc,.cnt")).forEach(function(e){ e.remove(); });
+    var n=Math.min(16,G.deck.length), cols=n>9?4:3, rows=Math.ceil(n/cols), sp=[], h="";
+    for(var i=0;i<n;i++){ var r=i/cols|0, c=i%cols, x=(c+.5)/cols*100+(Math.random()-.5)*(60/cols), y=(r+.5)/rows*100+(Math.random()-.5)*(50/rows);
+      sp.push([Math.max(14,Math.min(86,x)),Math.max(22,Math.min(78,y))]); }
+    shuffle(sp); G.spots=sp;
+    sp.forEach(function(s,i){ h+='<button class="pc" data-i="'+i+'" aria-label="A card in the pond" style="left:'+s[0]+'%;top:'+s[1]+'%;--r:'+((Math.random()-.5)*40).toFixed(1)+'deg;--d:-'+(Math.random()*3.6).toFixed(2)+'s;z-index:'+(1+i)+'">'+cardB()+'</button>'; });
+    pd.insertAdjacentHTML("beforeend",h+'<i class="cnt"></i>'); }
+  /* sizes: my cards as big as fit in a row (two rows if needed) without crowding the pond */
+  function fit(){ if(!G) return; var W=$("hand").clientWidth, g=Math.max(4,groups(G.P[0]).length), vh=window.innerHeight,
+      hMax=Math.max(60,Math.min(150,vh*.2)), cw=Math.min((W/g)-9, hMax*.75, 104);
+    if(cw<48&&g>5){ var g2=Math.ceil(g/2); cw=Math.min((W/g2)-9, hMax*.75*.62, 90); }
+    document.documentElement.style.setProperty("--cw",Math.max(40,cw|0)+"px");
+    var pd=$("pond"), pw=Math.min(pd.clientWidth/5.2, pd.clientHeight/(G.deck.length>9?3.4:2.6)*.75, 80);
+    pd.style.setProperty("--pcw",Math.max(30,pw|0)+"px");
+    document.documentElement.style.setProperty("--pw",(vh<640?44:52)+"px"); }
+  window.addEventListener("resize",fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($("pondW"));
+
+  /* ---------- where things are ---------- */
+  function elOf(pi){ return pi===0?$("hand"):$("opp").querySelector('.fr[data-p="'+pi+'"] .fan')||$("opp"); }
+  function bkOf(pi){ return pi===0?$("myBk"):$("opp").querySelector('.fr[data-p="'+pi+'"] .bk'); }
+  function bubbleEl(pi){ return pi===0?$("mine"):$("opp").querySelector('.fr[data-p="'+pi+'"]'); }
+  function bubble(pi,txt,k){ var host=bubbleEl(pi); if(!host) return; var old=host.querySelector(".sb"); if(old) old.remove();
+    var b=document.createElement("div"); b.className="sb"+(pi>0?" dn":""); b.innerHTML=(k!=null?'<span><img src="'+aimg(k)+'" alt=""></span>':'')+txt; host.appendChild(b);
+    later(function(){ if(b.parentNode) b.remove(); },2600); }
+  /* a card flying from one place to another (face up if k is given and it is mine or shown) */
+  function fly(from,to,k,ms,cb){ var a=from.getBoundingClientRect(), b=to.getBoundingClientRect(), d=document.createElement("div");
+    d.innerHTML=k!=null?cardF(k,false):cardB(); var c=d.firstChild; $("fly").appendChild(c);
+    var w=c.offsetWidth||60, h=c.offsetHeight||80;
+    c.style.transform="translate("+(a.left+a.width/2-w/2)+"px,"+(a.top+a.height/2-h/2)+"px) scale(.8)";
+    void c.offsetWidth; c.style.transitionDuration=(ms||500)+"ms";
+    c.style.transform="translate("+(b.left+b.width/2-w/2)+"px,"+(b.top+b.height/2-h/2)+"px) scale(.9)";
+    setTimeout(function(){ if(c.parentNode) c.remove(); if(cb) cb(); },(ms||500)+20); }
+  function pondCard(){ var v=[].slice.call($("pond").querySelectorAll(".pc")).filter(function(e){ return e.style.display!=="none"; }); return v[v.length-1]||$("pond"); }
+  function ripple(el){ var pd=$("pond"), r=pd.getBoundingClientRect(), a=el.getBoundingClientRect(), q=document.createElement("i");
+    q.className="rip"; q.style.left=(a.left+a.width/2-r.left)+"px"; q.style.top=(a.top+a.height/2-r.top)+"px"; pd.appendChild(q); setTimeout(function(){ q.remove(); },1000); }
+  function jump(el){ var pd=$("pond"), r=pd.getBoundingClientRect(), a=el.getBoundingClientRect(), f=$("fish");
+    f.style.left=(a.left+a.width/2-r.left)+"px"; f.style.top=(a.top-r.top)+"px"; f.classList.remove("jump"); void f.offsetWidth; f.classList.add("jump"); }
+
+  /* ---------- dealing ---------- */
+  function deal(){ if(G.ph!=="ready") return; G.ph="deal"; render(); SND.shuffle(big?24:12);
+    var n=big?7:5, order=[]; for(var r=0;r<n;r++) for(var p=0;p<G.P.length;p++) order.push(p);
+    order.forEach(function(p,i){ later(function(){ var k=G.deck.pop(), src=pondCard();
+      fly(src,elOf(p),p===0?k:null,380,function(){ G.P[p].hand.push(k); render(); fit(); }); },i*(big?90:140)); });
+    later(function(){ fit(); say(READY,"gf-ready"); layAll(0,function(){ layAll(1,function(){ if(G.P[2]) layAll(2,turn); else turn(); }); }); }, order.length*(big?90:140)+600); }
+
+  /* ---------- sets: lay them in the basket ---------- */
+  function layAll(pi,cb){ var p=G.P[pi], ks=groups(p).filter(function(k){ return count(p,k)>=G.setN; });
+    if(!ks.length){ cb(); return; }
+    var k=ks[0], src=pi===0?($("hand").querySelector('.grp[data-k="'+k+'"]')||$("hand")):elOf(pi), dst=bkOf(pi);
+    p.hand=p.hand.filter(function(x){ return x!==k; }); p.sets.push(k); delete G.know[k];
+    for(var j=0;j<G.setN;j++) fly(src,dst,k,520+j*60);
+    later(function(){ render(); fit(); var b=bkOf(pi); if(b){ b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); }
+      if(G.setN===2) SND.pair(); else SND.book(); bubble(pi,G.setN===2?"A pair!":"A whole set!",k);
+      if(pi===0) say(G.setN===2?PAIR:BOOK,G.setN===2?"gf-pair":"gf-book"); },600);
+    later(function(){ layAll(pi,cb); },1500); }
+
+  /* ---------- turns ---------- */
+  function over(){ return setsMade()>=G.nK; }
+  function turn(){ if(over()){ finish(); return; }
+    var p=G.P[G.cur];
+    if(!p.hand.length){
+      if(!G.deck.length){ next(); return; }
+      if(G.cur===0){ G.ph="fish"; G.want=null; G.emptyFish=true; render(); say(EMPTY,"gf-empty"); idle(); return; }
+      G.ph="wait"; render(); later(function(){ friendFish(G.cur,null); },900); return; }
+    if(G.cur===0){ G.ph=big?"pick":"ask"; if(big) G.ph="ask"; G.sel=null; render(); G.myTurns++;
+      if(G.myTurns<=2) say(big?BYOU:YOU,big?"gf-byou":"gf-you"); else say(YOURS,"gf-yours"); idle(); return; }
+    G.ph="wait"; render(); later(function(){ friendAsk(G.cur); },900); }
+  function next(){ var n=G.P.length, guard=0;
+    do{ G.cur=(G.cur+1)%n; guard++; }while(guard<=n&&!G.P[G.cur].hand.length&&!G.deck.length);
+    turn(); }
+  /* friends: ask for something they remember someone holding (3 times in 10), otherwise a card of their own at random */
+  function friendAsk(pi){ var p=G.P[pi], ks=shuffle(groups(p)), kind=null, opp=null;
+    for(var i=0;i<ks.length;i++){ var w=G.know[ks[i]]; if(w!=null&&w!==pi&&G.P[w].hand.length&&Math.random()<.3){ kind=ks[i]; opp=w; break; } }
+    if(kind==null){ kind=ks[0]; var os=[]; for(var q=0;q<G.P.length;q++) if(q!==pi&&G.P[q].hand.length) os.push(q);
+      if(!os.length){ friendFish(pi,kind); return; } opp=os[Math.random()*os.length|0]; }
+    ask(pi,opp,kind); }
+  function ask(pi,oi,kind){ var a=G.P[pi], o=G.P[oi]; G.ph="asking"; G.want={p:pi,o:oi,kind:kind}; if(pi>0) a.asked=kind; G.know[kind]=pi;
+    render(); SND.ask(); bubble(pi,(pi>0&&big?"Hey "+(oi===0?"you":o.a.name)+"! ":"")+"Do you have a "+AN[kind].kind+"?",kind);
+    if(oi>0) $("opp").querySelector('.fr[data-p="'+oi+'"]').classList.add("turn");
+    sayThen(ASK(kind),"gf-a-"+AN[kind].kind,function(){
+      if(oi===0){ G.ph="give"; render(); if(!big&&count(G.P[0],kind)) say(GIVE,"gf-give"); else if(!big) say(NONE,"gf-none"); idle(); return; }
+      answer(); },3200); }
+  /* the asked friend answers */
+  function answer(){ var w=G.want, o=G.P[w.o], n=count(o,w.kind);
+    if(n){ give(w.o,w.p,w.kind); return; }
+    bubble(w.o,"Go fish!"); SND.splash();
+    if(w.p===0){ G.ph="fish"; G.emptyFish=false; render(); later(function(){ say(FISH,"gf-fish"); idle(); },300); }
+    else{ G.ph="wait"; render(); later(function(){ friendFish(w.p,w.kind); },1300); } }
+  function give(from,to,kind){ var n=count(G.P[from],kind), src=from===0?($("hand").querySelector('.grp[data-k="'+kind+'"]')||$("hand")):elOf(from);
+    G.P[from].hand=G.P[from].hand.filter(function(x){ return x!==kind; }); G.know[kind]=to;
+    if(from>0) bubble(from,"Here you go!",kind); G.ph="moving"; render();
+    for(var j=0;j<n;j++) (function(j){ later(function(){ SND.flick(); fly(src,elOf(to),(to===0||from===0)?kind:null,480,function(){ G.P[to].hand.push(kind); if(j===n-1){ render(); fit(); } }); },j*130); })(j);
+    later(function(){ var go=function(){ layAll(to,function(){ turn(); }); };
+      if(to===0) sayThen(n>1?AGAIN:YES,n>1?"gf-again":"gf-yes",go,2600); else go(); }, n*130+700); }
+  /* fishing */
+  function drawTo(pi,srcEl,cb){ var k=G.deck.pop(), src=srcEl||pondCard(); ripple(src); jump(src); SND.splash();
+    G.ph="moving"; render();
+    fly(src,elOf(pi),pi===0?k:null,560,function(){ G.P[pi].hand.push(k); SND.plop(); if(G.deck.length<G.spots.length&&G.deck.length>0) {} render(); fit(); cb(k); }); }
+  function friendFish(pi,kind){ if(!G.deck.length){ next(); return; }
+    drawTo(pi,null,function(k){
+      if(kind!=null&&k===kind){ bubble(pi,"Lucky!",k); sayThen(FLUCKY,"gf-flucky",function(){ layAll(pi,function(){ turn(); }); },3000); }
+      else layAll(pi,function(){ if(kind==null) turn(); else next(); }); }); }
+  function myFish(el){ if(G.ph!=="fish"||!G.deck.length) return; var w=G.want, emp=G.emptyFish; G.emptyFish=false;
+    drawTo(0,el,function(k){
+      if(emp){ layAll(0,function(){ turn(); }); return; }
+      if(w&&k===w.kind){ bubble(0,"Lucky!",k); SND.pair(); sayThen(LUCKY,"gf-lucky",function(){ layAll(0,function(){ turn(); }); },3000); }
+      else layAll(0,function(){ next(); }); }); }
+  /* my answer to a friend */
+  function myGive(k){ var w=G.want; if(G.ph!=="give"||!w) return;
+    if(k!==w.kind){ var g=$("hand").querySelector('.grp[data-k="'+k+'"]'); if(g){ g.classList.remove("no"); void g.offsetWidth; g.classList.add("no"); } SND.no(); say(NOTIT,"gf-notit"); return; }
+    give(0,w.p,k); }
+  function myGoFish(){ var w=G.want; if(G.ph!=="give"||!w) return;
+    if(count(G.P[0],w.kind)){ SND.no(); say(LOOK,"gf-look"); var g=$("hand").querySelector('.grp[data-k="'+w.kind+'"]'); if(g&&!big){ g.classList.add("nudge"); } return; }
+    G.ph="moving"; bubble(0,"Go fish!"); render(); sayThen(GOFISH,"gf-gofish",function(){ friendFish(w.p,w.kind); },1800); }
+  function finish(){ G.ph="done"; G.want=null; var best=-1, who=[];
+    G.P.forEach(function(p,i){ if(p.sets.length>best){ best=p.sets.length; who=[i]; } else if(p.sets.length===best) who.push(i); });
+    S.games++; if(who.length===1&&who[0]===0) S.wins++; save(); BWK.played&&BWK.played("gofish"); render();
+    if(who.length===1&&who[0]===0){ SND.win(); say(WIN,"gf-win"); }
+    else if(who.length>1&&who.indexOf(0)>=0){ SND.soft(); say(TIE,"gf-tie"); }
+    else { SND.soft(); var a=G.P[who[0]].a; say(LOSE(a),"gf-l-"+a.id); } }
+
+  /* ---------- taps ---------- */
+  $("hand").addEventListener("click",function(e){ var b=e.target.closest(".grp"); if(!b||!G) return; var k=+b.dataset.k; lastAct=Date.now();
+    if(G.ph==="ask"&&G.cur===0){
+      if(!big){ BWK.sfx("tap"); ask(0,1,k); return; }
+      G.sel=k; G.ph="pick"; render(); say(WHO,"gf-who"); return; }
+    if(G.ph==="pick"){ G.sel=k; render(); return; }
+    if(G.ph==="give") myGive(k); });
+  $("opp").addEventListener("click",function(e){ var f=e.target.closest(".fr"); if(!f||!G||G.ph!=="pick"||G.sel==null) return; var i=+f.dataset.p; if(!G.P[i].hand.length) return;
+    lastAct=Date.now(); var k=G.sel; G.sel=null; ask(0,i,k); });
+  $("pond").addEventListener("click",function(e){ var c=e.target.closest(".pc"); if(!G||G.ph!=="fish") return; lastAct=Date.now(); myFish(c||null); });
+  /* waiting for me: after a while, a little wiggle on what to tap (no voice) */
+  function idle(){ lastAct=Date.now(); clearInterval(idleT); idleT=setInterval(function(){ if(!G) return; if(Date.now()-lastAct<6000) return; lastAct=Date.now();
+    var t=G.ph==="fish"?$("pond").querySelectorAll(".pc .cd"):G.ph==="ask"?$("hand").querySelectorAll(".grp"):G.ph==="pick"?$("opp").querySelectorAll(".fr"):G.ph==="give"?$("bar").querySelectorAll(".chip.go"):[];
+    [].forEach.call(t,function(x){ x.classList.remove("nudge"); void x.offsetWidth; x.classList.add("nudge"); setTimeout(function(){ x.classList.remove("nudge"); },1300); }); },1000); }
+  document.addEventListener("pointerdown",function(){ lastAct=Date.now(); },true);
+
+  /* ---------- How to play (look-only; first game, or the ? button) ---------- */
+  function how(){ var k=[0,4,9]; $("howSt").innerHTML=
+      '<div><span class="pic">'+cardF(k[1])+'<i class="q">?</i></span><p>'+H1+'</p></div>'+
+      '<div><span class="pic">'+(big?cardF(k[1])+cardF(k[1])+cardF(k[1])+cardF(k[1]):cardF(k[1])+cardF(k[1]))+'</span><p>'+(big?BH2:H2)+'</p></div>'+
+      '<div><span class="pic"><span class="mini-pond">'+cardB()+cardB()+'</span></span><p>'+H3+'</p></div>';
+    $("how").querySelectorAll("#howSt .pic").forEach(function(p,i){ if(big&&i===1) p.style.setProperty("--cw","34px"); });
+    $("how").hidden=false; say(H1,"gf-h1",{onend:function(){ if($("how").hidden) return; say(big?BH2:H2,big?"gf-bh2":"gf-h2",{onend:function(){ if(!$("how").hidden) say(H3,"gf-h3"); }}); }}); }
+  $("howGo").onclick=function(){ BWK.sfx("tap"); BWK.finnStop(); $("how").hidden=true; S.seen=1; save(); if(G.ph==="ready") deal(); };
+
+  /* ---------- the bottom row (no data-say: these make Finn talk or redraw the row, Nov 17) ---------- */
+  function bar(){ var ph=G?G.ph:"ready", h="";
+    if(ph==="give") h+='<button class="chip go pulse" data-a="gofish" aria-label="Go fish"><em>🎣</em><span>Go fish!</span></button>';
+    else if(ph==="ready") h+='<button class="chip go pulse" data-a="deal" aria-label="Deal"><em>🂠</em><span>Deal</span></button>';
+    else if(ph==="done") h+='<button class="chip go pulse" data-a="again" aria-label="Play again"><em>↺</em><span>Play again</span></button>';
+    else h+='<button class="chip" data-a="again" aria-label="New game"><em>↺</em><span>New game</span></button>';
+    h+='<button class="chip" data-a="how" aria-label="How to play"><em>?</em><span>How to play</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games" aria-label="More games"><em>☾</em><span>More games</span></button>';
+    $("bar").innerHTML=h; }
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b||!G) return; BWK.sfx("tap"); lastAct=Date.now(); var a=b.dataset.a;
+    if(a==="deal"){ BWK.finnStop(); if(!S.seen) how(); else deal(); }
+    else if(a==="again"){ newGame(); deal(); }
+    else if(a==="gofish") myGoFish();
+    else if(a==="how") how();
+    else if(a==="big"){ big=!big; talked=true; BWK.setBig(big,top); newGame(); }
+    else if(a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; newGame(); } });
+  document.addEventListener("click",function(e){ if(talked||!e.target.isConnected||e.target.closest("#pond,#hand,#opp,#how,.chip,.k-head,.k-sheet,.k-veil")) return; say(big?BHI:HI,big?"gf-bhi":"gf-hi"); });
+
+  newGame();
+  window.GFO={newGame:newGame, deal:deal, big:function(v){ big=!!v; BWK.setBig(big); newGame(); },
+    state:function(){ return G&&{ph:G.ph, cur:G.cur, deck:G.deck.length, want:G.want, sets:G.P.map(function(p){ return p.sets.length; }), hands:G.P.map(function(p){ return p.hand.slice(); }), sel:G.sel}; },
+    G:function(){ return G; }, myFish:function(){ myFish(pondCard()); }, myGive:myGive, myGoFish:myGoFish, ask:function(k,o){ if(big){ G.sel=k; G.ph="pick"; ask(0,o||1,k); } else ask(0,1,k); }};
+})();
+</script>
+</body>
+</html>
