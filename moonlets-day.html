@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>My Moon Day · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: My Moon Day (Nov 17, 2026; named by Judy). The fifth little moon, the sunrise moon on the meadow's swing.
+   Helpers for a little one's whole day, morning to bedtime (not games): the Brush-Brush Timer (moved here from Moon Games),
+   then My Morning Chart, How Do I Feel? and Sleepy Moon. Each is a card in the HELPERS table (id, name, line, page, picture);
+   a card without a page is "Coming soon" and Finn says so. Mood: a sky that runs from sunrise to a starry bedtime.
+   Finn's lines: dy-hi, dy-soon.
+   ========================================================================== */
+.bg{position:fixed;inset:-12px;z-index:-1;background:url("kids-moonlets-sm.jpg") 50% 80%/cover;filter:blur(2px) brightness(.5)}
+/* the day's sky over the meadow: sunrise peach on the left, bright day, a starry bedtime on the right */
+.bg::after{content:"";position:absolute;inset:0;mix-blend-mode:soft-light;
+  background:linear-gradient(100deg,rgba(255,170,110,.9),rgba(255,214,140,.7) 30%,rgba(150,200,255,.55) 60%,rgba(40,40,120,.6))}
+.gm.soon{cursor:default;opacity:.92}
+.gm.soon .pic{filter:saturate(.7) brightness(.9)}
+.gm .tag{position:absolute;top:22px;right:18px;font-style:normal;font-size:12px;font-weight:700;letter-spacing:.04em;padding:3px 10px;border-radius:999px;
+  background:rgba(255,226,150,.9);color:#3a2a10}
+.gm.soon .tag{background:rgba(10,20,44,.75);color:#dbe6ff}
+.mg{min-height:100svh;display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:calc(84px + var(--k-safe-t)) 14px calc(18px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+.shelf{width:min(100%,900px);display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin-top:auto;margin-bottom:auto}
+.gm{appearance:none;cursor:pointer;width:min(100%,290px);padding:18px 18px 20px;border-radius:28px;text-align:center;font:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 0%,rgba(120,110,230,.35),transparent 60%),linear-gradient(180deg,rgba(36,46,104,.92),rgba(14,20,52,.94));
+  border:1px solid rgba(255,226,150,.5);
+  box-shadow:0 0 0 3px rgba(255,226,150,.08),0 0 26px rgba(255,214,120,.28),0 14px 26px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14);
+  transition:transform .15s}
+.gm::before{content:"✦  ☾  ✧";position:absolute;top:8px;left:0;right:0;font-size:11px;letter-spacing:.5em;color:rgba(255,233,168,.55)}
+.gm:active{transform:scale(.97)}
+.gm .pic{width:78%;max-width:210px;aspect-ratio:1/1;filter:none}
+.gm b{font-size:23px;font-weight:700;color:#fff3d6;line-height:1.1;text-shadow:0 0 12px rgba(255,214,120,.35)}
+.gm i{font-style:normal;font-size:14.5px;color:#cfdaf0;line-height:1.35}
+.more{font-size:14px;color:#dbe6ff;text-shadow:0 1px 6px rgba(0,0,0,.7);margin:0;text-align:center}
+.back{appearance:none;cursor:pointer;border:1px solid rgba(255,236,190,.35);border-radius:999px;padding:12px 22px;font:inherit;font-weight:700;font-size:15px;color:#fff3d6;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.mg.go{transition:opacity .5s, transform .5s;opacity:0;transform:scale(1.08)}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="mg" id="mg">
+  <section class="top" id="finnHere"></section>
+  <div class="shelf" id="shelf"></div>
+  <p class="more">More helpers for your day are on the way!</p>
+  <button class="back" id="bBack">☾ Back to the meadow</button>
+</main>
+
+<script src="kids.js?v=1117b"></script>
+<script>
+(function(){
+  var HI="Welcome to My Moon Day! Here are little helpers for your whole day, from morning to bedtime.", SOON="That one is still waking up. Come back soon!";
+  BWK.lines({"dy-hi":HI,"dy-soon":SOON});
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();  // Finn's bubble area never shrinks, so the game below never jumps (Nov 16)
+  top.innerHTML='<div class="k-finn k-finn-in">'+face("dyS")+'<p class="k-fb">'+HI+'</p></div>';
+  var talked=false;
+  function say(t,clip){ talked=true; BWK.finn(t,{into:top, clip:clip}); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(HI,"dy-hi"); });
+  document.addEventListener("click",function(e){ if(talked || e.target.closest(".gm,.back,.k-head,.k-sheet,.k-veil")) return; say(HI,"dy-hi"); });
+
+  /* a drawn stand-in picture for helpers still waking up: a little sunrise moon with the helper's sign */
+  function soonPic(sym,c1,c2){ return '<svg class="pic" viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="dy'+sym.length+c1.slice(1)+'" cx="34%" cy="28%" r="72%"><stop offset="0" stop-color="#fffbe8"/><stop offset=".5" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></radialGradient></defs>'+
+    '<circle cx="100" cy="104" r="70" fill="'+c1+'" opacity=".18"/><circle cx="100" cy="104" r="56" fill="url(#dy'+sym.length+c1.slice(1)+')"/>'+
+    '<ellipse cx="84" cy="98" rx="5" ry="7" fill="#3b2a12"/><ellipse cx="116" cy="98" rx="5" ry="7" fill="#3b2a12"/><circle cx="82.6" cy="95.6" r="1.8" fill="#fff"/><circle cx="114.6" cy="95.6" r="1.8" fill="#fff"/>'+
+    '<path d="M88 116 q12 10 24 0" stroke="#3b2a12" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+    '<ellipse cx="72" cy="114" rx="8" ry="4.5" fill="#ff8a7a" opacity=".45"/><ellipse cx="128" cy="114" rx="8" ry="4.5" fill="#ff8a7a" opacity=".45"/>'+
+    SYM[sym]+'</svg>'; }
+  var SYM={sun:'<g transform="translate(152 52)"><circle r="13" fill="#ffc93c" stroke="#e79a1c" stroke-width="2"/>'+[0,45,90,135,180,225,270,315].map(function(a){ return '<rect x="-2.2" y="-26" width="4.4" height="8" rx="2.2" fill="#ffc93c" transform="rotate('+a+')"/>'; }).join("")+'</g>',
+    heart:'<path transform="translate(152 54)" d="M0 14 C-22 0 -18 -18 -8 -18 C-3 -18 0 -14 0 -10 C0 -14 3 -18 8 -18 C18 -18 22 0 0 14Z" fill="#ff7aa0" stroke="#d24f7a" stroke-width="2"/>',
+    moon:'<g transform="translate(152 52)"><path d="M6 -18 A19 19 0 1 0 6 18 A22 22 0 0 1 6 -18Z" fill="#fff3c4" stroke="#d8b866" stroke-width="2"/><circle cx="16" cy="-14" r="2.4" fill="#fff3c4"/><circle cx="20" cy="4" r="1.6" fill="#fff3c4"/></g>'};
+  var HELPERS=[
+    {id:"brush", n:"Brush-Brush Timer", d:"Brush along with Finn for two minutes and chase the sugar bugs away!", href:"moonlets-brush.html", pic:function(){ return '<img class="pic" src="bb/card.webp?v=1117b" alt="" draggable="false">'; }},
+    {id:"morning", n:"My Morning Chart", d:"Wake up the sleepy sun! Tap each morning job when it's done.", href:"moonlets-morning.html", pic:function(){ return soonPic("sun","#ffcf6e","#e08a2c"); }},
+    {id:"feel", n:"How Do I Feel?", d:"Happy, sad, cross or shy? Find the animal face that feels like you.", href:"", pic:function(){ return soonPic("heart","#ffb3c8","#d66a8e"); }},
+    {id:"sleepy", n:"Sleepy Moon", d:"Slow, cozy breaths and a goodnight to everything, ready for bed.", href:"", pic:function(){ return soonPic("moon","#b9b4ff","#6a5fc8"); }}];
+  $("shelf").innerHTML=HELPERS.map(function(g){ return '<button class="gm'+(g.href?'':' soon')+'" data-href="'+g.href+'">'+g.pic()+(g.href?'':'<i class="tag">Coming soon</i>')+'<b>'+g.n+'</b><i>'+g.d+'</i></button>'; }).join("");
+  $("shelf").addEventListener("click",function(e){ var b=e.target.closest(".gm"); if(!b) return;
+    if(!b.dataset.href){ BWK.sfx("tap"); say(SOON,"dy-soon"); return; }
+    BWK.sfx("whoosh"); BWK.finnStop(); $("mg").classList.add("go"); setTimeout(function(){ location.href=b.dataset.href; },480); });
+  $("bBack").onclick=function(){ BWK.sfx("whoosh"); BWK.finnStop(); setTimeout(function(){ location.href="moonlets.html"; },200); };
+  window.addEventListener("pageshow",function(){ $("mg").classList.remove("go"); });
+})();
+</script>
+</body>
+</html>
