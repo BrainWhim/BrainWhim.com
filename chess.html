@@ -62,7 +62,7 @@
 body.pk{--cs-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dvh - var(--pk-hdr) - var(--pk-sw) - 44px)),920px)}
 @media (min-width:1000px) and (max-width:1180px){body.pk{--cs-size:min(calc(100vw - 2*var(--pk-side) - 60px),max(360px,calc(100dvh - var(--pk-hdr) - var(--pk-sw) - 40px)))}}
 @media (max-width:999px){
-  body.pk{--cs-size:min(calc(100vw * 1.32),max(300px,calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 150px)));--pk-size:min(calc(100vw - 16px),calc(var(--cs-size) * .72))}
+  body.pk{--cs-size:min(calc(100vw * 1.42),max(300px,calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 150px)));--pk-size:min(calc(100vw - 16px),calc(var(--cs-size) * .72))}
   .cs-crop{width:100vw;clip-path:inset(-30% 0 -30% 0)}
 }
 @media (prefers-reduced-motion:reduce){.cs-sq.dest::after{animation:none}}
@@ -93,7 +93,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="play-config.js"></script>
-<script src="play-rooms.js?v=1112a"></script>
+<script src="play-rooms.js?v=1119a"></script>
 <script src="bw-avatars.js?v=1112b"></script>
 <script src="parlor-kit.js?v=1112a"></script>
 <script id="csEngine">
@@ -288,7 +288,7 @@ function ornaments(g){
 }
 
 /* ---------- the whole table top, one painted picture (1400px square, clipped round by CSS) ---------- */
-var BH=.67;   /* the board's half width, in table radii (board = 67% of the table, like Judy's table) */
+var BH=.62;   /* Nov 19: was .67; the inlaid board's corners sit inside the painted top */ var BH0=.67;   /* the board's half width, in table radii (board = 67% of the table, like Judy's table) */
 function paintTable(d){
   var N=1400,R=N/2,c=document.createElement("canvas");c.width=c.height=N;var ctx=c.getContext("2d");
   var m=document.createElement("canvas");m.width=m.height=N;var mg=m.getContext("2d");
@@ -389,9 +389,9 @@ var DESIGNS={
 var PIECESETS={
   classic:{name:"Ivory · Onyx",w:"piece-ivory-w-",b:"piece-onyx-b-",v:"8",names:["ivory","onyx"],dots:["#f3ecdc","#161616"]},
   cobalt:{name:"Cobalt · Ivory",w:"piece-w-",b:"piece-b-",v:"19",names:["cobalt","ivory"],dots:["#2346a8","#efe4c8"]},
-  gold:{name:"Rose Gold · Onyx",w:"piece-gold-w-",b:"piece-gold-b-",v:"19",names:["rose gold","onyx"],dots:["#e9b7c0","#1c1416"]}
+  gold:{name:"Rose Gold · Onyx",w:"piece-rose-w-",b:"piece-rose-b-",v:"1119a",   /* Nov 19: remade in ChatGPT (Carrara + onyx, rose gold) */ names:["rose gold","onyx"],dots:["#e9b7c0","#1c1416"]}
 };
-var PH={K:17.2,Q:16,B:14.1,N:12.8,R:11.9,P:10.8};   /* piece heights in em (a square is 12.6em) */
+var PH={K:15.9,Q:14.8,B:13,N:11.8,R:11,P:10};   /* Nov 19: ×.925 with the smaller board */   /* piece heights in em (a square is 12.6em) */
 var curDesign=null,curSet="classic",texCache={},fontsReady=false,stageReady=false;
 function pieceSrc(p){var s=PIECESETS[curSet]||PIECESETS.classic,u=p.toUpperCase();return (isW(p)?s.w:s.b)+u+".png?v="+s.v;}
 function applyDesign(k){
@@ -407,7 +407,7 @@ function applyDesign(k){
 var CSV="1119a",csImg={},csReady={};
 function csLoad(f,cb){ if(csImg[f]){ if(csImg[f].complete&&csImg[f].naturalWidth) cb(); else csImg[f].addEventListener("load",cb); return; }
   var im=new Image(); im.onload=cb; im.src="cs/"+f+".webp?v="+CSV; csImg[f]=im; }
-(function(){ Object.keys(DESIGNS).forEach(function(k){ var fs=["cs-table","cs-f-"+k,"t-"+k+"-L","t-"+k+"-D"],left=fs.length;
+(function(){ Object.keys(DESIGNS).forEach(function(k){ var fs=["cs-table","t-"+k+"-L","t-"+k+"-D"],left=fs.length;
   fs.forEach(function(f){ csLoad(f,function(){ if(--left) return; csReady[k]=1; if(curDesign===k){ curDesign=null; applyDesign(k); } }); }); }); })();
 function photoTable(d,k){
   var N=1400,R=N/2,c=document.createElement("canvas");c.width=c.height=N;var g=c.getContext("2d");
@@ -427,8 +427,11 @@ function photoTable(d,k){
   /* a soft garden light over the inlay: brighter top left */
   var lg=g.createLinearGradient(x0,x0,x0+2*half,x0+2*half);lg.addColorStop(0,"rgba(255,248,230,.07)");lg.addColorStop(1,"rgba(0,0,0,.07)");g.fillStyle=lg;g.fillRect(x0,x0,2*half,2*half);
   /* the border on top, its inner edge on the board's edge, with a little shadow onto the squares */
-  var W=2*half/(1-2*d.ph.f);g.save();g.shadowColor="rgba(0,0,0,.35)";g.shadowBlur=N*.006;g.shadowOffsetX=N*.0015;g.shadowOffsetY=N*.002;
-  g.drawImage(csImg["cs-f-"+k],R-W/2,R-W/2,W,W);g.restore();
+  /* Nov 19 (Judy): the board is inlaid flush into the tabletop, no frame: a fine painted stencil-colored edge with hairline shade */
+  var st="rgb("+d.stencil.join(",")+")", ed=N*.0042;
+  g.save();g.lineWidth=ed;g.strokeStyle=st;g.globalAlpha=.9;g.strokeRect(x0-ed/2,x0-ed/2,2*half+ed,2*half+ed);
+  g.globalAlpha=1;g.lineWidth=1.2;g.strokeStyle="rgba(0,0,0,.28)";g.strokeRect(x0-ed-.6,x0-ed-.6,2*half+2*ed+1.2,2*half+2*ed+1.2);
+  g.strokeStyle="rgba(0,0,0,.18)";g.strokeRect(x0+.6,x0+.6,2*half-1.2,2*half-1.2);g.restore();
   /* the BrainWhim monogram, gilded on the table's gray rim at the near edge */
   g.save();g.translate(R,R+.976*R);var sz=.05*R;
   g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";var wB=g.measureText("B").width;g.font="400 "+(sz*.76)+"px Pacifico, cursive";var wW=g.measureText("W").width;

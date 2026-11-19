@@ -333,7 +333,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     var set=setId||document.body.getAttribute("data-set")||"classic";
     var L=(letter||"P").toUpperCase();
     var s=side==="b"?"b":"w";
-    if(set==="gold") return (s==="w"?"piece-gold-w-":"piece-gold-b-")+L+".png?v=19";
+    if(set==="gold") return (s==="w"?"piece-rose-w-":"piece-rose-b-")+L+".png?v=1119a";
     if(set==="cobalt") return "piece-"+s+"-"+L+".png?v=19";
     return (s==="w"?"piece-ivory-w-":"piece-onyx-b-")+L+".png?v=7";
   }
