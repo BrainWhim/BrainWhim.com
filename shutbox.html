@@ -23,6 +23,9 @@
 .sb-tshadow{position:absolute;left:-30px;top:-10px;width:960px;height:610px;transform:translateZ(-79px);background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,.65),rgba(0,0,0,0) 70%);filter:blur(14px)}
 .sb-wh{background-image:var(--sb-wood-h);background-size:1200px 600px;background-repeat:no-repeat;background-color:#6b4626}
 .sb-wv{background-image:var(--sb-wood-v);background-size:600px 1200px;background-repeat:no-repeat;background-color:#6b4626}
+/* Nov 19: Judy's photo felt covers the whole panel (no tiling) */
+html.sxph .sb-felt{background-size:828px 488px}
+html.sxph .sb-tile .top,html.sxph .sb-tile .sl,html.sxph .sb-tile .sr{background-size:256px 256px}
 .sb-felt{left:36px;top:36px;width:828px;height:488px;transform:translateZ(-44px);background-image:var(--sb-felt-tex);background-size:256px 256px;background-color:var(--sb-felt,#1e4a2e)}
 .sb-felt::after{content:"";position:absolute;inset:0;background:
   radial-gradient(ellipse 70% 80% at 42% 60%,rgba(255,220,160,.10),rgba(0,0,0,0) 60%),
@@ -236,6 +239,16 @@ function applyDesign(k){
   s.setProperty("--sb-tile",m.tile);
   var cs=cupEl.style; cs.setProperty("--sb-cup",CUPS[k].body); cs.setProperty("--sb-cuptex",m.cup); cs.setProperty("--sb-cupin",CUPS[k].inside); s.setProperty("--sb-num",d.num||"transparent");
   s.setProperty("--sb-die",d.die); s.setProperty("--sb-die-core",d.dieCore); s.setProperty("--sb-pip",d.pip); s.setProperty("--sb-pip2",d.pip2);
+  sxPhotos(k);
+}
+/* Nov 19: Judy's photo materials (sx/): each replaces its painted texture once it loads */
+function sxPhotos(k){
+  var s=boxEl.style, html=document.documentElement, v="?v=1119a";
+  html.classList.remove("sxph");
+  [["--sb-wood-h","w-"],["--sb-wood-v","wv-"],["--sb-felt-tex","f-"],["--sb-tile","t-"]].forEach(function(p){
+    var u="sx/"+p[1]+k+".webp"+v, im=new Image();
+    im.onload=function(){ if(curDesign!==k) return; s.setProperty(p[0],'url("'+u+'")'); if(p[1]==="f-") html.classList.add("sxph"); };
+    im.src=u; });
 }
 
 /* =====================================================================
