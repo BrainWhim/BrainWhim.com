@@ -32,6 +32,20 @@
 .mo-tray{left:28px;width:584px;height:64px;border-radius:32px;transform:translateZ(.6px);pointer-events:none;background:var(--mo-tray);
   box-shadow:inset 0 6px 10px rgba(0,0,0,.55),inset 0 -2px 3px rgba(255,255,255,.12),0 1px 0 rgba(255,255,255,.18)}
 .mo-tray.back{top:13px}.mo-tray.front{top:743px}
+/* photo boards (Nov 19, Judy's ChatGPT pictures in nm/): the slab photo is the top; trays are carved channels of the same stone/wood;
+   pieces are photo stones. html.mph once the current board's 3 pictures are in */
+html.mph .mo-top{background-color:transparent}
+html.mph .mo-top.q1{width:640px;height:820px}html.mph .mo-top.q2,html.mph .mo-top.q3,html.mph .mo-top.q4{display:none}   /* one piece: no hairline seams */
+html.mph .mo-tsh{border-radius:26px}
+html.mph .mo-sheen{border-radius:26px;box-shadow:none;background:radial-gradient(ellipse 80% 70% at 30% 20%,rgba(255,245,220,.08),rgba(0,0,0,0) 60%),linear-gradient(to bottom,rgba(0,0,0,0) 65%,rgba(0,0,0,.08))}
+html.mph .mo-field{box-shadow:none}
+html.mph .mo-tray{background:linear-gradient(rgba(0,0,0,var(--mo-trd)),rgba(0,0,0,var(--mo-trd))),var(--mo-top) -28px -13px/640px 820px;
+  box-shadow:inset 0 7px 9px rgba(0,0,0,.6),inset 0 -2px 2px rgba(255,255,255,.2),inset 0 0 0 1px rgba(0,0,0,.25),0 1px 0 rgba(255,255,255,.22)}
+html.mph .mo-tray.front{background-position:0 0,-28px -743px}
+html.mph .mo-pc .s,html.mph .mo-pc .t::after{display:none}
+html.mph .mo-pc .t{background:var(--fcp) center/100% 100% no-repeat}
+html.mph .mo-pc:not(.mill):not(.can):not(.sel) .t{box-shadow:none}
+html.mph .mo-pc.a{--fcp:var(--mo-ap)}html.mph .mo-pc.b{--fcp:var(--mo-bp)}
 .mo-wall{background-image:var(--mo-top);background-size:640px 820px;background-color:var(--mo-topc,#5a3a22)}
 .mo-wall::after{content:"";position:absolute;inset:0}
 .mo-wall.f{top:820px;width:320px;height:34px;transform-origin:top;transform:rotateX(-90deg)}
@@ -171,11 +185,16 @@ var boardEl=stage.querySelector("#moBoard"), pcsEl=stage.querySelector("#moPcs")
 stage.querySelector("#moBoard").addEventListener("click",function(e){ var t=e.target.closest(".mo-hit"); if(t) tapPoint(+t.dataset.i); });
 
 var texCache={}, curDesign=null;
+var MPV="1119a",mpReady={},MPTRAY={walnut:.38,marble:.16,slate:.32};
+(function(){ ["walnut","marble","slate"].forEach(function(k){ var left=3;
+  ["b-"+k,"s-"+k+"-a","s-"+k+"-b"].forEach(function(f){ var im=new Image(); im.onload=function(){ if(--left) return; mpReady[k]=1; if(curDesign===k){ curDesign=null; applyDesign(k); } }; im.src="nm/"+f+".webp?v="+MPV; }); }); })();
 function applyDesign(k){
   if(!DESIGNS[k]) k="walnut"; if(k===curDesign) return; curDesign=k;
   var d=DESIGNS[k]; if(!texCache[k]) texCache[k]={top:d.top(),h:d.lineH(),v:d.lineV()};
   var t=texCache[k], s=boardEl.style, b=document.body.style;
-  s.setProperty("--mo-top",t.top); s.setProperty("--mo-topc",d.topc); s.setProperty("--mo-rim",d.rim); s.setProperty("--mo-rim2",d.rim2); s.setProperty("--mo-tray",d.tray);
+  var ph=!!mpReady[k]; document.documentElement.classList.toggle("mph",ph);
+  if(ph){ b.setProperty("--mo-ap",'url("nm/s-'+k+'-a.webp?v='+MPV+'")'); b.setProperty("--mo-bp",'url("nm/s-'+k+'-b.webp?v='+MPV+'")'); s.setProperty("--mo-trd",MPTRAY[k]); }
+  s.setProperty("--mo-top",ph?'url("nm/b-'+k+'.webp?v='+MPV+'")':t.top); s.setProperty("--mo-topc",d.topc); s.setProperty("--mo-rim",d.rim); s.setProperty("--mo-rim2",d.rim2); s.setProperty("--mo-tray",d.tray);
   s.setProperty("--mo-pt",d.pt); s.setProperty("--mo-ptsh",d.ptsh);
   b.setProperty("--mo-aface",d.a[0]); b.setProperty("--mo-aside",d.a[1]); b.setProperty("--mo-a",d.a[2]);
   b.setProperty("--mo-bface",d.b[0]); b.setProperty("--mo-bside",d.b[1]); b.setProperty("--mo-b",d.b[2]);
