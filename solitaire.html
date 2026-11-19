@@ -67,6 +67,10 @@
   body.pk.seated .pk-stage{justify-content:flex-start}
 }
 @media (max-width:420px){ .so-seg button{padding:8px 6px;font-size:11px} .so-tools .pk-btn{padding:8px 9px} }
+.ctph .so-desk{background:none}
+.ctph .so-desk::before{content:"";position:absolute;inset:0;border:solid transparent;border-width:calc(var(--so-r)*3.1);border-image:var(--so-photo) 150 fill / calc(var(--so-r)*3.1) stretch;filter:drop-shadow(0 0 0 transparent)}
+.ctph .so-rim,.ctph .so-tool,.ctph .so-fl{display:none}
+.ctph .so-leather{background:none;box-shadow:none}
 </style>
 <script src="bw-auth.js?v=1113c"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -103,15 +107,15 @@ var K=BWCards, PT=K.paint;
 /* ---------- the three desks ---------- */
 var DESIGNS={
   /* Mahogany & Oxblood: the room photo's desk; oxblood leather, gold tooling, claret card backs */
-  mahogany:{name:"Mahogany & Oxblood",wood:{light:[122,48,28],dark:[56,18,8],freq:.035,turb:6,wx:420,wy:30,sharp:.9,ringAmt:.38,streakAmt:.5,pores:.012,blotch:.3,seed:41},woodc:"#5a2414",
+  mahogany:{photo:"ct/ct-sol-mahogany.webp?v=1118a",name:"Mahogany & Oxblood",wood:{light:[122,48,28],dark:[56,18,8],freq:.035,turb:6,wx:420,wy:30,sharp:.9,ringAmt:.38,streakAmt:.5,pores:.012,blotch:.3,seed:41},woodc:"#5a2414",
     leath:[108,40,26],tool:"rgba(222,186,98,.72)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.4)",
     back:"linear-gradient(150deg,#a3242b,#5c0e14)",gold:"rgba(231,199,122,.8)",dots:["#5a2414","#6c281a","#a3242b"]},
   /* Satinwood & Bottle Green: a pale golden satinwood frame (Regency style) with green leather, like the photo's side table */
-  satinwood:{name:"Satinwood & Bottle Green",wood:{light:[226,184,118],dark:[176,126,62],freq:.022,turb:4,wx:340,wy:26,sharp:.55,ringAmt:.42,streakAmt:.5,pores:.006,blotch:.16,seed:29},woodc:"#c99d5e",
+  satinwood:{photo:"ct/ct-sol-satinwood.webp?v=1118a",name:"Satinwood & Bottle Green",wood:{light:[226,184,118],dark:[176,126,62],freq:.022,turb:4,wx:340,wy:26,sharp:.55,ringAmt:.42,streakAmt:.5,pores:.006,blotch:.16,seed:29},woodc:"#c99d5e",
     leath:[30,66,46],tool:"rgba(222,186,98,.66)",toolg:"linear-gradient(170deg,#fff1bf,#d9b25a 45%,#8f6a22 75%,#f3d68b)",slot:"rgba(231,199,122,.36)",
     back:"linear-gradient(150deg,#21613f,#0b2c1d)",gold:"rgba(231,199,122,.8)",dots:["#c99d5e","#1e4230","#21613f"]},
   /* Ebony & Midnight: an ebonised desk, midnight-navy leather, silver tooling, navy backs */
-  ebony:{name:"Ebony & Midnight",wood:{light:[44,36,32],dark:[12,10,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},woodc:"#1b1714",
+  ebony:{photo:"ct/ct-sol-ebony.webp?v=1118a",name:"Ebony & Midnight",wood:{light:[44,36,32],dark:[12,10,8],freq:.05,turb:4,wx:300,wy:30,sharp:.7,ringAmt:.5,streakAmt:.5,pores:0,blotch:.2,seed:3},woodc:"#1b1714",
     leath:[30,42,76],tool:"rgba(214,220,232,.6)",toolg:"linear-gradient(170deg,#ffffff,#c8ced8 45%,#7c8696 75%,#eef1f6)",slot:"rgba(214,220,232,.34)",
     back:"linear-gradient(150deg,#26407a,#0d1834)",gold:"rgba(222,228,238,.78)",dots:["#1b1714","#1e2a4c","#26407a"]}
 };
@@ -122,7 +126,11 @@ function applyDesign(k){
   var t=texCache[k], s=stage.style;
   s.setProperty("--so-wood",t.w); s.setProperty("--so-woodv",t.v); s.setProperty("--so-woodc",d.woodc); s.setProperty("--so-leath",t.l); s.setProperty("--so-leathc","rgb("+d.leath+")");
   s.setProperty("--so-tool",d.tool); s.setProperty("--so-toolg",d.toolg); s.setProperty("--so-slot",d.slot); s.setProperty("--bwc-back",d.back); s.setProperty("--bwc-gold",d.gold);
+  photoTable(k);
 }
+/* Nov 18: photo desks (ct/), drawn with border-image so the frame and tooling stay crisp at any shape; the drawn desk stays until the photo loads */
+function photoTable(k){ var src=DESIGNS[k].photo; stage.classList.remove("ctph"); if(!src) return;
+  var i=new Image(); i.onload=function(){ if(curDesign!==k) return; stage.style.setProperty("--so-photo",'url("'+src+'")'); stage.classList.add("ctph"); }; i.src=src; }
 var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
 function previewBar(){
   if(!PREVIEW) return;
