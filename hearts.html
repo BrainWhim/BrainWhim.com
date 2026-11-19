@@ -6,7 +6,7 @@
 <title>Rose Garden Hearts · BrainWhim Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1112a">
-<link rel="stylesheet" href="bw-cards.css?v=1101a">
+<link rel="stylesheet" href="bw-cards.css?v=1118a">
 <style>
 /* ===== Rose Garden Hearts: the rose garden's round wrought-iron table seen from straight above, drawn in the browser =====
    Same table machinery as Porch Gin Rummy, with four seats: your hand along your side, the other three hands face down
@@ -24,6 +24,9 @@
     radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 58%,rgba(0,0,0,.36)),var(--ce-felt);background-size:auto,auto,auto,auto,auto,512px 512px;
   box-shadow:inset 0 6px 14px rgba(0,0,0,.6),inset 0 0 0 2px rgba(0,0,0,.45)}
 .ce-round.nocups .ce-cup{display:none}
+.ctph .ce-round{background:var(--ce-photo) center/100% 100% no-repeat transparent}
+.ctph .ce-felt,.ctph .ce-bead{display:none}
+.ctph .ce-round::before{background:radial-gradient(circle at 34% 26%,rgba(255,236,200,.14),rgba(255,236,200,0) 46%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 70%,rgba(0,0,0,.22) 100%)}
 .ce-cup{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#1a1208 0 34%,rgba(0,0,0,0) 36%),radial-gradient(circle at 35% 30%,#fff1c2,#d9b25a 45%,#7a5518 85%);
   box-shadow:0 2px 3px rgba(0,0,0,.5),inset 0 -1px 2px rgba(0,0,0,.4)}
 .ce-mono{position:absolute;left:50%;top:922px;transform:translate(-50%,-50%);display:flex;align-items:baseline;font-size:24px;line-height:1;pointer-events:none}
@@ -159,7 +162,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-rooms.js?v=1112a"></script>
 <script src="bw-avatars.js?v=1112b"></script>
 <script src="parlor-kit.js?v=1112a"></script>
-<script src="bw-cards.js?v=1026d"></script>
+<script src="bw-cards.js?v=1118a"></script>
 <script>
 var K=BWCards, PT=K.paint;
 /* ===== Rose Garden Hearts =====
@@ -200,13 +203,13 @@ function linenFn(rgb,seed){ var r=K.rng(seed), n=PT.noise2(seed); return functio
   var k=.9+.05*Math.sin(x*1.9)+.05*Math.sin(y*2.1)+(PT.fbm(n,x/90,y/90,3)-.5)*.12+(r()-.5)*.05; return [Math.min(255,rgb[0]*k),Math.min(255,rgb[1]*k),Math.min(255,rgb[2]*k)]; }; }
 var DESIGNS={
   /* Wrought Iron & Rose: the photo's dark bronze garden table, filigree right across the top; rose card backs */
-  iron:{name:"Wrought Iron & Rose",rim:function(){ return ironRimFn([62,48,38],7,[150,118,80]); },rimc:"#3e3026",top:function(){ return filigreeFn([70,55,43],[92,82,70],11); },topWhole:true,
+  iron:{name:"Wrought Iron & Rose",photo:"ct/ct-hearts-iron.webp?v=1118a",rim:function(){ return ironRimFn([62,48,38],7,[150,118,80]); },rimc:"#3e3026",top:function(){ return filigreeFn([70,55,43],[92,82,70],11); },topWhole:true,
     feltc:[58,46,36],bead:"rgba(196,160,104,.45)",back:"linear-gradient(150deg,#d4627a,#8e2f48)",dots:["#3e3026","#8a6a48","#c25a6c"]},
   /* Verdigris & Ivy: an old green-bronze rim around an ivy-green felt top; ivy card backs */
-  ivy:{name:"Verdigris & Ivy",rim:function(){ return ironRimFn([84,128,110],5,[176,212,190]); },rimc:"#54806e",top:function(){ return PT.feltFn([62,98,70],9); },
+  ivy:{name:"Verdigris & Ivy",photo:"ct/ct-hearts-ivy.webp?v=1118a",rim:function(){ return ironRimFn([84,128,110],5,[176,212,190]); },rimc:"#54806e",top:function(){ return PT.feltFn([62,98,70],9); },
     feltc:[62,98,70],bead:"rgba(214,236,210,.45)",back:"linear-gradient(150deg,#5f8f62,#2c4f34)",dots:["#54806e","#3e6246","#2c4f34"]},
   /* White Lattice & Blush: white-painted iron filigree over blush linen; blush card backs; a pale table */
-  blush:{name:"White Lattice & Blush",rim:function(){ return ironRimFn([226,222,214],13,[255,255,255]); },rimc:"#e2ded6",
+  blush:{name:"White Lattice & Blush",photo:"ct/ct-hearts-blush.webp?v=1118a",rim:function(){ return ironRimFn([226,222,214],13,[255,255,255]); },rimc:"#e2ded6",
     top:function(){ var lin=linenFn([232,190,190],17); return filigreeFn([236,232,224],[232,190,190],19,{holeFn:function(x,y,k){ var c=lin(x,y), m=.88+k*.1; return [(c[0]*.62+246*.38)*m,(c[1]*.62+236*.38)*m,(c[2]*.62+232*.38)*m]; }}); },topWhole:true,light:true,
     feltc:[236,226,220],bead:"rgba(150,120,110,.35)",back:"linear-gradient(150deg,#e79aa6,#b25a6c)",dots:["#e2ded6","#e8bebe","#b25a6c"]}
 };
@@ -219,7 +222,11 @@ function applyDesign(k){
   T.classList.toggle("light",!!d.light);
   stage.querySelector(".ce-felt").style.backgroundSize=d.topWhole?"auto,auto,auto,auto,auto,912px 912px":"";
   stage.querySelector(".ce-felt").style.backgroundPosition=d.topWhole?"0 0,0 0,0 0,0 0,0 0,-44px -44px":"";
+  photoTable(k);
 }
+/* Nov 18: photo tabletops (ct/); the drawn table stays until the photo loads */
+function photoTable(k){ var src=DESIGNS[k].photo; stage.classList.remove("ctph"); if(!src) return;
+  var i=new Image(); i.onload=function(){ if(curDesign!==k) return; stage.style.setProperty("--ce-photo",'url("'+src+'")'); stage.classList.add("ctph"); }; i.src=src; }
 var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
 function previewBar(){
   if(!PREVIEW) return;

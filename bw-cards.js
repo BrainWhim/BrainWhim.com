@@ -119,3 +119,7 @@
     g.save(); g.translate(0, h * 2); g.scale(1, -1); g.drawImage(c, 0, 0); g.restore(); g.save(); g.translate(w * 2, h * 2); g.scale(-1, -1); g.drawImage(c, 0, 0); g.restore(); return d; }
   K.paint = { seamless: seamless, noise2: noise2, fbm: fbm, mix: mix, canvasOf: canvasOf, cssUrl: cssUrl, rot: rot, woodFn: woodFn, leatherFn: leatherFn, feltFn: feltFn };
 })();
+
+/* Nov 18: photo cards: html.ctp once the card pictures have loaded (see bw-cards.css) */
+(function(){ var L=["ct/ct-back-frame.webp?v=1118a","ct/ct-back-field.webp?v=1118a","jt/jt-face.webp?v=1115a"], n=0;
+  L.forEach(function(u){ var i=new Image(); i.onload=function(){ if(++n===L.length) document.documentElement.classList.add("ctp"); }; i.src=u; }); })();
