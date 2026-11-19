@@ -12,6 +12,7 @@
    BrainWhim · Moonlets: Shape Sorter (Nov 16, 2026), a Moon Games drag-and-drop game. A rainy afternoon in a cozy
    treehouse playroom. Drag each painted wooden shape into its hole in the board. Finn names each shape as it's
    picked up. 3 boards a game: Little 3, 4, 4 shapes; Big Moonlet 6 shapes, and Finn calls out which one goes next.
+   Nov 18: Big Moonlet has 6 more shapes (oval, rectangle, diamond, pentagon, hexagon, octagon): board 2 mixes, board 3 is all new.
    Holes are the piece's own silhouette (the photo's alpha, darkened), so they always match.
    Judy's photos: sz/bg, sz/shapes (six pieces cut apart into sz/<shape>.webp), sz/wood (folder sz/, not ss/: that is Style Studio). Saved: bwk.shapes {games}.
    Lines sz-*. Test hook SZO.
@@ -98,7 +99,14 @@ html.szw .board{background:url("sz/wood.webp?v=1116a") center/360px repeat,#e2c7
     ["triangle","triangle","#f2c230",'<path d="M50 8 L94 88 Q96 92 91 92 H9 Q4 92 6 88 Z"/>'],
     ["star","star","#3aa65a",'<path d="M50 5 L62 37 L96 38 L69 59 L79 93 L50 73 L21 93 L31 59 L4 38 L38 37 Z"/>'],
     ["heart","heart","#ef6fa4",'<path d="M50 90 C10 62 2 40 14 22 C26 6 46 12 50 28 C54 12 74 6 86 22 C98 40 90 62 50 90 Z"/>'],
-    ["moon","moon","#8c5ad0",'<path d="M62 6 A44 44 0 1 0 94 70 A36 36 0 1 1 62 6 Z"/>']].map(function(a){ return {id:a[0],n:a[1],c:a[2],p:a[3]}; });
+    ["moon","moon","#8c5ad0",'<path d="M62 6 A44 44 0 1 0 94 70 A36 36 0 1 1 62 6 Z"/>'],
+    ["oval","oval","#f08a24",'<ellipse cx="50" cy="50" rx="46" ry="31"/>'],
+    ["rectangle","rectangle","#1fa3a0",'<rect x="3" y="26" width="94" height="48" rx="8"/>'],
+    ["diamond","diamond","#4ab0f0",'<path d="M50 3 L87 50 L50 97 L13 50 Z"/>'],
+    ["pentagon","pentagon","#f2b51c",'<path d="M50.0 6.0 L95.7 39.2 L78.2 92.8 L21.8 92.8 L4.3 39.2 Z"/>'],
+    ["hexagon","hexagon","#8cd03a",'<path d="M50.0 3.0 L90.7 26.5 L90.7 73.5 L50.0 97.0 L9.3 73.5 L9.3 26.5 Z"/>'],
+    ["octagon","octagon","#d8342c",'<path d="M93.4 68.0 L68.0 93.4 L32.0 93.4 L6.6 68.0 L6.6 32.0 L32.0 6.6 L68.0 6.6 L93.4 32.0 Z"/>']].map(function(a,i){ return {id:a[0],n:a[1],c:a[2],p:a[3],v:i<6?"1116a":"1118a"}; });
+  /* Nov 18: six more shapes for Big Moonlet (Judy's sz-shapes2 photo; drawn until each loads): board 1 the six known shapes, board 2 three of each, board 3 the six new ones */
 
   var HI="Let's play Shape Sorter! Drag each shape into its hole.", TRY="Hmm, that one doesn't fit there. Try another hole!", NEXT="All done! Here's a new board!",
       WIN="You sorted every shape! Great job!", BIGWIN="Wow! Big Moonlet shape sorter!", NOTYET="Not that one yet! Listen for the shape I say.";
@@ -157,8 +165,8 @@ html.szw .board{background:url("sz/wood.webp?v=1116a") center/360px repeat,#e2c7
   var PH={};
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("szbg"); }; im.src="sz/bg-sm.jpg?v="+AV; })();
   (function(){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add("szw"); }; im.src="sz/wood.webp?v="+AV; })();
-  SH.forEach(function(s){ var im=new Image(); im.onload=function(){ PH[s.id]=1; if(G&&!dragging) refreshPics(); }; im.src="sz/"+s.id+".webp?v="+AV; });
-  function pic(s){ return PH[s.id]?'<img src="sz/'+s.id+'.webp?v='+AV+'" alt="" draggable="false">':'<svg viewBox="0 0 100 100" fill="'+s.c+'">'+s.p+'</svg>'; }
+  SH.forEach(function(s){ var im=new Image(); im.onload=function(){ PH[s.id]=1; if(G&&!dragging) refreshPics(); }; im.src="sz/"+s.id+".webp?v="+s.v; });
+  function pic(s){ return PH[s.id]?'<img src="sz/'+s.id+'.webp?v='+s.v+'" alt="" draggable="false">':'<svg viewBox="0 0 100 100" fill="'+s.c+'">'+s.p+'</svg>'; }
   function refreshPics(){ document.querySelectorAll("[data-s]").forEach(function(el){ var s=SH.filter(function(x){return x.id===el.dataset.s;})[0], tgt=el.querySelector(".hs")||el; tgt.innerHTML=pic(s); }); }
 
   /* ---------- the game ---------- */
@@ -166,7 +174,9 @@ html.szw .board{background:url("sz/wood.webp?v=1116a") center/360px repeat,#e2c7
   function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
   function counts(){ return big?[6,6,6]:[3,4,4]; }
   function newGame(){ G={b:0, done:false}; bar(); prog(); newBoard(); }
-  function newBoard(){ var n=counts()[G.b], pool=G.b===0&&!big?SH.slice(0,3):shuffle(SH.slice()).slice(0,n);
+  function newBoard(){ var n=counts()[G.b], base=SH.slice(0,6), extra=SH.slice(6), pool;
+    if(!big) pool=G.b===0?base.slice(0,3):shuffle(base).slice(0,n);
+    else pool=G.b===0?base:G.b===1?shuffle(base).slice(0,3).concat(shuffle(extra.slice()).slice(0,3)):extra.slice();
     G.set=shuffle(pool.slice()); G.holes=shuffle(pool.slice()); G.placed=0; G.call=null; build(); if(big) callNext(); }
   function prog(){ var h=""; for(var i=0;i<3;i++) h+='<i class="'+(i<G.b||G.done?'on':'')+'"></i>'; $("prog").innerHTML=h; }
   function build(){ var P=$("play"), W=P.clientWidth, H=P.clientHeight, n=G.set.length;

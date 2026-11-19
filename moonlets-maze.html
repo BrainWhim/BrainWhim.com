@@ -14,6 +14,8 @@
    Mazes are made fresh each time (recursive backtracker) so there is always a way. 3 mazes a game:
    Little 4×4, 5×5, 5×5 (carrots lie on the way home); Big Moonlet 5×5, 6×6, 6×6 (3 carrots anywhere; the burrow
    door opens only when all are found). Drag anywhere: Bunny hops one square at a time toward your finger.
+   Nov 18, Big Moonlet friends: mazes 2 and 3 also hide 2 lost animal friends (Slime Lab photos, sl/c-*.webp). Reaching one, it joins
+   and follows Bunny square by square (G.hist); the burrow opens when every carrot and friend is found, and everyone goes home.
    Judy's photos: bz/bg, bz/hedge, bz/path, bz/carrot, bz/home. Saved: bwk.maze {games}. Lines bz-*. Test hook BZO.
    ========================================================================== */
 .bg{position:fixed;inset:-12px;z-index:-1;background:#e9c6c0 linear-gradient(180deg,#f2c9c0,#e8d7b8 55%,#a9c79a) center/cover;filter:blur(1.2px) brightness(.93)}
@@ -46,6 +48,14 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
 @keyframes glw{50%{transform:scale(1.1) rotate(-6deg)}}
 .it.gone{transform:scale(0) translateY(-40%);opacity:0}
 .it.home.shut{filter:grayscale(.5) brightness(.8)}
+.it.friend{animation:fwv 1.8s ease-in-out infinite}
+@keyframes fwv{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(-6%)}}
+.fol{position:absolute;left:0;top:0;pointer-events:none;z-index:3;transition:transform .24s ease-in-out;display:flex;align-items:flex-end;justify-content:center}
+.fol img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(30,20,0,.45))}
+.fol.in{animation:fin .4s ease-out}
+@keyframes fin{0%{opacity:0}100%{opacity:1}}
+.prog .cr .fr{border-radius:50%}
+.done .row{display:flex;align-items:flex-end;gap:6px}.done .row img.f{height:80px}
 .bun{position:absolute;left:0;top:0;pointer-events:none;z-index:4;will-change:transform}
 .bun .b{will-change:transform}
 .bun .b{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center}
@@ -99,8 +109,11 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
   "use strict";
   var AV="1116a";
   var HI="Help Bunny find her carrots and hop home! Drag her along the path.", CRUNCH="Crunch!", SHUT="Find all the carrots first!", OPEN="All the carrots! Now hop home!",
+      LOST="Some friends are lost in this maze! Find them, and they'll follow Bunny home.", FOUND="Found a friend! Come along!",
+      SHUT2="Find all the carrots and friends first!", OPEN2="Everyone's here! Now hop home!",
       HOME="Home sweet home!", NEXT="Here's a bigger maze!", WIN="Bunny is home! You did it!", BIGWIN="Wow! Big Moonlet maze master!", BUMP="Oops, a hedge! Try another way.";
-  BWK.lines({"bz-hi":HI,"bz-crunch":CRUNCH,"bz-shut":SHUT,"bz-open":OPEN,"bz-home":HOME,"bz-next":NEXT,"bz-win":WIN,"bz-bigwin":BIGWIN,"bz-bump":BUMP});
+  BWK.lines({"bz-hi":HI,"bz-crunch":CRUNCH,"bz-shut":SHUT,"bz-open":OPEN,"bz-home":HOME,"bz-next":NEXT,"bz-win":WIN,"bz-bigwin":BIGWIN,"bz-bump":BUMP,"bz-lost":LOST,"bz-found":FOUND,"bz-shut2":SHUT2,"bz-open2":OPEN2});
+  var FR=["sunny","pip","mittens","rosie","pickle","coco","biscuit","hazel"];
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
   function face(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
@@ -178,10 +191,15 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
       cells.sort(function(){return Math.random()-.5;}); // spread: prefer cells far from each other and off the main route
       var onRoute={}; P.forEach(function(p){ onRoute[p[0]+","+p[1]]=1; });
       cells.sort(function(a,b){ return (onRoute[a[0]+","+a[1]]?1:0)-(onRoute[b[0]+","+b[1]]?1:0); });
-      for(var i=0;i<cells.length&&carrots.length<3;i++){ var c=cells[i]; if(carrots.every(function(o){ return Math.abs(o.x-c[0])+Math.abs(o.y-c[1])>=3; })) carrots.push({x:c[0],y:c[1],got:false}); } }
+      var want=G.m>0?4:3;
+      for(var i=0;i<cells.length&&carrots.length<want;i++){ var c=cells[i]; if(carrots.every(function(o){ return Math.abs(o.x-c[0])+Math.abs(o.y-c[1])>=3; })) carrots.push({x:c[0],y:c[1],got:false}); }
+      for(i=0;i<cells.length&&carrots.length<want;i++){ c=cells[i]; if(carrots.every(function(o){ return Math.abs(o.x-c[0])+Math.abs(o.y-c[1])>=2&&!(o.x===c[0]&&o.y===c[1]); })) carrots.push({x:c[0],y:c[1],got:false}); } }
+    /* Nov 18: in Big mazes 2 and 3, the last two spots are lost friends */
+    var friends=[]; if(big&&G.m>0){ if(!G.who) G.who=FR.slice().sort(function(){return Math.random()-.5;}); while(carrots.length>2){ var f=carrots.pop(); f.a=G.who.shift()||"sunny"; friends.push(f); } }
+    G.friends=friends; G.hist=[];
     G.mv=null; G.n=n; G.C=C; G.bx=0; G.by=0; G.end=end; G.carrots=carrots; G.trail={"0,0":1}; G.moving=false; G.q=[]; G.face=1; draw(); prog(); }
   function prog(){ var h=""; for(var i=0;i<3;i++) h+='<i class="'+(i<G.m||G.done?'on':'')+'"></i>';
-    if(G.carrots&&!G.done){ h+='<span class="cr">'+G.carrots.map(function(c){ return PH.carrot?'<img class="'+(c.got?'got':'')+'" src="'+PH.carrot+'" alt="">':'<span class="'+(c.got?'got':'')+'">🥕</span>'; }).join("")+'</span>'; }
+    if(G.carrots&&!G.done){ h+='<span class="cr">'+(G.friends||[]).map(function(f){ return '<img class="fr'+(f.got?' got':'')+'" src="sl/c-'+f.a+'.webp?v=1115a" alt="">'; }).join("")+G.carrots.map(function(c){ return PH.carrot?'<img class="'+(c.got?'got':'')+'" src="'+PH.carrot+'" alt="">':'<span class="'+(c.got?'got':'')+'">🥕</span>'; }).join("")+'</span>'; }
     $("prog").innerHTML=h; }
   function bp(l,tp){ return ";background-position:"+(-l)+"px "+(-tp)+"px"; }
   function draw(){ var w=$("wrap"), aw=w.clientWidth-16, ah=w.clientHeight-16, n=G.n, c=Math.floor(Math.min(aw,ah)/n); c=Math.max(34,Math.min(c,110));
@@ -192,10 +210,17 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
       if(o.e) h+='<div class="cell'+(G.trail[x+","+y]&&G.trail[(x+1)+","+y]?" trail":"")+'" style="left:'+(x*c+c-m-2)+'px;top:'+(y*c+m)+'px;width:'+(2*m+4)+'px;height:'+(c-2*m)+'px;border-radius:0'+bp(x*c+c-m-2,y*c+m)+'"></div>';
       if(o.s) h+='<div class="cell'+(G.trail[x+","+y]&&G.trail[x+","+(y+1)]?" trail":"")+'" style="left:'+(x*c+m)+'px;top:'+(y*c+c-m-2)+'px;width:'+(c-2*m)+'px;height:'+(2*m+4)+'px;border-radius:0'+bp(x*c+m,y*c+c-m-2)+'"></div>'; }
     G.carrots.forEach(function(k,i){ h+='<div class="it carrot'+(k.got?' gone':'')+'" data-k="'+i+'" style="left:'+(k.x*c+c*.15)+'px;top:'+(k.y*c+c*.15)+'px;width:'+(c*.7)+'px;height:'+(c*.7)+'px">'+img("carrot","🥕")+'</div>'; });
-    var shut=big&&G.carrots.some(function(k){return !k.got;});
+    G.friends.forEach(function(f,i){ if(!f.got) h+='<div class="it friend" data-f="'+i+'" style="left:'+(f.x*c+c*.12)+'px;top:'+(f.y*c+c*.08)+'px;width:'+(c*.76)+'px;height:'+(c*.76)+'px"><img src="sl/c-'+f.a+'.webp?v=1115a" alt="" draggable="false"></div>'; });
+    G.friends.forEach(function(f,i){ if(f.got) h+='<div class="fol" data-o="'+i+'" style="width:'+(c*.62)+'px;height:'+(c*.62)+'px"><img src="sl/c-'+f.a+'.webp?v=1115a" alt="" draggable="false"></div>'; });
+    var shut=shutNow();
     h+='<div class="it home'+(shut?' shut':'')+'" style="left:'+(G.end[0]*c+c*.04)+'px;top:'+(G.end[1]*c+c*.02)+'px;width:'+(c*.92)+'px;height:'+(c*.92)+'px">'+img("home","🏡")+'</div>';
     h+='<div class="bun" id="bun" style="width:'+(c*.8)+'px;height:'+(c*.8)+'px"><div class="b">'+img("bunny","🐰")+'</div></div>';
-    M.innerHTML=h; placeBun(true); }
+    M.innerHTML=h; placeBun(true); placeFol(true); }
+  function shutNow(){ return big&&(G.carrots.some(function(k){return !k.got;})||G.friends.some(function(f){return !f.got;})); }
+  /* friends who've joined walk the squares Bunny just left: friend j stands where she was j+1 hops ago */
+  function placeFol(now){ var c=G.c, got=G.friends.filter(function(f){return f.got;});
+    got.forEach(function(f,j){ var el=$("maze").querySelector('.fol[data-o="'+G.friends.indexOf(f)+'"]'); if(!el) return; var p=G.hist[G.hist.length-1-j]||[f.x,f.y];
+      if(now) el.style.transition="none"; el.style.transform="translate("+(p[0]*c+c*.19).toFixed(1)+"px,"+(p[1]*c+c*.22).toFixed(1)+"px)"; if(now){ void el.offsetWidth; el.style.transition=""; } }); }
   /* Bunny's place on screen: her square plus how far along she is in a glide (G.mv), with a little hop arc per square */
   function placeBun(){ var b=$("bun"), c=G.c; if(!b) return; var mv=G.mv, t=mv?mv.t:0, x=G.bx+(mv?mv.dx*t:0), y=G.by+(mv?mv.dy*t:0);
     b.style.transform="translate("+(x*c+c*.1).toFixed(1)+"px,"+(y*c+c*.06).toFixed(1)+"px)"; b.classList.toggle("l",G.face<0);
@@ -204,13 +229,16 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
   /* ---------- moving: Bunny glides toward the finger along the paths (rAF), hopping once per square ---------- */
   function open(x,y,dx,dy){ var o=G.C[y][x]; return dx===1?o.e:dx===-1?o.w:dy===1?o.s:o.n; }
   function step(dx,dy){ if(!G||G.done||G.busy) return false; if(!open(G.bx,G.by,dx,dy)){ return false; }
-    var shut=big&&G.carrots.some(function(k){return !k.got;}), nx=G.bx+dx, ny=G.by+dy;
+    var nx=G.bx+dx, ny=G.by+dy; G.hist.push([G.bx,G.by]); if(G.hist.length>12) G.hist.shift();
     G.bx=nx; G.by=ny; G.mv=null; if(dx) G.face=dx; placeBun();
     var key=nx+","+ny; if(!G.trail[key]){ G.trail[key]=1; trailAt(nx,ny,dx,dy); }
     G.carrots.forEach(function(k,i){ if(!k.got&&k.x===nx&&k.y===ny){ k.got=true; var el=$("maze").querySelector('.it.carrot[data-k="'+i+'"]'); el&&el.classList.add("gone"); SND.crunch(); prog();
-      var left=G.carrots.filter(function(k){return !k.got;}).length;
-      if(big&&!left){ SND.open(); say(OPEN,"bz-open"); var hm=$("maze").querySelector(".it.home"); hm&&hm.classList.remove("shut"); } else say(CRUNCH,"bz-crunch"); } });
-    if(nx===G.end[0]&&ny===G.end[1]){ if(shut){ if(!said.shut||Date.now()-said.shut>4000){ said.shut=Date.now(); say(SHUT,"bz-shut"); } } else arrive(); }  // the burrow can sit on a corridor: walking through it is fine
+      if(big&&!shutNow()){ openDoor(); } else say(CRUNCH,"bz-crunch"); } });
+    G.friends.forEach(function(f,i){ if(!f.got&&f.x===nx&&f.y===ny){ f.got=true; var el=$("maze").querySelector('.it.friend[data-f="'+i+'"]'); el&&el.classList.add("gone");
+      var fo=document.createElement("div"); fo.className="fol in"; fo.dataset.o=i; fo.style.width=fo.style.height=(G.c*.62)+"px"; fo.innerHTML='<img src="sl/c-'+f.a+'.webp?v=1115a" alt="" draggable="false">';
+      $("maze").appendChild(fo); SND.open(); prog(); if(!shutNow()) openDoor(); else say(FOUND,"bz-found"); } });
+    placeFol(false); var shut=shutNow();
+    if(nx===G.end[0]&&ny===G.end[1]){ if(shut){ if(!said.shut||Date.now()-said.shut>4000){ said.shut=Date.now(); if(G.friends.length) say(SHUT2,"bz-shut2"); else say(SHUT,"bz-shut"); } } else arrive(); }  // the burrow can sit on a corridor: walking through it is fine
     return true; }
   function trailAt(x,y,dx,dy){ var M=$("maze"), c=G.c, m=Math.round(c*.2); /* light up the new square and the gap behind it */
     var d=document.createElement("div"); d.className="cell trail"; d.style.cssText="left:"+(x*c+m)+"px;top:"+(y*c+m)+"px;width:"+(c-2*m)+"px;height:"+(c-2*m)+"px"+bp(x*c+m,y*c+m); M.insertBefore(d,M.querySelector(".it"));
@@ -218,13 +246,16 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
     if(dx) g.style.cssText+=";left:"+((dx>0?x:x+1)*c-m-2)+"px;top:"+(y*c+m)+"px;width:"+(2*m+4)+"px;height:"+(c-2*m)+"px"+bp((dx>0?x:x+1)*c-m-2,y*c+m);
     else g.style.cssText+=";left:"+(x*c+m)+"px;top:"+((dy>0?y:y+1)*c-m-2)+"px;width:"+(c-2*m)+"px;height:"+(2*m+4)+"px"+bp(x*c+m,(dy>0?y:y+1)*c-m-2);
     M.insertBefore(g,M.querySelector(".it")); }
+  function openDoor(){ SND.open(); if(G.friends.length) say(OPEN2,"bz-open2"); else say(OPEN,"bz-open"); var hm=$("maze").querySelector(".it.home"); hm&&hm.classList.remove("shut"); }
   function arrive(){ G.busy=true; var b=$("bun"); setTimeout(function(){ if(PH.sit) b.querySelector(".b").innerHTML='<img src="'+PH.sit+'" alt="">'; SND.open(); },250);
+    G.lastF=G.friends.map(function(f){ return f.a; }); G.allF=(G.allF||[]).concat(G.lastF);
+    $("maze").querySelectorAll(".fol").forEach(function(el){ el.style.transform+=" scale(.2)"; el.style.opacity="0"; });
     G.m++; prog();
     if(G.m>=3){ setTimeout(finish,1100); return; }
-    say(HOME,"bz-home"); setTimeout(function(){ G.busy=false; say(NEXT,"bz-next"); newMaze(); },2000); }
+    say(HOME,"bz-home"); setTimeout(function(){ G.busy=false; if(big) say(LOST,"bz-lost"); else say(NEXT,"bz-next"); newMaze(); },2000); }
   function finish(){ G.done=true; S.games++; save(); SND.win(); BWK.played&&BWK.played("maze"); prog();
     say(big?BIGWIN:WIN,big?"bz-bigwin":"bz-win");
-    $("maze").innerHTML='<div class="done">'+(PH.sit?'<img src="'+PH.sit+'" alt="">':'')+'<b>★★★</b><p>Bunny is home!</p></div>'; bar(); }
+    $("maze").innerHTML='<div class="done">'+(G.allF&&G.allF.length?'<div class="row">'+G.allF.slice(0,2).map(function(a){ return '<img class="f" src="sl/c-'+a+'.webp?v=1115a" alt="">'; }).join("")+(PH.sit?'<img src="'+PH.sit+'" alt="">':'')+G.allF.slice(2).map(function(a){ return '<img class="f" src="sl/c-'+a+'.webp?v=1115a" alt="">'; }).join("")+'</div>':(PH.sit?'<img src="'+PH.sit+'" alt="">':''))+'<b>★★★</b><p>'+(G.allF&&G.allF.length?'Everyone is home!':'Bunny is home!')+'</p></div>'; bar(); }
 
   var drag=false, bumpT=0, raf=0, last=0;  // speed: 4.2 squares a second (4.6 for Big Moonlet)
   function bump(){ if(Date.now()-bumpT>900){ bumpT=Date.now(); SND.bump(); G.bumps=(G.bumps||0)+1; if(G.bumps===3) say(BUMP,"bz-bump"); } }
@@ -267,8 +298,8 @@ html.bzp .cell{background:url("bz/path.webp?v=1116a") center/180px repeat}
 
   newGame();
   window.BZO={newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); }, step:step,
-    state:function(){ return G&&{m:G.m,n:G.n,x:G.bx,y:G.by,done:G.done,busy:!!G.busy,carrots:G.carrots.map(function(k){return k.got;}),c:G.c}; },
-    solve:function(){ /* walks to each carrot, then home (tests) */ var pts=G.carrots.filter(function(k){return !k.got;}).map(function(k){return [k.x,k.y];}).concat([G.end]), route=[], cur=[G.bx,G.by];
+    state:function(){ return G&&{m:G.m,n:G.n,x:G.bx,y:G.by,done:G.done,busy:!!G.busy,carrots:G.carrots.map(function(k){return k.got;}),friends:G.friends.map(function(f){return f.a+":"+f.got;}),c:G.c}; },
+    solve:function(){ /* walks to each carrot, then home (tests) */ var pts=G.carrots.concat(G.friends).filter(function(k){return !k.got;}).map(function(k){return [k.x,k.y];}).concat([G.end]), route=[], cur=[G.bx,G.by];
       pts.forEach(function(p){ var pp=path(G.C,G.n,cur,p); route=route.concat(pp.slice(1)); cur=p; });
       return route.map(function(p,i){ var q=i?route[i-1]:[G.bx,G.by]; return [p[0]-q[0],p[1]-q[1]]; }); }};
 })();

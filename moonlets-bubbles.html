@@ -11,6 +11,7 @@
 /* ==========================================================================
    BrainWhim · Moonlets: Bubble Pop (Nov 16, 2026), a Moon Games tapping game for the youngest. A sunny lavender meadow.
    Bubbles float up with the 13 photo animals inside (sl/c-*.webp). Finn names one ("Pop the puppies!"); pop those.
+   Nov 18, Big Moonlet: three kinds of rounds: animals (picture hidden), a color (bubbles tinted, .tn; COLS), then the numbers 1-10 in order (.nm; G.want).
    Popping another one is fine (it just wobbles). 3 animals a game, 6 pops each. Big Moonlet: faster, smaller,
    more kinds at once, 8 pops each, and the target changes every round with no picture shown, only Finn's word.
    Judy's photos: bp/bg, bp/bubble (on black → see-through). Saved: bwk.bubbles {games, pops}. Lines bp-*. Test hook BPO.
@@ -43,6 +44,17 @@ html.bpbg .bg{background:#b9c9ec url("bp/bg-sm.jpg?v=1116a") center 60%/cover}
   background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95) 0 6%,rgba(255,255,255,0) 12%),
     radial-gradient(circle at 50% 50%,rgba(255,255,255,0) 58%,rgba(190,220,255,.35) 68%,rgba(255,190,240,.55) 80%,rgba(255,255,255,.75) 92%,rgba(255,255,255,0) 100%)}
 html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-repeat}
+/* Nov 18, Big Moonlet: colored bubbles (round 2) and number bubbles (round 3) */
+.bb .tn{position:absolute;inset:1%;z-index:1;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95) 0 5%,rgba(255,255,255,0) 11%),
+    radial-gradient(circle at 50% 52%,rgba(var(--t),.16) 0 46%,rgba(var(--t),.92) 64%,rgb(var(--t)) 80%,rgba(var(--t),.85) 92%,rgba(var(--t),0) 100%);
+  box-shadow:0 0 calc(var(--d)*.08) rgba(var(--t),.6)}
+.bb .nm,.pa .nm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-family:var(--k-font);font-weight:700;line-height:1;
+  font-size:calc(var(--d)*.5);color:#fff;-webkit-text-stroke:calc(var(--d)*.03) #5a3aa0;paint-order:stroke fill;text-shadow:0 3px 6px rgba(60,30,120,.55)}
+.bb.wob .nm{animation:wob .45s ease-in-out}
+.goal .who.num{font-weight:700;font-size:24px;color:#5a3aa0}
+.done .row .cb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 8%,rgba(var(--t),.85) 30%,rgba(var(--t),1) 70%);box-shadow:0 4px 6px rgba(0,0,0,.3)}
+.done .row .nb{height:64px;padding:0 12px;border-radius:32px;display:flex;align-items:center;font-weight:700;font-size:28px;color:#5a3aa0;background:rgba(255,255,255,.85);box-shadow:0 4px 6px rgba(0,0,0,.3)}
 .bb.wob .an{animation:wob .45s ease-in-out}
 @keyframes wob{25%{transform:rotate(-12deg) scale(.95)}75%{transform:rotate(12deg) scale(.95)}}
 .drop{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;pointer-events:none;
@@ -103,6 +115,11 @@ html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-re
   var HI="Let's play Bubble Pop! Pop the bubbles I tell you!", OOPS="Oops, not that one! Find the right ones!", NEXT="Great popping! Now…", WIN="Pop, pop, hooray! You popped them all!", BIGWIN="Wow! Big Moonlet bubble popper!", GO="Tap Go to play!";
   var LN={"bp-hi":HI,"bp-oops":OOPS,"bp-next":NEXT,"bp-win":WIN,"bp-bigwin":BIGWIN,"bp-go":GO};
   AN.forEach(function(a){ LN["bp-t-"+a.kind]="Pop the "+a.pl+"!"; });
+  /* Nov 18, Big Moonlet: round 2 is a color, round 3 is the numbers in order */
+  var COLS=[["red","222,22,34"],["orange","255,128,0"],["yellow","255,212,0"],["green","28,168,58"],["blue","28,98,235"],["purple","138,58,214"]]
+    .map(function(c){ return {id:c[0],rgb:c[1]}; });
+  var NUMS="Now pop the numbers in order, from one to ten!", NUMHELP="Find the next number!";
+  COLS.forEach(function(c){ LN["bp-c-"+c.id]="Pop the "+c.id+" bubbles!"; }); LN["bp-num"]=NUMS; LN["bp-numhelp"]=NUMHELP;
   BWK.lines(LN);
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
@@ -162,15 +179,21 @@ html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-re
   function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
   function cfg(){ return big?{need:8, speed:.17, every:.55, kinds:3, size:.2, max:9}:{need:6, speed:.11, every:.85, kinds:2, size:.27, max:6}; }
   function newGame(){ stop(); var picks=shuffle(AN.slice()).slice(0,3);
-    G={picks:picks, r:0, got:0, bubbles:[], t:0, next:0, on:false, done:false, misses:0, c:cfg()};
+    G={picks:picks, r:0, got:0, bubbles:[], t:0, next:0, on:false, done:false, misses:0, c:cfg(), col:shuffle(COLS.slice())[0], want:1};
     $("field").innerHTML=""; goal(); bar(); }
   function go(){ if(!G||G.done) newGame(); G.on=true; bar(); startRound(); last=performance.now(); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
-  function startRound(){ if(!G.pause&&G.got) return; var a=G.picks[G.r]; G.pause=false; G.got=0; G.next=.6; goal(); say("Pop the "+a.pl+"!","bp-t-"+a.kind); }
+  /* the round's kind: Little is always animals; Big: animals, then a color, then the numbers */
+  function kind(){ return big?["an","col","num"][Math.min(G.r,2)]:"an"; }
+  function need(){ return kind()==="num"?10:G.c.need; }
+  function startRound(){ if(!G.pause&&G.got) return; var a=G.picks[G.r]; G.pause=false; G.got=0; G.want=1; G.next=.6; goal();
+    var k=kind(); if(k==="col") say("Pop the "+G.col.id+" bubbles!","bp-c-"+G.col.id); else if(k==="num") say(NUMS,"bp-num"); else say("Pop the "+a.pl+"!","bp-t-"+a.kind); }
   function stop(){ cancelAnimationFrame(raf); raf=0; if(G) G.on=false; }
-  function goal(){ if(!G) return; var a=G.picks[Math.min(G.r,2)], h='<span class="who'+(big&&G.on?' hide':'')+'"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="'+a.kind+'"></span>';
-    for(var i=0;i<G.c.need;i++) h+='<i class="'+(i<G.got?'on':'')+'"></i>'; $("goal").innerHTML=h; }
+  function goal(){ if(!G) return; var a=G.picks[Math.min(G.r,2)], k=kind(), h='<span class="who'+(big&&G.on?' hide':'')+'"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="'+a.kind+'"></span>';
+    if(G.on&&k==="num") h='<span class="who num">'+Math.min(G.want,10)+'</span>';
+    for(var i=0;i<need();i++) h+='<i class="'+(i<G.got?'on':'')+'"></i>'; $("goal").innerHTML=h; }
   function spawn(){ var f=$("field"), W=f.clientWidth, H=f.clientHeight, c=G.c, d=Math.round(Math.max(76,Math.min(150,Math.min(W,H)*c.size)));
     if(G.bubbles.length>=c.max) return;
+    var k=kind(); if(k!=="an") return spawn2(k,f,W,H,c,d);
     var tgt=G.picks[G.r], want=G.bubbles.filter(function(b){return b.a===tgt;}).length;
     var a=(want<2||Math.random()<.45)?tgt:(function(){ var o=AN.filter(function(x){ return x!==tgt; }); return o[Math.floor(Math.random()*Math.min(o.length,c.kinds+3))]; })();
     // keep the other kinds to a small, fixed set per round so the choice stays simple
@@ -179,6 +202,19 @@ html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-re
     var el=document.createElement("button"); el.className="bb"; el.style.setProperty("--d",d+"px"); el.setAttribute("aria-label",a.kind+" bubble");
     el.innerHTML='<span class="an"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="" draggable="false"></span><span class="sk"></span>';
     f.appendChild(el); var b={el:el,a:a,x:x,y:H+d/2,d:d,ph:Math.random()*6.28,v:c.speed*H*(.85+Math.random()*.3)}; el._b=b; G.bubbles.push(b); place(b); SND.blip(); }
+  /* Big rounds 2 and 3 */
+  function spawn2(k,f,W,H,c,d){ var a=AN[Math.floor(Math.random()*AN.length)], col=null, n=0, inner;
+    if(k==="col"){ var want=G.bubbles.filter(function(b){return b.c===G.col;}).length;
+      if(want<2||Math.random()<.45) col=G.col; else { var o=G.ocols||(G.ocols=shuffle(COLS.filter(function(x){return x!==G.col;})).slice(0,c.kinds)); col=o[Math.floor(Math.random()*o.length)]; }
+      inner='<span class="tn" style="--t:'+col.rgb+'"></span><span class="an"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="" draggable="false"></span>'; }
+    else { var have=G.bubbles.map(function(b){ return b.n; }), opts=[];
+      for(var q=G.want;q<=Math.min(10,G.want+3);q++) if(have.indexOf(q)<0) opts.push(q);
+      if(!opts.length) return; n=opts.indexOf(G.want)>=0&&(Math.random()<.5||have.length>=2)?G.want:opts[Math.floor(Math.random()*opts.length)];
+      d=Math.round(d*1.08); inner='<span class="nm">'+n+'</span>'; }
+    var x, tries=0; do{ x=d/2+Math.random()*(W-d); tries++; } while(tries<8&&G.bubbles.some(function(b){ return Math.abs(b.x-x)<d*.9&&b.y>H-d*1.4; }));
+    var el=document.createElement("button"); el.className="bb"; el.style.setProperty("--d",d+"px"); el.setAttribute("aria-label",col?col.id+" bubble":"number "+n+" bubble");
+    el.innerHTML=col?'<span class="an"><img src="sl/c-'+a.id+'.webp?v=1115a" alt="" draggable="false"></span><span class="sk"></span><span class="tn" style="--t:'+col.rgb+'"></span>':inner+'<span class="sk"></span>'; f.appendChild(el);
+    var b={el:el,a:a,c:col,n:n,x:x,y:H+d/2,d:d,ph:Math.random()*6.28,v:c.speed*H*(k==="num"?.72:1)*(.85+Math.random()*.3)}; el._b=b; G.bubbles.push(b); place(b); SND.blip(); }
   function place(b){ b.el.style.transform="translate("+(b.x+Math.sin(b.ph)*b.d*.12).toFixed(1)+"px,"+b.y.toFixed(1)+"px)"; }
   function loop(now){ if(!G||!G.on) return; var dt=Math.min(.05,(now-last)/1000); last=now; G.t+=dt;
     if(!G.pause) G.next-=dt; if(G.next<=0){ spawn(); G.next=G.c.every*(.7+Math.random()*.6); }
@@ -186,20 +222,22 @@ html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-re
     for(var i=G.bubbles.length-1;i>=0;i--){ var b=G.bubbles[i]; b.y-=b.v*dt; b.ph+=dt*1.6; place(b); if(b.y<-b.d/2){ b.el.remove(); G.bubbles.splice(i,1); } }
     raf=requestAnimationFrame(loop); }
   function popAt(b){ var f=$("field"), i=G.bubbles.indexOf(b); if(i<0||G.pause) return;
-    var tgt=G.picks[G.r];
-    if(b.a!==tgt){ G.misses++; b.el.classList.remove("wob"); void b.el.offsetWidth; b.el.classList.add("wob"); SND.nope(); if(!said.oops&&G.misses>=2){ said.oops=1; say(OOPS,"bp-oops"); } return; }
-    G.bubbles.splice(i,1); b.el.remove(); G.got++; S.pops++; SND.pop(G.got);
+    var tgt=G.picks[G.r], rk=kind(), ok=rk==="col"?b.c===G.col:rk==="num"?b.n===G.want:b.a===tgt;
+    if(!ok){ G.misses++; b.el.classList.remove("wob"); void b.el.offsetWidth; b.el.classList.add("wob"); SND.nope(); if(!said.oops&&G.misses>=2){ said.oops=1; if(rk==="num") say(NUMHELP,"bp-numhelp"); else say(OOPS,"bp-oops"); } return; }
+    G.bubbles.splice(i,1); b.el.remove(); G.got++; if(rk==="num") G.want++; S.pops++; SND.pop(G.got);
     var x=b.x+Math.sin(b.ph)*b.d*.12, y=b.y;
     for(var k=0;k<10;k++){ var dd=document.createElement("i"), an=k/10*6.28; dd.className="drop"; dd.style.left=x+"px"; dd.style.top=y+"px";
       dd.style.setProperty("--dx",(Math.cos(an)*b.d*.6).toFixed(0)+"px"); dd.style.setProperty("--dy",(Math.sin(an)*b.d*.6).toFixed(0)+"px"); f.appendChild(dd); setTimeout(dd.remove.bind(dd),600); }
-    var pa=document.createElement("span"); pa.className="pa"; pa.style.left=x+"px"; pa.style.top=y+"px"; pa.style.setProperty("--d",b.d+"px"); pa.innerHTML='<img src="sl/c-'+b.a.id+'.webp?v=1115a" alt="">'; f.appendChild(pa); setTimeout(pa.remove.bind(pa),950);
+    var pa=document.createElement("span"); pa.className="pa"; pa.style.left=x+"px"; pa.style.top=y+"px"; pa.style.setProperty("--d",b.d+"px"); pa.innerHTML=rk==="num"?'<span class="nm">'+b.n+'</span>':'<img src="sl/c-'+b.a.id+'.webp?v=1115a" alt="">'; f.appendChild(pa); setTimeout(pa.remove.bind(pa),950);
     goal();
-    if(G.got>=G.c.need){ G.r++; G.others=null; G.bubbles.forEach(function(x){ x.el.remove(); }); G.bubbles=[];
+    if(G.got>=need()){ G.r++; G.others=null; G.ocols=null; G.bubbles.forEach(function(x){ x.el.remove(); }); G.bubbles=[];
       if(G.r>=3){ finish(); return; }
       G.pause=true; G.next=1; goal(); say(NEXT,"bp-next",{onend:function(){ if(G&&G.on&&G.pause) startRound(); }}); setTimeout(function(){ if(G&&G.on&&G.pause) startRound(); },2600); } }
   function finish(){ stop(); G.done=true; S.games++; save(); SND.win(); BWK.played&&BWK.played("bubbles");
     say(big?BIGWIN:WIN,big?"bp-bigwin":"bp-win");
-    $("field").innerHTML='<div class="done"><b>★★★</b><div class="row">'+G.picks.map(function(a){ return '<img src="sl/c-'+a.id+'.webp?v=1115a" alt="'+a.kind+'">'; }).join("")+'</div><p>'+(G.c.need*3)+' bubbles popped!</p></div>';
+    var row=big?'<img src="sl/c-'+G.picks[0].id+'.webp?v=1115a" alt="'+G.picks[0].kind+'"><span class="cb" style="--t:'+G.col.rgb+'"></span><span class="nb">1-10</span>':
+      G.picks.map(function(a){ return '<img src="sl/c-'+a.id+'.webp?v=1115a" alt="'+a.kind+'">'; }).join("");
+    $("field").innerHTML='<div class="done"><b>★★★</b><div class="row">'+row+'</div><p>'+(big?G.c.need*2+10:G.c.need*3)+' bubbles popped!</p></div>';
     $("goal").innerHTML=""; bar(); }
   $("field").addEventListener("pointerdown",function(e){ var el=e.target.closest(".bb"); if(el&&G&&G.on){ e.preventDefault(); popAt(el._b); } });
 
@@ -218,9 +256,9 @@ html.bpb .bb .sk{background:url("bp/bubble.webp?v=1116a") center/100% 100% no-re
 
   newGame();
   window.BPO={go:go, newGame:newGame, big:function(on){ big=!!on; BWK.setBig(big); newGame(); },
-    state:function(){ return G&&{on:G.on,done:G.done,r:G.r,got:G.got,need:G.c.need,n:G.bubbles.length,target:G.picks[Math.min(G.r,2)].kind,misses:G.misses}; },
-    popTarget:function(){ var t=G.picks[G.r], b=G.bubbles.filter(function(x){return x.a===t;})[0]; if(b){ popAt(b); return true; } return false; },
-    popWrong:function(){ var t=G.picks[G.r], b=G.bubbles.filter(function(x){return x.a!==t;})[0]; if(b){ popAt(b); return true; } return false; }};
+    state:function(){ return G&&{on:G.on,done:G.done,r:G.r,got:G.got,need:G.c.need,n:G.bubbles.length,target:G.picks[Math.min(G.r,2)].kind,kind:kind(),col:G.col.id,want:G.want,misses:G.misses}; },
+    popTarget:function(){ var t=G.picks[G.r], k=kind(), b=G.bubbles.filter(function(x){ return k==="col"?x.c===G.col:k==="num"?x.n===G.want:x.a===t; })[0]; if(b){ popAt(b); return true; } return false; },
+    popWrong:function(){ var t=G.picks[G.r], k=kind(), b=G.bubbles.filter(function(x){ return k==="col"?x.c!==G.col:k==="num"?x.n!==G.want:x.a!==t; })[0]; if(b){ popAt(b); return true; } return false; }};
 })();
 </script>
 </body>

@@ -19,6 +19,9 @@
    Nov 10 night: a white pot and an eraser (Judy's ideas). Big Moonlet (BWK.big, the chip at the end of the picture row):
    only five paints (red, yellow, blue, white, black) and a mixing bowl: tap the bowl, then two paints; Finn names the new
    color and it goes on a shelf of five "my colors" (bwk.easel.mine). A picture finished in Big Moonlet gets a ☾ (bdone).
+   Nov 18: "Paint this" challenges (the 🎯 chip): one of the six pictures with some parts already painted; each part left to paint
+   shows a dot of its color (the dot goes when the part matches). Little: 4-6 parts, pot colors (CHL). Big Moonlet: the whole picture,
+   with 2-4 colors that must be mixed in the bowl (CHB). A match: chord, ★/☾ on the chip; the chip again = the next one (save.ch).
    ========================================================================== */
 .bg{position:fixed;inset:-12px;z-index:-1;background:url("kids-moonlets-sm.jpg") center/cover;filter:blur(2px) brightness(.5)}
 .ez{height:100svh;min-height:500px;display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -42,6 +45,8 @@
 .pic.on{background:linear-gradient(180deg,#f6efff,#d9c4ff);border-color:#f3eaff;box-shadow:0 0 0 3px rgba(200,170,255,.4),0 6px 14px rgba(0,0,0,.4)}
 .pic.on span{color:#2c1b4f}
 .pic .got{position:absolute;top:3px;right:7px;font-size:12px;color:#ffd35c;text-shadow:0 0 6px rgba(255,200,80,.8)}
+.r.cdot{pointer-events:none}
+.cdot{pointer-events:none}
 .pic .gotb{position:absolute;top:3px;left:8px;font-size:12px;color:#e6d6ff;text-shadow:0 0 6px rgba(200,170,255,.9)}
 /* the Big Moonlet chip (same look as the Moon Piano's) */
 .pic.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45);gap:5px}
@@ -134,6 +139,8 @@
 @media (max-height:440px){.pic span{display:none}.pic{height:44px;min-width:48px}}
 @media (max-width:600px) and (max-height:560px){.pic{min-width:0;height:46px}.tray{--ps:min(48px,12.4vw)}}
 @media (min-width:601px) and (max-aspect-ratio:4/5){.tray{--ps:min(74px,10.5vw)}}
+/* Nov 18: nine picture chips must fit an upright tablet without scrolling */
+@media (min-width:601px) and (max-width:1100px) and (max-aspect-ratio:4/5){.pics{width:100%;justify-content:center}.pic{flex:1 1 0;min-width:0;max-width:112px;padding:6px 2px}.pic span{font-size:12.5px;white-space:normal;text-align:center;line-height:1.1}}
 @media (prefers-reduced-motion:reduce){.perch svg{animation:none}.r{transition:none}}
 /* the photo look (Nov 15): html.ezp once the ez/ pictures have loaded; a bright, sunny art corner (not every Moonlets room is dark) */
 .ezp .bg{background-image:url("ez/ez-bg-sm.jpg?v=1115a");background-position:50% 35%;filter:blur(1.2px) brightness(.95) saturate(1.05)}
@@ -174,6 +181,8 @@
   var YAY="You painted the whole picture! It's so pretty!";
   var DOODLE="Finger painting! Draw anything you like.";
   var UNDO="Oops! Let's take that back.", CLEAR="A fresh clean page!";
+  var CHHI="Paint this! Paint each part the color of its dot.", CHBIG="Paint this, Big Moonlet! Mix the colors you need to match the dots.",
+      CHYAY="A perfect match! Tap Paint this for another one.";
   var BIGHI="Big Moonlet painting! Only five paints. Tap the bowl to mix two colors and make new ones.";
   var MIXGO="Pick two paints to mix.", NEWC="A brand new color!", ERASE="The eraser! Rub or tap to clean it off.";
   BWK.lines({"ez-hi":HI});
@@ -357,8 +366,22 @@
       circ(50,50,28),"M296 290 a16 16 0 0 1 4 -30 a22 22 0 0 1 40 -4 a18 18 0 0 1 12 34 Z"],
       lines:["M195 103 q-10 -24 -26 -28","M205 103 q10 -24 26 -28"], dots:[[169,75,4],[231,75,4]]}];
 
+  /* Nov 18: "Paint this" challenges: a target color for every part; o = the parts left to paint (Big: every part that isn't white) */
+  var CHL=[{p:"flower",c:"lightblue,green,yellow,green,green,green,pink,pink,pink,pink,pink,pink,yellow",o:[2,3,6,7,8,12]},
+    {p:"house",c:"lightblue,green,yellow,red,yellow,red,blue,lightblue,lightblue,brown,brown,green",o:[4,5,6,11]},
+    {p:"fish",c:"lightblue,yellow,green,green,orange,orange,orange,orange,white,white,white,white,white",o:[2,4,5,7]},
+    {p:"butterfly",c:"lightblue,green,purple,purple,pink,pink,yellow,yellow,yellow,yellow,brown,brown,yellow,white",o:[2,3,4,5,10]},
+    {p:"moon",c:"blue,green,yellow,white,yellow,yellow,yellow,yellow",o:[1,2,4,5]},
+    {p:"rocket",c:"blue,purple,orange,yellow,yellow,yellow,orange,red,red,white,red,lightblue,red",o:[1,6,7,8,10]}];
+  var CHB=[{p:"moon",c:"darkblue,green,lightyellow,gray,yellow,yellow,yellow,yellow"},
+    {p:"flower",c:"lightblue,green,yellow,green,green,green,purple,purple,purple,purple,purple,purple,orange"},
+    {p:"fish",c:"blue,yellow,green,green,orange,black,black,orange,white,white,white,white,white"},
+    {p:"house",c:"lightblue,green,yellow,red,pink,red,brown,yellow,yellow,brown,brown,green"},
+    {p:"rocket",c:"black,purple,orange,yellow,yellow,yellow,orange,red,red,white,red,lightblue,red"},
+    {p:"butterfly",c:"lightblue,green,orange,orange,orange,orange,black,black,black,black,black,black,yellow,white"}];
   var art=$("art"), paper=$("paper"), save=BWK.store.get("easel",{pics:{},done:{}});
   if(!save.pics) save.pics={}; if(!save.done) save.done={}; if(!save.bdone) save.bdone={}; if(!Array.isArray(save.mine)) save.mine=[];
+  if(!save.ch||typeof save.ch!=="object") save.ch={L:0,B:0,on:null,won:{}};
   function persist(){ try{ BWK.store.set("easel",save); }catch(_){ } }
   var cur=null, shapes=[], undo=[];
   function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
@@ -375,6 +398,40 @@
     art.appendChild(el("g",{"class":"splash",id:"spl"}));
   }
   function setFill(i,c){ var f=save.pics[cur.id]||(save.pics[cur.id]={}); if(c===PAPER) delete f[i]; else f[i]=c; shapes[i].setAttribute("fill",c); }
+  /* ---------- "Paint this" (Nov 18) ---------- */
+  var PT={};
+  function chOpen(){ var k=big?"B":"L", set=big?CHB:CHL, idx=save.ch[k]%set.length, C=set[idx], base=PICS.filter(function(p){ return p.id===C.p; })[0];
+    var tgt=C.c.split(",").map(function(n){ return COL[n].hex.toLowerCase(); }), open=C.o||tgt.map(function(h,i){ return h==="#ffffff"?-1:i; }).filter(function(i){ return i>=0; });
+    cur={id:"ch", ch:{k:k,idx:idx,tgt:tgt,open:open,won:false}, base:base, parts:base.parts, lines:base.lines, dots:base.dots};
+    if(save.ch.on!==k+idx||!save.pics.ch){ var f=save.pics.ch={}; tgt.forEach(function(h,i){ if(open.indexOf(i)<0) f[i]=h; }); save.ch.on=k+idx; persist(); }
+    draw(cur); chDots(); }
+  function chLeft(){ var f=save.pics.ch||{}; return cur.ch.open.filter(function(i){ return String(f[i]||"").toLowerCase()!==cur.ch.tgt[i]; }); }
+  /* a spot well inside the part for its dot: sample the part's box, keep the inside point farthest from the outside */
+  function inner(i){ var key=cur.base.id+i; if(PT[key]) return PT[key]; var e=shapes[i], b=e.getBBox(), N=16, ins=[], out=[], t0=typeof cur.parts[i]!=="string"&&cur.parts[i].t;
+    /* the page edge counts as outside (ground and hills run past it) */
+    if(!t0){ var x0=Math.max(b.x,0), y0=Math.max(b.y,0); b={x:x0-6,y:y0-6,width:Math.min(b.x+b.width,400)-x0+12,height:Math.min(b.y+b.height,300)-y0+12}; }
+    for(var a=0;a<=N;a++) for(var c=0;c<=N;c++){ var x=b.x+b.width*a/N, y=b.y+b.height*c/N, pt=new DOMPoint(x,y), inside=false;
+      try{ inside=e.isPointInFill(pt); }catch(_){ inside=true; } if(!t0&&(x<8||x>392||y<8||y>292)) inside=false; (inside?ins:out).push([x,y]); }
+    var best=[b.x+b.width/2,b.y+b.height/2], bd=-1;
+    ins.forEach(function(q){ var d=1e9; out.forEach(function(o){ var dd=(q[0]-o[0])*(q[0]-o[0])+(q[1]-o[1])*(q[1]-o[1]); if(dd<d) d=dd; });
+      var cxq=q[0]-(b.x+b.width/2), cyq=q[1]-(b.y+b.height/2); d=Math.sqrt(d)-.06*Math.sqrt(cxq*cxq+cyq*cyq);  /* ties: nearer the middle */
+      if(d>bd){ bd=d; best=q; } });
+    if(i===0) best=[200,24];  /* the sky: top middle */
+    return (PT[key]=best); }
+  function chDots(){ [].forEach.call(art.querySelectorAll(".cdot"),function(d){ d.remove(); }); if(!cur||!cur.ch) return;
+    var g=art.querySelector(".ln"), f=save.pics.ch||{};
+    chLeft().forEach(function(i){ var q=inner(i), o=cur.parts[i], t=typeof o==="string"?"":o.t||"", h=cur.ch.tgt[i];
+      var d=el("g",{"class":"cdot"}); if(t) d.setAttribute("transform",t);
+      d.appendChild(el("circle",{cx:q[0],cy:q[1],r:"9.5",fill:"#fff",stroke:"#3a2f4a","stroke-width":"2"}));
+      d.appendChild(el("circle",{cx:q[0],cy:q[1],r:"6.2",fill:h,stroke:h==="#ffffff"?"#bbb":"none","stroke-width":"1"}));
+      art.insertBefore(d,g.nextSibling); }); }
+  function chCheck(){ chDots(); if(cur.ch.won||chLeft().length) return; cur.ch.won=true; var k=cur.ch.k;
+    save.ch[k]=(save.ch[k]|0)+1; save.ch.on=null; save.ch.won[k]=(save.ch.won[k]|0)+1; persist();
+    var c=picsEl.querySelector('[data-id="ch"]'), cls=k==="B"?"gotb":"got";
+    if(c && !c.querySelector("."+cls)) c.insertAdjacentHTML("beforeend",'<i class="'+cls+'" aria-hidden="true">'+(k==="B"?"☾":"★")+'</i>');
+    setTimeout(function(){ chord(); var r=paper.getBoundingClientRect();
+      for(var q=0;q<7;q++) (function(q){ setTimeout(function(){ sparkleAt(r.left+r.width*(.12+q*.13), r.top+r.height*(.3+(q%3)*.2)); },q*90); })(q); },300);
+    setTimeout(function(){ say(CHYAY,"ez-chyay"); },900); }
   function painted(){ var f=save.pics[cur.id]||{}; return Object.keys(f).length; }
   function splash(x,y,c){ var s=$("spl"); if(!s) return; var r=el("circle",{cx:x,cy:y,r:46,fill:"none",stroke:c,"stroke-width":"5",opacity:"0"});
     r.style.transformBox="fill-box"; r.style.transformOrigin="center"; s.appendChild(r);
@@ -393,7 +450,7 @@
     var i=+t.dataset.r, prev=t.getAttribute("fill"), col=erasing?PAPER:ink; if(prev===col){ hopFinn(); return; }
     undo.push([[i,prev]]); var was=painted(); setFill(i,col); persist(); tools();
     var p=toSvg(e); splash(p.x,p.y,erasing?"#d9c4ff":ink); if(erasing) swish(); else plop(potIndex()); hopFinn(); sparkleAt(e.clientX,e.clientY);
-    if(painted()===shapes.length && was<shapes.length) finish(); });
+    if(cur.ch) chCheck(); else if(painted()===shapes.length && was<shapes.length) finish(); });
   function potIndex(){ for(var i=0;i<POTS.length;i++) if(POTS[i][2]===ink) return i; return 0; }
   function finish(){ var key=big?"bdone":"done", cls=big?"gotb":"got"; save[key][cur.id]=(save[key][cur.id]||0)+1; persist();
     var c=picsEl.querySelector('[data-id="'+cur.id+'"]');
@@ -428,10 +485,10 @@
   function tools(){ $("bUndo").disabled=!undo.length; $("bClear").disabled=cur?painted()===0:blank(); }
   function doUndo(){ if(!undo.length) return; var u=undo.pop(); BWK.sfx("close"); say(UNDO,"ez-undo");
     if(u==="s"||u==="c"){ strokes.pop(); keepDoodle(); redraw(); }
-    else{ u.forEach(function(x){ setFill(x[0],x[1]); }); persist(); }
+    else{ u.forEach(function(x){ setFill(x[0],x[1]); }); persist(); if(cur&&cur.ch) chDots(); }
     tools(); };
   function doClear(){ BWK.sfx("whoosh"); say(CLEAR,"ez-clear");
-    if(cur){ var f=save.pics[cur.id]||{}, batch=[]; Object.keys(f).forEach(function(i){ batch.push([+i,f[i]]); setFill(+i,PAPER); });
+    if(cur){ var f=save.pics[cur.id]||{}, batch=[]; Object.keys(f).forEach(function(i){ if(cur.ch&&cur.ch.open.indexOf(+i)<0) return; batch.push([+i,f[i]]); setFill(+i,PAPER); }); if(cur.ch) chDots();
       if(batch.length) undo.push(batch); persist(); }
     else if(!blank()){ strokes.push({clear:1}); undo.push("c"); keepDoodle(); redraw(); }
     tools(); };
@@ -441,21 +498,24 @@
   function chip(id,em,name){ var b=document.createElement("button"); b.className="pic"; b.dataset.id=id; b.setAttribute("aria-label",name);
     b.innerHTML='<em aria-hidden="true">'+em+'</em><span>'+name+'</span>'+(save.done[id]?'<i class="got" aria-hidden="true">★</i>':'')+(save.bdone[id]?'<i class="gotb" aria-hidden="true">☾</i>':''); picsEl.appendChild(b); return b; }
   PICS.forEach(function(p){ chip(p.id,p.em,p.name); });
+  chip("ch","🎯","Paint this");
   chip("doodle","🖐️","Finger paint");
   var bigB=document.createElement("button"); bigB.className="pic bigc"; bigB.dataset.id="big"; bigB.setAttribute("aria-label","Big Moonlet");
   bigB.innerHTML='<i class="sw" aria-hidden="true"></i><span>Big Moonlet</span><b aria-hidden="true">Big</b>'; picsEl.appendChild(bigB);
   function bigShow(){ bigB.setAttribute("aria-pressed",big?"true":"false"); }
   bigShow();
   function toggleBig(){ big=!big; BWK.setBig(big); bigShow(); BWK.sfx("tap"); erasing=false; lastMix=null; buildTray();
+    if(cur&&cur.ch){ open("ch"); if(big) say(BWK.BIG_LINES.on,"bg-on",function(){ say(CHBIG,"ez-chbig"); }); else say(BWK.BIG_LINES.off,"bg-off",function(){ say(CHHI,"ez-chhi"); }); return; }
     if(big) say(BWK.BIG_LINES.on,"bg-on",function(){ say(BIGHI,"ez-bighi"); }); else say(BWK.BIG_LINES.off,"bg-off"); }
   function open(id){ undo=[]; [].forEach.call(picsEl.children,function(x){ x.classList.toggle("on",x.dataset.id===id); });
     if(id==="doodle"){ cur=null; paper.classList.add("doodle"); fit(); }
+    else if(id==="ch"){ paper.classList.remove("doodle"); chOpen(); }
     else{ cur=PICS.filter(function(p){ return p.id===id; })[0]; paper.classList.remove("doodle"); draw(cur); }
     save.last=id; persist(); tools(); }
   picsEl.addEventListener("click",function(e){ var b=e.target.closest(".pic"); if(!b) return; if(b.dataset.id==="big"){ toggleBig(); return; } BWK.sfx("tap"); open(b.dataset.id);
-    if(b.dataset.id==="doodle") say(DOODLE,"ez-doodle"); else { var p=cur; say(p.say,"ez-"+p.id); } });
+    if(b.dataset.id==="doodle") say(DOODLE,"ez-doodle"); else if(b.dataset.id==="ch") say(big?CHBIG:CHHI,big?"ez-chbig":"ez-chhi"); else { var p=cur; say(p.say,"ez-"+p.id); } });
   buildTray();
-  open(save.last && (save.last==="doodle"||PICS.some(function(p){ return p.id===save.last; })) ? save.last : "moon");
+  open(save.last && (save.last==="doodle"||save.last==="ch"||PICS.some(function(p){ return p.id===save.last; })) ? save.last : "moon");
 
   function size(){ var w=$("frame").getBoundingClientRect().width; perch.style.setProperty("--hw",Math.round(Math.max(48,Math.min(78,w*.09)))+"px");
     if(!cur) fit(); }
@@ -464,6 +524,8 @@
     fillAll:function(){ shapes.forEach(function(t,i){ ink=POTS[i%POTS.length][2]; var r=t.getBoundingClientRect();
       t.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2})); }); },
     big:function(on){ if(!!on!==big) toggleBig(); },
+    chLeft:function(){ return cur&&cur.ch?chLeft():null; }, chSolve:function(){ var L=chLeft(); L.forEach(function(i){ ink=cur.ch.tgt[i]; var r=shapes[i].getBoundingClientRect(); shapes[i].dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2})); }); return L.length; },
+    ch:function(){ return save.ch; },
     state:function(){ return {pic:cur&&cur.id, painted:cur?painted():null, parts:shapes.length, undo:undo.length, strokes:strokes.length,
       big:big, ink:ink, erasing:erasing, mixing:mixing?mixing.length:null, mine:save.mine.map(function(m){ return m.k; }),
       pots:tray.querySelectorAll(".pc").length}; }};
