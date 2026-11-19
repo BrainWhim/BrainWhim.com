@@ -236,6 +236,9 @@ body.pk.seated .pk-mini{display:none!important}
 .bd-rev.on{display:flex}
 .bd-rev .pk-btn{width:auto;margin:0;padding:8px 14px;min-height:0}
 .ce-table.narrow .bd-rev{transform:translate(-50%,-50%) scale(1.55)}
+.ctph .ce-round{background:var(--ce-photo) center/100% 100% no-repeat transparent}
+.ctph .ce-felt,.ctph .ce-bead{display:none}
+.ctph .ce-round::before{background:radial-gradient(circle at 34% 26%,rgba(255,236,200,.14),rgba(255,236,200,0) 46%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 70%,rgba(0,0,0,.22) 100%)}
 </style>
 <script src="bw-auth.js?v=1113c"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -300,13 +303,13 @@ function damaskFn(base,seed){ var n=PT.noise2(seed), r=K.rng(seed);
     return [base[0]*m*f,base[1]*m*f,base[2]*m*f]; }; }
 var DESIGNS={
   /* Ebony & Gilt: the photo's ebonised table with a gilt edge and green baize; navy card backs with gold */
-  ebony:{name:"Ebony & Gilt",rim:function(H){ return gildedFn({light:[48,38,34],dark:[14,10,10],freq:.03,turb:5,wx:340,wy:26,sharp:.7,ringAmt:.35,streakAmt:.45,pores:.008,blotch:.2,seed:61},H,[226,184,96]); },rimc:"#1c1412",
+  ebony:{photo:"ct/ct-bridge-ebony.webp?v=1118a",name:"Ebony & Gilt",rim:function(H){ return gildedFn({light:[48,38,34],dark:[14,10,10],freq:.03,turb:5,wx:340,wy:26,sharp:.7,ringAmt:.35,streakAmt:.45,pores:.008,blotch:.2,seed:61},H,[226,184,96]); },rimc:"#1c1412",
     top:function(){ return {tile:true,fn:PT.feltFn([26,80,52],15)}; },feltc:[26,80,52],bead:"rgba(226,190,110,.75)",back:"linear-gradient(150deg,#22407a,#0c1834)",dots:["#1c1412","#1a5034","#d4a94e"]},
   /* Gilt & Ivory Silk: a gilded rim round ivory silk damask; crimson backs */
-  ivory:{name:"Gilt & Ivory Silk",rim:function(H){ return gildedFn({light:[196,156,78],dark:[132,96,38],freq:.02,turb:4,wx:420,wy:30,sharp:.4,ringAmt:.3,streakAmt:.35,pores:.004,blotch:.15,seed:29},H,[250,222,150]); },rimc:"#a8803a",
+  ivory:{photo:"ct/ct-bridge-ivory.webp?v=1118a",name:"Gilt & Ivory Silk",rim:function(H){ return gildedFn({light:[196,156,78],dark:[132,96,38],freq:.02,turb:4,wx:420,wy:30,sharp:.4,ringAmt:.3,streakAmt:.35,pores:.004,blotch:.15,seed:29},H,[250,222,150]); },rimc:"#a8803a",
     top:function(){ return {tile:true,fn:damaskFn([236,226,204],41)}; },feltc:[232,222,200],bead:"rgba(170,130,60,.7)",back:"linear-gradient(150deg,#a8202e,#5a0c16)",dots:["#a8803a","#ece2cc","#a8202e"],light:true},
   /* Rosewood & Sapphire: a rosewood rim round sapphire velvet with a gold line; emerald backs */
-  sapphire:{name:"Rosewood & Sapphire",rim:function(H){ return gildedFn({light:[112,48,36],dark:[48,18,14],freq:.03,turb:7,wx:300,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:83},H,[214,176,100]); },rimc:"#4a1c14",
+  sapphire:{photo:"ct/ct-bridge-sapphire.webp?v=1118a",name:"Rosewood & Sapphire",rim:function(H){ return gildedFn({light:[112,48,36],dark:[48,18,14],freq:.03,turb:7,wx:300,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:83},H,[214,176,100]); },rimc:"#4a1c14",
     top:function(){ return {tile:true,fn:PT.feltFn([26,52,112],23)}; },feltc:[26,52,112],bead:"rgba(214,180,110,.7)",back:"linear-gradient(150deg,#1f6a48,#0b3420)",dots:["#4a1c14","#1a3470","#1f6a48"]}
 };
 var texCache={}, curDesign=null;
@@ -317,7 +320,11 @@ function applyDesign(k){
   var t=texCache[key], s=stage.style;
   s.setProperty("--ce-rim",t.r); s.setProperty("--ce-rimc",d.rimc); s.setProperty("--ce-felt",t.f); s.setProperty("--ce-fsz",t.sz); s.setProperty("--ce-feltc","rgb("+d.feltc+")"); s.setProperty("--ce-bead",d.bead); s.setProperty("--bwc-back",d.back);
   T.classList.toggle("light",!!d.light);
+  photoTable(k);
 }
+/* Nov 18: photo tabletops (ct/); the drawn table stays until the photo loads */
+function photoTable(k){ var src=DESIGNS[k].photo; stage.classList.remove("ctph"); if(!src) return;
+  var i=new Image(); i.onload=function(){ if(String(curDesign).split(":")[0]!==k) return; stage.style.setProperty("--ce-photo",'url("'+src+'")'); stage.classList.add("ctph"); }; i.src=src; }
 var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
 function previewBar(){
   if(!PREVIEW) return;
