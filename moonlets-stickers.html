@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex">
+<title>Sticker Scenes · Moonlets · BrainWhim</title>
+<link rel="stylesheet" href="kids.css?v=1113a">
+<style>
+/* ==========================================================================
+   BrainWhim · Moonlets: Sticker Scenes (Nov 18, 2026), a Moon Games activity: Finn's sticker book.
+   Story: Finn's sticker book has three empty pages: the Farm, the Beach and Space. Peel a sticker off the sheet (tap it,
+   or pull it up) and press it onto the page; drag it anywhere; drag it back down to the sheet to peel it off.
+   Stickers get a real white die-cut edge (drawn once per picture on a canvas), shrink as they go farther back
+   (depth by height), and stack by depth. Tap a sticker on the page: it wiggles and Finn names it.
+   Little: free play; Ta-da counts the stickers one by one. Big Moonlet: three little challenges per page
+   ("Put a friend in the pond!"), checked as stickers land; a star each.
+   Photos reused: the 13 animals sl/c-*, Peekaboo's props pk/*, Moon Counting's mc/pumpkin, apple, Flip Run's beach
+   fr/bg + ball, castle, pail, shells, Go Fish's gf/fish, Moon Rover's rv/bg + rover, ship, crystal, flag, rock,
+   Launch Timer's lt/rocket, Moon Drops' md moons and star. New (Judy, ChatGPT; BrainWhim-StickerScenes-Prompts):
+   sc/farm(.jpg,-sm) and the stickers sc/<id>.webp (cow, sheep, pony, hen, goat, tractor; crab, starfish, gull,
+   turtle, umbrella, boat; planet, comet, satellite, astro, alien, scope). Emoji stand-ins until each loads.
+   Speech: like Peekaboo (lines start from click, never from pointerdown; Nov 18 lessons).
+   Saved: bwk.stickers {pages:{farm:[[id,x,y]...]}, page, made}. Lines sc-*. Test hook SCO.
+   ========================================================================== */
+.bg{position:fixed;inset:-24px;z-index:-1;background:#e9dcc6 radial-gradient(circle at 30% 20%,#fff6e4,#e6d3b4 60%,#cdb38e) center/cover;filter:blur(7px) brightness(.88)}
+.md{touch-action:manipulation;height:100svh;min-height:480px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:calc(84px + var(--k-safe-t)) 10px calc(10px + var(--k-safe-b))}
+.top{width:min(100%,720px);display:flex;justify-content:center;padding-top:16px;flex:none;min-height:96px}
+@media (max-height:600px){.top{min-height:84px}}
+.top .k-finn-in{margin:0}
+.top .k-finn{display:block;position:relative;width:fit-content;max-width:100%}
+.top .k-fm{position:absolute;left:-12px;top:-18px;z-index:2;width:62px;height:62px;cursor:pointer}
+.top .k-finn .k-fb{margin:0;padding:12px 18px 12px 54px;border-radius:20px}
+/* page tabs + the goal */
+#head{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.pg{appearance:none;cursor:pointer;display:flex;align-items:center;gap:6px;height:42px;padding:0 14px 0 4px;border-radius:21px;border:2px solid rgba(255,255,255,.7);background:rgba(255,250,238,.88);color:#5a3a10;font:inherit;font-weight:700;font-size:14px;box-shadow:0 3px 8px rgba(60,30,10,.2)}
+.pg i{width:34px;height:34px;border-radius:50%;background:#ddd center/cover;box-shadow:inset 0 0 0 2px #fff}
+.pg[aria-selected="true"]{background:linear-gradient(180deg,#ffe7a6,#e9c46a);border-color:#fff0c4;color:#3a2306;box-shadow:0 3px 0 #a97a1c,0 6px 12px rgba(0,0,0,.25)}
+.goal{display:flex;align-items:center;gap:8px;min-height:38px;padding:3px 14px;border-radius:20px;background:rgba(255,253,243,.9);box-shadow:0 3px 8px rgba(60,30,10,.2);font-weight:700;color:#4a3210;font-size:14.5px}
+.goal:empty{display:none}
+.goal .st{letter-spacing:2px;color:#d8c8a8;font-size:17px}
+.goal .st b{color:#f2be45;font-weight:400}
+/* the book page */
+#work{flex:1;min-height:0;width:min(100%,1100px);display:flex;flex-direction:column;gap:8px}
+#stageW{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;aspect-ratio:3/2;max-width:100%;max-height:100%;height:100%;border-radius:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:#9fd0f2 center/cover;box-shadow:0 0 0 6px #fffdf6,0 0 0 7px rgba(150,110,60,.35),0 14px 30px rgba(60,30,10,.35)}
+#stage .sky{position:absolute;inset:0;pointer-events:none}
+.sk{position:absolute;left:0;top:0;width:var(--w);transform-origin:50% 100%;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;will-change:transform}
+.sk img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none}
+.sk.drag{cursor:grabbing;z-index:999!important}
+.sk.drag img{transform:scale(1.08) rotate(-3deg);transition:transform .12s}
+.sk.wig img{animation:wig .6s ease-out}
+@keyframes wig{20%{transform:rotate(-8deg) scale(1.08)}50%{transform:rotate(6deg) scale(1.05)}80%{transform:rotate(-3deg)}}
+.sk.press img{animation:press .35s ease-out}
+@keyframes press{0%{transform:scale(1.25) rotate(-6deg);opacity:.6}70%{transform:scale(.96)}100%{transform:none}}
+.sk .num{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);min-width:34px;height:34px;border-radius:17px;background:#ffcf4a;color:#3a2306;font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 6px rgba(0,0,0,.3);animation:nin .3s ease-out}
+@keyframes nin{from{transform:translate(-50%,-60%) scale(.3);opacity:0}}
+.zone{position:absolute;border:3px dashed rgba(255,255,255,.85);border-radius:40%;pointer-events:none;animation:zn 1.4s ease-in-out infinite}
+@keyframes zn{50%{border-color:rgba(255,220,100,.95)}}
+/* the sticker sheet */
+#sheet{flex:none;position:relative;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:10px 14px;border-radius:16px;scroll-snap-type:x proximity;
+  background:repeating-linear-gradient(135deg,rgba(255,255,255,.0) 0 10px,rgba(255,255,255,.35) 10px 12px),linear-gradient(180deg,#bfe3f2,#9ccfe6);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 6px 14px rgba(30,50,70,.3)}
+#sheet.drop{box-shadow:inset 0 0 0 3px #ffcf4a,0 6px 14px rgba(30,50,70,.3)}
+.ti{appearance:none;flex:none;width:var(--tw,74px);height:var(--tw,74px);padding:3px;border:0;border-radius:14px;background:rgba(255,255,255,.45);cursor:pointer;scroll-snap-align:start;touch-action:pan-x;display:flex;align-items:center;justify-content:center}
+.ti img{max-width:100%;max-height:100%;pointer-events:none;-webkit-user-drag:none}
+.ti.used{opacity:.45}
+@media (orientation:landscape) and (min-width:900px){
+  #work{flex-direction:row;align-items:stretch}
+  #sheet{display:grid;grid-template-columns:repeat(3,var(--tw,74px));grid-auto-rows:var(--tw,74px);align-content:start;overflow-y:auto;overflow-x:hidden;max-height:100%}
+  .ti{touch-action:pan-y}}
+.bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
+.chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
+  box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .12s}
+.chip:active{transform:scale(.95)}
+.chip span{font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip em{font-style:normal;font-size:22px;line-height:1}
+.chip.go{background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#3a2306;border-color:#fff0c4;box-shadow:0 4px 0 #a97a1c,0 8px 16px rgba(0,0,0,.35)}
+.chip.bigc{background:linear-gradient(180deg,rgba(60,40,110,.9),rgba(30,20,70,.9));border-color:rgba(214,190,255,.45)}
+.chip.bigc i.sw{position:relative;display:block;width:34px;height:18px;border-radius:9px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.chip.bigc i.sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#cfc6e6;transition:left .2s,background .2s}
+.chip.bigc[aria-pressed="true"]{background:linear-gradient(180deg,#e6d6ff,#b89cf2);border-color:#efe4ff;box-shadow:0 0 0 3px rgba(190,160,255,.4),0 0 18px rgba(190,160,255,.55),0 6px 14px rgba(0,0,0,.4)}
+.chip.bigc[aria-pressed="true"] span{color:#2a1650}
+.chip.bigc[aria-pressed="true"] i.sw{background:#6a48c8}
+.chip.bigc[aria-pressed="true"] i.sw::after{left:18px;background:#fff6d0}
+@media (max-width:600px){.top .k-fm{width:56px;height:56px}.top .k-finn .k-fb{font-size:15.5px;padding:10px 14px 10px 48px}
+  .chip{height:54px;min-width:0;flex:1;padding:4px 4px}.chip span{font-size:11.5px}.bar{width:100%;flex-wrap:nowrap;gap:5px}
+  .pg{height:38px;font-size:13px;padding:0 10px 0 3px}.pg i{width:30px;height:30px}#head{gap:5px}}
+@media (max-height:600px){.md{gap:4px;padding-top:calc(78px + var(--k-safe-t))}.chip{height:48px}.chip em{font-size:18px}
+  .top .k-fm{width:52px;height:52px}.top .k-finn .k-fb{font-size:15px;padding:8px 12px 8px 46px}.pg{height:34px}}
+@media (min-width:700px) and (min-height:760px){.chip{height:70px;min-width:110px;border-radius:24px}.chip span{font-size:15px}.chip em{font-size:28px}.pg{height:48px;font-size:16px}.pg i{width:40px;height:40px}}
+@media (prefers-reduced-motion:reduce){.zone{animation:none}}
+</style>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<main class="md">
+  <section class="top" id="finnHere"></section>
+  <div id="head"><div id="pages" role="tablist" style="display:flex;gap:6px"></div><div class="goal" id="goal" aria-live="polite"></div></div>
+  <div id="work">
+    <div id="stageW"><div id="stage" aria-label="The sticker page"></div></div>
+    <div id="sheet" aria-label="Stickers"></div>
+  </div>
+  <div class="bar" id="bar"></div>
+</main>
+
+<script src="kids.js?v=1117b"></script>
+<script>
+(function(){
+  "use strict";
+  var AV="1118a";
+  /* ---------- the stickers: picture, emoji stand-in, size (% of the page's width, up front), kind, name ---------- */
+  /* kind: a animal (counts as a friend), s sky (flies), w water, t thing */
+  function A(id,kind,name){ return {id:id, src:"sl/c-"+id+".webp?v=1115a", w:13, k:"a", n:name}; }
+  var ST={
+    biscuit:A("biscuit","a","puppy"), mittens:A("mittens","a","kitten"), clover:A("clover","a","bunny"), rosie:A("rosie","a","piglet"),
+    sunny:A("sunny","a","duckling"), lulu:A("lulu","a","llama"), pickle:A("pickle","a","frog"), pip:A("pip","a","hamster"),
+    pearl:A("pearl","a","unicorn"), ziggy:A("ziggy","a","monkey"), poppy:A("poppy","a","panda"), coco:A("coco","a","koala"), hazel:A("hazel","a","fox"),
+    cow:{src:"sc/cow.webp", e:"🐄", w:22, k:"a", n:"cow"}, sheep:{src:"sc/sheep.webp", e:"🐑", w:17, k:"a", n:"sheep"}, pony:{src:"sc/pony.webp", e:"🐴", w:21, k:"a", n:"pony"},
+    hen:{src:"sc/hen.webp", e:"🐔", w:11, k:"a", n:"hen"}, goat:{src:"sc/goat.webp", e:"🐐", w:16, k:"a", n:"goat"}, tractor:{src:"sc/tractor.webp", e:"🚜", w:26, k:"t", n:"tractor"},
+    hay:{src:"pk/hay.webp?v=1117a", w:20, k:"t", n:"haystack"}, barrel:{src:"pk/barrel.webp?v=1117a", w:11, k:"t", n:"barrel"}, crate:{src:"pk/crate.webp?v=1117a", w:15, k:"t", n:"crate"},
+    bush:{src:"pk/bush.webp?v=1117a", w:18, k:"t", n:"bush"}, pot:{src:"pk/pot.webp?v=1117a", w:10, k:"t", n:"flowers"}, butterfly:{src:"pk/butterfly.webp?v=1117a", w:8, k:"s", n:"butterfly"},
+    pumpkin:{src:"mc/pumpkin.webp?v=1116a", w:9, k:"t", n:"pumpkin"}, apple:{src:"mc/apple.webp?v=1116a", w:6, k:"t", n:"apple"},
+    castle:{src:"fr/castle.webp?v=1115a", w:17, k:"t", n:"sandcastle"}, ball:{src:"fr/ball.webp?v=1115a", w:9, k:"t", n:"beach ball"}, pail:{src:"fr/pail.webp?v=1115a", w:8, k:"t", n:"pail"},
+    shells:{src:"fr/shells.webp?v=1115a", w:12, k:"t", n:"seashells"}, fish:{src:"gf/fish.webp?v=1118a", w:10, k:"w", n:"goldfish"},
+    crab:{src:"sc/crab.webp", e:"🦀", w:10, k:"a", n:"crab"}, starfish:{src:"sc/starfish.webp", e:"⭐", w:8, k:"t", n:"starfish"}, gull:{src:"sc/gull.webp", e:"🐦", w:11, k:"s", n:"seagull"},
+    turtle:{src:"sc/turtle.webp", e:"🐢", w:13, k:"w", n:"sea turtle"}, umbrella:{src:"sc/umbrella.webp", e:"⛱️", w:20, k:"t", n:"beach umbrella"}, boat:{src:"sc/boat.webp", e:"⛵", w:16, k:"w", n:"sailboat"},
+    rocket:{src:"lt/rocket.webp?v=1117a", w:7, k:"s", n:"rocket"}, ship:{src:"rv/ship.webp?v=1115a", w:15, k:"s", n:"spaceship"}, rover:{src:"rv/rover.webp?v=1115a", w:22, k:"t", n:"moon rover"},
+    crystal:{src:"rv/crystal.webp?v=1115a", w:5, k:"t", n:"crystal"}, flag:{src:"rv/flag.webp?v=1115a", w:5, k:"t", n:"flag"}, rock:{src:"rv/rock.webp?v=1115a", w:10, k:"t", n:"moon rock"},
+    mpink:{src:"md/md-moon-pink.webp?v=1115a", w:9, k:"s", n:"pink moon"}, mblue:{src:"md/md-moon-blue.webp?v=1115a", w:9, k:"s", n:"blue moon"}, mgreen:{src:"md/md-moon-green.webp?v=1115a", w:9, k:"s", n:"green moon"},
+    star:{src:"md/md-star.webp?v=1115a", w:7, k:"s", n:"star"},
+    planet:{src:"sc/planet.webp", e:"🪐", w:15, k:"s", n:"ringed planet"}, comet:{src:"sc/comet.webp", e:"☄️", w:14, k:"s", n:"comet"}, satellite:{src:"sc/satellite.webp", e:"🛰️", w:12, k:"s", n:"satellite"},
+    astro:{src:"sc/astro.webp", e:"🐰", w:12, k:"a", n:"astronaut bunny"}, alien:{src:"sc/alien.webp", e:"👾", w:11, k:"a", n:"little alien"}, scope:{src:"sc/scope.webp", e:"🔭", w:10, k:"t", n:"telescope"}};
+  for(var id in ST) ST[id].id=id;
+  /* ---------- the pages: photo, where the sky ends, the depth range, places for the challenges (% of the page) ---------- */
+  var PAGES={
+    farm:{n:"Farm", bg:"sc/farm", hz:42, near:[46,98],
+      ids:["cow","sheep","pony","hen","goat","tractor","biscuit","mittens","clover","rosie","sunny","lulu","pickle","hay","barrel","crate","bush","pot","pumpkin","apple","butterfly"],
+      zones:{pond:[4,58,36,88], sky:[0,0,100,40], field:[40,50,100,98]},
+      tasks:[["three","Put three animals on the farm!","sc-t-f1"],["pond","Put a friend in the pond!","sc-t-f2"],["skyb","Put a butterfly in the sky!","sc-t-f3"]],
+      stand:"linear-gradient(180deg,#9fd3f5 0,#cdeaf8 40%,#9ad06a 41%,#6fae48 100%)"},
+    beach:{n:"Beach", bg:"fr/bg", bgv:"1115a", hz:30, near:[58,98],
+      ids:["crab","starfish","gull","turtle","umbrella","boat","castle","ball","pail","shells","fish","sunny","biscuit","clover","pickle"],
+      zones:{water:[0,36,100,62], sand:[0,64,100,100], sky:[0,0,100,32]},
+      tasks:[["water2","Put two friends in the water!","sc-t-b1"],["sand","Put a sandcastle on the sand!","sc-t-b2"],["skyg","Put a seagull in the sky!","sc-t-b3"]],
+      stand:"linear-gradient(180deg,#6fc3f2 0,#bfe6fa 30%,#2fb3c8 31%,#5fd0d8 58%,#f2d49a 60%,#e8c27a 100%)"},
+    space:{n:"Space", bg:"rv/bg", bgv:"1115a", hz:46, near:[52,98],
+      ids:["rocket","ship","planet","comet","satellite","mpink","mblue","mgreen","star","astro","alien","rover","scope","flag","crystal","rock"],
+      zones:{sky:[0,0,100,45], ground:[0,52,100,100]},
+      tasks:[["rocketsky","Fly the rocket up in the sky!","sc-t-s1"],["moons2","Put two moon friends in the sky!","sc-t-s2"],["roverg","Park the rover on the moon!","sc-t-s3"]],
+      stand:"linear-gradient(180deg,#0b1030 0,#1c2a60 45%,#9a9aa2 46%,#6e6e76 100%)"}};
+  var ORDER=["farm","beach","space"];
+
+  /* ---------- Finn's lines (clips sc-*) ---------- */
+  var HI="Let's fill my sticker book! Tap a sticker, then drag it anywhere on the page.",
+      BHI="Big Moonlet, I have sticker challenges for you! Tap a sticker, then drag it to the right place.",
+      PAGE={farm:"The farm page!",beach:"The beach page!",space:"The space page!"}, TADA="Let's count your stickers!",
+      EMPTY="The page is empty! Tap a sticker to start.", YES="You did it!", ALL="You did all three! What a sticker star!", CLEAR="A fresh page!", OFF="Peeled off!";
+  function NAME(s){ return "A "+s.n+"!"; }
+  function MANY(n){ return n===1?"One sticker!":n+" stickers! Wonderful!"; }
+  var LN={"sc-hi":HI,"sc-bhi":BHI,"sc-tada":TADA,"sc-empty":EMPTY,"sc-yes":YES,"sc-all":ALL,"sc-clear":CLEAR};
+  ORDER.forEach(function(p){ LN["sc-p-"+p]=PAGE[p]; PAGES[p].tasks.forEach(function(t){ LN[t[2]]=t[1]; }); });
+  for(var k in ST) LN["sc-n-"+k]=NAME(ST[k]);
+  BWK.lines(LN);
+  BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
+  var $=function(id){return document.getElementById(id);};
+  function finnFace(id){ return '<svg class="k-fm" viewBox="0 0 100 100" aria-hidden="true"><defs>'+
+    '<radialGradient id="'+id+'g" cx="30%" cy="35%" r="75%"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f6e6bd"/><stop offset="1" stop-color="#dcc188"/></radialGradient>'+
+    '<mask id="'+id+'m"><rect width="100" height="100" fill="#fff"/><circle cx="71" cy="37" r="31" fill="#000"/></mask></defs>'+
+    '<circle cx="48" cy="54" r="38" fill="url(#'+id+'g)" mask="url(#'+id+'m)"/>'+
+    '<ellipse cx="25" cy="58" rx="3.2" ry="4.2" fill="#3b2a12"/><ellipse cx="40" cy="67" rx="3.2" ry="4.2" fill="#3b2a12"/>'+
+    '<circle cx="24.2" cy="56.6" r="1.1" fill="#fff"/><circle cx="39.2" cy="65.6" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="20" cy="68" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/><ellipse cx="44" cy="78" rx="4.5" ry="2.6" fill="#f2a98f" opacity=".55"/>'+
+    '<path d="M27 72 q5 7 11 3" stroke="#3b2a12" stroke-width="2.6" fill="#a5523a" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<g><path d="M68 50l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#fff3c4"/><path d="M80 40l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="#ffe7a0"/>'+
+    '<circle cx="75" cy="58" r="1.6" fill="#fff"/><circle cx="62" cy="44" r="1.2" fill="#ffeab0"/></g></svg>'; }
+  var top=$("finnHere");
+  (function(){ var mh=0; if(window.ResizeObserver) new ResizeObserver(function(){ var h=top.offsetHeight; if(h>mh){ mh=h; top.style.minHeight=h+"px"; } }).observe(top); })();
+  var big=BWK.big();
+  top.innerHTML='<div class="k-finn k-finn-in">'+finnFace("scS")+'<p class="k-fb">'+(big?BHI:HI)+'</p></div>';
+  /* like Peekaboo: Finn's lines are said straight from a click */
+  var talked=false;
+  function say(t,clip,o){ talked=true; o=o||{}; o.into=top; o.clip=clip; BWK.finn(t,o); }
+  top.addEventListener("click",function(e){ if(e.target.closest(".k-fm")) say(big?BHI:HI,big?"sc-bhi":"sc-hi"); });
+  ["sc-hi","sc-bhi","sc-yes","bg-on","bg-off"].forEach(BWK.preload);
+
+  var S=BWK.store.get("stickers",null)||{}; S.pages=S.pages||{}; S.made=S.made||0; if(!PAGES[S.page]) S.page="farm";
+  ORDER.forEach(function(p){ S.pages[p]=(S.pages[p]||[]).filter(function(r){ return ST[r[0]]; }); });
+  function save(){ BWK.store.set("stickers",S); }
+
+  /* ---------- sound ---------- */
+  var AC=null, OUT=null;
+  function ac(force){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C();
+      var comp=AC.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=12; comp.ratio.value=4;
+      OUT=AC.createGain(); OUT.gain.value=.9; OUT.connect(comp); comp.connect(AC.destination); }
+    /* iPhone: only a tap resumes an "interrupted" context (resuming mid-line cuts the device voice off) */
+    if(AC.state!=="running"&&(force||AC.state!=="interrupted")){ try{ AC.resume(); }catch(e){} } return AC; }
+  function unlock(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=="playback") navigator.audioSession.type="playback"; }catch(e){} var a=ac(true); if(!a) return; if(a.state!=="running"||!a._u){ try{ var b=a.createBuffer(1,1,22050), s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(0); a._u=1; }catch(e){} } }
+  ["pointerdown","pointerup","touchend","click","keydown"].forEach(function(ev){ document.addEventListener(ev,unlock,{capture:true,passive:true}); });
+  function on(){ return BWK.store.get("sound",true) && !!ac() && AC.state!=="interrupted"; }
+  function tone(f,t,d,v,type,f2){ var o=AC.createOscillator(), g=AC.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(OUT); o.start(t); o.stop(t+d+.05); }
+  function noise(t,d,v,f,q){ var n=Math.floor(AC.sampleRate*d), b=AC.createBuffer(1,n,AC.sampleRate), c=b.getChannelData(0);
+    for(var i=0;i<n;i++) c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+    var s=AC.createBufferSource(), fl=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=b; fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q||1; g.gain.value=v;
+    s.connect(fl); fl.connect(g); g.connect(OUT); s.start(t); }
+  var SND={
+    peel:function(){ if(!on()) return; var t=AC.currentTime+.01; for(var i=0;i<8;i++) noise(t+i*.025,.04,.07,2600+i*250,1.4); },
+    stick:function(){ if(!on()) return; var t=AC.currentTime+.01; noise(t,.06,.12,900,1); tone(620,t+.02,.12,.05,"sine",880); },
+    lift:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(500,t,.08,.03,"triangle",700); },
+    off:function(){ if(!on()) return; var t=AC.currentTime+.01; for(var i=0;i<6;i++) noise(t+i*.03,.05,.08,3400-i*300,1.2); tone(700,t+.15,.12,.04,"sine",400); },
+    page:function(){ if(!on()) return; var t=AC.currentTime+.01; noise(t,.35,.08,1500,.6); },
+    friend:function(){ if(!on()) return; var t=AC.currentTime+.01; tone(520,t,.12,.06,"sine",900); tone(900,t+.12,.1,.05,"sine",1300); },
+    thing:function(){ if(!on()) return; var t=AC.currentTime+.01; [1047,1319].forEach(function(f,i){ tone(f,t+i*.07,.35,.05,"triangle"); }); },
+    count:function(n){ if(!on()) return; var t=AC.currentTime+.01; tone(440*Math.pow(2,Math.min(n,14)/12),t,.25,.06,"triangle"); },
+    yes:function(){ if(!on()) return; var t=AC.currentTime+.01; [523,659,784,1047,1319].forEach(function(f,i){ tone(f,t+i*.08,.55,.06,"triangle"); tone(f*2,t+i*.08,.3,.015); }); } };
+
+  /* ---------- sticker pictures with a white die-cut edge (drawn once per picture) ---------- */
+  var ART={};   /* id -> {url, ar (height/width), photo} */
+  function emojiArt(s){ var c=document.createElement("canvas"), n=220; c.width=n; c.height=n; var x=c.getContext("2d");
+    x.font=(n*.72)+"px serif"; x.textAlign="center"; x.textBaseline="middle"; x.fillText(s.e||"⭐",n/2,n*.55); return c; }
+  function dieCut(src){ var M=300, sc=Math.min(1,M/Math.max(src.width,src.height)), w=Math.round(src.width*sc), h=Math.round(src.height*sc), p=Math.round(Math.max(w,h)*.06)+4;
+    var sil=document.createElement("canvas"); sil.width=w+2*p; sil.height=h+2*p; var sx=sil.getContext("2d");
+    sx.drawImage(src,p,p,w,h); sx.globalCompositeOperation="source-in"; sx.fillStyle="#fff"; sx.fillRect(0,0,sil.width,sil.height);
+    var tint=document.createElement("canvas"); tint.width=sil.width; tint.height=sil.height; var tx=tint.getContext("2d");
+    tx.drawImage(sil,0,0); tx.globalCompositeOperation="source-in"; tx.fillStyle="#3a2a18"; tx.fillRect(0,0,tint.width,tint.height);
+    var out=document.createElement("canvas"); out.width=sil.width; out.height=sil.height+6; var o=out.getContext("2d"), r=p-3;
+    /* a soft shadow under the sticker, then the white edge (the shape grown by r in every direction), then the picture */
+    o.save(); o.globalAlpha=.07; for(var a=0;a<16;a++) o.drawImage(tint,Math.cos(a*Math.PI/8)*(r+2),Math.sin(a*Math.PI/8)*(r+2)+4); o.restore();
+    for(var b=0;b<24;b++) o.drawImage(sil,Math.cos(b*Math.PI/12)*r,Math.sin(b*Math.PI/12)*r);
+    o.drawImage(sil,0,0); o.drawImage(src,p,p,w,h);
+    return out; }
+  function makeArt(s,cb){ function done(c,photo){ var cut=dieCut(c); ART[s.id]={url:cut.toDataURL("image/png"), ar:cut.height/cut.width, photo:photo}; cb(); }
+    var im=new Image(); im.onload=function(){ done(im,true); }; im.onerror=function(){ done(emojiArt(s),false); };
+    im.src=s.src+(s.src.indexOf("?")<0?"?v="+AV:""); }
+  function artFor(id,cb){ if(ART[id]) cb(); else makeArt(ST[id],cb); }
+
+  /* ---------- the page ---------- */
+  var stage=$("stage"), cur=S.page;
+  function P(){ return PAGES[cur]; }
+  function bgUrl(p,big){ return p.bg+(big?".jpg":"-sm.jpg")+"?v="+(p.bgv||AV); }
+  function setBg(){ var p=P(); stage.style.background=p.stand; var im=new Image(), u=bgUrl(p,window.innerWidth>=1100);
+    im.onload=function(){ if(P()!==p) return; stage.style.background='#888 url("'+u+'") center/cover'; document.querySelector(".bg").style.background='#888 url("'+bgUrl(p,false)+'") center/cover'; }; im.src=u; }
+  /* depth: a sticker shrinks as it goes up toward the sky line; sky stickers keep one size */
+  function scaleAt(id,y){ var p=P(), s=ST[id]; if(y<p.hz) return s.k==="s"?1:.62; var t=(y-p.near[0])/(p.near[1]-p.near[0]); return Math.max(.55,Math.min(1.08,.55+.53*t)); }
+  function place(el,id,x,y){ var s=ST[id], a=ART[id], sc=scaleAt(id,y), W=stage.clientWidth, H=stage.clientHeight, w=s.w/100*W*sc, h=w*(a?a.ar:1);
+    el.style.setProperty("--w",w+"px"); el.style.transform="translate("+(x/100*W-w/2)+"px,"+(y/100*H-h)+"px)"; el.style.zIndex=s.k==="s"&&y<P().hz?Math.round(y):100+Math.round(y*4); }
+  function drawPage(){ stage.querySelectorAll(".sk,.zone").forEach(function(e){ e.remove(); });
+    S.pages[cur].forEach(function(r,i){ addEl(r[0],r[1],r[2],i); }); sheet(); }
+  function addEl(id,x,y,i){ var el=document.createElement("div"); el.className="sk"; el.dataset.id=id; el.dataset.i=i;
+    artFor(id,function(){ el.innerHTML='<img src="'+ART[id].url+'" alt="'+ST[id].n+'" draggable="false">'; place(el,id,x,y); });
+    stage.appendChild(el); return el; }
+  function tw(){ var w=window.innerWidth, h=window.innerHeight, land=w>=900&&w>h; return land?Math.max(64,Math.min(92,(h-330)/6)):Math.max(56,Math.min(82,h*.1,w/5)); }
+  function sheet(){ var used={}; S.pages[cur].forEach(function(r){ used[r[0]]=1; });
+    $("sheet").innerHTML=P().ids.map(function(id){ return '<button class="ti'+(used[id]?' used':'')+'" data-id="'+id+'" aria-label="'+ST[id].n+'"></button>'; }).join("");
+    $("sheet").querySelectorAll(".ti").forEach(function(b){ artFor(b.dataset.id,function(){ b.innerHTML='<img src="'+ART[b.dataset.id].url+'" alt="" draggable="false">'; }); }); }
+  function pages(){ $("pages").innerHTML=ORDER.map(function(p){ var g=PAGES[p];
+    return '<button class="pg" role="tab" data-p="'+p+'" aria-selected="'+(p===cur)+'"><i style="background-image:url(\''+bgUrl(g,false)+'\'),'+g.stand+'"></i>'+g.n+'</button>'; }).join(""); }
+  window.addEventListener("resize",function(){ document.documentElement.style.setProperty("--tw",(tw()|0)+"px");
+    stage.querySelectorAll(".sk").forEach(function(el){ var r=S.pages[cur][+el.dataset.i]; if(r) place(el,r[0],r[1],r[2]); }); });
+  if(window.ResizeObserver) new ResizeObserver(function(){ stage.querySelectorAll(".sk").forEach(function(el){ var r=S.pages[cur][+el.dataset.i]; if(r) place(el,r[0],r[1],r[2]); }); }).observe(stage);
+
+  /* a good spot for a tapped sticker: sky stickers in the sky, water ones in the water, the rest on the ground, away from others */
+  function spot(id){ var p=P(), s=ST[id], z=p.zones, box;
+    if(s.k==="s") box=z.sky; else if(s.k==="w") box=z.water||z.pond||z.ground; else box=cur==="beach"?z.sand:(z.field||z.ground);
+    var best=null, bd=-1;
+    /* stickers stand on their bottom edge: keep the whole sticker inside the page */
+    var hp=s.w*(ART[id]?ART[id].ar:1)*1.5*(s.k==="s"?1:.8), y0=Math.max(box[1]+3,hp+3), y1=Math.max(y0+2,box[3]-2);
+    for(var i=0;i<14;i++){ var x=box[0]+s.w/2+2+Math.random()*Math.max(1,box[2]-box[0]-s.w-4), y=y0+Math.random()*(y1-y0), d=1e9;
+      S.pages[cur].forEach(function(r){ d=Math.min(d,Math.hypot(r[1]-x,(r[2]-y)*1.5)); }); if(d>bd){ bd=d; best=[x,y]; } }
+    return best; }
+
+  /* ---------- dragging (pointer events; no Finn lines here: lines start from clicks) ---------- */
+  var D=null;
+  function pt(e){ var r=stage.getBoundingClientRect(); return [ (e.clientX-r.left)/r.width*100, (e.clientY-r.top)/r.height*100 ]; }
+  stage.addEventListener("pointerdown",function(e){ var el=e.target.closest(".sk"); if(!el) return; e.preventDefault();
+    var i=+el.dataset.i, r=S.pages[cur][i]; if(!r) return; var p=pt(e);
+    D={el:el, i:i, id:r[0], dx:r[1]-p[0], dy:r[2]-p[1], sx:e.clientX, sy:e.clientY, moved:false, fromSheet:false};
+    try{ stage.setPointerCapture(e.pointerId); }catch(x){} });
+  /* pulling a sticker up off the sheet starts a drag (side-to-side still scrolls the sheet) */
+  var PS=null;
+  $("sheet").addEventListener("pointerdown",function(e){ var b=e.target.closest(".ti"); if(!b) return; PS={b:b, x:e.clientX, y:e.clientY, id:b.dataset.id, pid:e.pointerId}; });
+  window.addEventListener("pointermove",function(e){
+    if(PS&&!D&&e.pointerId===PS.pid){ var dy=PS.y-e.clientY, dx=Math.abs(e.clientX-PS.x), land=getComputedStyle($("sheet")).display==="grid";
+      var pull=land?(PS.x-e.clientX>18&&Math.abs(e.clientY-PS.y)<PS.x-e.clientX):(dy>18&&dy>dx);
+      if(pull){ var id=PS.id; PS=null; var p=pt(e); S.pages[cur].push([id,p[0],p[1]]); var i=S.pages[cur].length-1, el=addEl(id,p[0],p[1],i);
+        D={el:el, i:i, id:id, dx:0, dy:4, sx:e.clientX, sy:e.clientY, moved:true, fromSheet:true}; el.classList.add("drag"); SND.peel(); } }
+    if(!D) return; var p2=pt(e);
+    if(!D.moved&&Math.hypot(e.clientX-D.sx,e.clientY-D.sy)>6){ D.moved=true; D.el.classList.add("drag"); SND.lift(); }
+    if(!D.moved) return;
+    var x=Math.max(0,Math.min(100,p2[0]+D.dx)), y=Math.max(4,Math.min(104,p2[1]+D.dy)), r=S.pages[cur][D.i]; r[1]=x; r[2]=y;
+    if(ART[D.id]) place(D.el,D.id,x,y);
+    var sr=$("sheet").getBoundingClientRect(); $("sheet").classList.toggle("drop",e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom); });
+  window.addEventListener("pointerup",function(e){ PS=null; if(!D) return; var d=D; D=null; d.el.classList.remove("drag");
+    if(!d.moved){ d.tap=true; return; }
+    var sr=$("sheet").getBoundingClientRect(), off=e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom, r=S.pages[cur][d.i];
+    $("sheet").classList.remove("drop");
+    if(off||!r||r[2]>100){ S.pages[cur].splice(d.i,1); save(); SND.off(); drawPage(); return; }
+    r[2]=Math.min(100,r[2]); save(); SND.stick(); d.el.classList.remove("press"); void d.el.offsetWidth; d.el.classList.add("press"); place(d.el,d.id,r[1],r[2]);
+    sheet(); dropped=true; lastDrop=Date.now(); setTimeout(check,250); });
+  window.addEventListener("pointercancel",function(){ PS=null; if(D){ D.el.classList.remove("drag"); D=null; } });
+  var dropped=false, lastDrop=0;
+
+  /* ---------- taps (clicks): a sheet sticker goes onto the page; a page sticker wiggles and Finn names it ---------- */
+  $("sheet").addEventListener("click",function(e){ var b=e.target.closest(".ti"); if(!b) return; var id=b.dataset.id;
+    if(Date.now()-lastDrop<500) return;
+    if(!talked&&!big) talked=true;
+    var s=spot(id); S.pages[cur].push([id,s[0],s[1]]); S.made++; save(); var el=addEl(id,s[0],s[1],S.pages[cur].length-1);
+    SND.peel(); setTimeout(function(){ SND.stick(); el.classList.add("press"); },180); sheet(); say(NAME(ST[id]),"sc-n-"+id); setTimeout(check,300); });
+  stage.addEventListener("click",function(e){ var el=e.target.closest(".sk"); if(!el||Date.now()-lastDrop<350) return; var id=el.dataset.id, s=ST[id];
+    el.classList.remove("wig"); void el.offsetWidth; el.classList.add("wig"); if(s.k==="a") SND.friend(); else SND.thing(); say(NAME(s),"sc-n-"+id); });
+
+  /* ---------- Big Moonlet: the page's three challenges ---------- */
+  function inBox(r,b){ return r[1]>=b[0]&&r[1]<=b[2]&&r[2]>=b[1]&&r[2]<=b[3]; }
+  function met(key){ var L=S.pages[cur], z=P().zones;
+    function n(f){ return L.filter(f).length; }
+    switch(key){
+      case "three": return n(function(r){ return ST[r[0]].k==="a"&&r[2]>=P().hz; })>=3;
+      case "pond": return n(function(r){ return ST[r[0]].k==="a"&&inBox(r,z.pond); })>=1;
+      case "skyb": return n(function(r){ return r[0]==="butterfly"&&inBox(r,z.sky); })>=1;
+      case "water2": return n(function(r){ var k=ST[r[0]].k; return (k==="a"||k==="w")&&r[0]!=="boat"&&inBox(r,z.water); })>=2;
+      case "sand": return n(function(r){ return r[0]==="castle"&&inBox(r,z.sand); })>=1;
+      case "skyg": return n(function(r){ return r[0]==="gull"&&inBox(r,z.sky); })>=1;
+      case "rocketsky": return n(function(r){ return r[0]==="rocket"&&inBox(r,z.sky); })>=1;
+      case "moons2": return n(function(r){ return /^m(pink|blue|green)$/.test(r[0])&&inBox(r,z.sky); })>=2;
+      case "roverg": return n(function(r){ return r[0]==="rover"&&inBox(r,z.ground); })>=1; }
+    return false; }
+  var T=null;   /* {page, i, done} */
+  function startBig(){ T={page:cur, i:0, done:0}; goal(); }
+  function goal(){ if(!big||!T){ $("goal").innerHTML=""; return; } var h="", ts=P().tasks;
+    if(T.i<ts.length) h+='<span>'+ts[T.i][1]+'</span>'; else h+='<span>All done!</span>';
+    h+='<span class="st" aria-label="'+T.done+' of 3">'; for(var i=0;i<3;i++) h+=i<T.done?'<b>★</b>':'★'; h+='</span>'; $("goal").innerHTML=h; }
+  function ask(){ if(!big||!T) return; var t=P().tasks[T.i]; if(t){ say(t[1],t[2]); } }
+  function check(){ if(!big||!T||T.page!==cur) return; var t=P().tasks[T.i]; if(!t||!met(t[0])) return;
+    T.done++; T.i++; goal(); SND.yes(); BWK.played&&BWK.played("stickers");
+    if(T.i>=P().tasks.length){ say(ALL,"sc-all"); bar(); return; }
+    say(YES,"sc-yes",{onend:function(){ setTimeout(ask,300); }}); }
+
+  /* ---------- Ta-da (Little): count the stickers one by one ---------- */
+  var counting=false;
+  function tada(){ var els=[].slice.call(stage.querySelectorAll(".sk")); if(!els.length){ say(EMPTY,"sc-empty"); return; }
+    if(counting) return; counting=true; BWK.played&&BWK.played("stickers");
+    els.sort(function(a,b){ return a.getBoundingClientRect().left-b.getBoundingClientRect().left; });
+    say(TADA,"sc-tada",{onend:function(){ go(0); }});
+    var started=false; setTimeout(function(){ if(!started) go(0); },4200);
+    function go(i){ if(i===0){ if(started) return; started=true; }
+      if(i>=els.length){ counting=false; setTimeout(function(){ stage.querySelectorAll(".num").forEach(function(n){ n.remove(); }); },2200); say(MANY(els.length)); SND.yes(); return; }
+      var el=els[i], n=document.createElement("i"); n.className="num"; n.textContent=i+1; el.appendChild(n);
+      el.classList.remove("wig"); void el.offsetWidth; el.classList.add("wig"); SND.count(i); setTimeout(function(){ go(i+1); },650); } }
+
+  /* ---------- the bottom row (no data-say: these make Finn talk or redraw the row) ---------- */
+  function bar(){ $("bar").innerHTML=
+      (big?'<button class="chip go" data-a="next" aria-label="Next page"><em>➜</em><span>Next page</span></button>':'<button class="chip go" data-a="tada" aria-label="Ta-da"><em>✨</em><span>Ta-da!</span></button>')+
+      '<button class="chip" data-a="clear" aria-label="Fresh page"><em>↺</em><span>Fresh page</span></button>'+
+      '<button class="chip bigc" data-a="big" aria-pressed="'+big+'"><i class="sw"></i><span>Big Moonlet</span></button>'+
+      '<button class="chip" data-a="games" aria-label="More games"><em>☾</em><span>More games</span></button>'; }
+  function go2(p,speak){ cur=p; S.page=p; save(); SND.page(); pages(); setBg(); drawPage(); if(big) startBig(); if(speak){ if(big) ask(); else say(PAGE[p],"sc-p-"+p); } }
+  $("pages").addEventListener("click",function(e){ var b=e.target.closest(".pg"); if(!b||b.dataset.p===cur) return; go2(b.dataset.p,true); });
+  $("bar").addEventListener("click",function(e){ var b=e.target.closest(".chip"); if(!b) return; BWK.sfx("tap"); var a=b.dataset.a;
+    if(a==="tada") tada();
+    else if(a==="next"){ go2(ORDER[(ORDER.indexOf(cur)+1)%3],true); }
+    else if(a==="clear"){ S.pages[cur]=[]; save(); SND.off(); drawPage(); if(big){ startBig(); ask(); } else say(CLEAR,"sc-clear"); }
+    else if(a==="big"){ big=!big; talked=true; BWK.setBig(big,top); setMode(); }
+    else if(a==="games"){ BWK.finnStop(); BWK.sfx("whoosh"); setTimeout(function(){ location.href="moonlets-games.html"; },200); } });
+  function setMode(){ bar(); if(big){ S.pages[cur]=[]; save(); drawPage(); startBig(); setTimeout(ask,2600); } else { T=null; goal(); } }
+  window.addEventListener("bwk-big",function(e){ if(!!e.detail!==big){ big=!!e.detail; setMode(); } });
+  /* Finn's hello on the first tap that doesn't say something itself (like Peekaboo) */
+  document.addEventListener("click",function(e){ if(talked||!e.target.isConnected||e.target.closest("#sheet,#stage .sk,#pages,.chip,.k-head,.k-sheet,.k-veil")) return;
+    if(big){ say(BHI,"sc-bhi",{onend:function(){ setTimeout(ask,300); }}); } else say(HI,"sc-hi"); });
+
+  document.documentElement.style.setProperty("--tw",(tw()|0)+"px");
+  pages(); setBg(); drawPage(); bar(); if(big){ S.pages[cur]=S.pages[cur]||[]; startBig(); }
+  window.SCO={state:function(){ return {page:cur, stickers:JSON.parse(JSON.stringify(S.pages[cur])), big:big, task:T&&{i:T.i, done:T.done}}; },
+    put:function(id,x,y){ S.pages[cur].push([id,x,y]); save(); drawPage(); check(); }, page:function(p){ go2(p,false); }, big:function(v){ big=!!v; BWK.setBig(big); setMode(); },
+    met:met, tada:tada, PAGES:PAGES, ST:ST};
+})();
+</script>
+</body>
+</html>
