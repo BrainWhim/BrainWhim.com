@@ -54,6 +54,14 @@
 .c4-disc.p1{--hi:var(--s1h);--c1:var(--s1a);--c2:var(--s1b);--c3:var(--s1c);--ring:var(--s1g);--ring2:var(--s1k)}
 .c4-disc.p2{--hi:var(--s2h);--c1:var(--s2a);--c2:var(--s2b);--c3:var(--s2c);--ring:var(--s2g);--ring2:var(--s2k)}
 /* the hover row above the board: your next disc waits over the column you're pointing at */
+/* photo boards (Nov 19, Judy's ChatGPT pictures in c4p/): the frame photo as a border-image that reaches outward
+   (border-image-width/outset per side so the panel keeps its size), the panel photo with the holes cut in code, photo discs */
+html.c4ph .c4-frame{border-image-source:var(--c4-fph);border-image-slice:var(--c4-fsl);border-image-width:var(--c4-fbw);border-image-outset:var(--c4-fout);border-image-repeat:stretch}
+html.c4ph.c4-porch .c4-feet{display:none}
+html.c4ph .c4-board{box-shadow:none}html.c4ph .c4-frame{filter:drop-shadow(0 calc(var(--c4-size) * .014) calc(var(--c4-size) * .016) rgba(0,0,0,.4))}
+html.c4ph .c4-disc{background:var(--dph) center/100% 100% no-repeat;box-shadow:0 calc(var(--c4-size) * .003) calc(var(--c4-size) * .006) rgba(0,0,0,.35)}
+html.c4ph .c4-disc::after{display:none}
+html.c4ph .c4-disc.p1{--dph:var(--c4-d1)}html.c4ph .c4-disc.p2{--dph:var(--c4-d2)}
 .c4-ghost{position:absolute;top:0;left:var(--f);width:var(--cell);height:var(--cell);z-index:5;pointer-events:none;transition:transform .16s ease-out,opacity .2s}
 .c4-ghost .c4-disc{box-shadow:0 calc(var(--c4-size) * .012) calc(var(--c4-size) * .016) rgba(0,0,0,.45),inset 0 calc(var(--c4-size) * -.007) calc(var(--c4-size) * .01) rgba(0,0,0,.3),inset 0 calc(var(--c4-size) * .004) calc(var(--c4-size) * .006) rgba(255,255,255,.35)}
 .c4-ghost.idle .c4-disc{animation:c4-bob 2.4s ease-in-out infinite}
@@ -206,9 +214,43 @@ function paintPanel(o){
   return cssUrl(c,true);
 }
 var texCache={}, curDesign=null;
+/* frame slices (photo px: top right bottom left) and the panel's inner size, measured from Judy's pictures */
+var C4V="1119a",c4Img={},c4Ready={},C4F={porch:{t:107,r:130,b:120,l:138,iw:1251,ih:779},drift:{t:73,r:79,b:63,l:82,iw:1335,ih:870},navy:{t:71,r:76,b:80,l:74,iw:1356,ih:856}};
+(function(){ Object.keys(C4F).forEach(function(k){ var fs=["f-"+k,"p-"+k,"d-"+k+"-1","d-"+k+"-2"],left=fs.length;
+  fs.forEach(function(f){ var im=new Image(); im.onload=function(){ if(--left) return; c4Ready[k]=1; if(curDesign===k){ curDesign=null; applyDesign(k); } }; im.src="c4p/"+f+".webp?v="+C4V; c4Img[f]=im; }); }); })();
+function photoPanel(k,o){
+  var CS=120, W=7*CS, H=6*CS, c=document.createElement("canvas"); c.width=W; c.height=H; var g=c.getContext("2d");
+  g.imageSmoothingQuality="high"; g.drawImage(c4Img["p-"+k],0,0,W,H);
+  var R=CS*.39;
+  for(var r=0;r<6;r++) for(var kk=0;kk<7;kk++){
+    var cx=kk*CS+CS/2, cy=r*CS+CS/2;
+    var lip=g.createLinearGradient(cx-R,cy-R,cx+R,cy+R); lip.addColorStop(0,"rgba(255,255,255,"+(o.lip*.7)+")"); lip.addColorStop(.5,"rgba(255,255,255,0)"); lip.addColorStop(1,"rgba(0,0,0,.26)");
+    g.fillStyle=lip; g.beginPath(); g.arc(cx,cy,R+6,0,7); g.fill();
+    g.save(); g.globalCompositeOperation="destination-out"; g.fillStyle="#000"; g.beginPath(); g.arc(cx,cy,R,0,7); g.fill(); g.restore();
+    var wall=g.createLinearGradient(cx-R,cy-R,cx+R,cy+R); wall.addColorStop(0,"rgba(0,0,0,.62)"); wall.addColorStop(.55,o.wall); wall.addColorStop(1,"rgba(255,255,255,.45)");
+    g.fillStyle=wall; g.beginPath(); g.arc(cx,cy,R,0,7); g.arc(cx,cy,R-6,0,7,true); g.fill();
+    g.strokeStyle="rgba(0,0,0,.35)"; g.lineWidth=1; g.beginPath(); g.arc(cx,cy,R+.5,0,7); g.stroke();
+  }
+  return cssUrl(c,true);
+}
+function c4Photo(k){
+  var on=!!c4Ready[k], s=document.body.style, b=document.documentElement.classList;   /* on <html>: body class changes re-run applyDesign */
+  b.toggle("c4ph",on); ["porch","drift","navy"].forEach(function(x){ b.toggle("c4-"+x,x===k); });
+  if(!on) return;
+  var F=C4F[k], pw="(var(--c4-size) - 2 * var(--f))", sx=1/F.iw, sy=6/7/F.ih;
+  function w(px,sc){ return "calc("+pw+" * "+(px*sc).toFixed(5)+")"; }
+  function o(px,sc){ return "max(0px, calc("+pw+" * "+(px*sc).toFixed(5)+" - var(--f)))"; }
+  s.setProperty("--c4-fph",'url("c4p/f-'+k+'.webp?v='+C4V+'")'); s.setProperty("--c4-fsl",F.t+" "+F.r+" "+F.b+" "+F.l);
+  s.setProperty("--c4-fbw",[w(F.t,sy),w(F.r,sx),w(F.b,sy),w(F.l,sx)].join(" "));
+  s.setProperty("--c4-fout",[o(F.t,sy),o(F.r,sx),o(F.b,sy),o(F.l,sx)].join(" "));
+  s.setProperty("--c4-d1",'url("c4p/d-'+k+'-1.webp?v='+C4V+'")'); s.setProperty("--c4-d2",'url("c4p/d-'+k+'-2.webp?v='+C4V+'")');
+}
 function applyDesign(k){
   if(!DESIGNS[k]) k="porch"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
-  if(!texCache[k]) texCache[k]={frame:d.frame(),panel:paintPanel(d.panel)};
+  if(!texCache[k]) texCache[k]={frame:d.frame(),panel:c4Ready[k]?null:paintPanel(d.panel)};
+  if(c4Ready[k]&&!texCache[k].ph) texCache[k].ph=photoPanel(k,d.panel);
+  if(c4Ready[k]) texCache[k].panel=texCache[k].ph; else if(!texCache[k].panel) texCache[k].panel=paintPanel(d.panel);
+  c4Photo(k);
   var s=document.body.style, t=texCache[k];
   s.setProperty("--c4-frame",t.frame); s.setProperty("--c4-panel",t.panel); s.setProperty("--c4-foot",d.foot); s.setProperty("--c4-sheen",d.sheen);
   s.setProperty("--c4-plate",d.plate); s.setProperty("--c4-plate-ink",d.plateInk);
