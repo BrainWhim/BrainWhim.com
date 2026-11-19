@@ -17,6 +17,10 @@
    Saved on the device: bwk.garden {plots:[{k,s}|null ×6], seed, basket, recent:[k…], big:{done, got}}. Test hook GDO.
    Nov 11: Big Moonlet (BWK.big; the switch after the packets): Finn's flower orders on a note pinned in the bed's corner (10 orders, then 4-10 again);
    picked flowers the order needs fill its dots; done orders unlock Lily (3), Pansy (5), Marigold (7).
+   Nov 18: a Flowers | Veggies switch (first button in the packet row): six veggies (Carrot, Tomato, Pumpkin, Strawberry, Corn, Peas; KINDS 9-14, veg:true).
+   The bed can mix both. Grown veggies use Judy's photos (gd/gd-<id>.webp, window.GDV[id] when loaded; the carrot is clipped at the soil line);
+   seed, sprout and young plant (with its little flower) stay drawn. Big Moonlet in Veggies: the animal friends' orders (VORD; the friend's photo on the note;
+   save.bigv {done, got}, 10 orders, then 3-10 again). save.mode "f" | "v".
    ========================================================================== */
 .bg{position:fixed;inset:-12px;z-index:-1;background:url("kids-moonlets-sm.jpg") center/cover;filter:blur(2px) brightness(.5)}
 .gd{height:100svh;min-height:500px;display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -156,6 +160,15 @@
 @media (max-width:600px) and (max-height:619px){.seeds{display:flex;gap:6px}.pk{width:min(50px,calc((100vw - 24px)/var(--n,7) - 6px))}
   .seeds.two{display:grid;grid-template-columns:repeat(var(--cols,4),auto);gap:5px 12px}.seeds.two .pk{width:min(50px,calc((100vw - 32px)/var(--cols,4) - 12px))}}
 @media (min-width:601px) and (max-aspect-ratio:4/5){.seeds{display:grid;grid-template-columns:repeat(var(--cols,4),auto);gap:14px 24px;justify-content:center}}
+/* Nov 18: the Flowers | Veggies switch, styled like the Big switch but garden green */
+.pk.modec .bf{width:100%;aspect-ratio:60/76;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-sizing:border-box;
+  background:linear-gradient(180deg,rgba(38,92,48,.92),rgba(20,58,30,.92));border:1.5px solid rgba(190,240,190,.5);box-shadow:0 5px 8px rgba(0,0,0,.45)}
+.pk.modec .bf{gap:5%}
+.pk.modec .bf svg{width:56%;aspect-ratio:1;filter:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffaf0,#efe0bd);box-shadow:0 2px 4px rgba(0,0,0,.35);transition:opacity .2s,transform .2s}
+.pk.modec .bf svg.off{opacity:.45;transform:scale(.8)}
+.pk.modec .bf svg.on{opacity:1;transform:scale(1.02);box-shadow:0 0 0 2px #bff0a8,0 0 10px rgba(190,250,160,.8)}
+.order .who{display:none;width:3.4em;height:3.4em;object-fit:contain;margin:-.5em auto .15em;filter:drop-shadow(0 .15em .2em rgba(0,0,0,.35))}
+.order.veg .who{display:block}
 @media (prefers-reduced-motion:reduce){.perch svg,.bfly svg,.bfly .wl,.bfly .wr,.plot.hint .hit{animation:none}}
 /* the photo look (Nov 15): html.gdp once the gd/ pictures have loaded; a fresh, sunny spring morning (not every Moonlets room is dark) */
 .gdp .bg{background-image:url("gd/gd-bg-sm.jpg?v=1115a");background-position:50% 40%;filter:blur(1.2px) brightness(.95) saturate(1.05)}
@@ -172,8 +185,8 @@
       <svg id="art" viewBox="0 0 600 380" aria-label="The garden bed"></svg>
       <div class="perch" id="perch" aria-hidden="true"></div>
       <div class="bfly" id="bfly" aria-hidden="true"></div>
-      <button class="bask" id="bask" aria-label="The flower basket: pick the flowers"><svg viewBox="0 0 100 92" aria-hidden="true" id="baskArt"></svg><span class="n" id="bn"></span></button>
-      <button class="order" id="order" aria-label="Finn's flower order"><span class="note"><span class="pin" aria-hidden="true"></span><span class="rows" id="orows"></span><span class="stamp" aria-hidden="true">✓</span></span><span class="num" id="onum" aria-hidden="true"></span></button>
+      <button class="bask" id="bask" aria-label="The basket: pick what is grown"><svg viewBox="0 0 100 92" aria-hidden="true" id="baskArt"></svg><span class="n" id="bn"></span></button>
+      <button class="order" id="order" aria-label="Finn's flower order"><span class="note"><span class="pin" aria-hidden="true"></span><img class="who" id="owho" alt=""><span class="rows" id="orows"></span><span class="stamp" aria-hidden="true">✓</span></span><span class="num" id="onum" aria-hidden="true"></span></button>
     </div>
   </div>
   <nav class="seeds" id="seeds" aria-label="Seed packets"></nav>
@@ -200,6 +213,20 @@
     "Two bluebells and two tulips, please!","Two pansies, two roses, and one daisy, please!","Three sunflowers and two bluebells, please!",
     "Three marigolds, two lilies, and one poppy, please!","Two tulips, two pansies, and two marigolds, please!",
     "A rainbow order! One rose, one daisy, one poppy, one bluebell, one sunflower, and one lily."];
+  /* Nov 18: Veggies */
+  var VEG="Veggies! Pick a seed, then plant it.", FLW="Flowers! Pick a seed, then plant it.";
+  var VFIRST="Ready to pick! Tap the basket any time to pick it.", VYAY="Your whole garden is ready! Now tap the basket to pick them all.";
+  var VNUDGE="Tap the basket to pick them!", VEMPTY="Grow something first, then put it in the basket!";
+  var VBIGHI="Big Moonlet veggies! My animal friends are hungry. Grow what they ask for, then pick it into the basket.";
+  var VDONE="Yum! Order done! Thank you so much!", VALL="You finished every order! All my animal friends are full and happy!";
+  var VORD=[{who:"clover",o:{carrot:2}},{who:"rosie",o:{pumpkin:1,corn:1}},{who:"sunny",o:{peas:3}},{who:"coco",o:{strawberry:2,tomato:1}},
+    {who:"biscuit",o:{carrot:2,peas:1}},{who:"pip",o:{corn:2,strawberry:2}},{who:"mittens",o:{tomato:2,carrot:1}},{who:"hazel",o:{strawberry:3,pumpkin:1}},
+    {who:"pickle",o:{peas:2,corn:2,carrot:1}},{who:"rosie",o:{carrot:1,tomato:1,pumpkin:1,strawberry:1,corn:1,peas:1}}];
+  var VTXT=["Clover the bunny is hungry! Can you grow two carrots?","Rosie the piglet wants one pumpkin and one corn, please!",
+    "Sunny the duckling loves peas! Three peas, please!","Coco the koala wants two strawberries and one tomato, please!",
+    "Biscuit the puppy wants two carrots and one peas, please!","Pip the hamster wants two corn and two strawberries, please!",
+    "Mittens the kitten is making soup! Two tomatoes and one carrot, please!","Hazel the fox is baking a pie! Three strawberries and one pumpkin, please!",
+    "Pickle the frog wants two peas, two corn, and one carrot, please!","Rosie's garden party! One of every veggie, please!"];
   BWK.lines({"gd-hi":HI});
   BWK.init({here:"moonlets", voice:"finn", intro:HI, noHello:true});
   var $=function(id){return document.getElementById(id);};
@@ -223,7 +250,7 @@
   top.addEventListener("click",function(e){ if(e.target.closest(".k-fm") && !talked) greet(); });
   document.addEventListener("click",function(e){
     if(talked || e.target.closest(".plot,.pk,.bask,.order,.k-head,.k-sheet,.k-veil")) return; greet(); });
-  function greet(){ if(big) say(BIGHI,"gd-bighi",sayOrder); else say(HI,"gd-hi"); }
+  function greet(){ if(big) say(veg?VBIGHI:BIGHI,veg?"gd-vbighi":"gd-bighi",sayOrder); else say(HI,"gd-hi"); }
   var perch=$("perch"); perch.innerHTML=face("gdP");
   function hopFinn(){ perch.classList.remove("land"); void perch.offsetWidth; perch.classList.add("land"); }
 
@@ -271,13 +298,25 @@
     /* Big Moonlet seeds, earned with orders */
     {id:"lily",name:"Lily",c:"#ffd3e6",d:"#c9467f",band:"#ee86b5",H:100},
     {id:"pansy",name:"Pansy",c:"#8a52e0",d:"#57299e",band:"#8048d8",H:72},
-    {id:"marigold",name:"Marigold",c:"#ffa31a",d:"#c95f06",band:"#f4900f",H:82}];
+    {id:"marigold",name:"Marigold",c:"#ffa31a",d:"#c95f06",band:"#f4900f",H:82},
+    /* Nov 18: veggies (the Veggies switch) */
+    {id:"carrot",name:"Carrot",c:"#f28a1e",d:"#b85a0c",band:"#f08a24",H:84,veg:1,fl:"#ffffff"},
+    {id:"tomato",name:"Tomato",c:"#e8352a",d:"#a01c14",band:"#e2433a",H:100,veg:1,fl:"#ffe14a"},
+    {id:"pumpkin",name:"Pumpkin",c:"#f28c1c",d:"#b5590a",band:"#e98a2c",H:72,veg:1,fl:"#ffc61a"},
+    {id:"strawberry",name:"Strawberry",c:"#e8304a",d:"#a3172c",band:"#ee5a70",H:80,veg:1,fl:"#ffffff"},
+    {id:"corn",name:"Corn",c:"#ffd23a",d:"#c99a10",band:"#e9c43a",H:122,veg:1},
+    {id:"peas",name:"Peas",c:"#6fc24a",d:"#3a7d24",band:"#5fb24a",H:104,veg:1,fl:"#ffffff"}];
+  var VEGS=[9,10,11,12,13,14];
+  /* photo plants: width at 300 px tall; sink = share of the picture below the soil (the carrot) */
+  var VPH={carrot:{w:146,sink:.5},tomato:{w:202},pumpkin:{w:224},strawberry:{w:208},corn:{w:182},peas:{w:147}};
+  window.GDV={};
   function shade(hex,k){ var n=parseInt(hex.slice(1),16), r=n>>16, g=n>>8&255, b=n&255;
     var f=function(v){ return Math.max(0,Math.min(255,Math.round(k<0?v*(1+k):v+(255-v)*k))); };
     return "#"+((1<<24)|(f(r)<<16)|(f(g)<<8)|f(b)).toString(16).slice(1); }
   function ring(n,dist,rx,ry,fill,stroke,sw){ var s=""; for(var i=0;i<n;i++) s+='<ellipse cx="0" cy="'+(-dist)+'" rx="'+rx+'" ry="'+ry+'" transform="rotate('+(i*360/n).toFixed(1)+')" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>'; return s; }
   /* the open flower head, centered on 0,0 */
   function head(k){ var K=KINDS[k], c=K.c, d=K.d, s="";
+    if(K.veg) return vhead(K);
     if(K.id==="sunflower"){ s=ring(16,23,6.5,15,shade(c,-.08),d,1.2)+ring(16,20,5.5,13,c,d,1).replace(/rotate\(([\d.]+)\)/g,function(m,a){ return "rotate("+(+a+11.25)+")"; })+
       '<circle r="15" fill="#6b3f1d" stroke="#45260f" stroke-width="1.5"/>';
       for(var i=0;i<12;i++){ var a=i*2.4, r=2.5+i*.95; s+='<circle cx="'+(r*Math.cos(a)).toFixed(1)+'" cy="'+(r*Math.sin(a)).toFixed(1)+'" r="1.5" fill="#3a200b"/>'; }
@@ -313,6 +352,32 @@
       for(var j=0;j<8;j++){ var b=j*Math.PI/4; s+='<circle cx="'+(9.5*Math.cos(b)).toFixed(1)+'" cy="'+(9.5*Math.sin(b)).toFixed(1)+'" r="1.4" fill="#2b2030"/>'; }
       s+='<ellipse cx="-11" cy="-12" rx="4" ry="2.4" fill="#fff" opacity=".35"/>'; }
     return s; }
+  /* Nov 18: the drawn veggies, centered on 0,0 (packets, markers, basket, orders, and the grown plant until its photo loads) */
+  function vhead(K){ var c=K.c, d=K.d, s="";
+    if(K.id==="carrot"){ s='<path d="M0 -9 Q-6 -20 -9 -27 M0 -9 Q0 -21 1 -29 M0 -9 Q6 -19 10 -26" stroke="#3f9a45" stroke-width="3.4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M-8 -9 Q0 -13 8 -9 Q6 6 1.5 21 Q0 24 -1.5 21 Q-6 6 -8 -9Z" fill="'+c+'" stroke="'+d+'" stroke-width="1.5"/>'+
+      '<path d="M-5 -2 h4 M2 4 h4 M-4 10 h3 M1 15 h3" stroke="'+d+'" stroke-width="1.2" stroke-linecap="round" opacity=".7"/><path d="M-4 -6 Q-5 3 -3 10" stroke="#fff" stroke-width="1.8" fill="none" opacity=".4" stroke-linecap="round"/>'; }
+    else if(K.id==="tomato"){ s='<circle cy="3" r="15" fill="'+c+'" stroke="'+d+'" stroke-width="1.6"/><ellipse cx="-6" cy="-3" rx="4.5" ry="3" fill="#fff" opacity=".4"/>'+
+      '<path d="M0 -11 L-8 -14 L-3 -9 L-10 -7 L-2 -7 L0 -1 L2 -7 L10 -7 L3 -9 L8 -14Z" fill="#4caf50" stroke="#2f7d35" stroke-width="1" stroke-linejoin="round"/><path d="M0 -11 v-6" stroke="#2f7d35" stroke-width="2.4" stroke-linecap="round"/>'; }
+    else if(K.id==="pumpkin"){ s='<path d="M0 -12 Q1 -18 5 -20" stroke="#6b8a2a" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+      '<ellipse cx="-9" cy="3" rx="11" ry="13" fill="'+shade(c,-.06)+'" stroke="'+d+'" stroke-width="1.4"/><ellipse cx="9" cy="3" rx="11" ry="13" fill="'+shade(c,-.06)+'" stroke="'+d+'" stroke-width="1.4"/>'+
+      '<ellipse cy="3" rx="9" ry="14" fill="'+c+'" stroke="'+d+'" stroke-width="1.4"/><ellipse cx="-3" cy="-4" rx="3" ry="4" fill="#fff" opacity=".3"/>'; }
+    else if(K.id==="strawberry"){ s='<path d="M0 -8 C-14 -12 -17 2 -9 12 C-5 17 -2 21 0 22 C2 21 5 17 9 12 C17 2 14 -12 0 -8Z" fill="'+c+'" stroke="'+d+'" stroke-width="1.5"/>';
+      [[-7,-2],[0,-3],[7,-2],[-5,5],[2,5],[8,4],[-2,12],[4,12],[0,18]].forEach(function(q){ s+='<ellipse cx="'+q[0]+'" cy="'+q[1]+'" rx="1" ry="1.5" fill="#ffe07a"/>'; });
+      s+='<path d="M0 -8 L-10 -12 L-4 -9 L-7 -15 L0 -10 L7 -15 L4 -9 L10 -12Z" fill="#4caf50" stroke="#2f7d35" stroke-width="1" stroke-linejoin="round"/><path d="M0 -10 v-6" stroke="#2f7d35" stroke-width="2.2" stroke-linecap="round"/>'; }
+    else if(K.id==="corn"){ s='<ellipse rx="8" ry="18" fill="'+c+'" stroke="'+d+'" stroke-width="1.4"/>';
+      for(var y=-14;y<=14;y+=4) for(var x=-5;x<=5;x+=3.4) if(x*x/64+y*y/324<.82) s+='<circle cx="'+x.toFixed(1)+'" cy="'+y+'" r="1.4" fill="'+shade(c,.25)+'" stroke="'+shade(d,.1)+'" stroke-width=".5"/>';
+      s+='<path d="M-2 -17 Q-6 -24 -4 -28 M1 -18 Q2 -25 5 -27" stroke="#e0b25a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
+        '<path d="M-3 20 Q-16 6 -12 -12 Q-8 4 -2 10Z M3 20 Q16 6 12 -12 Q8 4 2 10Z" fill="#6ab84f" stroke="#2f7d35" stroke-width="1.2"/>'; }
+    else { s='<path d="M-18 6 Q-12 -10 4 -12 Q16 -12 19 -5 Q12 4 -2 8 Q-12 10 -18 6Z" fill="'+c+'" stroke="'+d+'" stroke-width="1.5"/>'+
+      '<circle cx="-8" cy="1" r="4" fill="'+shade(c,.2)+'" stroke="'+d+'" stroke-width="1"/><circle cx="0" cy="-2" r="4.2" fill="'+shade(c,.2)+'" stroke="'+d+'" stroke-width="1"/><circle cx="8" cy="-5" r="4" fill="'+shade(c,.2)+'" stroke="'+d+'" stroke-width="1"/>'+
+      '<path d="M19 -5 q4 -3 3 -8" stroke="#3a7d24" stroke-width="1.8" fill="none" stroke-linecap="round"/>'; }
+    return s; }
+  /* a veggie for small places: its photo when loaded, else the drawing (fits about 48 units) */
+  function icon(k){ var K=KINDS[k], P=VPH[K.id];
+    if(K.veg&&P&&window.GDV[K.id]){ var h=50, w=h*P.w/300; if(w>50){ h=h*50/w; w=50; }
+      return '<image href="gd/gd-'+K.id+'.webp?v=1118a" x="'+(-w/2).toFixed(1)+'" y="'+(-h/2).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'"/>'; }
+    return head(k); }
   function stem(h){ return '<path d="M0 0 C-5 '+(-h*.35).toFixed(1)+' 5 '+(-h*.65).toFixed(1)+' 0 '+(-h)+'" stroke="#3f9a45" stroke-width="5" fill="none" stroke-linecap="round"/>'+
     '<path d="M-1.2 -4 C-5 '+(-h*.35).toFixed(1)+' 3 '+(-h*.6).toFixed(1)+' -1.2 '+(-h+4)+'" stroke="#7fd287" stroke-width="1.4" fill="none" opacity=".6" stroke-linecap="round"/>'; }
   function leaf(x,y,ang,len){ return '<g transform="translate('+x+' '+y.toFixed(1)+') rotate('+ang+')"><path d="M0 0 Q'+(len/2)+' '+(-len/2.6)+' '+len+' 0 Q'+(len/2)+' '+(len/2.6)+' 0 0Z" fill="#5cc163" stroke="#2f7d35" stroke-width="1.4"/>'+
@@ -320,6 +385,7 @@
   /* a whole plant at stage s (1 seed, 2 sprout, 3 bud, 4 flower), standing on 0,0 */
   function plant(k,s){ var K=KINDS[k], H=K.H;
     var mound='<path d="M-20 2 Q0 -12 20 2Z" fill="#6e4a2c" stroke="#4a2f19" stroke-width="1.2"/>';
+    if(K.veg&&s>2) return vplant(k,s,mound);
     if(s===1) return mound+'<ellipse cx="-2" cy="-3.5" rx="4" ry="2.6" fill="#e6c98d" stroke="#9c7a44" stroke-width="1" transform="rotate(-20 -2 -3.5)"/>'+
       '<rect x="24" y="-36" width="4" height="38" rx="1.5" fill="#c8975f" stroke="#8d6234" stroke-width="1"/>'+
       '<rect x="13" y="-48" width="26" height="17" rx="3" fill="#fff6e2" stroke="#b58a55" stroke-width="1.2"/>'+
@@ -328,9 +394,29 @@
     if(s===3){ var h=Math.round(H*.68); return mound+stem(h)+leaf(0,-h*.42,-160,26)+leaf(0,-h*.55,-20,26)+
       '<g transform="translate(0 '+(-h-7)+')"><ellipse rx="7" ry="11" fill="'+K.c+'" stroke="'+K.d+'" stroke-width="1.4"/>'+
       '<path d="M-8 4 Q0 14 8 4 Q4 8 0 12 Q-4 8 -8 4Z" fill="#4caf50" stroke="#2f7d35" stroke-width="1"/></g>'; }
-    var PW={sunflower:173,tulip:136,daisy:159,rose:158,bluebell:150,poppy:161};
-    if(window.GDPH&&PW[K.id]){ var ht=H*1.28, w=ht*PW[K.id]/300; return mound+'<image href="gd/gd-'+K.id+'.webp?v=1115a" x="'+(-w/2).toFixed(1)+'" y="'+(-ht+2).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+ht.toFixed(1)+'"/>'; }
+    var PW={sunflower:173,tulip:136,daisy:159,rose:158,bluebell:150,poppy:161,lily:193,pansy:159,marigold:188}, NEWF={lily:1,pansy:1,marigold:1};
+    if(window.GDPH&&PW[K.id]&&(!NEWF[K.id]||window.GDV[K.id])){ var ht=H*1.28, w=ht*PW[K.id]/300; return mound+'<image href="gd/gd-'+K.id+'.webp?v='+(NEWF[K.id]?'1118a':'1115a')+'" x="'+(-w/2).toFixed(1)+'" y="'+(-ht+2).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+ht.toFixed(1)+'"/>'; }
     return mound+stem(H)+leaf(0,-H*.33,-160,30)+leaf(0,-H*.52,-20,30)+'<g class="hd" transform="translate(0 '+(-H)+')">'+head(k)+'</g>'; }
+  /* Nov 18: a veggie's young plant (with its little flower) and the grown plant */
+  function bloom5(c){ var s=""; for(var i=0;i<5;i++) s+='<ellipse cx="0" cy="-4.2" rx="3" ry="4.2" transform="rotate('+(i*72)+')" fill="'+c+'" stroke="#c9b98a" stroke-width=".7"/>'; return s+'<circle r="2.2" fill="#f2b51c"/>'; }
+  function vplant(k,s,mound){ var K=KINDS[k], H=K.H, id=K.id, P=VPH[id];
+    var fern=function(h,n){ var o=""; for(var j=0;j<n;j++){ var a=-60+j*120/(n-1), r=a*Math.PI/180, x=Math.sin(r)*h*.55, y=-Math.cos(r)*h;
+      o+='<path d="M0 -2 Q'+(x*.3).toFixed(1)+' '+(y*.6).toFixed(1)+' '+x.toFixed(1)+' '+y.toFixed(1)+'" stroke="#3f9a45" stroke-width="3" fill="none" stroke-linecap="round"/>';
+      for(var q=.45;q<1;q+=.18) o+='<circle cx="'+(x*q).toFixed(1)+'" cy="'+(y*q).toFixed(1)+'" r="3.4" fill="#5cc163" stroke="#2f7d35" stroke-width=".8"/>'; } return o; };
+    if(s===3){ var h=Math.round(H*.6);
+      if(id==="carrot") return fern(38,5)+mound+'<ellipse cy="-2" rx="6" ry="3" fill="'+K.c+'" stroke="'+K.d+'" stroke-width="1.2"/>';
+      if(id==="pumpkin") return mound+'<path d="M0 -4 Q-14 -12 -26 -6" stroke="#4f9a3a" stroke-width="3" fill="none" stroke-linecap="round"/>'+leaf(-4,-6,-150,24)+leaf(2,-6,-30,24)+
+        '<g transform="translate(-26 -10) scale(1.3)">'+bloom5(K.fl)+'</g><ellipse cx="14" cy="-5" rx="6" ry="5" fill="#8cc63f" stroke="#4f7d1f" stroke-width="1"/>';
+      var o=mound+stem(h)+leaf(0,-h*.4,-160,24)+leaf(0,-h*.6,-20,24);
+      if(id==="corn") return o+leaf(0,-h*.8,-150,26)+'<path d="M0 '+(-h)+' l-5 -12 M0 '+(-h)+' l0 -14 M0 '+(-h)+' l5 -12" stroke="#d8b860" stroke-width="2" stroke-linecap="round"/>';
+      return o+'<g transform="translate(0 '+(-h-3)+') scale(1.25)">'+bloom5(K.fl)+'</g>'; }
+    if(window.GDV[id]&&P){ var ht=H*1.28/(1-(P.sink||0)), w=ht*P.w/300, y=-ht*(1-(P.sink||0))+2;
+      var img='<image href="gd/gd-'+id+'.webp?v=1118a" x="'+(-w/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+ht.toFixed(1)+'"'+(P.sink?' clip-path="url(#gdGround)"':'')+'/>';
+      return P.sink?img+mound:mound+img; }
+    if(id==="carrot") return fern(62,7)+mound+'<ellipse cy="-3" rx="9" ry="4.5" fill="'+K.c+'" stroke="'+K.d+'" stroke-width="1.4"/>';
+    if(id==="pumpkin") return mound+leaf(-6,-8,-160,30)+'<g class="hd" transform="translate(4 -16) scale(1.25)">'+head(k)+'</g>';
+    return mound+stem(H)+leaf(0,-H*.33,-160,30)+leaf(0,-H*.52,-20,30)+(id==="corn"?leaf(0,-H*.7,-150,32)+leaf(0,-H*.82,-30,30):'')+
+      '<g class="hd" transform="translate(0 '+(-H)+')">'+head(k)+'</g>'; }
   /* ---------- the garden bed (600 × 380) and its six patches ---------- */
   var PLOTS=[[214,178,.8],[300,178,.8],[386,178,.8],[168,258,1],[300,258,1],[432,258,1]];
   var art=$("art"), bed=$("bed");
@@ -343,7 +429,8 @@
       '<pattern id="gdSoilP" patternUnits="userSpaceOnUse" x="40" y="130" width="320" height="320"><image href="gd/gd-soil.jpg?v=1115a" width="320" height="320"/></pattern>'+
       '<radialGradient id="gdSoilSh" cx="45%" cy="35%" r="80%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient>'+
       '<linearGradient id="gdFaceSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>'+
-      '<linearGradient id="gdPost" x1="0" x2="1"><stop offset="0" stop-color="#7a4a24"/><stop offset=".45" stop-color="#c08a52"/><stop offset="1" stop-color="#6e401d"/></linearGradient></defs>'+
+      '<linearGradient id="gdPost" x1="0" x2="1"><stop offset="0" stop-color="#7a4a24"/><stop offset=".45" stop-color="#c08a52"/><stop offset="1" stop-color="#6e401d"/></linearGradient>'+
+      '<clipPath id="gdGround" clipPathUnits="userSpaceOnUse"><rect x="-300" y="-600" width="600" height="603"/></clipPath></defs>'+
       '<ellipse cx="300" cy="350" rx="300" ry="30" fill="url(#gdShade)"/>'+
       '<path d="M34 296 L566 296 L490 112 L110 112Z" fill="url(#gdWood)" stroke="#6e401d" stroke-width="2" stroke-linejoin="round"/>'+
       '<path d="M35 295 L565 295 L489 113 L111 113Z" fill="url(#gdWoodP)" opacity=".95"/>'+
@@ -376,12 +463,16 @@
   if(!save||!Array.isArray(save.plots)||save.plots.length!==6) save={plots:[null,null,null,null,null,null],seed:0,basket:0,recent:[]};
   if(!Array.isArray(save.recent)) save.recent=[]; if(!(save.seed>=0&&save.seed<KINDS.length)) save.seed=0; save.basket=save.basket|0;
   if(!save.big||typeof save.big!=="object") save.big={done:0,got:{}}; save.big.done=save.big.done|0; if(!save.big.got||typeof save.big.got!=="object") save.big.got={};
+  if(!save.bigv||typeof save.bigv!=="object") save.bigv={done:0,got:{}}; save.bigv.done=save.bigv.done|0; if(!save.bigv.got||typeof save.bigv.got!=="object") save.bigv.got={};
+  if(save.mode!=="v") save.mode="f"; var veg=save.mode==="v";
+  function anyVeg(){ return save.plots.some(function(p){ return p&&p.s===4&&KINDS[p.k].veg; }); }
   function persist(){ try{ BWK.store.set("garden",save); }catch(_){ } }
   var busy=[false,false,false,false,false,false], toldWater=false;
   function render(i,anim){ var p=save.plots[i], g=plotEls[i].querySelector(".pl"); g.innerHTML=p?plant(p.k,p.s):"";
     if(anim && p && g.animate) g.animate([{transform:"scale(.35)",opacity:.4},{transform:"scale(1.08)",opacity:1,offset:.7},{transform:"scale(1)"}],{duration:520,easing:"ease-out"}); }
   function hints(){ var any=save.plots.some(function(p){ return p; }); plotEls.forEach(function(e,i){ e.classList.toggle("hint",!any); }); }
   window.GDRE=function(){ for(var i=0;i<6;i++) render(i); };
+  window.GDVRE=function(){ for(var i=0;i<6;i++) render(i); if(window.GDVS) window.GDVS(); };
   function blooms(){ var n=0; save.plots.forEach(function(p){ if(p&&p.s===4) n++; }); return n; }
   /* positions in % of the bed, for the can, drops, sparkles and the butterfly */
   function pct(x,y){ return [x/600*100, y/380*100]; }
@@ -414,28 +505,30 @@
     busy[i]=true; water(i); hopFinn();
     setTimeout(function(){ p.s++; persist(); render(i,true); grow(i);
       if(p.s===4){ var hx=headXY(i); setTimeout(function(){ bloomSnd(i); sparkle(hx[0],hx[1],KINDS[p.k].c==="#ffffff"?"#fff6c8":KINDS[p.k].c,3); },220);
-        var n=blooms(); if(n===6) finish(); else if(n===1&&!toldBask){ toldBask=true; say(FIRST,"gd-first"); } else say(COUNT[n-1],"gd-"+n); baskState(); flutter(); } },820);
+        var n=blooms(), V=anyVeg(), K=KINDS[p.k];
+        if(n===6) finish(); else if(n===1&&!toldBask){ toldBask=true; if(V) say(VFIRST,"gd-vfirst"); else say(FIRST,"gd-first"); }
+        else if(V) say(K.name+"!","gd-"+K.id); else say(COUNT[n-1],"gd-"+n); baskState(); flutter(); } },820);
     setTimeout(function(){ busy[i]=false; },1000); }
   function finish(){ setTimeout(function(){ chord(); for(var k=0;k<8;k++) (function(k){ setTimeout(function(){ sparkle(10+k*11,18+(k%3)*18,"#ffe08a",2); },k*90); })(k); },300);
-    setTimeout(function(){ toldBask=true; say(YAY,"gd-yay-2"); },500);
-    clearTimeout(nudgeT); nudgeT=setTimeout(function(){ if(blooms()===6) say(NUDGE,"gd-nudge"); },16000); }
+    var V=anyVeg(); setTimeout(function(){ toldBask=true; if(V) say(VYAY,"gd-vyay"); else say(YAY,"gd-yay-2"); },500);
+    clearTimeout(nudgeT); nudgeT=setTimeout(function(){ if(blooms()===6){ if(anyVeg()) say(VNUDGE,"gd-vnudge"); else say(NUDGE,"gd-nudge"); } },16000); }
   function baskState(){ var n=blooms(); bask.classList.toggle("ready",n>0&&n<6); bask.classList.toggle("call",n===6); }
   /* ---------- the basket ---------- */
   var bask=$("bask"), bn=$("bn");
   function drawBasket(){ var s='<defs><linearGradient id="gdWick" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfa760"/><stop offset="1" stop-color="#9c6129"/></linearGradient></defs>'+
       '<path d="M16 46 Q50 -6 84 46" stroke="#8a5426" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M18 44 Q50 -2 82 44" stroke="#d7a15f" stroke-width="3" fill="none" stroke-linecap="round"/>';
     var r=save.recent.slice(-5), xs=[30,70,42,58,50], ys=[42,42,36,36,30];
-    r.forEach(function(k,j){ s+='<g transform="translate('+xs[j]+' '+ys[j]+') scale(.42)">'+head(k)+'</g>'; });
+    r.forEach(function(k,j){ s+='<g transform="translate('+xs[j]+' '+ys[j]+') scale('+(KINDS[k]&&KINDS[k].veg?.5:.42)+')">'+icon(k)+'</g>'; });
     s+='<path d="M10 46 H90 L81 86 Q50 92 19 86Z" fill="url(#gdWick)" stroke="#6e3f18" stroke-width="2" stroke-linejoin="round"/>';
     for(var y=56;y<86;y+=8) s+='<path d="M'+(12+(y-46)*.22)+' '+y+' H'+(88-(y-46)*.22)+'" stroke="#7a4519" stroke-width="1.4" opacity=".55"/>';
     for(var x=22;x<82;x+=8) s+='<path d="M'+x+' 48 L'+(50+(x-50)*.86)+' 88" stroke="#7a4519" stroke-width="1.2" opacity=".4"/>';
     s+='<rect x="7" y="42" width="86" height="9" rx="4.5" fill="#c58748" stroke="#6e3f18" stroke-width="1.8"/><path d="M12 45 H88" stroke="#f2c88e" stroke-width="1.6" opacity=".7"/>';
     $("baskArt").innerHTML=s; bn.textContent=save.basket?String(save.basket):""; }
   bask.addEventListener("click",function(){ var list=[], picked=[]; save.plots.forEach(function(p,i){ if(p&&p.s===4&&!busy[i]) list.push(i); });
-    if(!list.length){ BWK.sfx("tap"); say(EMPTY,"gd-empty"); return; }
+    if(!list.length){ BWK.sfx("tap"); if(veg) say(VEMPTY,"gd-vempty"); else say(EMPTY,"gd-empty"); return; }
     var br=bask.getBoundingClientRect(), bd=bed.getBoundingClientRect(), tx=(br.left+br.width/2-bd.left)/bd.width*100, ty=(br.top+br.height*.4-bd.top)/bd.height*100;
     list.forEach(function(i,j){ var p=save.plots[i], q=headXY(i), f=document.createElement("div"); f.className="fly";
-      f.innerHTML='<svg viewBox="-40 -40 80 80" aria-hidden="true">'+head(p.k)+'</svg>'; f.style.left=q[0]+"%"; f.style.top=q[1]+"%"; bed.appendChild(f);
+      f.innerHTML='<svg viewBox="-40 -40 80 80" aria-hidden="true">'+(KINDS[p.k].veg?'<g transform="scale(1.4)">'+icon(p.k)+'</g>':head(p.k))+'</svg>'; f.style.left=q[0]+"%"; f.style.top=q[1]+"%"; bed.appendChild(f);
       save.recent.push(p.k); picked.push(KINDS[p.k].id); save.plots[i]=null; render(i,false);
       var a=f.animate?f.animate([{left:q[0]+"%",top:q[1]+"%",transform:"translate(-50%,-50%) scale(1)"},
         {left:((q[0]+tx)/2)+"%",top:(Math.min(q[1],ty)-12)+"%",transform:"translate(-50%,-50%) scale(.9) rotate(20deg)",offset:.5},
@@ -460,7 +553,15 @@
     bf.classList.add("on"); bf.style.left=q[0]+"%"; bf.style.top=(q[1]-7)+"%"; }
   setInterval(flutter,4200);
   /* ---------- seed packets ---------- */
-  function packet(k){ var K=KINDS[k]; return '<svg viewBox="0 0 60 76" aria-hidden="true">'+
+  function packet(k){ var K=KINDS[k];
+    if(K.veg) return '<svg viewBox="0 0 60 76" aria-hidden="true">'+
+      '<path d="M4 8 H56 V70 Q56 74 52 74 H8 Q4 74 4 70Z" fill="#fff4dc" stroke="#b8935c" stroke-width="1.6"/>'+
+      '<path d="M4 2 L8 8 L12 2 L16 8 L20 2 L24 8 L28 2 L32 8 L36 2 L40 8 L44 2 L48 8 L52 2 L56 8 V12 H4Z" fill="#e8cf9e" stroke="#b8935c" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M4 56 H56 V70 Q56 74 52 74 H8 Q4 74 4 70Z" fill="'+K.band+'" stroke="#b8935c" stroke-width="1.2"/>'+
+      '<path d="M10 62 H50 M14 67 H46" stroke="#fff" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>'+
+      '<g transform="translate(30 34) scale(.82)">'+icon(k)+'</g>'+
+      '<path d="M8 12 V52" stroke="#fff" stroke-width="2.4" opacity=".6" stroke-linecap="round"/></svg>';
+    return '<svg viewBox="0 0 60 76" aria-hidden="true">'+
     '<path d="M4 8 H56 V70 Q56 74 52 74 H8 Q4 74 4 70Z" fill="#fff4dc" stroke="#b8935c" stroke-width="1.6"/>'+
     '<path d="M4 2 L8 8 L12 2 L16 8 L20 2 L24 8 L28 2 L32 8 L36 2 L40 8 L44 2 L48 8 L52 2 L56 8 V12 H4Z" fill="#e8cf9e" stroke="#b8935c" stroke-width="1.2" stroke-linejoin="round"/>'+
     '<path d="M4 56 H56 V70 Q56 74 52 74 H8 Q4 74 4 70Z" fill="'+K.band+'" stroke="#b8935c" stroke-width="1.2"/>'+
@@ -469,25 +570,28 @@
     '<g transform="translate('+(K.id==="bluebell"?20:30)+' '+(K.id==="bluebell"?32:31)+') scale(.6)">'+head(k)+'</g>'+
     '<path d="M8 12 V52" stroke="#fff" stroke-width="2.4" opacity=".6" stroke-linecap="round"/></svg>'; }
   var seedsEl=$("seeds"), pkBtns=[];
-  seedsEl.addEventListener("click",function(e){ var b=e.target.closest(".pk"); if(!b) return; if(b===bigB){ toggleBig(); return; } var k=+b.dataset.k; save.seed=k; persist();
+  seedsEl.addEventListener("click",function(e){ var b=e.target.closest(".pk"); if(!b) return; if(b===bigB){ toggleBig(); return; } if(b===modeB){ toggleMode(); return; } var k=+b.dataset.k; save.seed=k; persist();
     pkBtns.forEach(function(x){ x.classList.toggle("on",x===b); }); rustle(); say(KINDS[k].name+"!","gd-"+KINDS[k].id); });
   /* ---------- Big Moonlet (Nov 11): Finn's flower orders; new seeds as orders are done ---------- */
-  var gdMain=document.querySelector("main.gd"), card=$("order"), orows=$("orows"), onum=$("onum");
+  var gdMain=document.querySelector("main.gd"), card=$("order"), orows=$("orows"), onum=$("onum"), owho=$("owho");
   var KI={}; KINDS.forEach(function(K,k){ KI[K.id]=k; });
   var UNLOCK={3:"lily",5:"pansy",7:"marigold"};
-  function oIdx(){ var d=save.big.done; return d<10?d:3+((d-10)%7); }
-  function cur(){ return ORDERS[oIdx()]; }
+  function bk(){ return veg?save.bigv:save.big; }
+  function oIdx(){ var d=bk().done; return veg?(d<10?d:2+((d-10)%8)):(d<10?d:3+((d-10)%7)); }
+  function cur(){ return veg?VORD[oIdx()].o:ORDERS[oIdx()]; }
+  function otxt(){ return veg?VTXT[oIdx()]:OTXT[oIdx()]; }
   function unlocked(){ var d=save.big.done; return 6+(d>=3?1:0)+(d>=5?1:0)+(d>=7?1:0); }
-  function sayOrder(){ var i=oIdx(); say(OTXT[i],"gd-o"+(i+1)); }
-  function orderRow(id,n,g){ var k=KI[id], K=KINDS[k], vb=id==="bluebell"?"-4 -16 46 46":"-25 -25 50 50", d="";
+  function sayOrder(){ var i=oIdx(); say(otxt(),(veg?"gd-v":"gd-o")+(i+1)); }
+  function orderRow(id,n,g){ var k=KI[id], K=KINDS[k], vb=id==="bluebell"?"-4 -16 46 46":K.veg?"-28 -28 56 56":"-25 -25 50 50", d="";
     for(var j=0;j<n;j++) d+='<i class="d'+(j<g?' f':'')+'"></i>';
-    return '<span class="r" style="--c:'+K.c+';--dk:'+K.d+'"><svg viewBox="'+vb+'" aria-hidden="true">'+head(k)+'</svg><span class="ds">'+d+'</span></span>'; }
-  function drawOrder(){ var O=cur(), got=save.big.got, s="", n=0; for(var id in O){ s+=orderRow(id,O[id],Math.min(got[id]|0,O[id])); n++; }
-    orows.innerHTML=s; orows.style.setProperty("--oc",n>3?2:1); onum.textContent=save.big.done?"☾ "+save.big.done:"";
-    card.setAttribute("aria-label","Finn's flower order: "+OTXT[oIdx()]); }
+    return '<span class="r" style="--c:'+K.c+';--dk:'+K.d+'"><svg viewBox="'+vb+'" aria-hidden="true">'+icon(k)+'</svg><span class="ds">'+d+'</span></span>'; }
+  function drawOrder(){ var O=cur(), got=bk().got, s="", n=0; for(var id in O){ s+=orderRow(id,O[id],Math.min(got[id]|0,O[id])); n++; }
+    orows.innerHTML=s; orows.style.setProperty("--oc",n>3?2:1); onum.textContent=bk().done?"☾ "+bk().done:"";
+    card.classList.toggle("veg",veg); if(veg){ var w=VORD[oIdx()].who; if(owho.dataset.w!==w){ owho.dataset.w=w; owho.src="sl/c-"+w+".webp?v=1118a"; } }
+    card.setAttribute("aria-label",(veg?"The order: ":"Finn's flower order: ")+otxt()); }
   function tick(n){ var c=snd(); if(!c) return; var t=c.currentTime+.02; for(var k=0;k<n;k++) tone(c,1046.5*(1+k*.125),t+k*.09,.14,.05,"triangle"); }
   /* picked flowers that the order still needs fill its dots; true when the order is now complete */
-  function orderPick(ids,n){ var O=cur(), got=save.big.got, add=0;
+  function orderPick(ids,n){ var O=cur(), got=bk().got, add=0;
     ids.forEach(function(id){ if((got[id]|0)<(O[id]|0)){ got[id]=(got[id]|0)+1; add++; } });
     if(!add) return false; persist(); var wait=650+n*110;
     setTimeout(function(){ drawOrder(); tick(add); },wait);
@@ -497,9 +601,10 @@
   function orderDone(){ card.classList.remove("ok"); void card.offsetWidth; card.classList.add("ok"); chord();
     var r=card.getBoundingClientRect(), bd=bed.getBoundingClientRect(), cx=(r.left+r.width/2-bd.left)/bd.width*100, cy=(r.top+r.height/2-bd.top)/bd.height*100;
     for(var k=0;k<4;k++) (function(k){ setTimeout(function(){ sparkle(cx+(k-1.5)*4,cy,"#ffe08a",2); },k*110); })(k);
-    save.big.done++; save.big.got={}; persist(); var d=save.big.done, nk=UNLOCK[d];
+    var B=bk(), wasVeg=veg; B.done++; B.got={}; persist(); var d=B.done, nk=wasVeg?null:UNLOCK[d];
     setTimeout(function(){ card.classList.remove("ok"); drawOrder(); },1500);
     if(nk) setTimeout(function(){ var k=KI[nk]; save.seed=k; persist(); buildSeeds(k); rustle(); },3400);
+    if(wasVeg){ say(VDONE,"gd-vdone",function(){ if(d===10) say(VALL,"gd-vallorders",sayOrder); else sayOrder(); }); return; }
     say(DONE,"gd-done",function(){
       if(d===10) say(ALL,"gd-allorders",sayOrder);
       else if(nk) say(NEWSEED,"gd-newseed",function(){ say(KINDS[KI[nk]].name+"!","gd-"+nk,sayOrder); });
@@ -507,32 +612,43 @@
   var bigB=document.createElement("button"); bigB.className="pk bigc"; bigB.setAttribute("aria-label","Big Moonlet");
   bigB.innerHTML='<span class="bf" aria-hidden="true"><i class="sw"></i><b>Big</b></span><span>Big Moonlet</span>';
   function bigShow(){ bigB.setAttribute("aria-pressed",big?"true":"false"); gdMain.classList.toggle("big",big); }
-  function buildSeeds(newK){ var n=big?unlocked():6; if(save.seed>=n) save.seed=0; seedsEl.innerHTML=""; pkBtns=[];
-    for(var k=0;k<n;k++){ var K=KINDS[k], b=document.createElement("button"); b.className="pk"+(k===save.seed?" on":"")+(k===newK?" new":""); b.dataset.k=k;
+  /* Nov 18: the Flowers | Veggies switch */
+  var modeB=document.createElement("button"); modeB.className="pk modec";
+  function modeShow(){ modeB.setAttribute("aria-pressed",veg?"true":"false"); modeB.setAttribute("aria-label",veg?"Veggies: switch to flowers":"Flowers: switch to veggies");
+    modeB.innerHTML='<span class="bf" aria-hidden="true"><svg viewBox="-26 -26 52 52" class="'+(veg?"off":"on")+'">'+head(1)+'</svg><svg viewBox="-28 -28 56 56" class="'+(veg?"on":"off")+'">'+head(9)+'</svg></span><span>'+(veg?"Veggies":"Flowers")+'</span>'; }
+  function toggleMode(){ veg=!veg; save.mode=veg?"v":"f"; persist(); rustle(); modeShow(); buildSeeds(); drawOrder(); requestAnimationFrame(size);
+    var then=big?function(){ say(veg?VBIGHI:BIGHI,veg?"gd-vbighi":"gd-bighi",sayOrder); }:null;
+    if(veg) say(VEG,"gd-veg",then); else say(FLW,"gd-flw",then); }
+  function buildSeeds(newK){ var list=[]; if(veg) list=VEGS.slice(); else for(var q=0;q<(big?unlocked():6);q++) list.push(q);
+    var n=list.length; if(list.indexOf(save.seed)<0) save.seed=list[0]; seedsEl.innerHTML=""; pkBtns=[]; modeShow(); seedsEl.appendChild(modeB);
+    list.forEach(function(k){ var K=KINDS[k], b=document.createElement("button"); b.className="pk"+(k===save.seed?" on":"")+(k===newK?" new":""); b.dataset.k=k;
       b.setAttribute("aria-label",K.name+" seeds"); b.style.setProperty("--c",K.band); b.innerHTML=packet(k)+'<span>'+K.name+'</span>';
-      seedsEl.appendChild(b); pkBtns.push(b); }
-    seedsEl.appendChild(bigB); seedsEl.style.setProperty("--cols",Math.ceil((n+1)/2)); seedsEl.style.setProperty("--n",n+1); seedsEl.classList.toggle("two",n+1>7); }
+      seedsEl.appendChild(b); pkBtns.push(b); });
+    seedsEl.appendChild(bigB); seedsEl.style.setProperty("--cols",Math.ceil((n+2)/2)); seedsEl.style.setProperty("--n",n+2); seedsEl.classList.toggle("two",n+2>7); }
   function toggleBig(){ big=!big; BWK.setBig(big); bigShow(); BWK.sfx("tap"); buildSeeds(); drawOrder(); requestAnimationFrame(size);
-    if(big) say(BWK.BIG_LINES.on,"bg-on",function(){ say(BIGHI,"gd-bighi",sayOrder); }); else say(BWK.BIG_LINES.off,"bg-off"); }
+    if(big) say(BWK.BIG_LINES.on,"bg-on",function(){ say(veg?VBIGHI:BIGHI,veg?"gd-vbighi":"gd-bighi",sayOrder); }); else say(BWK.BIG_LINES.off,"bg-off"); }
   card.addEventListener("click",function(){ BWK.sfx("tap"); card.classList.remove("wig"); void card.offsetWidth; card.classList.add("wig");
     setTimeout(function(){ card.classList.remove("wig"); },650); sayOrder(); });
   /* ---------- start ---------- */
   buildSeeds(); bigShow(); drawOrder();
+  window.GDVS=function(){ var k=save.seed; buildSeeds(); drawOrder(); drawBasket(); };
   for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); baskState(); setTimeout(flutter,900);
   function size(){ var w=bed.getBoundingClientRect().width; perch.style.setProperty("--hw",Math.round(Math.max(44,Math.min(74,w*.085)))+"px");
     card.style.fontSize=Math.min(20,Math.max(10.5,w*.034)).toFixed(1)+"px"; }
   requestAnimationFrame(size); window.addEventListener("resize",size);
-  window.GDO={tap:tapPlot, seed:function(k){ seedsEl.children[k].click(); }, pick:function(){ bask.click(); },
-    growAll:function(){ for(var i=0;i<6;i++){ if(!save.plots[i]) save.plots[i]={k:i,s:1}; save.plots[i].s=4; render(i,false); } persist(); hints(); baskState(); flutter(); },
-    reset:function(){ save={plots:[null,null,null,null,null,null],seed:0,basket:0,recent:[],big:{done:0,got:{}}}; persist(); for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); baskState(); buildSeeds(); drawOrder(); },
-    state:function(){ return {plots:save.plots.map(function(p){ return p?p.k+":"+p.s:"-"; }).join(" "), basket:save.basket, seed:save.seed, busy:busy.join(), big:big, done:save.big.done, order:oIdx(), got:JSON.stringify(save.big.got), seeds:pkBtns.length}; },
+  window.GDO={tap:tapPlot, seed:function(k){ seedsEl.children[k+1].click(); }, mode:function(v){ if(!!v!==veg) toggleMode(); }, pick:function(){ bask.click(); },
+    growAll:function(){ for(var i=0;i<6;i++){ if(!save.plots[i]) save.plots[i]={k:veg?VEGS[i]:i,s:1}; save.plots[i].s=4; render(i,false); } persist(); hints(); baskState(); flutter(); },
+    reset:function(){ save={plots:[null,null,null,null,null,null],seed:0,basket:0,recent:[],big:{done:0,got:{}},bigv:{done:0,got:{}},mode:veg?"v":"f"}; persist(); for(var i=0;i<6;i++) render(i,false); hints(); drawBasket(); baskState(); buildSeeds(); drawOrder(); },
+    state:function(){ return {plots:save.plots.map(function(p){ return p?p.k+":"+p.s:"-"; }).join(" "), basket:save.basket, seed:save.seed, busy:busy.join(), big:big, veg:veg, done:bk().done, order:oIdx(), got:JSON.stringify(bk().got), seeds:pkBtns.length}; },
     big:function(on){ if(!!on!==big) toggleBig(); },
-    setDone:function(n){ save.big.done=n; save.big.got={}; persist(); buildSeeds(); drawOrder(); },
+    setDone:function(n){ bk().done=n; bk().got={}; persist(); buildSeeds(); drawOrder(); },
     orderBed:function(){ var O=cur(), list=[]; for(var id in O) for(var j=0;j<O[id];j++) list.push(KI[id]);
       for(var i=0;i<6;i++){ save.plots[i]=i<list.length?{k:list[i],s:4}:null; render(i,false); } persist(); hints(); baskState(); flutter(); }};
 })();
 </script>
 <script>(function(){ var L=["gd-bg-sm.jpg","gd-soil.jpg","gd-wood.jpg","gd-sunflower.webp","gd-tulip.webp","gd-daisy.webp","gd-rose.webp","gd-bluebell.webp","gd-poppy.webp"], n=0;
-  L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n===L.length){ document.documentElement.classList.add("gdp"); window.GDPH=true; if(window.GDRE) window.GDRE(); } }; i.src="gd/"+f+"?v=1115a"; }); })();</script>
+  L.forEach(function(f){ var i=new Image(); i.onload=function(){ if(++n===L.length){ document.documentElement.classList.add("gdp"); window.GDPH=true; if(window.GDRE) window.GDRE(); } }; i.src="gd/"+f+"?v=1115a"; });
+  /* Nov 18: the veggie photos switch on one by one as they load */
+  ["carrot","tomato","pumpkin","strawberry","corn","peas","lily","pansy","marigold"].forEach(function(id){ var i=new Image(); i.onload=function(){ window.GDV[id]=true; clearTimeout(window.GDVT); window.GDVT=setTimeout(function(){ if(window.GDVRE) window.GDVRE(); },60); }; i.src="gd/gd-"+id+".webp?v=1118a"; }); })();</script>
 </body>
 </html>
