@@ -256,12 +256,45 @@ var texCache={},curDesign=null,stageReady=false,fontsReady=false;
 function pieceMat(p){ return p.marble?"radial-gradient(circle at 34% 28%,rgba(255,255,255,.7) 0 4%,transparent 24%),radial-gradient(circle at 50% 50%,transparent 55%,rgba(0,0,0,.12)),"+marbleTex(p.marble)+" center/160%":p.mat; }
 function applyDesign(k){
   if(!DESIGNS[k]) k="garden"; if(!fontsReady||k===curDesign) return; curDesign=k; var d=DESIGNS[k];
-  if(!texCache[k]) texCache[k]={top:paintTable(d),p1:pieceMat(d.p1),p2:pieceMat(d.p2)};
+  if(!texCache[k]) texCache[k]={top:ckReady[k]?null:paintTable(d),p1:pieceMat(d.p1),p2:pieceMat(d.p2)};
+  if(ckReady[k]&&!texCache[k].ph) texCache[k].ph=photoTable(d,k);
   var s=document.body.style,t=texCache[k];
-  s.setProperty("--ck-top",t.top);s.setProperty("--ck-topc","rgb("+d.top.join(",")+")");
+  s.setProperty("--ck-top",ckReady[k]?t.ph:t.top);s.setProperty("--ck-topc","rgb("+d.top.join(",")+")");
   s.setProperty("--p1mat",t.p1);s.setProperty("--p2mat",t.p2);s.setProperty("--p1edge",d.p1.edge);s.setProperty("--p2edge",d.p2.edge);
   s.setProperty("--ck-dot1",d.dots[0]);s.setProperty("--ck-dot2",d.dots[1]);
   nameSeats(); if(stageReady) paint();
+}
+/* photo tables (Nov 19): Judy's garden table photo (Chess's), recolored for Dove and Charcoal, with borders and tiles
+   recolored from Chess's Garden Aqua set (ck/); 64 squares each cut from a different spot (and turn) of its tile */
+var CKV="1119b",ckImg={},ckReady={};
+(function(){ Object.keys(DESIGNS).forEach(function(k){ var fs=["ck-table-"+k,"f-"+k,"t-"+k+"-L","t-"+k+"-D"],left=fs.length;
+  fs.forEach(function(f){ var im=new Image(); im.onload=function(){ if(--left) return; ckReady[k]=1; if(curDesign===k){ curDesign=null; applyDesign(k); } }; im.src="ck/"+f+".webp?v="+CKV; ckImg[k+"/"+f]=im; }); }); })();
+function photoTable(d,k){
+  var N=1400,R=N/2,c=document.createElement("canvas");c.width=c.height=N;var g=c.getContext("2d");
+  g.fillStyle="rgb("+d.top.join(",")+")";g.fillRect(0,0,N,N);
+  g.drawImage(ckImg[k+"/ck-table-"+k],0,0,N,N);
+  var half=BH*R,sq=2*half/8,x0=R-half,rr=rng(d.seed+101),tL=ckImg[k+"/t-"+k+"-L"],tD=ckImg[k+"/t-"+k+"-D"];
+  for(var r=0;r<8;r++)for(var cc=0;cc<8;cc++){
+    var t=(r+cc)%2?tD:tL,tw=t.naturalWidth,cw=tw*(.42+rr()*.16),sx=rr()*(tw-cw),sy=rr()*(tw-cw),rot=Math.floor(rr()*4);
+    g.save();g.translate(x0+cc*sq+sq/2,x0+r*sq+sq/2);g.rotate(rot*Math.PI/2);
+    g.drawImage(t,sx,sy,cw,cw,-sq/2-.5,-sq/2-.5,sq+1,sq+1);g.restore();
+  }
+  g.lineWidth=1.2;g.strokeStyle="rgba(0,0,0,.22)";g.beginPath();
+  for(var i=1;i<8;i++){g.moveTo(x0+i*sq,x0);g.lineTo(x0+i*sq,x0+2*half);g.moveTo(x0,x0+i*sq);g.lineTo(x0+2*half,x0+i*sq);}g.stroke();
+  g.strokeStyle="rgba(255,255,255,.18)";g.beginPath();
+  for(i=1;i<8;i++){g.moveTo(x0+i*sq+1.2,x0);g.lineTo(x0+i*sq+1.2,x0+2*half);g.moveTo(x0,x0+i*sq+1.2);g.lineTo(x0+2*half,x0+i*sq+1.2);}g.stroke();
+  var lg=g.createLinearGradient(x0,x0,x0+2*half,x0+2*half);lg.addColorStop(0,"rgba(255,248,230,.07)");lg.addColorStop(1,"rgba(0,0,0,.07)");g.fillStyle=lg;g.fillRect(x0,x0,2*half,2*half);
+  var W=2*half/(1-2*.0438);g.save();g.shadowColor="rgba(0,0,0,.35)";g.shadowBlur=N*.006;g.shadowOffsetX=N*.0015;g.shadowOffsetY=N*.002;
+  g.drawImage(ckImg[k+"/f-"+k],R-W/2,R-W/2,W,W);g.restore();
+  /* the BrainWhim monogram, gilded on the table's rim at the near edge */
+  g.save();g.translate(R,R+.976*R);var sz=.05*R;
+  g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";var wB=g.measureText("B").width;g.font="400 "+(sz*.76)+"px Pacifico, cursive";var wW=g.measureText("W").width;
+  var mx=-(wB+wW+sz*.06)/2,base=sz*.36;
+  function mono(fill,ox,oy){g.fillStyle=fill;g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";g.fillText("B",mx+ox,base+oy);g.font="400 "+(sz*.76)+"px Pacifico, cursive";g.fillText("W",mx+wB+sz*.06+ox,base+oy);}
+  mono("rgba(0,0,0,.4)",1,1.3);mono("rgba(255,250,220,.6)",-.6,-.7);
+  var gg=g.createLinearGradient(0,-sz*.6,0,sz*.5);gg.addColorStop(0,"#f6dc8e");gg.addColorStop(.5,"#c9a24f");gg.addColorStop(1,"#8a6526");mono(gg,0,0);
+  g.restore();
+  return 'url('+c.toDataURL("image/jpeg",.9)+')';
 }
 function colorNames(){ return (DESIGNS[curDesign]||DESIGNS.garden).names; }
 function cap(w){ return w.charAt(0).toUpperCase()+w.slice(1); }
