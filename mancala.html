@@ -88,6 +88,35 @@ body.pk .pk-stage{justify-content:center}
   .mk-cell{grid-column:var(--vc);grid-row:var(--vr)}
   body.pk .pk-mini{width:min(var(--mk-w) * 1.25,calc(100vw - 16px))}
 }
+/* Nov 19: photo boards (mk/b-<k>.webp; mk/v-<k>.webp turned for portrait) + photo stones (mk/s-<k>-<0..3>.webp). html.mkph / html.mkst switch on once each loads. */
+html.mkph .mk-board{height:calc(var(--mk-w) / var(--mk-ar));padding:0;border-radius:calc(var(--mk-w) / var(--mk-ar) * .3);background:var(--mk-ph) center/100% 100% no-repeat;box-shadow:0 2vmin 3.2vmin rgba(0,0,0,.5),0 .5vmin 1vmin rgba(0,0,0,.35)}
+html.mkph .mk-board::before{display:none}
+html.mkph .mk-mono{top:50%;transform:translate(-50%,-50%);font-size:calc(var(--mk-w) * .016)}
+html.mkph .mk-wood{display:block;position:absolute;inset:0;padding:0;background:none;box-shadow:none;border-radius:0}
+html.mkph .mk-cell{position:absolute;left:var(--px);top:var(--py);width:var(--pw);height:var(--ph);padding:calc(var(--mk-w) * .009);background:none;box-shadow:none}
+html.mkph .mk-store{padding:calc(var(--mk-w) * .03) calc(var(--mk-w) * .012)}
+html.mkph .mk-cell.last{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75)}
+html.mkph .mk-cell .mk-n,html.mkph .mk-cell[data-pos] .mk-n{left:50%;right:auto;top:auto;bottom:auto;transform:translateX(-50%);font-size:calc(var(--mk-w) * .018);color:#fff6dc;text-shadow:none;
+  background:rgba(24,14,6,.62);padding:.12em .5em .14em;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+html.mkph .mk-cell[data-pos=far] .mk-n,html.mkph .mk-cell[data-pos=storeL] .mk-n,html.mkph .mk-cell[data-pos=storeR] .mk-n{top:calc(var(--mk-w) * .002)}
+html.mkph .mk-cell[data-pos=near] .mk-n{bottom:calc(var(--mk-w) * .002)}
+html.mkph body.pk{--mk-gem:calc(var(--mk-w) * .022)}
+/* finger-sized tap areas past each photo cup (Nov 19) */
+html.mkph .mk-cell::after{content:"";position:absolute;inset:-5px}
+html.mkst .mk-gem{width:calc(var(--mk-gem) * 1.16);height:calc(var(--mk-gem) * 1.16);margin:calc(var(--mk-gem) * -.05);border-radius:0;box-shadow:none}
+html.mkst .mk-gem::after{display:none}
+html.mkst .mk-gem.g0{background:var(--s0) center/contain no-repeat}html.mkst .mk-gem.g1{background:var(--s1) center/contain no-repeat}
+html.mkst .mk-gem.g2{background:var(--s2) center/contain no-repeat}html.mkst .mk-gem.g3{background:var(--s3) center/contain no-repeat}
+@media (max-width:999px) and (orientation:portrait){
+  html.mkph body.pk{--mk-w:calc(var(--mk-h) / var(--mk-ar));--mk-gem:calc(var(--mk-h) * .025)}
+  html.mkph .mk-cell[data-pos=near]::after{inset:-4px -4px -4px -16px}html.mkph .mk-cell[data-pos=far]::after{inset:-4px -16px -4px -4px}
+  html.mkph .mk-board{height:var(--mk-h);padding:0;background-image:var(--mk-pv);border-radius:calc(var(--mk-w) * .3)}
+  html.mkph .mk-mono{top:calc(var(--mk-h) * .002);transform:translateX(-50%);font-size:calc(var(--mk-h) * .014)}
+  html.mkph .mk-cell{left:var(--qx);top:var(--qy);width:var(--qw);height:var(--qh);padding:calc(var(--mk-h) * .009)}
+  html.mkph .mk-store{padding:calc(var(--mk-h) * .012) calc(var(--mk-h) * .02)}
+  html.mkph .mk-cell .mk-n,html.mkph .mk-cell[data-pos] .mk-n{top:auto;bottom:calc(var(--mk-h) * .002);font-size:calc(var(--mk-h) * .02)}
+  html.mkph .mk-cell[data-pos=storeL] .mk-n,html.mkph .mk-cell[data-pos=storeR] .mk-n{top:auto;bottom:calc(var(--mk-h) * .006)}
+}
 @media (prefers-reduced-motion:reduce){.mk-cell{transition:none}.mk-cell.ok{animation:none}}
 </style>
 <script src="bw-auth.js?v=1113c"></script>
@@ -146,6 +175,35 @@ var DESIGNS={
     texc:"#1e1814",edge:"#000",inlay:"rgba(217,178,90,.9)",rim:"#c9a24f",rimw:"2px",cupdk:".55",monoc:"#d9b25a",numc:"#e6c56e",nums:"0 1px 2px rgba(0,0,0,.7)",
     stones:{a0:"#9a9aa2",b0:"#2c2c32",c0:"#050507",a1:"#fff0b8",b1:"#d9a83a",c1:"#6a4a10",a2:"#ffc2c8",b2:"#a3182e",c2:"#4a0610",a3:"#ffffff",b3:"#f2ece2",c3:"#b8ab94"}}
 };
+/* Nov 19: Judy's photo boards. Geometry measured on each picture (source pixels): cup centers x0+i*dx on rows y[0] (far) / y[1] (near), radius r; stores at x[0] (left) / x[1] (right). */
+var AVM="1119a", MKPH={
+  maple:{W:2172,H:651,x0:449,dx:256,y:[173,470],r:118,sx:[184,1991],sy:330,sw:228,sh:490},
+  stone:{W:1774,H:538,x0:391,dx:199.6,y:[154,376],r:89,sx:[178,1599],sy:268,sw:188,sh:408},
+  ebony:{W:1774,H:520,x0:383,dx:200.6,y:[147,368],r:90,sx:[178,1594],sy:258,sw:190,sh:415}
+}, phOn=null;
+function photoPlace(){
+  var g=phOn&&MKPH[phOn]; (typeof slots!=="undefined"?slots:[]).forEach(function(c){ var s=c.style;
+    if(!g||!c.dataset.hc){ ["--px","--py","--pw","--ph","--qx","--qy","--qw","--qh"].forEach(function(v){ s.removeProperty(v); }); return; }
+    var hc=+c.dataset.hc, x,y,w,h;
+    if(hc===1||hc===8){ x=g.sx[hc===1?0:1]; y=g.sy; w=g.sw; h=g.sh; } else { x=g.x0+(hc-2)*g.dx; y=g.y[parseInt(c.dataset.hr,10)-1]; w=h=2*g.r; }
+    var px=(x-w/2)/g.W, py=(y-h/2)/g.H, pw=w/g.W, ph=h/g.H;
+    s.setProperty("--px",(px*100)+"%"); s.setProperty("--py",(py*100)+"%"); s.setProperty("--pw",(pw*100)+"%"); s.setProperty("--ph",(ph*100)+"%");
+    /* portrait: the photo is turned a quarter clockwise, so (x,y) -> (1-y, x) */
+    s.setProperty("--qx",((1-py-ph)*100)+"%"); s.setProperty("--qy",(px*100)+"%"); s.setProperty("--qw",(ph*100)+"%"); s.setProperty("--qh",(pw*100)+"%");
+  });
+}
+function setPhotos(k){
+  var html=document.documentElement, bs=document.body.style;
+  if(MKPH[k]){ var im=new Image(); im.onload=function(){ if(curDesign!==k) return; var g=MKPH[k];
+      bs.setProperty("--mk-ph",'url("mk/b-'+k+'.webp?v='+AVM+'")'); bs.setProperty("--mk-pv",'url("mk/v-'+k+'.webp?v='+AVM+'")'); bs.setProperty("--mk-ar",String(g.W/g.H));
+      phOn=k; html.classList.add("mkph"); photoPlace(); new Image().src="mk/v-"+k+".webp?v="+AVM; };
+    im.src="mk/b-"+k+".webp?v="+AVM; }
+  if(phOn!==k){ phOn=null; html.classList.remove("mkph"); photoPlace(); }
+  html.classList.remove("mkst"); var left=4, ok=true;
+  for(var i=0;i<4;i++) (function(i){ var u="mk/s-"+k+"-"+i+".webp?v="+AVM, im=new Image();
+    im.onload=function(){ bs.setProperty("--s"+i,'url("'+u+'")'); if(--left===0&&ok&&curDesign===k) html.classList.add("mkst"); };
+    im.onerror=function(){ ok=false; }; im.src=u; })(i);
+}
 var texCache={}, curDesign=null;
 function applyDesign(k){
   if(!DESIGNS[k]) k="maple"; if(k===curDesign) return; curDesign=k; var d=DESIGNS[k];
@@ -154,6 +212,7 @@ function applyDesign(k){
   s.setProperty("--mk-tex",texCache[k]); s.setProperty("--mk-cuptex",texCache[k]); s.setProperty("--mk-texc",d.texc); s.setProperty("--mk-edge",d.edge); s.setProperty("--mk-inlay",d.inlay);
   s.setProperty("--mk-rim",d.rim); s.setProperty("--mk-rimw",d.rimw); s.setProperty("--mk-cupdk",d.cupdk); s.setProperty("--mk-monoc",d.monoc); s.setProperty("--mk-numc",d.numc); s.setProperty("--mk-nums",d.nums);
   Object.keys(d.stones).forEach(function(v){ s.setProperty("--"+v,d.stones[v]); });
+  setPhotos(k);
 }
 var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
 function previewBar(){
@@ -212,11 +271,12 @@ function build(){
    (bottom on portrait phones); the other side's cups across the far row, their store on the left (top) */
 function place(){
   var meS=mySide===2?2:1, mine=cupsOf(meS), theirs=cupsOf(3-meS);
-  function set(i,hc,hr,vc,vr,label,pos){ var s=slots[i].style; s.setProperty("--hc",hc); s.setProperty("--hr",hr); s.setProperty("--vc",vc); s.setProperty("--vr",vr); slots[i].dataset.label=label; slots[i].dataset.pos=pos; }
+  function set(i,hc,hr,vc,vr,label,pos){ var s=slots[i].style; s.setProperty("--hc",hc); s.setProperty("--hr",hr); s.setProperty("--vc",vc); s.setProperty("--vr",vr); slots[i].dataset.label=label; slots[i].dataset.pos=pos; slots[i].dataset.hc=hc; slots[i].dataset.hr=hr; }
   mine.forEach(function(idx,k){ set(idx,String(2+k),"2",1,String(2+k),"Your cup "+(k+1),"near"); });
   theirs.forEach(function(idx,k){ var j=5-k; set(idx,String(2+j),"1",2,String(2+j),"Opponent cup "+(k+1),"far"); });
   set(storeOf(3-meS),"1","1 / span 2","1 / span 2","1","Opponent store","storeL");
   set(storeOf(meS),"8","1 / span 2","1 / span 2","8","Your store","storeR");
+  photoPlace();
 }
 function gems(n,isStore){
   var max=isStore?24:12, h="";
