@@ -377,12 +377,12 @@ var TABLE={top:[238,236,230],under:[196,190,178],grain:.05,stencil:[100,188,184]
 function design(o){var d={};for(var k in TABLE)d[k]=TABLE[k];for(k in o)d[k]=o[k];return d;}
 var DESIGNS={
   /* Garden Aqua: the table's own colours (white lacquer and the aqua of its stencil) with a fine crackle, and a moulded grey trim like the table's rim */
-  sage:design({name:"Garden Aqua",seed:41,sqL:[243,241,235],sqD:[134,204,200],border:[150,154,156],borderType:"moulded",bw:.042,crack:1,pieces:"cobalt",dots:["#f1efe9","#86ccc8"]}),
+  sage:design({name:"Garden Aqua",ph:{f:.0438},seed:41,sqL:[243,241,235],sqD:[134,204,200],border:[150,154,156],borderType:"moulded",bw:.042,crack:1,pieces:"cobalt",dots:["#f1efe9","#86ccc8"]}),
   /* Verde & Carrara: green and white marble squares with a brass border */
-  verde:design({name:"Verde & Carrara",seed:57,sqType:"marble",sqL:[244,242,238],sqD:[52,96,78],sqWear:.15,crack:0,border:[214,170,86],borderType:"brass",
+  verde:design({name:"Verde & Carrara",ph:{f:.0493},seed:57,sqType:"marble",sqL:[244,242,238],sqD:[52,96,78],sqWear:.15,crack:0,border:[214,170,86],borderType:"brass",
     mL:{base:[247,245,241],cloud:[229,229,231],vein:[136,140,148],amt:.5},mD:{base:[48,92,74],cloud:[34,70,56],vein:[176,206,190],amt:.55,pw:12},pieces:"gold",dots:["#f3f1ec","#2f6a52"]}),
   /* Slate & Limestone: honed blue-grey slate and warm cream limestone, with a brushed pewter trim */
-  walnut:design({name:"Slate & Limestone",seed:73,sqType:"stone",sqL:[226,217,198],sqD:[70,79,89],sqWear:.15,crack:0,border:[162,166,172],borderType:"pewter",
+  walnut:design({name:"Slate & Limestone",ph:{f:.0493},seed:73,sqType:"stone",sqL:[226,217,198],sqD:[70,79,89],sqWear:.15,crack:0,border:[162,166,172],borderType:"pewter",
     sD:{base:[70,79,89],lay:.2,cloud:.16},sL:{base:[228,219,200],lay:.06,cloud:.1},pieces:"classic",dots:["#e4dbc8","#464f59"]})
 };
 /* Judy's piece sets (the same files the old chess room used); heights in table units, so they scale with the table */
@@ -396,10 +396,48 @@ var curDesign=null,curSet="classic",texCache={},fontsReady=false,stageReady=fals
 function pieceSrc(p){var s=PIECESETS[curSet]||PIECESETS.classic,u=p.toUpperCase();return (isW(p)?s.w:s.b)+u+".png?v="+s.v;}
 function applyDesign(k){
   if(!DESIGNS[k])k="sage";if(!fontsReady||k===curDesign)return;curDesign=k;var d=DESIGNS[k];
-  if(!texCache[k])texCache[k]=paintTable(d);
+  if(csReady[k]){ if(!texCache[k+":ph"])texCache[k+":ph"]=photoTable(d,k); }
+  else if(!texCache[k])texCache[k]=paintTable(d);
   setPieces(d.pieces);
-  var st=document.body.style;st.setProperty("--cs-top",texCache[k]);st.setProperty("--cs-topc","rgb("+d.top.join(",")+")");
+  var st=document.body.style;st.setProperty("--cs-top",csReady[k]?texCache[k+":ph"]:texCache[k]);st.setProperty("--cs-topc","rgb("+d.top.join(",")+")");
   if(stageReady)paint();
+}
+/* photo tables (Nov 19, Judy's ChatGPT pictures in cs/): her garden table, each style's border, and 64 squares each cut
+   from a different spot (and turn) of its tile, composed on a canvas; the drawn table shows until the pictures are in */
+var CSV="1119a",csImg={},csReady={};
+function csLoad(f,cb){ if(csImg[f]){ if(csImg[f].complete&&csImg[f].naturalWidth) cb(); else csImg[f].addEventListener("load",cb); return; }
+  var im=new Image(); im.onload=cb; im.src="cs/"+f+".webp?v="+CSV; csImg[f]=im; }
+(function(){ Object.keys(DESIGNS).forEach(function(k){ var fs=["cs-table","cs-f-"+k,"t-"+k+"-L","t-"+k+"-D"],left=fs.length;
+  fs.forEach(function(f){ csLoad(f,function(){ if(--left) return; csReady[k]=1; if(curDesign===k){ curDesign=null; applyDesign(k); } }); }); }); })();
+function photoTable(d,k){
+  var N=1400,R=N/2,c=document.createElement("canvas");c.width=c.height=N;var g=c.getContext("2d");
+  g.fillStyle="rgb("+d.top.join(",")+")";g.fillRect(0,0,N,N);
+  g.drawImage(csImg["cs-table"],0,0,N,N);
+  var half=BH*R,sq=2*half/8,x0=R-half,rr=rng(d.seed+101),tL=csImg["t-"+k+"-L"],tD=csImg["t-"+k+"-D"];
+  for(var r=0;r<8;r++)for(var cc=0;cc<8;cc++){
+    var t=(r+cc)%2?tD:tL,tw=t.naturalWidth,cw=tw*(.42+rr()*.16),sx=rr()*(tw-cw),sy=rr()*(tw-cw),rot=Math.floor(rr()*4);
+    g.save();g.translate(x0+cc*sq+sq/2,x0+r*sq+sq/2);g.rotate(rot*Math.PI/2);
+    g.drawImage(t,sx,sy,cw,cw,-sq/2-.5,-sq/2-.5,sq+1,sq+1);g.restore();
+  }
+  /* hairline seams between the squares, lit from the top left */
+  g.lineWidth=1.2;g.strokeStyle="rgba(0,0,0,.22)";g.beginPath();
+  for(var i=1;i<8;i++){g.moveTo(x0+i*sq,x0);g.lineTo(x0+i*sq,x0+2*half);g.moveTo(x0,x0+i*sq);g.lineTo(x0+2*half,x0+i*sq);}g.stroke();
+  g.strokeStyle="rgba(255,255,255,.18)";g.beginPath();
+  for(i=1;i<8;i++){g.moveTo(x0+i*sq+1.2,x0);g.lineTo(x0+i*sq+1.2,x0+2*half);g.moveTo(x0,x0+i*sq+1.2);g.lineTo(x0+2*half,x0+i*sq+1.2);}g.stroke();
+  /* a soft garden light over the inlay: brighter top left */
+  var lg=g.createLinearGradient(x0,x0,x0+2*half,x0+2*half);lg.addColorStop(0,"rgba(255,248,230,.07)");lg.addColorStop(1,"rgba(0,0,0,.07)");g.fillStyle=lg;g.fillRect(x0,x0,2*half,2*half);
+  /* the border on top, its inner edge on the board's edge, with a little shadow onto the squares */
+  var W=2*half/(1-2*d.ph.f);g.save();g.shadowColor="rgba(0,0,0,.35)";g.shadowBlur=N*.006;g.shadowOffsetX=N*.0015;g.shadowOffsetY=N*.002;
+  g.drawImage(csImg["cs-f-"+k],R-W/2,R-W/2,W,W);g.restore();
+  /* the BrainWhim monogram, gilded on the table's gray rim at the near edge */
+  g.save();g.translate(R,R+.976*R);var sz=.05*R;
+  g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";var wB=g.measureText("B").width;g.font="400 "+(sz*.76)+"px Pacifico, cursive";var wW=g.measureText("W").width;
+  var mx=-(wB+wW+sz*.06)/2,base=sz*.36;
+  function mono(fill,ox,oy){g.fillStyle=fill;g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";g.fillText("B",mx+ox,base+oy);g.font="400 "+(sz*.76)+"px Pacifico, cursive";g.fillText("W",mx+wB+sz*.06+ox,base+oy);}
+  mono("rgba(0,0,0,.4)",1,1.3);mono("rgba(255,250,220,.6)",-.6,-.7);
+  var gg=g.createLinearGradient(0,-sz*.6,0,sz*.5);gg.addColorStop(0,"#f6dc8e");gg.addColorStop(.5,"#c9a24f");gg.addColorStop(1,"#8a6526");mono(gg,0,0);
+  g.restore();
+  return 'url('+c.toDataURL("image/jpeg",.9)+')';
 }
 function setPieces(k){if(!PIECESETS[k])k="classic";curSet=k;var s=PIECESETS[k];
   document.body.style.setProperty("--cs-dot1",s.dots[0]);document.body.style.setProperty("--cs-dot2",s.dots[1]);nameSeats();
