@@ -178,6 +178,9 @@ body.pk.seated .pk-mini{display:none!important}
 .ce-panel.call{width:540px;padding:22px 24px 20px}
 .ce-panel.call h3{font-size:30px;margin-bottom:8px}
 .ce-panel.call p{font-size:19px;margin-bottom:14px}
+.ctph .ce-round{background:var(--ce-photo) center/100% 100% no-repeat transparent}
+.ctph .ce-felt,.ctph .ce-bead{display:none}
+.ctph .ce-round::before{background:radial-gradient(circle at 34% 26%,rgba(255,236,200,.14),rgba(255,236,200,0) 46%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 70%,rgba(0,0,0,.22) 100%)}
 </style>
 <script src="bw-auth.js?v=1113c"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -242,14 +245,14 @@ function plaidFn(a,b,seed){
 var PLAID_BACK="repeating-linear-gradient(0deg,rgba(20,10,10,.55) 0 9px,rgba(0,0,0,0) 9px 18px),repeating-linear-gradient(90deg,rgba(20,10,10,.55) 0 9px,rgba(0,0,0,0) 9px 18px),linear-gradient(150deg,#a8302a,#6e1814)";
 var DESIGNS={
   /* Lakehouse Pine: the photo's honey pine table, planked top in a darker pine frame; red buffalo-check backs */
-  pine:{name:"Lakehouse Pine",rim:function(H){ return frameFn({light:[150,96,52],dark:[86,50,24],freq:.03,turb:6,wx:360,wy:26,sharp:.6,ringAmt:.5,streakAmt:.5,pores:.012,blotch:.3,seed:41},H); },rimc:"#6a3e1e",
+  pine:{photo:"ct/ct-euchre-pine.webp?v=1118a",name:"Lakehouse Pine",rim:function(H){ return frameFn({light:[150,96,52],dark:[86,50,24],freq:.03,turb:6,wx:360,wy:26,sharp:.6,ringAmt:.5,streakAmt:.5,pores:.012,blotch:.3,seed:41},H); },rimc:"#6a3e1e",
     top:function(H){ return {w:884,h:H-116,fn:planksFn({light:[214,160,96],dark:[156,102,52],freq:.022,turb:7,wx:300,wy:22,sharp:.55,ringAmt:.55,streakAmt:.6,pores:.014,blotch:.3,seed:23},884)}; },
     feltc:[196,142,82],bead:"rgba(60,32,14,.55)",back:PLAID_BACK,dots:["#6a3e1e","#c48e52","#a8302a"],light:true},
   /* Cedar & Red Plaid: a red cedar frame round a red-and-black buffalo-check wool blanket; forest-green backs */
-  plaid:{name:"Cedar & Red Plaid",rim:function(H){ return frameFn({light:[150,70,44],dark:[80,32,18],freq:.028,turb:7,wx:320,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:59},H); },rimc:"#6a2c1a",
+  plaid:{photo:"ct/ct-euchre-plaid.webp?v=1118a",name:"Cedar & Red Plaid",rim:function(H){ return frameFn({light:[150,70,44],dark:[80,32,18],freq:.028,turb:7,wx:320,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:59},H); },rimc:"#6a2c1a",
     top:function(){ return {tile:true,fn:plaidFn([150,32,30],[30,20,20],17)}; },feltc:[120,28,26],bead:"rgba(232,206,150,.55)",back:"linear-gradient(150deg,#2f6a44,#12361f)",dots:["#6a2c1a","#962020","#2f6a44"]},
   /* Driftwood & Lake Blue: a silver-grey driftwood frame round lake-blue wool; sunset amber backs */
-  lake:{name:"Driftwood & Lake Blue",rim:function(H){ return frameFn({light:[164,156,142],dark:[96,90,82],freq:.034,turb:8,wx:260,wy:20,sharp:.7,ringAmt:.6,streakAmt:.7,pores:.016,blotch:.25,seed:83},H); },rimc:"#7a746a",
+  lake:{photo:"ct/ct-euchre-lake.webp?v=1118a",name:"Driftwood & Lake Blue",rim:function(H){ return frameFn({light:[164,156,142],dark:[96,90,82],freq:.034,turb:8,wx:260,wy:20,sharp:.7,ringAmt:.6,streakAmt:.7,pores:.016,blotch:.25,seed:83},H); },rimc:"#7a746a",
     top:function(){ return {tile:true,seamless:true,fn:PT.feltFn([44,86,120],29)}; },feltc:[44,86,120],bead:"rgba(236,226,206,.6)",back:"linear-gradient(150deg,#d08a3a,#7c3816)",dots:["#7a746a","#2c5678","#c87a30"]}
 };
 var texCache={}, curDesign=null;
@@ -261,7 +264,11 @@ function applyDesign(k){
   var t=texCache[key], s=stage.style;
   s.setProperty("--ce-rim",t.r); s.setProperty("--ce-rimc",d.rimc); s.setProperty("--ce-felt",t.f); s.setProperty("--ce-fsz",t.sz); s.setProperty("--ce-feltc","rgb("+d.feltc+")"); s.setProperty("--ce-bead",d.bead); s.setProperty("--bwc-back",d.back);
   T.classList.toggle("light",!!d.light);
+  photoTable(k);
 }
+/* Nov 18: photo tabletops (ct/); the drawn table stays until the photo loads */
+function photoTable(k){ var src=DESIGNS[k].photo; stage.classList.remove("ctph"); if(!src) return;
+  var i=new Image(); i.onload=function(){ if(String(curDesign).split(":")[0]!==k) return; stage.style.setProperty("--ce-photo",'url("'+src+'")'); stage.classList.add("ctph"); }; i.src=src; }
 var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
 function previewBar(){
   if(!PREVIEW) return;
