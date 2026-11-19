@@ -25,6 +25,19 @@
 .do-tsh{left:-8px;top:-2px;width:876px;height:876px;transform:translateZ(-30px);border-radius:14px;background:rgba(0,0,0,.6);filter:blur(12px)}
 .do-wh{background-image:var(--do-wood);background-size:1200px 600px;background-repeat:no-repeat;background-color:var(--do-woodc)}
 .do-wv{background-image:var(--do-woodv);background-size:600px 1200px;background-repeat:no-repeat;background-color:var(--do-woodc)}
+/* Nov 19: Judy's photo trays (dm/t-<k>.webp, remapped to 860 x 860 with 36 px rims): each rim and felt layer shows its own slice, so the depth stays */
+html.dmph .do-tray .do-rim,html.dmph .do-tray .do-felt{background:var(--do-ph) no-repeat;background-size:860px 860px;box-shadow:none}
+html.dmph .do-rim::after{display:none}
+html.dmph .do-tray .do-rim.t,html.dmph .do-tray .do-rim.b{width:860px}html.dmph .do-tray .do-rim.t2,html.dmph .do-tray .do-rim.b2{display:none}
+html.dmph .do-rim.t{background-position:0 0}html.dmph .do-rim.t2{background-position:-430px 0}
+html.dmph .do-rim.b{background-position:0 -824px}html.dmph .do-rim.b2{background-position:-430px -824px}
+html.dmph .do-rim.l{background-position:0 -36px}html.dmph .do-rim.r{background-position:-824px -36px}
+html.dmph .do-felt.a{background-position:-36px -36px}html.dmph .do-felt.b{background-position:-430px -36px}
+html.dmph .do-felt.c{background-position:-36px -430px}html.dmph .do-felt.d{background-position:-430px -430px}
+/* photo tiles: a blank face and back per board (dm/f-<k>, dm/b-<k>, -v turned); pips, bar and the BW stay drawn on top */
+html.dmtl .dm .f{background:var(--do-tf) center/100% 100% no-repeat;box-shadow:none}html.dmtl .dm.v .f{background-image:var(--do-tfv)}
+html.dmtl .dm .bk{background:var(--do-tb) center/100% 100% no-repeat;box-shadow:none}html.dmtl .dm.v .bk{background-image:var(--do-tbv)}
+html.dmtl .dm .s,html.dmtl .dm .f,html.dmtl .dm .bk{border-radius:calc(var(--rad,7px) * 1.35)}
 .do-felt{width:394px;height:394px;transform:translateZ(-22px);background-image:var(--do-felt);background-size:256px 256px;background-color:var(--do-feltc)}
 .do-felt.a{left:36px;top:36px}.do-felt.b{left:430px;top:36px}.do-felt.c{left:36px;top:430px}.do-felt.d{left:430px;top:430px}
 .do-feltsh{left:36px;top:36px;width:788px;height:788px;transform:translateZ(-21.6px);pointer-events:none;
@@ -178,6 +191,16 @@ function applyDesign(k){
   s.setProperty("--do-face",d.face); s.setProperty("--do-edge",d.edge); s.setProperty("--do-pip",d.pip); s.setProperty("--do-pip2",d.pip2); s.setProperty("--do-bar",d.bar); s.setProperty("--do-back",d.back); s.setProperty("--do-emb",d.emb);
   b.setProperty("--do-dot",d.dot);
   stage.classList.toggle("do-colour",d.colour);
+  dmPhotos(k);
+}
+/* Nov 19: switch the photo tray and tiles on once their files load (the drawn ones stay as the fallback) */
+function dmPhotos(k){
+  var html=document.documentElement, s=stage.style, v="?v=1119a";
+  html.classList.remove("dmph","dmtl");
+  var t=new Image(); t.onload=function(){ if(curDesign!==k) return; s.setProperty("--do-ph",'url("dm/t-'+k+'.webp'+v+'")'); html.classList.add("dmph"); }; t.src="dm/t-"+k+".webp"+v;
+  var n=4, U={"--do-tf":"f-"+k,"--do-tfv":"f-"+k+"-v","--do-tb":"b-"+k,"--do-tbv":"b-"+k+"-v"};
+  Object.keys(U).forEach(function(p){ var u="dm/"+U[p]+".webp"+v, im=new Image();
+    im.onload=function(){ if(curDesign!==k) return; s.setProperty(p,'url("'+u+'")'); if(--n===0) html.classList.add("dmtl"); }; im.src=u; });
 }
 var PIPS={0:[],1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 function half(n){ var s='<div class="half" data-n="'+n+'">'; for(var k=0;k<9;k++) s+='<i class="'+(PIPS[n].indexOf(k)>=0?"on":"")+'"></i>'; return s+'</div>'; }
