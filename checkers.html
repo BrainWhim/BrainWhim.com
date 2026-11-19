@@ -270,7 +270,7 @@ function applyDesign(k){
 /* photo tables (Nov 19): Judy's garden table photo (Chess's), recolored for Dove and Charcoal, with borders and tiles
    recolored from Chess's Garden Aqua set (ck/); 64 squares each cut from a different spot (and turn) of its tile */
 var CKV="1119b",ckImg={},ckReady={};
-(function(){ Object.keys(DESIGNS).forEach(function(k){ var fs=["ck-table-"+k,"f-"+k,"t-"+k+"-L","t-"+k+"-D"],left=fs.length;
+(function(){ Object.keys(DESIGNS).forEach(function(k){ var fs=["ck-table-"+k,"t-"+k+"-L","t-"+k+"-D"],left=fs.length;
   fs.forEach(function(f){ var im=new Image(); im.onload=function(){ if(--left) return; ckReady[k]=1; if(curDesign===k){ curDesign=null; applyDesign(k); } }; im.src="ck/"+f+".webp?v="+CKV; ckImg[k+"/"+f]=im; }); }); })();
 function photoTable(d,k){
   var N=1400,R=N/2,c=document.createElement("canvas");c.width=c.height=N;var g=c.getContext("2d");
@@ -287,8 +287,12 @@ function photoTable(d,k){
   g.strokeStyle="rgba(255,255,255,.18)";g.beginPath();
   for(i=1;i<8;i++){g.moveTo(x0+i*sq+1.2,x0);g.lineTo(x0+i*sq+1.2,x0+2*half);g.moveTo(x0,x0+i*sq+1.2);g.lineTo(x0+2*half,x0+i*sq+1.2);}g.stroke();
   var lg=g.createLinearGradient(x0,x0,x0+2*half,x0+2*half);lg.addColorStop(0,"rgba(255,248,230,.07)");lg.addColorStop(1,"rgba(0,0,0,.07)");g.fillStyle=lg;g.fillRect(x0,x0,2*half,2*half);
-  var W=2*half/(1-2*.0438);g.save();g.shadowColor="rgba(0,0,0,.35)";g.shadowBlur=N*.006;g.shadowOffsetX=N*.0015;g.shadowOffsetY=N*.002;
-  g.drawImage(ckImg[k+"/f-"+k],R-W/2,R-W/2,W,W);g.restore();
+  /* Nov 19 (Judy): the board is inlaid, painted flush into the tabletop like her reference table: no frame, just a fine painted edge
+     (a thin stencil-colored line with a hairline of shade outside it) */
+  var st="rgb("+d.stencil.join(",")+")", ed=N*.0042;
+  g.save();g.lineWidth=ed;g.strokeStyle=st;g.globalAlpha=.9;g.strokeRect(x0-ed/2,x0-ed/2,2*half+ed,2*half+ed);
+  g.globalAlpha=1;g.lineWidth=1.2;g.strokeStyle="rgba(0,0,0,.28)";g.strokeRect(x0-ed-.6,x0-ed-.6,2*half+2*ed+1.2,2*half+2*ed+1.2);
+  g.strokeStyle="rgba(0,0,0,.18)";g.strokeRect(x0+.6,x0+.6,2*half-1.2,2*half-1.2);g.restore();
   /* the BrainWhim monogram, gilded on the table's rim at the near edge */
   g.save();g.translate(R,R+.976*R);var sz=.05*R;
   g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";var wB=g.measureText("B").width;g.font="400 "+(sz*.76)+"px Pacifico, cursive";var wW=g.measureText("W").width;
