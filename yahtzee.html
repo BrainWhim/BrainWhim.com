@@ -25,6 +25,14 @@
   box-shadow:0 30px 60px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,235,200,.18)}
 .yz-scene .table::before{content:"";position:absolute;inset:12px;border-radius:14px;border:2px solid var(--y-band1);box-shadow:0 0 0 3px var(--y-band2),inset 0 0 0 3px var(--y-band2)}
 .yz-scene .table::after{content:"";position:absolute;inset:0;border-radius:22px;background:radial-gradient(ellipse 60% 55% at 38% 40%,rgba(255,230,180,.16),rgba(0,0,0,0) 60%),linear-gradient(115deg,rgba(255,255,255,.06),rgba(0,0,0,0) 40%,rgba(0,0,0,.25))}
+/* Nov 19: Judy's photos. Tables: the photo replaces --y-table. Trays (html.yzpt): the photo as a border-image (frame slice measured per picture), the drawn frame/inlay/lip/felt off; the Kept Dice strip, rail and label stay. Cups (html.yzpc): the photo cup; the BW, glow and shadow stay. */
+html.yzpt .yz-scene .tray .frame{background:none;box-shadow:none;border-radius:0;border-style:solid;border-width:44px;border-image-source:var(--y-trph);border-image-slice:var(--y-trs) fill;border-image-width:44px}
+html.yzpt .yz-scene .tray .band,html.yzpt .yz-scene .tray .lip,html.yzpt .yz-scene .tray .felt{display:none}
+html.yzpt .yz-scene .tray .keep{background:rgba(0,0,0,.24);filter:none}
+html.yzpc .yz-scene .cup .body,html.yzpc .yz-scene .cup .band,html.yzpc .yz-scene .cup .rim{display:none}
+html.yzpc .yz-scene .cup::before{content:"";position:absolute;left:4px;top:0;width:116px;height:152px;background:var(--y-cupph) center bottom/contain no-repeat;z-index:0}
+html.yzpc .yz-scene .cup .csh{z-index:-1}html.yzpc .yz-scene .cup .mono{z-index:1;top:72px}
+html.yzpc .yz-scene .cup:hover::before{filter:brightness(1.08)}
 /* the dice tray */
 .yz-scene .tray .sh{position:absolute;inset:-6px -14px -22px -6px;border-radius:12px;background:rgba(0,0,0,.55);filter:blur(14px)}
 .yz-scene .tray .frame{position:absolute;inset:0;border-radius:8px;background-image:var(--y-frame);background-size:cover;background-color:var(--y-framec);
@@ -240,6 +248,16 @@ function applyDesign(k){
   s.setProperty("--y-cup",d.cup); s.setProperty("--y-cuptex",t.cup); s.setProperty("--y-cuprim",d.cuprim); s.setProperty("--y-cupin",d.cupin);
   s.setProperty("--y-die",d.die); s.setProperty("--y-diecore",d.diecore); s.setProperty("--y-pip",d.pip); s.setProperty("--y-pip2",d.pip2);
   s.setProperty("--y-label",d.label||"rgba(255,240,210,.78)"); s.setProperty("--y-cardc",d.cardc); s.setProperty("--y-cardtex",t.card); s.setProperty("--y-cardline",d.cardline); s.setProperty("--y-cardline2",d.cardline2); s.setProperty("--y-ink",d.ink); s.setProperty("--y-ink2",d.ink2);
+  yzPhotos(k);
+}
+var YZS={marble:"109 113 114 110",mahogany:"112 114 117 112",ebony:"106 105 114 108"};
+function yzPhotos(k){
+  var html=document.documentElement, s=sceneEl.style, v="?v=1119a";
+  html.classList.remove("yzpt","yzpc");
+  function load(u,fn){ var im=new Image(); im.onload=function(){ if(curDesign===k) fn('url("'+u+'")'); }; im.src=u; }
+  load("yz/t-"+k+".webp"+v,function(u){ s.setProperty("--y-table",u); });
+  load("yz/tr-"+k+".webp"+v,function(u){ s.setProperty("--y-trph",u); s.setProperty("--y-trs",YZS[k]); html.classList.add("yzpt"); });
+  load("yz/c-"+k+".webp"+v,function(u){ s.setProperty("--y-cupph",u); html.classList.add("yzpc"); });
 }
 
 /* two arrangements: desktop/tablet (tray left, cup and Roll under it, card right) and phone (tray, then cup row, then the card in two halves) */
