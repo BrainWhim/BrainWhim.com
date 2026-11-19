@@ -48,7 +48,8 @@
 #stage{position:relative;aspect-ratio:3/2;max-width:100%;max-height:100%;height:100%;border-radius:18px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
   background:#9fd0f2 center/cover;box-shadow:0 0 0 6px #fffdf6,0 0 0 7px rgba(150,110,60,.35),0 14px 30px rgba(60,30,10,.35)}
 #stage .sky{position:absolute;inset:0;pointer-events:none}
-.sk{position:absolute;left:0;top:0;width:var(--w);transform-origin:50% 100%;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;will-change:transform}
+.sk{position:absolute;left:0;top:0;width:var(--w);transform-origin:50% 100%;cursor:grab;touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;will-change:transform}
+.sk::before{content:"";position:absolute;inset:-14px}   /* a finger-sized grab area around each sticker (Nov 18) */
 .sk img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none}
 .sk.drag{cursor:grabbing;z-index:999!important}
 .sk.drag img{transform:scale(1.08) rotate(-3deg);transition:transform .12s}
@@ -65,13 +66,14 @@
   background:repeating-linear-gradient(135deg,rgba(255,255,255,.0) 0 10px,rgba(255,255,255,.35) 10px 12px),linear-gradient(180deg,#bfe3f2,#9ccfe6);
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 6px 14px rgba(30,50,70,.3)}
 #sheet.drop{box-shadow:inset 0 0 0 3px #ffcf4a,0 6px 14px rgba(30,50,70,.3)}
-.ti{appearance:none;flex:none;width:var(--tw,74px);height:var(--tw,74px);padding:3px;border:0;border-radius:14px;background:rgba(255,255,255,.45);cursor:pointer;scroll-snap-align:start;touch-action:pan-x;display:flex;align-items:center;justify-content:center}
-.ti img{max-width:100%;max-height:100%;pointer-events:none;-webkit-user-drag:none}
+.ti{appearance:none;flex:none;width:var(--tw,74px);height:var(--tw,74px);padding:3px;border:0;border-radius:14px;background:rgba(255,255,255,.45);cursor:pointer;scroll-snap-align:start;touch-action:none;display:flex;align-items:center;justify-content:center}
+.ti img{max-width:100%;max-height:100%;pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none}
+.ti{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .ti.used{opacity:.45}
 @media (orientation:landscape) and (min-width:900px){
   #work{flex-direction:row;align-items:stretch}
   #sheet{display:grid;grid-template-columns:repeat(3,var(--tw,74px));grid-auto-rows:var(--tw,74px);align-content:start;overflow-y:auto;overflow-x:hidden;max-height:100%}
-  .ti{touch-action:pan-y}}
+}
 .bar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%}
 .chip{appearance:none;cursor:pointer;height:58px;min-width:84px;padding:4px 14px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   background:linear-gradient(180deg,rgba(32,44,90,.9),rgba(16,24,54,.9));border:1px solid rgba(255,236,190,.28);color:#e9f0fb;font:inherit;
@@ -249,8 +251,10 @@
     im.onload=function(){ if(P()!==p) return; stage.style.background='#888 url("'+u+'") center/cover'; document.querySelector(".bg").style.background='#888 url("'+bgUrl(p,false)+'") center/cover'; }; im.src=u; }
   /* depth: a sticker shrinks as it goes up toward the sky line; sky stickers keep one size */
   function scaleAt(id,y){ var p=P(), s=ST[id]; if(y<p.hz) return s.k==="s"?1:.62; var t=(y-p.near[0])/(p.near[1]-p.near[0]); return Math.max(.55,Math.min(1.08,.55+.53*t)); }
-  function place(el,id,x,y){ var s=ST[id], a=ART[id], sc=scaleAt(id,y), W=stage.clientWidth, H=stage.clientHeight, w=s.w/100*W*sc, h=w*(a?a.ar:1);
-    el.style.setProperty("--w",w+"px"); el.style.transform="translate("+(x/100*W-w/2)+"px,"+(y/100*H-h)+"px)"; el.style.zIndex=s.k==="s"&&y<P().hz?Math.round(y):100+Math.round(y*4); }
+  /* the width is set once (from the page's size); depth only scales it, so dragging never re-lays out the page */
+  function place(el,id,x,y){ var s=ST[id], a=ART[id], sc=scaleAt(id,y), W=stage.clientWidth, H=stage.clientHeight, w=s.w/100*W, h=w*(a?a.ar:1);
+    if(el._w!==w){ el._w=w; el.style.setProperty("--w",w+"px"); }
+    el.style.transform="translate("+(x/100*W-w/2)+"px,"+(y/100*H-h)+"px) scale("+sc.toFixed(3)+")"; el.style.zIndex=s.k==="s"&&y<P().hz?Math.round(y):100+Math.round(y*4); }
   function drawPage(){ stage.querySelectorAll(".sk,.zone").forEach(function(e){ e.remove(); });
     S.pages[cur].forEach(function(r,i){ addEl(r[0],r[1],r[2],i); }); sheet(); }
   function addEl(id,x,y,i){ var el=document.createElement("div"); el.className="sk"; el.dataset.id=id; el.dataset.i=i;
@@ -285,19 +289,30 @@
     try{ stage.setPointerCapture(e.pointerId); }catch(x){} });
   /* pulling a sticker up off the sheet starts a drag (side-to-side still scrolls the sheet) */
   var PS=null;
-  $("sheet").addEventListener("pointerdown",function(e){ var b=e.target.closest(".ti"); if(!b) return; PS={b:b, x:e.clientX, y:e.clientY, id:b.dataset.id, pid:e.pointerId}; });
-  window.addEventListener("pointermove",function(e){
-    if(PS&&!D&&e.pointerId===PS.pid){ var dy=PS.y-e.clientY, dx=Math.abs(e.clientX-PS.x), land=getComputedStyle($("sheet")).display==="grid";
-      var pull=land?(PS.x-e.clientX>18&&Math.abs(e.clientY-PS.y)<PS.x-e.clientX):(dy>18&&dy>dx);
-      if(pull){ var id=PS.id; PS=null; var p=pt(e); S.pages[cur].push([id,p[0],p[1]]); var i=S.pages[cur].length-1, el=addEl(id,p[0],p[1],i);
+  /* the game decides what a finger on the sheet means (Nov 18: phones took diagonal pulls as a scroll and cancelled them):
+     mostly sideways = scroll the sheet; heading up (or left, when the sheet is on the right) = peel the sticker off */
+  $("sheet").addEventListener("pointerdown",function(e){ var b=e.target.closest(".ti"); if(!b) return; var sh=$("sheet");
+    PS={b:b, x:e.clientX, y:e.clientY, id:b.dataset.id, pid:e.pointerId, sl:sh.scrollLeft, st:sh.scrollTop, mode:null}; try{ sh.setPointerCapture(e.pointerId); }catch(x){} });
+  var mvE=null, mvR=0;
+  window.addEventListener("pointermove",function(e){ if(D&&D.moved){ mvE=e; if(!mvR) mvR=requestAnimationFrame(function(){ mvR=0; if(mvE) move(mvE); }); return; } move(e); });
+  function move(e){
+    if(PS&&!D&&e.pointerId===PS.pid){ var sh=$("sheet"), land=getComputedStyle(sh).display==="grid",
+        out=land?PS.x-e.clientX:PS.y-e.clientY, along=land?e.clientY-PS.y:e.clientX-PS.x;
+      if(!PS.mode&&Math.max(Math.abs(out),Math.abs(along))>9) PS.mode=(out>5&&out>Math.abs(along)*.4)?"pull":"scroll";
+      if(PS.mode==="scroll"){ lastDrop=Date.now(); var r0=sh.getBoundingClientRect();
+        /* a finger that leaves the sheet toward the page peels the sticker off after all */
+        if(land?e.clientX<r0.left-8:e.clientY<r0.top-8){ PS.mode="pull"; if(land) sh.scrollTop=PS.st; else sh.scrollLeft=PS.sl; }
+        else { if(land) sh.scrollTop=PS.st-along; else sh.scrollLeft=PS.sl-along; return; } }
+      if(PS.mode==="pull"){ var id=PS.id; PS=null; var p=pt(e); S.pages[cur].push([id,p[0],p[1]]); var i=S.pages[cur].length-1, el=addEl(id,p[0],p[1],i);
         D={el:el, i:i, id:id, dx:0, dy:4, sx:e.clientX, sy:e.clientY, moved:true, fromSheet:true}; el.classList.add("drag"); SND.peel(); } }
     if(!D) return; var p2=pt(e);
     if(!D.moved&&Math.hypot(e.clientX-D.sx,e.clientY-D.sy)>6){ D.moved=true; D.el.classList.add("drag"); SND.lift(); }
     if(!D.moved) return;
     var x=Math.max(0,Math.min(100,p2[0]+D.dx)), y=Math.max(4,Math.min(104,p2[1]+D.dy)), r=S.pages[cur][D.i]; r[1]=x; r[2]=y;
     if(ART[D.id]) place(D.el,D.id,x,y);
-    var sr=$("sheet").getBoundingClientRect(); $("sheet").classList.toggle("drop",e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom); });
-  window.addEventListener("pointerup",function(e){ PS=null; if(!D) return; var d=D; D=null; d.el.classList.remove("drag");
+    var sr=SR||(SR=$("sheet").getBoundingClientRect()); $("sheet").classList.toggle("drop",e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom); }
+  var SR=null;
+  window.addEventListener("pointerup",function(e){ if(PS&&PS.mode==="scroll") lastDrop=Date.now(); PS=null; SR=null; mvE=null; if(!D) return; var d=D; D=null; d.el.classList.remove("drag");
     if(!d.moved){ d.tap=true; return; }
     var sr=$("sheet").getBoundingClientRect(), off=e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom, r=S.pages[cur][d.i];
     $("sheet").classList.remove("drop");
