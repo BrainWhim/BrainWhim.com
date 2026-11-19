@@ -199,6 +199,10 @@ body.pk.seated .pk-mini{display:none!important}
 .cn-tally td:nth-child(2),.cn-tally td:nth-child(3){width:26%}
 .ce-panel.wide{width:620px}
 .ce-table.narrow .ce-panel.wide{width:600px;transform:translate(-50%,-50%) scale(1.55)}
+.ctph .ce-round{background:var(--ce-photo) center/100% 100% no-repeat transparent}
+.ctph .ce-round.oct{clip-path:polygon(31.5% 0,68.5% 0,100% 31.5%,100% 68.5%,68.5% 100%,31.5% 100%,0 68.5%,0 31.5%)!important}
+.ctph .ce-felt,.ctph .ce-bead{display:none}
+.ctph .ce-round::before{background:radial-gradient(circle at 34% 26%,rgba(255,236,200,.14),rgba(255,236,200,0) 46%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 70%,rgba(0,0,0,.22) 100%)}
 </style>
 <script src="bw-auth.js?v=1113c"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -277,13 +281,13 @@ function octFrameFn(o,H,bead){ var wood=PT.woodFn(o); return function(x,y){ var 
   return [Math.min(255,c[0]*k),Math.min(255,c[1]*k),Math.min(255,c[2]*k)]; }; }
 var DESIGNS={
   /* Club Walnut & Green Baize: the photo's octagonal walnut table with dark green baize; claret card backs */
-  walnut:{name:"Club Walnut & Green Baize",rim:function(H){ return octFrameFn({light:[138,84,46],dark:[66,36,18],freq:.028,turb:6,wx:360,wy:26,sharp:.65,ringAmt:.55,streakAmt:.5,pores:.012,blotch:.3,seed:37},H,[214,176,104]); },rimc:"#5a3418",
+  walnut:{photo:"ct/ct-canasta-walnut.webp?v=1118a",name:"Club Walnut & Green Baize",rim:function(H){ return octFrameFn({light:[138,84,46],dark:[66,36,18],freq:.028,turb:6,wx:360,wy:26,sharp:.65,ringAmt:.55,streakAmt:.5,pores:.012,blotch:.3,seed:37},H,[214,176,104]); },rimc:"#5a3418",
     top:function(){ return PT.feltFn([22,62,44],11); },feltc:[22,62,44],tray:"linear-gradient(160deg,#7a4a26,#4a2a14)",back:"linear-gradient(150deg,#9e2f3c,#5c1420)",dots:["#5a3418","#163e2c","#8e2a36"]},
   /* Mahogany & Claret: a mahogany rim round claret leather with a gold tooled line; bottle-green backs */
-  claret:{name:"Mahogany & Claret",rim:function(H){ return octFrameFn({light:[128,52,34],dark:[62,22,14],freq:.03,turb:7,wx:320,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:61},H,[226,192,116]); },rimc:"#4e1c12",
+  claret:{photo:"ct/ct-canasta-claret.webp?v=1118a",name:"Mahogany & Claret",rim:function(H){ return octFrameFn({light:[128,52,34],dark:[62,22,14],freq:.03,turb:7,wx:320,wy:24,sharp:.6,ringAmt:.55,streakAmt:.55,pores:.01,blotch:.3,seed:61},H,[226,192,116]); },rimc:"#4e1c12",
     top:function(){ return PT.leatherFn([110,26,34],23); },feltc:[110,26,34],tray:"linear-gradient(160deg,#6a2a1c,#3a120a)",back:"linear-gradient(150deg,#2f6a44,#12361f)",dots:["#4e1c12","#6e1a22","#2f6a44"]},
   /* Burl & Navy Baize: a figured burl-walnut rim round navy baize with a silver line; plum backs */
-  burl:{name:"Burl & Navy Baize",rim:function(H){ return octFrameFn({light:[150,104,62],dark:[72,44,22],freq:.05,turb:14,wx:120,wy:60,sharp:.5,ringAmt:.7,streakAmt:.3,pores:.01,blotch:.45,seed:89},H,[214,220,232]); },rimc:"#6a4422",
+  burl:{photo:"ct/ct-canasta-burl.webp?v=1118a",name:"Burl & Navy Baize",rim:function(H){ return octFrameFn({light:[150,104,62],dark:[72,44,22],freq:.05,turb:14,wx:120,wy:60,sharp:.5,ringAmt:.7,streakAmt:.3,pores:.01,blotch:.45,seed:89},H,[214,220,232]); },rimc:"#6a4422",
     top:function(){ return PT.feltFn([28,42,80],17); },feltc:[28,42,80],tray:"linear-gradient(160deg,#7e5630,#4a2e14)",back:"linear-gradient(150deg,#6a2e66,#2c1030)",dots:["#6a4422","#1c2a50","#6a2e66"]}
 };
 var texCache={}, curDesign=null;
@@ -294,7 +298,11 @@ function applyDesign(k){
   var t=texCache[key], s=stage.style;
   s.setProperty("--ce-rim",t.r); s.setProperty("--ce-rimc",d.rimc); s.setProperty("--ce-felt",t.f); s.setProperty("--ce-feltc","rgb("+d.feltc+")"); s.setProperty("--bwc-back",d.back); s.setProperty("--cn-tray",d.tray);
   ROUND.style.clipPath=octPoly(1000,TH,0); FELT.style.clipPath=octPoly(1000-116,TH-116,58);
+  photoTable(k);
 }
+/* Nov 18: photo tabletops (ct/); the drawn table stays until the photo loads */
+function photoTable(k){ var src=DESIGNS[k].photo; stage.classList.remove("ctph"); if(!src) return;
+  var i=new Image(); i.onload=function(){ if(String(curDesign).split(":")[0]!==k) return; stage.style.setProperty("--ce-photo",'url("'+src+'")'); stage.classList.add("ctph"); }; i.src=src; }
 var PREVIEW=/[?&]preview=1/.test(location.search), previewPick=null;
 function previewBar(){
   if(!PREVIEW) return;
