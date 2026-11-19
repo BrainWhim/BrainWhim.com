@@ -45,6 +45,15 @@
 .ot-disc.p1{--hi:var(--s1h);--c1:var(--s1a);--c2:var(--s1b);--c3:var(--s1c);--rim:var(--s1r);--edge:var(--s1e);--ring:var(--s1g)}
 .ot-disc.p2{--hi:var(--s2h);--c1:var(--s2a);--c2:var(--s2b);--c3:var(--s2c);--rim:var(--s2r);--edge:var(--s2e);--ring:var(--s2g)}
 .ot-disc.drop{animation:ot-drop .28s ease-out}
+/* photo boards (Nov 19, Judy's ChatGPT pictures in ot/): the frame + field as one border-image; grid lines, stars, plate stay drawn.
+   --ot-fw = the photo frame's width as a share of the board; .otph goes on <body> once the current board's pictures load */
+body.otph .ot-board{border-width:calc(var(--ot-size) * var(--ot-fw));border-image:var(--ot-ph) var(--ot-sl) fill / calc(var(--ot-size) * var(--ot-fw)) stretch}
+body.otph .ot-inner{background:none;box-shadow:none;padding:0}
+body.otph .ot-field{background:none;box-shadow:inset 0 0 2.4vmin rgba(0,0,0,.35)}
+body.otph .ot-plate{bottom:calc(var(--ot-size) * (var(--ot-fw) / -2 - .023))}
+body.otph .ot-disc{background:var(--dph) center/100% 100% no-repeat;box-shadow:0 calc(var(--ot-size) * .006) calc(var(--ot-size) * .008) rgba(0,0,0,.45),0 calc(var(--ot-size) * .014) calc(var(--ot-size) * .016) rgba(0,0,0,.3)}
+body.otph .ot-disc::after{display:none}
+body.otph .ot-disc.p1{--dph:var(--ot-d1)}body.otph .ot-disc.p2{--dph:var(--ot-d2)}
 .ot-disc.flip{animation:ot-flip .42s ease-in-out}
 @keyframes ot-drop{from{transform:translateY(-55%) scale(1.25);opacity:0}to{transform:none;opacity:1}}
 @keyframes ot-flip{0%{transform:rotateY(0)}45%{transform:rotateY(90deg) scale(1.1)}100%{transform:rotateY(0)}}
@@ -150,7 +159,7 @@ function paintFrame(o){
 var GOLD={glint:"rgba(255,246,200,.95)",mid:"#c9a24f",deep:"#6e4f1d",shade:"rgba(60,38,8,.85)"};
 var DESIGNS={
   /* Terrace Gilt: matches the room photo; carved gilt frame, dark walnut board with inlaid gold lines, cobalt and ivory discs */
-  gilt:{name:"Terrace Gilt",names:["cobalt","ivory"],dots:["#2d5084","#f3e6c4"],
+  gilt:{name:"Terrace Gilt",ph:{fw:.099,sl:99},names:["cobalt","ivory"],dots:["#2d5084","#f3e6c4"],
     frame:function(){ return paintFrame({bevel:[[0,"#f6dc8e"],[.3,"#c9a24f"],[.6,"#8a6526"],[1,"#5a3f12"]],beads:true,scroll:true,egg:true,glint:GOLD.glint,mid:GOLD.mid,deep:GOLD.deep,shade:GOLD.shade}); },
     field:function(){ return cssUrl(canvasOf(512,512,woodFn({light:[92,58,34],dark:[40,24,13],freq:.04,turb:6,wx:300,wy:30,sharp:.8,ringAmt:.55,streakAmt:.5,pores:.02,blotch:.25,seed:61}))); },
     fieldc:"#3a2414",lip:"linear-gradient(145deg,#f3d790,#a8812f 40%,#6e4f1d)",line:"rgba(214,178,92,.75)",line2:"rgba(0,0,0,.35)",star:"radial-gradient(circle at 40% 35%,#fff1bf,#c9a24f 60%,#6e4f1d)",
@@ -158,7 +167,7 @@ var DESIGNS={
     discs:{s1h:"rgba(255,255,255,.7)",s1a:"#8fb4ec",s1b:"#2a54b0",s1c:"#0b1a44",s1r:"#d9b25a",s1e:"#0a1430",s1g:"rgba(255,255,255,.2)",
            s2h:"#fff",s2a:"#fffef8",s2b:"#f3e6c4",s2c:"#b8944a",s2r:"#d9b25a",s2e:"#8a6e3e",s2g:"rgba(160,120,50,.35)"}},
   /* Tournament Green: polished mahogany frame with brass corner caps, green baize, glossy black and white discs */
-  green:{name:"Tournament Green",names:["black","white"],dots:["#1c1c20","#f4f4f0"],
+  green:{name:"Tournament Green",ph:{fw:.0696,sl:70,line:"rgba(0,0,0,.8)",line2:"rgba(255,255,255,.07)"},names:["black","white"],dots:["#1c1c20","#f4f4f0"],
     frame:function(){ return paintFrame({bevel:[[0,"#8a3a20"],[.5,"#5a2010"],[1,"#2e0e06"]],wood:{light:[150,62,36],dark:[70,22,10],freq:.05,turb:5,wx:300,wy:20,sharp:.8,ringAmt:.5,streakAmt:.45,pores:.015,blotch:.25,seed:12},woodAlpha:.9,
       inline:"#c9a24f",cornerCap:true,capHi:"#fff1bf",capMid:"#c9a24f",capLo:"#6e4f1d",glint:"rgba(255,235,200,.6)",mid:"#7a2e18",deep:"#2e0e06",shade:"rgba(0,0,0,.5)"}); },
     field:function(){ return cssUrl(canvasOf(256,256,feltFn([28,96,56],31))); },
@@ -167,7 +176,7 @@ var DESIGNS={
     discs:{s1h:"rgba(255,255,255,.55)",s1a:"#6a6a72",s1b:"#1c1c20",s1c:"#000",s1r:"#2a2a30",s1e:"#000",s1g:"rgba(255,255,255,.12)",
            s2h:"#fff",s2a:"#ffffff",s2b:"#f2f2ee",s2c:"#b8b8b2",s2r:"#e8e8e4",s2e:"#8a8a86",s2g:"rgba(0,0,0,.12)"}},
   /* Onyx & Pearl: black marble board with silver lines in a fluted platinum frame, onyx and pearl discs */
-  onyx:{name:"Onyx & Pearl",names:["onyx","pearl"],dots:["#202024","#f2eee8"],
+  onyx:{name:"Onyx & Pearl",ph:{fw:.0752,sl:75},names:["onyx","pearl"],dots:["#202024","#f2eee8"],
     frame:function(){ return paintFrame({bevel:[[0,"#ffffff"],[.3,"#cfd4dc"],[.65,"#8a909c"],[1,"#4a4e58"]],beads:true,flutes:true,egg:true,glint:"rgba(255,255,255,.95)",mid:"#c3c8d0",deep:"#5a5e68",shade:"rgba(20,22,30,.8)"}); },
     field:function(){ return cssUrl(canvasOf(512,512,marbleFn({base:[24,24,28],cloud:[44,44,50],vein:[120,120,132],freq:2.6,turb:6,sharp:5,amt:.32,seed:77}))); },
     fieldc:"#1a1a1e",lip:"linear-gradient(145deg,#f4f6fa,#a8aeb8 45%,#5a5e68)",line:"rgba(200,206,216,.55)",line2:"rgba(0,0,0,.5)",star:"radial-gradient(circle at 40% 35%,#fff,#c3c8d0 60%,#5a5e68)",
@@ -184,8 +193,21 @@ function applyDesign(k){
   s.setProperty("--ot-line",d.line); s.setProperty("--ot-line2",d.line2); s.setProperty("--ot-star",d.star); s.setProperty("--ot-plate",d.plate); s.setProperty("--ot-plate-ink",d.plateInk);
   Object.keys(d.discs).forEach(function(v){ s.setProperty("--"+v,d.discs[v]); });
   s.setProperty("--ot-dot1",d.dots[0]); s.setProperty("--ot-dot2",d.dots[1]);
+  photoBoard(k);
   nameSeats();
 }
+/* photo boards: each style's board + its 2 discs load in the background; the drawn board shows until they're in */
+var OTV="1119a", otReady={};
+function photoBoard(k){
+  var d=DESIGNS[k], s=document.body.style;
+  if(d&&d.ph){ s.setProperty("--ot-fw",d.ph.fw); s.setProperty("--ot-sl",d.ph.sl);
+    s.setProperty("--ot-ph",'url("ot/ot-'+k+'.webp?v='+OTV+'")');
+    s.setProperty("--ot-d1",'url("ot/d-'+k+'-1.webp?v='+OTV+'")'); s.setProperty("--ot-d2",'url("ot/d-'+k+'-2.webp?v='+OTV+'")'); }
+  var on=!!otReady[k], ph=d&&d.ph||{}; s.setProperty("--ot-line",on&&ph.line||d.line); s.setProperty("--ot-line2",on&&ph.line2||d.line2);
+  document.body.classList.toggle("otph",!!otReady[k]);
+}
+(function(){ Object.keys(DESIGNS).forEach(function(k){ if(!DESIGNS[k].ph) return; var left=3;
+  ["ot/ot-"+k,"ot/d-"+k+"-1","ot/d-"+k+"-2"].forEach(function(f){ var im=new Image(); im.onload=function(){ if(--left===0){ otReady[k]=1; if(curDesign===k) photoBoard(k); } }; im.src=f+".webp?v="+OTV; }); }); })();
 function colorNames(){ var d=DESIGNS[curDesign]||DESIGNS.gilt; return d.names; }
 function cap(w){ return w.charAt(0).toUpperCase()+w.slice(1); }
 function who(s){ return mySide&&s===mySide?"You":mySide?Parlor.oppName():cap(colorNames()[s-1]); }
