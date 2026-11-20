@@ -19,8 +19,8 @@
     var src=box.getAttribute("data-bw-signup")||"home", joined=false;
     try{ joined=!!localStorage.getItem(DONE); }catch(e){}
     box.innerHTML='<p class="kick">Letters from the Studio</p><h2>Be First Through the Door</h2>'+
-      '<p>A short note when a new room opens, and the day BrainWhim opens its doors. Only a few letters a year. We never share or sell your address, and you can leave the list anytime.</p>'+
-      (joined?'<p class="bwsu-msg ok">You\'re on the list. Thank you!</p>':
+      '<p>A short note when a new room opens, and the day BrainWhim opens its doors. Only a few letters a year. We never share or sell your address, and you can stop the letters anytime.</p>'+
+      (joined?'<p class="bwsu-msg ok">You\'re in. Thank you!</p>':
       '<form class="bwsu-f" novalidate><label class="bwsu-hp" aria-hidden="true">Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>'+
       '<input type="email" name="email" required autocomplete="email" inputmode="email" placeholder="you@example.com" aria-label="Your email address">'+
       '<button type="submit">Keep Me Posted</button></form><p class="bwsu-msg" role="status" aria-live="polite"></p>')+
@@ -31,20 +31,20 @@
     f.addEventListener("submit",function(e){
       e.preventDefault();
       var v=inp.value.trim();
-      if(f.website.value){ say("You're on the list. Thank you!","ok"); f.remove(); return; }   /* a robot filled the hidden box */
+      if(f.website.value){ say("You're in. Thank you!","ok"); f.remove(); return; }   /* a robot filled the hidden box */
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){ say("That email address doesn't look quite right.","no"); inp.focus(); return; }
       var sb=window.BW&&BW.client&&BW.client();
-      if(!sb){ say("We couldn't reach the list just now. Please try again in a moment.","no"); return; }
+      if(!sb){ say("We couldn't send that just now. Please try again in a moment.","no"); return; }
       btn.disabled=true; say("Adding you…");
       sb.rpc("join_email_list",{p_email:v,p_source:src}).then(function(r){
         btn.disabled=false;
         var a=r&&r.data;
-        if(r&&r.error){ say("We couldn't reach the list just now. Please try again in a moment.","no"); return; }
+        if(r&&r.error){ say("We couldn't send that just now. Please try again in a moment.","no"); return; }
         if(a==="bad"){ say("That email address doesn't look quite right.","no"); inp.focus(); return; }
         if(a==="busy"){ say("Lots of sign-ups right now! Please try again in a minute.","no"); return; }
         try{ localStorage.setItem(DONE,"1"); }catch(e){}
-        f.remove(); say("You're on the list. Thank you! Watch for a note from BrainWhim.","ok");
-      },function(){ btn.disabled=false; say("We couldn't reach the list just now. Please try again in a moment.","no"); });
+        f.remove(); say("You're in. Thank you! Watch for a letter from the studio.","ok");
+      },function(){ btn.disabled=false; say("We couldn't send that just now. Please try again in a moment.","no"); });
     });
   }
   function boot(){
