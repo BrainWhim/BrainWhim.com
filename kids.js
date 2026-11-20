@@ -429,7 +429,8 @@
       '<p style="margin:14px 0 6px;font-weight:700">What should Finn call you?</p><div class="k-chips" id="kMon"></div>'+
       '<p class="k-small" style="margin-top:8px">A few lines that change every day aren\'t recorded; those use this device\'s own voice. For a more natural one, download an enhanced English voice: on iPhone, iPad or Mac, Settings, then Accessibility, then Spoken Content, then Voices.</p>'+
       '<p class="k-small" style="margin-top:12px">Coming soon here: settings, progress at a glance, printables and play-together ideas.</p>'+
-      '<div class="k-row"><a class="k-btn k-ghost" href="index.html">Leave for BrainWhim home</a></div>');
+      '<div class="k-row"><a class="k-btn k-ghost" href="index.html">Leave for BrainWhim home</a></div>'+
+      '<p class="k-small" style="margin-top:10px;text-align:center"><a href="privacy.html" style="color:inherit">Privacy Policy</a> · <a href="terms.html" style="color:inherit">Terms</a></p>');
     var row=$("#kBrk",box);
     [[20,"20 min"],[30,"30 min"],[45,"45 min"],[0,"Off"]].forEach(function(o){
       var b=document.createElement("button"); b.className="k-chip"+(o[0]===mins?" on":""); b.textContent=o[1];

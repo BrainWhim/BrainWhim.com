@@ -142,10 +142,12 @@
     var g3 = group("Leave");
     g3.appendChild(btn("Back to the Room", "", function () { P.stand(); }));
     g3.appendChild(btn("Switch Game", "", function () { P.games(); }));
-    var tb = mk("a", "pk-btn", "Lobby"); tb.href = C.home || "lobby.html"; g3.appendChild(tb);
+    var hm = C.home || "lobby.html", tb = mk("a", "pk-btn", /puzzles/.test(hm) ? "All Puzzles" : /cards/.test(hm) ? "Card Lobby" : "Lobby"); tb.href = hm; g3.appendChild(tb);
     el.coach = mk("div", "pk-coach"); el.coach.hidden = true; document.body.appendChild(el.coach);   /* Learn to Play (Oct 24) */
     right.appendChild(ac);
     el.mode = mk("p", "pk-sub", ""); ac.appendChild(el.mode);
+    /* Nov 20 (Navigation Audit B): the legal pages from every room */
+    var lg = mk("p", "pk-legal"); lg.innerHTML = '<a href="privacy.html">Privacy</a>·<a href="terms.html">Terms</a>·<a href="disclaimers.html">Disclaimers</a>'; ac.appendChild(lg);
 
     /* floating bar (phones) */
     var bar = mk("div", "pk-bar");
