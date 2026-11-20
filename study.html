@@ -406,6 +406,17 @@ body.st-still .st-room svg *{animation:none!important}
   body.pk-land.seated .st-pad.land .st-tools{width:100%;padding:5px;grid-template-columns:1fr 1fr}
   body.pk-land.seated .st-pad.land .st-tools .pk-btn{padding:8px 6px;font-size:12px}
 }
+/* photo pictures (Nov 19, late; sd/): hidden until each file loads */
+#stScene .ph{display:none}
+#stScene.on-wood .ph-wood,#stScene.on-marble .ph-marble,#stScene.on-chair .ph-chair,#stScene.on-leather .ph-leather,#stScene.on-wall .ph-wall,#stScene.on-floor .ph-floor,#stScene.on-rug .ph-rug,#stScene.on-books .ph-books,#stScene.on-map .ph-map,#stScene.on-painting .ph-painting,#stScene.on-portrait .ph-portrait,#stScene.on-clock .ph-clock,#stScene.on-candle .ph-candle,#stScene.on-lamp .ph-lamp{display:inline}
+#stScene.on-rug .hide-rug,#stScene.on-books .hide-books,#stScene.on-map .hide-map,#stScene.on-painting .hide-painting,#stScene.on-portrait .hide-portrait,#stScene.on-clock .hide-clock,#stScene.on-candle .hide-candle,#stScene.on-lamp .hide-lamp,#stScene.on-marble [fill="url(#stVein)"],#stScene.on-wall [fill="url(#stDam)"]{display:none}
+#stScene.on-wood .dr-wood{opacity:.42}#stScene.on-marble .dr-marble{opacity:.22}#stScene.on-chair .dr-chair{opacity:.45}#stScene.on-leather .dr-leather{opacity:.2}#stScene.on-wall .dr-wall{opacity:.3}
+body.sd-wall .st-lock.ob-clock,body.sd-wall .st-lock.ob-safe{background:var(--lamp),var(--vig),linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.34)),var(--sdWall) 0 0/calc(var(--u) * 340) repeat}
+body.sd-wall .st-lock.ob-clock{background:var(--lamp),var(--vig),linear-gradient(180deg,transparent 84%,rgba(255,255,255,.9) 84%,rgba(255,255,255,.9) 84.6%,transparent 84.6%,transparent 90%,rgba(0,0,0,.18) 90%,rgba(0,0,0,.18) 90.8%,transparent 90.8%),linear-gradient(100deg,transparent 30%,rgba(140,120,90,.18) 34%,transparent 38%,transparent 66%,rgba(140,120,90,.14) 70%,transparent 74%),linear-gradient(180deg,transparent 84%,#e6dcc8 84%,#c9bb9e 91%,#8f8064),linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.34)),var(--sdWall) 0 0/calc(var(--u) * 340) repeat}
+body.sd-wall .st-lock.ob-globe{background:var(--lamp),var(--vig),linear-gradient(180deg,transparent 70%,rgba(0,0,0,.35) 70%,rgba(0,0,0,0) 73%),linear-gradient(180deg,transparent 68%,var(--wood1) 68%,var(--wood2) 69.5%,var(--wood2) 85%,var(--wood3)),linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.34)),var(--sdWall) 0 0/calc(var(--u) * 340) repeat}
+body.sd-leather .st-lock.ob-desk,body.sd-leather .st-lock.ob-box{background:var(--lamp),var(--vig),linear-gradient(160deg,rgba(0,0,0,0),rgba(0,0,0,.3)),var(--sdLeather) 50% 50%/cover}
+body.sd-wood .st-lock.ob-door{background:var(--lamp),var(--vig),linear-gradient(160deg,rgba(0,0,0,0),rgba(0,0,0,.42)),var(--sdWood) 50% 50%/calc(var(--u) * 460)}
+body.sd-paper .st-note{background:radial-gradient(ellipse at 15% 0%,rgba(255,255,255,.4),transparent 55%),var(--sdPaper) 50% 50%/cover}
 </style>
 <script src="bw-auth.js?v=1113c"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -789,6 +800,20 @@ function bevel(x,y,w,h,b,fill){
     pg([[x,y],[x+w,y],[x+w-b,y+b],[x+b,y+b]],'fill="#fff" opacity=".2"')+pg([[x,y],[x+b,y+b],[x+b,y+h-b],[x,y+h]],'fill="#fff" opacity=".1"')+
     pg([[x,y+h],[x+b,y+h-b],[x+w-b,y+h-b],[x+w,y+h]],'fill="#000" opacity=".34"')+pg([[x+w,y],[x+w,y+h],[x+w-b,y+h-b],[x+w-b,y+b]],'fill="#000" opacity=".24"');
 }
+var SDV="1119a", SDOK={};
+/* where the photo pieces sit (scene units): x, y, width, height (the candle: width, top; the lamp: + the glow's y) */
+var SDP={painting:[372,52,228,172],portrait:[636,142,68,88],clock:[428,196,116,132],candle:[26,236],lamp:[556,440,88,74,470]};
+/* each wood, marble, leather, wallpaper or chair surface gets a photo twin under it; the drawn one fades to a tint when the photo is on */
+function sdDress(svg){
+  var MAP={stWood:"wood",stWoodV:"wood",stWoodH:"wood",stMarble:"marble",stChair:"chair",stLeather:"leather",stWall:"wall",stSideL:"wall"};
+  return svg.replace(/<(rect|path|polygon|ellipse|circle)\b([^>]*?) fill="url\(#(stWood|stWoodV|stWoodH|stMarble|stChair|stLeather|stWall|stSideL)\)"([^>]*?)\/>/g,function(m,tag,a,g,b){
+    var k=MAP[g], all=a+b, pat;
+    if(/class="/.test(all)) return m;
+    if(k==="wood"){ var w=/\bwidth="([\d.]+)"/.exec(all), h=/\bheight="([\d.]+)"/.exec(all);
+      pat=(w&&h)?(+w[1]>+h[1]*1.3?"stPhWoodH":"stPhWoodV"):(g==="stWoodV"?"stPhWoodH":"stPhWoodV"); }
+    else pat={marble:"stPhMarble",chair:"stPhChair",leather:"stPhLeather",wall:"stPhWall"}[k];
+    return '<'+tag+' class="ph ph-'+k+'"'+a+' fill="url(#'+pat+')"'+b+'/>'+'<'+tag+' class="dr-'+k+'"'+a+' fill="url(#'+g+')"'+b+'/>'; });
+}
 function sceneSVG(){
   var s=[], i, k;
   s.push('<defs>');
@@ -832,6 +857,12 @@ function sceneSVG(){
   s.push('<linearGradient id="stChair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a2a20"/><stop offset=".6" stop-color="#4a1410"/><stop offset="1" stop-color="#22080a"/></linearGradient>');
   s.push('<clipPath id="stGlobeC"><circle cx="764" cy="512" r="64"/></clipPath>');
   s.push('<clipPath id="stFloorC"><polygon points="0,574 64,548 936,548 1000,574 1000,760 0,760"/></clipPath>');
+  s.push('<pattern id="stPhWall" patternUnits="userSpaceOnUse" width="230" height="230"><image id="stPhWallIm" width="230" height="230" preserveAspectRatio="none"/></pattern>');
+  s.push('<pattern id="stPhWoodV" patternUnits="userSpaceOnUse" width="240" height="240"><image href="sd/wood.webp?v='+SDV+'" width="240" height="240" preserveAspectRatio="none"/></pattern>');
+  s.push('<pattern id="stPhWoodH" patternUnits="userSpaceOnUse" width="240" height="240" patternTransform="rotate(90)"><image href="sd/wood.webp?v='+SDV+'" width="240" height="240" preserveAspectRatio="none"/></pattern>');
+  s.push('<pattern id="stPhMarble" patternUnits="userSpaceOnUse" width="340" height="340"><image href="sd/marble.webp?v='+SDV+'" width="340" height="340" preserveAspectRatio="none"/></pattern>');
+  s.push('<pattern id="stPhChair" patternUnits="userSpaceOnUse" width="150" height="150"><image href="sd/chair.webp?v='+SDV+'" width="150" height="150" preserveAspectRatio="none"/></pattern>');
+  s.push('<pattern id="stPhLeather" patternUnits="userSpaceOnUse" x="250" y="488" width="420" height="420"><image href="sd/leather.webp?v='+SDV+'" width="420" height="420" preserveAspectRatio="none"/></pattern>');
   s.push('</defs>');
 
   /* ===== the room box: ceiling, back wall, side walls, floor ===== */
@@ -873,17 +904,19 @@ function sceneSVG(){
     s.push('<path d="M'+q[0][0].toFixed(1)+' 548L'+q[3][0].toFixed(1)+' 760" stroke="#120802" stroke-opacity=".55" stroke-width="1.6"/>');
     for(var r=1;r<9;r++){ if((k+r)%3) continue; var z=1-r*.062, yy=VPY+176/z; if(yy>760) break;
       s.push('<path d="M'+fl(bx[k],yy).toFixed(1)+' '+yy.toFixed(1)+'L'+fl(bx[k+1],yy).toFixed(1)+' '+yy.toFixed(1)+'" stroke="#120802" stroke-opacity=".5" stroke-width="1.4"/>'); } }
-  s.push('<rect y="540" width="1000" height="220" fill="url(#stGrain)" opacity=".5"/></g>');
+  s.push('<rect y="540" width="1000" height="220" fill="url(#stGrain)" opacity=".5"/><image class="ph ph-floor" href="sd/floor-p.webp?v='+SDV+'" x="0" y="548" width="1000" height="212" preserveAspectRatio="none"/></g>');
   s.push(pg([[0,574],[64,548],[64,553],[0,580]],'fill="#000" opacity=".4"')+pg([[1000,574],[936,548],[936,553],[1000,580]],'fill="#000" opacity=".4"')+'<rect x="64" y="548" width="872" height="7" fill="url(#stCastD)"/>');
   /* the sun patch from the window, with the glazing bars' shadows */
   s.push(pg([[86,604],[226,586],[300,664],[118,700]],'fill="#fff1c4" opacity=".26"')+'<path d="M106 652L262 625" stroke="#3a2010" stroke-opacity=".3" stroke-width="5"/><path d="M156 595L200 692" stroke="#3a2010" stroke-opacity=".3" stroke-width="5"/>');
   /* the rug, in perspective, with its borders and a fringe */
   function rg(u,v){ var y=604+156*v, xl=fl(262,y), xr=fl(738,y); return [xl+(xr-xl)*u,y]; }
   s.push(pg([rg(0,0),rg(1,0),rg(1,1),rg(0,1)],'fill="url(#stRug)"'));
+  s.push('<g class="hide-rug">');
   s.push(pg([rg(.04,.08),rg(.96,.08),rg(.965,1.02),rg(.035,1.02)],'fill="none" stroke="#e7c66a" stroke-opacity=".5" stroke-width="4"'));
   s.push(pg([rg(.08,.18),rg(.92,.18),rg(.93,1.04),rg(.07,1.04)],'fill="none" stroke="#e7c66a" stroke-opacity=".25" stroke-width="2"'));
   var mc=rg(.5,.55); s.push('<ellipse cx="'+mc[0]+'" cy="'+mc[1]+'" rx="150" ry="42" fill="none" stroke="#e7c66a" stroke-opacity=".3" stroke-width="3"/><ellipse cx="'+mc[0]+'" cy="'+mc[1]+'" rx="96" ry="26" style="fill:var(--rug2)" opacity=".7"/>');
   for(i=0;i<=40;i++){ var fp=rg(i/40,0); s.push('<path d="M'+fp[0].toFixed(1)+' '+fp[1]+'v-4" stroke="#efe2c0" stroke-opacity=".3" stroke-width="1.2"/>'); }
+  s.push('</g><image id="stRugIm" class="ph ph-rug" x="-25" y="604" width="1050" height="156" preserveAspectRatio="none"/>');
   s.push(pg([rg(0,0),rg(1,0),rg(1,.03),rg(0,.03)],'fill="#fff" opacity=".08"'));
 
   /* ===== the bookcase (against the back wall, left): its right side shows, books stand in deep shelves ===== */
@@ -896,6 +929,7 @@ function sceneSVG(){
     s.push('<rect x="102" y="'+y0+'" width="178" height="'+(y1-y0)+'" fill="#120804"/>');
     s.push(pg([[102,y0],[118,y0+(VPY-y0)*.04],[118,y1+(VPY-y1)*.04],[102,y1]],'fill="url(#stWoodV)" opacity=".55"'));
     s.push('<rect x="102" y="'+y0+'" width="178" height="18" fill="url(#stCastD)"/>');
+    s.push('<g class="hide-books">');
     var x=118, wantStack=sh===1, deco=sh===2;
     while(x<272){ var w=11+Math.floor(R()*11), h=60+Math.floor(R()*30); if(x+w>(wantStack?238:deco?248:278)) break;
       var c=COLS[Math.floor(R()*COLS.length)], bt=y1-h;
@@ -904,6 +938,7 @@ function sceneSVG(){
       if(bt>VPY-30) s.push(pg([[x,bt],[x+w,bt],[x+w+(VPX-x-w)*.03,bt+(VPY-bt)*.03],[x+(VPX-x)*.03,bt+(VPY-bt)*.03]],'fill="#efe4c6" opacity=".85"'));
       x+=w+1; if(R()<.07) x+=8; }
     if(wantStack){ [0,1,2].forEach(function(j){ var yb=y1-j*11-11, c2=COLS[(j*3+2)%COLS.length]; s.push('<rect x="'+(242-j*2)+'" y="'+yb+'" width="'+(36+j*3)+'" height="10" rx="1.5" fill="'+c2+'"/><rect x="'+(242-j*2)+'" y="'+yb+'" width="'+(36+j*3)+'" height="10" fill="url(#stCastD)" opacity=".5" transform="rotate(180 '+(260-j*2)+' '+(yb+5)+')"/><rect x="'+(242-j*2)+'" y="'+(yb+1)+'" width="'+(36+j*3)+'" height="1.6" fill="#fff" opacity=".2"/>'); }); }
+    s.push('</g><svg class="ph ph-books" x="118" y="'+(y1-90)+'" width="'+(deco?128:160)+'" height="90" viewBox="0 0 '+(deco?128:160)+' 90" preserveAspectRatio="none"><image href="sd/books.webp?v='+SDV+'" x="'+(-[0,95,190,40][sh])+'" y="0" width="360" height="90" preserveAspectRatio="none"/></svg>');
     if(deco){ /* a little brass hourglass */ s.push('<g transform="translate(262 '+(y1-36)+')"><rect x="-12" y="0" width="24" height="4" fill="url(#stBrass)"/><rect x="-12" y="32" width="24" height="4" fill="url(#stBrass)"/><path d="M-9 4h18l-8 14 8 14h-18l8-14z" fill="#dfeef4" opacity=".55"/><path d="M-6 28h12l-6-8z" fill="#e7c66a"/><path d="M-10 4v28M10 4v28" stroke="url(#stBrass)" stroke-width="2"/></g>'); }
     s.push('<rect x="98" y="'+y1+'" width="186" height="16" fill="url(#stWoodV)"/><path d="M98 '+(y1+1)+'H284" stroke="#fff" stroke-opacity=".3" stroke-width="2"/><rect x="102" y="'+(y1+16)+'" width="178" height="3" fill="#000" opacity=".45"/>'); }
   s.push('<path d="M88 62V546" stroke="#fff" stroke-opacity=".22" stroke-width="3"/><path d="M294 62V546" stroke="#000" stroke-opacity=".35" stroke-width="3"/>');
@@ -914,9 +949,12 @@ function sceneSVG(){
   s.push('<g class="op op-books"><rect x="150" y="316" width="96" height="98" fill="#050302"/><rect x="186" y="380" width="24" height="24" rx="4" fill="url(#stBrassR)" opacity=".7"/>'+pg([[150,316],[110,300],[110,430],[150,414]],'fill="url(#stWoodH)"')+pg([[110,300],[150,316],[150,414],[110,430]],'fill="url(#stCyl)" opacity=".6"')+'</g>');
 
   /* ===== the portrait (a silhouette of the professor), between the painting and the door ===== */
+  s.push('<g class="hide-portrait">');
   s.push('<ellipse cx="678" cy="196" rx="34" ry="44" fill="#000" opacity=".25"/><ellipse cx="670" cy="186" rx="34" ry="44" fill="url(#stBrassR)"/><ellipse cx="670" cy="186" rx="26" ry="35" fill="#f2e6c8"/>');
   s.push('<path d="M680 214c-2-8 0-14-4-20 4-2 4-5 2-7 2-1 3-3 1-6 1-4-2-6-1-10-2-6-8-10-15-9-8 1-13 8-12 16 1 6-1 9 1 13 2 6-5 10-10 16-4 5-4 10-4 15h46c0-3-2-6-4-8z" fill="#1d1408"/>');
   s.push('<path d="M646 170a30 40 0 0 1 16-22" stroke="#fff" stroke-opacity=".5" stroke-width="2.5" fill="none" stroke-linecap="round"/>');
+  s.push('</g>');
+  s.push('<image class="ph ph-portrait" href="sd/portrait.webp?v='+SDV+'" x="'+SDP.portrait[0]+'" y="'+SDP.portrait[1]+'" width="'+SDP.portrait[2]+'" height="'+SDP.portrait[3]+'" preserveAspectRatio="none"/>');
 
   /* ===== the wall safe (behind the painting), and the painting on its hinge ===== */
   s.push('<rect x="382" y="64" width="208" height="150" fill="#0d0f11"/><rect x="390" y="72" width="192" height="134" rx="4" fill="url(#stSteel)"/>');
@@ -924,6 +962,7 @@ function sceneSVG(){
   s.push('<g class="cl-safe"><rect x="398" y="80" width="176" height="118" rx="3" fill="url(#stSteel)" stroke="#1a1e22" stroke-width="2"/><circle cx="486" cy="139" r="26" fill="#2a3036"/><circle cx="486" cy="139" r="20" fill="url(#stBrassR)"/></g>');
   s.push('<g class="st-paint">');
   s.push('<rect x="384" y="66" width="220" height="168" fill="url(#stCastD)" opacity=".8" transform="translate(4 0)"/><rect x="380" y="62" width="228" height="170" fill="#000" opacity=".22" transform="translate(10 12)"/>');
+  s.push('<g class="hide-painting">');
   s.push('<rect x="372" y="52" width="228" height="172" rx="3" fill="url(#stBrass)"/>');
   s.push(pg([[372,52],[600,52],[588,64],[384,64]],'fill="#fff" opacity=".35"')+pg([[372,52],[384,64],[384,212],[372,224]],'fill="#fff" opacity=".18"')+pg([[372,224],[384,212],[588,212],[600,224]],'fill="#000" opacity=".3"')+pg([[600,52],[600,224],[588,212],[588,64]],'fill="#000" opacity=".22"'));
   s.push('<rect x="386" y="66" width="200" height="144" fill="none" stroke="#6b4c18" stroke-width="2"/>');
@@ -931,6 +970,8 @@ function sceneSVG(){
   s.push('<path d="M390 168C430 140 470 160 510 138S570 150 582 142V206H390Z" fill="#5f7a4a"/><path d="M390 186C440 168 500 190 582 172V206H390Z" fill="#3e5a34"/><path d="M430 186c4-20 10-26 16-30 4 8 4 22 0 30z" fill="#2a4024"/><path d="M520 196c3-10 8-14 12-16 3 4 3 12 0 16z" fill="#2a4024"/><circle cx="540" cy="100" r="13" fill="#fff4cc" opacity=".85"/><path d="M400 120c20-6 40-4 56 2" stroke="#fff" stroke-opacity=".4" stroke-width="3" fill="none"/>');
   s.push(pg([[390,70],[470,70],[400,206],[390,206]],'fill="#fff" opacity=".12"')+'<rect x="390" y="70" width="192" height="8" fill="url(#stCastD)"/>');
   [[372,52],[600,52],[372,224],[600,224]].forEach(function(p){ s.push('<circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="url(#stBrassR)" stroke="#6b4c18" stroke-width="1"/>'); });
+  s.push('</g>');
+  s.push('<image class="ph ph-painting" href="sd/painting.webp?v='+SDV+'" x="'+SDP.painting[0]+'" y="'+SDP.painting[1]+'" width="'+SDP.painting[2]+'" height="'+SDP.painting[3]+'" preserveAspectRatio="none"/>');
   s.push('</g>');
   /* its picture light, a brass hood above the frame */
   s.push('<path d="M430 40h112l-8 10h-96z" fill="url(#stBrass)"/><path d="M482 34v8" stroke="url(#stBrass)" stroke-width="5"/>'+pg([[440,50],[532,50],[580,110],[392,110]],'fill="url(#stHalo)" opacity=".5" pointer-events="none"'));
@@ -963,20 +1004,25 @@ function sceneSVG(){
   /* ===== the mantel clock: a domed case, a glass over the dial, a pendulum behind a little brass door ===== */
   s.push('<path d="M536 236q30 4 36 90H536Z" fill="#000" opacity=".18"/>');
   s.push('<ellipse cx="490" cy="328" rx="64" ry="5" fill="url(#stShadow)"/>');
+  s.push('<g class="hide-clock">');
   s.push('<rect x="430" y="314" width="112" height="12" rx="2" fill="url(#stWoodV)"/><path d="M432 315H540" stroke="#fff" stroke-opacity=".3" stroke-width="1.5"/>');
   s.push('<path d="M438 314V258Q438 214 486 208Q534 214 534 258V314Z" fill="url(#stWood)"/><path d="M438 314V258Q438 214 486 208Q534 214 534 258V314Z" fill="url(#stGrainV)"/>');
   s.push('<path d="M438 314V258Q438 214 486 208Q534 214 534 258V314Z" fill="url(#stCyl)" opacity=".55"/>');
   s.push('<circle cx="486" cy="258" r="34" fill="url(#stBrassR)"/><circle cx="486" cy="258" r="28" fill="url(#stEnamel)"/>');
   for(i=0;i<12;i++){ var a=i/12*Math.PI*2; s.push('<path d="M'+(486+Math.sin(a)*23).toFixed(1)+' '+(258-Math.cos(a)*23).toFixed(1)+'L'+(486+Math.sin(a)*26).toFixed(1)+' '+(258-Math.cos(a)*26).toFixed(1)+'" stroke="#2a2116" stroke-width="'+(i%3?1.3:2.4)+'"/>'); }
+  s.push('</g>');
+  s.push('<image class="ph ph-clock" href="sd/clock.webp?v='+SDV+'" x="'+SDP.clock[0]+'" y="'+SDP.clock[1]+'" width="'+SDP.clock[2]+'" height="'+SDP.clock[3]+'" preserveAspectRatio="none"/>');
   s.push('<path d="M486 258L476 246M486 258L500 250" stroke="#1d1408" stroke-width="2.4" stroke-linecap="round"/><path class="st-sec" d="M486 262V236" stroke="#9c2b1c" stroke-width="1.2" stroke-linecap="round"/><circle cx="486" cy="258" r="2.4" fill="#1d1408"/>');
   s.push('<path d="M464 240a28 28 0 0 1 20-10" stroke="#fff" stroke-opacity=".85" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M500 280a28 28 0 0 0 10-8" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none" stroke-linecap="round"/>');
   s.push('<rect x="470" y="292" width="32" height="20" rx="2" fill="#140a04"/><g class="cl-clock"><g class="st-pend"><path d="M486 292v12" stroke="url(#stBrass)" stroke-width="1.4"/><circle cx="486" cy="306" r="4" fill="url(#stBrassR)"/></g><rect x="470" y="292" width="32" height="20" rx="2" fill="#bfe0ee" opacity=".18" stroke="url(#stBrass)" stroke-width="2.2"/></g>');
   s.push('<g class="op op-clock"><rect x="476" y="298" width="20" height="10" rx="2" fill="url(#stBrassR)" opacity=".8"/>'+pg([[470,292],[458,288],[458,316],[470,312]],'fill="url(#stBrass)"')+'</g>');
+  s.push('<g class="hide-clock">');
   s.push('<circle cx="486" cy="205" r="6" fill="url(#stBrassR)"/><path d="M432 326h10v4h-10zM530 326h10v4h-10z" fill="url(#stBrass)"/>');
+  s.push('</g>');
   /* the candlesticks either side, flames flickering, a halo on the wall */
   [356,616].forEach(function(cx0,j){ s.push('<circle cx="'+cx0+'" cy="236" r="34" fill="url(#stHalo)"/><ellipse cx="'+(cx0+4)+'" cy="326" rx="16" ry="3" fill="url(#stShadow)"/>');
-    s.push('<path d="M'+(cx0-13)+' 324h26l-4-6h-18zM'+(cx0-4)+' 318v-30h8v30zM'+(cx0-8)+' 300h16v-4h-16zM'+(cx0-9)+' 288h18l-3-6h-12z" fill="url(#stBrassH)"/>');
-    s.push('<rect x="'+(cx0-5)+'" y="250" width="10" height="32" rx="2" fill="#f6efdc"/><rect x="'+(cx0-5)+'" y="250" width="10" height="32" fill="url(#stCyl)" opacity=".5"/><path d="M'+cx0+' 250v-4" stroke="#3a2a14" stroke-width="1.4"/>');
+    s.push('<g class="hide-candle">');    s.push('<path d="M'+(cx0-13)+' 324h26l-4-6h-18zM'+(cx0-4)+' 318v-30h8v30zM'+(cx0-8)+' 300h16v-4h-16zM'+(cx0-9)+' 288h18l-3-6h-12z" fill="url(#stBrassH)"/>');
+    s.push('<rect x="'+(cx0-5)+'" y="250" width="10" height="32" rx="2" fill="#f6efdc"/><rect x="'+(cx0-5)+'" y="250" width="10" height="32" fill="url(#stCyl)" opacity=".5"/><path d="M'+cx0+' 250v-4" stroke="#3a2a14" stroke-width="1.4"/>'); s.push('</g>'); s.push('<image class="ph ph-candle" href="sd/candle.webp?v='+SDV+'" x="'+(cx0-SDP.candle[0]/2)+'" y="'+SDP.candle[1]+'" width="'+SDP.candle[0]+'" height="'+(326-SDP.candle[1])+'" preserveAspectRatio="none"/>');
     s.push('<path class="st-cf '+(j?"b":"a")+'" d="M'+cx0+' 232c5 6 5 11 0 14-5-3-5-8 0-14z" fill="url(#stFlame)"/>'); });
 
   /* ===== the door, set in a deep frame; a sunny hall behind it ===== */
@@ -1008,7 +1054,10 @@ function sceneSVG(){
   s.push('<path d="M764 440V448M764 576V584" stroke="url(#stBrass)" stroke-width="4"/>');
   s.push('<circle cx="764" cy="512" r="64" fill="url(#stGlobe)"/>');
   s.push('<g clip-path="url(#stGlobeC)"><g class="st-turn">');
+  s.push('<g class="hide-map">');
   ["",260].forEach(function(dx){ s.push('<g transform="translate('+(dx||0)+' 0)"><path d="M700 486c16-10 30 0 26 14s-22 10-18 28c4 14 22 10 24 24M756 452c12 8 28 4 34 18s-10 22-8 36 16 18 10 30M808 470c10-4 18 6 14 14s-12 6-10 14M850 520c14-6 24 4 20 16s-16 10-12 22M900 460c8 6 18 4 22 14" fill="none" stroke="#d8c58e" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></g>'); });
+  s.push('</g>');
+  s.push('<g class="ph ph-map"><image href="sd/map.webp?v='+SDV+'" x="690" y="447" width="260" height="130" preserveAspectRatio="none"/><image href="sd/map.webp?v='+SDV+'" x="949.5" y="447" width="260" height="130" preserveAspectRatio="none"/></g>');
   s.push('</g><ellipse cx="764" cy="512" rx="64" ry="20" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="1.2"/><ellipse cx="764" cy="512" rx="64" ry="44" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="1"/><ellipse cx="764" cy="512" rx="28" ry="64" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="1"/></g>');
   s.push('<circle cx="764" cy="512" r="64" fill="url(#stSphere)"/>');
   s.push('<g class="op op-globe"><path d="M776 488h30a50 64 0 0 1 4 44h-34z" fill="#0a0604"/><rect x="784" y="502" width="16" height="16" rx="3" fill="url(#stBrassR)" opacity=".8"/>'+pg([[806,488],[838,474],[842,520],[810,532]],'fill="url(#stGlobe)"')+'</g>');
@@ -1051,14 +1100,17 @@ function sceneSVG(){
   s.push('<ellipse cx="438" cy="508" rx="16" ry="3" fill="url(#stShadow)"/><path d="M424 508h28l-3-14h-22z" fill="#1e2a3a"/><path d="M427 496h22" stroke="#9fb6cc" stroke-opacity=".6" stroke-width="2"/><path d="M430 500v6" stroke="#fff" stroke-opacity=".4" stroke-width="2"/><path d="M440 496l14-34" stroke="#f4ecd6" stroke-width="3.5" stroke-linecap="round"/><path d="M452 466c6-10 14-16 22-18-4 8-10 16-20 22z" fill="#f4ecd6"/>');
   /* the banker's lamp, glowing, with its pool of light */
   s.push('<ellipse cx="600" cy="512" rx="80" ry="12" fill="url(#stPool)" pointer-events="none"/><ellipse cx="604" cy="512" rx="26" ry="4" fill="url(#stShadow)"/>');
+  s.push('<g class="hide-lamp">');
   s.push('<path d="M600 510V470" stroke="url(#stBrassH)" stroke-width="6"/><ellipse cx="600" cy="510" rx="24" ry="5" fill="url(#stBrass)"/><path d="M614 470v-16" stroke="url(#stBrassH)" stroke-width="3"/>');
   s.push('<path d="M560 468Q562 446 600 444Q638 446 640 468Z" fill="url(#stLamp)"/><ellipse cx="600" cy="468" rx="40" ry="5" fill="#ffefb0"/><ellipse cx="600" cy="468" rx="36" ry="3" fill="#fffbe0"/><path d="M572 454q28-10 56 0" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none"/>');
+  s.push('</g>');
+  s.push('<g class="ph ph-lamp"><image href="sd/lamp.webp?v='+SDV+'" x="'+SDP.lamp[0]+'" y="'+SDP.lamp[1]+'" width="'+SDP.lamp[2]+'" height="'+SDP.lamp[3]+'" preserveAspectRatio="none"/><ellipse cx="600" cy="'+SDP.lamp[4]+'" rx="30" ry="4" fill="#ffefb0" opacity=".55"/></g>');
 
   /* ===== the light from the window over everything, and the room's dark corners ===== */
   s.push('<path d="M0 0H640L260 760H0Z" fill="url(#stLight)" pointer-events="none"/>');
   s.push('<rect width="1000" height="760" fill="url(#stVig)" pointer-events="none"/>');
   s.push('<g id="stMarks"></g>');
-  return s.join("");
+  return sdDress(s.join(""));
 }
 
 /* ---------- the stage ---------- */
@@ -1073,6 +1125,21 @@ stage.innerHTML='<div class="st-left"><div class="st-board" id="stBoard">'+
   '<div class="st-tools"><button class="pk-btn gold" type="button" id="stHint">Read His Notes</button><button class="pk-btn" type="button" id="stNav">Look Closer</button></div></div>';
 var BOARD=$("#stBoard",stage), ROOM=$("#stRoom",stage), SCENE=$("#stScene",stage), LOCK=$("#stLock",stage), TOAST=$("#stToast",stage);
 SCENE.innerHTML=sceneSVG();
+
+/* ---------- photo pictures (Nov 19, late): each switches on when its file loads; the set picks the wallpaper and rug ---------- */
+var SDNAMES=["wood","marble","chair","leather","floor-p","books","map","painting","portrait","clock","candle","lamp","paper"];
+function sdLoad(n){ if(SDOK[n]!==undefined) return; SDOK[n]=0; var im=new Image(); im.onload=function(){ SDOK[n]=true; sdApply(); }; im.onerror=function(){ SDOK[n]=false; }; im.src="sd/"+n+".webp?v="+SDV; }
+function sdApply(){ var st=document.body.getAttribute("data-set")||"green", sv=SCENE, b=document.body;
+  SDNAMES.forEach(function(n){ var k=n.replace("-p",""), on=SDOK[n]===true; sv.classList.toggle("on-"+k,on); b.classList.toggle("sd-"+k,on); });
+  if(SDOK.paper===true) b.style.setProperty("--sdPaper",'url("sd/paper.webp?v='+SDV+'")');
+  if(SDOK.leather===true) b.style.setProperty("--sdLeather",'url("sd/leather.webp?v='+SDV+'")');
+  if(SDOK.wood===true) b.style.setProperty("--sdWood",'url("sd/wood.webp?v='+SDV+'")');
+  var w="wall-"+st, r="rug-"+st+"-p"; sdLoad(w); sdLoad(r);
+  var wi=document.getElementById("stPhWallIm"); if(SDOK[w]===true){ wi.setAttribute("href","sd/"+w+".webp?v="+SDV); b.style.setProperty("--sdWall",'url("sd/'+w+'.webp?v='+SDV+'")'); }
+  sv.classList.toggle("on-wall",SDOK[w]===true); b.classList.toggle("sd-wall",SDOK[w]===true);
+  var ri=document.getElementById("stRugIm"); if(SDOK[r]===true) ri.setAttribute("href","sd/"+r+".webp?v="+SDV); sv.classList.toggle("on-rug",SDOK[r]===true); }
+SDNAMES.forEach(sdLoad); sdApply();
+new MutationObserver(sdApply).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
 
 /* ---------- state ---------- */
 var D=null, mode="daily", cur=0, view="room", hints=0, tries=0, HS=[], t0=0, secs0=0, done=false, lessonK=0;
