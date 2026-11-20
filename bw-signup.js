@@ -19,7 +19,7 @@
     var src=box.getAttribute("data-bw-signup")||"home", joined=false;
     try{ joined=!!localStorage.getItem(DONE); }catch(e){}
     box.innerHTML='<p class="kick">Letters from the Studio</p><h2>Be First Through the Door</h2>'+
-      '<p>A short note when a new room opens, and the day BrainWhim opens its doors. Only a few letters a year. We never share or sell your address, and you can stop the letters anytime.</p>'+
+      '<p>A short note when a new room, or a whole new wing, opens its doors. Only a few letters a year. We never share or sell your address, and you can stop the letters anytime.</p>'+
       (joined?'<p class="bwsu-msg ok">You\'re in. Thank you!</p>':
       '<form class="bwsu-f" novalidate><label class="bwsu-hp" aria-hidden="true">Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>'+
       '<input type="email" name="email" required autocomplete="email" inputmode="email" placeholder="you@example.com" aria-label="Your email address">'+
