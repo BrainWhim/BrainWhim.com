@@ -1,6 +1,6 @@
 /* ==========================================================================
    BrainWhim · Kids' Corner kit (Nov 6, 2026)  ·  window.BWK
-   The kids' header (Home · Sound · Read to me · My stuff · Grown-ups), the grown-ups gate,
+   The kids' header (Up one step [Moonlets / The Outpost / Kids' Corner] · Sound · Read to me · My stuff · Grown-ups), the grown-ups gate,
    device-only name, read-aloud with on-device voices only, little sounds, the break reminder.
    Safety: nothing here talks to a server. Everything is kept in this browser (localStorage).
    Nov 7: Finn's voice and speech bubble (BWK.finn); voices ranked best-first (Premium/Enhanced).
@@ -22,6 +22,8 @@
     sound:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="k-w" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
     mute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/></svg>',
     read:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5c3-1 6-1 9 1 3-2 6-2 9-1V19c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6.5V20"/></svg>',
+    moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6z"/></svg>',
+    tree:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 4.5 9h15z"/><path d="M6.5 9v5.5h11V9"/><path d="M11 14.5v-3h2v3"/><path d="M9 14.5 8 21M15 14.5l1 6.5M8.6 18h6.8"/></svg>',
     stuff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>',
     gu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>'
   };
@@ -496,12 +498,31 @@
     });
   }
 
+  /* ---- The header's first button goes one step up (Nov 20, Navigation Audit A1):
+     a Moon Game -> Moon Games, a My Moon Day helper -> My Moon Day, any other Moonlets page -> Moonlets,
+     an Outpost game -> The Outpost, moonlets.html / outpost.html -> Kids' Corner, kids.html -> BrainWhim home.
+     A new Moon Game or Moon Day helper: add its file here too. A page can override with BWK.init({up:"file.html"}). ---- */
+  var UP_GAMES="bubbles count drops face fliprun gofish hello letters match maze peekaboo shapes stickers".split(" "),
+      UP_DAY="brush feel morning sleepy weather".split(" "),
+      UP_NAME={"kids.html":["Kids' Corner","home"],"moonlets.html":["Moonlets","moon"],"moonlets-games.html":["Moon Games","moon"],
+        "moonlets-day.html":["Moon Day","moon"],"outpost.html":["Outpost","tree"]},
+      UP_SAY={"moonlets-day.html":"My Moon Day","outpost.html":"The Outpost"};
+  function upTo(){
+    if(cfg.up) return cfg.up;
+    var pg=(location.pathname.split("/").pop()||"").toLowerCase(), m=pg.match(/^moonlets-([a-z]+)\.html$/);
+    if(pg==="moonlets.html"||pg==="outpost.html") return "kids.html";
+    if(m) return UP_GAMES.indexOf(m[1])>=0?"moonlets-games.html":UP_DAY.indexOf(m[1])>=0?"moonlets-day.html":"moonlets.html";
+    if(cfg.voice==="outpost") return "outpost.html";
+    return "kids.html";
+  }
+
   /* ---------------- header ---------------- */
   function head(){
+    var up=upTo(), un=UP_NAME[up]||UP_NAME["kids.html"];
     var h=document.createElement("nav"); h.className="k-head"; h.setAttribute("aria-label","Kids' Corner");
     h.innerHTML=
       (cfg.here==="home"?'<a class="k-hb k-leave" href="index.html" data-k="leave" aria-label="Back to the BrainWhim home page">'+I.back+'<span>BrainWhim</span></a>':
-      '<button class="k-hb" data-k="home">'+I.home+'<span>Home</span></button>')+
+      '<button class="k-hb k-up" data-k="home" aria-label="Back to '+(UP_SAY[up]||un[0])+'">'+I[un[1]]+'<span>'+un[0]+'</span></button>')+
       '<button class="k-hb" data-k="sound" aria-pressed="'+soundOn+'">'+(soundOn?I.sound:I.mute)+'<span>Sound</span></button>'+
       '<button class="k-hb" data-k="read" aria-pressed="'+readOn+'">'+I.read+'<span>Read to me</span></button>'+
       '<button class="k-hb" data-k="stuff">'+I.stuff+'<span>My stuff</span></button>'+
@@ -511,7 +532,7 @@
     h.addEventListener("click",function(e){
       var b=e.target.closest(".k-hb"); if(!b) return; var k=b.getAttribute("data-k");
       if(k==="leave"){ e.preventDefault(); sfx("whoosh"); setTimeout(function(){location.href="index.html";},180); }
-      else if(k==="home"){ sfx("whoosh"); setTimeout(function(){location.href="kids.html";},180); }
+      else if(k==="home"){ sfx("whoosh"); setTimeout(function(){location.href=up;},180); }
       else if(k==="sound"){ soundOn=!soundOn; LS.set("sound",soundOn); b.setAttribute("aria-pressed",soundOn); b.innerHTML=(soundOn?I.sound:I.mute)+'<span>Sound</span>'; wake(); sfx("tap"); }
       else if(k==="read"){
         if(!voice){ voice=pickVoice(); }

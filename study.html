@@ -239,6 +239,8 @@ body.st-still .st-room svg *{animation:none!important}
 .st-plate.bad{animation:st-nope .4s ease}
 .st-slot{position:relative;width:calc(var(--u) * var(--cw,108));height:calc(var(--u) * var(--cw,108));border:0;padding:0;border-radius:50%;cursor:pointer;background:radial-gradient(circle at 50% 40%,#2a1d08,#4a3410 70%,#6b4c18);box-shadow:inset calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 10) rgba(0,0,0,.7),0 calc(var(--u) * 2) 0 rgba(255,255,255,.45)}
 .st-slot em{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:calc(var(--u) * 4);font:700 calc(var(--u) * 20)/1 Montserrat,sans-serif;font-style:normal;color:#4a3410;letter-spacing:.04em;white-space:nowrap;text-transform:uppercase}
+.st-slot.sel .st-coin{transform:translateY(calc(var(--u) * -8)) scale(1.06)}
+.st-tray{cursor:default}
 .st-slot.sel{box-shadow:inset calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 10) rgba(0,0,0,.7),0 0 0 calc(var(--u) * 6) #ffd36b}
 .st-coin{position:relative;width:calc(var(--u) * var(--cw,108));height:calc(var(--u) * var(--cw,108));border:0;padding:0;border-radius:50%;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#3b2a0c;
   background:radial-gradient(circle at 34% 28%,#fff3c8,#e7c66a 40%,#b38a2e 75%,#7a5a1e);box-shadow:inset 0 0 0 calc(var(--u) * 5) rgba(122,90,30,.6),inset calc(var(--u) * -3) calc(var(--u) * -4) calc(var(--u) * 6) rgba(0,0,0,.25),calc(var(--u) * 3) calc(var(--u) * 6) calc(var(--u) * 8) rgba(0,0,0,.45);transition:transform .15s}
@@ -329,7 +331,7 @@ body.st-still .st-room svg *{animation:none!important}
   #stEnd .pk-streak p,#stEnd .pk-streak div{font-size:12.5px;line-height:1.4}
   #stEnd .pk-row{margin-top:10px}
 }
-@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+@media (max-width:999px) and (orientation:portrait) and (max-height:780px){
   #stEnd .pk-modal{padding:12px 14px 12px;max-height:95dvh}
   #stEnd .pk-streak .pk-btn{padding:9px 12px}
   #stEnd .pk-modal .pk-streak p{margin:0 0 8px}
@@ -1421,6 +1423,7 @@ function paintOrder(){
   m.innerHTML=h.join("");
   $$(".st-slot",m).forEach(function(b){ b.onclick=function(){ slotTap(+b.getAttribute("data-p")); }; });
   $$(".st-tray .st-coin",m).forEach(function(b){ b.onclick=function(){ coinTap(+b.getAttribute("data-t")); }; });
+  $(".st-tray",m).onclick=trayTap;
   $("#stTry",m).onclick=tryOrder;
 }
 function coinHTML(i,fix){ return '<span class="st-coin'+(fix?" fix":"")+'"><b>'+D.locks[i].token+'</b><small>'+esc(OBJ[D.locks[i].obj].tag)+'</small></span>'; }
@@ -1439,9 +1442,18 @@ function coinTap(i){
 function slotTap(p){
   if(blocked()) return; hideToast(); startClock();
   if(fixedP(p)){ toast("The professor's note fixed that token in place.",1800); return; }
-  if(order[p]>=0){ if(pickI>=0&&pickI<100){ order[p]=pickI; pickI=-1; snd("st-token"); paintOrder(); return; } order[p]=-1; pickI=-1; snd("st-tick"); paintOrder(); return; }
+  /* Nov 20 (Judy): tokens move inside the plate like Night Train's seats. Tap a placed token to pick it up, then tap
+     another slot to move it there (or swap with the token there); tap it again, or the tray, to send it back below the plate. */
   if(pickI>=0&&pickI<100){ order[p]=pickI; pickI=-1; snd("st-token"); paintOrder(); return; }
-  pickI=pickI===100+p?-1:100+p; paintOrder();
+  if(pickI>=100){ var q=pickI-100;
+    if(q===p){ if(order[p]>=0){ order[p]=-1; snd("st-tick"); } pickI=-1; paintOrder(); return; }
+    if(order[q]>=0||order[p]>=0){ var t=order[p]; order[p]=order[q]; order[q]=t; pickI=-1; snd("st-token"); paintOrder(); return; }
+  }
+  pickI=100+p; snd("st-tick"); paintOrder();
+}
+function trayTap(e){
+  if(e.target.closest(".st-coin")||pickI<100) return; if(blocked()) return;
+  var q=pickI-100; if(order[q]>=0){ order[q]=-1; snd("st-tick"); } pickI=-1; paintOrder();
 }
 function tryOrder(){
   if(blocked()) return; hideToast(); startClock();
