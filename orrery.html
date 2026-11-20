@@ -351,7 +351,15 @@ function shade(hex,f){ var n=parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b
 
 /* ---------- the planets: little lit globes, drawn once at radius 100 and placed with <use> ----------
    (To use painted images later: give a planet img:"planet-earth.webp" in PL and it's used instead of the drawing.) */
+/* ---------- photos (Nov 19): each switches on by itself when its file loads; the drawn version stays until then ---------- */
+var ORV="1119a", BASEPH={brass:"or/or-base-burl",silver:"or/or-base-lapis",rose:"or/or-base-ivory"}, GLOBEPH=["or/or-mercury","or/or-venus","or/or-earth","or/or-mars","or/or-jupiter"], phOK={};
+function phURL(n){ return n+".webp?v="+ORV; }
+var phT=0; function phAgain(){ clearTimeout(phT); phT=setTimeout(function(){ if(P){ drawBase(); drawLive(); showSel(); } },60); }
+function phLoad(n){ if(phOK[n]!==undefined) return phOK[n]===true; phOK[n]=0; var im=new Image(); im.onload=function(){ phOK[n]=true; phAgain(); }; im.onerror=function(){ phOK[n]=false; }; im.src=phURL(n); return false; }
+function kset(){ var k=document.body.getAttribute("data-set"); return BASEPH[k]?k:"brass"; }
+function globePh(){ GLOBEPH.forEach(function(n,i){ PL[i].img=phLoad(n)?phURL(n):null; }); MOON.img=phLoad("or/or-moon")?phURL("or/or-moon"):null; return phLoad("or/or-sun")?phURL("or/or-sun"):null; }
 function globeDefs(d){
+  var SUNIMG=globePh();
   sv("circle",{r:100},sv("clipPath",{id:"orClip"},d));
   stops(d,"radialGradient","orShade",{cx:"34%",cy:"30%",r:"82%"},[["0%","rgba(0,0,0,0)"],["52%","rgba(0,0,0,0)"],["80%","rgba(10,6,20,.32)"],["100%","rgba(10,6,20,.66)"]]);
   stops(d,"radialGradient","orSpec",{cx:"32%",cy:"26%",r:"34%"},[["0%","rgba(255,255,255,.85)"],["35%","rgba(255,255,255,.32)"],["100%","rgba(255,255,255,0)"]]);
@@ -359,7 +367,7 @@ function globeDefs(d){
   stops(d,"radialGradient","orShadow",{},[["0%","rgba(0,0,0,.55)"],["60%","rgba(0,0,0,.25)"],["100%","rgba(0,0,0,0)"]]);
   function globe(id,col,img,detail){
     var g=sv("g",{id:id},d);
-    if(img){ sv("image",{href:img,x:-100,y:-100,width:200,height:200,"clip-path":"url(#orClip)"},g); return; }
+    if(img){ sv("image",{href:img,x:-100,y:-100,width:200,height:200,"clip-path":"url(#orClip)"},g); sv("circle",{r:100,fill:"url(#orShade)",opacity:.75},g); sv("circle",{r:100,fill:"url(#orSpec)",opacity:.45},g); return; }
     sv("circle",{r:100,fill:grad(d,id+"B",col,"36%","32%","80%")},g);
     var det=sv("g",{"clip-path":"url(#orClip)"},g); detail(det);
     sv("circle",{r:100,fill:"url(#orShade)"},g);
@@ -399,6 +407,7 @@ function globeDefs(d){
   /* the sun: no shadow side, a hot limb and a corona */
   var sun=sv("g",{id:"orGS"},d);
   sv("circle",{r:150,fill:stops(d,"radialGradient","orCorona",{},[["55%","rgba(255,214,110,.55)"],["75%","rgba(255,180,70,.18)"],["100%","rgba(255,170,60,0)"]])},sun);
+  if(SUNIMG){ sv("image",{href:SUNIMG,x:-100,y:-100,width:200,height:200,"clip-path":"url(#orClip)"},sun); return; }
   sv("circle",{r:100,fill:stops(d,"radialGradient","orSunB",{cx:"40%",cy:"36%",r:"70%"},[["0%","#fffdf0"],["35%","#ffe58a"],["75%","#f6a93a"],["100%","#d0661a"]])},sun);
   var sd=sv("g",{"clip-path":"url(#orClip)",opacity:.35},sun);
   [[-30,30,22],[36,-10,16],[10,50,12],[-50,-30,10],[50,40,9]].forEach(function(c){ sv("circle",{cx:c[0],cy:c[1],r:c[2],fill:"#f5b347"},sd); });
@@ -418,8 +427,10 @@ function drawBase(){
   /* a brass band round the edge */
   sv("ellipse",{cx:500,cy:CY+THICK*.42,rx:490,ry:490*K,fill:"none",stroke:fin.ring[1],"stroke-width":3,opacity:.55},BASE);
   var top=sv("g",{transform:PLANE},BASE);
+  var bk=BASEPH[kset()], BPH=phLoad(bk);
   sv("circle",{cx:500,cy:500,r:490,fill:grad(d,"orBaseG",fin.base,"42%","30%","78%")},top);
-  for(var r=30;r<490;r+=7+((r*7)%5)) sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.grain,"stroke-width":(r%3)+1},top);
+  if(BPH){ sv("circle",{cx:500,cy:500,r:490},sv("clipPath",{id:"orBaseClip"},d)); sv("image",{href:phURL(bk),x:10,y:10,width:980,height:980,preserveAspectRatio:"none","clip-path":"url(#orBaseClip)"},top); }
+  if(!BPH) for(var r=30;r<490;r+=7+((r*7)%5)) sv("circle",{cx:500,cy:500,r:r,fill:"none",stroke:fin.grain,"stroke-width":(r%3)+1},top);
   var hl=sv("radialGradient",{id:"orHL",cx:"30%",cy:"18%",r:"62%"},d); sv("stop",{offset:"0%","stop-color":"rgba(255,240,210,.26)"},hl); sv("stop",{offset:"100%","stop-color":"rgba(255,240,210,0)"},hl);
   sv("circle",{cx:500,cy:500,r:490,fill:"url(#orHL)"},top);
   /* the bezel: a polished brass rim with engraved degree ticks */
