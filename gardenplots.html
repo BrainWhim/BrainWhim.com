@@ -576,13 +576,27 @@ stage.innerHTML='<div class="gp-left"><div class="gp-board" id="gpBoard"><svg id
   '<div class="gp-tools"><button class="pk-btn gold" type="button" id="gpHint">Ask the Gardener</button><button class="pk-btn" type="button" id="gpUndo">Undo</button><button class="pk-btn" type="button" id="gpRestart">Restart</button></div></div>';
 var BOARD=$("#gpBoard",stage), BASE=$("#gpBase",stage), LIVE=$("#gpLive",stage), TOAST=$("#gpToast",stage), PETALS=$("#gpPetals",stage), NOTES=$("#gpNotes",stage);
 
+/* ---------- the photos (gp/): wood per garden set, a ground cover per bed, a rose bush per set, four pebbles.
+   Each switches on by itself once its file has loaded; until then the drawn version shows. ---------- */
+var GPV="1119a", WOODPH={cedar:"gp/gp-cedar",white:"hb/hb-white",gold:"gp/gp-oak"}, ROSEPH={cedar:"gp/gp-rose-red",white:"gp/gp-rose-blush",gold:"gp/gp-rose-gold"}, phOK={}, phR={};
+function phURL(n){ return n+".webp?v="+GPV; }
+function phLoad(n,cb){ if(phOK[n]!==undefined){ return phOK[n]===true; } phOK[n]=0; var im=new Image(); im.onload=function(){ phOK[n]=true; phR[n]=im.naturalHeight/im.naturalWidth; cb&&cb(); }; im.onerror=function(){ phOK[n]=false; }; im.src=phURL(n); return false; }
+function gset(){ var d=document.body.dataset.set; return WOODPH[d]?d:"cedar"; }
+var phT=0; function phAgain(){ clearTimeout(phT); phT=setTimeout(function(){ if(P){ drawBase(); paint(); } },60); }
+function pebArt(i){ var k="gp/gp-peb-"+(1+(i*7+3)%4); if(!phLoad(k,phAgain)) return PEB;
+  var w=34, h=w*(phR[k]||.7); return '<ellipse cx="2" cy="5" rx="16" ry="6" fill="#000" opacity=".28"/><image href="'+phURL(k)+'" x="'+(-w/2)+'" y="'+(4-h)+'" width="'+w+'" height="'+h.toFixed(1)+'"/>'; }
 /* ---------- the planter, drawn once per garden ---------- */
+new MutationObserver(function(){ if(P){ drawBase(); paint(); } }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
 function drawBase(){
   var n=P.n, i, s=[];
   W=n*S+2*F; VH=Math.round(TOPM+W*K+TH+LEG+SHD);
   BASE.setAttribute("viewBox","0 0 "+W+" "+VH); LIVE.setAttribute("viewBox","0 0 "+W+" "+VH);
   var yb=TOPM+W*K;   /* where the top meets the front face */
+  var wk=WOODPH[gset()], WD=phLoad(wk,phAgain), rk=ROSEPH[gset()], RS=phLoad(rk,phAgain);
   s.push('<defs>');
+  if(WD){ s.push('<pattern id="gpWoodP" width="'+W+'" height="'+W+'" patternUnits="userSpaceOnUse"><image href="'+phURL(wk)+'" width="'+W+'" height="'+W+'" preserveAspectRatio="none"/></pattern>');
+    s.push('<pattern id="gpWoodPV" width="'+W+'" height="'+W+'" patternUnits="userSpaceOnUse" patternTransform="rotate(90)"><image href="'+phURL(wk)+'" width="'+W+'" height="'+W+'" preserveAspectRatio="none"/></pattern>');
+    s.push('<linearGradient id="gpFaceSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0c03" stop-opacity=".12"/><stop offset="1" stop-color="#1a0c03" stop-opacity=".5"/></linearGradient>'); }
   s.push('<linearGradient id="gpWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--wood1)"/><stop offset=".55" style="stop-color:var(--wood2)"/><stop offset="1" style="stop-color:var(--wood3)"/></linearGradient>');
   s.push('<linearGradient id="gpFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--face1)"/><stop offset=".55" style="stop-color:var(--face2)"/><stop offset="1" style="stop-color:var(--face3)"/></linearGradient>');
   s.push('<linearGradient id="gpFaceX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>');
@@ -599,15 +613,17 @@ function drawBase(){
   /* each bed's ground cover: a base color, leaves and little flowers, scattered */
   for(var b=0;b<n;b++){ var B=GP.BEDS[P.cols[b]], R=GP.rng("tex:"+B.id), dots=[];
     for(var q=0;q<26;q++){ var x=R()*50, y=R()*50, kind=R(); dots.push(kind<.45?'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(1.6+R()*1.4).toFixed(1)+'" fill="'+B.g[2]+'" opacity=".55"/>':kind<.8?'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(1.2+R()*1.2).toFixed(1)+'" fill="'+B.g[0]+'"/>':'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(.9+R()*.8).toFixed(1)+'" fill="'+B.f+'"/>'); }
-    s.push('<pattern id="gpBed'+b+'" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="50" height="50" fill="'+B.g[1]+'"/>'+dots.join("")+'</pattern>'); }
+    var bk="gp/gp-bed-"+B.id;
+    if(phLoad(bk,phAgain)) s.push('<pattern id="gpBed'+b+'" x="'+F+'" y="'+F+'" width="300" height="300" patternUnits="userSpaceOnUse"><image href="'+phURL(bk)+'" width="300" height="300" preserveAspectRatio="none"/></pattern>');
+    else s.push('<pattern id="gpBed'+b+'" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="50" height="50" fill="'+B.g[1]+'"/>'+dots.join("")+'</pattern>'); }
   s.push(roseDefs("gp"));
-  s.push('<symbol id="gpRoseS" viewBox="-56 -104 112 112" overflow="visible">'+roseArt("gp")+'</symbol>');
+  var rh=104*(phR[rk]||1); s.push('<symbol id="gpRoseS" viewBox="-56 -104 112 112" overflow="visible">'+(RS?'<ellipse cx="4" cy="2" rx="40" ry="9" fill="#1a0d04" opacity=".3"/><image href="'+phURL(rk)+'" x="-52" y="'+(6-rh).toFixed(1)+'" width="104" height="'+rh.toFixed(1)+'"/>':roseArt("gp"))+'</symbol>');
   s.push('</defs>');
   /* the table shadow and the legs */
   s.push('<ellipse cx="'+(W/2+10)+'" cy="'+(yb+TH+LEG+4)+'" rx="'+(W*.56)+'" ry="'+(SHD*.9)+'" fill="url(#gpTable)"/>');
-  [[14,1],[W-14-34,0]].forEach(function(L){ s.push('<rect x="'+L[0]+'" y="'+(yb+TH-4)+'" width="34" height="'+(LEG+4)+'" rx="3" fill="url(#gpFace)"/><rect x="'+L[0]+'" y="'+(yb+TH-4)+'" width="34" height="'+(LEG+4)+'" rx="3" fill="#000" opacity="'+(L[1]?.15:.35)+'"/>'); });
+  [[14,1],[W-14-34,0]].forEach(function(L){ s.push('<rect x="'+L[0]+'" y="'+(yb+TH-4)+'" width="34" height="'+(LEG+4)+'" rx="3" fill="url(#gp'+(WD?'WoodPV':'Face')+')"/><rect x="'+L[0]+'" y="'+(yb+TH-4)+'" width="34" height="'+(LEG+4)+'" rx="3" fill="#000" opacity="'+(L[1]?.15:.35)+'"/>'); });
   /* the front face: two planks, lit from the left, with brass corner brackets and the maker's plate */
-  s.push('<rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" rx="4" fill="url(#gpFace)"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#gpGrainH)"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#gpFaceX)"/>');
+  s.push('<rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" rx="4" fill="url(#gp'+(WD?'WoodP':'Face')+')"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#gp'+(WD?'FaceSh':'GrainH')+')"/><rect x="0" y="'+yb+'" width="'+W+'" height="'+TH+'" fill="url(#gpFaceX)"/>');
   s.push('<path d="M0 '+(yb+TH/2)+'H'+W+'" stroke="#2a1405" stroke-opacity=".45" stroke-width="2"/><path d="M0 '+(yb+TH/2+2)+'H'+W+'" stroke="#fff" stroke-opacity=".08" stroke-width="1.5"/>');
   s.push('<path d="M0 '+(yb+1)+'H'+W+'" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>');
   [[6,1],[W-6,-1]].forEach(function(c){ var x=c[0], d=c[1]; s.push('<path d="M'+x+' '+(yb+4)+'h'+(d*30)+'v8h'+(-d*22)+'v'+(TH-16)+'h'+(-d*8)+'z" fill="url(#gpBrass)" stroke="#6b4c18" stroke-width="1"/>'+
@@ -620,7 +636,7 @@ function drawBase(){
   s.push('<g transform="'+PLANE()+'">');
   var I=F, O=W-F;
   var boards=[["M0 0H"+W+"L"+O+" "+I+"H"+I+"Z","gpGrainH",0],["M0 0L"+I+" "+I+"V"+O+"L0 "+W+"Z","gpGrainV",.04],["M"+W+" 0V"+W+"L"+O+" "+O+"V"+I+"Z","gpGrainV",.2],["M0 "+W+"H"+W+"L"+O+" "+O+"H"+I+"Z","gpGrainH",.12]];
-  boards.forEach(function(B){ s.push('<path d="'+B[0]+'" fill="url(#gpWood)"/><path d="'+B[0]+'" fill="url(#'+B[1]+')"/>'+(B[2]?'<path d="'+B[0]+'" fill="#000" opacity="'+B[2]+'"/>':'')); });
+  boards.forEach(function(B){ s.push(WD?'<path d="'+B[0]+'" fill="url(#gpWoodP'+(B[1]==="gpGrainV"?"V":"")+')"/>':'<path d="'+B[0]+'" fill="url(#gpWood)"/><path d="'+B[0]+'" fill="url(#'+B[1]+')"/>'); s.push(''+(B[2]?'<path d="'+B[0]+'" fill="#000" opacity="'+B[2]+'"/>':'')); });
   s.push('<path d="M0 0L'+I+' '+I+'M'+W+' 0L'+O+' '+I+'M0 '+W+'L'+I+' '+O+'M'+W+' '+W+'L'+O+' '+O+'" stroke="#2a1405" stroke-opacity=".4" stroke-width="2"/>');
   s.push('<path d="M2 '+(W-2)+'V2H'+(W-2)+'" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>');
   /* brass corner caps */
@@ -652,7 +668,7 @@ function drawBase(){
   /* the far board's inner wall, facing you: you see it above the far row of soil, lit from the top left */
   var wy=TOPM+F*K;
   s.push('<linearGradient id="gpWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wood2)"/><stop offset="1" style="stop-color:var(--wood3)"/></linearGradient>');
-  s.push('<path d="M'+F+' '+wy+'H'+(W-F)+'l-6 '+WALL+'H'+(F+6)+'z" fill="url(#gpWall)"/><path d="M'+F+' '+wy+'H'+(W-F)+'l-6 '+WALL+'H'+(F+6)+'z" fill="url(#gpGrainH)"/>');
+  s.push('<path d="M'+F+' '+wy+'H'+(W-F)+'l-6 '+WALL+'H'+(F+6)+'z" fill="url(#gp'+(WD?'WoodP':'Wall')+')"/><path d="M'+F+' '+wy+'H'+(W-F)+'l-6 '+WALL+'H'+(F+6)+'z" fill="url(#gp'+(WD?'FaceSh':'GrainH')+')"/>');
   s.push('<path d="M'+(F+6)+' '+(wy+WALL)+'H'+(W-F-6)+'" stroke="#1a0c03" stroke-opacity=".45" stroke-width="3"/>');
   s.push('<path d="M'+F+' '+wy+'l6 '+WALL+'" stroke="#1a0c03" stroke-opacity=".3" stroke-width="2"/><path d="M'+(W-F)+' '+wy+'l-6 '+WALL+'" stroke="#fff" stroke-opacity=".15" stroke-width="2"/>');
   BASE.innerHTML=s.join("");
@@ -677,7 +693,7 @@ function paint(){
   s.push('</g>');
   /* pebbles and roses, back to front */
   for(i=0;i<n*n;i++){ if(!st[i]) continue; var x=cx(i), y=cy(i), d=depth(i);
-    if(st[i]===1){ s.push('<g transform="translate('+x+' '+(y+4)+') scale('+(d*S/58)+')"><g class="'+(fresh[i]?"gp-pebin":"")+'">'+PEB+'</g></g>'); continue; }
+    if(st[i]===1){ s.push('<g transform="translate('+x+' '+(y+4)+') scale('+(d*S/58)+')"><g class="'+(fresh[i]?"gp-pebin":"")+'">'+pebArt(i)+'</g></g>'); continue; }
     var sc=d*S/104, base=y+S*K*.3;
     s.push('<g transform="translate('+x+' '+base+') scale('+sc+')">'+
       '<ellipse cx="6" cy="2" rx="46" ry="'+(46*K*.42)+'" fill="url(#gpSh)"/>'+
