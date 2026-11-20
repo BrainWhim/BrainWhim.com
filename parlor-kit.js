@@ -25,7 +25,7 @@
   /* the Puzzles & Brain Games wing (Oct 30): one room per daily puzzle; a puzzle without a page yet shows dimmed */
   var PUZZLE_GAMES = [["orrery","Orrery","orrery.html"],["observatory","Observatory","observatory.html"],["telegraph","Telegraph","telegraph.html"],["nighttrain","Night Train","nighttrain.html"],["gardenplots","Garden Plots","gardenplots.html"],["countinghouse","Counting House","countinghouse.html"],["harbor","Harbor","harbor.html"],["study","Locked Study","study.html"],["maproom","Map Room","maproom.html"],["clockmaker","Clockmaker","clockmaker.html"]];
   function gameLink(g, cls) {
-    if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening soon"; return x; }
+    if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening Soon"; return x; }
     var a = mk("a", cls, g[1]); a.href = g[2]; return a;
   }
   var el = {}, accountInfo = { pts: 0, member: false, user: null };
@@ -357,7 +357,7 @@
     el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
       (score && C.solo && !C.free ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club Members get more).</li></ul>" : "") +
       (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club Members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
-    var r = mk("div", "pk-row"); r.appendChild(btn("Got it", "", function () { el.help.veil.classList.remove("on"); }));
+    var r = mk("div", "pk-row"); r.appendChild(btn("Got It", "", function () { el.help.veil.classList.remove("on"); }));
     el.help.box.appendChild(r); el.help.veil.classList.add("on");
   };
 
@@ -569,7 +569,7 @@
     if (lvlNote) b.appendChild(mk("p", "pk-lvlnote", lvlNote));
     var pts = mk("p", "pk-pts", ""); b.appendChild(pts);
     var r = mk("div", "pk-row");
-    if (mode === "house") r.appendChild(btn(C.solo ? "Deal Again" : "Play again?", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
+    if (mode === "house") r.appendChild(btn(C.solo ? "Deal Again" : "Play Again", "", function () { el.end.veil.classList.remove("on"); P.newGame(); }));
     if (mode === "learn") {
       b.insertBefore(mk("p", "pk-lvlnote", C.solo ? "A practice game: no points." : "A practice game: no points, and The House's level doesn't change."), pts);
       r.appendChild(btn("Practice Again", "", function () { el.end.veil.classList.remove("on"); finished = false; if (C.learn.practice) C.learn.practice(); else C.learn.start(); }));

@@ -222,7 +222,7 @@
       '<button type="button" class="bwa-link" id="bwa-sms" hidden>Text me a code instead</button>' +
       '<button type="button" class="bwa-link" id="bwa-alt" hidden></button>' +
       '<button type="button" class="bwa-link" id="bwa-guest" hidden>Play as a Visitor</button>' +
-      '<button type="button" class="bwa-link" id="bwa-close">Not now</button>' +
+      '<button type="button" class="bwa-link" id="bwa-close">Not Now</button>' +
       "</div></div>";
     document.body.appendChild(ov);
     var $ = function (id) { return ov.querySelector("#" + id); };
@@ -286,7 +286,7 @@
     ui.forgot.hidden = !f; ui.sms.hidden = !sms; ui.alt.hidden = !alt; ui.alt.textContent = alt;
     ui.guest.hidden = !(S.opts.allowGuest && st !== "recovery" && st !== "name");
     ui.close.hidden = st === "recovery";
-    ui.close.textContent = st === "name" ? "Later" : "Not now";
+    ui.close.textContent = st === "name" ? "Later" : "Not Now";
     var focusEl = { start: ui.id, login: ui.pass, register: ui.un, forgot: ui.id.value ? null : ui.id, code: ui.otp, recovery: ui.recpass, name: ui.un }[st];
     if (focusEl) setTimeout(function () { try { focusEl.focus({ preventScroll: true }); } catch (e) {} }, 140);
   }
