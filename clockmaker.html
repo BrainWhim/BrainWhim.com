@@ -532,12 +532,22 @@ function gearPath(R,teeth,depth){
     p.push((k?"L":"M")+(r*Math.cos(a2)).toFixed(1)+" "+(r*Math.sin(a2)).toFixed(1)); }
   return p.join("")+"Z";
 }
+/* ---------- the photos (cm/): plate and floor per set, two gear metals per set, the enamel dial; each switches on by itself ---------- */
+var CMV="1119a", PLATEPH={gilt:"cm/cm-plate-gilt",rhodium:"cm/cm-plate-rhodium",rose:"cm/cm-plate-rose"}, GEARPH={gilt:["gold","silver"],rhodium:["gold","silver"],rose:["rose","black"]}, DIALPH={gilt:"cream",rhodium:"cream",rose:"black"}, phOK={};
+function phURL(n){ return n+".webp?v="+CMV; }
+var phT=0; function phAgain(){ clearTimeout(phT); phT=setTimeout(function(){ if(P){ drawBase(); paint(); } },60); }
+function phLoad(n){ if(phOK[n]!==undefined) return phOK[n]===true; phOK[n]=0; var im=new Image(); im.onload=function(){ phOK[n]=true; phAgain(); }; im.onerror=function(){ phOK[n]=false; }; im.src=phURL(n); return false; }
+function kset(){ var d=document.body.dataset.set; return PLATEPH[d]?d:"gilt"; }
+function dialPh(){ var k="cm/cm-dial-"+DIALPH[kset()]; return phLoad(k)?k:null; }
+new MutationObserver(function(){ if(P){ drawBase(); paint(); } }).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
 function drawBase(){
   var n=P.n, G=P.G, i, s=[], per=n/G.bc, rows=n/G.br;
   W=2*F+n*S+(per-1)*GAP; PH=2*F+n*S+(rows-1)*GAP; VH=Math.round(TOPM+PH*K+TH+SHD);
   BASE.setAttribute("viewBox","0 0 "+W+" "+VH); LIVE.setAttribute("viewBox","0 0 "+W+" "+VH);
-  var yb=TOPM+PH*K;
+  var yb=TOPM+PH*K, ks=kset(), plk=PLATEPH[ks], PLT=phLoad(plk), PRL=phLoad("cm/cm-perlage"), dk=dialPh(), gk={A:"cm/cm-gear-"+GEARPH[ks][0],B:"cm/cm-gear-"+GEARPH[ks][1]}, GOK={A:phLoad(gk.A),B:phLoad(gk.B)}, SZ=Math.max(W,PH);
   s.push('<defs>');
+  if(PLT) s.push('<pattern id="cbPlP" width="'+SZ+'" height="'+SZ+'" patternUnits="userSpaceOnUse"><image href="'+phURL(plk)+'" width="'+SZ+'" height="'+SZ+'" preserveAspectRatio="none"/></pattern>');
+  if(PRL) s.push('<pattern id="cbPerlP" width="260" height="260" patternUnits="userSpaceOnUse"><image href="'+phURL("cm/cm-perlage")+'" width="260" height="260" preserveAspectRatio="none"/><rect width="260" height="260" style="fill:var(--floor2)" opacity=".35"/></pattern>');
   s.push('<linearGradient id="cbPl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--pl1)"/><stop offset=".45" style="stop-color:var(--pl2)"/><stop offset="1" style="stop-color:var(--pl3)"/></linearGradient>');
   s.push('<linearGradient id="cbEdge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--edge1)"/><stop offset=".5" style="stop-color:var(--edge2)"/><stop offset="1" style="stop-color:var(--pl4)"/></linearGradient>');
   s.push('<linearGradient id="cbEdgeX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>');
@@ -570,7 +580,7 @@ function drawBase(){
   for(var ln=0;ln<3;ln++) s.push('<path d="M14 '+(yb+6+ln*6)+'H'+(W-14)+'" stroke="#fff" stroke-opacity=".09" stroke-width="1"/>');
   /* the plate's top */
   s.push('<g transform="'+PLANE()+'">');
-  s.push('<rect x="0" y="0" width="'+W+'" height="'+PH+'" rx="18" fill="url(#cbPl)"/><rect x="0" y="0" width="'+W+'" height="'+PH+'" rx="18" fill="url(#cbStripe)"/>');
+  s.push('<rect x="0" y="0" width="'+W+'" height="'+PH+'" rx="18" fill="url(#cbPl'+(PLT?'P':'')+')"/>'+(PLT?'':'<rect x="0" y="0" width="'+W+'" height="'+PH+'" rx="18" fill="url(#cbStripe)"/>'));
   s.push('<rect x="1.5" y="1.5" width="'+(W-3)+'" height="'+(PH-3)+'" rx="17" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3"/>');
   s.push('<path d="M18 '+(PH-1.5)+'H'+(W-18)+'Q'+(W-1.5)+' '+(PH-1.5)+' '+(W-1.5)+' '+(PH-18)+'V18" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="3"/>');
   /* a fine engraved line around the rim */
@@ -578,11 +588,12 @@ function drawBase(){
   /* each gear window: the floor, the gear turning under it, the walls' shade, and the dials on top */
   for(b=0;b<n;b++){ gr=Math.floor(b/per); gc=b%per; x0=colX(gc*G.bc)-6; y0=rowY(gr*G.br)-6; ww=G.bc*S+12; hh=G.br*S+12;
     var gx=x0+ww/2, gy=y0+hh/2, Rg=Math.min(ww,hh)*.5+Math.abs(ww-hh)*.32+8, teeth=Math.round(Rg/9), ccw=(gr+gc)%2, kind=(gr+gc)%2?"B":"A";
-    s.push('<g clip-path="url(#cbWin'+b+')"><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" fill="url(#cbPerl)"/><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" fill="url(#cbFloor)"/>');
+    s.push('<g clip-path="url(#cbWin'+b+')"><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" fill="url(#cbPerl'+(PRL?'P':'')+')"/><rect x="'+x0+'" y="'+y0+'" width="'+ww+'" height="'+hh+'" fill="url(#cbFloor)"/>');
     /* the gear's shadow on the floor, then the gear: toothed rim, five spokes and a jeweled hub */
     var gp=gearPath(Rg,teeth,12), spokes=[];
     for(var k=0;k<5;k++){ var a=k*Math.PI*2/5-Math.PI/2; spokes.push('M0 0L'+(Math.cos(a)*(Rg-24)).toFixed(1)+' '+(Math.sin(a)*(Rg-24)).toFixed(1)); }
     s.push('<g transform="translate('+(gx+7)+' '+(gy+9)+')" opacity=".45"><path d="'+gp+'" fill="#000"/></g>');
+    if(GOK[kind]) s.push('<g transform="translate('+gx+' '+gy+')"><g class="cb-gear'+(ccw?" ccw":"")+'" data-g="'+b+'"><image href="'+phURL(gk[kind])+'" x="'+(-Rg)+'" y="'+(-Rg)+'" width="'+(2*Rg)+'" height="'+(2*Rg)+'"/></g></g>'); else
     s.push('<g transform="translate('+gx+' '+gy+')"><g class="cb-gear'+(ccw?" ccw":"")+'" data-g="'+b+'">'+
       '<path d="'+gp+'" fill="url(#cbG'+kind+')"/>'+
       '<circle r="'+(Rg-24)+'" fill="url(#cbPerl)"/>'+
@@ -597,6 +608,7 @@ function drawBase(){
   }
   /* the dials: enamel discs in gold bezels, each with a soft shadow on its gear */
   for(i=0;i<n*n;i++){ var X=pcx(i), Y=pcy(i);
+    if(dk){ s.push('<circle cx="'+(X+4)+'" cy="'+(Y+6)+'" r="'+(DR+2)+'" fill="#000" opacity=".4"/><image href="'+phURL(dk)+'" x="'+(X-DR-3)+'" y="'+(Y-DR-3)+'" width="'+(2*DR+6)+'" height="'+(2*DR+6)+'"/>'); continue; }
     s.push('<circle cx="'+(X+4)+'" cy="'+(Y+6)+'" r="'+(DR+2)+'" fill="#000" opacity=".4"/>'+
       '<circle cx="'+X+'" cy="'+Y+'" r="'+(DR+3)+'" fill="url(#cbBez)"/>'+
       '<circle cx="'+X+'" cy="'+Y+'" r="'+(DR-1.5)+'" fill="url(#cbEn)"/>'+
@@ -646,7 +658,7 @@ function paint(){
   for(var b in badSet) s.push(disc(+b,"rgba(224,80,60,.22)","#e0503c","cb-bad",5,DR+4));
   /* the selected dial lifts: a deeper shadow, a little bigger, and a gold ring */
   if(sel>=0&&!done){ var X=pcx(sel), Y=pcy(sel);
-    s.push('<circle cx="'+(X+9)+'" cy="'+(Y+13)+'" r="'+(DR+4)+'" fill="#000" opacity=".35"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+6)+'" fill="url(#cbBez)"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+.5)+'" fill="url(#cbEn)"/>'+
+    s.push('<circle cx="'+(X+9)+'" cy="'+(Y+13)+'" r="'+(DR+4)+'" fill="#000" opacity=".35"/>'+(dialPh()?'<image href="'+phURL(dialPh())+'" x="'+(X-DR-6)+'" y="'+(Y-4-DR-6)+'" width="'+(2*DR+12)+'" height="'+(2*DR+12)+'"/>':'<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+6)+'" fill="url(#cbBez)"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+.5)+'" fill="url(#cbEn)"/>')+
       '<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+9)+'" fill="none" stroke="#ffd36b" stroke-width="4"/>'+
       '<ellipse cx="'+(X-DR*.38)+'" cy="'+(Y-4-DR*.45)+'" rx="'+(DR*.34)+'" ry="'+(DR*.16)+'" fill="#fff" opacity=".4" transform="rotate(-32 '+(X-DR*.38)+' '+(Y-4-DR*.45)+')"/>'); }
   s.push('</g>');
