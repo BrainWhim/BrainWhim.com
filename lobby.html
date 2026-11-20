@@ -663,11 +663,13 @@ function toggleNav(){
   if(open) closeMobileDrawers();
   setNav(open);
 }
+/* a tap outside the open menu closes it and is used up, so it never opens a game underneath (Judy, Nov 20) */
 document.addEventListener('click', function(e){
   if(!document.body.classList.contains('nav-open')) return;
   if(e.target.closest('.menu-trigger') || e.target.closest('.hdr')) return;
-  setNav(false);
-});
+  setNav(false); e.preventDefault(); e.stopPropagation();
+}, true);
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && document.body.classList.contains('nav-open')) setNav(false); });
 function openTargetMobileDrawer(targetZone) {
   setNav(false);
   var leftSide = document.querySelector('.sidebar-left-pane') || document.querySelector('.dashboard-sidebar-left');

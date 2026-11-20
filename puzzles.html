@@ -467,6 +467,15 @@ document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeWin()
   w.addEventListener("touchend",function(e){ if(y0!=null&&e.changedTouches[0].clientY-y0>70) closeWin(); y0=null; });
 })();
 $("menuBtn").onclick=function(){ var m=$("phoneMenu"), on=!m.classList.contains("on"); m.classList.toggle("on",on); this.setAttribute("aria-expanded",on); };
+/* the phone menu also closes by tapping outside it (that tap is used up, so it never opens a game underneath), by swiping it up, or with Esc (Judy, Nov 20) */
+(function(){ var m=$("phoneMenu"), b=$("menuBtn"), eat=0, y0=null;
+  function shut(){ m.classList.remove("on"); b.setAttribute("aria-expanded",false); }
+  document.addEventListener("pointerdown",function(e){ if(!m.classList.contains("on")||m.contains(e.target)||b.contains(e.target)) return; shut(); eat=Date.now(); },true);
+  document.addEventListener("click",function(e){ if(eat&&Date.now()-eat<900){ eat=0; e.preventDefault(); e.stopPropagation(); } },true);
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&m.classList.contains("on")) shut(); });
+  m.addEventListener("touchstart",function(e){ y0=e.touches[0].clientY; },{passive:true});
+  m.addEventListener("touchend",function(e){ if(y0!==null&&e.changedTouches[0].clientY-y0<-30) shut(); y0=null; },{passive:true});
+})();
 
 /* whims */
 var WHIMS=["Solve today’s puzzle before you check the news.","Try a puzzle with your other hand on the mouse.","Explain today’s solve to someone in one sentence.","Stop at the first star you’re proud of.","Open a lesson in a room you know well. Notice something new.","Do the puzzle, then look out a window for one minute."];
