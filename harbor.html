@@ -809,10 +809,13 @@ function solve(B,P0){
    ferries (three berths), each with a paint no other boat of its kind shares that day; bows point either way */
 var PAINTS=[["navy","#24406b"],["green","#2f6a4a"],["white","#eef0ea"],["blue","#4f8fc0"],["yellow","#e0b23c"],["teal","#2e8a86"],["gray","#7d8794"],["varnished","#9a5f2c"],["black","#2a2c30"],["cream","#e9dcb8"]];
 var KINDS2=["launch","rowboat","dinghy","launch"], KINDS3=["trawler","ferry"];
+/* each kind's paints, in the order of its photo sheet (hb/hb-<kind>.png, left to right) */
+var KPAINT={launch:["navy","green","blue","yellow","varnished"],rowboat:["green","blue","teal","varnished"],dinghy:["yellow","teal","gray","navy"],trawler:["navy","green","black","blue"],ferry:["navy","green","black","yellow"]};
+var PHEX={}; PAINTS.forEach(function(p){ PHEX[p[0]]=p[1]; });
 function dress(B,seed){
   var r=rng("hb-paint:"+seed), used={}, out=[{kind:"sloop",paint:"red",color:"#a8262a",bow:1,name:"your red sloop"}];
   for(var i=1;i<B.length;i++){ var kinds=B[i].len===3?KINDS3:KINDS2, kind, p, t=0;
-    do{ kind=kinds[Math.floor(r()*kinds.length)]; p=PAINTS[Math.floor(r()*PAINTS.length)]; t++; } while(used[kind+p[0]]&&t<60);
+    do{ kind=kinds[Math.floor(r()*kinds.length)]; var kp=KPAINT[kind]; p=kp[Math.floor(r()*kp.length)]; p=[p,PHEX[p]]; t++; } while(used[kind+p[0]]&&t<200);
     used[kind+p[0]]=1;
     out.push({kind:kind,paint:p[0],color:p[1],bow:r()<.5?1:-1,name:"the "+p[0]+" "+kind}); }
   return out; }
@@ -847,9 +850,18 @@ var NUMW=["no","one","two","three","four","five"];
 var TW=780, TH=724, FR=48, CELL=100, N=6;
 function bx(c){ return FR+c*CELL; }
 function trayPct(x,y,w,h){ return "left:"+(x/TW*100)+"%;top:"+(y/TH*100)+"%;width:"+(w/TW*100)+"%;height:"+(h/TH*100)+"%"; }
+/* the tray photos (hb/): a wood photo for the frame bars and piers (turned 90 degrees for the side bars) and a water photo
+   for the sea; each switches on by itself once its file has loaded */
+var HBV="1119a", TRAYPH={oak:["hb-oak","hb-sea-blue"],teak:["hb-teak","hb-sea-green"],white:["hb-white","hb-sea-navy"]}, phOK={}, phR={};
+function phURL(n){ return "hb/"+n+".webp?v="+HBV; }
+function phLoad(n,cb){ if(phOK[n]!==undefined){ if(phOK[n]===true) cb&&cb(); return; } phOK[n]=0; var im=new Image(); im.onload=function(){ phOK[n]=true; phR[n]=im.naturalHeight/im.naturalWidth; cb&&cb(); }; im.onerror=function(){ phOK[n]=false; }; im.src=phURL(n); }
+function curSet(){ var d=document.body.dataset.set; return TRAYPH[d]?d:"oak"; }
 function traySVG(mr){
-  var s=[], my0=FR+mr*CELL, my1=my0+CELL, R=FR+N*CELL;
+  var s=[], my0=FR+mr*CELL, my1=my0+CELL, R=FR+N*CELL, tp=TRAYPH[curSet()], WD=phOK[tp[0]]===true, SEA=phOK[tp[1]]===true;
   s.push('<defs>');
+  if(WD){ s.push('<pattern id="hbWoodH" width="780" height="780" patternUnits="userSpaceOnUse"><image href="'+phURL(tp[0])+'" width="780" height="780" preserveAspectRatio="none"/></pattern>');
+    s.push('<pattern id="hbWoodV" width="780" height="780" patternUnits="userSpaceOnUse" patternTransform="rotate(90)"><image href="'+phURL(tp[0])+'" width="780" height="780" preserveAspectRatio="none"/></pattern>'); }
+  if(SEA) s.push('<pattern id="hbSeaP" x="44" y="44" width="740" height="740" patternUnits="userSpaceOnUse"><image href="'+phURL(tp[1])+'" width="740" height="740" preserveAspectRatio="none"/></pattern>');
   s.push('<linearGradient id="hbOak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--f1)"/><stop offset=".5" style="stop-color:var(--f2)"/><stop offset="1" style="stop-color:var(--f3)"/></linearGradient>');
   s.push('<linearGradient id="hbFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--ff1)"/><stop offset="1" style="stop-color:var(--ff2)"/></linearGradient>');
   s.push('<pattern id="hbGrain" width="300" height="40" patternUnits="userSpaceOnUse"><path d="M0 6C70 3 160 10 300 6M0 17C90 20 200 13 300 18M0 29C60 26 170 33 300 28" fill="none" stroke="#5a3a14" stroke-opacity=".16" stroke-width="1.6"/><ellipse cx="190" cy="22" rx="20" ry="4" fill="none" stroke="#5a3a14" stroke-opacity=".1" stroke-width="1.5"/></pattern>');
@@ -868,12 +880,12 @@ function traySVG(mr){
   /* the tray's shadow on the table */
   s.push('<rect x="22" y="30" width="'+(R+FR-6)+'" height="'+(R+FR-4)+'" rx="22" fill="#1a1006" opacity=".28"/><rect x="14" y="20" width="'+(R+FR)+'" height="'+(R+FR)+'" rx="20" fill="#1a1006" opacity=".18"/>');
   /* the front edge (the tray's thickness) */
-  s.push('<path d="M0 '+(R+FR-20)+'H'+(R+FR)+'V'+(TH-14)+'Q'+(R+FR)+' '+TH+' '+(R+FR-14)+' '+TH+'H14Q0 '+TH+' 0 '+(TH-14)+'Z" fill="url(#hbFace)"/><path d="M0 '+(TH-14)+'H'+(R+FR)+'" stroke="#000" stroke-opacity=".2" stroke-width="2"/>');
+  s.push('<path d="M0 '+(R+FR-20)+'H'+(R+FR)+'V'+(TH-14)+'Q'+(R+FR)+' '+TH+' '+(R+FR-14)+' '+TH+'H14Q0 '+TH+' 0 '+(TH-14)+'Z" fill="url(#hbFace)"/>'+(WD?'<path d="M0 '+(R+FR-20)+'H'+(R+FR)+'V'+(TH-14)+'Q'+(R+FR)+' '+TH+' '+(R+FR-14)+' '+TH+'H14Q0 '+TH+' 0 '+(TH-14)+'Z" fill="url(#hbWoodH)"/><path d="M0 '+(R+FR-20)+'H'+(R+FR)+'V'+TH+'H0Z" fill="#1a0e04" opacity=".38"/>':'')+'<path d="M0 '+(TH-14)+'H'+(R+FR)+'" stroke="#000" stroke-opacity=".2" stroke-width="2"/>');
   /* the water, sunlit from the top left, with ripples */
-  s.push('<rect x="'+(FR-4)+'" y="'+(FR-4)+'" width="'+(N*CELL+8)+'" height="'+(N*CELL+8)+'" fill="url(#hbSea)"/>');
+  s.push('<rect x="'+(FR-4)+'" y="'+(FR-4)+'" width="'+(N*CELL+8)+'" height="'+(N*CELL+8)+'" fill="url(#hbSea'+(SEA?'P':'')+')"/>');
   /* the mouth's channel, running out past the frame */
-  s.push('<rect x="'+(R-4)+'" y="'+my0+'" width="'+(TW-R+4)+'" height="'+CELL+'" fill="url(#hbSea)"/>');
-  s.push('<rect x="'+(FR-4)+'" y="'+(FR-4)+'" width="'+(N*CELL+8)+'" height="'+(N*CELL+8)+'" fill="url(#hbRip)" opacity=".9"/><rect x="'+(R-4)+'" y="'+my0+'" width="'+(TW-R+4)+'" height="'+CELL+'" fill="url(#hbRip)" opacity=".9"/>');
+  s.push('<rect x="'+(R-4)+'" y="'+my0+'" width="'+(TW-R+4)+'" height="'+CELL+'" fill="url(#hbSea'+(SEA?'P':'')+')"/>');
+  if(!SEA) s.push('<rect x="'+(FR-4)+'" y="'+(FR-4)+'" width="'+(N*CELL+8)+'" height="'+(N*CELL+8)+'" fill="url(#hbRip)" opacity=".9"/><rect x="'+(R-4)+'" y="'+my0+'" width="'+(TW-R+4)+'" height="'+CELL+'" fill="url(#hbRip)" opacity=".9"/>');
   s.push('<rect x="'+FR+'" y="'+FR+'" width="'+(N*CELL)+'" height="'+(N*CELL)+'" fill="url(#hbSun)"/>');
   /* the berths: faint chart lines, and a lighter lane toward the mouth */
   for(var k=1;k<N;k++){ s.push('<path d="M'+bx(k)+' '+FR+'V'+R+'M'+FR+' '+bx(k)+'H'+R+'" stroke="#fff" stroke-opacity=".13" stroke-width="1.5" stroke-dasharray="5 7"/>'); }
@@ -888,7 +900,7 @@ function traySVG(mr){
     ['M0 '+(R+FR)+'L'+FR+' '+R+'H'+R+'L'+(R+FR)+' '+(R+FR)+'Z',"hbGrain"],
     ['M'+(R+FR)+' 0V'+my0+'H'+R+'V'+FR+'Z',"hbGrainV"],
     ['M'+(R+FR)+' '+(R+FR)+'V'+my1+'H'+R+'V'+R+'Z',"hbGrainV"]];
-  bars.forEach(function(b){ s.push('<path d="'+b[0]+'" fill="url(#hbOak)"/><path d="'+b[0]+'" fill="url(#'+b[1]+')"/>'); });
+  bars.forEach(function(b){ if(WD) s.push('<path d="'+b[0]+'" fill="url(#'+(b[1]==="hbGrainV"?"hbWoodV":"hbWoodH")+')"/>'); else s.push('<path d="'+b[0]+'" fill="url(#hbOak)"/><path d="'+b[0]+'" fill="url(#'+b[1]+')"/>'); });
   /* the frame's lit top-left edges, its shaded inner edges, and the miter lines */
   s.push('<path d="M2 '+(R+FR-2)+'V2H'+(R+FR-2)+'" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="3"/>');
   s.push('<path d="M'+FR+' '+R+'V'+FR+'H'+R+'" fill="none" stroke="#3a2408" stroke-opacity=".45" stroke-width="3"/>');
@@ -900,7 +912,7 @@ function traySVG(mr){
   /* the mouth: two short piers of planks running out to sea, a buoy at each */
   [[my0-16,"N"],[my1,"S"]].forEach(function(q){ var y=q[0];
     s.push('<rect x="'+(R+FR-2)+'" y="'+(y+6)+'" width="'+(TW-R-FR+2)+'" height="16" fill="#0a1420" opacity=".25"/>');
-    s.push('<rect x="'+(R+FR-6)+'" y="'+y+'" width="'+(TW-R-FR+2)+'" height="16" rx="3" fill="url(#hbOak)"/>');
+    s.push('<rect x="'+(R+FR-6)+'" y="'+y+'" width="'+(TW-R-FR+2)+'" height="16" rx="3" fill="url(#hb'+(WD?'WoodH':'Oak')+')"/>');
     for(var x=R+FR+6;x<TW-4;x+=12) s.push('<path d="M'+x+' '+(y+1)+'V'+(y+15)+'" stroke="#5a3a14" stroke-opacity=".3" stroke-width="1.2"/>');
     s.push('<path d="M'+(R+FR-4)+' '+(y+1)+'H'+(TW-6)+'" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>'); });
   s.push('<ellipse cx="'+(TW-14)+'" cy="'+(my0+26)+'" rx="14" ry="6" fill="url(#hbShade)"/><circle cx="'+(TW-20)+'" cy="'+(my0+18)+'" r="11" fill="url(#hbBuoyR)"/><path d="M'+(TW-27)+' '+(my0+15)+'h14" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>');
@@ -925,6 +937,8 @@ function boatDefs(){
 }
 /* one boat, drawn for its own line: u runs along the boat (bow at u = L when bow = 1), v across it.
    Box: (len × 100 − 12) by 88; the hull is narrower than the berth, with its near side (thickness) showing below. */
+var bAgainT=0;
+function boatsAgain(){ clearTimeout(bAgainT); bAgainT=setTimeout(function(){ if(PZ&&!busy&&!BOATS.querySelector(".drag,.out")) render(); else boatsAgain(); },120); }
 function boatSVG(b,look){
   var L=b.len*CELL-12, W=88, hw=W*.40, bowL=Math.min(56,L*.3), h=b.h, bow=look.bow;
   function pt(u,v){ var uu=bow>0?u:L-u; return h?[uu,W/2+v]:[W/2+v,uu]; }
@@ -940,7 +954,15 @@ function boatSVG(b,look){
   var vb=h?"0 0 "+L+" "+W:"0 0 "+W+" "+L;
   /* the shadow on the water (two soft layers, no blur filter), in its own layer so it can move when the boat is lifted */
   var sh='<svg class="sh" viewBox="'+vb+'" preserveAspectRatio="none">'+hull(1.02,6,10)+' fill="#04121e" opacity=".26"/>'+hull(1.12,9,14)+' fill="#04121e" opacity=".12"/></svg>';
-  var o=[];
+  function sailS(){ var m=pt(L*.6,0); look.mast=m; return '<g class="sail" style="transform-box:view-box;transform-origin:'+m[0].toFixed(1)+'px '+m[1].toFixed(1)+'px"><path d="M'+P(L*.6,0)+'L'+P(L*.08,-hw*1.25)+'Q'+P(L*.3,-hw*.2)+' '+P(L*.6,0)+'Z" fill="url(#hbSailG)" stroke="#bfae84" stroke-width="1"/>'+
+        '<path d="M'+P(L*.6,0)+'L'+P(L*1.02,-hw*1.05)+'Q'+P(L*.86,-hw*.2)+' '+P(L*.6,0)+'Z" fill="url(#hbSailG)" stroke="#bfae84" stroke-width="1" opacity=".95"/></g>'; }
+  var o=[], pk="b-"+look.kind+"-"+look.paint;
+  /* the photo boat (hb/b-<kind>-<paint>.webp, cut from its sheet, bow up): turned to its line and its bow; the sloop keeps its drawn sail */
+  if(phOK[pk]===true){ var il=L-4, iw=Math.min(W*(b.len===3?.86:.8),il/(phR[pk]||3)*1.15), cx=h?L/2:W/2, cy=h?W/2:L/2, rot=h?(bow>0?90:-90):(bow>0?180:0);
+    o.push('<image href="'+phURL(pk)+'" x="'+(cx-iw/2).toFixed(1)+'" y="'+(cy-il/2).toFixed(1)+'" width="'+iw.toFixed(1)+'" height="'+il.toFixed(1)+'" preserveAspectRatio="none" transform="rotate('+rot+' '+cx.toFixed(1)+' '+cy.toFixed(1)+')"/>');
+    if(look.kind==="sloop") o.push(sailS());
+    return sh+'<div class="lift"><svg viewBox="'+vb+'" preserveAspectRatio="none">'+o.join("")+'</svg><div class="ring"></div></div>'; }
+  phLoad(pk,boatsAgain);
   /* the near side of the hull (its thickness), then the hull's top: paint, sheen, a deck inside the gunwale */
   o.push(hull(1,0,7)+' fill="'+col+'"/>'+hull(1,0,7)+' fill="#000" opacity=".4"/>');
   o.push(hull(1)+' fill="'+col+'"/>'+hull(1)+' fill="url(#hbSheen)"/>');
@@ -963,9 +985,7 @@ function boatSVG(b,look){
       o.push(circ(L*.6,0,9)+' fill="url(#hbMast)" stroke="#5e430f" stroke-width="1"/>');
       o.push('<path d="M'+P(L-bowL*.7,-4)+'L'+P(L-bowL*.25,0)+'L'+P(L-bowL*.7,4)+'Z" fill="#e7c25a"/>');
       /* the sail, which unfurls as the sloop sails out */
-      var m=pt(L*.6,0); look.mast=m;
-      o.push('<g class="sail" style="transform-box:view-box;transform-origin:'+m[0].toFixed(1)+'px '+m[1].toFixed(1)+'px"><path d="M'+P(L*.6,0)+'L'+P(L*.08,-hw*1.25)+'Q'+P(L*.3,-hw*.2)+' '+P(L*.6,0)+'Z" fill="url(#hbSailG)" stroke="#bfae84" stroke-width="1"/>'+
-        '<path d="M'+P(L*.6,0)+'L'+P(L*1.02,-hw*1.05)+'Q'+P(L*.86,-hw*.2)+' '+P(L*.6,0)+'Z" fill="url(#hbSailG)" stroke="#bfae84" stroke-width="1" opacity=".95"/></g>');
+      o.push(sailS());
     } else if(k==="launch"){
       /* a motor launch: a white cabin top with a windshield, a little brass horn */
       o.push(rect(L*.36,-hw*.62,L*.74,hw*.62,8)+' fill="#04121e" opacity=".22" transform="translate(3 4)"/>');
@@ -1004,7 +1024,9 @@ stage.innerHTML='<div class="hb-left"><div class="hb-board" id="hbBoard"><svg id
 var BOARD=$("#hbBoard",stage), BASE=$("#hbBase",stage), BOATS=$("#hbBoats",stage), PATHS=$("#hbPaths",stage), TOAST=$("#hbToast",stage), FX=$("#hbFx",stage);
 var mouthRow=-1;
 function tray(r){ if(r!==mouthRow){ mouthRow=r; BASE.innerHTML=traySVG(r); } }
-tray(2);
+function trayPhotos(){ var tp=TRAYPH[curSet()], again=function(){ BASE.innerHTML=traySVG(mouthRow); }; tp.forEach(function(n){ phLoad(n,again); }); again(); }
+tray(2); trayPhotos();
+new MutationObserver(trayPhotos).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
 
 /* ---------- state ----------
    PZ: the puzzle {B (boats), P0 (start), d (fewest moves), looks}. P: where each boat is now.
