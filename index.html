@@ -194,6 +194,8 @@ header.top .bw-bell{width:36px;height:36px;padding:0!important;margin-left:18px!
 a.chip:hover{background:rgba(255,255,255,.1);border-color:rgba(229,193,88,.5)}
 .chip i{flex:none;font-style:normal;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(126,182,217,.18);border:1px solid rgba(126,182,217,.4)}
 .chip.soon{opacity:.62}
+.chip i.ph{width:44px;height:30px;background:center/cover;border-color:rgba(229,193,88,.45)}
+.chip.soon:has(i.ph){opacity:.8}
 .chip em{margin-left:auto;font-style:normal;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6)}
 .kids{display:grid;grid-template-columns:1.1fr 1fr;gap:0;padding:0;overflow:hidden;border-color:rgba(214,190,255,.35)}
 .kids img{display:block;width:100%;height:100%;min-height:240px;object-fit:cover}
@@ -480,18 +482,22 @@ $("rowPlay").innerHTML=PLAY.map(function(r){ return '<a class="room" href="'+r[1
 var PILLARS=[
   {name:"Learn",wing:"The Library Wing",href:"learn.html",img:"planet-learn-word.jpg",glow:"rgba(120,190,255,.55)",
    line:"Short lessons that stick: a five-minute lesson a day, flashcards that come back when you need them.",
-   rooms:[["📖","The Reading Room"],["🗂️","The Card Catalog"],["🔬","Cabinet of Curiosities"],["🗺️","The Atlas Room"]]},
+   rooms:[["📖","The Reading Room","learn-reading"],["🗂️","The Card Catalog","learn-catalog"],["🔬","Cabinet of Curiosities","learn-curio"],["🗺️","The Atlas Room","learn-atlas"]]},
   {name:"Live",wing:"The Household",href:"live.html",img:"planet-live-word.jpg",glow:"rgba(120,220,170,.55)",
    line:"Habits that grow like a garden, a daybook, gentle routines and a pantry that writes your grocery list.",
-   rooms:[["🌱","The Habit Garden"],["📔","The Daybook"],["🔔","The Morning Bell"],["🧺","The Pantry"]]},
+   rooms:[["🌱","The Habit Garden","live-garden"],["📔","The Daybook","live-daybook"],["🔔","The Morning Bell","live-bell"],["🧺","The Pantry","live-pantry"]]},
   {name:"Create",wing:"The Studio",href:"create.html",img:"planet-create-word.jpg",glow:"rgba(220,150,255,.55)",
    line:"Story starters, mood boards, idea cards to shuffle and pin, and real type specimens for pairing fonts.",
-   rooms:[["✒️","The Writing Desk"],["🎨","The Mood Board"],["💡","The Brainstorm Table"],["🔤","The Type Case"]]}];
+   rooms:[["✒️","The Writing Desk","create-desk"],["🎨","The Mood Board","create-mood"],["💡","The Brainstorm Table","create-brainstorm"],["🔤","The Type Case","create-type"]]}];
 $("pillarBoxes").innerHTML=PILLARS.map(function(p){
   return '<div class="box"><div class="pill-ic"><span style="--img:url(\''+p.img+'\');--glow:'+p.glow+'"></span><div><small>'+esc(p.wing)+'</small><h2>'+p.name+'</h2></div></div>'+
-    '<p>'+esc(p.line)+'</p><div class="chips">'+p.rooms.map(function(r){ return '<span class="chip soon"><i>'+r[0]+'</i>'+esc(r[1])+'</span>'; }).join("")+'</div>'+
+    '<p>'+esc(p.line)+'</p><div class="chips">'+p.rooms.map(function(r){ return '<span class="chip soon"><i data-pw="'+r[2]+'">'+r[0]+'</i>'+esc(r[1])+'</span>'; }).join("")+'</div>'+
     '<a class="more" href="'+p.href+'">Visit '+p.name+' →</a></div>';
 }).join("");
+
+/* Learn/Live/Create room photos (pw/, HomeCards-Prompts): each switches on by itself when its file loads; until then the emoji stays */
+function pwOn(src,fn){ var i=new Image(); i.onload=function(){ fn(src); }; i.src=src; }
+[].forEach.call(document.querySelectorAll(".chip i[data-pw]"),function(i){ pwOn("pw/"+i.dataset.pw+"-sm.jpg",function(src){ i.classList.add("ph"); i.style.backgroundImage="url('"+src+"')"; i.textContent=""; }); });
 
 /* ---------- today's puzzles (this device) ---------- */
 function todayPanel(){
@@ -532,11 +538,11 @@ var CATS=[
   {name:"Play", sub:"Games, cards & daily puzzles", href:"play.html", img:"planet-play-word.jpg", glow:"rgba(245,158,11,.45)", at:[71,-12,-134], atP:[80,2,-130],
    moons:[["The Orrery","puzzles-orrery-sm.jpg","orrery.html","Today's puzzle"],["Garden Chess","garden-parlor-sm.jpg","chess.html","Play now"]]},
   {name:"Learn", sub:"The Library Wing · opening soon", href:"learn.html", img:"planet-learn-word.jpg", glow:"rgba(120,190,255,.45)", at:[288,188,124], atP:[296,180,136],
-   moons:[["The Reading Room",null,null,"Opening Soon","📖","#3d5f9e"],["The Card Catalog",null,null,"Opening Soon","🗂️","#2f6f8f"]]},
+   moons:[["The Reading Room",null,null,"Opening Soon","📖","#3d5f9e","pw/learn-reading-sm.jpg"],["The Card Catalog",null,null,"Opening Soon","🗂️","#2f6f8f","pw/learn-catalog-sm.jpg"]]},
   {name:"Live", sub:"The Household · opening soon", href:"live.html", img:"planet-live-word.jpg", glow:"rgba(120,220,170,.45)", at:[41,-30,-114], atP:[37,-25,-104],
-   moons:[["The Habit Garden",null,null,"Opening Soon","🌱","#2f7a55"],["The Morning Bell",null,null,"Opening Soon","🔔","#7a6a2f"]]},
+   moons:[["The Habit Garden",null,null,"Opening Soon","🌱","#2f7a55","pw/live-garden-sm.jpg"],["The Morning Bell",null,null,"Opening Soon","🔔","#7a6a2f","pw/live-bell-sm.jpg"]]},
   {name:"Create", sub:"The Studio · opening soon", href:"create.html", img:"planet-create-word.jpg", glow:"rgba(220,150,255,.45)", at:[137,79,-3], atP:[211,109,5],
-   moons:[["The Writing Desk",null,null,"Opening Soon","✒️","#6a4a9e"],["The Mood Board",null,null,"Opening Soon","🎨","#9e4a7a"]]}
+   moons:[["The Writing Desk",null,null,"Opening Soon","✒️","#6a4a9e","pw/create-desk-sm.jpg"],["The Mood Board",null,null,"Opening Soon","🎨","#9e4a7a","pw/create-mood-sm.jpg"]]}
 ];
 var G_DESK ={bw:900,bh:630,core:168,r:[150,228,306,384],k:.66,tilt:-14,orb:90,moon:74,back:.72,font:11.5, kid:{x:-346,y:-262,size:92}};
 var G_PHONE={bw:460,bh:336,core:72, r:[76,114,152,190],  k:.66,tilt:-14,orb:58,moon:44,back:.74,font:9,    kid:{x:-162,y:-120,size:62}};
@@ -578,7 +584,9 @@ function build(){
       el.className="moon"+(m[1]?"":" drawn soon");
       el.setAttribute("aria-label",m[0]+" ("+m[3]+")");
       if(m[1]) el.style.backgroundImage="url('"+m[1]+"')";
-      else { el.style.background="radial-gradient(circle at 32% 26%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 50% 55%,"+m[5]+",#0e1a33 95%)"; el.innerHTML='<span style="font-size:'+(G.moon*.42)+'px">'+m[4]+'</span>'; }
+      else { el.style.background="radial-gradient(circle at 32% 26%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 50% 55%,"+m[5]+",#0e1a33 95%)"; el.innerHTML='<span style="font-size:'+(G.moon*.42)+'px">'+m[4]+'</span>';
+        /* the room's own photo switches on by itself once it exists (HomeCards-Prompts, Nov 20) */
+        if(m[6]) pwOn(m[6],function(src){ el.classList.remove("drawn"); el.style.background=""; el.style.backgroundImage="url('"+src+"')"; el.innerHTML=""; }); }
       add(el,G.moon,m[0],m[3],r).a=at[mi+1]*Math.PI/180;
     });
   });
