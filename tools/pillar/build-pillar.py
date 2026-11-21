@@ -36,6 +36,10 @@ CSS = r"""
 .wroom p{margin:0;font-size:13px;line-height:1.55;color:rgba(255,255,255,.78)}
 .wroom .try{margin-top:10px;font-size:12px;color:rgba(255,255,255,.62)}
 .wroom .try a{color:var(--gold-b);font-weight:700;text-decoration:none}
+.wroom .tag.open{background:rgba(229,193,88,.92);color:#2a1d05;border-color:#f2be45}
+.wroom.open{border-color:rgba(229,193,88,.55)}
+.wroom h3 a{color:inherit;text-decoration:none}
+.wroom .go{margin-top:12px}.wroom .go a{display:inline-block;padding:9px 14px;border-radius:6px;background:linear-gradient(180deg,#ffe7a6,#e9c46a);color:#2a1d05;font-size:13px;font-weight:700;text-decoration:none}
 .wroom.lit{box-shadow:0 0 0 2px rgba(229,193,88,.8),0 0 30px rgba(120,190,255,.35);transition:box-shadow .3s}
 /* For families: a grown-up opens a kids' tool here, or on the child's own device (CrossPromotion note) */
 .fam{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -142,6 +146,8 @@ JS = r"""/* ---------- Learn's rooms (Pillars note, Nov 3; photos pw/, HomeCards
 function pz(id){ var P=window.BWPuzzles; if(!P) return null; for(var i=0;i<P.rooms.length;i++) if(P.rooms[i].id===id) return P.rooms[i]; return null; }
 $("wingRooms").innerHTML=ROOMS.map(function(r){
   var t=r.try.map(pz).filter(Boolean).map(function(p){ return '<a href="'+p.page+'">'+esc(p.name)+'</a>'; }).join(" or ");
+  if(r.page) return '<article class="wroom open" id="r-'+r.id+'"><span class="tag open">Open Now</span><a href="'+r.page+'"><img src="pw/@@PW@@-'+r.id+'-sm.jpg?v=1120a" alt="" width="1000" height="667" loading="lazy"></a>'+   /* an open room (Nov 21) */
+    '<div class="wb"><small>'+esc(r.kind)+'</small><h3><a href="'+r.page+'">'+esc(r.name)+'</a></h3><p>'+esc(r.line)+'</p><p class="go"><a href="'+r.page+'">'+esc(r.cta||"Enter the Room")+' \u2192</a></p></div></article>';
   return '<article class="wroom" id="r-'+r.id+'"><span class="tag">Opening Soon</span><img src="pw/@@PW@@-'+r.id+'-sm.jpg?v=1120a" alt="" width="1000" height="667" loading="lazy">'+
     '<div class="wb"><small>'+esc(r.kind)+'</small><h3>'+esc(r.name)+'</h3><p>'+esc(r.line)+'</p>'+(t?'<p class="try">Until it opens, try '+t+'.</p>':'')+'</div></article>';
 }).join("");
@@ -185,12 +191,12 @@ R(C['DAYOLD'], C['DAYNEW'])
 # ---- the system: Learn's planet in the middle, its four rooms on the rings, each trailed by two open puzzle rooms ----
 a = s.index('var CATS=['); b = s.index('var G_DESK =')
 s = s[:a] + """var AT=[[71,-12,-134],[288,188,124],[41,-30,-114],[137,79,-3]], ATP=[[80,2,-130],[296,180,136],[37,-25,-104],[211,109,5]];
-var CATS=ROOMS.map(function(r,i){ return {name:r.name, sub:"Opening Soon · "+r.kind, href:"#r-"+r.id, img:"pw/@@PW@@-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
+var CATS=ROOMS.map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/@@PW@@-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
   moons:r.try.map(pz).filter(Boolean).map(function(p){ return [p.name,p.img,p.page,"Open now · today's puzzle"]; })}; });
 """ + s[b:]
 R('var o=document.createElement("a"); o.href=c.href; o.className="orb";', 'var o=document.createElement("a"); o.href=c.href; o.className="orb"+(c.ph?" ph":"");')
 R("o.innerHTML='<span class=\"lbl\" style=\"font-size:'+G.font+'px\">'+c.name+'</span>';",
-  "o.innerHTML='<span class=\"lbl\" style=\"font-size:'+(c.ph?G.font*.82:G.font)+'px\">'+c.name+'</span>';\n    if(c.ph) o.addEventListener(\"click\",function(e){ e.preventDefault(); goRoom(c.href.slice(1)); });")
+  "o.innerHTML='<span class=\"lbl\" style=\"font-size:'+(c.ph?G.font*.82:G.font)+'px\">'+c.name+'</span>';\n    if(c.ph&&!c.open) o.addEventListener(\"click\",function(e){ e.preventDefault(); goRoom(c.href.slice(1)); });")
 R("var G_DESK ={bw:900,bh:630,core:168,", "function goRoom(id){ var el=$(id); if(!el) return; $(\"lane\").scrollTo({top:el.getBoundingClientRect().top-$(\"lane\").getBoundingClientRect().top+$(\"lane\").scrollTop-16,behavior:\"smooth\"}); el.classList.add(\"lit\"); setTimeout(function(){ el.classList.remove(\"lit\"); },1600); }\nvar G_DESK ={bw:900,bh:630,core:168,")
 R('$("cue").onclick=function(){ $("lane").scrollTo({top:$("rooms").offsetTop-8,behavior:"smooth"}); };',
   '$("cue").onclick=function(){ $("lane").scrollTo({top:$("rooms").offsetTop-8,behavior:"smooth"}); };\ndocument.addEventListener("click",function(e){ var a=e.target.closest&&e.target.closest(\'a[href^="#r-"]\'); if(!a||a.classList.contains("orb")) return; e.preventDefault(); closeWin(); goRoom(a.getAttribute("href").slice(1)); });')

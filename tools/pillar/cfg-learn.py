@@ -1,7 +1,7 @@
 # Learn page settings for build-pillar.py (Nov 20)
 ROOMS = r"""var ROOMS=[
-  {id:"reading", name:"The Reading Room", kind:"Daily Lessons", glow:"rgba(120,170,255,.5)",
-   line:"A five-minute lesson a day: one clear idea, a picture or two, and three quick questions to see if it stuck. Keep a streak, just like the puzzle rooms.",
+  {id:"reading", name:"The Reading Room", kind:"A Fascinating Fact a Day", glow:"rgba(120,170,255,.5)", page:"reading.html", cta:"Read Today's Lesson",
+   line:"A five-minute lesson a day on one good idea, with a new subject each weekday, then three quick questions to see if it stuck. Keep a streak, just like the puzzle rooms.",
    try:["telegraph","study"]},
   {id:"catalog", name:"The Card Catalog", kind:"Memory", glow:"rgba(120,200,230,.5)",
    line:"Flashcards that come back just before you'd forget them. Make your own decks or borrow ours, from state capitals to Spanish verbs.",
@@ -20,11 +20,11 @@ FAM = r"""var FAM=[
   ["Circuit Builder","circuit.html","cb/bg-sm.jpg","The Outpost → Mission Control → Circuit Builder","Turn the wire tiles until the battery lights every bulb: first steps in circuits and logic. Ages 8 to 12."],
   ["Jack's Bee Garden","beegarden.html","jb/bg-sm.jpg","The Outpost → The Workshop → Jack's Bee Garden","A sliding puzzle with 31 real bee facts from Jack, a 10-year-old beekeeper. Ages 8 to 12."]];"""
 def li(n,e): return '      <li class="c-learn"><i class="pd"></i><span><b>%s</b><em>%s</em></span></li>' % (n,e)
-C = dict(META="Learn at BrainWhim: short lessons that stick. The Reading Room, the Card Catalog, a Cabinet of Curiosities and the Atlas Room are opening soon, with learning games for kids ready now.", OUT="learn.html", TITLE="Learn · The Library Wing · BrainWhim", PLANET='url("planet-learn-word.jpg")',
+C = dict(META="Learn at BrainWhim: short lessons that stick. The Reading Room is open, with a fascinating fact a day. The Card Catalog, a Cabinet of Curiosities and the Atlas Room are on the way, with learning games for kids ready now.", OUT="learn.html", TITLE="Learn · The Library Wing · BrainWhim", PLANET='url("planet-learn-word.jpg")',
   GLOW="0 0 36px rgba(120,190,255,.45),0 0 100px rgba(80,140,255,.22)", KC="color:#a9d2ff",
-  KICK="The Library Wing · Opening Soon", H1="<h1>Learn</h1>",
-  INTRO="Short lessons that stick. Four rooms are being furnished in this wing of the house: a five-minute lesson a day, flashcards that come back when you need them, small working models you can poke, and maps that tell stories. Each room opens on its own, and the first letter from the studio will say when.",
-  TRYLINE="While Learn is being furnished, these daily puzzle rooms already work the same muscles: words, numbers, maps and the night sky.",
+  KICK="The Library Wing · Now Open: The Reading Room", H1="<h1>Learn</h1>",
+  INTRO="Short lessons that stick. The first room in this wing of the house is open: the Reading Room, with a fascinating fact a day. Three more are being furnished: flashcards that come back when you need them, small working models you can poke, and maps that tell stories. Each opens on its own, and a letter from the studio will say when.",
+  TRYLINE="Alongside the Reading Room, these daily puzzle rooms work the same muscles: words, numbers, maps and the night sky.",
   FAMH2="Learning in the Kids' Corner",
   FAMLINE="Ready now for young learners: no ads, no chat, nothing sent anywhere. Open one here, or on your child's own tablet with the QR code.",
   SIGNUP='data-bw-signup="learn"', PLANKICK="The Plan for Learn", PLANH2="What Learn Will Hold",
@@ -35,6 +35,6 @@ C = dict(META="Learn at BrainWhim: short lessons that stick. The Reading Room, t
             <li><b>Languages</b>A real language course that grows out of Hello World's first words.</li>""",
   CLUBROOMS="and the Club rooms in Learn as they open.", ASK="Questions, or something you'd love to learn here?",
   NEXTH="<h3>Opening Next in Learn</h3>",
-  NEXTLI="\n".join([li("The Reading Room","A five-minute lesson a day"),li("The Card Catalog","Flashcards that come back in time"),li("Cabinet of Curiosities","Science you can touch"),li("The Atlas Room","Maps, timelines and languages")]),
+  NEXTLI="\n".join([li("The Card Catalog","Flashcards that come back in time"),li("Cabinet of Curiosities","Science you can touch"),li("The Atlas Room","Maps, timelines and languages")]),
   ROOMS=ROOMS, FAM=FAM, PW="learn",
-  DAYOLD='["learn","Learn","Today\'s idea","learn.html","Soon",0,1]', DAYNEW='["learn","Learn","The Reading Room","#r-reading","Soon",0,1]')
+  DAYOLD='["learn","Learn",readDone?"Today\'s fact: read":"Today\'s fascinating fact","reading.html",readDone?"\\u2713":"",readDone]', DAYNEW='["learn","Learn",readDone?"Today\'s fact: read":"Today\'s fascinating fact","reading.html",readDone?"\\u2713":"",readDone]')

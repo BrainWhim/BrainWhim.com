@@ -2,12 +2,13 @@
 """One header everywhere (Nov 20, Navigation Audit B). Re-runnable: rewrites the link lists in every grown-up
 page's header, phone menu and old-style side menu to the canonical order. Dry run by default; pass --apply OUTDIR
 to write changed files into OUTDIR (then copy them over). Kids' pages (kids.js) are left alone.
-Canonical bar: Home · Play · Puzzles · Cards · Board Games · Kids' Corner. Learn · Live · Create only in menus, under Coming Soon."""
+Canonical bar: Home · Play · Puzzles · Cards · Board Games · Learn · Kids' Corner (Learn joined Nov 21, when the Reading Room opened).
+Live · Create only in menus, under Coming Soon, until a room of theirs opens."""
 import re, sys, glob, os
 APPLY = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == "--apply" else None
-CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Board Games"),("kids.html","Kids' Corner")]
+CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Board Games"),("learn.html","Learn"),("kids.html","Kids' Corner")]
 HREFS = {h for h,_ in CANON} | {"learn.html","live.html","create.html","quickplays.html"}
-ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"lobby.html"}
+ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"lobby.html","learn.html":"learn.html"}
 UPS = {"quickplays.html":"puzzles.html","member.html":"lobby.html"}   # pages with no phone menu: the one link phones keep
 def home_of(src):
     m = re.search(r'home:\s*"([^"]+)"', src); return m.group(1) if m else None
@@ -35,8 +36,8 @@ SOON = '<span style="display:block;padding:6px 18px 2px;font-size:11px;font-weig
 def phone_menu(page):
     about = '<a href="#about" data-jump="about">About BrainWhim</a>' if page == "index.html" else '<a href="index.html#about">About BrainWhim</a>'
     return ('\n  <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Today\'s Puzzles</a><a href="lobby.html">Board Game Lobby</a>'
-            '<a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="kids.html">Kids\' Corner</a>'
-            '\n  <hr>' + SOON + '<a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a>\n  <hr>' + about + '\n')
+            '<a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="kids.html">Kids\' Corner</a>'
+            '\n  <hr>' + SOON + '<a href="live.html">Live</a><a href="create.html">Create</a>\n  <hr>' + about + '\n')
 def fix_pm(page, s, log):
     n = len(re.findall(r'<nav class="phone-menu"', s))
     if not n: return s
@@ -45,7 +46,7 @@ def fix_pm(page, s, log):
 def fix_old(page, s, log):
     if 'class="left-menu"' not in s: return s
     links = ''.join('\n            <a href="%s" class="left-menu-link">%s</a>' % x for x in [("index.html","Home"),("play.html","Play"),("puzzles.html","Today's Puzzles"),
-        ("lobby.html","Board Game Lobby"),("lobby.html?cat=cards","Card Lobby"),("quickplays.html","Quick Plays"),("kids.html","Kids' Corner"),
+        ("lobby.html","Board Game Lobby"),("lobby.html?cat=cards","Card Lobby"),("quickplays.html","Quick Plays"),("learn.html","Learn"),("kids.html","Kids' Corner"),
         ("index.html#about","About BrainWhim"),("terms.html","Terms"),("refunds.html","Refunds"),("privacy.html","Privacy"),("disclaimers.html","Disclaimers")]) + '\n        '
     s, a = re.subn(r'(<div class="left-menu-links">).*?(</div>)', lambda m: m.group(1) + links + m.group(2), s, count=1, flags=re.S)
     play = ('<h3><a href="play.html">Play</a></h3>\n                <ul>\n                    <li><a href="puzzles.html">Today\'s Puzzles</a></li>\n'
