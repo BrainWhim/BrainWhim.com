@@ -26,6 +26,7 @@
   var PUZZLE_GAMES = [["orrery","Orrery","orrery.html"],["observatory","Observatory","observatory.html"],["telegraph","Telegraph","telegraph.html"],["nighttrain","Night Train","nighttrain.html"],["gardenplots","Garden Plots","gardenplots.html"],["countinghouse","Counting House","countinghouse.html"],["harbor","Harbor","harbor.html"],["study","Locked Study","study.html"],["maproom","Map Room","maproom.html"],["clockmaker","Clockmaker","clockmaker.html"]];
   /* the Learn wing (Nov 21): the Library Wing's rooms; a room without a page yet shows dimmed */
   var LEARN_GAMES = [["reading","Reading Room","reading.html"],["catalog","Card Catalog",""],["curio","Cabinet of Curiosities",""],["atlas","Atlas Room",""]];
+  var CREATE_GAMES = [["writing","Writing Desk","writing.html"],["mood","Mood Board",""],["brainstorm","Brainstorm Table",""],["type","Type Case",""]];
   function gameLink(g, cls) {
     if (!g[2]) { var x = mk("span", "soon" + (cls ? " " + cls : ""), g[1]); x.title = "Opening Soon"; return x; }
     var a = mk("a", cls, g[1]); a.href = g[2]; return a;
@@ -47,7 +48,7 @@
 
     var room = $(".pk-room");
     /* game switcher (glass rectangle, same as chess) */
-    GAMES = C.cat === "cards" ? CARD_GAMES : C.cat === "puzzles" ? PUZZLE_GAMES : C.cat === "learn" ? LEARN_GAMES : BOARD_GAMES;
+    GAMES = C.cat === "cards" ? CARD_GAMES : C.cat === "puzzles" ? PUZZLE_GAMES : C.cat === "learn" ? LEARN_GAMES : C.cat === "create" ? CREATE_GAMES : BOARD_GAMES;
     if (C.solo) document.body.classList.add("pk-solo");
     var sw = mk("nav", "pk-games");
     GAMES.forEach(function (g) { sw.appendChild(gameLink(g, g[0] === C.game ? "on" : "")); });
@@ -144,7 +145,7 @@
     var g3 = group("Leave");
     g3.appendChild(btn("Back to the Room", "", function () { P.stand(); }));
     g3.appendChild(btn("Switch Game", "", function () { P.games(); }));
-    var hm = C.home || "lobby.html", tb = mk("a", "pk-btn", /puzzles/.test(hm) ? "All Puzzles" : /learn/.test(hm) ? "All of Learn" : /cards/.test(hm) ? "Card Lobby" : "Lobby"); tb.href = hm; g3.appendChild(tb);
+    var hm = C.home || "lobby.html", tb = mk("a", "pk-btn", /puzzles/.test(hm) ? "All Puzzles" : /learn/.test(hm) ? "All of Learn" : /create/.test(hm) ? "All of Create" : /cards/.test(hm) ? "Card Lobby" : "Lobby"); tb.href = hm; g3.appendChild(tb);
     el.coach = mk("div", "pk-coach"); el.coach.hidden = true; document.body.appendChild(el.coach);   /* Guided Lesson (Oct 24) */
     right.appendChild(ac);
     el.mode = mk("p", "pk-sub", ""); ac.appendChild(el.mode);
@@ -521,7 +522,7 @@
      with Hint and Back to the Lesson. */
   var LK = 0;
   /* on every lesson and practice card: leave the lesson and start a real game against The House (Judy, Oct 25) */
-  function houseBtn() { return { label: C && C.cat === "puzzles" ? "Today's Puzzle" : C && C.cat === "learn" ? "Today's Lesson" : "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
+  function houseBtn() { return { label: C && C.cat === "puzzles" ? "Today's Puzzle" : C && C.cat === "learn" ? "Today's Lesson" : C && C.cat === "create" ? "Today's Prompt" : "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
   P.houseBtn = houseBtn;
   function lessonSteps() { var L = C.lesson; return typeof L.steps === "function" ? L.steps() : L.steps; }
   P.lessonGo = function (k) {

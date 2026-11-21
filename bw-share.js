@@ -7,6 +7,8 @@
 (function(){
   var W=1080, H=1350, GOLD="#F2BE45", IVORY="#f4ecd8", NAVY="#0a1630";
   var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  /* rooms that aren't puzzles name their day their own way (Nov 21) */
+  var KIND={reading:["Lesson","Read today's lesson."],writing:["Prompt","Write today's page."]};
   var LEVEL={Monday:"Gentle",Tuesday:"Easy",Wednesday:"Steady",Thursday:"Tricky",Friday:"Hard",Saturday:"Harder",Sunday:"The Hardest"};
 
   function parse(txt){
@@ -60,12 +62,16 @@
       var d=new Date(), day=DAYS[d.getDay()];
       var y=PH-24; c.textAlign="center";
       c.font="700 30px Montserrat, sans-serif"; c.fillStyle=GOLD;
-      var kick=(day+"'s Puzzle"+(r.no?" \u00b7 No. "+r.no:"")).toUpperCase().split("").join(String.fromCharCode(8202));
+      var K=KIND[r.page]||["Puzzle","Can you solve today's?"];
+      var kick=(day+"'s "+K[0]+(r.no?" \u00b7 No. "+r.no:"")).toUpperCase().split("").join(String.fromCharCode(8202));
       c.fillText(kick,W/2,y);
       /* the room */
       y+=86; c.fillStyle=IVORY; fit(c,r.room,"700 $px Fraunces, Georgia, serif",W-180,96); c.fillText(r.room,W/2,y);
       /* the stars */
-      y+=112; for(var i=0;i<3;i++) star(c,W/2+(i-1)*128,y,52,i<r.stars);
+      if(r.page==="writing"){ y+=64;   /* a gold rule with a diamond instead of stars */
+        c.strokeStyle="rgba(242,190,69,.75)"; c.lineWidth=3; c.beginPath(); c.moveTo(W/2-200,y); c.lineTo(W/2-34,y); c.moveTo(W/2+34,y); c.lineTo(W/2+200,y); c.stroke();
+        c.beginPath(); c.moveTo(W/2,y-20); c.lineTo(W/2+20,y); c.lineTo(W/2,y+20); c.lineTo(W/2-20,y); c.closePath(); c.fillStyle=GOLD; c.fill(); y+=24; }
+      else { y+=112; for(var i=0;i<3;i++) star(c,W/2+(i-1)*128,y,52,i<r.stars); }
       /* the numbers: one glass chip each */
       y+=106; c.font="600 34px Montserrat, sans-serif";
       var chips=r.bits.slice(0,4); if(r.streak) chips.push("\ud83d\udd25 "+r.streak+"-day streak"); var pad=30, gap=18, ws=chips.map(function(b){ return c.measureText(b).width+pad*2; });
@@ -76,7 +82,7 @@
           c.fillStyle=/day streak$/.test(chips[k])?GOLD:IVORY; c.fillText(chips[k],x+ws[k]/2,yy+1); x+=ws[k]+gap; });
       });
       /* the invitation */
-      c.font="italic 700 46px 'Cormorant Garamond', Georgia, serif"; c.fillStyle="rgba(244,236,216,.85)"; c.fillText("Can you solve today's?",W/2,H-142);
+      c.font="italic 700 46px 'Cormorant Garamond', Georgia, serif"; c.fillStyle="rgba(244,236,216,.85)"; c.fillText(K[1],W/2,H-142);
       c.font="600 32px Montserrat, sans-serif"; c.fillStyle=GOLD; c.fillText(r.url.replace(/^https?:\/\//,""),W/2,H-90);
       return cv;
     });

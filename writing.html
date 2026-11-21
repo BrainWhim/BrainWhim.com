@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Writing Desk · A Story Starter a Day · BrainWhim</title>
+<meta name="description" content="The Writing Desk: a story starter a day at BrainWhim. A fresh prompt, a quiet page and a word goal you choose, with a new kind of writing each weekday. Your writing stays on your device.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1120c">
+<style>
+/* ===== The Writing Desk (Create · The Studio, Nov 21, 2026): a prompt a day, a quiet page, a word goal, a streak =====
+   One prompt a day, the same for everyone (by the writer's own date). Each weekday has its own kind of writing (writing-prompts.js).
+   The page is a sheet of writing paper on the desk: the prompt card, then the page itself (a lined textarea).
+   The writing is saved ONLY on this device (localStorage "bwWdText:<date>"); nothing written is ever sent to BrainWhim.
+   Reaching the goal (50 / 150 / 300 words, the writer's pick) finishes the day and keeps the streak ("bwWrite:<date>").
+   Club Members: Past Prompts (last 30 days; writing a missed day mends the streak), the Notebook (every page, by date), Deckled Cotton paper. */
+.wd-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.wd-paper{--ink:#26201a;--soft:#6a5c48;--gold:#9a6a1c;--rule:rgba(110,80,40,.2);--line:rgba(80,110,160,.22);--margin:rgba(190,70,70,.32);--edgeA:#efe8d6;--edgeB:#d6ccb4;--lh:32px;
+  position:relative;width:min(100%,720px);height:var(--wd-h,560px);display:flex;flex-direction:column;color:var(--ink);border-radius:4px;
+  background:
+    radial-gradient(120% 90% at 25% 0%,rgba(255,255,255,.6),rgba(255,255,255,0) 60%),
+    repeating-linear-gradient(90deg,rgba(120,100,60,.016) 0 1px,rgba(0,0,0,0) 1px 3px),
+    linear-gradient(180deg,#fcf8ee,#f2ead8);
+  box-shadow:2px 3px 0 -1px var(--edgeA),2px 3px 0 0 var(--edgeB),5px 6px 0 -1px var(--edgeA),5px 6px 0 0 var(--edgeB),
+    0 26px 50px rgba(0,0,0,.55),0 6px 14px rgba(0,0,0,.35)}
+/* a brass paper clip on the top edge */
+.wd-paper::before{content:"";position:absolute;top:-12px;left:14px;width:14px;height:46px;z-index:3;pointer-events:none;border-radius:9px;
+  border:3px solid #c9a050;border-bottom-color:#a77c2e;box-shadow:inset 0 0 0 3px transparent,1px 2px 3px rgba(0,0,0,.35)}
+.wd-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:34px clamp(22px,6%,56px) 22px;-webkit-overflow-scrolling:touch}
+.wd-scroll,.wd-ta,.wd-nb-read{scrollbar-width:thin;scrollbar-color:rgba(154,106,28,.45) transparent}
+.wd-scroll::-webkit-scrollbar,.wd-ta::-webkit-scrollbar{width:6px}.wd-scroll::-webkit-scrollbar-thumb,.wd-ta::-webkit-scrollbar-thumb{background:rgba(154,106,28,.4);border-radius:3px}
+.wd-kick{margin:0 0 10px;font:700 12px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.wd-title{margin:0 0 12px;font:700 clamp(30px,4.6vw,42px)/1.08 "Cormorant Garamond",Georgia,serif;color:var(--ink)}
+.wd-prompt{margin:0 0 14px;font:19px/1.55 Georgia,"Times New Roman",serif;color:var(--ink)}
+.wd-start{margin:0 0 14px;padding:12px 16px;border-left:3px solid #b8862b;background:rgba(184,134,43,.08);border-radius:4px;font:italic 18px/1.5 Georgia,serif;color:var(--soft)}
+.wd-start b{display:block;font:700 11.5px/1.3 Montserrat,system-ui,sans-serif;font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.wd-nudge{margin:0 0 6px;font:16px/1.5 Georgia,serif;color:var(--soft)}
+.wd-nudge b{font:700 12px Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.wd-rule{height:1px;background:var(--rule);margin:16px 0}
+.wd-tag{margin:0;font:italic 600 18px/1.3 "Cormorant Garamond",Georgia,serif;color:var(--gold)}
+.wd-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font:600 13.5px/1.4 Montserrat,system-ui,sans-serif;color:var(--soft)}
+.wd-meta b{color:var(--ink)}
+.wd-private{margin:12px 0 0;font:600 13px/1.45 Montserrat,system-ui,sans-serif;color:var(--soft)}
+.wd-done{display:inline-flex;align-items:center;gap:6px;margin:14px 0 0;padding:7px 12px;border-radius:8px;font:700 14px/1.2 Montserrat,system-ui,sans-serif;
+  color:#2f5a2a;background:rgba(80,140,70,.12);border:1px solid rgba(80,140,70,.3)}
+.wd-done.draft{color:var(--soft);background:rgba(120,90,50,.08);border-color:rgba(120,90,50,.22)}
+/* the goal picker */
+.wd-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 0}
+.wd-goal{appearance:none;padding:10px 6px;border-radius:10px;cursor:pointer;text-align:center;color:var(--ink);background:rgba(255,255,255,.5);
+  border:1.5px solid rgba(120,90,50,.25);font:inherit;-webkit-tap-highlight-color:transparent}
+.wd-goal b{display:block;font:700 20px/1.1 Montserrat,system-ui,sans-serif}
+.wd-goal small{display:block;margin-top:3px;font:600 11.5px/1.3 Montserrat,system-ui,sans-serif;color:var(--soft)}
+.wd-goal.on{border-color:#b8862b;background:rgba(242,190,69,.18);box-shadow:0 0 0 3px rgba(184,134,43,.18)}
+@media (hover:hover){.wd-goal:not(.on):hover{border-color:rgba(154,106,28,.6)}}
+.wd-glabel{margin:18px 0 0;font:700 12px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+/* the page: a lined sheet that scrolls with the words */
+.wd-write{flex:1;min-height:0;display:none;flex-direction:column}
+.wd-paper.writing .wd-write{display:flex}.wd-paper.writing .wd-scroll{display:none}
+.wd-whead{flex:none;display:flex;align-items:flex-start;gap:10px;padding:18px clamp(18px,5%,44px) 8px clamp(56px,9%,76px)}
+.wd-whead .t{flex:1;min-width:0}
+.wd-whead .k{display:block;font:700 11px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.wd-whead .h{display:block;margin-top:2px;font:700 22px/1.15 "Cormorant Garamond",Georgia,serif;color:var(--ink)}
+.wd-whead .p{display:none;margin:6px 0 0;font:15.5px/1.45 Georgia,serif;color:var(--soft)}
+.wd-whead.open .p{display:block}
+.wd-pbtn{appearance:none;flex:none;margin-top:2px;padding:6px 10px;border-radius:7px;cursor:pointer;font:700 12px/1 Montserrat,system-ui,sans-serif;color:var(--soft);
+  background:transparent;border:1.5px solid rgba(120,90,50,.28)}
+.wd-ta{flex:1;min-height:0;width:100%;box-sizing:border-box;resize:none;border:0;outline:0;margin:0;display:block;
+  padding:8px clamp(18px,5%,44px) 24px clamp(56px,9%,76px);color:var(--ink);caret-color:#9a6a1c;
+  font:19px/var(--lh) Georgia,"Times New Roman",serif;-webkit-text-size-adjust:100%;
+  background-color:transparent;
+  background-image:linear-gradient(90deg,rgba(0,0,0,0) calc(clamp(56px,9%,76px) - 12px),var(--margin) calc(clamp(56px,9%,76px) - 12px),var(--margin) calc(clamp(56px,9%,76px) - 11px),rgba(0,0,0,0) calc(clamp(56px,9%,76px) - 11px)),
+    repeating-linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) calc(var(--lh) - 1px),var(--line) calc(var(--lh) - 1px),var(--line) var(--lh));
+  background-position:0 0,0 8px;background-attachment:local,local}
+.wd-ta::placeholder{color:rgba(106,92,72,.55);font-style:italic}
+/* the foot: back to the prompt · word count · keys · finish */
+.wd-foot{flex:none;display:flex;align-items:center;gap:10px;padding:10px clamp(14px,3.5%,30px) 14px;border-top:1px solid var(--rule)}
+.wd-count{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.wd-count span{font:700 13.5px/1.2 Montserrat,system-ui,sans-serif;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-count span b{color:var(--ink)}
+.wd-bar{height:6px;border-radius:3px;background:rgba(120,90,50,.15);overflow:hidden}
+.wd-bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#d9b35c,#b8862b);transition:width .25s}
+.wd-paper.met .wd-bar i{background:linear-gradient(90deg,#f2be45,#e6a52a);box-shadow:0 0 10px rgba(242,190,69,.7)}
+.wd-btn{appearance:none;flex:none;min-height:44px;padding:0 16px;border-radius:8px;cursor:pointer;white-space:nowrap;font:700 15px/1 Montserrat,system-ui,sans-serif;
+  color:#3a2306;background:linear-gradient(180deg,#ffe7a6,#e9c46a);border:0;box-shadow:0 3px 0 #a97a1c;-webkit-tap-highlight-color:transparent}
+.wd-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.wd-btn.gh{background:transparent;color:var(--soft);box-shadow:none;border:1.5px solid rgba(120,90,50,.3)}
+.wd-btn.ic{min-width:44px;padding:0 10px;font-size:17px}
+.wd-btn.ic.off{opacity:.45}
+.wd-row{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 4px}
+.wd-scroll.turn{animation:wdTurn .32s ease}
+@keyframes wdTurn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+.wd-paper.writing .wd-write{animation:wdTurn .32s ease}
+@media (prefers-reduced-motion:reduce){.wd-scroll.turn,.wd-paper.writing .wd-write{animation:none}}
+/* Midnight Ink: blue-hour paper, silver ink */
+body[data-set="ink"] .wd-paper{--ink:#e9edf6;--soft:#aab4c8;--gold:#e7c46e;--rule:rgba(200,210,240,.16);--line:rgba(170,190,240,.16);--margin:rgba(240,140,150,.3);--edgeA:#26304a;--edgeB:#141a2b;
+  background:radial-gradient(110% 80% at 25% 0%,rgba(150,170,255,.12),rgba(0,0,0,0) 60%),linear-gradient(180deg,#232c45,#1a2135)}
+body[data-set="ink"] .wd-goal{background:rgba(255,255,255,.05);border-color:rgba(200,210,240,.22)}
+body[data-set="ink"] .wd-goal.on{background:rgba(231,196,110,.14);border-color:#e7c46e}
+body[data-set="ink"] .wd-done{color:#bfe3b3;background:rgba(120,190,100,.14)}
+body[data-set="ink"] .wd-ta::placeholder{color:rgba(170,180,200,.55)}
+body[data-set="ink"] .wd-ta{caret-color:#e7c46e}
+body[data-set="ink"] .wd-bar{background:rgba(200,210,240,.14)}
+/* Deckled Cotton (Club): heavy white cotton paper, a torn deckle edge, gold rules */
+body[data-set="cotton"] .wd-paper{--line:rgba(184,134,43,.2);--margin:rgba(184,134,43,.35);--edgeA:#f6f1e3;--edgeB:#d9c79a;border-radius:2px;
+  background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.75),rgba(255,255,255,0) 60%),
+    repeating-radial-gradient(circle at 30% 40%,rgba(150,130,90,.02) 0 2px,rgba(0,0,0,0) 2px 5px),linear-gradient(180deg,#fffef9,#f8f3e6)}
+body[data-set="cotton"] .wd-paper::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:7px;pointer-events:none;
+  background:radial-gradient(circle at 4px 0,#f8f3e6 3.2px,rgba(0,0,0,0) 3.6px) 0 0/8px 7px repeat-x}
+body[data-set="cotton"] .wd-paper::before{border-color:#d8b764;border-bottom-color:#b8902f}
+/* the result window, Past Prompts and the Notebook */
+.wd-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 12px}
+.wd-facts div{padding:8px 6px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);text-align:center}
+.wd-facts b{display:block;font:700 22px/1.2 Montserrat,system-ui,sans-serif;color:#fff}
+.wd-facts small{font:600 11.5px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.wd-orn{position:relative;height:18px;margin:2px auto 10px;width:220px;background:linear-gradient(90deg,rgba(242,190,69,0),rgba(242,190,69,.8) 40%,rgba(242,190,69,0) 40%,rgba(242,190,69,0) 60%,rgba(242,190,69,.8) 60%,rgba(242,190,69,0)) center/100% 2px no-repeat}
+.wd-orn::after{content:"";position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;transform:rotate(45deg);background:#f2be45;box-shadow:0 0 12px rgba(242,190,69,.6)}
+.wd-note{margin:0 0 10px;font:15px/1.5 Georgia,serif;color:rgba(255,255,255,.85)}
+.wd-list{display:flex;flex-direction:column;gap:6px;max-height:min(52vh,440px);overflow-y:auto;margin:8px 0 12px;padding-right:2px}
+.wd-li{appearance:none;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;text-align:left;cursor:pointer;
+  color:#fff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font:inherit}
+.wd-li:hover{background:rgba(255,255,255,.1)}
+.wd-li .d{flex:none;width:92px;font:700 12px/1.3 Montserrat,system-ui,sans-serif;color:#f2be45;letter-spacing:.04em;text-transform:uppercase}
+.wd-li .t{flex:1;min-width:0;font:600 15px/1.35 Georgia,serif}
+.wd-li .t small{display:block;font:600 11.5px/1.3 Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.55);letter-spacing:.04em;text-transform:uppercase}
+.wd-li .s{flex:none;font:700 12.5px/1.2 Montserrat,system-ui,sans-serif;color:#f2be45;white-space:nowrap}
+.wd-li.lock{opacity:.6;cursor:default}
+.wd-club{margin:4px 0 10px;padding:12px 14px;border-radius:10px;background:linear-gradient(180deg,rgba(242,190,69,.16),rgba(242,190,69,.06));border:1px solid rgba(242,190,69,.35);
+  font:14.5px/1.5 Montserrat,system-ui,sans-serif;color:#fff}
+.wd-nb-read{max-height:min(54vh,460px);overflow-y:auto;margin:8px 0 12px;padding:16px 18px;border-radius:10px;background:#fbf6ea;color:#26201a;text-align:left}
+.pk-veil .wd-nb-read p,.pk-veil .wd-nb-read h3{color:#26201a}.pk-veil .wd-nb-read .k{color:#9a6a1c}.pk-veil .wd-nb-read .q{color:#6a5c48}
+.wd-nb-read h3{margin:0 0 4px;font:700 24px/1.15 "Cormorant Garamond",Georgia,serif;color:#26201a}
+.wd-nb-read .k{margin:0 0 10px;font:700 11.5px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9a6a1c}
+.wd-nb-read .q{margin:0 0 12px;font:italic 15px/1.5 Georgia,serif;color:#6a5c48}
+.wd-nb-read p{margin:0 0 10px;font:17px/1.6 Georgia,serif;white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-height:560px) and (orientation:landscape){.wd-whead{padding-top:10px;padding-bottom:4px}.wd-whead .k{display:none}.wd-whead .h{font-size:19px}}
+@media (max-width:560px){
+  .wd-scroll{padding:28px 18px 16px 22px}
+  .wd-paper{--lh:30px}
+  .wd-ta{font-size:18px;padding-left:46px;padding-right:16px;
+    background-image:linear-gradient(90deg,rgba(0,0,0,0) 34px,var(--margin) 34px,var(--margin) 35px,rgba(0,0,0,0) 35px),
+      repeating-linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) calc(var(--lh) - 1px),var(--line) calc(var(--lh) - 1px),var(--line) var(--lh))}
+  .wd-whead{padding:14px 14px 6px 46px}
+  .wd-paper::before{left:8px;height:40px}
+  .wd-foot{padding:9px 10px 11px 12px;gap:7px}
+  .wd-btn{padding:0 12px;font-size:14.5px}
+  .wd-goal small{font-size:10.5px}
+}
+</style>
+<script src="bw-auth.js?v=1120c"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,700,100,0&display=swap">
+<style id="bw-wordmark">/* BrainWhim wordmark (Nov 11): gold Whim, set tight so BrainWhim always reads as one word */
+span.whim,.brand-whim,.brand-whim-accent{background:linear-gradient(180deg,#fff2b3 0%,#f2be45 52%,#c27f1c 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#f2be45!important;text-shadow:none!important;padding:0 .08em!important;margin-left:-.16em!important;margin-right:-.08em!important}
+/* Nov 11 refinement (C): "Brain" in polished ivory-silver, "Whim" gold, both with a soft shadow from the top-left light; room between coin and name */
+span:has(+ span.whim),.brand-brain,.brand .brain{background:linear-gradient(180deg,#ffffff 0%,#e8e4da 50%,#a19c92 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#efe9dc!important;text-shadow:none!important;letter-spacing:-.01em;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+span.whim,.brand-whim,.brand-whim-accent{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+.brand .whim{font-size:1.08em}
+.brand>img{margin-right:8px!important}
+/* Nov 11 (18b): "Brain" in Fraunces Soft 700 (rounded serifs, real thick-and-thin), sized so its B stands as tall as Pacifico's W */
+span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_){font-family:"Fraunces",Georgia,serif!important;font-weight:700!important;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:1.3em!important;letter-spacing:-.025em!important;line-height:1!important}
+/* Nov 11 evening: the Pacifico "Tap for Whims" labels in gold to match */
+.whim-label:not(#_),.whimp .wt:not(#_),.whim-mobile-card p:not(#_),.pk-whim-label:not(#_){color:#F2BE45!important}
+</style>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e31875694216416e84797ec764428367"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html" aria-label="BrainWhim"><img src="bw-emblem.png?v=1111a" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="lobby.html">Board Games</a><a href="learn.html">Learn</a><a href="kids.html">Kids' Corner</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1120a"></script>
+<script src="bw-avatars.js?v=1120a"></script>
+<script src="parlor-kit.js?v=1121b"></script>
+<script src="bw-share.js?v=1121a"></script>
+<script src="writing-prompts.js?v=1121a"></script>
+<script>
+(function(){
+"use strict";
+function $(s,r){ return (r||document).querySelector(s); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+function jget(k){ try{ return JSON.parse(store(k)||"null"); }catch(e){ return null; } }
+
+/* ---------- the dates (same numbering as the Reading Room) ---------- */
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fromKey(k){ var p=k.split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+var EPOCH=new Date(2026,10,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function shortDate(d){ return DAYS[d.getDay()].slice(0,3)+" "+MONTHS[d.getMonth()].slice(0,3)+" "+d.getDate(); }
+var today=new Date(); today=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+var todayKey=ymd(today);
+
+/* ---------- which prompt a day gets: its weekday's kind, that kind's prompts in turn a week at a time ---------- */
+function ell(t){ return /[.!?:,;]$/.test(t)?t:t+"…"; }   /* an opening line trails off, unless it already ends in a mark */
+function kindOf(d){ return WD_KINDS[d.getDay()]; }
+function promptFor(d){ var kd=kindOf(d), list=WD_PROMPTS[kd.id]||[]; if(!list.length) return null; var w=Math.floor((dayNo(d)-1)/7)-2; /* -2: the week of Nov 15-21, 2026 uses each kind's first prompt */ return list[((w%list.length)+list.length)%list.length]; }
+function findPrompt(id){ for(var k in WD_PROMPTS){ var l=WD_PROMPTS[k]; for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i]; } return null; }
+
+/* ---------- what's kept (on this device only) ----------
+   bwWrite:<date>   = the finished day {w, goal, sec, id} (the kit's daily key; streaks)
+   bwWdText:<date>  = the page itself {id, t, w, sec, upd}
+   bwWriteStreak    = {n, best, last}   ·   bwWdGoal = 50 | 150 | 300   ·   bwWdKeys = "0" when typewriter keys are off */
+var GOALS=[[50,"A few lines","About 5 min"],[150,"A page","About 10 min"],[300,"A long sit","About 20 min"]];
+function goal(){ var g=+store("bwWdGoal"); return g===50||g===300?g:150; }
+function rec(k){ return jget("bwWrite:"+(k||todayKey)); }
+function page(k){ return jget("bwWdText:"+k); }
+function streak(){ return jget("bwWriteStreak")||{n:0,best:0,last:""}; }
+function member(){ try{ return !!(window.BW&&BW.member&&BW.member()); }catch(e){ return false; } }
+function words(t){ var m=String(t||"").match(/\S+/g); return m?m.length:0; }
+function allPages(){ var out=[]; try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf("bwWdText:")===0){ var p=jget(k); if(p&&p.t&&p.t.trim()) out.push({k:k.slice(9),p:p}); } } }catch(e){} out.sort(function(a,b){ return a.k<b.k?1:-1; }); return out; }
+
+/* ---------- sounds: the typewriter on the desk (keys, the return, the bell at the goal), paper, a warm close ---------- */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("wd-key",function(h,o){ var d=h.out(.1), t=h.t, v=o.v||1;   /* one typewriter key: a tick and a soft thud of the typebar */
+    h.burst(d,t,.035,"bandpass",2400+Math.random()*900,2.2,.16*v,.001,.025);
+    h.osc(d,t+.004,"sine",210+Math.random()*40,140,.05*v,.002,.05,["lowpass",600]); });
+  D("wd-space",function(h){ var d=h.out(.1), t=h.t; h.burst(d,t,.05,"bandpass",1500,1.4,.13,.002,.04); h.osc(d,t+.006,"sine",160,110,.05,.002,.06,["lowpass",500]); });
+  D("wd-return",function(h){ var d=h.out(.14), t=h.t;   /* the carriage return: a ratchet and a stop */
+    for(var i=0;i<6;i++) h.burst(d,t+i*.028,.025,"bandpass",3200-i*120,2.5,.07,.001,.02);
+    h.burst(d,t+.2,.06,"bandpass",1200,1.2,.16,.002,.05); h.osc(d,t+.2,"sine",180,120,.08,.003,.08,["lowpass",500]); });
+  D("wd-bell",function(h){ var d=h.out(.3), tine=[[1,1,1],[2.76,.22,.35],[5.4,.07,.2]]; h.bell(d,h.t,1760,.08,1.6,tine); });   /* the typewriter's margin bell: the goal is reached */
+  D("wd-paper",function(h,o){ var d=h.out(.16), t=h.t;   /* a sheet slides out and settles */
+    h.burst(d,t,.22,"bandpass",2200,1,.16,.03,.16); h.burst(d,t+.08,.14,"highpass",4800,.7,.07,.02,.1); h.burst(d,t+.22,.05,"lowpass",900,1,.1,.003,.04); });
+  D("wd-done",function(h){ var d=h.out(.4), t=h.t, tine=[[1,1,1],[2.76,.18,.3],[5.4,.06,.15]];
+    [392,523.3,659.3,784,1046.5].forEach(function(f,i){ h.bell(d,t+i*.1,f,.065,1.7,tine); });
+    h.osc(d,t+.02,"sine",110,70,.12,.004,.2,["lowpass",380]); });
+})();
+function snd(n,o){ if(window.Parlor&&Parlor.sfx) Parlor.sfx(n,o||{}); }
+var lastKey=0;
+function keysOn(){ return store("bwWdKeys")!=="0"; }
+
+/* ---------- the sheet ---------- */
+var P=null, day=today, mode="daily", writing=false, met=false, active=0, lastIn=0, saveT=0, finished=false;
+var stage=document.createElement("div"); stage.className="wd-pad";
+stage.innerHTML='<article class="wd-paper"><div class="wd-scroll" data-bws="off"></div>'+
+  '<div class="wd-write"><div class="wd-whead"><span class="t"><span class="k"></span><span class="h"></span><span class="p"></span></span><button class="wd-pbtn" type="button" aria-expanded="false">Prompt</button></div>'+
+  '<textarea class="wd-ta" data-bws="off" spellcheck="true" autocapitalize="sentences" aria-label="Your page"></textarea></div>'+
+  '<div class="wd-foot"><button class="wd-btn gh" type="button" id="wdBack">← Prompt</button><div class="wd-count"><span></span><div class="wd-bar"><i></i></div></div>'+
+  '<button class="wd-btn gh ic" type="button" id="wdKeys" aria-label="Typewriter sounds" title="Typewriter sounds">⌨</button><button class="wd-btn" type="button" id="wdFin">Finish ✓</button></div></article>';
+var PAPER=$(".wd-paper",stage), SCROLL=$(".wd-scroll",stage), TA=$(".wd-ta",stage), HEAD=$(".wd-whead",stage), FOOT=$(".wd-foot",stage),
+    COUNT=$(".wd-count span",stage), BAR=$(".wd-bar i",stage), FIN=$("#wdFin",stage), KEYS=$("#wdKeys",stage), PBTN=$(".wd-pbtn",stage);
+$("#wdBack",stage).onclick=function(){ save(); showCover(true); };
+PBTN.onclick=function(){ var o=HEAD.classList.toggle("open"); PBTN.setAttribute("aria-expanded",o?"true":"false"); PBTN.textContent=o?"Hide":"Prompt"; setTimeout(fit,0); };
+KEYS.onclick=function(){ store("bwWdKeys",keysOn()?"0":"1"); paintKeys(); if(window.Parlor) Parlor.toast(keysOn()?"Typewriter sounds on.":"Typewriter sounds off."); };
+function paintKeys(){ KEYS.classList.toggle("off",!keysOn()); KEYS.setAttribute("aria-pressed",keysOn()?"true":"false"); }
+FIN.onclick=function(){
+  var w=words(TA.value), g=goal(), r=rec(ymd(day));
+  if(w<g&&!r){ save(); if(window.Parlor) Parlor.toast("Your page saves as you go. "+(g-w)+" more word"+(g-w===1?"":"s")+" to reach today’s goal."); return; }
+  finish();
+};
+TA.addEventListener("keydown",function(e){
+  if(!keysOn()||e.isComposing||e.metaKey||e.ctrlKey||e.altKey) return;
+  var now=performance.now(); if(now-lastKey<28) return; lastKey=now;
+  if(e.key==="Enter") snd("wd-return"); else if(e.key===" ") snd("wd-space"); else if(e.key==="Backspace") snd("wd-key",{v:.6}); else if(e.key.length===1) snd("wd-key");
+});
+TA.addEventListener("input",function(){
+  var now=Date.now(); if(lastIn&&now-lastIn<60000) active+=now-lastIn; lastIn=now;
+  count(); clearTimeout(saveT); saveT=setTimeout(save,500);
+});
+TA.addEventListener("focus",function(){ setTimeout(fit,60); setTimeout(fit,400); });
+TA.addEventListener("blur",function(){ save(); setTimeout(fit,60); });
+document.addEventListener("visibilitychange",function(){ if(document.hidden) save(); });
+window.addEventListener("pagehide",save);
+
+function count(){
+  var w=words(TA.value), g=goal(), r=rec(ymd(day));
+  COUNT.innerHTML='<b>'+w+'</b> / '+g+' words'+(r?' · ✓ Finished':w>=g?' · Goal reached!':'');
+  BAR.style.width=Math.min(100,w/g*100)+"%";
+  var nowMet=w>=g; PAPER.classList.toggle("met",nowMet||!!r);
+  if(nowMet&&!met&&writing&&!r){ snd("wd-bell"); if(window.Parlor) Parlor.toast("Goal reached! Keep going, or tap Finish."); }
+  met=nowMet;
+  FIN.classList.toggle("gh",!(nowMet||r)); FIN.textContent=r?"Done ✓":"Finish ✓";
+  if(window.Parlor&&Parlor.score) Parlor.score([w]);
+}
+function save(){
+  if(!P) return; clearTimeout(saveT);
+  var t=TA.value, k=ymd(day), old=page(k);
+  if(!t.trim()&&!old) return;
+  store("bwWdText:"+k,JSON.stringify({id:P.id,t:t,w:words(t),sec:Math.round(active/1000),upd:Date.now()}));
+}
+
+function load(d,m){
+  if(P) save();
+  day=d; mode=m; P=promptFor(d); finished=false;
+  var pg=P?page(ymd(d)):null;
+  TA.value=pg&&pg.id===P.id?pg.t:""; active=pg?(pg.sec||0)*1000:0; lastIn=0; met=words(TA.value)>=goal();
+  if(window.Parlor){ Parlor.info("No. "+dayNo(d)+" · "+niceDate(d)); Parlor.coach(null); }
+  showCover(); count();
+}
+function status(){
+  if(!window.Parlor||!P) return;
+  var head=mode==="archive"?"Past Prompt · "+shortDate(day):"Today’s Prompt";
+  Parlor.status(head,writing?kindOf(day).name+" · "+goal()+"-word goal":kindOf(day).name+" · "+DAYS[day.getDay()]);
+}
+function showCover(back){
+  writing=false; PAPER.classList.remove("writing"); FOOT.style.display="none";
+  if(!P){ SCROLL.innerHTML='<p class="wd-kick">The Writing Desk</p><h2 class="wd-title">A prompt is on its way</h2>'; return; }
+  var kd=kindOf(day), k=ymd(day), r=rec(k), w=words(TA.value), g=goal();
+  var h='<p class="wd-kick">'+esc(DAYS[day.getDay()])+' · '+esc(kd.name)+'</p><h2 class="wd-title">'+esc(P.title)+'</h2>'+
+    '<p class="wd-prompt">'+esc(P.prompt)+'</p>'+
+    (P.start?'<p class="wd-start"><b>An opening line, if you want it</b>“'+esc(ell(P.start))+'”</p>':'')+
+    '<p class="wd-nudge"><b>A nudge:</b> '+esc(P.nudge)+'</p>'+
+    '<div class="wd-rule"></div><p class="wd-tag">The Writing Desk · <span style="white-space:nowrap">A Story Starter a Day</span></p>'+
+    '<p class="wd-meta"><span><b>No. '+dayNo(day)+'</b> · '+esc(niceDate(day))+'</span><span>'+esc(kd.line)+'</span></p>'+
+    (r?'<p class="wd-done">✓ Written'+(mode==="daily"?" today":"")+' · '+w+' words</p>':w?'<p class="wd-done draft">Your page is saved · '+w+' words so far</p>':'')+
+    '<p class="wd-glabel">Today’s goal</p><div class="wd-goals">'+GOALS.map(function(G){ return '<button type="button" class="wd-goal'+(G[0]===g?" on":"")+'" data-g="'+G[0]+'" aria-pressed="'+(G[0]===g)+'"><b>'+G[0]+'</b><small>'+G[1]+' · '+G[2]+'</small></button>'; }).join("")+'</div>'+
+    '<div class="wd-row"><button class="wd-btn" type="button" data-a="write">'+(w?"Keep Writing":"Start Writing")+'</button>'+
+    (P.start&&!w?'<button class="wd-btn gh" type="button" data-a="start">Use the Opening Line</button>':'')+
+    (mode==="daily"?'<button class="wd-btn gh" type="button" data-a="past">Past Prompts</button>':'<button class="wd-btn gh" type="button" data-a="today">Today’s Prompt</button>')+
+    '<button class="wd-btn gh" type="button" data-a="nb">Notebook</button></div>'+
+    '<p class="wd-private">🔒 Your writing stays on this device. Nothing you write is sent to BrainWhim.</p>';
+  SCROLL.innerHTML=h; SCROLL.scrollTop=0;
+  SCROLL.classList.remove("turn"); void SCROLL.offsetWidth; if(back) SCROLL.classList.add("turn");
+  if(back) snd("wd-paper",{back:1});
+  status(); fit();
+}
+function showWrite(starter){
+  if(!P) return;
+  writing=true; PAPER.classList.add("writing"); FOOT.style.display="";
+  var kd=kindOf(day);
+  $(".k",HEAD).textContent=DAYS[day.getDay()]+" · "+kd.name; $(".h",HEAD).textContent=P.title; $(".p",HEAD).textContent=P.prompt+(P.nudge?"  "+P.nudge:"");
+  HEAD.classList.remove("open"); PBTN.textContent="Prompt"; PBTN.setAttribute("aria-expanded","false");
+  TA.placeholder=P.start?ell(P.start):"Begin anywhere. Your page saves as you go.";
+  if(starter&&P.start&&!TA.value.trim()){ TA.value=P.start+" "; save(); }
+  count(); status(); snd("wd-paper"); fit();
+  setTimeout(function(){ try{ TA.focus({preventScroll:true}); var n=TA.value.length; TA.setSelectionRange(n,n); TA.scrollTop=TA.scrollHeight; }catch(e){} },60);
+}
+SCROLL.addEventListener("click",function(e){
+  if(!e.target.isConnected) return;
+  var gb=e.target.closest("[data-g]"); if(gb){ store("bwWdGoal",gb.getAttribute("data-g")); [].forEach.call(SCROLL.querySelectorAll(".wd-goal"),function(x){ var on=x===gb; x.classList.toggle("on",on); x.setAttribute("aria-pressed",on); }); snd("wd-key"); count(); status(); return; }
+  var b=e.target.closest("[data-a]"); if(!b) return; var a=b.getAttribute("data-a");
+  if(a==="write") showWrite(false); else if(a==="start") showWrite(true); else if(a==="past") pastPrompts(); else if(a==="nb") notebook(); else if(a==="today") load(today,"daily");
+});
+
+/* ---------- finishing ---------- */
+function finish(){
+  if(finished) return; finished=true; save();
+  var k=ymd(day), w=words(TA.value), g=goal(), secs=Math.round(active/1000), first=false, sk=streak(), srv=null, r0={w:w,goal:g,sec:secs,id:P.id};
+  if(mode==="daily"&&!rec()){
+    first=true; store("bwWrite:"+todayKey,JSON.stringify(r0));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwWriteStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,r0):null;
+  } else if(mode==="archive"&&!rec(k)){
+    first=true; r0.past=1; store("bwWrite:"+k,JSON.stringify(r0));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(k,r0,true):null;   /* Club catch-up: mends the streak */
+  }
+  if(first) snd("wd-done");
+  count(); TA.blur();
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(w,secs,first,sk,sv); }); },first?650:0);
+}
+function withServer(srv,go2){ if(!srv){ go2(null); return; } var t=setTimeout(function(){ t=0; go2(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go2(sv); } },function(){ if(t){ clearTimeout(t); go2(null); } }); }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function veil(id){ var v=$("#"+id); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id=id; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v);
+  v.addEventListener("click",function(e){ if(e.target===v) v.classList.remove("on"); }); } return v; }
+function btnIn(row,label,fn,href){ var x=document.createElement(href?"a":"button"); if(href) x.href=href; else x.type="button"; x.className="pk-btn"; x.textContent=label; if(fn) x.onclick=fn; row.appendChild(x); return x; }
+function result(w,secs,first,sk,sv){
+  var v=veil("wdEnd"), b=v.firstChild, g=goal();
+  var head=mode==="archive"?"Past Prompt · "+niceDate(day):"The Writing Desk · No. "+dayNo(day);
+  var title=w>=g*2?"What a Page!":w>=300?"Beautifully Done":"Page Written";
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+title+'</h2><div class="wd-orn" aria-hidden="true"></div>'+
+    '<div class="wd-facts"><div><b>'+w+'</b><small>Words</small></div><div><b>'+fmt(secs)+'</b><small>Writing</small></div><div><b>'+(mode==="daily"?(sk.n||1):"–")+'</b><small>Streak</small></div></div>'+
+    '<p class="wd-note"><b>'+esc(P.title)+'.</b> Your page is saved on this device'+(member()?" and in your Notebook":"")+'. You can keep adding to it all day.</p>'+
+    (mode==="daily"&&!first?'<p class="wd-note" style="opacity:.75">You’d already finished today’s page; your first finish is the one counted.</p>':'')+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  if(mode==="daily") btnIn(row,"Share Result",function(){ share(w,sk); });
+  btnIn(row,"Keep Writing",function(){ v.classList.remove("on"); finished=false; showWrite(false); });
+  btnIn(row,"Notebook",function(){ v.classList.remove("on"); notebook(); });
+  if(mode!=="daily") btnIn(row,"Today’s Prompt",function(){ v.classList.remove("on"); load(today,"daily"); });
+  btnIn(row,"Back to Create",null,"create.html");
+  v.classList.add("on");
+}
+function share(w,sk){
+  var txt="BrainWhim · The Writing Desk No. "+dayNo(today)+"\n"+w+" words · "+P.title+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/writing.html";
+  if(window.BWShare){ BWShare.go(txt); return; }
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- Past Prompts (Club): the last 30 days ---------- */
+function pastPrompts(){
+  var v=veil("wdPast"), b=v.firstChild, club=member(), items="";
+  for(var i=1;i<=30;i++){
+    var d=new Date(today); d.setDate(d.getDate()-i); var Px=promptFor(d); if(!Px) continue; var k=ymd(d), r=rec(k), pg=page(k);
+    items+='<button type="button" class="wd-li'+(club?"":" lock")+'" data-k="'+k+'"><span class="d">'+esc(shortDate(d))+'</span><span class="t"><small>'+esc(kindOf(d).name)+'</small>'+esc(Px.title)+'</span><span class="s">'+(r?"✓ "+r.w:pg&&pg.w?pg.w+" so far":club?"":"🔒")+'</span></button>';
+  }
+  b.innerHTML='<p class="pk-kick">The Writing Desk</p><h2>Past Prompts</h2>'+
+    (club?'<p class="wd-note">Any prompt from the last 30 days. Writing a day you missed mends your streak.</p>'
+         :'<div class="wd-club">Past prompts open with the <b>Club</b>: write any of the last 30 days, and a missed day mends your streak. Today’s prompt is always free.</div>')+
+    '<div class="wd-list">'+items+'</div><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(!club) btnIn(row,"Join the Club",null,"member.html");
+  btnIn(row,"Close",function(){ v.classList.remove("on"); });
+  [].forEach.call(b.querySelectorAll(".wd-li"),function(x){ x.onclick=function(){
+    if(!member()){ if(window.Parlor) Parlor.toast("Past prompts open with the Club."); return; }
+    v.classList.remove("on"); load(fromKey(x.getAttribute("data-k")),"archive");
+    if(!document.body.classList.contains("seated")&&window.Parlor&&Parlor.sitHouse) Parlor.sitHouse(); }; });
+  v.classList.add("on");
+}
+
+/* ---------- the Notebook (Club): every page written at this desk, newest first ---------- */
+function pageText(e){ var Px=findPrompt(e.p.id), d=fromKey(e.k); return (Px?Px.title:"The Writing Desk")+"\n"+niceDate(d)+(Px?" · "+kindOf(d).name:"")+"\n\n"+e.p.t.trim()+"\n"; }
+function download(name,text){ try{ var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:"text/plain;charset=utf-8"})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }catch(e){ if(window.Parlor) Parlor.toast("Saving a file isn’t possible here."); } }
+function copy(text){ try{ navigator.clipboard.writeText(text).then(function(){ Parlor.toast("Copied."); },function(){ Parlor.toast("Couldn’t copy here."); }); }catch(e){ Parlor.toast("Couldn’t copy here."); } }
+function notebook(){
+  save();
+  var v=veil("wdNb"), b=v.firstChild, club=member(), list=allPages(), items="";
+  list.forEach(function(e){ var Px=findPrompt(e.p.id), d=fromKey(e.k), r=rec(e.k);
+    items+='<button type="button" class="wd-li'+(club?"":" lock")+'" data-k="'+e.k+'"><span class="d">'+esc(shortDate(d))+'</span><span class="t"><small>'+esc(kindOf(d).name)+'</small>'+esc(Px?Px.title:"A page")+'</span><span class="s">'+(club?(r?"✓ ":"")+e.p.w+" words":"🔒")+'</span></button>'; });
+  b.innerHTML='<p class="pk-kick">The Writing Desk</p><h2>Your Notebook</h2>'+
+    (!list.length?'<p class="wd-note">Nothing here yet. Every page you write at the desk will be kept here, newest first.</p>':
+     club?'<p class="wd-note">Every page you’ve written, newest first. They’re kept on this device only: <b>Save All as a File</b> now and then keeps a copy safe.</p>'
+         :'<div class="wd-club">The <b>Notebook</b> opens with the Club: reread every page you’ve written, and save them all as a file. Today’s page is always yours to write.</div>')+
+    (list.length?'<div class="wd-list">'+items+'</div>':'')+'<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(!club) btnIn(row,"Join the Club",null,"member.html");
+  else if(list.length) btnIn(row,"Save All as a File",function(){ download("brainwhim-notebook.txt",list.map(pageText).join("\n———\n\n")); });
+  btnIn(row,"Close",function(){ v.classList.remove("on"); });
+  [].forEach.call(b.querySelectorAll(".wd-li"),function(x){ x.onclick=function(){
+    if(!member()){ if(window.Parlor) Parlor.toast("The Notebook opens with the Club."); return; }
+    readPage(x.getAttribute("data-k")); }; });
+  v.classList.add("on");
+}
+function readPage(k){
+  var v=veil("wdNb"), b=v.firstChild, e={k:k,p:page(k)}; if(!e.p) return;
+  var Px=findPrompt(e.p.id), d=fromKey(k), inReach=(today-d)/864e5<=30;
+  b.innerHTML='<p class="pk-kick">Your Notebook · '+esc(shortDate(d))+'</p>'+
+    '<div class="wd-nb-read" data-bws="off"><p class="k">'+esc(DAYS[d.getDay()]+" · "+kindOf(d).name)+' · '+e.p.w+' words</p><h3>'+esc(Px?Px.title:"A page")+'</h3>'+(Px?'<p class="q">'+esc(Px.prompt)+'</p>':'')+
+    '<p>'+esc(e.p.t.trim())+'</p></div><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(inReach) btnIn(row,"Open at the Desk",function(){ v.classList.remove("on"); load(d,k===todayKey?"daily":"archive"); if(!document.body.classList.contains("seated")&&window.Parlor&&Parlor.sitHouse) Parlor.sitHouse(); showWrite(false); });
+  btnIn(row,"Copy Text",function(){ copy(pageText(e)); });
+  btnIn(row,"Save as a File",function(){ download("brainwhim-"+k+".txt",pageText(e)); });
+  btnIn(row,"Back",function(){ notebook(); });
+  v.classList.add("on");
+}
+
+/* ---------- fitting the sheet to the screen (and above a phone's keyboard while typing) ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  var wide=window.innerWidth>=1000, st2=document.querySelector(".pk-stage");
+  var top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var h=wide?window.innerHeight-top-28:window.innerHeight-(seatedNow()?top:56)-(64+24)-8;
+  h=Math.max(window.innerHeight<560?230:380,Math.min(860,h));
+  var vv=window.visualViewport, typing=document.activeElement===TA&&!wide;
+  if(typing&&vv&&vv.height<window.innerHeight-80){ h=Math.max(200,vv.height-16); }
+  PAPER.style.setProperty("--wd-h",Math.round(h)+"px");
+  if(typing&&vv&&vv.height<window.innerHeight-80){ var r=PAPER.getBoundingClientRect(); window.scrollBy(0,r.top-(vv.offsetTop||0)-8); }
+}
+window.addEventListener("resize",function(){ requestAnimationFrame(fit); });
+if(window.visualViewport) visualViewport.addEventListener("resize",function(){ requestAnimationFrame(fit); });
+new MutationObserver(function(){ setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+
+/* ---------- the room ---------- */
+Parlor.init({
+  game:"writing", cat:"create", solo:true, free:true, daily:{key:"bwWrite:",streak:"bwWriteStreak"}, title:"The Writing Desk", bg:"pw/create-desk.jpg?v=1120a", home:"create.html", stage:stage,
+  soloLabel:"Today's prompt", dealLabel:"Today's Prompt",
+  tagline:"A Story Starter a Day.", invite:"A story starter a day. Blue hour over the rooftops, a lamp on the desk: write today's page, at your own pace, toward a word goal you choose.",
+  players:[{name:"You",color:"#b8862b"}],
+  setsLabel:"Paper",
+  sets:[
+    {id:"ivory",name:"Ivory Laid",need:0,dots:["#f8f2e2","#26201a"]},
+    {id:"ink",name:"Midnight Ink",need:0,dots:["#1f2740","#e9edf6"]},
+    {id:"cotton",name:"Deckled Cotton",club:true,dots:["#fffef9","#c8992f"]}
+  ],
+  rules:{
+    play:"<ol><li><b>One prompt a day:</b> a story starter, with an opening line you can use if you like and a small nudge.</li><li><b>Pick your goal:</b> 50, 150 or 300 words. Then tap <b>Start Writing</b> and write on the page.</li><li><b>Your page saves as you go.</b> Leave and come back any time today. When you reach your goal you’ll hear the typewriter’s bell: tap <b>Finish</b>, or keep going.</li></ol>",
+    score:"<ul><li><b>A new prompt every day</b>, the same for everyone. It changes at midnight on your device.</li><li><b>Each weekday has its kind of writing:</b> Sunday Memory, Monday Mystery, Tuesday Letter, Wednesday Poem, Thursday Dialogue, Friday Whimsy, Saturday Place.</li><li><b>Your streak</b> counts the days in a row you reach your goal.</li><li><b>Private:</b> your writing stays on this device. Nothing you write is sent to BrainWhim; only the fact that you finished (for your streak) is saved to your account.</li><li><b>Club Members</b> can write any prompt from the last 30 days (a missed day mends your streak), reread every page in the Notebook, and write on Deckled Cotton.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Prompt"; }); load(today,"daily"); }
+});
+paintKeys();
+document.addEventListener("DOMContentLoaded",function(){ if(!P) load(today,"daily"); fit(); });
+if(document.readyState!=="loading"){ load(today,"daily"); fit(); }
+window.WDO={get:function(){ return {P:P,mode:mode,day:ymd(day),writing:writing,words:words(TA.value),goal:goal()}; },load:function(k,m){ load(fromKey(k),m||"archive"); },promptFor:function(k){ return promptFor(fromKey(k)); },
+  write:showWrite,cover:showCover,finish:finish,type:function(t){ TA.value=t; TA.dispatchEvent(new Event("input")); },past:pastPrompts,notebook:notebook,read:readPage};   /* for testing */
+})();
+</script>
+</body>
+</html>
