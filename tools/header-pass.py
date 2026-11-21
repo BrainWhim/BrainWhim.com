@@ -46,7 +46,7 @@ def fix_old(page, s, log):
     if 'class="left-menu"' not in s: return s
     links = ''.join('\n            <a href="%s" class="left-menu-link">%s</a>' % x for x in [("index.html","Home"),("play.html","Play"),("puzzles.html","Today's Puzzles"),
         ("lobby.html","Board Game Lobby"),("lobby.html?cat=cards","Card Lobby"),("quickplays.html","Quick Plays"),("kids.html","Kids' Corner"),
-        ("index.html#about","About BrainWhim"),("terms.html","Terms"),("privacy.html","Privacy"),("disclaimers.html","Disclaimers")]) + '\n        '
+        ("index.html#about","About BrainWhim"),("terms.html","Terms"),("refunds.html","Refunds"),("privacy.html","Privacy"),("disclaimers.html","Disclaimers")]) + '\n        '
     s, a = re.subn(r'(<div class="left-menu-links">).*?(</div>)', lambda m: m.group(1) + links + m.group(2), s, count=1, flags=re.S)
     play = ('<h3><a href="play.html">Play</a></h3>\n                <ul>\n                    <li><a href="puzzles.html">Today\'s Puzzles</a></li>\n'
             '                    <li><a href="lobby.html">Board Games</a></li>\n                    <li><a href="lobby.html?cat=cards">Card Games</a></li>\n'
