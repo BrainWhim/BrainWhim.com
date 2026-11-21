@@ -781,12 +781,12 @@
       var av = mk("button", "av bwa-av"); av.type = "button"; av.title = "Change your avatar"; av.innerHTML = BWAvatar.html(prof, { size: 72 }); av.onclick = function () { BWAvatar.studio(); };
       var tx = mk("div"); tx.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><small>" + esc(rk.name) + "</small>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club Member" : " · House Guest");
       t.appendChild(av); t.appendChild(tx);
-      if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Club Details" : "Join the Club";
+      if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Manage Membership" : "Join the Club";
       a.appendChild(btn("Avatar", "", function () { BWAvatar.studio(); }));
       if (!accountInfo.member) a.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
     } else if (accountInfo.user) {
       t.innerHTML = "<b>" + esc(accountInfo.name || "Player") + "</b><br>" + accountInfo.pts + " points" + (accountInfo.member ? " · Club Member" : " · House Guest");
-      if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Club Details" : "Join the Club";
+      if (el.clubBtn) el.clubBtn.textContent = accountInfo.member ? "Manage Membership" : "Join the Club";
       if (!accountInfo.member) a.appendChild(btn("Join the Club", "", function () { location.href = "member.html"; }));
     } else {
       t.textContent = "Playing as a Visitor. Create a free account to become a House Guest: earn points and unlock sets.";

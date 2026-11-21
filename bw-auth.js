@@ -130,7 +130,20 @@
   function snapshot(event) {
     return { event: event || "", user: S.user, profile: S.profile, member: !!(S.profile && S.profile.member), ready: S.ready };
   }
+  /* Nov 20: Club Members see "Manage Membership" wherever a page says "Join the Club" (links/buttons to member.html) */
+  function clubLabels() {
+    var m = !!(S.profile && S.profile.member);
+    try {
+      [].forEach.call(document.querySelectorAll('a[href^="member.html"],button[onclick*="member.html"],[data-club-label]'), function (el) {
+        var t = (el.textContent || "").trim();
+        if (!el.hasAttribute("data-club-label")) { if (t !== "Join the Club") return; el.setAttribute("data-club-label", t); }
+        var want = m ? "Manage Membership" : el.getAttribute("data-club-label");
+        if (t !== want) el.textContent = want;
+      });
+    } catch (e) {}
+  }
   function notify(event) {
+    clubLabels();
     S.listeners.forEach(function (cb) { try { cb(snapshot(event)); } catch (e) { console.error(e); } });
   }
   function settled() {
