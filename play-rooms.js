@@ -185,6 +185,8 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     load();
   }
   window.toggleMail=toggle;
+  /* room names in invites read in Title Case ("Rose Garden Hearts"), also for notes sent before Nov 20 */
+  function bwRoomCaps(t){ return String(t).replace(/( invited you to (?:be their partner at )?)([^.]+)\./, function(_,a,b){ return a+b.split(" ").map(function(w,i){ return (i&&/^(the|a|of)$/.test(w))?w:w.charAt(0).toUpperCase()+w.slice(1); }).join(" ")+"."; }); }
   function showToast(text, code, nid, game){
     var el=document.getElementById("bwToast")||document.getElementById("toast");
     if(!el) return;
@@ -251,7 +253,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
     list.textContent="";
     rows.forEach(function(n){
       var row=bwMakeEl("div","bw-note");
-      row.appendChild(document.createTextNode((n.body||"Invite")+" "));   // plain text only
+      row.appendChild(document.createTextNode(bwRoomCaps(n.body||"Invite")+" "));   // plain text only
       if(n.status==="pending" && n.room_code){
         var act=bwMakeEl("div","acts");
         var join=bwMakeEl("button","bw-mbtn go","Join"); join.type="button";
@@ -275,7 +277,7 @@ window.bwRateGame=async function(sb, room, me, winnerSide){
       event:"INSERT", schema:"public", table:"notices", filter:"to_id=eq."+s.user.id
     }, function(payload){
       var n=payload.new;
-      showToast(n.body||"You were invited to a table.", n.room_code, n.id, n.game);
+      showToast(bwRoomCaps(n.body||"You were invited to a table."), n.room_code, n.id, n.game);
       load();
     }).subscribe();
     load();

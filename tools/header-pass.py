@@ -2,10 +2,10 @@
 """One header everywhere (Nov 20, Navigation Audit B). Re-runnable: rewrites the link lists in every grown-up
 page's header, phone menu and old-style side menu to the canonical order. Dry run by default; pass --apply OUTDIR
 to write changed files into OUTDIR (then copy them over). Kids' pages (kids.js) are left alone.
-Canonical bar: Home · Play · Puzzles · Cards · Lobby · Kids' Corner. Learn · Live · Create only in menus, under Coming Soon."""
+Canonical bar: Home · Play · Puzzles · Cards · Board Games · Kids' Corner. Learn · Live · Create only in menus, under Coming Soon."""
 import re, sys, glob, os
 APPLY = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == "--apply" else None
-CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Lobby"),("kids.html","Kids' Corner")]
+CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Board Games"),("kids.html","Kids' Corner")]
 HREFS = {h for h,_ in CANON} | {"learn.html","live.html","create.html","quickplays.html"}
 ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"lobby.html"}
 UPS = {"quickplays.html":"puzzles.html","member.html":"lobby.html"}   # pages with no phone menu: the one link phones keep

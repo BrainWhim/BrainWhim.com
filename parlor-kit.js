@@ -317,7 +317,7 @@
     if (!window.BWAvatar || (mode === "online" && T && !T.side)) return null;
     var d = mk("div", "pk-duo");
     function one(prof, name, sub) {
-      var x = mk("div", "p"), a = mk("span", "bwa-av"); a.innerHTML = BWAvatar.html(prof, { size: 96, title: name, even: true }); x.appendChild(a);
+      var x = mk("div", "p"), a = mk("span", "bwa-av"); a.innerHTML = BWAvatar.html(prof, { size: 124, title: name, even: true }); x.appendChild(a);
       x.appendChild(mk("b", "", name)); if (sub) x.appendChild(mk("i", "", sub)); return x;
     }
     var m = meProf(), o = oppProf();
@@ -337,7 +337,7 @@
   function solo1() {
     if (!window.BWAvatar) return null;
     var d = mk("div", "pk-duo pk-duo1"), x = mk("div", "p"), a = mk("span", "bwa-av"), m = meProf();
-    a.innerHTML = BWAvatar.html(m, { size: 96, title: "You", even: true }); x.appendChild(a);
+    a.innerHTML = BWAvatar.html(m, { size: 124, title: "You", even: true }); x.appendChild(a);
     x.appendChild(mk("b", "", "You")); x.appendChild(mk("i", "", m ? BWAvatar.rank(m.skill_points).name : "Visitor")); d.appendChild(x); return d;
   }
   window.addEventListener("bw-avatar", function () { renderAccount(); paintAv(); });
