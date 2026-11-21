@@ -167,7 +167,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1120a"></script>
 <script src="bw-avatars.js?v=1120a"></script>
-<script src="parlor-kit.js?v=1120d"></script>
+<script src="parlor-kit.js?v=1120e"></script>
 <script>
 /* =================== backgammon rules (no drawing here) ===================
    b[1..24]: >0 = side 1's checkers (light), <0 = side 2's (dark). Side 1 moves 24 → 1 and bears off past 1.
@@ -640,7 +640,7 @@ async function rollClick(){
     else{say("The House starts","It rolled "+b+", you rolled "+a);G.phase="house";await wait(1100);if(my!==token)return;busy=false;houseTurn([b,a]);}
     return;}
   if(G.phase!=="roll"||G.turn!==ms)return;if(online&&(!room||!room.guest))return;
-  busy=true;await shakeCup();buttons();var d=[r6(),r6()];if(forceDice){d=forceDice;forceDice=null;}   /* Learn to Play: the lesson's dice */
+  busy=true;await shakeCup();buttons();var d=[r6(),r6()];if(forceDice){d=forceDice;forceDice=null;}   /* Guided Lesson: the lesson's dice */
   await tumble(diceSpots(true,2),d);if(my!==token)return;busy=false;G.roll=d;startMyMove(diceList(d));}
 function startMyMove(list){G.dice=list;var r=allSeqs(G.st,ms,list);G.seqs=r.seqs;G.max=r.max;G.played=[];G.hist=[];G.sel=null;G.dests=null;G.last=null;
   showDice(true,list,0);
@@ -691,7 +691,7 @@ function undo(){if(busy||G.phase!=="move"&&G.phase!=="wait"||!G.played.length)re
 function endMyTurn(){finishTurn();}
 /* the mover's turn is done: record it, check for a win, pass the dice */
 function finishTurn(){
-  if(Parlor.lessonOn){G.phase="look";G.sources={};G.sel=null;G.dests=null;render(G.st);buttons();Parlor.lessonDone();return;}   /* Learn to Play */
+  if(Parlor.lessonOn){G.phase="look";G.sources={};G.sel=null;G.dests=null;render(G.st);buttons();Parlor.lessonDone();return;}   /* Guided Lesson */
   var s=G.turn,path=G.played.map(function(m){return {f:m.f,t:m.t};});
   G.last=path.map(function(m){return {s:s,f:m.f,t:m.t};});seq++;
   if(G.st.off[s]===15){over=true;winner=s+1;}
@@ -733,7 +733,7 @@ function end(){
   Parlor.finish(watcher?"draw":mine?"win":"lose",detail);
 }
 
-/* ---------- Learn to Play (Oct 24): six steps (the lesson sets the dice), then a coached practice game ---------- */
+/* ---------- Guided Lesson (Oct 24): six steps (the lesson sets the dice), then a coached practice game ---------- */
 var practice=false,forceDice=null,lessonSrc=null,tipN=0;
 /* a lesson position: mine and theirs as {point: count}, each side counting its own points (25 = bar) */
 function lessonPos(mine,theirs){var b=new Array(25).fill(0),bar=[0,0];

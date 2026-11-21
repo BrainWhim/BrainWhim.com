@@ -161,7 +161,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1120a"></script>
 <script src="bw-avatars.js?v=1120a"></script>
-<script src="parlor-kit.js?v=1120d"></script>
+<script src="parlor-kit.js?v=1120e"></script>
 <script>
 /* =====================================================================
    Painted materials
@@ -422,7 +422,7 @@ async function sendToCrib(){
   if(!myDiscard()||sel.length!==2) return;
   var picks=sel.slice().sort(function(a,b){ return b-a; }); sel=[]; busy=true; hintIdx=-1;
   await tossCards(mySide,picks);
-  if(Parlor.lessonOn){ houseDiscard(); await houseTossNow(); await Parlor.wait(300); S.starter=S.deck.pop(); Parlor.sfx("flip",{pitch:1.6}); S.phase="play"; S.turn=2; busy=false; render(); Parlor.lessonDone(); return; }   /* Learn to Play */
+  if(Parlor.lessonOn){ houseDiscard(); await houseTossNow(); await Parlor.wait(300); S.starter=S.deck.pop(); Parlor.sfx("flip",{pitch:1.6}); S.phase="play"; S.turn=2; busy=false; render(); Parlor.lessonDone(); return; }   /* Guided Lesson */
   busy=false; seq++; lastMv={k:"toss",s:mySide};
   if(!online&&!S.tossed[2]){ houseDiscard(); await houseTossNow(); }
   if(S.tossed[1]&&S.tossed[2]) await cutStarter(); else { push(); render(); msg(); }
@@ -476,7 +476,7 @@ async function humanPlay(k){
   var c=S.hand[mySide][k]; if(S.count+val(c)>31) return;
   if(lessonOnly!=null&&c.r!==lessonOnly) return;
   busy=true; seq++; hintIdx=-1; await playCard(mySide,k); busy=false;
-  if(Parlor.lessonOn){ lessonOnly=null; S.turn=2; render(); Parlor.lessonDone(); return; }   /* Learn to Play */
+  if(Parlor.lessonOn){ lessonOnly=null; S.turn=2; render(); Parlor.lessonDone(); return; }   /* Guided Lesson */
   afterCard(mySide);
 }
 async function playCard(s,k){
@@ -531,7 +531,7 @@ async function houseTurn(){
   afterCard(2);
 }
 
-/* ---------- Learn to Play (Oct 24): six steps, then a coached practice game to 61 ---------- */
+/* ---------- Guided Lesson (Oct 24): six steps, then a coached practice game to 61 ---------- */
 var practice=false, lessonOnly=null, hintIdx=-1, tipN=0;
 function card(r,su){ return {r:r,s:su}; }
 function LESSON(){ return [

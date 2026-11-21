@@ -95,7 +95,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1120a"></script>
 <script src="bw-avatars.js?v=1120a"></script>
-<script src="parlor-kit.js?v=1120d"></script>
+<script src="parlor-kit.js?v=1120e"></script>
 <script id="csEngine">
 /* =================== chess rules (no drawing here) ===================
    Board: 64 squares, index = row*8 + col, row 0 = Black's back rank (rank 8). Pieces are letters: white upper case, black lower case, "" empty.
@@ -557,7 +557,7 @@ async function playMove(m,side,fromXY){
   busy=true;sel=-1;paint();
   await animate(m,side,fromXY);
   seq++;hist.push(posKey(S));busy=false;hintAt=-1;
-  if(Parlor.lessonOn){legalNow=[];paint();Parlor.lessonDone();return;}   /* Learn to Play */
+  if(Parlor.lessonOn){legalNow=[];paint();Parlor.lessonDone();return;}   /* Guided Lesson */
   var st=status(S,hist);
   legalNow=st?[]:legal(S);
   if(st){over=true;result=st;}
@@ -651,12 +651,12 @@ function newGame(){
   legalNow=legal(S);promoEl.hidden=true;paint();msg();
 }
 
-/* ---------- Learn to Play (Oct 24): ten steps on small positions, then a coached practice game with a Hint button ---------- */
+/* ---------- Guided Lesson (Oct 24): ten steps on small positions, then a coached practice game with a Hint button ---------- */
 var practice=false,hintAt=-1,tipN=0,lessonAllow=null;
 function LESSON(){var n=colorNames();return [
   {title:"The Board",text:"<p>You play the <b>"+n[0]+"</b> pieces from the near side and move first. Each kind of piece moves its own way, and you capture by moving onto an opponent's piece.</p><p>The goal is <b>checkmate</b>: trap The House's king.</p>"},
   {title:"Pawns",fen:"4k3/8/8/8/8/8/4P3/4K3 w - - 0 1",only:{f:52},text:"<p><b>Pawns</b> move straight forward one square, or <b>two</b> from their starting square.</p><p>Tap your glowing pawn, then a gold dot.</p>",done:"<p>Pawns never move backward.</p>",sub:"Move the glowing pawn"},
-  {title:"Pawn Captures",fen:"4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1",only:{f:36,t:27},text:"<p>Pawns <b>capture diagonally</b>: one square forward and to the side.</p><p>Capture The House's pawn.</p>",done:"<p>Captured pieces go to your side of the table. (A rare pawn capture called <b>en passant</b> also exists: How to Play explains it.)</p>",sub:"Capture with the glowing pawn"},
+  {title:"Pawn Captures",fen:"4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1",only:{f:36,t:27},text:"<p>Pawns <b>capture diagonally</b>: one square forward and to the side.</p><p>Capture The House's pawn.</p>",done:"<p>Captured pieces go to your side of the table. (A rare pawn capture called <b>en passant</b> also exists: the Rules explain it.)</p>",sub:"Capture with the glowing pawn"},
   {title:"Knights",fen:"4k3/8/8/8/8/8/8/1N2K3 w - - 0 1",only:{f:57},text:"<p><b>Knights</b> jump in an L: two squares one way, then one to the side. They're the only piece that can jump over others.</p><p>Move your knight.</p>",done:"<p>Knights are best near the middle of the board, where they reach the most squares.</p>",sub:"Move the glowing knight"},
   {title:"Bishops, Rooks and the Queen",fen:"4k3/8/8/8/8/8/8/3QK3 w - - 0 1",only:{f:59},text:"<p><b>Bishops</b> slide diagonally; <b>rooks</b> slide along rows and columns. The <b>queen</b> does both, as far as the way is clear.</p><p>Move your queen.</p>",done:"<p>The queen is your strongest piece. Don't bring it out too early, where it can be chased around.</p>",sub:"Move the glowing queen"},
   {title:"The King and Check",fen:"4k3/8/8/8/8/8/4r3/4K3 w - - 0 1",only:{f:60,t:52},text:"<p>The <b>king</b> moves one square in any direction. When it's attacked, it's in <b>check</b> (its square glows red), and you must get out of check at once.</p><p>Your king is in check. Capture the rook.</p>",done:"<p>Out of check. You can never make a move that leaves your own king in check.</p>",sub:"Capture with your king"},

@@ -129,8 +129,8 @@
     g1.appendChild(el.newBtn);
     el.forfeitBtn = btn(C.partners ? "Leave the Game" : "Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
     g1.appendChild(el.forfeitBtn);
-    if (C.learn) { el.learnBtn = btn("Learn to Play", "", function () { P.sitLearn(); }); g1.appendChild(el.learnBtn); }
-    g1.appendChild(btn("How to Play", "", function () { P.help("play"); }));
+    if (C.learn) { el.learnBtn = btn("Guided Lesson", "", function () { P.sitLearn(); }); g1.appendChild(el.learnBtn); }
+    g1.appendChild(btn("Rules", "", function () { P.help("play"); }));
     g1.appendChild(btn("Scoring Rules", "", function () { P.help("score"); }));
     g1.appendChild(btn("Sound & Motion", "", function () { P.settings(); }));
     var g2 = group("My Seat", "pk-phone");
@@ -143,7 +143,7 @@
     g3.appendChild(btn("Back to the Room", "", function () { P.stand(); }));
     g3.appendChild(btn("Switch Game", "", function () { P.games(); }));
     var hm = C.home || "lobby.html", tb = mk("a", "pk-btn", /puzzles/.test(hm) ? "All Puzzles" : /cards/.test(hm) ? "Card Lobby" : "Lobby"); tb.href = hm; g3.appendChild(tb);
-    el.coach = mk("div", "pk-coach"); el.coach.hidden = true; document.body.appendChild(el.coach);   /* Learn to Play (Oct 24) */
+    el.coach = mk("div", "pk-coach"); el.coach.hidden = true; document.body.appendChild(el.coach);   /* Guided Lesson (Oct 24) */
     right.appendChild(ac);
     el.mode = mk("p", "pk-sub", ""); ac.appendChild(el.mode);
     /* Nov 20 (Navigation Audit B): the legal pages from every room */
@@ -356,7 +356,7 @@
   P.help = function (kind) {
     sheet(null);
     var score = kind === "score";
-    el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "How to Play") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
+    el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "Rules") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
       (score && C.solo && !C.free ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club Members get more).</li></ul>" : "") +
       (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club Members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got It", "", function () { el.help.veil.classList.remove("on"); }));
@@ -373,7 +373,7 @@
     var s = mk("div", "pk-stack");
     if (C.solo) {   /* one-player rooms (Solitaire, FreeCell): no House, no online table */
       s.appendChild(btn(C.dealLabel || "Deal a Game", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
-      if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
+      if (C.learn) s.appendChild(btn("Guided Lesson", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
       s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
       b.appendChild(s); el.seat.veil.classList.add("on"); return;
     }
@@ -386,12 +386,12 @@
       var to = opt("Team Up with a Friend", "Invite a partner to sit across from you against The House.", function () { tf.style.display = tf.style.display === "none" ? "" : "none"; if (tf.style.display === "") ti.focus(); });
       to.appendChild(tf);
       opt("Match an Online Partner", "Quickly team up with another live player against The House.", function () { location.href = homeWith("match=" + encodeURIComponent(C.game)); });
-      if (C.learn) opt("Learn to Play", "An interactive walkthrough of the rules and a guided practice game.", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); });
+      if (C.learn) opt("Guided Lesson", "An interactive walkthrough of the rules and a guided practice game.", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); });
       s.appendChild(btn("Close", "quiet", function () { el.seat.veil.classList.remove("on"); }));
       b.appendChild(s); el.seat.veil.classList.add("on"); return;
     }
     s.appendChild(btn("Play vs. The House", "", function () { el.seat.veil.classList.remove("on"); P.sitHouse(); }));
-    if (C.learn) s.appendChild(btn("Learn to Play", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
+    if (C.learn) s.appendChild(btn("Guided Lesson", "", function () { el.seat.veil.classList.remove("on"); P.sitLearn(); }));
     s.appendChild(btn("Match an Online Player", "", function () { location.href = homeWith("match=" + encodeURIComponent(C.game)); }));
     var f = mk("div", "pk-field"), inv = mk("input"); inv.placeholder = "Enter friend's public name..."; inv.maxLength = 20;
     var sendB = btn("Send Invite", "", function () {
@@ -448,7 +448,7 @@
   };
   P.mode = function () { return mode; };
 
-  /* ---------------- Learn to Play (Oct 24) ----------------
+  /* ---------------- Guided Lesson (Oct 24) ----------------
      A room opts in with learn:{start(), practice()} in Parlor.init. Learn mode is free for everyone: it doesn't use a
      guest game, earns no points and never moves The House's level; Parlor.skill() is gentle and fixed.
      The room drives the lesson with Parlor.coach({kick, title, text, buttons:[{label, fn, quiet}]}) and Parlor.coach(null).
@@ -525,19 +525,19 @@
   P.lessonGo = function (k) {
     var L = C.lesson, steps = lessonSteps(), st = steps[k]; LK = k; P.lessonOn = true; P.lessonWaiting = !!st.done;
     if (L.setup) L.setup(k, st);
-    var b = [], kick = "Learn to Play · " + (k + 1) + " of " + steps.length;
+    var b = [], kick = "Guided Lesson · " + (k + 1) + " of " + steps.length;
     if (k === steps.length - 1) { b.push({ label: "Start Practice Game", fn: P.startPractice }); if (k) b.push({ label: "Back", quiet: true, fn: function () { P.lessonGo(k - 1); } }); }
     else if (!st.done) { b.push({ label: "Next", fn: function () { P.lessonGo(k + 1); } }); b.push({ label: "Skip to a Practice Game", quiet: true, fn: P.startPractice }); }
     else { if (k) b.push({ label: "Back", quiet: true, fn: function () { P.lessonGo(k - 1); } }); b.push({ label: "Skip to a Practice Game", quiet: true, fn: P.startPractice }); }
     b.push(houseBtn());
     P.coach({ kick: kick, title: st.title, text: st.text, buttons: b });
-    P.status(st.done ? "Your move" : "Learn to Play", st.done ? (st.sub || "Follow the glowing hint") : "");
+    P.status(st.done ? "Your move" : "Guided Lesson", st.done ? (st.sub || "Follow the glowing hint") : "");
   };
   P.lessonDone = function (extra) {
     var steps = lessonSteps(), st = steps[LK], k = LK; P.lessonWaiting = false;
     /* the last page has no page after it: its button starts a practice game instead (Nov 1 fix: "Next" did nothing there) */
     var last = k >= steps.length - 1;
-    P.coach({ kick: "Learn to Play · " + (k + 1) + " of " + steps.length, title: st.title, text: (st.done || "") + (extra || ""),
+    P.coach({ kick: "Guided Lesson · " + (k + 1) + " of " + steps.length, title: st.title, text: (st.done || "") + (extra || ""),
       buttons: [last ? { label: "Start Practice Game", fn: P.startPractice } : { label: "Next", fn: function () { P.lessonGo(k + 1); } }, { label: "Try Again", quiet: true, fn: function () { P.lessonGo(k); } }, houseBtn()] });
     P.status("Well done", "");
   };

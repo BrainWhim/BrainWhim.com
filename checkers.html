@@ -118,7 +118,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1120a"></script>
 <script src="bw-avatars.js?v=1120a"></script>
-<script src="parlor-kit.js?v=1120d"></script>
+<script src="parlor-kit.js?v=1120e"></script>
 <script>
 /* ---------- painted materials (drawn in the browser; no picture files) ---------- */
 function rng(seed){var s=seed%2147483647;if(s<=0)s+=2147483646;return function(){return (s=s*16807%2147483647)/2147483647;};}
@@ -514,7 +514,7 @@ function commit(m,side){
   quiet=(m.x.length||!wasK)?0:quiet+1;
   if(!wasK&&isK(B[z])){ crownAt=z; Parlor.sfx("mill"); setTimeout(function(){ crownAt=-1; },700); }
   turn=3-side; legal=gen(B,turn); hintAt=-1;
-  if(learning){ paint(); lessonMoved(m); return; }   /* Learn to Play: the lesson decides what happens next */
+  if(learning){ paint(); lessonMoved(m); return; }   /* Guided Lesson: the lesson decides what happens next */
   if(!legal.length){ over=true; winner=side; }
   else if(quiet>=80){ over=true; winner=0; }
   paint(); if(over) end(); else msg();
@@ -607,7 +607,7 @@ async function bootOnline(){
   }).subscribe();
 }
 
-/* ---------- Learn to Play (Oct 24): an eight-step lesson where you make each move yourself, then a coached
+/* ---------- Guided Lesson (Oct 24): an eight-step lesson where you make each move yourself, then a coached
    practice game against a gentle House with a Hint button. Free for everyone; no points, no level change. ---------- */
 var learning=null, practice=false, hintAt=-1, tipN=0, firstKing=true;
 function setupBoard(list){
@@ -635,13 +635,13 @@ function lessonStep(k){
   else if(!st.done){ btns.push({label:"Next",fn:function(){ lessonStep(k+1); }}); btns.push({label:"Skip to a Practice Game",quiet:true,fn:startPractice}); }
   else { if(k) btns.push({label:"Back",quiet:true,fn:function(){ lessonStep(k-1); }}); btns.push({label:"Skip to a Practice Game",quiet:true,fn:startPractice}); }
   btns.push(Parlor.houseBtn());
-  Parlor.coach({kick:"Learn to Play · "+(k+1)+" of "+L.length,title:st.title,text:st.text,buttons:btns});
-  say(st.done?"Your move":"Learn to Play",st.done?"Tap the glowing piece":"");
+  Parlor.coach({kick:"Guided Lesson · "+(k+1)+" of "+L.length,title:st.title,text:st.text,buttons:btns});
+  say(st.done?"Your move":"Guided Lesson",st.done?"Tap the glowing piece":"");
 }
 function lessonMoved(m){
   var L=LESSON(), k=learning.k, st=L[k]; learning.done=true; legal=[]; paint();
   say("Well done","");
-  Parlor.coach({kick:"Learn to Play · "+(k+1)+" of "+L.length,title:st.title,text:st.done,buttons:[{label:"Next",fn:function(){ lessonStep(k+1); }},{label:"Try Again",quiet:true,fn:function(){ lessonStep(k); }},Parlor.houseBtn()]});
+  Parlor.coach({kick:"Guided Lesson · "+(k+1)+" of "+L.length,title:st.title,text:st.done,buttons:[{label:"Next",fn:function(){ lessonStep(k+1); }},{label:"Try Again",quiet:true,fn:function(){ lessonStep(k); }},Parlor.houseBtn()]});
 }
 function startPractice(){
   learning=null; practice=true; tipN=0; firstKing=true; mySide=1; newGame();
