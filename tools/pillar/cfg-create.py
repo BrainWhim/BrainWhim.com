@@ -1,7 +1,7 @@
 # Create page settings for build-pillar.py (Nov 20)
 ROOMS = r"""var ROOMS=[
-  {id:"desk", name:"The Writing Desk", kind:"Writing", glow:"rgba(160,170,255,.5)",
-   line:"A fresh story starter every day and a quiet page to write on, with a word-count goal that keeps you coming back.",
+  {id:"desk", name:"The Writing Desk", kind:"Hone Your Writing Skills", glow:"rgba(160,170,255,.5)", page:"writing.html", cta:"Write Today's Page",
+   line:"A prompt a day with a short writing lesson, a word goal you pick, and suggestions to make your page stronger. Keep a streak, just like the puzzle rooms. Your writing stays on your device.",
    try:["telegraph","study"]},
   {id:"mood", name:"The Mood Board", kind:"Design", glow:"rgba(255,170,210,.45)",
    line:"Save color palettes and pin pictures into layout boards, so a feeling turns into something you can build from.",
@@ -20,11 +20,11 @@ FAM = r"""var FAM=[
   ["Sticker Scenes","moonlets-stickers.html","sc/card.webp?v=1118b","Moonlets → Moon Games → Sticker Scenes","Fill Finn's sticker book with stickers on the farm, at the beach and in space. Ages 3 to 7."],
   ["Make a Face","moonlets-face.html","mf/card.webp?v=1118b","Moonlets → Moon Games → Make a Face","Moonbeam lost her face! Give her eyes, a mouth and a hat, and decide how she feels. Ages 3 to 7."]];"""
 def li(n,e): return '      <li class="c-create"><i class="pd"></i><span><b>%s</b><em>%s</em></span></li>' % (n,e)
-C = dict(META="Create at BrainWhim: aids for writers, makers and designers. The Writing Desk, the Mood Board, the Brainstorm Table and the Type Case are opening soon, with making games for kids ready now.", OUT="create.html", TITLE="Create · The Studio · BrainWhim", PLANET='url("planet-create-word.jpg")',
+C = dict(META="Create at BrainWhim: aids for writers, makers and designers. The Writing Desk is open: hone your writing skills, a page a day. The Mood Board, the Brainstorm Table and the Type Case are on the way, with making games for kids ready now.", OUT="create.html", TITLE="Create · The Studio · BrainWhim", PLANET='url("planet-create-word.jpg")',
   GLOW="0 0 36px rgba(220,150,255,.45),0 0 100px rgba(160,90,255,.22)", KC="color:#e2b8ff",
-  KICK="The Studio · Opening Soon", H1="<h1>Create</h1>",
-  INTRO="Aids for writers, makers and designers. Four rooms are being furnished in this wing of the house: a writing desk with a story starter every day, a mood board for colors and layouts, a table of idea cards to shuffle and pin, and a case of real type for pairing fonts. Each room opens on its own, and the first letter from the studio will say when.",
-  TRYLINE="While Create is being furnished, these daily puzzle rooms stretch the same muscles: words, patterns, and watching a plan come together.",
+  KICK="The Studio · Now Open: The Writing Desk", H1="<h1>Create</h1>",
+  INTRO="Aids for writers, makers and designers. The first room in this wing of the house is open: the Writing Desk, where you hone your writing skills a page a day. Three more are being furnished: a mood board for colors and layouts, a table of idea cards to shuffle and pin, and a case of real type for pairing fonts. Each opens on its own, and a letter from the studio will say when.",
+  TRYLINE="Alongside the Writing Desk, these daily puzzle rooms stretch the same muscles: words, patterns, and watching a plan come together.",
   FAMH2="Making Things in the Kids' Corner",
   FAMLINE="Ready now for young makers: fashion, slime, paint and stickers. No ads, no chat, nothing sent anywhere. Open one here, or on your child's own tablet with the QR code.",
   SIGNUP='data-bw-signup="create"', PLANKICK="The Plan for Create", PLANH2="What Create Will Hold",
@@ -34,6 +34,6 @@ C = dict(META="Create at BrainWhim: aids for writers, makers and designers. The 
             <li><b>Trending</b>A desk for what's moving, without the noise.</li>""",
   CLUBROOMS="and the Club rooms in Create as they open.", ASK="Questions, or a tool you wish existed?",
   NEXTH="<h3>Opening Next in Create</h3>",
-  NEXTLI="\n".join([li("The Writing Desk","A story starter a day"),li("The Mood Board","Palettes and layout boards"),li("The Brainstorm Table","Idea cards to shuffle and pin"),li("The Type Case","Font pairing with real type")]),
+  NEXTLI="\n".join([li("The Mood Board","Palettes and layout boards"),li("The Brainstorm Table","Idea cards to shuffle and pin"),li("The Type Case","Font pairing with real type")]),
   ROOMS=ROOMS, FAM=FAM, PW="create",
-  DAYOLD='["create","Create","Today\'s writing prompt","create.html","Soon",0,1]', DAYNEW='["create","Create","The Writing Desk","#r-desk","Soon",0,1]')
+  DAYOLD='["create","Create",writeDone?"Today\'s page: written":"Today\'s writing prompt","writing.html",writeDone?"\\u2713":"",writeDone]', DAYNEW='["create","Create",writeDone?"Today\'s page: written":"Today\'s writing prompt","writing.html",writeDone?"\\u2713":"",writeDone]')
