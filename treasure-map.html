@@ -85,7 +85,7 @@ body.m-play #play{display:flex}
   #app{padding-top:calc(72px + var(--k-safe-t));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px))}
   #play{flex-direction:row;gap:14px;align-items:stretch}
   .side{display:flex;flex-direction:column;gap:8px;width:min(330px,42%);height:100%;justify-content:center}
-  .bar,.coach,.tools{width:100%}
+  .cbar,.coach,.tools{width:100%}
   .tools{flex-wrap:wrap}.tb{flex:1 1 40%;max-width:none;min-height:52px}
   .coach p{font-size:15px}
   .mcard{padding:14px 18px}.emb{display:none}.mcard h1{font-size:24px}.mcard .lead{font-size:14.5px;margin-bottom:6px}
@@ -135,6 +135,21 @@ body.m-play #play{display:flex}
   border-image:url("tm/tm-roller.webp?v=1115a") 0 110 fill / 0 5.8% stretch;filter:drop-shadow(0 6px 6px rgba(0,0,0,.45))}
 .tmp .roll::before,.tmp .roll::after{display:none}
 .tmp .roll.t{top:-4.4%}.tmp .roll.b{bottom:-4.4%}
+/* Outpost top banner (Nov 21): Menu left, title middle, Hint right, as in Color Sort; Undo/Start over stay below */
+.cbar{order:1;width:min(640px,100%);display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15;min-width:0}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#a0661c}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.ib[disabled]{opacity:.45;cursor:default}
+@media (max-height:640px){.cbar{padding:4px 8px}.ib{min-height:36px}}
+body.m-play .k-hello{display:none}
+@media (orientation:landscape) and (max-height:560px){#play .side{justify-content:flex-start}}
+#play .tools .tb{flex-direction:row;gap:7px;min-height:46px;font-size:15px}#play .tools .tb svg{width:22px;height:22px}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -169,13 +184,15 @@ body.m-play #play{display:flex}
   </section>
   <section class="scr" id="play">
     <div class="side">
-      <div class="bar" id="bar"></div>
+      <div class="cbar">
+        <button class="ib gh" id="tMenu">Menu</button>
+        <div class="cday" id="bar"></div>
+        <button class="ib" id="tHint">Hint</button>
+      </div>
       <div class="coach" id="coach" aria-live="polite"></div>
       <div class="tools">
-        <button class="tb hint" id="tHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 14 12-7 2.5 4.3-12 7z"/><path d="m15 7 3.5-2 2.5 4.3-3.5 2"/><path d="M9 17.5 7.5 22M11 16.5l2 5"/></svg>Hint</button>
         <button class="tb" id="tUndo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
         <button class="tb" id="tRestart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Start over</button>
-        <button class="tb" id="tMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
       </div>
     </div>
     <div class="wrap" id="wrap"><div class="paper" id="paper"><div class="roll t"></div><div class="roll b"></div><svg id="bd" aria-label="Treasure map"></svg></div></div>
@@ -643,9 +660,9 @@ function load(p,mode,saved){
   st=saved&&saved.length===G.E?Int8Array.from(saved):new Int8Array(G.E);
   draw(); lastMet=metCount(); $("#tUndo").disabled=true; $("#tHint").disabled=false;
   var b=$("#bar");
-  if(mode==="daily") b.innerHTML=WDN[todayWd]+"'s Map <span>· "+P.isle+" · "+P.n+" × "+P.n+"</span>";
-  else if(mode==="practice") b.innerHTML="Practice Map <span>· "+P.n+" × "+P.n+"</span>";
-  else b.innerHTML="Learn to Play";
+  if(mode==="daily") b.innerHTML="<b>"+WDN[todayWd]+"'s Map</b><span>"+P.isle+" · "+P.n+" × "+P.n+"</span>";
+  else if(mode==="practice") b.innerHTML="<b>Practice Map</b><span>"+P.n+" × "+P.n+"</span>";
+  else b.innerHTML="<b>Learn to Play</b>";
   coach(null); requestAnimationFrame(fit);
   if(saved&&isSolved()){ solved=true; locked=true; showLand(st,true); if(mode!=="lesson") svg.classList.add("won"); }
 }

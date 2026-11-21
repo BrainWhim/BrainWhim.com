@@ -136,7 +136,7 @@ body.m-play #play{display:flex}
   #app{padding-top:calc(72px + var(--k-safe-t));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px))}
   #play{flex-direction:row;gap:14px;align-items:stretch}
   .side{display:flex;flex-direction:column;gap:7px;width:min(340px,44%);height:100%;justify-content:center;overflow:auto}
-  .bar,.ticket,.coach,.tools{width:100%}
+  .cbar,.ticket,.coach,.tools{width:100%}
   .tools{flex-wrap:wrap}.tb{flex:1 1 40%;max-width:none;min-height:46px}
   .coach p{font-size:14.5px}
   .mcard{padding:14px 18px}.emb{display:none}.mcard h1{font-size:24px}.mcard .lead{font-size:14.5px;margin-bottom:6px}
@@ -168,6 +168,21 @@ body.m-play #play{display:flex}
 .pjp .plate{background:none;box-shadow:none;border-radius:0;padding:3px 20px 4px;border-style:solid;border-width:0 11px;margin:0 -11px;color:#3f2706;text-shadow:0 1px 0 rgba(255,236,170,.5);
   border-image:url("pj/pj-plate.webp?v=1115a") 0 60 fill / 0 11px stretch;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));bottom:-8px}
 .pjp .blk.ring{box-shadow:0 0 0 4px #ffb020,0 0 18px 4px rgba(255,176,32,.7),0 3px 0 rgba(80,48,16,.55)}
+/* Outpost top banner (Nov 21): Menu left, title middle, Hint right, as in Color Sort; Undo/Start over stay below */
+.cbar{order:1;width:min(640px,100%);display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;color:#2b2116;flex:none;
+  background:linear-gradient(180deg,#fffaf0,#f1e3c2);box-shadow:0 4px 0 #c9b384,0 10px 22px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.cday{flex:1;text-align:center;line-height:1.15;min-width:0}
+.cday b{display:block;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#a0661c}
+.cday span{font-size:14px;font-weight:700;color:#5a4220}
+.ib{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;min-height:40px;padding:0 13px;border-radius:12px;color:#3a2306;
+  background:linear-gradient(180deg,#ffe7a6,#e9c46a);box-shadow:0 3px 0 #a97a1c}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.ib.gh{background:rgba(120,80,20,.1);box-shadow:none;color:#6b4a1a}
+.ib[disabled]{opacity:.45;cursor:default}
+@media (max-height:640px){.cbar{padding:4px 8px}.ib{min-height:36px}}
+body.m-play .k-hello{display:none}
+@media (orientation:landscape) and (max-height:560px){#play .side{justify-content:flex-start}}
+#play .tools .tb{flex-direction:row;gap:7px;min-height:46px;font-size:15px}#play .tools .tb svg{width:22px;height:22px}
 </style>
 <link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
 </head>
@@ -201,13 +216,15 @@ body.m-play #play{display:flex}
   </section>
   <section class="scr" id="play">
     <div class="side">
-      <div class="bar" id="bar"></div>
+      <div class="cbar">
+        <button class="ib gh" id="tMenu">Menu</button>
+        <div class="cday" id="bar"></div>
+        <button class="ib" id="tHint">Hint</button>
+      </div>
       <div class="ticket" id="ticket"><div class="tk-top"><b id="tkT"></b><span id="tkB"></span></div><div class="slots" id="slots"></div></div>
       <div class="coach" id="coach" aria-live="polite"></div>
       <div class="tools">
-        <button class="tb hint" id="tHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/><path d="M8 9a3 3 0 0 1 3-2"/></svg>Hint</button>
         <button class="tb" id="tClear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Clear</button>
-        <button class="tb" id="tMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
       </div>
     </div>
     <div class="wrap" id="wrap">
@@ -659,13 +676,13 @@ function load(p,mode,saved){
   document.body.className="m-play"; var pr=$(".proof"); if(pr) pr.remove(); clearTimeout(flashT); $("#flash").className="flash";
   $("#tHint").disabled=false; $("#tClear").disabled=false;
   var b=$("#bar");
-  if(mode==="daily") b.innerHTML=WDN[todayWd]+"'s Job <span>· "+P.R+" × "+P.C+" case</span>";
-  else if(mode==="practice") b.innerHTML="Practice Job <span>· "+P.R+" × "+P.C+" case</span>";
-  else b.innerHTML="Learn to Play";
+  if(mode==="daily") b.innerHTML="<b>"+WDN[todayWd]+"'s Job</b><span>"+P.R+" × "+P.C+" case</span>";
+  else if(mode==="practice") b.innerHTML="<b>Practice Job</b><span>"+P.R+" × "+P.C+" case</span>";
+  else b.innerHTML="<b>Learn to Play</b>";
   coach(null); build(); requestAnimationFrame(fit);
   if(found.every(Boolean)){ solved=true; locked=true; $("#tHint").disabled=true; }
 }
-function busy(t){ document.body.className="m-play"; P=null; cellsEl.innerHTML=""; ink.innerHTML=""; $("#slots").innerHTML=""; $("#tkT").textContent=""; $("#tkB").textContent=""; $("#bar").innerHTML=t; coach(null); }
+function busy(t){ document.body.className="m-play"; P=null; cellsEl.innerHTML=""; ink.innerHTML=""; $("#slots").innerHTML=""; $("#tkT").textContent=""; $("#tkB").textContent=""; $("#bar").innerHTML="<span>"+t+"</span>"; coach(null); }
 var START="Here's today's job! Every block belongs to one word. Find them all to print the page.";
 function loadToday(){
   var sv=ST.now&&ST.now.key===todayKey?ST.now:null, cached=LS.get("pshopT",null);
