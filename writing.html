@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Writing Desk · A Story Starter a Day · BrainWhim</title>
-<meta name="description" content="The Writing Desk: a story starter a day at BrainWhim. A fresh prompt, a quiet page and a word goal you choose, with a new kind of writing each weekday. Your writing stays on your device.">
+<title>The Writing Desk · Hone Your Writing Skills · BrainWhim</title>
+<meta name="description" content="The Writing Desk: hone your writing skills at BrainWhim. A fresh prompt and a short writing lesson every day, a quiet page with a word goal you choose, and suggestions to make your writing stronger. Your writing stays on your device.">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parlor-kit.css?v=1120c">
 <style>
@@ -107,6 +107,19 @@ body[data-set="cotton"] .wd-paper{--line:rgba(184,134,43,.2);--margin:rgba(184,1
 body[data-set="cotton"] .wd-paper::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:7px;pointer-events:none;
   background:radial-gradient(circle at 4px 0,#f8f3e6 3.2px,rgba(0,0,0,0) 3.6px) 0 0/8px 7px repeat-x}
 body[data-set="cotton"] .wd-paper::before{border-color:#d8b764;border-bottom-color:#b8902f}
+.wd-skill{margin:0 0 14px;padding:14px 16px;border-radius:8px;background:rgba(70,100,160,.08);border:1px solid rgba(70,100,160,.2);font:16.5px/1.5 Georgia,serif;color:var(--ink)}
+.wd-skill b{display:block;margin-bottom:5px;font:700 11.5px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#3d5a8c}
+body[data-set="ink"] .wd-skill{background:rgba(150,170,255,.08);border-color:rgba(170,190,240,.22)}body[data-set="ink"] .wd-skill b{color:#a9c0f0}
+.wd-pbtn.wd-lbtn{color:var(--gold);border-color:rgba(184,134,43,.5)}
+.wd-skill-m{margin:6px 0 12px;padding:12px 14px;border-radius:10px;background:rgba(140,170,255,.1);border:1px solid rgba(160,180,255,.25);font:14.5px/1.5 Georgia,serif;color:rgba(255,255,255,.9);text-align:left}
+.wd-skill-m b{display:block;margin-bottom:4px;font:700 13px/1.3 Montserrat,system-ui,sans-serif;color:#b9cbff}
+.wd-lh{margin:12px 0 6px;font:700 12px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#f2be45;text-align:left}
+.wd-lh.ok{color:#9fd88f}
+.wd-sug{margin:0 0 8px;padding:11px 14px;border-radius:10px;background:rgba(242,190,69,.08);border:1px solid rgba(242,190,69,.28);font:14.5px/1.5 Georgia,serif;color:rgba(255,255,255,.9);text-align:left}
+.wd-sug b{display:block;margin-bottom:3px;font:700 14px/1.3 Montserrat,system-ui,sans-serif;color:#fff}
+.wd-sug.ok{background:rgba(120,190,100,.1);border-color:rgba(120,190,100,.3)}.wd-sug.ok b{color:#bfe3b3}
+.wd-small{margin:10px 0 6px;font:600 12px/1.45 Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.6);text-align:left}
+#wdLook .pk-modal{max-height:calc(100dvh - 24px);overflow-y:auto}
 /* the result window, Past Prompts and the Notebook */
 .wd-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 12px}
 .wd-facts div{padding:8px 6px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);text-align:center}
@@ -144,6 +157,8 @@ body[data-set="cotton"] .wd-paper::before{border-color:#d8b764;border-bottom-col
   .wd-foot{padding:9px 10px 11px 12px;gap:7px}
   .wd-btn{padding:0 12px;font-size:14.5px}
   .wd-goal small{font-size:10.5px}
+  .wd-pbtn{padding:6px 8px;font-size:11.5px}
+  .wd-whead{gap:6px}
 }
 </style>
 <script src="bw-auth.js?v=1120c"></script>
@@ -177,7 +192,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="bw-avatars.js?v=1120a"></script>
 <script src="parlor-kit.js?v=1121b"></script>
 <script src="bw-share.js?v=1121a"></script>
-<script src="writing-prompts.js?v=1121a"></script>
+<script src="writing-prompts.js?v=1121b"></script>
 <script>
 (function(){
 "use strict";
@@ -243,12 +258,13 @@ function keysOn(){ return store("bwWdKeys")!=="0"; }
 var P=null, day=today, mode="daily", writing=false, met=false, active=0, lastIn=0, saveT=0, finished=false;
 var stage=document.createElement("div"); stage.className="wd-pad";
 stage.innerHTML='<article class="wd-paper"><div class="wd-scroll" data-bws="off"></div>'+
-  '<div class="wd-write"><div class="wd-whead"><span class="t"><span class="k"></span><span class="h"></span><span class="p"></span></span><button class="wd-pbtn" type="button" aria-expanded="false">Prompt</button></div>'+
+  '<div class="wd-write"><div class="wd-whead"><span class="t"><span class="k"></span><span class="h"></span><span class="p"></span></span><button class="wd-pbtn wd-lbtn" type="button">Look It Over</button><button class="wd-pbtn" type="button" aria-expanded="false">Prompt</button></div>'+
   '<textarea class="wd-ta" data-bws="off" spellcheck="true" autocapitalize="sentences" aria-label="Your page"></textarea></div>'+
   '<div class="wd-foot"><button class="wd-btn gh" type="button" id="wdBack">← Prompt</button><div class="wd-count"><span></span><div class="wd-bar"><i></i></div></div>'+
   '<button class="wd-btn gh ic" type="button" id="wdKeys" aria-label="Typewriter sounds" title="Typewriter sounds">⌨</button><button class="wd-btn" type="button" id="wdFin">Finish ✓</button></div></article>';
 var PAPER=$(".wd-paper",stage), SCROLL=$(".wd-scroll",stage), TA=$(".wd-ta",stage), HEAD=$(".wd-whead",stage), FOOT=$(".wd-foot",stage),
-    COUNT=$(".wd-count span",stage), BAR=$(".wd-bar i",stage), FIN=$("#wdFin",stage), KEYS=$("#wdKeys",stage), PBTN=$(".wd-pbtn",stage);
+    COUNT=$(".wd-count span",stage), BAR=$(".wd-bar i",stage), FIN=$("#wdFin",stage), KEYS=$("#wdKeys",stage), PBTN=$(".wd-pbtn:not(.wd-lbtn)",stage);
+$(".wd-lbtn",stage).onclick=function(){ lookItOver(); };
 $("#wdBack",stage).onclick=function(){ save(); showCover(true); };
 PBTN.onclick=function(){ var o=HEAD.classList.toggle("open"); PBTN.setAttribute("aria-expanded",o?"true":"false"); PBTN.textContent=o?"Hide":"Prompt"; setTimeout(fit,0); };
 KEYS.onclick=function(){ store("bwWdKeys",keysOn()?"0":"1"); paintKeys(); if(window.Parlor) Parlor.toast(keysOn()?"Typewriter sounds on.":"Typewriter sounds off."); };
@@ -309,8 +325,9 @@ function showCover(back){
   var h='<p class="wd-kick">'+esc(DAYS[day.getDay()])+' · '+esc(kd.name)+'</p><h2 class="wd-title">'+esc(P.title)+'</h2>'+
     '<p class="wd-prompt">'+esc(P.prompt)+'</p>'+
     (P.start?'<p class="wd-start"><b>An opening line, if you want it</b>“'+esc(ell(P.start))+'”</p>':'')+
+    (P.skill?'<div class="wd-skill"><b>Today’s skill · '+esc(P.skill.name)+'</b>'+esc(P.skill.tip)+'</div>':'')+
     '<p class="wd-nudge"><b>A nudge:</b> '+esc(P.nudge)+'</p>'+
-    '<div class="wd-rule"></div><p class="wd-tag">The Writing Desk · <span style="white-space:nowrap">A Story Starter a Day</span></p>'+
+    '<div class="wd-rule"></div><p class="wd-tag">The Writing Desk · <span style="white-space:nowrap">Hone Your Writing Skills</span></p>'+
     '<p class="wd-meta"><span><b>No. '+dayNo(day)+'</b> · '+esc(niceDate(day))+'</span><span>'+esc(kd.line)+'</span></p>'+
     (r?'<p class="wd-done">✓ Written'+(mode==="daily"?" today":"")+' · '+w+' words</p>':w?'<p class="wd-done draft">Your page is saved · '+w+' words so far</p>':'')+
     '<p class="wd-glabel">Today’s goal</p><div class="wd-goals">'+GOALS.map(function(G){ return '<button type="button" class="wd-goal'+(G[0]===g?" on":"")+'" data-g="'+G[0]+'" aria-pressed="'+(G[0]===g)+'"><b>'+G[0]+'</b><small>'+G[1]+' · '+G[2]+'</small></button>'; }).join("")+'</div>'+
@@ -341,6 +358,94 @@ SCROLL.addEventListener("click",function(e){
   var b=e.target.closest("[data-a]"); if(!b) return; var a=b.getAttribute("data-a");
   if(a==="write") showWrite(false); else if(a==="start") showWrite(true); else if(a==="past") pastPrompts(); else if(a==="nb") notebook(); else if(a==="today") load(today,"daily");
 });
+
+/* ---------- Look It Over: suggestions to make the page stronger, worked out right here on the device (nothing is sent) ---------- */
+var STOP=" a an the and but or nor so yet for of to in on at by with from up down out over under into onto about as than then that this these those it its it's is are was were be been being am do does did have has had i me my mine we us our you your he him his she her they them their there here what which who whom whose when where why how not no all any each every some one two very just only also too more most such own same can could will would shall should may might must said says say into like through after before again once while because if just ";
+function sentences(t){ return (String(t).replace(/\s+/g," ").trim().match(/[^.!?]+[.!?]+["'”’)]*|[^.!?]+$/g)||[]).map(function(x){ return x.trim(); }).filter(function(x){ return /\w/.test(x); }); }
+function wlist(t){ return (String(t).toLowerCase().match(/[a-z][a-z'’-]*/g)||[]); }
+function clip(s,n){ s=String(s).trim(); var w=s.split(/\s+/); return w.length>n?w.slice(0,n).join(" ")+"…":s; }
+var SENSES={
+  sound:/\b(hear|heard|hears|sound|sounds|noise|quiet|silence|silent|loud|whisper|whispered|hum|hummed|buzz|creak|creaked|rustle|rustled|ring|rang|ticked|tick|clatter|clink|hiss|roar|echo|echoed|murmur|thump|bang|music|song|sang|sing|bell|whistle|footsteps|crackle|crackled|splash|thud|squeak|chirp|laughter|voice|voices)\b/i,
+  smell:/\b(smell|smelled|smelt|smells|scent|scented|odor|aroma|fragrance|perfume|stink|stank|musty|smoky|smoke|whiff|sniff|sniffed|reek|reeked|stench|bread|coffee|cinnamon|pine|diesel|rain-soaked)\b/i,
+  touch:/\b(cold|warm|hot|cool|chill|chilly|damp|wet|dry|rough|smooth|soft|hard|sharp|sticky|silky|velvet|icy|freezing|burning|heavy|weight|texture|touch|touched|brushed|grip|gripped|pressed|shiver|shivered|prickly|slick|gritty|fuzzy|tingle|ache|numb)\b/i,
+  taste:/\b(taste|tasted|tastes|sweet|sour|bitter|salty|salt|sugar|savory|spicy|tang|tangy|flavor|sip|sipped|bite|bit|chewed|swallowed|honey|lemon|mint|delicious)\b/i,
+  sight:/\b(saw|see|seen|looked|look|watched|glance|glanced|light|dark|shadow|shadows|bright|dim|gleam|glow|glowed|color|red|blue|green|yellow|gold|golden|silver|white|black|gray|grey|pink|purple|orange|brown|shine|shining|sparkle|flicker|flickered)\b/i
+};
+var FILLER={very:"very",really:"really",just:"just",actually:"actually",basically:"basically",quite:"quite",literally:"literally",totally:"totally",somewhat:"somewhat",stuff:"stuff",things:"things",thing:"thing",nice:"nice",got:"got",kind:"kind of",sort:"sort of"};
+var BOOKISH=/\b(exclaimed|retorted|interjected|queried|opined|ejaculated|chortled|hissed|growled|snapped|barked|declared|stated|uttered|proclaimed|inquired|responded|replied)\b/gi;
+function analyze(t){
+  var good=[], tips=[], W=wlist(t), n=W.length, S=sentences(t), lens=S.map(function(x){ return (x.match(/\S+/g)||[]).length; });
+  if(n<15) return {good:good,tips:[{h:"Write a little more first",p:"Suggestions need a few sentences to look at. Keep going, then tap Look It Over again."}],few:true};
+  var kd=kindOf(day).id, sk=P&&P.skill;
+  /* the senses (Place and Memory lean on them most) */
+  var have=[], miss=[]; ["sight","sound","smell","touch","taste"].forEach(function(k){ (SENSES[k].test(t)?have:miss).push(k); });
+  if(have.length>=3) good.push({h:"You used "+have.length+" senses",p:"Your page reaches the reader through "+have.join(", ")+". That’s what makes a scene feel real."});
+  else if(kd==="place"||kd==="memory"||(sk&&/sense/i.test(sk.name))) tips.push({h:"Add another sense",p:"So far the page leans on "+(have.length?have.join(" and "):"what things look like")+". Try one line of "+miss.filter(function(x){ return x!=="sight"; }).slice(0,2).join(" or ")+": what can you hear or smell there?"});
+  /* filler words */
+  var fc={}, ft=0; W.forEach(function(w,i){ var k=w.replace(/['’]s$/,""); if(FILLER[k]&&(k!=="kind"&&k!=="sort"||W[i+1]==="of")){ fc[FILLER[k]]=(fc[FILLER[k]]||0)+1; ft++; } });
+  var fl=Object.keys(fc).sort(function(a,b){ return fc[b]-fc[a]; });
+  if(ft>=2||fc["very"]||fc["really"]) tips.push({h:"Trim the filler words",p:"Words like "+fl.slice(0,4).map(function(k){ return "“"+k+"” ("+fc[k]+")"; }).join(", ")+" soften a sentence without adding much. Cut them, or trade “very cold” for one sharper word like “freezing.”"});
+  else if(n>=60) good.push({h:"Lean and clear",p:"Hardly any filler words. Every word is pulling its weight."});
+  /* a word used too often */
+  var cnt={}; W.forEach(function(w){ if(w.length>=4&&STOP.indexOf(" "+w+" ")<0) cnt[w]=(cnt[w]||0)+1; });
+  var rep=Object.keys(cnt).filter(function(w){ return cnt[w]>=Math.max(3,Math.round(n/60)); }).sort(function(a,b){ return cnt[b]-cnt[a]; }).slice(0,3);
+  if(rep.length) tips.push({h:"A word is repeating",p:rep.map(function(w){ return "“"+w+"” appears "+cnt[w]+" times"; }).join("; ")+". Repeating on purpose can be powerful; if it wasn’t on purpose, try a different word or cut one."});
+  /* sentence starts */
+  var st={}; S.forEach(function(x){ var f=(x.replace(/^["'“‘(]+/,"").match(/^[A-Za-z']+/)||[""])[0].toLowerCase(); if(f) st[f]=(st[f]||0)+1; });
+  var same=Object.keys(st).filter(function(f){ return st[f]>=3&&st[f]>=S.length*.3; });
+  if(same.length) tips.push({h:"Vary how sentences begin",p:st[same[0]]+" of your "+S.length+" sentences start with “"+same[0].charAt(0).toUpperCase()+same[0].slice(1)+".” Try opening a few with a place, a sound or an action instead."});
+  /* sentence length: rhythm */
+  if(S.length>=5){
+    var avg=lens.reduce(function(a,b){ return a+b; },0)/lens.length, sd=Math.sqrt(lens.reduce(function(a,b){ return a+(b-avg)*(b-avg); },0)/lens.length);
+    if(sd>=6) good.push({h:"Good rhythm",p:"You mix short and long sentences, which keeps the reader’s ear awake."});
+    else if(sd<3.5) tips.push({h:"Mix up sentence lengths",p:"Most of your sentences run about "+Math.round(avg)+" words. Drop in one very short sentence. It lands like a drumbeat."});
+  }
+  var longI=lens.findIndex(function(l){ return l>32; });
+  if(longI>=0) tips.push({h:"One sentence runs long",p:"“"+clip(S[longI],9)+"” has "+lens[longI]+" words. Try splitting it in two where it takes a breath.",ex:1});
+  /* -ly adverbs */
+  var ly=W.filter(function(w){ return /^[a-z]{3,}ly$/.test(w)&&!/^(only|family|early|holy|ugly|lonely|lovely|friendly|daily|reply|supply|fly|july|italy|belly|jelly|silly|curly|chilly|hilly|bully|rally|ally|lily|holly|apply|rely|likely|elderly|costly|deadly|lively|orderly|smelly|wobbly|bubbly|sly|imply|comply|unlikely)$/.test(w); });
+  if(ly.length>=Math.max(3,n/50)) tips.push({h:"Let verbs do the work",p:"You have "+ly.length+" -ly words (like “"+ly.slice(0,3).join("”, “")+"”). Often a stronger verb does the job alone: “walked slowly” becomes “shuffled.”"});
+  /* passive voice (a rough check) */
+  var pv=(t.match(/\b(was|were|is|are|been|being|be)\s+(\w+ly\s+)?(\w+ed|given|taken|seen|done|made|known|written|broken|forgotten|hidden|stolen|told|found|left|held|built|thrown|shown|kept)\b(\s+by\b)?/gi)||[]).filter(function(m){ return !/\b(was|were|is|are)\s+(tired|excited|interested|bored|scared|worried|surprised|pleased|married|used|supposed|closed|crowded|tied|tucked|painted|lined|covered|filled|located|dressed|stuck|tangled|frozen|faded|cracked|chipped|worn|old-fashioned)\b/i.test(m); });
+  if(pv.length>=2) tips.push({h:"Who is doing it?",p:"A few sentences hide who acts (“"+pv[0].trim()+"”). Try naming the doer first: “The porter locked the door” is stronger than “The door was locked.”"});
+  /* dialogue */
+  var quotes=(t.match(/["“”]/g)||[]).length;
+  if(kd==="dialogue"){
+    if(quotes<4) tips.push({h:"Let them talk",p:"Today is a dialogue day: put the characters’ own words in quotation marks, each speaker on a new line."});
+    else good.push({h:"Real conversation",p:"Your characters speak in their own words. Read it aloud: does each one sound like a different person?"});
+  }
+  var bk=t.match(BOOKISH)||[];
+  if(bk.length>=2) tips.push({h:"Keep “said” simple",p:"Tags like “"+bk.slice(0,2).join("” and “").toLowerCase()+"” call attention to themselves. “Said” disappears, and the words themselves can carry the feeling."});
+  /* paragraphs */
+  var paras=t.split(/\n\s*\n|\n/).filter(function(x){ return x.trim(); });
+  if(n>=180&&paras.length<2) tips.push({h:"Give it room to breathe",p:"It’s all one block. Start a new paragraph when the moment, place or speaker changes: white space helps the reader."});
+  if(kd==="dialogue"&&quotes>=6&&paras.length<2) tips.push({h:"New speaker, new line",p:"Each time a different person speaks, start a new line. It makes a conversation easy to follow."});
+  /* small mechanics */
+  var low=S.filter(function(x){ return /^[a-z]/.test(x.trim()); }).length, ii=(t.match(/(^|\s)i(\s|['’])/g)||[]).length;
+  var dbl=(t.match(/\b(\w+)\s+\1\b/gi)||[]).filter(function(m){ return !/^(had had|that that|very very|no no|yes yes|bye bye|tick tick|knock knock|so so|ha ha)$/i.test(m); });
+  var mech=[]; if(low) mech.push(low===1?"one sentence starts with a small letter":low+" sentences start with a small letter"); if(ii) mech.push("“i” on its own should be “I”"); if(dbl.length) mech.push("a doubled word (“"+dbl[0]+"”)");
+  var ex=(t.match(/!/g)||[]).length; if(ex>=3) mech.push(ex+" exclamation points (one is usually plenty)");
+  if(mech.length) tips.unshift({h:"A quick proofread",p:"Watch for: "+mech.join("; ")+"."});
+  /* strong points to encourage */
+  if(n>=goal()) good.unshift({h:"You reached your goal",p:n+" words on the page. Showing up is the hardest part of writing."});
+  if(S.length>=3&&/[?]/.test(S[0])) good.push({h:"A strong opening",p:"You open with a question: it pulls the reader straight in."});
+  return {good:good.slice(0,3),tips:tips.slice(0,6)};
+}
+function lookItOver(){
+  save();
+  var v=veil("wdLook"), b=v.firstChild, r=analyze(TA.value), sk=P&&P.skill;
+  b.innerHTML='<p class="pk-kick">The Writing Desk · Hone Your Writing Skills</p><h2>Look It Over</h2>'+
+    (sk?'<div class="wd-skill-m"><b>Today’s skill: '+esc(sk.name)+'</b>'+esc(sk.tip)+'</div>':'')+
+    (r.good.length?'<p class="wd-lh ok">What’s working</p>'+r.good.map(function(g){ return '<div class="wd-sug ok"><b>✓ '+esc(g.h)+'</b>'+esc(g.p)+'</div>'; }).join(""):'')+
+    (r.tips.length?'<p class="wd-lh">'+(r.few?"":"Try this")+'</p>'+r.tips.map(function(g){ return '<div class="wd-sug"><b>'+esc(g.h)+'</b>'+esc(g.p)+'</div>'; }).join("")
+                  :'<div class="wd-sug ok"><b>✓ Nothing to flag</b>Read it aloud once: your ear will catch anything a checklist can’t.</div>')+
+    '<p class="wd-small">🔒 These suggestions are worked out right here on your device. Your writing isn’t sent anywhere.</p><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  btnIn(row,writing?"Back to My Page":"Keep Writing",function(){ v.classList.remove("on"); finished=false; if(!writing) showWrite(false); else setTimeout(function(){ try{ TA.focus({preventScroll:true}); }catch(e){} },30); });
+  btnIn(row,"Close",function(){ v.classList.remove("on"); });
+  snd("wd-paper");
+  v.classList.add("on");
+}
 
 /* ---------- finishing ---------- */
 function finish(){
@@ -375,6 +480,7 @@ function result(w,secs,first,sk,sv){
     '<div class="pk-row" style="flex-wrap:wrap"></div>';
   var row=b.querySelector(".pk-row");
   if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  btnIn(row,"Look It Over",function(){ v.classList.remove("on"); lookItOver(); });
   if(mode==="daily") btnIn(row,"Share Result",function(){ share(w,sk); });
   btnIn(row,"Keep Writing",function(){ v.classList.remove("on"); finished=false; showWrite(false); });
   btnIn(row,"Notebook",function(){ v.classList.remove("on"); notebook(); });
@@ -467,7 +573,7 @@ new MutationObserver(function(){ setTimeout(fit,30); setTimeout(fit,400); }).obs
 Parlor.init({
   game:"writing", cat:"create", solo:true, free:true, daily:{key:"bwWrite:",streak:"bwWriteStreak"}, title:"The Writing Desk", bg:"pw/create-desk.jpg?v=1120a", home:"create.html", stage:stage,
   soloLabel:"Today's prompt", dealLabel:"Today's Prompt",
-  tagline:"A Story Starter a Day.", invite:"A story starter a day. Blue hour over the rooftops, a lamp on the desk: write today's page, at your own pace, toward a word goal you choose.",
+  tagline:"Hone Your Writing Skills.", invite:"Hone your writing skills, a page a day. Blue hour over the rooftops, a lamp on the desk: today's prompt, a short writing lesson, and suggestions to make your page stronger.",
   players:[{name:"You",color:"#b8862b"}],
   setsLabel:"Paper",
   sets:[
@@ -476,7 +582,7 @@ Parlor.init({
     {id:"cotton",name:"Deckled Cotton",club:true,dots:["#fffef9","#c8992f"]}
   ],
   rules:{
-    play:"<ol><li><b>One prompt a day:</b> a story starter, with an opening line you can use if you like and a small nudge.</li><li><b>Pick your goal:</b> 50, 150 or 300 words. Then tap <b>Start Writing</b> and write on the page.</li><li><b>Your page saves as you go.</b> Leave and come back any time today. When you reach your goal you’ll hear the typewriter’s bell: tap <b>Finish</b>, or keep going.</li></ol>",
+    play:"<ol><li><b>One prompt a day:</b> a story starter, with an opening line you can use if you like and a small nudge.</li><li><b>Today’s skill:</b> a short writing lesson to try on the page.</li><li><b>Pick your goal:</b> 50, 150 or 300 words. Then tap <b>Start Writing</b> and write on the page.</li><li><b>Your page saves as you go.</b> Leave and come back any time today. When you reach your goal you’ll hear the typewriter’s bell: tap <b>Finish</b>, or keep going.</li><li><b>Look It Over</b> (any time): suggestions to make your page stronger, what’s working and what to try. They’re worked out on your device; your writing isn’t sent anywhere.</li></ol>",
     score:"<ul><li><b>A new prompt every day</b>, the same for everyone. It changes at midnight on your device.</li><li><b>Each weekday has its kind of writing:</b> Sunday Memory, Monday Mystery, Tuesday Letter, Wednesday Poem, Thursday Dialogue, Friday Whimsy, Saturday Place.</li><li><b>Your streak</b> counts the days in a row you reach your goal.</li><li><b>Private:</b> your writing stays on this device. Nothing you write is sent to BrainWhim; only the fact that you finished (for your streak) is saved to your account.</li><li><b>Club Members</b> can write any prompt from the last 30 days (a missed day mends your streak), reread every page in the Notebook, and write on Deckled Cotton.</li></ul>"
   },
   onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Prompt"; }); load(today,"daily"); }
