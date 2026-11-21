@@ -396,7 +396,10 @@ html.gfd #mine{background:none;box-shadow:none;border:22px solid transparent;bor
       if(G.cur===0){ G.ph="fish"; G.want=null; G.emptyFish=true; render(); sayQ(EMPTY,"gf-empty"); idle(); return; }
       G.ph="wait"; render(); later(function(){ friendFish(G.cur,null); },900); return; }
     if(G.cur===0){ G.ph=big?"pick":"ask"; if(big) G.ph="ask"; G.sel=null; render(); G.myTurns++;
-      if(G.myTurns<=2) sayQ(big?BYOU:YOU,big?"gf-byou":"gf-you"); else sayQ(YOURS,"gf-yours"); idle(); return; }
+      if(G.myTurns<=2) sayQ(big?BYOU:YOU,big?"gf-byou":"gf-you");
+      /* Nov 20 (Judy: "Your turn" on every move was annoying): after the first two turns, "Your turn!" only if the child waits 5 s */
+      else { var g0=G, t0=G.myTurns; setTimeout(function(){ if(G===g0&&G.cur===0&&G.myTurns===t0&&(G.ph==="ask"||G.ph==="pick")&&Date.now()-lastAct>=4900) sayQ(YOURS,"gf-yours"); },5000); }
+      idle(); return; }
     G.ph="wait"; render(); later(function(){ friendAsk(G.cur); },900); }
   function next(){ var n=G.P.length, guard=0;
     do{ G.cur=(G.cur+1)%n; guard++; }while(guard<=n&&!G.P[G.cur].hand.length&&!G.deck.length);

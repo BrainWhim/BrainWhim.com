@@ -368,7 +368,7 @@
         return;
       }
       if (fd && fd.error === "invalid") { setErr("That password doesn't match. Try again, or use Forgot password."); return; }
-      if (fd && fd.error === "rate") { setErr("Too many tries. Wait a minute and try again."); return; }
+      if (fd && fd.error === "rate") { setErr("Too many tries. For your safety, please wait 15 minutes and try again, or use Forgot password."); return; }
       if (fd && fd.error === "unconfirmed") { setErr("This account still needs its email confirmed. Check your inbox (and spam)."); return; }
       /* function not reachable yet: fall back to the old email lookup */
       var l = await rpc("bw_login_email", { n: S.ident });

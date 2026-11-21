@@ -4,6 +4,7 @@
 // The lookup runs here, inside Supabase, using the built-in service key
 // (Supabase sets SUPABASE_SERVICE_ROLE_KEY for every Edge Function; it is never in the site).
 // Returns only { access_token, refresh_token } or { error }.
+// Nov 20: a brake on guessing (sql/supabase-login-limit.sql): 5 misses a username / 20 an address per 15 minutes.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const CORS = {
@@ -25,9 +26,14 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim().slice(0, 64);
+  const gate = await admin.rpc("bw_login_gate", { p_uname: name, p_ip: ip });
+  if (!gate.error && gate.data === false) return reply({ error: "rate" });
+  const miss = () => admin.rpc("bw_login_miss", { p_uname: name, p_ip: ip });
+
   const who = await admin.rpc("bw_login_ident", { n: name });
   const row = Array.isArray(who.data) ? who.data[0] : who.data;
-  if (who.error || !row || (!row.email && !row.phone)) return reply({ error: "invalid" });
+  if (who.error || !row || (!row.email && !row.phone)) { await miss(); return reply({ error: "invalid" }); }
 
   const pub = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { auth: { persistSession: false } });
   const creds = row.email
@@ -38,7 +44,9 @@ Deno.serve(async (req) => {
     const m = String(r.error?.message || "").toLowerCase();
     if (r.error?.status === 429 || m.includes("rate limit")) return reply({ error: "rate" });
     if (m.includes("not confirmed")) return reply({ error: "unconfirmed" });
+    await miss();
     return reply({ error: "invalid" });
   }
+  await admin.rpc("bw_login_ok", { p_uname: name });
   return reply({ access_token: r.data.session.access_token, refresh_token: r.data.session.refresh_token });
 });
