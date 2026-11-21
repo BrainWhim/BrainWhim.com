@@ -1658,7 +1658,9 @@ function seatedNow(){ return document.body.classList.contains("seated"); }
 function shrink(el,min){ if(!el) return; el.style.zoom=""; var inner=el.scrollHeight, h=el.clientHeight; if(h>0&&inner>h+2) el.style.zoom=Math.max(min,h/inner); }
 function fitLock(){ /* shrink a note, a lock or the letter that doesn't fit (a long Sunday padlock on a small phone) */
   shrink($("#stNote",LOCK),.7);
-  var m=$("#stMech",LOCK); if(m){ m.style.zoom=""; var kids=[].slice.call(m.children), need=kids.reduce(function(t,k){ var cs=getComputedStyle(k); return t+k.offsetHeight+Math.max(0,parseFloat(cs.marginTop))+Math.max(0,parseFloat(cs.marginBottom)); },0)+(kids.length-1)*parseFloat(getComputedStyle(m).rowGap||0)+10, h=m.clientHeight; if(h>0&&need>h+2) m.style.zoom=Math.max(.7,h/need); }
+  var m=$("#stMech",LOCK); if(m){ m.style.zoom=""; var kids=[].slice.call(m.children), need=kids.reduce(function(t,k){ var cs=getComputedStyle(k); return t+k.offsetHeight+Math.max(0,parseFloat(cs.marginTop))+Math.max(0,parseFloat(cs.marginBottom)); },0)+(kids.length-1)*parseFloat(getComputedStyle(m).rowGap||0)+10, h=m.clientHeight; if(h>0&&need>h+2) m.style.zoom=Math.max(.7,h/need);
+    /* Nov 20: on a phone the lock grows into empty room (the safe's jewels, the books, the dials), up to 1.45 times */
+    else if(h>0&&BOARD.classList.contains("tall")){ var mw=kids.reduce(function(t,k){ return Math.max(t,k.offsetWidth); },0), z=Math.min(1.45,h/need,(m.clientWidth-10)/Math.max(1,mw)); if(z>1.06) m.style.zoom=z.toFixed(3); } }
   var bl=$("#stBlot",stage), bi=bl&&bl.firstChild; if(bi&&bi.style){ bi.style.zoom=""; var cs=getComputedStyle(bl), room=bl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom); if(room>0&&bi.offsetHeight>room+1) bi.style.zoom=Math.max(.62,room/bi.offsetHeight); }
 }
 function fit(){
@@ -1688,7 +1690,9 @@ function fit(){
       var barTop=bar&&getComputedStyle(bar).display!=="none"?bar.getBoundingClientRect().top:window.innerHeight;
       if(ch>stTop) stage.style.paddingTop=Math.round(ch-stTop)+"px";
       availH=barTop-8-Math.max(ch,stTop); }
-    var slim=window.innerHeight<700; stage.classList.toggle("slim",slim);
+    stage.classList.remove("slim");
+    /* Nov 20: a short phone keeps the token plate and buttons under the room when they fit (no empty band at the bottom) */
+    var slim=window.innerHeight<700&&(coach||(availH-$(".st-right",stage).offsetHeight-8)/(VW-12)<1); stage.classList.toggle("slim",slim);
     var rest=coach||slim?0:$(".st-right",stage).offsetHeight+8;
     /* as tall as fits, between 1 and 1.18 times the width; then the width that fits */
     var tr=Math.max(coach?.78:1,Math.min(1.18,(availH-rest)/(VW-12))); BOARD.style.setProperty("--tr",tr.toFixed(3)); BOARD.classList.toggle("noblot",tr<1);
