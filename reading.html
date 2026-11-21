@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Reading Room · BrainWhim Learn</title>
+<meta name="description" content="The Reading Room: a five-minute lesson a day at BrainWhim. One good idea, a few short pages and three quick questions, with a new subject each weekday.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1120c">
+<style>
+/* ===== The Reading Room (Learn · The Library Wing, Nov 21, 2026): a five-minute lesson a day, three questions, a streak =====
+   One lesson a day, the same for everyone (by the reader's own date). Each weekday has its own subject (reading-lessons.js).
+   The lesson is a page of the book on the library table: the title page, four short pages, "Remember This", then three questions.
+   Stars by answers right the first time (3 → ★★★). Club Members can open any of the last 30 days' lessons (Past Lessons).
+   Pages (the Pages card): Cream Linen and Evening Lamp free, Gilt-Edged Vellum for Club Members. */
+.rr-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.rr-book{--ink:#2b2218;--soft:#6a5a44;--gold:#9a6a1c;--rule:rgba(110,80,40,.22);--edgeA:#efe6d2;--edgeB:#d8cbb0;
+  position:relative;width:min(100%,700px);height:var(--rr-h,560px);display:flex;flex-direction:column;color:var(--ink);
+  border-radius:3px 12px 12px 3px;
+  background:
+    radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.55),rgba(255,255,255,0) 60%),
+    linear-gradient(90deg,rgba(90,60,25,.20) 0,rgba(90,60,25,.06) 18px,rgba(0,0,0,0) 44px),
+    repeating-linear-gradient(0deg,rgba(120,90,50,.018) 0 2px,rgba(0,0,0,0) 2px 4px),
+    linear-gradient(180deg,#fbf5e6,#f3e9d2);
+  box-shadow:3px 3px 0 -1px var(--edgeA),3px 3px 0 0 var(--edgeB),6px 6px 0 -1px var(--edgeA),6px 6px 0 0 var(--edgeB),
+    9px 9px 0 -1px var(--edgeA),9px 9px 0 0 var(--edgeB),0 26px 50px rgba(0,0,0,.55),0 6px 14px rgba(0,0,0,.35)}
+/* the ribbon bookmark */
+.rr-book::before{content:"";position:absolute;top:-8px;right:56px;width:22px;height:74px;z-index:2;pointer-events:none;
+  background:linear-gradient(90deg,#7a1424,#a8243a 45%,#7a1424);clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);
+  box-shadow:0 2px 4px rgba(0,0,0,.35);filter:drop-shadow(1px 2px 2px rgba(0,0,0,.35))}
+.rr-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:34px clamp(22px,5.5%,52px) 18px clamp(28px,6.5%,60px);-webkit-overflow-scrolling:touch}
+.rr-scroll{scrollbar-width:thin;scrollbar-color:rgba(154,106,28,.45) transparent}.rr-scroll::-webkit-scrollbar{width:6px}.rr-scroll::-webkit-scrollbar-thumb{background:rgba(154,106,28,.4);border-radius:3px}
+.rr-kick{margin:0 0 10px;font:700 12px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.rr-title{margin:0 0 10px;font:700 clamp(30px,4.6vw,42px)/1.08 "Cormorant Garamond",Georgia,serif;color:var(--ink)}
+.rr-dek{margin:0 0 18px;font:italic 19px/1.5 Georgia,"Times New Roman",serif;color:var(--soft)}
+.rr-h{margin:0 0 12px;font:700 clamp(25px,3.4vw,31px)/1.15 "Cormorant Garamond",Georgia,serif;color:var(--ink)}
+.rr-text p{margin:0 0 14px;font:18px/1.62 Georgia,"Times New Roman",serif;color:var(--ink)}
+.rr-rule{height:1px;background:var(--rule);margin:16px 0}
+.rr-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin:14px 0 0;font:600 13.5px/1.4 Montserrat,system-ui,sans-serif;color:var(--soft)}
+.rr-meta b{color:var(--ink)}
+.rr-done{display:inline-flex;align-items:center;gap:6px;margin:14px 0 0;padding:7px 12px;border-radius:8px;font:700 14px/1.2 Montserrat,system-ui,sans-serif;
+  color:#2f5a2a;background:rgba(80,140,70,.12);border:1px solid rgba(80,140,70,.3)}
+.rr-remember{margin:6px 0 0;padding:18px 20px;border-radius:6px;border-left:4px solid #b8862b;background:rgba(184,134,43,.10);
+  font:19px/1.55 Georgia,"Times New Roman",serif;color:var(--ink)}
+/* the questions */
+.rr-q{margin:4px 0 16px;font:700 21px/1.4 Georgia,"Times New Roman",serif;color:var(--ink)}
+.rr-ans{display:flex;flex-direction:column;gap:10px}
+.rr-a{appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:10px 14px;border-radius:10px;cursor:pointer;text-align:left;
+  font:17px/1.4 Georgia,"Times New Roman",serif;color:var(--ink);background:rgba(255,255,255,.55);border:1.5px solid rgba(120,90,50,.28);
+  box-shadow:0 2px 0 rgba(120,90,50,.18);-webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s}
+.rr-a i{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;font:700 13px/1 Montserrat,system-ui,sans-serif;font-style:normal;
+  color:var(--gold);border:1.5px solid rgba(154,106,28,.45)}
+@media (hover:hover){.rr-a:not([disabled]):hover{background:rgba(255,248,228,.95);border-color:rgba(154,106,28,.6)}}
+.rr-a[disabled]{cursor:default}
+.rr-a.right{background:rgba(96,160,84,.16);border-color:#5d9a4f}.rr-a.right i{color:#fff;background:#5d9a4f;border-color:#5d9a4f}
+.rr-a.wrong{background:rgba(190,70,60,.12);border-color:#b6493d}.rr-a.wrong i{color:#fff;background:#b6493d;border-color:#b6493d}
+.rr-a.dim{opacity:.55}
+.rr-why{margin:14px 0 0;padding:12px 14px;border-radius:8px;font:16.5px/1.5 Georgia,"Times New Roman",serif;color:var(--ink);background:rgba(184,134,43,.10)}
+.rr-why b{font-family:Montserrat,system-ui,sans-serif;font-size:14px;letter-spacing:.04em}
+.rr-why.ok b{color:#3f7a33}.rr-why.no b{color:#a23a2f}
+/* the foot of the page: back · page dots · next */
+.rr-foot{flex:none;display:flex;align-items:center;gap:10px;padding:12px clamp(18px,4%,34px) 16px clamp(26px,5.5%,48px);border-top:1px solid var(--rule)}
+.rr-dots{flex:1;display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.rr-dots i{width:8px;height:8px;border-radius:50%;background:rgba(120,90,50,.25)}
+.rr-dots i.on{background:#b8862b;box-shadow:0 0 0 3px rgba(184,134,43,.2)}
+.rr-dots i.q{border-radius:2px;transform:rotate(45deg) scale(.85)}
+.rr-btn{appearance:none;min-height:44px;padding:0 16px;border-radius:8px;cursor:pointer;white-space:nowrap;font:700 15px/1 Montserrat,system-ui,sans-serif;
+  color:#3a2306;background:linear-gradient(180deg,#ffe7a6,#e9c46a);border:0;box-shadow:0 3px 0 #a97a1c;-webkit-tap-highlight-color:transparent}
+.rr-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #a97a1c}
+.rr-btn.gh{background:transparent;color:var(--soft);box-shadow:none;border:1.5px solid rgba(120,90,50,.3)}
+.rr-btn[disabled]{opacity:.35;cursor:default;transform:none}
+.rr-btn.hide{visibility:hidden}
+.rr-row{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 4px}
+/* page turns */
+.rr-scroll.turn{animation:rrTurn .32s ease}
+@keyframes rrTurn{0%{opacity:0;transform:translateX(14px)}100%{opacity:1;transform:none}}
+.rr-scroll.turnb{animation:rrTurnB .32s ease}
+@keyframes rrTurnB{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rr-scroll.turn,.rr-scroll.turnb{animation:none}}
+/* Evening Lamp: a warm dark page for reading at night */
+body[data-set="lamp"] .rr-book{--ink:#f1e6cf;--soft:#c9b897;--gold:#e7b85a;--rule:rgba(240,210,150,.18);--edgeA:#3a2c1c;--edgeB:#1f170e;
+  background:radial-gradient(110% 80% at 25% 0%,rgba(255,200,120,.12),rgba(0,0,0,0) 60%),linear-gradient(90deg,rgba(0,0,0,.35) 0,rgba(0,0,0,0) 40px),linear-gradient(180deg,#3b2d1e,#2c2116)}
+body[data-set="lamp"] .rr-a{background:rgba(255,240,210,.06);border-color:rgba(240,210,150,.25);box-shadow:none}
+@media (hover:hover){body[data-set="lamp"] .rr-a:not([disabled]):hover{background:rgba(255,240,210,.12)}}
+body[data-set="lamp"] .rr-done{color:#bfe3b3;background:rgba(120,190,100,.14)}
+body[data-set="lamp"] .rr-a.right{background:rgba(120,190,100,.18)}body[data-set="lamp"] .rr-a.wrong{background:rgba(220,100,90,.16)}
+body[data-set="lamp"] .rr-why.ok b{color:#9fd88f}body[data-set="lamp"] .rr-why.no b{color:#f0a196}
+body[data-set="lamp"] .rr-dots i{background:rgba(240,210,150,.22)}
+/* Gilt-Edged Vellum (Club): whiter page, gold edges, a deep green ribbon */
+body[data-set="vellum"] .rr-book{--edgeA:#f3e3a8;--edgeB:#c8992f;
+  background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.7),rgba(255,255,255,0) 60%),linear-gradient(90deg,rgba(90,70,30,.14) 0,rgba(0,0,0,0) 40px),linear-gradient(180deg,#fffdf6,#f7f0de)}
+body[data-set="vellum"] .rr-book::before{background:linear-gradient(90deg,#14432f,#23684a 45%,#14432f)}
+body[data-set="vellum"] .rr-book::after{content:"";position:absolute;inset:7px;border:1px solid rgba(184,134,43,.35);border-radius:2px 9px 9px 2px;pointer-events:none}
+/* the result window */
+.rr-stars{font-size:38px;letter-spacing:6px;color:#f2be45;text-shadow:0 0 18px rgba(242,190,69,.45);margin:6px 0 10px}
+.rr-stars i{font-style:normal;color:rgba(255,255,255,.18);text-shadow:none}
+.rr-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 12px}
+.rr-facts div{padding:8px 6px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);text-align:center}
+.rr-facts b{display:block;font:700 22px/1.2 Montserrat,system-ui,sans-serif;color:#fff}
+.rr-facts small{font:600 11.5px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.rr-note{margin:0 0 10px;font:15px/1.5 Georgia,serif;color:rgba(255,255,255,.85)}
+/* Past Lessons */
+.rr-past{display:flex;flex-direction:column;gap:6px;max-height:min(56vh,460px);overflow-y:auto;margin:8px 0 12px;padding-right:2px}
+.rr-pl{appearance:none;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;text-align:left;cursor:pointer;
+  color:#fff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font:inherit}
+.rr-pl:hover{background:rgba(255,255,255,.1)}
+.rr-pl .d{flex:none;width:76px;font:700 12px/1.3 Montserrat,system-ui,sans-serif;color:#f2be45;letter-spacing:.04em;text-transform:uppercase}
+.rr-pl .t{flex:1;min-width:0;font:600 15px/1.35 Georgia,serif}
+.rr-pl .t small{display:block;font:600 11.5px/1.3 Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.55);letter-spacing:.04em;text-transform:uppercase}
+.rr-pl .s{flex:none;font-size:14px;color:#f2be45}
+.rr-pl.lock{opacity:.6;cursor:default}
+.rr-club{margin:4px 0 10px;padding:12px 14px;border-radius:10px;background:linear-gradient(180deg,rgba(242,190,69,.16),rgba(242,190,69,.06));border:1px solid rgba(242,190,69,.35);
+  font:14.5px/1.5 Montserrat,system-ui,sans-serif;color:#fff}
+@media (max-width:560px){
+  .rr-scroll{padding:26px 18px 14px 24px}
+  .rr-text p{font-size:17.5px}
+  .rr-book::before{right:30px;height:60px}
+  .rr-foot{padding:10px 12px 12px 18px;gap:8px}
+  .rr-btn{padding:0 13px;font-size:14.5px}
+}
+</style>
+<script src="bw-auth.js?v=1120c"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,700,100,0&display=swap">
+<style id="bw-wordmark">/* BrainWhim wordmark (Nov 11): gold Whim, set tight so BrainWhim always reads as one word */
+span.whim,.brand-whim,.brand-whim-accent{background:linear-gradient(180deg,#fff2b3 0%,#f2be45 52%,#c27f1c 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#f2be45!important;text-shadow:none!important;padding:0 .08em!important;margin-left:-.16em!important;margin-right:-.08em!important}
+/* Nov 11 refinement (C): "Brain" in polished ivory-silver, "Whim" gold, both with a soft shadow from the top-left light; room between coin and name */
+span:has(+ span.whim),.brand-brain,.brand .brain{background:linear-gradient(180deg,#ffffff 0%,#e8e4da 50%,#a19c92 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#efe9dc!important;text-shadow:none!important;letter-spacing:-.01em;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+span.whim,.brand-whim,.brand-whim-accent{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+.brand .whim{font-size:1.08em}
+.brand>img{margin-right:8px!important}
+/* Nov 11 (18b): "Brain" in Fraunces Soft 700 (rounded serifs, real thick-and-thin), sized so its B stands as tall as Pacifico's W */
+span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_){font-family:"Fraunces",Georgia,serif!important;font-weight:700!important;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:1.3em!important;letter-spacing:-.025em!important;line-height:1!important}
+/* Nov 11 evening: the Pacifico "Tap for Whims" labels in gold to match */
+.whim-label:not(#_),.whimp .wt:not(#_),.whim-mobile-card p:not(#_),.pk-whim-label:not(#_){color:#F2BE45!important}
+</style>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e31875694216416e84797ec764428367"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html" aria-label="BrainWhim"><img src="bw-emblem.png?v=1111a" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="lobby.html">Board Games</a><a href="kids.html">Kids' Corner</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1120a"></script>
+<script src="bw-avatars.js?v=1120a"></script>
+<script src="parlor-kit.js?v=1121a"></script>
+<script src="bw-share.js?v=1120a"></script>
+<script src="reading-lessons.js?v=1121a"></script>
+<script>
+(function(){
+"use strict";
+function $(s,r){ return (r||document).querySelector(s); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){} return null; }
+
+/* ---------- the dates ---------- */
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var EPOCH=new Date(2026,10,1);   /* lesson No. 1 (re-base at launch if wanted) */
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+function shortDate(d){ return DAYS[d.getDay()].slice(0,3)+" "+MONTHS[d.getMonth()].slice(0,3)+" "+d.getDate(); }
+var today=new Date(); today=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+var todayKey=ymd(today);
+
+/* ---------- which lesson a day gets: its weekday's subject, that subject's lessons in turn a week at a time ---------- */
+function trackOf(d){ return RR_TRACKS[d.getDay()]; }
+function lessonFor(d){ var tr=trackOf(d), list=RR_LESSONS[tr.id]||[]; if(!list.length) return null; var w=Math.floor((dayNo(d)-1)/7); return list[((w%list.length)+list.length)%list.length]; }
+function hash(str){ var h=2166136261; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+/* answers are written right-one-first in any order; show them in a fixed shuffled order per question */
+function order(L,qi){ var n=L.qs[qi].a.length, o=[], h=hash(L.id+":"+qi); for(var i=0;i<n;i++) o.push(i); for(var j=n-1;j>0;j--){ h=Math.imul(h^(h>>>15),2246822507)>>>0; var k=h%(j+1), t=o[j]; o[j]=o[k]; o[k]=t; } return o; }
+
+/* ---------- state ---------- */
+var L=null, day=today, mode="daily", step=0, picks=[], t0=0, finished=false;
+var BOOK, SCROLL, FOOT, BACK, NEXT, DOTS;
+function rec(k){ try{ return JSON.parse(store("bwRead:"+(k||todayKey))||"null"); }catch(e){ return null; } }
+function streak(){ try{ return JSON.parse(store("bwReadStreak")||'{"n":0,"best":0,"last":""}'); }catch(e){ return {n:0,best:0,last:""}; } }
+function member(){ try{ return !!(window.BW&&BW.member&&BW.member()); }catch(e){ return false; } }
+function nPages(){ return L.pages.length; }
+/* steps: 0 = title page · 1..n = pages · n+1 = Remember This · n+2.. = the questions */
+function lastStep(){ return nPages()+1+L.qs.length; }
+function qIndex(s){ return s-(nPages()+2); }
+
+/* ---------- sounds (the room's own: paper, a soft bell, a wooden knock, a warm close) ---------- */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("rr-page",function(h,o){ var d=h.out(.16), t=h.t, b=o.back?.85:1;   /* a page lifting and settling */
+    h.burst(d,t,.16,"bandpass",2600*b,1.2,.22,.03,.11);
+    h.burst(d,t+.05,.12,"highpass",5200*b,.7,.09,.02,.08);
+    h.burst(d,t+.15,.05,"lowpass",900,1,.12,.003,.04); });
+  D("rr-open",function(h){ var d=h.out(.18), t=h.t;   /* the book opens: a soft thump and the pages fan */
+    h.osc(d,t,"sine",120,70,.18,.004,.16,["lowpass",400]);
+    for(var i=0;i<5;i++) h.burst(d,t+.04+i*.035,.05,"bandpass",3000+i*300,1.5,.07*(1-i/6),.004,.04); });
+  D("rr-right",function(h){ var d=h.out(.34); h.bell(d,h.t,1046.5,.07,1.1); h.bell(d,h.t+.11,1568,.055,1.3); });
+  D("rr-wrong",function(h){ var d=h.out(.16), t=h.t;   /* a muted knock on the table */
+    h.osc(d,t,"sine",190,120,.16,.004,.12,["lowpass",500]); h.burst(d,t,.05,"lowpass",700,1,.08,.002,.04);
+    h.osc(d,t+.09,"sine",150,100,.1,.004,.12,["lowpass",420]); });
+  D("rr-done",function(h,o){ var d=h.out(.4), t=h.t, tine=[[1,1,1],[2.76,.18,.3],[5.4,.06,.15]];
+    var notes=o.stars>=3?[523.3,659.3,784,1046.5,1318.5]:o.stars===2?[523.3,659.3,784,1046.5]:[523.3,659.3,784];
+    notes.forEach(function(f,i){ h.bell(d,t+i*.09,f,.07,1.6,tine); });
+    h.osc(d,t+.02,"sine",110,70,.12,.004,.2,["lowpass",380]); });
+})();
+function snd(n,o){ if(window.Parlor&&Parlor.sfx) Parlor.sfx(n,o||{}); }
+
+/* ---------- the book ---------- */
+var stage=document.createElement("div"); stage.className="rr-pad";
+stage.innerHTML='<article class="rr-book" aria-live="polite"><div class="rr-scroll" data-bws="off"></div><div class="rr-foot"><button class="rr-btn gh" type="button" id="rrBack">← Back</button><div class="rr-dots" aria-hidden="true"></div><button class="rr-btn" type="button" id="rrNext">Next →</button></div></article>';
+BOOK=$(".rr-book",stage); SCROLL=$(".rr-scroll",stage); FOOT=$(".rr-foot",stage); BACK=$("#rrBack",stage); NEXT=$("#rrNext",stage); DOTS=$(".rr-dots",stage);
+BACK.onclick=function(){ go(step-1,true); };
+NEXT.onclick=function(){ if(NEXT.disabled) return; if(step>=lastStep()){ finish(); return; } go(step+1); };
+document.addEventListener("keydown",function(e){
+  if(!document.body.classList.contains("seated")||document.querySelector(".pk-veil.on")) return;
+  if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  var qi=step>nPages()+1?qIndex(step):-1;
+  if(qi>=0&&picks[qi]==null&&/^[1-3abc]$/i.test(e.key)){ var k=/[1-3]/.test(e.key)?+e.key-1:"abc".indexOf(e.key.toLowerCase()); var b=SCROLL.querySelectorAll(".rr-a")[k]; if(b){ b.click(); e.preventDefault(); } return; }
+  if(e.key==="ArrowRight"&&!NEXT.disabled){ NEXT.click(); e.preventDefault(); }
+  else if(e.key==="ArrowLeft"&&step>0){ BACK.click(); e.preventDefault(); }
+});
+
+function load(d,m){
+  day=d; mode=m; L=lessonFor(d); step=0; picks=[]; t0=0; finished=false;
+  draw(); status(); if(window.Parlor&&Parlor.score) Parlor.score([0]);
+  if(window.Parlor){ Parlor.info("No. "+dayNo(d)+" · "+niceDate(d)); Parlor.coach(null); }
+}
+function status(){
+  if(!window.Parlor||!L) return;
+  var head=mode==="archive"?"Past Lesson · "+shortDate(day):mode==="again"?"Reading Again":"Today's Lesson";
+  var n=nPages(), sub=step===0?trackOf(day).name+" · about 5 minutes":step<=n?"Page "+step+" of "+n:step===n+1?"Remember This":"Question "+(qIndex(step)+1)+" of "+L.qs.length;
+  Parlor.status(head,sub);
+}
+function go(s,back){
+  s=Math.max(0,Math.min(lastStep(),s)); if(s===step) return;
+  if(s>0&&!t0) t0=Date.now();
+  step=s; snd(s===1&&!back?"rr-open":"rr-page",{back:!!back});
+  draw(back); status();
+}
+function dots(){
+  var h="", n=lastStep();
+  for(var i=1;i<=n;i++) h+='<i class="'+(i>nPages()+1?"q":"")+(i===step?" on":"")+'"></i>';
+  DOTS.innerHTML=step===0?"":h;
+}
+function draw(back){
+  if(!L){ SCROLL.innerHTML='<p class="rr-kick">The Reading Room</p><h2 class="rr-title">A lesson is on its way</h2>'; FOOT.style.display="none"; return; }
+  var n=nPages(), tr=trackOf(day), h="";
+  if(step===0){
+    var r=mode==="archive"?rec(ymd(day)):mode==="daily"?rec():null;
+    h='<p class="rr-kick">'+esc(DAYS[day.getDay()])+' · '+esc(tr.name)+'</p><h2 class="rr-title">'+esc(L.title)+'</h2><p class="rr-dek">'+esc(L.dek)+'</p>'+
+      '<div class="rr-rule"></div><p class="rr-meta"><span><b>No. '+dayNo(day)+'</b> · '+esc(niceDate(day))+'</span><span>'+n+' short pages · 3 questions · about 5 minutes</span></p>'+
+      (r?'<p class="rr-done">✓ Read'+(mode==="daily"?" today":"")+' · '+r.s+' of 3 right</p>':"")+
+      '<div class="rr-row"><button class="rr-btn" type="button" data-a="begin">'+(r?"Read It Again":"Begin Reading")+'</button>'+
+      (mode==="daily"?'<button class="rr-btn gh" type="button" data-a="past">Past Lessons</button>':'<button class="rr-btn gh" type="button" data-a="today">Today’s Lesson</button>')+'</div>';
+  } else if(step<=n){
+    var pg=L.pages[step-1];
+    h='<p class="rr-kick">'+esc(L.title)+'</p><h3 class="rr-h">'+esc(pg.h)+'</h3><div class="rr-text">'+pg.p.map(function(p){ return "<p>"+esc(p)+"</p>"; }).join("")+'</div>';
+  } else if(step===n+1){
+    h='<p class="rr-kick">'+esc(L.title)+'</p><h3 class="rr-h">Remember This</h3><p class="rr-remember">'+esc(L.remember)+'</p>'+
+      '<div class="rr-text" style="margin-top:16px"><p>Now three quick questions. Take your time: the pages are only a tap back.</p></div>';
+  } else {
+    var qi=qIndex(step), Q=L.qs[qi], o=order(L,qi), pk=picks[qi];
+    h='<p class="rr-kick">Check Yourself · '+(qi+1)+' of '+L.qs.length+'</p><p class="rr-q">'+esc(Q.q)+'</p><div class="rr-ans">'+
+      o.map(function(ai,k){
+        var cls=pk==null?"":ai===Q.c?" right":ai===pk?" wrong":" dim";
+        return '<button class="rr-a'+cls+'" type="button" data-ai="'+ai+'"'+(pk!=null?" disabled":"")+'><i>'+"ABC"[k]+'</i><span>'+esc(Q.a[ai])+'</span></button>';
+      }).join("")+'</div>'+
+      (pk!=null?'<p class="rr-why '+(pk===Q.c?"ok":"no")+'"><b>'+(pk===Q.c?"RIGHT":"NOT QUITE")+'</b>  '+esc(Q.why)+'</p>':"");
+  }
+  SCROLL.innerHTML=h; SCROLL.scrollTop=0;
+  SCROLL.classList.remove("turn","turnb"); void SCROLL.offsetWidth; if(step>0||back) SCROLL.classList.add(back?"turnb":"turn");
+  FOOT.style.display=step===0?"none":"";
+  BACK.disabled=step===0;
+  var qi2=step>n+1?qIndex(step):-1;
+  NEXT.textContent=step===n+1?"Check Yourself →":step===lastStep()?"Finish ✓":qi2>=0?"Next Question →":"Next →";
+  NEXT.disabled=qi2>=0&&picks[qi2]==null;
+  dots();
+}
+SCROLL_CLICK();
+function SCROLL_CLICK(){
+  SCROLL.addEventListener("click",function(e){
+    if(!e.target.isConnected) return;
+    var b=e.target.closest("[data-a]"); if(b){ var a=b.getAttribute("data-a");
+      if(a==="begin") go(1); else if(a==="past") pastLessons(); else if(a==="today") load(today,"daily"); return; }
+    var x=e.target.closest(".rr-a"); if(!x||x.disabled) return;
+    var qi=qIndex(step), Q=L.qs[qi]; if(picks[qi]!=null) return;
+    picks[qi]=+x.getAttribute("data-ai"); snd(picks[qi]===Q.c?"rr-right":"rr-wrong"); if(window.Parlor&&Parlor.score) Parlor.score([score()]);
+    draw(); SCROLL.classList.remove("turn","turnb");
+    var w=$(".rr-why",SCROLL); if(w&&w.scrollIntoView) setTimeout(function(){ try{ w.scrollIntoView({block:"nearest",behavior:"smooth"}); }catch(er){} },60);
+  });
+}
+
+/* ---------- finishing ---------- */
+function score(){ var s=0; L.qs.forEach(function(Q,i){ if(picks[i]===Q.c) s++; }); return s; }
+function finish(){
+  if(finished) return; finished=true;
+  var s=score(), secs=t0?Math.round((Date.now()-t0)/1000):0, first=false, sk=streak(), srv=null, k=ymd(day);
+  snd("rr-done",{stars:s});
+  if(mode==="daily"&&!rec()){
+    first=true; store("bwRead:"+todayKey,JSON.stringify({s:s,sec:secs,id:L.id}));
+    var y=new Date(today); y.setDate(y.getDate()-1);
+    sk.n=sk.last===ymd(y)?sk.n+1:sk.last===todayKey?sk.n:1; sk.last=todayKey; sk.best=Math.max(sk.best||0,sk.n); store("bwReadStreak",JSON.stringify(sk));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(todayKey,{s:s,sec:secs,id:L.id}):null;
+  } else if(mode==="archive"&&!rec(k)){
+    first=true; store("bwRead:"+k,JSON.stringify({s:s,sec:secs,id:L.id,past:1}));
+    srv=window.Parlor&&Parlor.dailyFinish?Parlor.dailyFinish(k,{s:s,sec:secs,id:L.id},true):null;   /* Club catch-up: mends the streak */
+  }
+  setTimeout(function(){ withServer(srv,function(sv){ if(sv&&sv.ok) sk={n:sv.n,best:sv.best,last:sv.last}; result(s,secs,first,sk,sv); }); },650);
+}
+function withServer(srv,go2){ if(!srv){ go2(null); return; } var t=setTimeout(function(){ t=0; go2(null); },1500); srv.then(function(sv){ if(t){ clearTimeout(t); go2(sv); } },function(){ if(t){ clearTimeout(t); go2(null); } }); }
+function fmt(sec){ var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function veil(id){ var v=$("#"+id); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id=id; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v);
+  v.addEventListener("click",function(e){ if(e.target===v) v.classList.remove("on"); }); } return v; }
+function result(s,secs,first,sk,sv){
+  var v=veil("rrEnd"), b=v.firstChild;
+  var head=mode==="archive"?"Past Lesson · "+niceDate(day):"The Reading Room · No. "+dayNo(day);
+  var title=s===3?"Well Read!":s===2?"Nicely Done":s===1?"Lesson Read":"Lesson Read";
+  b.innerHTML='<p class="pk-kick">'+esc(head)+'</p><h2>'+title+'</h2>'+
+    '<div class="rr-stars">'+"★★★".slice(0,s)+'<i>'+"★★★".slice(s)+'</i></div>'+
+    '<div class="rr-facts"><div><b>'+s+' of 3</b><small>Right</small></div><div><b>'+fmt(secs)+'</b><small>Time</small></div><div><b>'+(mode==="daily"?(sk.n||1):"–")+'</b><small>Streak</small></div></div>'+
+    '<p class="rr-note"><b>'+esc(L.title)+':</b> '+esc(L.remember)+'</p>'+
+    (mode==="daily"?(first?"":'<p class="rr-note" style="opacity:.75">You’d already read today’s lesson; your first result is the one kept.</p>'):"")+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(mode==="daily"&&window.Parlor&&Parlor.dailyNote) b.insertBefore(Parlor.dailyNote(sk.n||1,sv),row);
+  function bt(label,cls,fn){ var x=document.createElement("button"); x.type="button"; x.className="pk-btn"+(cls?" "+cls:""); x.textContent=label; x.onclick=fn; row.appendChild(x); return x; }
+  if(mode==="daily") bt("Share Result","",function(){ share(s,sk); });
+  bt("Past Lessons","",function(){ v.classList.remove("on"); pastLessons(); });
+  if(mode!=="daily") bt("Today’s Lesson","",function(){ v.classList.remove("on"); load(today,"daily"); });
+  var a=document.createElement("a"); a.className="pk-btn"; a.href="learn.html"; a.textContent="Back to Learn"; row.appendChild(a);
+  v.classList.add("on");
+}
+function share(s,sk){
+  var txt="BrainWhim · The Reading Room No. "+dayNo(today)+"\n"+"★★★".slice(0,s)+"☆☆☆".slice(s)+" "+s+" of 3 · "+L.title+(sk&&sk.n>1?" · "+sk.n+"-day streak":"")+"\nbrainwhim.com/reading.html";
+  if(window.BWShare){ BWShare.go(txt); return; }
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* ---------- Past Lessons (Club): the last 30 days ---------- */
+function pastLessons(){
+  var v=veil("rrPast"), b=v.firstChild, club=member(), items="";
+  for(var i=1;i<=30;i++){
+    var d=new Date(today); d.setDate(d.getDate()-i); var Lx=lessonFor(d); if(!Lx) continue; var r=rec(ymd(d));
+    items+='<button type="button" class="rr-pl'+(club?"":" lock")+'" data-k="'+ymd(d)+'"><span class="d">'+esc(shortDate(d))+'</span><span class="t"><small>'+esc(trackOf(d).name)+'</small>'+esc(Lx.title)+'</span><span class="s">'+(r?"★★★".slice(0,r.s)+(r.s?"":"✓"):club?"":"🔒")+'</span></button>';
+  }
+  b.innerHTML='<p class="pk-kick">The Reading Room</p><h2>Past Lessons</h2>'+
+    (club?'<p class="rr-note">Any lesson from the last 30 days. Reading a day you missed mends your streak.</p>'
+         :'<div class="rr-club">Past lessons open with the <b>Club</b>: read any of the last 30 days, and a missed day mends your streak. Today’s lesson is always free.</div>')+
+    '<div class="rr-past">'+items+'</div><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(!club){ var j=document.createElement("a"); j.className="pk-btn"; j.href="member.html"; j.textContent="Join the Club"; row.appendChild(j); }
+  var c=document.createElement("button"); c.type="button"; c.className="pk-btn"; c.textContent="Close"; c.onclick=function(){ v.classList.remove("on"); }; row.appendChild(c);
+  [].forEach.call(b.querySelectorAll(".rr-pl"),function(x){ x.onclick=function(){
+    if(!member()){ if(window.Parlor) Parlor.toast("Past lessons open with the Club."); return; }
+    var p=x.getAttribute("data-k").split("-"); v.classList.remove("on"); load(new Date(+p[0],+p[1]-1,+p[2]),"archive");
+    if(!document.body.classList.contains("seated")&&window.Parlor&&Parlor.sitHouse) Parlor.sitHouse(); }; });
+  v.classList.add("on");
+}
+
+/* ---------- fitting the book to the screen ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  var wide=window.innerWidth>=1000, st2=document.querySelector(".pk-stage");
+  var top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var h=wide?window.innerHeight-top-28:window.innerHeight-(seatedNow()?top:56)-(64+24)-8;
+  h=Math.max(window.innerHeight<560?230:380,Math.min(820,h));
+  BOOK.style.setProperty("--rr-h",Math.round(h)+"px");
+}
+window.addEventListener("resize",function(){ requestAnimationFrame(fit); });
+new MutationObserver(function(){ setTimeout(fit,30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+
+/* ---------- the room ---------- */
+Parlor.init({
+  game:"reading", cat:"learn", solo:true, free:true, daily:{key:"bwRead:",streak:"bwReadStreak"}, title:"The Reading Room", bg:"pw/learn-reading.jpg?v=1120a", home:"learn.html", stage:stage,
+  soloLabel:"Today's lesson", dealLabel:"Today's Lesson",
+  tagline:"Five minutes, one good idea, every day.", invite:"Rain on the tall window, a lamp on the table. Read today's short lesson, then answer three questions.",
+  players:[{name:"You",color:"#b8862b"}],
+  setsLabel:"Pages",
+  sets:[
+    {id:"linen",name:"Cream Linen",need:0,dots:["#f6eedb","#2b2218"]},
+    {id:"lamp",name:"Evening Lamp",need:0,dots:["#33261a","#f1e6cf"]},
+    {id:"vellum",name:"Gilt-Edged Vellum",club:true,dots:["#fffdf6","#c8992f"]}
+  ],
+  rules:{
+    play:"<ol><li><b>One lesson a day:</b> a few short pages on one good idea. Tap <b>Next</b> (or press →) to turn the page, <b>Back</b> to look again.</li><li><b>Remember This:</b> the one line worth keeping.</li><li><b>Check Yourself:</b> three questions. Tap an answer to see if it’s right and why. You can always turn back to the pages.</li></ol>",
+    score:"<ul><li><b>A new lesson every day</b>, the same for everyone. It changes at midnight on your device.</li><li><b>Each weekday has its subject:</b> Monday Science, Tuesday History, Wednesday Words, Thursday Money & Life, Friday Art & Music, Saturday Nature & Places, Sunday How Things Work.</li><li><b>Stars:</b> one for each question right the first time.</li><li><b>Your streak</b> counts the days in a row you read the lesson.</li><li><b>Club Members</b> can open any lesson from the last 30 days; reading a day you missed mends your streak.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Lesson"; }); load(today,"daily"); }
+});
+document.addEventListener("DOMContentLoaded",function(){ load(today,"daily"); fit(); });
+if(document.readyState!=="loading"){ load(today,"daily"); fit(); }
+window.RRO={get:function(){ return {L:L,step:step,picks:picks,mode:mode,day:ymd(day)}; },go:go,finish:finish,load:function(k,m){ var p=k.split("-"); load(new Date(+p[0],+p[1]-1,+p[2]),m||"archive"); },lessonFor:function(k){ var p=k.split("-"); return lessonFor(new Date(+p[0],+p[1]-1,+p[2])); },order:order,past:pastLessons};   /* for testing */
+})();
+</script>
+</body>
+</html>
