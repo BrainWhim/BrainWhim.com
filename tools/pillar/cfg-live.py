@@ -1,7 +1,7 @@
 # Live page settings for build-pillar.py (Nov 20)
 ROOMS = r"""var ROOMS=[
-  {id:"garden", name:"The Habit Garden", kind:"Habits", glow:"rgba(120,220,150,.5)",
-   line:"Every habit you keep is a plant that grows. Water it by doing the thing. Miss a day and it waits for you; nothing wilts away.",
+  {id:"garden", name:"The Habit Garden", kind:"Habits That Grow", glow:"rgba(120,220,150,.5)", page:"habits.html", cta:"Tend Your Garden",
+   line:"Every habit you keep is a plant in your own raised beds. Water it by doing the thing, and watch it sprout, bud and bloom. Miss a day and it waits for you; nothing wilts. Your habits stay on your device.",
    try:["gardenplots","orrery"]},
   {id:"daybook", name:"The Daybook", kind:"Planning & Journal", glow:"rgba(255,210,140,.45)",
    line:"A calm daily planner with room for one line about your day. Look back a month later and see what really happened.",
@@ -20,11 +20,11 @@ FAM = r"""var FAM=[
   ["My Morning Chart","moonlets-morning.html","mo/card.webp?v=1117a","Moonlets → My Moon Day → My Morning Chart","Wake up the sleepy sun: tap each morning job as it's done. Ages 3 to 7."],
   ["Sleepy Moon","moonlets-sleepy.html","sy/card.webp?v=1117a","Moonlets → My Moon Day → Sleepy Moon","Say goodnight to the room, breathe slowly like a sleepy moon, and drift off to a lullaby. Ages 3 to 7."]];"""
 def li(n,e): return '      <li class="c-live"><i class="pd"></i><span><b>%s</b><em>%s</em></span></li>' % (n,e)
-C = dict(META="Live at BrainWhim: habits that grow like a garden. The Habit Garden, the Daybook, the Morning Bell and the Pantry are opening soon, with chore charts and bedtime helpers for kids ready now.", OUT="live.html", TITLE="Live · The Household · BrainWhim", PLANET='url("planet-live-word.jpg")',
+C = dict(META="Live at BrainWhim: habits that grow. The Habit Garden is open: every habit you keep is a plant you water. The Daybook, the Morning Bell and the Pantry are on the way, with chore charts and bedtime helpers for kids ready now.", OUT="live.html", TITLE="Live · The Household · BrainWhim", PLANET='url("planet-live-word.jpg")',
   GLOW="0 0 36px rgba(120,220,170,.45),0 0 100px rgba(60,200,140,.22)", KC="color:#9fe3c0",
-  KICK="The Household · Opening Soon", H1="<h1>Live</h1>",
-  INTRO="Habits that grow like a garden. Four rooms are being furnished in this wing of the house: a garden for the habits you keep, a daybook for plans and one line a day, a bell that walks you through your routines, and a pantry that writes your grocery list. Each room opens on its own, and the first letter from the studio will say when.",
-  TRYLINE="While Live is being furnished, a puzzle a day is a good habit to start with. Keep a streak in any of these rooms.",
+  KICK="The Household · Now Open: The Habit Garden", H1="<h1>Live</h1>",
+  INTRO="Habits that grow. The first room in this wing of the house is open: the Habit Garden, where every habit you keep is a plant you water, and nothing ever wilts. Three more are being furnished: a daybook for plans and one line a day, a bell that walks you through your routines, and a pantry that writes your grocery list. Each opens on its own, and a letter from the studio will say when.",
+  TRYLINE="A puzzle a day is a good habit to plant in your garden. Keep a streak in any of these rooms.",
   FAMH2="Everyday Helpers in the Kids' Corner",
   FAMLINE="Ready now for families: chores, countdowns, brushing and bedtime. No ads, no chat, nothing sent anywhere. Open one here, or on your child's own tablet with the QR code.",
   SIGNUP='data-bw-signup="live"', PLANKICK="The Plan for Live", PLANH2="What Live Will Hold",
@@ -35,6 +35,6 @@ C = dict(META="Live at BrainWhim: habits that grow like a garden. The Habit Gard
             <li><b>Recovery &amp; Mindful Living</b>Mindful living and recovery support: practical, not preachy.</li>""",
   CLUBROOMS="and the Club rooms in Live as they open.", ASK="Questions, or a routine you'd love help with?",
   NEXTH="<h3>Opening Next in Live</h3>",
-  NEXTLI="\n".join([li("The Habit Garden","Habits that grow"),li("The Daybook","Plans and one line a day"),li("The Morning Bell","Routines with a chime"),li("The Pantry","Meals and the grocery list")]),
+  NEXTLI="\n".join([li("The Daybook","Plans and one line a day"),li("The Morning Bell","Routines with a chime"),li("The Pantry","Meals and the grocery list")]),
   ROOMS=ROOMS, FAM=FAM, PW="live",
-  DAYOLD='["live","Live","The Morning Bell","live.html","Soon",0,1]', DAYNEW='["live","Live","The Habit Garden","#r-garden","Soon",0,1]')
+  DAYOLD='["live","Live",gardenTxt,"habits.html",gardenDone?"\\u2713":"",gardenDone]', DAYNEW='["live","Live",gardenTxt,"habits.html",gardenDone?"\\u2713":"",gardenDone]')

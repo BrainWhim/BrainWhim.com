@@ -2,13 +2,12 @@
 """One header everywhere (Nov 20, Navigation Audit B). Re-runnable: rewrites the link lists in every grown-up
 page's header, phone menu and old-style side menu to the canonical order. Dry run by default; pass --apply OUTDIR
 to write changed files into OUTDIR (then copy them over). Kids' pages (kids.js) are left alone.
-Canonical bar: Home · Play · Puzzles · Cards · Board Games · Learn · Create · Kids' Corner (Learn joined Nov 21 with the Reading Room; Create the same evening with the Writing Desk).
-Live only in menus, under Coming Soon, until a room of theirs opens."""
+Canonical bar: Home · Play · Puzzles · Cards · Board Games · Learn · Live · Create · Kids' Corner (Learn joined Nov 21 with the Reading Room; Create the same evening with the Writing Desk; Live Nov 22 with the Habit Garden)."""
 import re, sys, glob, os
 APPLY = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == "--apply" else None
-CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Board Games"),("learn.html","Learn"),("create.html","Create"),("kids.html","Kids' Corner")]
+CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Board Games"),("learn.html","Learn"),("live.html","Live"),("create.html","Create"),("kids.html","Kids' Corner")]
 HREFS = {h for h,_ in CANON} | {"learn.html","live.html","create.html","quickplays.html"}
-ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"lobby.html","learn.html":"learn.html","create.html":"create.html"}
+ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"lobby.html","learn.html":"learn.html","live.html":"live.html","create.html":"create.html"}
 UPS = {"quickplays.html":"puzzles.html","member.html":"lobby.html"}   # pages with no phone menu: the one link phones keep
 def home_of(src):
     m = re.search(r'home:\s*"([^"]+)"', src); return m.group(1) if m else None
@@ -36,8 +35,8 @@ SOON = '<span style="display:block;padding:6px 18px 2px;font-size:11px;font-weig
 def phone_menu(page):
     about = '<a href="#about" data-jump="about">About BrainWhim</a>' if page == "index.html" else '<a href="index.html#about">About BrainWhim</a>'
     return ('\n  <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Today\'s Puzzles</a><a href="lobby.html">Board Game Lobby</a>'
-            '<a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="create.html">Create</a><a href="kids.html">Kids\' Corner</a>'
-            '\n  <hr>' + SOON + '<a href="live.html">Live</a>\n  <hr>' + about + '\n')
+            '<a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids\' Corner</a>'
+            '\n  <hr>' + about + '\n')
 def fix_pm(page, s, log):
     n = len(re.findall(r'<nav class="phone-menu"', s))
     if not n: return s
@@ -46,7 +45,7 @@ def fix_pm(page, s, log):
 def fix_old(page, s, log):
     if 'class="left-menu"' not in s: return s
     links = ''.join('\n            <a href="%s" class="left-menu-link">%s</a>' % x for x in [("index.html","Home"),("play.html","Play"),("puzzles.html","Today's Puzzles"),
-        ("lobby.html","Board Game Lobby"),("lobby.html?cat=cards","Card Lobby"),("quickplays.html","Quick Plays"),("learn.html","Learn"),("create.html","Create"),("kids.html","Kids' Corner"),
+        ("lobby.html","Board Game Lobby"),("lobby.html?cat=cards","Card Lobby"),("quickplays.html","Quick Plays"),("learn.html","Learn"),("live.html","Live"),("create.html","Create"),("kids.html","Kids' Corner"),
         ("index.html#about","About BrainWhim"),("terms.html","Terms"),("refunds.html","Refunds"),("privacy.html","Privacy"),("disclaimers.html","Disclaimers")]) + '\n        '
     s, a = re.subn(r'(<div class="left-menu-links">).*?(</div>)', lambda m: m.group(1) + links + m.group(2), s, count=1, flags=re.S)
     play = ('<h3><a href="play.html">Play</a></h3>\n                <ul>\n                    <li><a href="puzzles.html">Today\'s Puzzles</a></li>\n'
@@ -59,14 +58,21 @@ def fix_old(page, s, log):
 STYLE = {
  "old": "@media (min-width:993px){.header-navigation-menu{gap:28px!important}.nav-link{white-space:nowrap}}"
         "@media (min-width:993px) and (max-width:1439px){.header-widget-box{display:none!important}}"
-        "@media (min-width:993px) and (max-width:1180px){.header-navigation-menu{gap:20px!important}.nav-link{font-size:15px!important}}",
+        "@media (min-width:993px) and (max-width:1100px){.header-navigation-menu{gap:11px!important}.nav-link{font-size:13px!important}}"
+        "@media (min-width:1101px) and (max-width:1279px){.header-navigation-menu{gap:14px!important}.nav-link{font-size:14px!important}}"
+        "@media (min-width:1280px) and (max-width:1439px){.header-navigation-menu{gap:20px!important}.nav-link{font-size:15px!important}}"
+        "@media (min-width:1440px){.header-navigation-menu{gap:18px!important}.nav-link{font-size:15px!important}}",   # 9 links (Nov 22): clear of the wordmark at 993-1600
  "quickplays.html": ".hdr a{white-space:nowrap}@media (max-width:900px){.hdr a:not(.up){display:none}}",
  "member.html": ".hdr a{white-space:nowrap}@media (max-width:560px){.hdr a:not(.up){display:none}}",
 }
 def add_style(page, s, log):
     css = STYLE.get("old" if 'class="left-menu"' in s else page)
-    if not css or 'id="bw-hdr-pass"' in s: return s
-    log.append("style"); return s.replace("</head>", '<style id="bw-hdr-pass">/* tools/header-pass.py (Nov 20) */' + css + "</style>\n</head>", 1)
+    if not css: return s
+    tag = '<style id="bw-hdr-pass">/* tools/header-pass.py (Nov 20) */' + css + "</style>"
+    if tag in s: return s
+    log.append("style")
+    if 'id="bw-hdr-pass"' in s: return re.sub(r'<style id="bw-hdr-pass">.*?</style>', lambda m: tag, s, count=1, flags=re.S)
+    return s.replace("</head>", tag + "\n</head>", 1)
 changed = 0
 for f in sorted(glob.glob("*.html")):
     s = open(f, encoding="utf-8").read()

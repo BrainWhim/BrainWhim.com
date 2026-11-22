@@ -354,12 +354,11 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
   <button class="menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
   <a class="brand" href="index.html" aria-label="BrainWhim"><img src="bw-emblem.png?v=1111a" alt=""><span>Brain</span><span class="whim">Whim</span></a>
   <nav class="hdr">
-    <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="lobby.html">Board Games</a><a class="on" href="learn.html">Learn</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
+    <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="lobby.html">Board Games</a><a class="on" href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
   </nav>
 </header>
 <nav class="phone-menu" id="phoneMenu" aria-label="Site">
-  <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Today's Puzzles</a><a href="lobby.html">Board Game Lobby</a><a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
-  <hr><span style="display:block;padding:6px 18px 2px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)">Coming Soon</span><a href="live.html">Live</a>
+  <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Today's Puzzles</a><a href="lobby.html">Board Game Lobby</a><a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
   <hr><a href="index.html#about">About BrainWhim</a>
 </nav>
 
@@ -554,11 +553,14 @@ function todayPanel(){
   var best=0; items.forEach(function(x){ if((x.t.streak||0)>best) best=x.t.streak; });
   var writeDone=false; try{ var wd=new Date(); writeDone=!!localStorage.getItem("bwWrite:"+wd.getFullYear()+"-"+String(wd.getMonth()+1).padStart(2,"0")+"-"+String(wd.getDate()).padStart(2,"0")); }catch(e){}
   var readDone=false; try{ var rd=new Date(); readDone=!!localStorage.getItem("bwRead:"+rd.getFullYear()+"-"+String(rd.getMonth()+1).padStart(2,"0")+"-"+String(rd.getDate()).padStart(2,"0")); }catch(e){}
+  var gardenDone=false, gardenTxt="Plant your first habit"; try{ var gd=new Date(), gk=gd.getFullYear()+"-"+String(gd.getMonth()+1).padStart(2,"0")+"-"+String(gd.getDate()).padStart(2,"0"), gps=JSON.parse(localStorage.getItem("bwHgPlants")||"[]")||[];
+    gardenDone=!!localStorage.getItem("bwHabits:"+gk);
+    if(gardenDone) gardenTxt="Today's garden: tended"; else if(gps.length) gardenTxt=gps.some(function(p){ return !p.days||!p.days.length||p.days.indexOf(gd.getDay())>=0; })?"Water today's habits":"A rest day in the garden"; }catch(e){}
   var mapDone=false; try{ var tm=JSON.parse(localStorage.getItem("bwk.tmap")||"{}"), dd=new Date(); mapDone=!!(tm&&tm.done&&tm.done[dd.getFullYear()+"-"+String(dd.getMonth()+1).padStart(2,"0")+"-"+String(dd.getDate()).padStart(2,"0")]); }catch(e){}
   var DAY=[
     ["play","Play",n===10?"All ten puzzles solved":n+" of 10 puzzles solved","puzzles.html",(best?"🔥 "+best:"")+(n===10?" ✓":""),n===10],
     ["learn","Learn",readDone?"Today's fact: read":"Today's fascinating fact","reading.html",readDone?"\u2713":"",readDone],
-    ["live","Live","The Morning Bell","live.html","Soon",0,1],
+    ["live","Live",gardenTxt,"habits.html",gardenDone?"\u2713":"",gardenDone],
     ["create","Create",writeDone?"Today's page: written":"Today's writing prompt","writing.html",writeDone?"\u2713":"",writeDone],
     ["kids","Kids' Corner",mapDone?"Today's treasure found":"Today's map is waiting","treasure-map.html",mapDone?"✓":"",mapDone]
   ];

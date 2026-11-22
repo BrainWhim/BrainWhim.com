@@ -12,7 +12,7 @@
    Each habit is a plant in a raised bed. Water it on the days you do the thing; every watering makes it grow
    (Planted → Sprout → Growing → In Bud → In Full Bloom at 21 waterings) and it keeps blooming after. Nothing ever wilts.
    Saved ONLY on this device (localStorage "bwHgPlants"); habit names are never sent to BrainWhim.
-   "bwGarden:<date>" marks a day when every plant due that day was watered (Home's Your Day reads it).
+   "bwHabits:<date>" marks a day when every plant due that day was watered (Home's Your Day reads it).
    Free: 3 plants and five kinds of plant. Club: up to 12 plants, three more kinds (Rose, Peony, Strawberry), the full
    Garden Journal (month by month), Charcoal beds. A fresh, present-day look (Judy, Nov 21: old-fashioned only where it fits). */
 .hg-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(100%,780px);padding-bottom:18px;font-family:Montserrat,system-ui,sans-serif}
@@ -305,8 +305,10 @@ var IDEAS=[
 
 /* ---------- what's kept (on this device only) ----------
    bwHgPlants = [{id, name, kind, days:[0-6] (empty = every day), born:"YYYY-MM-DD", log:["YYYY-MM-DD", …]}]
-   bwGarden:<date> = {n, of} once every plant due that day is watered   ·   bwHgSeen = "1" after the first watering */
+   bwHabits:<date> = {n, of} once every plant due that day is watered   ·   bwHgSeen = "1" after the first watering */
 var plants=jget("bwHgPlants")||[];
+/* Nov 22: "bwGarden:<date>" is the Garden Plots puzzle's own key; the preview briefly wrote its {n, of} marks there. Move them over (a puzzle's record has no "of"). */
+try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("bwGarden:")!==0) return; var v=jget(k); if(v&&v.of!==undefined&&v.s===undefined){ store("bwHabits:"+k.slice(9),JSON.stringify(v)); store(k,null); } }); }catch(e){}
 function save(){ store("bwHgPlants",JSON.stringify(plants)); }
 function maxPlants(){ return member()?12:3; }
 function isDue(p,d){ return !p.days||!p.days.length||p.days.indexOf(d.getDay())>=0; }
@@ -470,7 +472,7 @@ function water(p,el){
 function pop(el,t,gold){ if(!el) return; var s=document.createElement("span"); s.className="hg-pop"+(gold?" gold":""); s.textContent=t; el.appendChild(s); setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); },2300); }
 function checkDone(){
   var due=dueToday(); if(!due.length) return;
-  var all=due.every(function(p){ return wetOn(p,todayKey); }), k="bwGarden:"+todayKey, had=store(k);
+  var all=due.every(function(p){ return wetOn(p,todayKey); }), k="bwHabits:"+todayKey, had=store(k);
   if(all&&!had){ store(k,JSON.stringify({n:due.length,of:due.length})); setTimeout(function(){ snd("hg-done"); result(); },1500); }
   else if(!all&&had) store(k,null);
 }
@@ -512,7 +514,7 @@ function plantWin(edit){
     var p={id:"p"+Date.now().toString(36),name:nm,kind:sel.kind,days:sel.days.slice().sort(),born:todayKey,log:[]};
     plants.push(p); save(); v.classList.remove("on"); snd("hg-plant"); render();
     var el=BEDS.querySelector('.hg-plot[data-id="'+p.id+'"]'); if(el){ el.classList.add("grow"); pop(el,"Planted!"); el.scrollIntoView({block:"nearest",behavior:"smooth"}); }
-    if(dueToday().length&&store("bwGarden:"+todayKey)&&isDue(p,today)) store("bwGarden:"+todayKey,null);
+    if(dueToday().length&&store("bwHabits:"+todayKey)&&isDue(p,today)) store("bwHabits:"+todayKey,null);
   }).classList.add("primary");
   btnIn(row,"Cancel",function(){ v.classList.remove("on"); });
   paint(); v.classList.add("on");
