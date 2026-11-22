@@ -135,7 +135,7 @@
     g1.appendChild(el.forfeitBtn);
     if (C.learn) { el.learnBtn = btn("Guided Lesson", "", function () { P.sitLearn(); }); g1.appendChild(el.learnBtn); }
     g1.appendChild(btn("Rules", "", function () { P.help("play"); }));
-    g1.appendChild(btn("Scoring Rules", "", function () { P.help("score"); }));
+    g1.appendChild(btn(C.scoreLabel || "Scoring Rules", "", function () { P.help("score"); }));   /* rooms without scores name it their own way (Judy, Nov 22) */
     g1.appendChild(btn("Sound & Motion", "", function () { P.settings(); }));
     var g2 = group("My Seat", "pk-phone");
     if (C.sets && C.sets.length) g2.appendChild(btn(C.setsLabel || "Sets", "", function () { sheet("left", el.setsCard); }));
@@ -360,7 +360,7 @@
   P.help = function (kind) {
     sheet(null);
     var score = kind === "score";
-    el.help.box.innerHTML = "<h2>" + (score ? "Scoring Rules" : "Rules") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
+    el.help.box.innerHTML = "<h2>" + (score ? (C.scoreLabel || "Scoring Rules") : "Rules") + "</h2>" + ((C.rules && C.rules[kind]) || "") +
       (score && C.solo && !C.free ? "<ul><li>Every game you <b>win</b> earns 2 points for any account (3 games a day count; Club Members get more).</li></ul>" : "") +
       (score && !C.solo ? "<ul><li>Playing <b>The House</b> earns points for any account: 2 for a win, 1 for a draw (3 games a day count; Club Members get more).</li><li><b>The House grows with you.</b> It starts gentle and gets a little stronger each time you beat it. Lose twice in a row and it eases off a step.</li>" + (C.partners ? "<li>Playing <b>online with a partner</b>: the two of you are a team against The House, and a win earns House points for both of you.</li>" : "<li>Playing <b>people online</b> moves your rating more, based on who you beat.</li>") + "</ul>" : "");
     var r = mk("div", "pk-row"); r.appendChild(btn("Got It", "", function () { el.help.veil.classList.remove("on"); }));

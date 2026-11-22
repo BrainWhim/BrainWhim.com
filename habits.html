@@ -174,6 +174,37 @@ body[data-set="white"] .hg-wk i.t{box-shadow:0 0 0 2px rgba(40,90,60,.7)}
   .hg-sug{max-height:22vh}
   .hg-can{width:60px;height:50px}
 }
+
+/* photo planter boxes and the oak sign (Judy's ChatGPT pictures, Nov 22): each switches on by itself when its picture loads
+   (stage[data-bedph] / stage[data-signph]); the drawn bed above stays as the fallback. Bed photo 1200x300: soil rows 15-68,
+   cap 68-90, planks 90-296, end posts 53 px each side; shown at 160 px tall (scale .533) */
+.hg-pad[data-bedph="1"] .hg-plots{background:none;position:relative;z-index:2}
+.hg-pad[data-bedph="1"] .hg-plots::after,.hg-pad[data-bedph="1"] .hg-face::before,.hg-pad[data-bedph="1"] .hg-face::after{display:none}
+.hg-pad[data-bedph="1"] .hg-bed{filter:drop-shadow(0 14px 14px rgba(10,20,10,.34))}
+.hg-pad[data-bedph="1"] .hg-face{box-sizing:border-box;height:160px;margin-top:-30px;padding:58px 12px 10px;align-items:start;border-radius:0;background:none;
+  border-style:solid;border-width:0 28px;border-image:url(hg/bed-cedar.png?v=1122a) 0 53 0 53 fill / 0 28px stretch}
+body[data-set="white"] .hg-pad[data-bedph="1"] .hg-face{border-image-source:url(hg/bed-white.png?v=1122a)}
+body[data-set="charcoal"] .hg-pad[data-bedph="1"] .hg-face{border-image-source:url(hg/bed-charcoal.png?v=1122a)}
+.hg-pad[data-bedph="1"] .hg-plots{padding-left:40px;padding-right:40px}
+.hg-pad[data-bedph="1"] .hg-tag{box-shadow:0 1px 0 rgba(0,0,0,.14),0 4px 9px rgba(0,0,0,.3)}
+/* this week's dots on a little white pill so they read on any wood */
+.hg-pad[data-bedph="1"] .hg-wk{padding:4px 7px;border-radius:99px;background:rgba(255,253,248,.92);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.hg-pad[data-bedph="1"] .hg-wk i{border-color:rgba(60,70,60,.4);background:rgba(0,0,0,.04)}
+.hg-pad[data-bedph="1"] .hg-wk i.r,.hg-pad[data-bedph="1"] .hg-wk i.f{border-color:rgba(60,70,60,.2);background:none}
+.hg-pad[data-bedph="1"] .hg-wk i.w{background:#3aa7dc;border-color:#3aa7dc}
+.hg-pad[data-bedph="1"] .hg-wk i.t{box-shadow:0 0 0 2px rgba(40,90,60,.7)}
+.hg-pad[data-signph="1"] .hg-top{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border-radius:0;
+  border-style:solid;border-width:20px;padding:0 6px;border-image:url(hg/sign.png?v=1122a) 66 fill / 20px stretch;filter:drop-shadow(0 8px 12px rgba(20,30,10,.35))}
+.hg-pad[data-signph="1"] .hg-day{color:#3d3a10}
+.hg-pad[data-signph="1"] .hg-sum{color:#1f2a12;text-shadow:0 1px 0 rgba(255,236,200,.45)}
+.hg-pad[data-signph="1"] .hg-sub{color:#3b2c16;font-weight:600}
+.hg-pad[data-signph="1"] .hg-bar{background:rgba(70,40,10,.18);box-shadow:inset 0 1px 2px rgba(60,30,0,.25)}
+.hg-pad[data-signph="1"] .hg-btn.soft{background:#fbf6ea;box-shadow:inset 0 0 0 1.5px rgba(90,60,20,.25),0 2px 6px rgba(60,30,0,.15)}
+@media (max-width:560px){
+  .hg-pad[data-bedph="1"] .hg-face{height:136px;margin-top:-26px;padding:48px 6px 8px;border-width:0 24px;border-image-width:0 24px}
+  .hg-pad[data-bedph="1"] .hg-plots{padding-left:30px;padding-right:30px}
+  .hg-pad[data-signph="1"] .hg-top{border-width:16px;border-image-width:16px;padding:0 4px}
+}
 @media (max-height:560px) and (orientation:landscape){.hg-plot{height:140px}}
 </style>
 <script src="bw-auth.js?v=1120c"></script>
@@ -205,7 +236,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1120a"></script>
 <script src="bw-avatars.js?v=1120a"></script>
-<script src="parlor-kit.js?v=1121c"></script>
+<script src="parlor-kit.js?v=1122a"></script>
 <script src="bw-share.js?v=1121b"></script>
 <script>
 (function(){
@@ -340,6 +371,12 @@ function snd(n,o){ if(window.Parlor&&Parlor.sfx) Parlor.sfx(n,o||{}); }
 var stage=document.createElement("div"); stage.className="hg-pad";
 stage.innerHTML='<div class="hg-top"><div><p class="hg-day"></p><p class="hg-sum"></p><p class="hg-sub"></p></div><div class="hg-acts"><button type="button" class="hg-btn" data-a="plant">+ Plant a Habit</button><button type="button" class="hg-btn soft" data-a="journal">Garden Journal</button></div><div class="hg-bar"><i></i></div></div><div class="hg-beds"></div>';
 var BEDS=$(".hg-beds",stage);
+/* photo bed + sign: switch on when the picture for the current Beds choice has loaded */
+var BEDPH={}, SETS_PH=["cedar","white","charcoal"];
+function bedPh(){ var k=document.body.getAttribute("data-set"); if(SETS_PH.indexOf(k)<0) k="cedar"; stage.setAttribute("data-bedph",BEDPH[k]?"1":""); }
+SETS_PH.forEach(function(k){ var im=new Image(); im.onload=function(){ BEDPH[k]=1; bedPh(); }; im.src="hg/bed-"+k+".png?v=1122a"; });
+(function(){ var im=new Image(); im.onload=function(){ stage.setAttribute("data-signph","1"); }; im.src="hg/sign.png?v=1122a"; })();
+try{ new MutationObserver(bedPh).observe(document.body,{attributes:true,attributeFilter:["data-set"]}); }catch(e){}
 stage.addEventListener("click",function(e){ var b=e.target.closest("[data-a]"); if(!b) return; if(b.dataset.a==="plant") plantWin(); else if(b.dataset.a==="journal") journal(); });
 function perBed(){ return window.innerWidth<560?3:4; }
 function weekDots(p,cls){ var s="", st=addDays(today,-today.getDay()), born=fromKey(p.born); for(var i=0;i<7;i++){ var d=addDays(st,i), k=ymd(d), c=wetOn(p,k)?"w":d>today?"f":(!isDue(p,d)||d<born)?"r":"";
@@ -540,7 +577,7 @@ Parlor.init({
   soloLabel:"Today's garden", dealLabel:"Today's Garden",
   tagline:"Habits That Grow.", invite:"Habits that grow. Raised beds on a dewy spring morning: every habit you keep is a plant, and every day you do it, you water it. Miss a day and it waits for you; nothing ever wilts.",
   players:[{name:"You",color:"#2f8a4f"}],
-  setsLabel:"Beds",
+  setsLabel:"Beds", scoreLabel:"How It Grows",
   sets:[
     {id:"cedar",name:"Cedar",need:0,dots:["#b47a4b","#4a3324"]},
     {id:"white",name:"Whitewashed",need:0,dots:["#f1eee7","#4a3324"]},
