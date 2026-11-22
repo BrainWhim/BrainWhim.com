@@ -81,7 +81,7 @@
 
     /* left: status + players + account + sets */
     var st = mk("div", "pk-card");
-    st.appendChild(mk("h3", "", "Table"));
+    st.appendChild(mk("h3", "", C.seatHead || "Table"));   /* rooms that aren't games name it their own way (Nov 22) */
     el.status = mk("p", "pk-status", "Take your seat"); el.sub = mk("p", "pk-sub", "");
     st.appendChild(el.status); st.appendChild(el.sub);
     el.players = mk("div", "pk-players");
@@ -809,7 +809,7 @@
       var b = mk("button", "pk-set" + (s.id === cur ? " on" : "") + (ok ? "" : " lock")); b.type = "button";
       var dots = mk("span", "dots"); (s.dots || []).forEach(function (c) { var i = mk("i"); i.style.background = c; dots.appendChild(i); });
       var nm = mk("span", "nm"); nm.appendChild(document.createTextNode(s.name + (ok ? "" : " 🔒")));
-      var sm = mk("small", "", s.club ? (ok ? "Club board" : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
+      var sm = mk("small", "", s.club ? (ok ? "Club " + (C.setWord || "board") : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
       b.appendChild(dots); b.appendChild(nm);
       b.onclick = function () {
         if (!ok) { location.href = "member.html"; return; }
