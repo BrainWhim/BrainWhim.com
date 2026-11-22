@@ -8,7 +8,7 @@
   var W=1080, H=1350, GOLD="#F2BE45", IVORY="#f4ecd8", NAVY="#0a1630";
   var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   /* rooms that aren't puzzles name their day their own way (Nov 21) */
-  var KIND={reading:["Lesson","Read today's lesson."],writing:["Prompt","Write today's page."]};
+  var KIND={reading:["Lesson","Read today's lesson."],writing:["Prompt","Write today's page."],habits:["Garden","Tend your own garden."]};
   var LEVEL={Monday:"Gentle",Tuesday:"Easy",Wednesday:"Steady",Thursday:"Tricky",Friday:"Hard",Saturday:"Harder",Sunday:"The Hardest"};
 
   function parse(txt){
@@ -68,7 +68,7 @@
       /* the room */
       y+=86; c.fillStyle=IVORY; fit(c,r.room,"700 $px Fraunces, Georgia, serif",W-180,96); c.fillText(r.room,W/2,y);
       /* the stars */
-      if(r.page==="writing"){ y+=64;   /* a gold rule with a diamond instead of stars */
+      if(r.page==="writing"||r.page==="habits"){ y+=64;   /* a gold rule with a diamond instead of stars */
         c.strokeStyle="rgba(242,190,69,.75)"; c.lineWidth=3; c.beginPath(); c.moveTo(W/2-200,y); c.lineTo(W/2-34,y); c.moveTo(W/2+34,y); c.lineTo(W/2+200,y); c.stroke();
         c.beginPath(); c.moveTo(W/2,y-20); c.lineTo(W/2+20,y); c.lineTo(W/2,y+20); c.lineTo(W/2-20,y); c.closePath(); c.fillStyle=GOLD; c.fill(); y+=24; }
       else { y+=112; for(var i=0;i<3;i++) star(c,W/2+(i-1)*128,y,52,i<r.stars); }

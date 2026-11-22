@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Habit Garden · Habits That Grow · BrainWhim</title>
+<meta name="description" content="The Habit Garden: habits that grow, at BrainWhim. Every habit you keep is a plant in a raised bed; water it on the days you do it and watch it bloom. Miss a day and it waits for you: nothing ever wilts. Your habits stay on your device.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1120c">
+<style>
+/* ===== The Habit Garden (Live · The Household, Nov 21, 2026): every habit is a plant that grows =====
+   Each habit is a plant in a raised bed. Water it on the days you do the thing; every watering makes it grow
+   (Planted → Sprout → Growing → In Bud → In Full Bloom at 21 waterings) and it keeps blooming after. Nothing ever wilts.
+   Saved ONLY on this device (localStorage "bwHgPlants"); habit names are never sent to BrainWhim.
+   "bwGarden:<date>" marks a day when every plant due that day was watered (Home's Your Day reads it).
+   Free: 3 plants and five kinds of plant. Club: up to 12 plants, three more kinds (Rose, Peony, Strawberry), the full
+   Garden Journal (month by month), Charcoal beds. A fresh, present-day look (Judy, Nov 21: old-fashioned only where it fits). */
+.hg-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(100%,780px);padding-bottom:18px;font-family:Montserrat,system-ui,sans-serif}
+/* today's panel: frosted white, modern */
+.hg-top{width:100%;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:14px 18px;border-radius:18px;
+  background:rgba(255,255,255,.84);-webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2);
+  box-shadow:0 10px 30px rgba(10,30,20,.28),inset 0 1px 0 rgba(255,255,255,.9);color:#1f3a2a}
+.hg-day{margin:0;font:700 11.5px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#4c7a5a}
+.hg-sum{margin:3px 0 0;font:700 20px/1.25 Montserrat,system-ui,sans-serif;color:#17301f}
+.hg-sub{margin:3px 0 0;font:500 13.5px/1.45 Montserrat,system-ui,sans-serif;color:#4a5f50}
+.hg-acts{display:flex;flex-wrap:wrap;gap:8px}
+.hg-btn{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border-radius:999px;
+  font:700 14px/1 Montserrat,system-ui,sans-serif;color:#fff;background:linear-gradient(180deg,#4fae6e,#2f8a4f);box-shadow:0 2px 0 #23683c,0 4px 12px rgba(30,90,50,.3);text-decoration:none}
+.hg-btn.soft{color:#245236;background:#eef5ef;box-shadow:inset 0 0 0 1.5px #b9d6c1}
+.hg-btn:active{transform:translateY(1px)}
+.hg-btn:focus-visible{outline:3px solid #9fd8af;outline-offset:2px}
+.hg-bar{flex-basis:100%;height:8px;border-radius:99px;background:#e3ece5;overflow:hidden}
+.hg-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#7fd18f,#3f9e5c);transition:width .6s ease}
+
+/* the raised beds (cedar by default; Whitewashed and Charcoal from the Beds menu) */
+.hg-beds{width:100%;display:flex;flex-direction:column;align-items:center;gap:22px}
+.hg-bed{--cap:#d4a373;--capB:#b07d4f;--plA:#b47a4b;--plB:#9b6438;--plLine:rgba(60,30,10,.35);--soilA:#4a3324;--soilB:#2f2018;--tag:#fffdf8;--tagInk:#1f3a2a;
+  position:relative;width:min(100%,calc(var(--n) * 178px + 36px));filter:drop-shadow(0 18px 18px rgba(10,20,10,.38))}
+body[data-set="white"] .hg-bed{--cap:#fbfaf6;--capB:#dcd8cf;--plA:#f1eee7;--plB:#e1ddd3;--plLine:rgba(90,80,60,.18)}
+body[data-set="charcoal"] .hg-bed{--cap:#55595e;--capB:#2f3235;--plA:#3e4246;--plB:#2c2f33;--plLine:rgba(0,0,0,.45);--tag:#f5f6f4}
+.hg-plots{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));padding:0 18px;
+  background:radial-gradient(130% 60% at 50% 100%,var(--soilA),var(--soilB)) bottom/100% 30px no-repeat}
+.hg-plots::after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:30px;pointer-events:none;opacity:.55;
+  background:radial-gradient(circle at 20% 40%,rgba(255,235,200,.16) 0 1px,transparent 1.5px) 0 0/9px 7px,radial-gradient(circle at 70% 70%,rgba(0,0,0,.35) 0 1px,transparent 1.5px) 0 0/7px 6px}
+.hg-face{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:0;padding:14px 18px 12px;border-radius:0 0 6px 6px;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 31px,var(--plLine) 31px 32px),linear-gradient(180deg,var(--plA),var(--plB))}
+.hg-face::before{content:"";position:absolute;left:-6px;right:-6px;top:-7px;height:12px;border-radius:4px;background:linear-gradient(180deg,var(--cap),var(--capB));box-shadow:0 2px 3px rgba(0,0,0,.25)}
+.hg-face::after{content:"";position:absolute;inset:0;border-radius:0 0 6px 6px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,0) 0 23px,rgba(255,255,255,.04) 23px 24px,rgba(0,0,0,0) 24px 61px),linear-gradient(90deg,rgba(0,0,0,.22),rgba(0,0,0,0) 6%,rgba(0,0,0,0) 94%,rgba(0,0,0,.22))}
+
+/* one plot: the plant standing in the soil */
+.hg-plot{position:relative;appearance:none;border:0;background:none;padding:0;margin:0;cursor:pointer;height:230px;display:flex;align-items:flex-end;justify-content:center;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.hg-plot:focus-visible{outline:3px solid #b9f0c6;outline-offset:-3px;border-radius:12px}
+.hg-pl{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;transform-origin:50% 100%}
+.hg-pl svg,.hg-pl img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
+.hg-plot.bloom .hg-pl{animation:hgSway 7s ease-in-out infinite}
+.hg-plot:nth-child(2n).bloom .hg-pl{animation-delay:-2.5s}.hg-plot:nth-child(3n).bloom .hg-pl{animation-delay:-4.5s}
+@keyframes hgSway{0%,100%{transform:rotate(-.8deg)}50%{transform:rotate(.8deg)}}
+.hg-plot.grow .hg-pl{animation:hgGrow .7s cubic-bezier(.3,1.6,.5,1)}
+@keyframes hgGrow{0%{transform:scale(.9,.86)}100%{transform:scale(1)}}
+@media (hover:hover){.hg-plot:hover .hg-pl{filter:brightness(1.06)}}
+/* watered today: a droplet badge and a little dew */
+.hg-drop{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;display:none;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#7fd3f7,#2f9bd6);color:#fff;font:700 13px/1 Montserrat,system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,40,80,.35),inset 0 1px 0 rgba(255,255,255,.5)}
+.hg-plot.wet .hg-drop{display:flex}
+.hg-plot.wet::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:22px;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(20,10,5,.45),rgba(20,10,5,0))}
+/* due today and not yet watered: a soft glow at its feet */
+.hg-plot.due::before{content:"";position:absolute;left:22%;right:22%;bottom:4px;height:12px;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(160,240,190,.75),rgba(160,240,190,0));animation:hgDue 2.4s ease-in-out infinite}
+@keyframes hgDue{0%,100%{opacity:.35}50%{opacity:1}}
+.hg-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:5px 10px;border-radius:99px;background:rgba(255,255,255,.92);color:#245236;
+  font:700 12px/1 Montserrat,system-ui,sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.2);pointer-events:none}
+/* an empty patch of soil */
+.hg-plot.empty .hg-pl{align-items:center}
+.hg-new{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:40px;padding:12px 10px;border-radius:14px;border:2px dashed rgba(255,255,255,.75);background:rgba(255,255,255,.18);
+  color:#fff;font:700 13px/1.25 Montserrat,system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.hg-new b{font-size:26px;line-height:1}
+@media (hover:hover){.hg-plot.empty:hover .hg-new{background:rgba(255,255,255,.3)}}
+/* the name tag clipped to the bed, with this week's watering dots */
+.hg-lab{min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 5px;cursor:pointer}
+.hg-tag{max-width:100%;box-sizing:border-box;padding:6px 10px;border-radius:8px;background:var(--tag);color:var(--tagInk);box-shadow:0 2px 0 rgba(0,0,0,.12),0 3px 8px rgba(0,0,0,.25);
+  font:700 13px/1.2 Montserrat,system-ui,sans-serif;text-align:center}
+.hg-tag .nm{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.hg-tag small{display:block;margin-top:2px;font:600 10.5px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#5f8a6b}
+.hg-wk{display:flex;gap:4px}
+.hg-wk i{width:9px;height:9px;border-radius:50%;box-sizing:border-box;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.55)}
+.hg-wk i.r{border-color:rgba(255,255,255,.22);background:none}
+.hg-wk i.f{border-color:rgba(255,255,255,.28);background:none;opacity:.6}
+.hg-wk i.w{background:#5cc0ee;border-color:#c9efff}
+.hg-wk i.t{box-shadow:0 0 0 2px rgba(255,255,255,.95)}
+body[data-set="white"] .hg-wk i{border-color:rgba(60,70,60,.4);background:rgba(0,0,0,.04)}
+body[data-set="white"] .hg-wk i.r,body[data-set="white"] .hg-wk i.f{border-color:rgba(60,70,60,.2)}
+body[data-set="white"] .hg-wk i.w{background:#3aa7dc;border-color:#3aa7dc}
+body[data-set="white"] .hg-wk i.t{box-shadow:0 0 0 2px rgba(40,90,60,.7)}
+.hg-lab.empty{visibility:hidden}
+.hg-more{margin:-8px 0 0;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.84);color:#2b4a35;font:600 13px/1.4 Montserrat,system-ui,sans-serif;text-align:center}
+.hg-more a{color:#2f8a4f;font-weight:700}
+
+/* the watering can that tips over a plant */
+.hg-can{position:absolute;top:-6px;right:-4px;width:74px;height:60px;pointer-events:none;z-index:4;transform-origin:20% 80%;animation:hgCan 1.15s ease-in-out forwards}
+@keyframes hgCan{0%{opacity:0;transform:translate(16px,-10px) rotate(0)}18%{opacity:1;transform:translate(0,0) rotate(0)}35%,75%{opacity:1;transform:translate(0,0) rotate(-32deg)}100%{opacity:0;transform:translate(10px,-8px) rotate(0)}}
+.hg-rain{position:absolute;left:20%;right:30%;top:40px;height:120px;pointer-events:none;z-index:3}
+.hg-rain i{position:absolute;top:0;width:3px;height:9px;border-radius:2px;background:linear-gradient(180deg,rgba(170,225,255,0),#9fdcff);opacity:0;animation:hgRain .55s linear infinite}
+@keyframes hgRain{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(110px)}}
+.hg-pop{position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:5;white-space:nowrap;padding:6px 12px;border-radius:99px;background:#fff;color:#2f8a4f;
+  font:700 13px/1 Montserrat,system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none;animation:hgPop 2.2s ease forwards}
+.hg-pop.gold{background:linear-gradient(180deg,#fff4cf,#ffe08a);color:#7a5208}
+@keyframes hgPop{0%{opacity:0;transform:translate(-50%,8px)}12%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-10px)}}
+
+/* windows: Plant a Habit, a plant's card, the Garden Journal */
+.hg-in{width:100%;box-sizing:border-box;min-height:46px;padding:10px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.95);color:#17301f;font:600 16px Montserrat,system-ui,sans-serif}
+.hg-in:focus{outline:3px solid rgba(127,209,143,.7)}
+.hg-h{margin:16px 0 8px;font:700 12px/1.3 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#a8e2b6;text-align:left}
+.hg-chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-start}
+.hg-chip{appearance:none;cursor:pointer;padding:8px 12px;border-radius:99px;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.07);color:#fff;font:600 13.5px/1.1 Montserrat,system-ui,sans-serif}
+.hg-chip.on{background:#4fae6e;border-color:#8fe0a4}
+.hg-chip:disabled{opacity:.4;cursor:default}
+.hg-grp{margin:8px 0 3px;font:700 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);text-align:left}
+.hg-sug{max-height:min(30vh,230px);overflow-y:auto;padding-right:4px}
+.hg-kinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.hg-kind{position:relative;appearance:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px 8px;border-radius:14px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font:600 12.5px/1.15 Montserrat,system-ui,sans-serif}
+.hg-kind .pic{display:block;width:100%;height:74px}
+.hg-kind .pic svg,.hg-kind .pic img,.hg-card .pic svg,.hg-card .pic img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
+.hg-kind.on{border-color:#8fe0a4;background:rgba(79,174,110,.28)}
+.hg-kind.lock{opacity:.6}
+.hg-kind.lock::after{content:"Club";position:absolute;top:5px;right:5px;padding:2px 6px;border-radius:99px;background:#F2BE45;color:#2a1c00;font:700 10px/1.2 Montserrat,system-ui,sans-serif}
+.hg-err{min-height:1.2em;margin:8px 0 0;font:600 13px/1.4 Montserrat,system-ui,sans-serif;color:#ffd08a}
+.hg-card{display:flex;gap:14px;align-items:center;text-align:left;margin:6px 0 4px}
+.hg-card .pic{flex:none;width:110px;height:140px;border-radius:14px;background:radial-gradient(120% 80% at 50% 100%,rgba(120,200,140,.25),rgba(255,255,255,.04))}
+.hg-card h2{margin:0 0 4px}
+.hg-card p{margin:0 0 4px;font:500 14px/1.45 Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.85)}
+.hg-meter{height:8px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;margin:8px 0 4px}
+.hg-meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7fd18f,#3f9e5c)}
+.hg-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:10px 0 4px}
+.hg-week div{display:flex;flex-direction:column;align-items:center;gap:4px;font:700 11px/1 Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.65)}
+.hg-week i{width:16px;height:16px;border-radius:50%;box-sizing:border-box;border:2px solid rgba(255,255,255,.45)}
+.hg-week i.w{background:#5cc0ee;border-color:#c9efff}.hg-week i.r,.hg-week i.f{border-color:rgba(255,255,255,.18)}.hg-week i.t{box-shadow:0 0 0 2px #fff}
+.hg-note{margin:8px 0;font:500 13.5px/1.5 Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.8)}
+.hg-club{margin:10px 0;padding:11px 14px;border-radius:12px;background:linear-gradient(180deg,rgba(242,190,69,.16),rgba(242,190,69,.06));border:1px solid rgba(242,190,69,.35);font:500 14px/1.5 Montserrat,system-ui,sans-serif;color:#fff;text-align:left}
+.hg-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.hg-facts div{padding:10px 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(160,230,180,.25)}
+.hg-facts b{display:block;font:700 26px/1.1 Montserrat,system-ui,sans-serif;color:#fff}
+.hg-facts small{font:600 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a8e2b6}
+.hg-leaf{display:block;width:64px;height:30px;margin:2px auto 0}
+.hg-facts div{text-align:center}
+#hgEnd .pk-row .pk-btn{flex:1 1 40%}
+/* the Garden Journal: a row of days for each plant */
+.hg-jhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 8px}
+.hg-jhead b{font:700 16px Montserrat,system-ui,sans-serif;color:#fff}
+.hg-jhead button{min-width:40px}
+.hg-jwrap{overflow-x:auto;max-height:min(46vh,380px);overflow-y:auto;border-radius:12px;background:rgba(255,255,255,.05);padding:8px}
+.hg-jt{border-collapse:separate;border-spacing:2px;font:600 11px Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.7)}
+.hg-jt th{font-weight:700;padding:0 0 3px;text-align:center;min-width:12px}
+.hg-jt td.n{max-width:118px;padding-right:8px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;font-size:12px}
+.hg-jt td.c i{display:block;width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,.07)}
+.hg-jt td.c i.w{background:#5cc0ee}.hg-jt td.c i.d{background:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)}.hg-jt td.c i.x{background:none}
+.hg-jt th.t{color:#a8e2b6}
+.hg-jkey{display:flex;gap:12px;justify-content:center;margin:8px 0 0;font:600 11.5px Montserrat,system-ui,sans-serif;color:rgba(255,255,255,.7)}
+.hg-jkey i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+#hgPlant .pk-modal,#hgCard .pk-modal,#hgJournal .pk-modal{max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
+/* the intro line is long: let it wrap beside Take a Seat (Nov 21 rule) */
+.pk-introtxt{flex:1 1 auto}.pk-introtxt .pk-tag{white-space:normal;line-height:1.4}
+@media (max-width:560px){
+  .hg-top{padding:12px 14px;border-radius:16px}
+  .hg-sum{font-size:17.5px}
+  .hg-acts{width:100%}.hg-acts .hg-btn{flex:1 1 0;padding:0 10px;font-size:13.5px}
+  .hg-plot{height:178px}
+  .hg-plots,.hg-face{padding-left:10px;padding-right:10px}
+  .hg-plots::after{left:10px;right:10px}
+  .hg-tag{font-size:12px;padding:5px 7px}
+  .hg-wk{gap:3px}.hg-wk i{width:8px;height:8px}
+  .hg-kinds{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.hg-kind .pic{height:60px}.hg-kind{font-size:11px}
+  .hg-card .pic{width:88px;height:116px}
+  .hg-sug{max-height:22vh}
+  .hg-can{width:60px;height:50px}
+}
+@media (max-height:560px) and (orientation:landscape){.hg-plot{height:140px}}
+</style>
+<script src="bw-auth.js?v=1120c"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,700,100,0&display=swap">
+<style id="bw-wordmark">/* BrainWhim wordmark (Nov 11): gold Whim, set tight so BrainWhim always reads as one word */
+span.whim,.brand-whim,.brand-whim-accent{background:linear-gradient(180deg,#fff2b3 0%,#f2be45 52%,#c27f1c 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#f2be45!important;text-shadow:none!important;padding:0 .08em!important;margin-left:-.16em!important;margin-right:-.08em!important}
+/* Nov 11 refinement (C): "Brain" in polished ivory-silver, "Whim" gold, both with a soft shadow from the top-left light; room between coin and name */
+span:has(+ span.whim),.brand-brain,.brand .brain{background:linear-gradient(180deg,#ffffff 0%,#e8e4da 50%,#a19c92 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#efe9dc!important;text-shadow:none!important;letter-spacing:-.01em;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+span.whim,.brand-whim,.brand-whim-accent{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+.brand .whim{font-size:1.08em}
+.brand>img{margin-right:8px!important}
+/* Nov 11 (18b): "Brain" in Fraunces Soft 700 (rounded serifs, real thick-and-thin), sized so its B stands as tall as Pacifico's W */
+span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_){font-family:"Fraunces",Georgia,serif!important;font-weight:700!important;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:1.3em!important;letter-spacing:-.025em!important;line-height:1!important}
+/* Nov 11 evening: the Pacifico "Tap for Whims" labels in gold to match */
+.whim-label:not(#_),.whimp .wt:not(#_),.whim-mobile-card p:not(#_),.pk-whim-label:not(#_){color:#F2BE45!important}
+</style>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e31875694216416e84797ec764428367"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html" aria-label="BrainWhim"><img src="bw-emblem.png?v=1111a" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="lobby.html?cat=cards">Cards</a><a href="lobby.html">Board Games</a><a href="learn.html">Learn</a><a class="up" href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1120a"></script>
+<script src="bw-avatars.js?v=1120a"></script>
+<script src="parlor-kit.js?v=1121c"></script>
+<script src="bw-share.js?v=1121b"></script>
+<script>
+(function(){
+"use strict";
+function $(s,r){ return (r||document).querySelector(s); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null){ localStorage.removeItem(k); return null; } localStorage.setItem(k,v); }catch(e){} return null; }
+function jget(k){ try{ return JSON.parse(store(k)||"null"); }catch(e){ return null; } }
+function member(){ try{ return !!(window.BW&&BW.member&&BW.member()); }catch(e){ return false; } }
+
+/* ---------- dates ---------- */
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fromKey(k){ var p=k.split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function addDays(d,n){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); }
+var EPOCH=new Date(2026,10,1);
+function dayNo(d){ return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-EPOCH)/864e5)+1; }
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], DL="SMTWTFS";
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function niceDate(d){ return DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate(); }
+var today, todayKey;
+function setToday(d){ d=d||new Date(); today=new Date(d.getFullYear(),d.getMonth(),d.getDate()); todayKey=ymd(today); }
+setToday();
+
+/* ---------- the plants ---------- */
+var KINDS=[
+  {id:"sunflower",name:"Sunflower",p1:"#ffd84a",p2:"#e8960f",mid:"#5b3417"},
+  {id:"tulip",name:"Tulip",p1:"#ff8a95",p2:"#d6304c"},
+  {id:"daisy",name:"Daisy",p1:"#ffffff",p2:"#dcd8e8",mid:"#f6c12c"},
+  {id:"lavender",name:"Lavender",p1:"#b9a0ef",p2:"#7353c2"},
+  {id:"tomato",name:"Tomato",p1:"#ff6a45",p2:"#c62a17"},
+  {id:"rose",name:"Rose",club:true,p1:"#ff5d77",p2:"#a3122d"},
+  {id:"peony",name:"Peony",club:true,p1:"#ffd0dc",p2:"#ee7c9c"},
+  {id:"strawberry",name:"Strawberry",club:true,p1:"#ff4b55",p2:"#b3131f"}];
+function kind(id){ for(var i=0;i<KINDS.length;i++) if(KINDS[i].id===id) return KINDS[i]; return KINDS[0]; }
+var TH=[0,1,5,12,21], STAGES=["Planted","Sprout","Growing","In Bud","In Full Bloom"], BLOOM=21;
+function stageOf(w){ var s=0; for(var i=0;i<TH.length;i++) if(w>=TH[i]) s=i; return s; }
+var IDEAS=[
+  ["Body",["Drink 8 glasses of water","Walk 20 minutes","Stretch for 5 minutes","Move for 10 minutes","In bed by 10:30","Eat a vegetable at lunch"]],
+  ["Mind",["Read 10 pages","Learn one new thing","Today's BrainWhim puzzle","Write one line in a journal","5 quiet minutes","Practice an instrument"]],
+  ["Home",["Make the bed","Tidy for 10 minutes","Cook dinner at home","Water the houseplants","Clear the kitchen counter"]],
+  ["People",["Call someone you love","Send a kind note","Say thank you to someone","Play a game together"]],
+  ["Money",["Write down what I spend","No-spend day","Pack a lunch"]]];
+
+/* ---------- what's kept (on this device only) ----------
+   bwHgPlants = [{id, name, kind, days:[0-6] (empty = every day), born:"YYYY-MM-DD", log:["YYYY-MM-DD", …]}]
+   bwGarden:<date> = {n, of} once every plant due that day is watered   ·   bwHgSeen = "1" after the first watering */
+var plants=jget("bwHgPlants")||[];
+function save(){ store("bwHgPlants",JSON.stringify(plants)); }
+function maxPlants(){ return member()?12:3; }
+function isDue(p,d){ return !p.days||!p.days.length||p.days.indexOf(d.getDay())>=0; }
+function wetOn(p,k){ return p.log.indexOf(k)>=0; }
+function w(p){ return p.log.length; }
+function schedText(p){ if(!p.days||!p.days.length||p.days.length===7) return "Every day"; var d=p.days.slice().sort(); if(d.join()==="1,2,3,4,5") return "Weekdays"; if(d.join()==="0,6") return "Weekends"; return d.map(function(i){ return DAYS[i].slice(0,3); }).join(", "); }
+function dueToday(){ return plants.filter(function(p){ return isDue(p,today); }); }
+function daysTended(){ var s={}; plants.forEach(function(p){ p.log.forEach(function(k){ s[k]=1; }); }); return Object.keys(s).length; }
+function inBloom(){ return plants.filter(function(p){ return w(p)>=BLOOM; }).length; }
+
+/* ---------- drawn plants (stand-ins until the photo plants arrive: hg/<kind>-<stage>.png, hg/sprout.png) ---------- */
+var HGV="1121a", PH={};
+function photoSrc(k,st){ return st<1?null:st===1?"hg/sprout.png?v="+HGV:"hg/"+k+"-"+st+".png?v="+HGV; }
+function want(src){ if(!src||PH[src]!==undefined) return; PH[src]=0; var im=new Image(); im.onload=function(){ PH[src]=1; render(); }; im.onerror=function(){ PH[src]=-1; }; im.src=src; }
+var uid=0;
+function plantSVG(kid,wt,big){
+  var K=kind(kid), st=stageOf(wt), lo=TH[st], hi=TH[st+1], pr=st>=4?1:(wt-lo)/((hi||lo+1)-lo), sc=st===0?1:.84+.16*pr, u="hgp"+(++uid);
+  var o='<svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs>'+
+    '<linearGradient id="'+u+'l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fd06f"/><stop offset="1" stop-color="#3a8a3d"/></linearGradient>'+
+    '<radialGradient id="'+u+'p" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="'+K.p1+'"/><stop offset="1" stop-color="'+K.p2+'"/></radialGradient>'+
+    '<radialGradient id="'+u+'m" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="'+(K.mid||"#f6c12c")+'"/><stop offset="1" stop-color="#2a1608"/></radialGradient>'+
+    '<radialGradient id="'+u+'s" cx=".5" cy=".3" r=".7"><stop offset="0" stop-color="#5c4030"/><stop offset="1" stop-color="#2a1b12"/></radialGradient></defs>';
+  var L="url(#"+u+"l)", P="url(#"+u+"p)", M="url(#"+u+"m)";
+  function leaf(x,y,len,a,wd){ var t=' transform="translate('+x+' '+y+') rotate('+a+')"'; return '<path d="M0 0C'+wd+' '+(-len*.3)+' '+(wd*.8)+' '+(-len*.8)+' 0 '+(-len)+'C'+(-wd*.8)+' '+(-len*.8)+' '+(-wd)+' '+(-len*.3)+' 0 0Z" fill="'+L+'"'+t+'/><path d="M0 -1L0 '+(-len*.88)+'" stroke="rgba(255,255,255,.35)" stroke-width=".8" fill="none"'+t+'/>'; }
+  function stem(x0,y0,x1,y1,sw){ return '<path d="M'+x0+' '+y0+'Q'+(x0+(x1-x0)*.2+4)+' '+((y0+y1)/2)+' '+x1+' '+y1+'" stroke="#4e9a43" stroke-width="'+(sw||3.4)+'" fill="none" stroke-linecap="round"/>'; }
+  function circ(cx,cy,r,f,ex){ return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+f+'"'+(ex||"")+'/>'; }
+  function petals(cx,cy,n,len,wd,f,off,rot){ var s=""; for(var i=0;i<n;i++){ var a=(rot||0)+i*360/n; s+='<ellipse cx="'+cx+'" cy="'+(cy-off-len/2)+'" rx="'+wd+'" ry="'+(len/2)+'" fill="'+f+'" transform="rotate('+a.toFixed(1)+' '+cx+' '+cy+')"/>'; } return s; }
+  function sunHead(cx,cy,r){ return petals(cx,cy,16,r*.62,r*.16,P,r*.42,11)+petals(cx,cy,16,r*.6,r*.15,P,r*.4,0)+circ(cx,cy,r*.46,M)+circ(cx-r*.1,cy-r*.12,r*.2,"rgba(255,220,140,.18)"); }
+  function daisyHead(cx,cy,r){ return petals(cx,cy,18,r*.7,r*.11,P,r*.28,0)+circ(cx,cy,r*.3,M)+circ(cx-r*.08,cy-r*.08,r*.12,"rgba(255,255,255,.35)"); }
+  function tulipHead(cx,cy){ return '<ellipse cx="'+(cx+5)+'" cy="'+(cy-9)+'" rx="8" ry="13" fill="'+K.p2+'"/><path d="M'+(cx-13)+' '+(cy-20)+'Q'+(cx-15)+' '+(cy+3)+' '+cx+' '+(cy+6)+'Q'+(cx+15)+' '+(cy+3)+' '+(cx+13)+' '+(cy-20)+'Q'+(cx+7)+' '+(cy-11)+' '+cx+' '+(cy-23)+'Q'+(cx-7)+' '+(cy-11)+' '+(cx-13)+' '+(cy-20)+'Z" fill="'+P+'"/><path d="M'+(cx-3)+' '+(cy-15)+'Q'+(cx-6)+' '+(cy-3)+' '+cx+' '+(cy+3)+'" stroke="rgba(255,255,255,.35)" stroke-width="1.5" fill="none"/>'; }
+  function roseHead(cx,cy,r){ var s=""; for(var i=0;i<6;i++){ var a=i*60+15; s+='<ellipse cx="'+cx+'" cy="'+(cy-r*.55)+'" rx="'+(r*.55)+'" ry="'+(r*.62)+'" fill="'+K.p2+'" transform="rotate('+a+' '+cx+' '+cy+')"/>'; }
+    s+=circ(cx,cy,r*.78,P)+'<path d="M'+(cx-r*.5)+' '+cy+'A'+(r*.5)+' '+(r*.45)+' 0 0 1 '+(cx+r*.45)+' '+(cy-r*.1)+'M'+(cx-r*.3)+' '+(cy+r*.05)+'A'+(r*.3)+' '+(r*.3)+' 0 0 1 '+(cx+r*.25)+' '+(cy-r*.15)+'M'+(cx-r*.12)+' '+(cy-r*.02)+'A'+(r*.13)+' '+(r*.13)+' 0 0 1 '+(cx+r*.12)+' '+(cy-r*.1)+'" stroke="'+K.p2+'" stroke-width="1.6" fill="none" stroke-linecap="round"/>'; return s; }
+  function peonyHead(cx,cy,r){ var s=""; [[0,1],[1,.8],[2,.6],[3,.4]].forEach(function(q){ var n=8-q[0], rr=r*q[1]; for(var i=0;i<n;i++){ var a=i*360/n+q[0]*17, x=cx+Math.cos(a*Math.PI/180)*rr*.5, y=cy+Math.sin(a*Math.PI/180)*rr*.45; s+=circ(x.toFixed(1),y.toFixed(1),(rr*.48).toFixed(1),q[0]%2?K.p1:P); } }); return s+circ(cx,cy,r*.16,"#fff1b8"); }
+  function bud(cx,cy,r,f){ return '<path d="M'+cx+' '+(cy-r*1.5)+'C'+(cx+r)+' '+(cy-r*.6)+' '+(cx+r)+' '+(cy+r*.5)+' '+cx+' '+(cy+r*.6)+'C'+(cx-r)+' '+(cy+r*.5)+' '+(cx-r)+' '+(cy-r*.6)+' '+cx+' '+(cy-r*1.5)+'Z" fill="'+f+'"/>'+leaf(cx,cy+r*.6,r*1.1,-35,r*.45)+leaf(cx,cy+r*.6,r*1.1,35,r*.45); }
+  function fruit(cx,cy,r){ return circ(cx,cy,r,P)+circ(cx-r*.35,cy-r*.35,r*.28,"rgba(255,255,255,.45)")+'<path d="M'+(cx-r*.5)+' '+(cy-r*.85)+'L'+cx+' '+(cy-r*1.15)+'L'+(cx+r*.5)+' '+(cy-r*.85)+'M'+cx+' '+(cy-r*.75)+'L'+cx+' '+(cy-r*1.35)+'" stroke="#3e8a35" stroke-width="1.8" fill="none" stroke-linecap="round"/>'; }
+  function berry(cx,cy,r){ var s='<path d="M'+(cx-r)+' '+(cy-r*.6)+'Q'+cx+' '+(cy-r*1.2)+' '+(cx+r)+' '+(cy-r*.6)+'Q'+(cx+r*.9)+' '+(cy+r*.6)+' '+cx+' '+(cy+r*1.3)+'Q'+(cx-r*.9)+' '+(cy+r*.6)+' '+(cx-r)+' '+(cy-r*.6)+'Z" fill="'+P+'"/>'; for(var i=0;i<6;i++) s+=circ((cx+(i%3-1)*r*.45).toFixed(1),(cy-r*.2+Math.floor(i/3)*r*.55).toFixed(1),.9,"#ffe27a"); return s+leaf(cx,cy-r*.75,r*.7,-60,r*.35)+leaf(cx,cy-r*.75,r*.7,60,r*.35); }
+  function blossom(cx,cy,r,mid){ return petals(cx,cy,5,r,r*.55,"#ffffff",r*.15,0)+circ(cx,cy,r*.35,mid||"#f6c12c"); }
+  var b='<ellipse cx="60" cy="152" rx="'+(st?18:26)+'" ry="'+(st?5:7)+'" fill="url(#'+u+'s)"/>';
+  if(st===0) b+='<ellipse cx="54" cy="148" rx="2.4" ry="1.6" fill="#d9c49a"/><ellipse cx="63" cy="149.5" rx="2.2" ry="1.5" fill="#cdb48a"/><ellipse cx="68" cy="147.5" rx="2" ry="1.4" fill="#e2cfa8"/>';
+  else if(st===1) b+=stem(60,151,61,128)+leaf(61,129,14,-62,6)+leaf(61,129,14,62,6);
+  else if(st===2) b+=stem(60,151,62,96)+leaf(60,140,22,-72,9)+leaf(60,134,24,68,9)+leaf(61,120,20,-58,8)+leaf(61,113,20,55,8)+leaf(62,99,12,-18,5)+leaf(62,99,12,22,5);
+  else {
+    var bl=st===4, id=K.id;
+    if(id==="lavender"){ [[34,62],[47,48],[60,40],[73,48],[86,62]].forEach(function(t,i){ b+=stem(60,151,t[0],t[1],2.2); var dx=(t[0]-60)/40; for(var j=0;j<(bl?9:5);j++){ var y=t[1]+j*4.2, x=t[0]-dx*j*1.7; b+='<ellipse cx="'+(x+(j%2?2.2:-2.2)).toFixed(1)+'" cy="'+y.toFixed(1)+'" rx="2.6" ry="3.6" fill="'+(bl?P:"#8f9b82")+'"/>'; } });
+      b+=leaf(58,150,26,-55,5)+leaf(62,150,26,55,5)+leaf(58,150,22,-25,4)+leaf(62,150,22,25,4); }
+    else if(id==="tomato"){ b+=stem(60,151,60,46,3.8)+stem(60,118,34,90,2.6)+stem(60,104,88,78,2.6)+stem(60,80,40,62,2.4);
+      b+=leaf(50,128,22,-80,9)+leaf(66,124,22,78,9)+leaf(38,94,18,-50,8)+leaf(84,82,18,50,8)+leaf(44,66,16,-40,7)+leaf(61,52,14,10,6)+leaf(70,98,16,70,7);
+      if(bl) b+=fruit(36,100,8)+fruit(84,88,9)+fruit(46,73,7)+fruit(70,112,7.5); else b+=blossom(36,96,4.5,"#f6c12c").replace(/#ffffff/g,"#ffe27a")+blossom(84,84,4.5).replace(/#ffffff/g,"#ffe27a")+blossom(46,70,4).replace(/#ffffff/g,"#ffe27a"); }
+    else if(id==="strawberry"){ [[-70,30],[-35,34],[0,36],[35,34],[70,30]].forEach(function(q){ var a=q[0]*Math.PI/180, x=60+Math.sin(a)*q[1], y=150-Math.cos(a)*q[1]*.8; b+=stem(60,151,x,y,2)+leaf(x,y,13,q[0]-25,6)+leaf(x,y,14,q[0],6.5)+leaf(x,y,13,q[0]+25,6); });
+      if(bl) b+=berry(30,138,7.5)+berry(90,136,8)+berry(62,142,6.5)+blossom(44,110,5,"#f6d23c")+blossom(80,106,4.5,"#f6d23c"); else b+=blossom(40,112,5.5,"#f6d23c")+blossom(78,108,5.5,"#f6d23c")+blossom(60,100,5,"#f6d23c"); }
+    else {
+      var top={sunflower:38,tulip:62,daisy:58,rose:54,peony:56}[id]||56, tx=63;
+      b+=stem(60,151,tx,top+8)+leaf(60,142,24,-74,10)+leaf(60,136,26,70,10)+leaf(61,118,22,-60,9)+leaf(61,108,22,58,9)+(top<50?leaf(62,88,20,-55,8)+leaf(62,80,20,52,8):"");
+      if(id==="daisy"){ b+=stem(60,140,36,82,2.2)+stem(60,132,88,74,2.2); b+=bl?daisyHead(36,80,15)+daisyHead(88,72,14)+daisyHead(tx,top,18):bud(36,82,5,"#7fb85e")+bud(88,74,5,"#7fb85e")+bud(tx,top+2,6,"#e9f3dc"); }
+      else if(!bl){ b+=bud(tx,top+4,id==="sunflower"?10:8,id==="sunflower"?"#6aa84f":id==="peony"?"#c7e0b0":P); if(id==="sunflower") b+=petals(tx,top+4,8,5,2,K.p1,8,0); }
+      else if(id==="sunflower") b+=sunHead(tx,top,30);
+      else if(id==="tulip") b+=tulipHead(tx,top);
+      else if(id==="rose") b+=roseHead(tx,top,15);
+      else if(id==="peony") b+=peonyHead(tx,top,22);
+    }
+  }
+  return o+'<g transform="translate(60 152) scale('+sc.toFixed(3)+') translate(-60 -152)">'+b+'</g></svg>';
+}
+function plantPic(kid,wt){ var st=stageOf(wt), src=photoSrc(kid,st); want(src); if(src&&PH[src]===1) return '<img src="'+src+'" alt="" draggable="false">'; return plantSVG(kid,wt); }
+
+/* ---------- sounds: water from the can, a little growth, a stage, full bloom, planting, birdsong when the garden's done ---------- */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx, tine=[[1,1,1],[2.76,.18,.3],[5.4,.06,.15]];
+  D("hg-pour",function(h){ var d=h.out(.22), t=h.t;
+    h.burst(d,t+.12,.85,"lowpass",900,.8,.06,.12,.45);
+    for(var i=0;i<12;i++) h.burst(d,t+.15+i*.06,.08,"bandpass",1700+Math.random()*1500,1.6,.05,.008,.06); });
+  D("hg-grow",function(h){ var d=h.out(.22), t=h.t; h.osc(d,t,"sine",587.3,587.3,.07,.004,.4); h.osc(d,t+.09,"sine",880,880,.06,.004,.5); h.osc(d,t,"triangle",1174.6,1174.6,.015,.004,.3); });
+  D("hg-stage",function(h){ var d=h.out(.3), t=h.t; [523.3,659.3,784].forEach(function(f,i){ h.bell(d,t+i*.09,f,.06,1.2,tine); }); });
+  D("hg-bloom",function(h){ var d=h.out(.4), t=h.t; [392,523.3,659.3,784,1046.5].forEach(function(f,i){ h.bell(d,t+i*.1,f,.065,1.7,tine); }); h.osc(d,t+.02,"sine",110,70,.1,.004,.2,["lowpass",380]); });
+  D("hg-plant",function(h){ var d=h.out(.2), t=h.t; h.burst(d,t,.12,"lowpass",700,1,.14,.004,.09); h.osc(d,t+.01,"sine",150,72,.12,.003,.18,["lowpass",420]); h.osc(d,t+.22,"sine",660,660,.05,.004,.35); });
+  D("hg-dig",function(h){ var d=h.out(.2), t=h.t; for(var i=0;i<4;i++) h.burst(d,t+i*.09,.09,"bandpass",900+i*150,1,.1,.006,.07); });
+  D("hg-tap",function(h){ var d=h.out(.1); h.burst(d,h.t,.03,"bandpass",2600,2,.08,.001,.02); });
+  D("hg-done",function(h){ var d=h.out(.25), t=h.t;   /* a robin's few notes */
+    [[0,2900,3500],[.16,3300,2800],[.3,3000,3700],[.52,3500,3100]].forEach(function(n){ h.osc(d,t+n[0],"sine",n[1],n[2],.045,.01,.1); }); });
+})();
+function snd(n,o){ if(window.Parlor&&Parlor.sfx) Parlor.sfx(n,o||{}); }
+
+/* ---------- the garden ---------- */
+var stage=document.createElement("div"); stage.className="hg-pad";
+stage.innerHTML='<div class="hg-top"><div><p class="hg-day"></p><p class="hg-sum"></p><p class="hg-sub"></p></div><div class="hg-acts"><button type="button" class="hg-btn" data-a="plant">+ Plant a Habit</button><button type="button" class="hg-btn soft" data-a="journal">Garden Journal</button></div><div class="hg-bar"><i></i></div></div><div class="hg-beds"></div>';
+var BEDS=$(".hg-beds",stage);
+stage.addEventListener("click",function(e){ var b=e.target.closest("[data-a]"); if(!b) return; if(b.dataset.a==="plant") plantWin(); else if(b.dataset.a==="journal") journal(); });
+function perBed(){ return window.innerWidth<560?3:4; }
+function weekDots(p,cls){ var s="", st=addDays(today,-today.getDay()), born=fromKey(p.born); for(var i=0;i<7;i++){ var d=addDays(st,i), k=ymd(d), c=wetOn(p,k)?"w":d>today?"f":(!isDue(p,d)||d<born)?"r":"";
+  if(k===todayKey) c+=" t"; s+=cls?'<div>'+DL[i]+'<i class="'+c+'"></i></div>':'<i class="'+c+'" title="'+DAYS[i]+'"></i>'; } return s; }
+function render(){
+  if(!BEDS) return;
+  var due=dueToday(), done=due.filter(function(p){ return wetOn(p,todayKey); }).length, extra=plants.filter(function(p){ return !isDue(p,today)&&wetOn(p,todayKey); }).length;
+  $(".hg-day",stage).textContent=niceDate(today);
+  var sum,sub;
+  if(!plants.length){ sum="Plant your first habit"; sub="Pick something you'd like to do, plant it, and water it each day you do it. Every watering helps it grow; nothing ever wilts."; }
+  else if(!due.length){ sum="A rest day for every plant"; sub="Nothing is due today. Did one anyway? Tap its plant to water it."; }
+  else if(done>=due.length){ sum="All watered today"+(due.length>1?": "+done+" of "+due.length:""); sub="Lovely. Come back tomorrow"+(inBloom()?"; "+inBloom()+" in full bloom.":" and watch them grow."); }
+  else { sum=done+" of "+due.length+" watered today"; sub=store("bwHgSeen")?"Tap a plant when you've done its habit.":"Done a habit today? Tap its plant to water it."; }
+  if(extra) sub+=" (+"+extra+" extra today)";
+  $(".hg-sum",stage).textContent=sum; $(".hg-sub",stage).textContent=sub;
+  $(".hg-bar i",stage).style.width=(due.length?Math.round(100*done/due.length):plants.length?100:0)+"%";
+  $(".hg-bar",stage).style.display=plants.length?"":"none";
+  var max=maxPlants(), slots=plants.slice();
+  if(plants.length<max) slots.push(null);
+  while(slots.length<3) slots.push(null);
+  var n=perBed(), html="";
+  for(var i=0;i<slots.length;i+=n){
+    var row=slots.slice(i,i+n), cols=row.length, pl="", fa="";
+    row.forEach(function(p){
+      if(!p){ pl+='<button type="button" class="hg-plot empty" data-new="1" aria-label="Plant a habit here"><div class="hg-pl"><div class="hg-new"><b>+</b>Plant a habit</div></div></button>'; fa+='<div class="hg-lab empty"></div>'; return; }
+      var wt=w(p), st=stageOf(wt), wet=wetOn(p,todayKey), dueNow=isDue(p,today)&&!wet;
+      pl+='<button type="button" class="hg-plot'+(st===4?" bloom":"")+(wet?" wet":"")+(dueNow?" due":"")+'" data-id="'+p.id+'" aria-label="'+esc(p.name)+': '+STAGES[st]+(wet?", watered today":dueNow?", tap to water":"")+'"><div class="hg-pl">'+plantPic(p.kind,wt)+'</div><span class="hg-drop" aria-hidden="true">✓</span>'+
+        (!store("bwHgSeen")&&dueNow&&p===plants[0]?'<span class="hg-hint">Tap to water</span>':'')+'</button>';
+      fa+='<div class="hg-lab" data-card="'+p.id+'"><span class="hg-tag"><span class="nm">'+esc(p.name)+'</span><small>'+STAGES[st]+'</small></span><span class="hg-wk">'+weekDots(p)+'</span></div>';
+    });
+    html+='<div class="hg-bed" style="--n:'+cols+'"><div class="hg-plots">'+pl+'</div><div class="hg-face">'+fa+'</div></div>';
+  }
+  if(!member()&&plants.length>=3) html+='<p class="hg-more">Room for more? <a href="member.html">Club Members</a> can grow up to 12 habits, with roses, peonies and strawberries.</p>';
+  BEDS.innerHTML=html;
+}
+BEDS.addEventListener("click",function(e){
+  var lab=e.target.closest("[data-card]"); if(lab){ snd("hg-tap"); card(find(lab.dataset.card)); return; }
+  var b=e.target.closest(".hg-plot"); if(!b) return;
+  if(b.dataset.new){ plantWin(); return; }
+  var p=find(b.dataset.id); if(!p) return;
+  if(wetOn(p,todayKey)) card(p); else water(p,b);
+});
+function find(id){ for(var i=0;i<plants.length;i++) if(plants[i].id===id) return plants[i]; return null; }
+
+/* watering: the can tips, the plant drinks and grows a little */
+var busy=0;
+function water(p,el){
+  if(busy) return; busy=1;
+  var before=stageOf(w(p));
+  var can=document.createElement("div"); can.innerHTML='<svg class="hg-can" viewBox="0 0 74 60"><defs><linearGradient id="hgCanG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9eef0"/><stop offset=".55" stop-color="#b9c4c9"/><stop offset="1" stop-color="#8e9aa0"/></linearGradient></defs>'+
+    '<path d="M24 22h30v30c0 3-2 5-5 5H29c-3 0-5-2-5-5z" fill="url(#hgCanG)" stroke="#7b878d" stroke-width="1.2"/><path d="M24 30L6 16l-3 3 18 16" fill="#b9c4c9" stroke="#7b878d" stroke-width="1.2"/><ellipse cx="4" cy="17" rx="3" ry="5" transform="rotate(-40 4 17)" fill="#9aa6ac"/>'+
+    '<path d="M30 22c0-9 18-9 18 0" fill="none" stroke="#8e9aa0" stroke-width="3.5"/><path d="M54 28c10 0 10 18 0 18" fill="none" stroke="#8e9aa0" stroke-width="3.5"/><rect x="24" y="36" width="30" height="5" fill="#4fae6e" opacity=".85"/></svg>'+
+    '<div class="hg-rain">'+[8,26,44,60,16,36,52].map(function(x,i){ return '<i style="left:'+x+'%;animation-delay:'+(.38+i*.07).toFixed(2)+'s"></i>'; }).join("")+'</div>';
+  [].slice.call(can.childNodes).forEach(function(c){ el.appendChild(c); });
+  snd("hg-pour");
+  setTimeout(function(){
+    p.log.push(todayKey); save(); store("bwHgSeen","1");
+    var after=stageOf(w(p)); render();
+    var nb=BEDS.querySelector('.hg-plot[data-id="'+p.id+'"]');
+    if(nb){ nb.classList.add("grow"); setTimeout(function(){ nb.classList.remove("grow"); },800); }
+    if(after>before){ pop(nb,after===4?"In full bloom!":after===1?"It sprouted!":after===3?"A bud!":"Growing!",after===4); snd(after===4?"hg-bloom":"hg-stage"); }
+    else { snd("hg-grow"); var left=after<4?TH[after+1]-w(p):0; pop(nb,after<4?(left===1?"1 more to "+STAGES[after+1].toLowerCase():left+" to "+STAGES[after+1].toLowerCase()):w(p)+" waterings"); }
+    busy=0; checkDone();
+  },1150);
+}
+function pop(el,t,gold){ if(!el) return; var s=document.createElement("span"); s.className="hg-pop"+(gold?" gold":""); s.textContent=t; el.appendChild(s); setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); },2300); }
+function checkDone(){
+  var due=dueToday(); if(!due.length) return;
+  var all=due.every(function(p){ return wetOn(p,todayKey); }), k="bwGarden:"+todayKey, had=store(k);
+  if(all&&!had){ store(k,JSON.stringify({n:due.length,of:due.length})); setTimeout(function(){ snd("hg-done"); result(); },1500); }
+  else if(!all&&had) store(k,null);
+}
+
+/* ---------- windows ---------- */
+function veil(id){ var v=$("#"+id); if(!v){ v=document.createElement("div"); v.className="pk-veil"; v.id=id; v.innerHTML='<div class="pk-modal"></div>'; document.body.appendChild(v);
+  v.addEventListener("click",function(e){ if(e.target===v) v.classList.remove("on"); }); } return v; }
+function btnIn(row,label,fn,href){ var x=document.createElement(href?"a":"button"); if(href) x.href=href; else x.type="button"; x.className="pk-btn"; x.textContent=label; if(fn) x.onclick=fn; row.appendChild(x); return x; }
+function closeAll(){ [].forEach.call(document.querySelectorAll(".pk-veil.on"),function(v){ v.classList.remove("on"); }); }
+
+/* Plant a Habit (or edit one): what, which days, which plant */
+function plantWin(edit){
+  var club=member();
+  if(!edit&&plants.length>=maxPlants()){ var v0=veil("hgFull"), b0=v0.firstChild;
+    b0.innerHTML='<p class="pk-kick">The Habit Garden</p><h2>Your beds are full</h2><div class="hg-club">'+(club?"Your garden holds 12 plants. Dig one up (tap its name tag) to make room.":"A free garden holds <b>3 habits</b>. The <b>Club</b> opens more beds: up to 12 habits, plus roses, peonies and strawberries.")+'</div><div class="pk-row"></div>';
+    var r0=b0.querySelector(".pk-row"); if(!club) btnIn(r0,"Join the Club",null,"member.html"); btnIn(r0,"Close",function(){ v0.classList.remove("on"); }); v0.classList.add("on"); return; }
+  var v=veil("hgPlant"), b=v.firstChild, sel={name:edit?edit.name:"", days:edit?(edit.days||[]).slice():[], kind:edit?edit.kind:"sunflower"};
+  var sug=IDEAS.map(function(g){ return '<p class="hg-grp">'+g[0]+'</p><div class="hg-chips">'+g[1].map(function(t){ return '<button type="button" class="hg-chip" data-s="'+esc(t)+'">'+esc(t)+'</button>'; }).join("")+'</div>'; }).join("");
+  b.innerHTML='<p class="pk-kick">The Habit Garden</p><h2>'+(edit?"Change This Habit":"Plant a Habit")+'</h2>'+
+    '<p class="hg-h">1 · What will you do?</p><input class="hg-in" maxlength="40" placeholder="Type a habit, or pick one below" value="'+esc(sel.name)+'">'+
+    (edit?"":'<div class="hg-sug">'+sug+'</div>')+
+    '<p class="hg-h">2 · Which days?</p><div class="hg-chips hg-days"><button type="button" class="hg-chip" data-d="all">Every day</button>'+DAYS.map(function(d,i){ return '<button type="button" class="hg-chip" data-d="'+i+'" aria-label="'+d+'">'+d.slice(0,3)+'</button>'; }).join("")+'</div>'+
+    (edit?"":'<p class="hg-h">3 · Pick a plant</p><div class="hg-kinds">'+KINDS.map(function(K){ return '<button type="button" class="hg-kind'+(K.club&&!club?" lock":"")+'" data-k="'+K.id+'"><span class="pic">'+plantPic(K.id,BLOOM)+'</span>'+K.name+'</button>'; }).join("")+'</div>')+
+    '<p class="hg-err" aria-live="polite"></p><p class="hg-note" style="font-size:12.5px;opacity:.75">🔒 Your habits stay on this device. Nothing you write here is sent to BrainWhim.</p><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var inp=$(".hg-in",b), err=$(".hg-err",b);
+  function paint(){ [].forEach.call(b.querySelectorAll("[data-s]"),function(c){ c.classList.toggle("on",c.dataset.s===inp.value.trim()); });
+    [].forEach.call(b.querySelectorAll("[data-d]"),function(c){ var d=c.dataset.d; c.classList.toggle("on",d==="all"?!sel.days.length||sel.days.length===7:sel.days.indexOf(+d)>=0&&sel.days.length<7); });
+    [].forEach.call(b.querySelectorAll("[data-k]"),function(c){ c.classList.toggle("on",c.dataset.k===sel.kind); }); }
+  b.onclick=function(e){ var c=e.target.closest("button"); if(!c) return;
+    if(c.dataset.s){ inp.value=c.dataset.s; snd("hg-tap"); paint(); err.textContent=""; }
+    else if(c.dataset.d){ snd("hg-tap"); if(c.dataset.d==="all") sel.days=[]; else { var d=+c.dataset.d, i=sel.days.indexOf(d); if(!sel.days.length) sel.days=[d]; else if(i>=0) sel.days.splice(i,1); else sel.days.push(d); if(sel.days.length===7) sel.days=[]; } paint(); }
+    else if(c.dataset.k){ var K=kind(c.dataset.k); if(K.club&&!club){ err.innerHTML='The '+K.name+' grows in Club gardens. <a href="member.html" style="color:#F2BE45">Join the Club</a>'; return; } snd("hg-tap"); sel.kind=K.id; err.textContent=""; paint(); } };
+  inp.oninput=paint;
+  var row=b.querySelector(".pk-row");
+  btnIn(row,edit?"Save":"Plant It",function(){
+    var nm=inp.value.trim().replace(/\s+/g," ");
+    if(!nm){ err.textContent="Give your habit a name first."; inp.focus(); return; }
+    if(edit){ edit.name=nm; edit.days=sel.days.slice().sort(); save(); v.classList.remove("on"); render(); checkDone(); Parlor.toast&&Parlor.toast("Saved."); return; }
+    var p={id:"p"+Date.now().toString(36),name:nm,kind:sel.kind,days:sel.days.slice().sort(),born:todayKey,log:[]};
+    plants.push(p); save(); v.classList.remove("on"); snd("hg-plant"); render();
+    var el=BEDS.querySelector('.hg-plot[data-id="'+p.id+'"]'); if(el){ el.classList.add("grow"); pop(el,"Planted!"); el.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+    if(dueToday().length&&store("bwGarden:"+todayKey)&&isDue(p,today)) store("bwGarden:"+todayKey,null);
+  }).classList.add("primary");
+  btnIn(row,"Cancel",function(){ v.classList.remove("on"); });
+  paint(); v.classList.add("on");
+  if(!edit&&window.innerWidth>=700) setTimeout(function(){ inp.focus(); },60);
+}
+
+/* a plant's card: how it's growing, this week, water / undo, change, dig up */
+function card(p){
+  if(!p) return;
+  var v=veil("hgCard"), b=v.firstChild, wt=w(p), st=stageOf(wt), wet=wetOn(p,todayKey), nx=st<4?TH[st+1]:0;
+  var grow=st<4?(nx-wt)+" more watering"+(nx-wt===1?"":"s")+" to "+STAGES[st+1].toLowerCase()+".":"In full bloom since watering 21. It keeps blooming.";
+  var ribbon=wt>=100?"🏅 100 waterings: an evergreen habit.":wt>=50?"🏅 50 waterings: strong roots.":"";
+  b.innerHTML='<p class="pk-kick">'+esc(kind(p.kind).name)+' · '+STAGES[st]+'</p><div class="hg-card"><div class="pic">'+plantPic(p.kind,wt)+'</div><div><h2>'+esc(p.name)+'</h2><p>'+schedText(p)+' · '+wt+' watering'+(wt===1?"":"s")+'</p><p>'+grow+'</p>'+(ribbon?'<p style="color:#F2BE45">'+ribbon+'</p>':'')+'</div></div>'+
+    '<div class="hg-meter"><i style="width:'+Math.min(100,Math.round(100*wt/BLOOM))+'%"></i></div><div class="hg-week">'+weekDots(p,1)+'</div>'+
+    '<p class="hg-note">'+(wet?"Watered today. ":isDue(p,today)?"Due today. ":"A rest day for this one. ")+'Missed days never undo a plant\'s growth: it simply waits for you.</p><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  if(wet) btnIn(row,"Undo Today's Watering",function(){ p.log=p.log.filter(function(k){ return k!==todayKey; }); save(); v.classList.remove("on"); render(); checkDone(); });
+  else btnIn(row,"Water Now",function(){ v.classList.remove("on"); var el=BEDS.querySelector('.hg-plot[data-id="'+p.id+'"]'); if(el) water(p,el); }).classList.add("primary");
+  btnIn(row,"Change",function(){ v.classList.remove("on"); plantWin(p); });
+  btnIn(row,"Dig Up",function(){
+    b.innerHTML='<p class="pk-kick">'+esc(p.name)+'</p><h2>Dig up this plant?</h2><p class="hg-note">Its '+wt+' watering'+(wt===1?"":"s")+' go with it. This can’t be undone.</p><div class="pk-row"></div>';
+    var r2=b.querySelector(".pk-row");
+    btnIn(r2,"Dig Up",function(){ plants=plants.filter(function(x){ return x!==p; }); save(); snd("hg-dig"); v.classList.remove("on"); render(); checkDone(); });
+    btnIn(r2,"Keep It",function(){ card(p); }).classList.add("primary");
+  });
+  btnIn(row,"Close",function(){ v.classList.remove("on"); });
+  v.classList.add("on");
+}
+
+/* the Garden Journal: this week for everyone; month by month with the Club */
+var jMonth=null;
+function journal(m){
+  var v=veil("hgJournal"), b=v.firstChild, club=member();
+  if(m) jMonth=m; else if(!jMonth) jMonth=new Date(today.getFullYear(),today.getMonth(),1);
+  var start, n;
+  if(club){ start=new Date(jMonth.getFullYear(),jMonth.getMonth(),1); n=new Date(jMonth.getFullYear(),jMonth.getMonth()+1,0).getDate(); }
+  else { start=addDays(today,-6); n=7; }
+  var head="", rows="";
+  for(var i=0;i<n;i++){ var d=addDays(start,i); head+='<th class="'+(ymd(d)===todayKey?"t":"")+'">'+(club?d.getDate():DL[d.getDay()])+'</th>'; }
+  plants.forEach(function(p){ var born=fromKey(p.born); rows+='<tr><td class="n" title="'+esc(p.name)+'">'+esc(p.name)+'</td>';
+    for(var i=0;i<n;i++){ var d=addDays(start,i), k=ymd(d), c=wetOn(p,k)?"w":(d>today||d<born)?"x":isDue(p,d)?"d":""; rows+='<td class="c"><i class="'+c+'"></i></td>'; } rows+='</tr>'; });
+  var title=club?MONTHS[jMonth.getMonth()]+" "+jMonth.getFullYear():"The last 7 days";
+  b.innerHTML='<p class="pk-kick">The Habit Garden</p><h2>Garden Journal</h2>'+
+    '<div class="hg-facts"><div><b>'+daysTended()+'</b><small>Days Tended</small></div><div><b>'+plants.reduce(function(a,p){ return a+w(p); },0)+'</b><small>Waterings</small></div><div><b>'+inBloom()+'</b><small>In Bloom</small></div></div>'+
+    '<div class="hg-jhead">'+(club?'<button type="button" class="pk-btn" data-m="-1" aria-label="Earlier month">‹</button>':'<span></span>')+'<b>'+title+'</b>'+(club?'<button type="button" class="pk-btn" data-m="1" aria-label="Later month">›</button>':'<span></span>')+'</div>'+
+    (plants.length?'<div class="hg-jwrap" data-bws="off"><table class="hg-jt"><tr><th></th>'+head+'</tr>'+rows+'</table></div><p class="hg-jkey"><span><i style="background:#5cc0ee"></i>Watered</span><span><i style="box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)"></i>Due</span><span><i style="background:rgba(255,255,255,.07)"></i>Rest day</span></p>':'<p class="hg-note">Plant a habit and its days will show here.</p>')+
+    (club?'':'<div class="hg-club">The full <b>Garden Journal</b> opens with the <b>Club</b>: every month since you planted, day by day.</div>')+
+    '<div class="pk-row" style="flex-wrap:wrap"></div>';
+  b.onclick=function(e){ var c=e.target.closest("[data-m]"); if(!c) return; var nm=new Date(jMonth.getFullYear(),jMonth.getMonth()+(+c.dataset.m),1); if(nm>today) return; journal(nm); };
+  var row=b.querySelector(".pk-row");
+  if(!club) btnIn(row,"Join the Club",null,"member.html");
+  btnIn(row,"Close",function(){ v.classList.remove("on"); });
+  v.classList.add("on");
+}
+
+/* all of today's plants watered */
+function result(){
+  var v=veil("hgEnd"), b=v.firstChild, due=dueToday(), bl=inBloom(), dt=daysTended();
+  b.innerHTML='<p class="pk-kick">The Habit Garden · '+niceDate(today)+'</p><h2>'+(bl&&due.some(function(p){ return w(p)===BLOOM; })?"In Full Bloom":"Garden Tended")+'</h2>'+
+    '<svg class="hg-leaf" viewBox="0 0 64 30" aria-hidden="true"><path d="M4 15H24M40 15H60" stroke="#7fd18f" stroke-width="2" stroke-linecap="round"/><path d="M32 4C40 10 40 20 32 26C24 20 24 10 32 4Z" fill="#7fd18f"/><path d="M32 7V24" stroke="#2f8a4f" stroke-width="1.2"/></svg>'+
+    '<div class="hg-facts"><div><b>'+due.length+'</b><small>Watered Today</small></div><div><b>'+dt+'</b><small>Days Tended</small></div><div><b>'+bl+'</b><small>In Bloom</small></div></div>'+
+    '<p class="hg-note">Every plant keeps every watering. Miss a day and it simply waits for you.</p><div class="pk-row" style="flex-wrap:wrap"></div>';
+  var row=b.querySelector(".pk-row");
+  btnIn(row,"Share Result",function(){ share(); });
+  btnIn(row,"Garden Journal",function(){ v.classList.remove("on"); journal(); });
+  btnIn(row,"Back to the Garden",function(){ v.classList.remove("on"); }).classList.add("primary");
+  btnIn(row,"Back to Live",null,"live.html");
+  v.classList.add("on");
+}
+function share(){   /* never the habits' names: only the counts */
+  var due=dueToday(), done=due.filter(function(p){ return wetOn(p,todayKey); }).length;
+  var txt="BrainWhim · The Habit Garden No. "+dayNo(today)+"\n"+done+" of "+due.length+" watered · "+daysTended()+" days tended"+(inBloom()?" · "+inBloom()+" in bloom":"")+"\nbrainwhim.com/habits.html";
+  if(window.BWShare){ BWShare.go(txt); return; }
+  if(navigator.share){ navigator.share({text:txt}).catch(function(){}); return; }
+  try{ navigator.clipboard.writeText(txt).then(function(){ Parlor.toast("Result copied: paste it to a friend."); }); }catch(e){ Parlor.toast(txt); }
+}
+
+/* a new day while the page is open; a resize changes the beds' width */
+document.addEventListener("visibilitychange",function(){ if(document.hidden) return; var k=todayKey; setToday(); if(k!==todayKey) render(); });
+var rw=window.innerWidth<560;
+window.addEventListener("resize",function(){ var r=window.innerWidth<560; if(r!==rw){ rw=r; render(); } });
+window.addEventListener("bw-auth",render);
+
+/* ---------- the room ---------- */
+Parlor.init({
+  game:"habits", cat:"live", solo:true, free:true, title:"The Habit Garden", bg:"pw/live-garden.jpg?v=1120a", home:"live.html", stage:stage,
+  soloLabel:"Today's garden", dealLabel:"Today's Garden",
+  tagline:"Habits That Grow.", invite:"Habits that grow. Raised beds on a dewy spring morning: every habit you keep is a plant, and every day you do it, you water it. Miss a day and it waits for you; nothing ever wilts.",
+  players:[{name:"You",color:"#2f8a4f"}],
+  setsLabel:"Beds",
+  sets:[
+    {id:"cedar",name:"Cedar",need:0,dots:["#b47a4b","#4a3324"]},
+    {id:"white",name:"Whitewashed",need:0,dots:["#f1eee7","#4a3324"]},
+    {id:"charcoal",name:"Charcoal",club:true,dots:["#3e4246","#7fd18f"]}
+  ],
+  rules:{
+    play:"<ol><li><b>Plant a habit:</b> type something you'd like to do (or pick one of ours), choose its days, and pick a plant.</li><li><b>Water it</b> on the days you do the thing: tap its plant. The watering can tips and the plant grows a little.</li><li><b>Watch it grow:</b> Planted, Sprout (1 watering), Growing (5), In Bud (12), <b>In Full Bloom (21)</b>. After that it keeps blooming.</li><li><b>Tap a name tag</b> to see a plant's week, undo today's watering, change the habit or dig it up.</li><li><b>Garden Journal:</b> every plant's days at a glance.</li></ol>",
+    score:"<ul><li><b>Nothing ever wilts.</b> A missed day never takes away a watering; the plant simply waits for you.</li><li><b>Days to water:</b> every day, or only the days you choose (say, Monday, Wednesday and Friday). On its other days a plant rests. Did it anyway? Water it: every watering counts.</li><li><b>Today's dots</b> on each name tag show this week: blue for watered, a ring for today.</li><li><b>Private:</b> your habits stay on this device. Nothing you type here is sent to BrainWhim.</li><li><b>Free gardens</b> hold 3 habits and five kinds of plant. <b>Club Members</b> grow up to 12, add roses, peonies and strawberries, keep the full Garden Journal month by month, and get Charcoal beds.</li></ul>"
+  },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Garden"; }); setToday(); render(); }
+});
+render();
+window.HGO={get:function(){ return {plants:plants,today:todayKey,due:dueToday().length,tended:daysTended(),bloom:inBloom()}; },
+  plant:function(name,k,days){ var p={id:"p"+Math.random().toString(36).slice(2,8),name:name,kind:k||"sunflower",days:days||[],born:todayKey,log:[]}; plants.push(p); save(); render(); return p.id; },
+  water:function(i){ var p=plants[i]; var el=BEDS.querySelector('.hg-plot[data-id="'+p.id+'"]'); water(p,el); },
+  grow:function(i,n){ var p=plants[i]; p.log=[]; for(var j=n;j>=1;j--) p.log.push(ymd(addDays(today,-j))); save(); render(); },
+  clear:function(){ plants=[]; save(); render(); }, card:function(i){ card(plants[i]); }, journal:journal, plantWin:plantWin, result:result, render:render, today:function(k){ setToday(fromKey(k)); render(); }};   /* for testing */
+})();
+</script>
+</body>
+</html>
