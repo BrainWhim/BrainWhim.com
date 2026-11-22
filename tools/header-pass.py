@@ -2,13 +2,16 @@
 """One header everywhere (Nov 20, Navigation Audit B). Re-runnable: rewrites the link lists in every grown-up
 page's header, phone menu and old-style side menu to the canonical order. Dry run by default; pass --apply OUTDIR
 to write changed files into OUTDIR (then copy them over). Kids' pages (kids.js) are left alone.
-Canonical bar: Home · Play · Puzzles · Cards · Board Games · Learn · Live · Create · Kids' Corner (Learn joined Nov 21 with the Reading Room; Create the same evening with the Writing Desk; Live Nov 22 with the Habit Garden)."""
+Canonical bar (Judy, Nov 22, "too crowded"): Home · Play · Puzzles · Learn · Live · Create · Kids' Corner. Cards and Board Games left the bar;
+they are reached from Play (its rows) and the phone menu. A card/board room (home: lobby...) gets one extra link, a.up.uplink
+("Board Games"/"Cards"), shown only where the kit hides the others (seated under 1000 px, phones under 560 px) so players can step back to the Lobby."""
 import re, sys, glob, os
 APPLY = sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == "--apply" else None
-CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("lobby.html?cat=cards","Cards"),("lobby.html","Board Games"),("learn.html","Learn"),("live.html","Live"),("create.html","Create"),("kids.html","Kids' Corner")]
-HREFS = {h for h,_ in CANON} | {"learn.html","live.html","create.html","quickplays.html"}
-ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"lobby.html","learn.html":"learn.html","live.html":"live.html","create.html":"create.html"}
-UPS = {"quickplays.html":"puzzles.html","member.html":"lobby.html"}   # pages with no phone menu: the one link phones keep
+CANON = [("index.html","Home"),("play.html","Play"),("puzzles.html","Puzzles"),("learn.html","Learn"),("live.html","Live"),("create.html","Create"),("kids.html","Kids' Corner")]
+LOBBY = {"lobby.html":"Board Games","lobby.html?cat=cards":"Cards"}   # off the bar since Nov 22; a room's way back (uplink)
+HREFS = {h for h,_ in CANON} | set(LOBBY) | {"learn.html","live.html","create.html","quickplays.html"}
+ON = {"index.html":"index.html","play.html":"play.html","puzzles.html":"puzzles.html","lobby.html":"play.html","learn.html":"learn.html","live.html":"live.html","create.html":"create.html"}
+UPS = {"quickplays.html":"puzzles.html","member.html":"play.html"}   # pages with no phone menu: the one link phones keep
 def home_of(src):
     m = re.search(r'home:\s*"([^"]+)"', src); return m.group(1) if m else None
 def bar(page, src, cls=""):
@@ -17,6 +20,7 @@ def bar(page, src, cls=""):
     for h,l in CANON:
         c = [x for x in [cls, "on" if h == on else "", "up" if h == up else ""] if x]
         out.append('<a%s href="%s">%s</a>' % (' class="%s"' % " ".join(c) if c else "", h, l))
+    if up in LOBBY: out.append('<a class="up uplink" href="%s">%s</a>' % (up, LOBBY[up]))
     return "".join(out)
 STD_A = re.compile(r'<a(?: class="[^"]*")? href="([^"#]+)"[^>]*>[^<]*</a>')
 def fix_hdr(page, s, log):
@@ -58,15 +62,17 @@ def fix_old(page, s, log):
 STYLE = {
  "old": "@media (min-width:993px){.header-navigation-menu{gap:28px!important}.nav-link{white-space:nowrap}}"
         "@media (min-width:993px) and (max-width:1439px){.header-widget-box{display:none!important}}"
-        "@media (min-width:993px) and (max-width:1100px){.header-navigation-menu{gap:11px!important}.nav-link{font-size:13px!important}}"
-        "@media (min-width:1101px) and (max-width:1279px){.header-navigation-menu{gap:14px!important}.nav-link{font-size:14px!important}}"
+        "@media (min-width:993px) and (max-width:1100px){.header-navigation-menu{gap:16px!important}.nav-link{font-size:14px!important}}"
+        "@media (min-width:1101px) and (max-width:1279px){.header-navigation-menu{gap:20px!important}.nav-link{font-size:15px!important}}"
         "@media (min-width:1280px) and (max-width:1439px){.header-navigation-menu{gap:20px!important}.nav-link{font-size:15px!important}}"
-        "@media (min-width:1440px){.header-navigation-menu{gap:18px!important}.nav-link{font-size:15px!important}}",   # 9 links (Nov 22): clear of the wordmark at 993-1600
+        "@media (min-width:1440px){.header-navigation-menu{gap:18px!important}.nav-link{font-size:15px!important}}",   # 7 links (Nov 22): roomier now; clear of the wordmark at 993-1600
  "quickplays.html": ".hdr a{white-space:nowrap}@media (max-width:900px){.hdr a:not(.up){display:none}}",
  "member.html": ".hdr a{white-space:nowrap}@media (max-width:560px){.hdr a:not(.up){display:none}}",
 }
+UPLINK = ".pk .hdr a.uplink{display:none}@media (max-width:999px){body.pk.seated .hdr a.uplink{display:inline}}@media (max-width:560px){.pk .hdr a.uplink{display:inline}}"
 def add_style(page, s, log):
     css = STYLE.get("old" if 'class="left-menu"' in s else page)
+    if not css and "parlor-kit.js" in s and home_of(s) in LOBBY: css = UPLINK
     if not css: return s
     tag = '<style id="bw-hdr-pass">/* tools/header-pass.py (Nov 20) */' + css + "</style>"
     if tag in s: return s
