@@ -141,14 +141,20 @@ body[data-set="vellum"] .rr-book::after{content:"";position:absolute;inset:7px;b
 .rr-dots i.q.miss{background:#b6584a;border-color:#8e3a2f}
 .rr-dots i.ok{width:17px;height:17px;border:0;border-radius:0;transform:none;box-shadow:none;background:var(--rr-seal) center/contain no-repeat}
 .rr-dots i.ok.on{outline:2px solid rgba(184,134,43,.45);outline-offset:1px;border-radius:50%}
-@media (max-width:560px){.rr-dots{gap:5px}.rr-dots i{width:9px;height:9px}.rr-dots i.on{width:13px;height:13px}.rr-dots i.q.on{width:11px;height:11px}.rr-dots i.ok{width:15px;height:15px}}
+@media (max-width:560px){.rr-dots{gap:4px;flex-wrap:nowrap;min-width:0}.rr-dots i{flex:none;width:8px;height:8px}.rr-book.ph .rr-foot{gap:6px}.rr-dots i.on{width:13px;height:13px}.rr-dots i.q.on{width:11px;height:11px}.rr-dots i.ok{width:15px;height:15px}}
 /* result window: drawn stars */
 .rr-stars{display:flex;justify-content:center;gap:10px;font-size:0;letter-spacing:0;text-shadow:none}
 .rr-stars svg{width:40px;height:40px;filter:drop-shadow(0 0 10px rgba(242,190,69,.4))}.rr-stars svg.off{filter:none;opacity:.22}
 /* photo pages (switch on by themselves when rr/page-<set>.png exists; geometry in RRPH) */
-.rr-book.ph{background:none!important;border-style:solid;border-color:transparent}
+.rr-book.ph{background:none!important;border-style:solid;border-color:transparent;border-radius:3px 14px 14px 3px;
+  box-shadow:6px 8px 4px -3px rgba(0,0,0,.5),0 30px 46px -8px rgba(0,0,0,.6),0 8px 16px rgba(0,0,0,.3)}
+.rr-book.ph::after{display:none}
+.rr-book.ph::before{top:-6px}
+.rr-book.ph .rr-scroll{padding:26px clamp(14px,4%,40px) 14px clamp(16px,4.5%,44px)}
+.rr-book.ph .rr-foot{padding:10px clamp(10px,3%,26px) 8px clamp(12px,3.5%,30px)}
+.rr-book.ph .rr-shade{inset:0;border-radius:0}
 /* phones: the "Tap Menu" tip sits above the page's own footer, not on the Back button */
-@media (max-width:999px){body.pk.seated .pk-hint.on{bottom:calc(var(--pk-bar) + 92px + env(safe-area-inset-bottom))}}
+@media (max-width:999px){body.pk.seated .pk-hint.on{bottom:calc(var(--pk-bar) + 100px + env(safe-area-inset-bottom))!important}}
 /* the intro line is long: let it wrap beside Take a Seat instead of running under it (Nov 21) */
 .pk-introtxt{flex:1 1 auto}.pk-introtxt .pk-tag{white-space:normal;line-height:1.4}
 </style>
@@ -181,7 +187,7 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
 <script src="play-config.js"></script>
 <script src="play-rooms.js?v=1120a"></script>
 <script src="bw-avatars.js?v=1120a"></script>
-<script src="parlor-kit.js?v=1122b"></script>
+<script src="parlor-kit.js?v=1122a"></script>
 <script src="bw-share.js?v=1121b"></script>
 <script src="reading-lessons.js?v=1121c"></script>
 <script>
@@ -268,13 +274,16 @@ function newLabels(){
     if(b.hasAttribute("data-rrnew")) b.textContent=mode==="daily"?"Back to Cover":"Today\u2019s Lesson"; });
 }
 /* photo pages: each set's page photo switches on by itself once rr/page-<set>.png loads (geometry filled in when Judy's photos arrive) */
-var RRPH={}, RRPV="1122a", rrPhOk={};
+/* each photo is 820x1126; slices (top right bottom left) keep the cover band, the gilt/page-edge band and the gutter whole; the middle stretches */
+var RRPS="35 56 37 72", RRPH={linen:RRPS,lamp:RRPS,vellum:RRPS}, RRPV="1122a", rrPhOk={};
+function rrPhW(){ var k=Math.max(.3,Math.min(.55,(BOOK.clientWidth||600)/1100)); return RRPS.split(" ").map(function(v){ return Math.round(v*k)+"px"; }).join(" "); }
+window.addEventListener("resize",function(){ if(BOOK&&BOOK.classList.contains("ph")){ var w=rrPhW(); BOOK.style.borderWidth=w; BOOK.style.borderImageWidth=w; } });
 function rrPhoto(){
   var st=document.body.getAttribute("data-set")||"linen", g=RRPH[st]; if(!BOOK) return;
   BOOK.classList.remove("ph"); BOOK.style.borderWidth=""; BOOK.style.borderImage="";
   if(!g) return;
-  var src="rr/page-"+st+".png?v="+RRPV, on=function(){ if((document.body.getAttribute("data-set")||"linen")!==st) return;
-    BOOK.classList.add("ph"); BOOK.style.borderWidth=g.w; BOOK.style.borderImage='url("'+src+'") '+g.slice+' fill / '+g.w+' stretch'; };
+  var src="rr/page-"+st+".webp?v="+RRPV, on=function(){ if((document.body.getAttribute("data-set")||"linen")!==st) return;
+    var w=rrPhW(); BOOK.classList.add("ph"); BOOK.style.borderWidth=w; BOOK.style.borderImage='url("'+src+'") '+g+' fill / '+w+' stretch'; };
   if(rrPhOk[st]) on(); else { var im=new Image(); im.onload=function(){ rrPhOk[st]=1; on(); }; im.src=src; }
 }
 new MutationObserver(rrPhoto).observe(document.body,{attributes:true,attributeFilter:["data-set"]});
