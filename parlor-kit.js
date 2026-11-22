@@ -128,7 +128,7 @@
        where the left card is tucked away; on desktop that card is always in view) */
     var ac = mk("div", "pk-card pk-menu");
     function group(title, cls) { var g = mk("div", "pk-group" + (cls ? " " + cls : "")); g.appendChild(mk("h3", "", title)); var l = mk("div", "pk-actions"); g.appendChild(l); ac.appendChild(g); return l; }
-    var g1 = group("This Game");
+    var g1 = group(C.menuTitle || (C.title || "This Game").replace(/^The /, ""));   /* the room's own name heads its menu (Judy, Nov 22) */
     el.newBtn = btn("New Game", "", function () { P.newGame(); });
     g1.appendChild(el.newBtn);
     el.forfeitBtn = btn(C.partners ? "Leave the Game" : "Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
