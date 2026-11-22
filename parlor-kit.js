@@ -159,7 +159,9 @@
     bar.appendChild(el.menuBtn);
     el.bstat = mk("button", "pk-bstat"); el.bstat.type = "button"; el.bstat.onclick = function () { sheet(document.body.classList.contains("sheet-left") ? null : "left"); };
     bar.appendChild(el.bstat);
-    bar.appendChild(btn("New Game", "primary", function () { P.newGame(); }));
+    /* puzzle rooms: no "New Game" in the phone bar (it only restarted today's puzzle; Restart and the Menu have it) (Judy, Nov 22) */
+    if (C.cat !== "puzzles") bar.appendChild(btn("New Game", "primary", function () { P.newGame(); }));
+    else bar.classList.add("pk-bar-2");
     document.body.appendChild(bar);
     var scrim = mk("div", "pk-scrim"); scrim.onclick = function () { sheet(null); }; document.body.appendChild(scrim);
     scrim.addEventListener("touchmove", function (e) { if (e.cancelable) e.preventDefault(); }, { passive: false });   /* the page behind stays put */
@@ -809,7 +811,7 @@
       var b = mk("button", "pk-set" + (s.id === cur ? " on" : "") + (ok ? "" : " lock")); b.type = "button";
       var dots = mk("span", "dots"); (s.dots || []).forEach(function (c) { var i = mk("i"); i.style.background = c; dots.appendChild(i); });
       var nm = mk("span", "nm"); nm.appendChild(document.createTextNode(s.name + (ok ? "" : " 🔒")));
-      var sm = mk("small", "", s.club ? (ok ? "Club " + (C.setWord || "board") : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
+      var sm = mk("small", "", s.club ? (ok ? "Club " + (C.setWord || (C.cat === "cards" ? "table" : "board")) : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
       b.appendChild(dots); b.appendChild(nm);
       b.onclick = function () {
         if (!ok) { location.href = "member.html"; return; }
