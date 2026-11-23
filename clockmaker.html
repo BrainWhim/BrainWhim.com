@@ -84,7 +84,9 @@ body[data-set="rose"]{--pl1:#ffe2d6;--pl2:#e3a58e;--pl3:#a86a55;--pl4:#6e3f31;--
 .cb-key:active{transform:translateY(2px) scale(.96);box-shadow:0 0 0 3px #d9b25a,0 0 0 4px #7a5a1e,inset 0 1px 1px rgba(255,255,255,.9),1px 2px 3px rgba(0,0,0,.45)}
 .cb-key:disabled{cursor:default}
 .cb-key.full{opacity:.4}
-.cb-key small{position:absolute;right:16%;bottom:12%;font:700 9px Montserrat,sans-serif;color:#8a6a2c}
+.cb-key small{position:absolute;left:81%;top:81%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 9px/1 Montserrat,sans-serif;color:#5e400c;background:radial-gradient(circle at 35% 30%,#fff4cf,#e2c27a 70%,#b58c3c);box-shadow:0 0 0 1px rgba(110,76,14,.55),0 1px 1px rgba(0,0,0,.25)}
+.cb-key small:empty{display:none}
+.cb-key[data-d]{padding:0 .2em .16em 0}
 body.cb-pen .cb-key{color:#4a6fd0;font-size:22px;font-family:Montserrat,sans-serif;font-weight:700}
 .cb-key.erase{display:flex;align-items:center;justify-content:center}
 /* ---------- tools ---------- */
@@ -181,7 +183,8 @@ body.cb-pen .cb-key{color:#4a6fd0;font-size:22px;font-family:Montserrat,sans-ser
     box-shadow:0 0 0 2px #d9b25a,0 0 0 3px #7a5a1e,inset 0 1px 1px rgba(255,255,255,.9),inset -2px -3px 5px rgba(120,90,30,.25),2px 3px 5px rgba(0,0,0,.45)}
   .cb-key::before{inset:3px;border-radius:9px}
   .cb-key:active{box-shadow:0 0 0 2px #d9b25a,0 0 0 3px #7a5a1e,1px 1px 2px rgba(0,0,0,.45)}
-  .cb-key small{right:5px;bottom:3px;font-size:8px}
+  .cb-key small{left:auto;top:auto;right:2px;bottom:2px;transform:none;width:13px;height:13px;font-size:8px}
+  .cb-key[data-d]{padding:0 9px 5px 0}
   body.cb-pen .cb-key{font-size:18px}
   .cb-tools{width:100%;padding:6px;gap:6px;grid-template-columns:1.7fr 1fr 1fr 1fr}
   .cb-tools .pk-btn{padding:8px 6px;font-size:12.5px}
@@ -656,10 +659,16 @@ function paint(){
   var s=[], n=P.n, G=P.G, i;
   s.push('<g transform="'+PLANE()+'">');
   function disc(i,fill,stroke,cls,sw,r){ return '<circle class="'+(cls||"")+'" cx="'+pcx(i)+'" cy="'+pcy(i)+'" r="'+(r||DR+2)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(sw||4)+'"/>'; }
-  /* the selected dial's row, column and gear, warmly lit; dials with the same number ringed in blue */
+  /* the maker's clues: an aged-ivory tint and a fine inner brass bezel, so they read apart from the open dials */
+  var rs=kset()==="rose", gT=rs?"rgba(150,86,72,.13)":"rgba(150,118,58,.16)", gR=rs?"#a8604a":"#b38a3a";
+  s.push('<defs><radialGradient id="cbSelG"><stop offset=".55" stop-color="#ffd36b" stop-opacity=".55"/><stop offset="1" stop-color="#ffd36b" stop-opacity="0"/></radialGradient></defs>');
+  for(i=0;i<n*n;i++) if(given[i]){ var gx0=pcx(i), gy0=pcy(i);
+    s.push('<circle cx="'+gx0+'" cy="'+gy0+'" r="'+(DR-3)+'" fill="'+gT+'"/><circle cx="'+gx0+'" cy="'+gy0+'" r="'+(DR-7)+'" fill="none" stroke="'+gR+'" stroke-width="3.2" stroke-opacity=".85"/><circle cx="'+(gx0+.8)+'" cy="'+(gy0+1.2)+'" r="'+(DR-8.6)+'" fill="none" stroke="#fff8e0" stroke-width="1" stroke-opacity=".7"/>'); }
+  /* the selected dial's row, column and gear, softly lit as bands; dials with the same number ringed in blued steel */
   if(sel>=0&&!done){ var peers={}; G.CU[sel].forEach(function(u){ G.U[u].forEach(function(x){ peers[x]=1; }); });
-    var dkS=false; for(var x in peers) if(+x!==sel) s.push(disc(+x,dkS?"rgba(255,214,190,.2)":"rgba(255,200,90,.34)",dkS?"rgba(255,206,180,.85)":"rgba(201,154,63,.55)","",dkS?3.5:2.5));
-    if(v[sel]) for(i=0;i<n*n;i++) if(i!==sel&&v[i]===v[sel]) s.push(disc(i,"rgba(74,111,208,.2)","rgba(74,111,208,.9)","",5)); }
+    G.CU[sel].forEach(function(u){ var gear=u>=2*n; s.push(unitRing(u,gear?"rgba(255,226,150,.1)":"rgba(255,226,150,.15)",gear?"rgba(255,211,107,.85)":"rgba(255,211,107,.6)",gear?3.2:2.4)); });
+    for(var x in peers) if(+x!==sel) s.push(disc(+x,"rgba(255,214,120,.14)","rgba(255,211,107,.45)","",2));
+    if(v[sel]) for(i=0;i<n*n;i++) if(i!==sel&&v[i]===v[sel]) s.push(disc(i,"rgba(74,111,208,.24)","rgba(43,74,168,.95)","",5.5,DR+4)); }
   /* the clockmaker's rows, columns or gears, a red flash where a number was taken out, and a shine across a finished line */
   function unitRing(u,fill,stroke,sw){ var cells=G.U[u], xs=cells.map(pcx), ys=cells.map(pcy), x0=Math.min.apply(0,xs)-S/2+3, y0=Math.min.apply(0,ys)-S/2+3, x1=Math.max.apply(0,xs)+S/2-3, y1=Math.max.apply(0,ys)+S/2-3;
     return '<rect x="'+x0+'" y="'+y0+'" width="'+(x1-x0)+'" height="'+(y1-y0)+'" rx="22" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>'; }
@@ -672,8 +681,8 @@ function paint(){
   for(var b in badSet) s.push(disc(+b,"rgba(224,80,60,.22)","#e0503c","cb-bad",5,DR+4));
   /* the selected dial lifts: a deeper shadow, a little bigger, and a gold ring */
   if(sel>=0&&!done){ var X=pcx(sel), Y=pcy(sel);
-    s.push('<circle cx="'+(X+9)+'" cy="'+(Y+13)+'" r="'+(DR+4)+'" fill="#000" opacity=".35"/>'+(dialPh()?'<image href="'+phURL(dialPh())+'" x="'+(X-DR-6)+'" y="'+(Y-4-DR-6)+'" width="'+(2*DR+12)+'" height="'+(2*DR+12)+'"/>':'<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+6)+'" fill="url(#cbBez)"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+.5)+'" fill="url(#cbEn)"/>')+
-      '<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+9)+'" fill="none" stroke="#ffd36b" stroke-width="4"/>'+
+    s.push('<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+24)+'" fill="url(#cbSelG)"/><circle cx="'+(X+9)+'" cy="'+(Y+13)+'" r="'+(DR+4)+'" fill="#000" opacity=".35"/>'+(dialPh()?'<image href="'+phURL(dialPh())+'" x="'+(X-DR-6)+'" y="'+(Y-4-DR-6)+'" width="'+(2*DR+12)+'" height="'+(2*DR+12)+'"/>':'<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+6)+'" fill="url(#cbBez)"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+.5)+'" fill="url(#cbEn)"/>')+
+      '<circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+13)+'" fill="none" stroke="#3a2606" stroke-opacity=".55" stroke-width="2"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+10.5)+'" fill="none" stroke="#ffd36b" stroke-width="5"/><circle cx="'+X+'" cy="'+(Y-4)+'" r="'+(DR+1)+'" fill="none" stroke="#2b4aa8" stroke-width="4"/>'+
       '<ellipse cx="'+(X-DR*.38)+'" cy="'+(Y-4-DR*.45)+'" rx="'+(DR*.34)+'" ry="'+(DR*.16)+'" fill="#fff" opacity=".4" transform="rotate(-32 '+(X-DR*.38)+' '+(Y-4-DR*.45)+')"/>'); }
   s.push('</g>');
   /* the numbers, upright: printed black on the fixed dials, blued steel on yours; pencil notes small in a grid */
