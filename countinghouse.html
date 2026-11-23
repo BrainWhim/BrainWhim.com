@@ -34,7 +34,7 @@ body[data-set="copper"]{--d1:#c99a62;--d2:#9c7040;--d3:#6a4824;--df1:#7a5430;--d
 .ch-panR .ch-rw{transition:opacity .25s}
 /* the weights: brass bell weights standing in the case, lit from the top left */
 .ch-w{position:absolute;z-index:2;transform:translate(-50%,-100%);width:var(--w);height:calc(var(--w) * 1.22);cursor:pointer;transition:left .26s ease-in,top .26s ease-in}
-.ch-w .sh{position:absolute;left:-6%;right:-26%;bottom:-11%;height:26%;border-radius:50%;background:radial-gradient(ellipse at 45% 50%,rgba(10,4,0,.62),rgba(10,4,0,.28) 45%,transparent 70%);transition:transform .2s,opacity .2s}
+.ch-w .sh{position:absolute;left:-6%;right:-26%;bottom:-11%;height:26%;border-radius:50%;background:radial-gradient(ellipse 40% 26% at 40% 40%,rgba(6,2,0,.8),rgba(6,2,0,.5) 55%,transparent 100%),radial-gradient(ellipse 52% 40% at 46% 48%,rgba(10,4,0,.42),transparent 100%),radial-gradient(ellipse 66% 52% at 54% 56%,rgba(10,4,0,.24),transparent 100%),radial-gradient(ellipse 80% 66% at 62% 64%,rgba(10,4,0,.12),transparent 100%);transition:transform .2s,opacity .2s}
 .ch-w .lift{position:absolute;inset:0;transition:transform .2s cubic-bezier(.3,1.5,.6,1)}
 .ch-w .kn{position:absolute;left:36%;width:28%;top:0;height:21%;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--b1),var(--b3) 45%,var(--b5) 100%);box-shadow:inset -1px -2px 2px rgba(0,0,0,.25)}
 .ch-w .nk{position:absolute;left:42%;width:16%;top:17%;height:10%;background:linear-gradient(90deg,var(--b5),var(--b2) 30%,var(--b4) 70%,var(--b5))}
@@ -238,9 +238,17 @@ body[data-set="copper"]{--d1:#c99a62;--d2:#9c7040;--d3:#6a4824;--df1:#7a5430;--d
 .ch-board.phw .ch-w.made .lift{background-image:var(--wimgm)}
 .ch-board.phw .ch-w .bd{background:none;top:38%}
 .ch-board.phw .ch-w .bd::after{display:none}
-.ch-board.phw .ch-w:not(.up):not(.over):not(.glow):not(.ring) .bd{box-shadow:none}
+.ch-board.phw .ch-w:not(.glow):not(.ring) .bd{box-shadow:none}
+/* picked / drop target (photo weights): a glowing ring on the velvet under the weight, not a box around it (review, Nov 22) */
+.ch-board.phw .ch-w::before{content:"";position:absolute;left:-7%;right:-7%;bottom:-8%;height:24%;border-radius:50%;border:.45cqw solid transparent;opacity:0;transition:opacity .18s;pointer-events:none}
+.ch-board.phw .ch-w.up::before{opacity:1;border-color:rgba(255,214,110,.95);box-shadow:0 0 1.6cqw rgba(255,206,90,.75),inset 0 0 1.2cqw rgba(255,206,90,.5)}
+.ch-board.phw .ch-w.over::before{opacity:1;border-color:rgba(140,220,150,.95);box-shadow:0 0 1.6cqw rgba(120,220,140,.7),inset 0 0 1.2cqw rgba(120,220,140,.45)}
+.ch-board.phw .ch-w.drag::before{opacity:0}
+/* phones sideways: the "Tap Menu" tip sits in the empty space under the tools, off the scale (review, Nov 22) */
+body.pk.pk-land.seated .pk-hint.on{left:auto!important;top:auto!important;right:calc(10px + env(safe-area-inset-right))!important;bottom:10px!important;max-width:min(230px,29vw)!important}
+body.pk.pk-land.seated .pk-hint.on::after{display:none}
 .ch-board.phs .ch-stamp,.ch-board.phs .ch-pick button{background:var(--simg) center/100% 100% no-repeat}
-.ch-board.phs .ch-stamp:not(.on):not(.glow){box-shadow:.6cqw 1.2cqw 1.4cqw rgba(10,4,0,.55)}
+.ch-board.phs .ch-stamp:not(.on):not(.glow){box-shadow:.1cqw .25cqw .3cqw rgba(6,2,0,.7),.45cqw .9cqw 1cqw rgba(10,4,0,.42),1cqw 2cqw 2.4cqw rgba(10,4,0,.26),1.6cqw 3cqw 4cqw rgba(10,4,0,.12)}
 .ch-board.phs .ch-stamp::before{display:none}
 </style>
 <script src="bw-auth.js?v=1120c"></script>
@@ -418,7 +426,7 @@ function weightSVG(x,base,v,made,big,label){
   /* a bell weight standing in a pan (SVG): x its middle, base its foot; brass, or nickel for a made weight */
   var w=big?168:136, h=w*1.05, y0=base-h, g=made?"chNk":"chBr", t=made?"var(--mt)":"var(--bt)", s=String(fmtN(v)), fs=s.length<=2?66:s.length===3?58:44;
   var wi=wimg(made), body=wi?'<image href="'+phURL(wi)+'" x="'+(x-w/2)+'" y="'+(base-w*1.22)+'" width="'+w+'" height="'+(w*1.22)+'" preserveAspectRatio="none"/>':null;
-  return '<ellipse cx="'+(x+14)+'" cy="'+(base+2)+'" rx="'+(w*.56)+'" ry="13" fill="#140800" opacity=".35"/>'+(body||
+  return '<ellipse cx="'+(x+14)+'" cy="'+(base+2)+'" rx="'+(w*.56)+'" ry="13" fill="#140800" opacity=".3"/><ellipse cx="'+(x+4)+'" cy="'+(base-1)+'" rx="'+(w*.42)+'" ry="6" fill="#0a0400" opacity=".55"/>'+(body||
     '<circle cx="'+x+'" cy="'+(y0+12)+'" r="15" fill="url(#'+g+'R)"/><rect x="'+(x-9)+'" y="'+(y0+22)+'" width="18" height="12" fill="url(#'+g+'H)"/>'+
     '<path d="M'+(x-w/2)+' '+(y0+44)+'V'+(base-14)+'Q'+(x-w/2)+' '+base+' '+x+' '+base+'Q'+(x+w/2)+' '+base+' '+(x+w/2)+' '+(base-14)+'V'+(y0+44)+'Z" fill="url(#'+g+'H)"/>'+
     '<ellipse cx="'+x+'" cy="'+(y0+44)+'" rx="'+(w/2)+'" ry="14" fill="url(#'+g+'T)"/>')+
@@ -443,8 +451,10 @@ function deskSVG(){
     s.push('<radialGradient id="'+m[0]+'R" cx="35%" cy="30%" r="75%"><stop offset="0" style="stop-color:var('+v+'1)"/><stop offset=".5" style="stop-color:var('+v+'3)"/><stop offset="1" style="stop-color:var('+v+'5)"/></radialGradient>');
     s.push('<linearGradient id="'+m[0]+'V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var('+v+'1)"/><stop offset=".4" style="stop-color:var('+v+'3)"/><stop offset="1" style="stop-color:var('+v+'5)"/></linearGradient>'); });
   s.push('<radialGradient id="chShade" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0a0300" stop-opacity=".6"/><stop offset=".6" stop-color="#0a0300" stop-opacity=".25"/><stop offset="1" stop-color="#0a0300" stop-opacity="0"/></radialGradient>');
-  s.push('<linearGradient id="chInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
-  s.push('<linearGradient id="chInL" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('<filter id="chSoft" x="-10%" y="-20%" width="130%" height="150%"><feGaussianBlur stdDeviation="9"/></filter><filter id="chSoft2" x="-10%" y="-20%" width="130%" height="150%"><feGaussianBlur stdDeviation="3"/></filter><clipPath id="chVelC"><rect x="56" y="458" width="888" height="214" rx="8"/></clipPath>');
+  s.push('<linearGradient id="chInB" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient><linearGradient id="chInR" x1="1" x2="0"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="chInT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".72"/><stop offset=".45" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
+  s.push('<linearGradient id="chInL" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".65"/><stop offset=".45" stop-color="#000" stop-opacity=".26"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>');
   s.push('</defs>');
   /* the desk top, its grain and the light from the top left; a brass inlay line; the front edge */
   s.push('<rect x="0" y="0" width="1000" height="840" rx="20" fill="url(#chDesk)"/><rect x="0" y="0" width="1000" height="840" rx="20" fill="url(#chGrain)"/><rect x="0" y="0" width="1000" height="840" rx="20" fill="url(#chLight)"/>');
@@ -453,8 +463,10 @@ function deskSVG(){
   s.push('<path d="M0 820H1000V862Q1000 880 982 880H18Q0 880 0 862Z" fill="url(#chFace)"/><path d="M0 821H1000" stroke="#fff" stroke-opacity=".22" stroke-width="2"/><path d="M0 850H1000" stroke="#000" stroke-opacity=".25" stroke-width="2"/>');
   /* the scale: its shadow, the plinth, the pillar and the level dial */
   s.push('<ellipse cx="528" cy="396" rx="210" ry="26" fill="url(#chShade)"/>');
-  s.push('<path d="M330 352H670V392Q670 400 662 400H338Q330 400 330 392Z" fill="url(#chFace)"/><rect x="330" y="340" width="340" height="14" rx="3" fill="url(#chCase)"/><path d="M332 341H668" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>');
+  s.push('<linearGradient id="chPl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient><linearGradient id="chPlS" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".35"/><stop offset=".08" stop-color="#000" stop-opacity="0"/><stop offset=".92" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>');
+  s.push('<path d="M330 352H670V392Q670 400 662 400H338Q330 400 330 392Z" fill="url(#chCase)"/><path d="M330 352H670V392Q670 400 662 400H338Q330 400 330 392Z" fill="url(#chPl)"/><path d="M330 352H670V392Q670 400 662 400H338Q330 400 330 392Z" fill="url(#chPlS)"/><path d="M336 397H664" stroke="#000" stroke-opacity=".5" stroke-width="2"/><rect x="326" y="338" width="348" height="16" rx="5" fill="url(#chCase)"/><rect x="326" y="338" width="348" height="16" rx="5" fill="url(#chLight)"/><path d="M330 339.5H670" stroke="#fff" stroke-opacity=".38" stroke-width="2"/><path d="M328 353H672" stroke="#000" stroke-opacity=".35" stroke-width="1.5"/>');
   s.push('<rect x="330" y="352" width="340" height="6" fill="url(#chBrV)"/>');
+  s.push('<ellipse cx="508" cy="342" rx="86" ry="7" fill="#060200" opacity=".55" filter="url(#chSoft2)"/><ellipse cx="516" cy="344" rx="120" ry="10" fill="#0a0300" opacity=".25" filter="url(#chSoft2)"/>');
   if(sp.stand){ var sh2=318, sw=sh2/(phR[sp.stand]||2.2); s.push('<image href="'+phURL(sp.stand)+'" x="'+(500-sw/2).toFixed(1)+'" y="26" width="'+sw.toFixed(1)+'" height="'+sh2+'"/>'); }
   else { s.push('<path d="M400 340Q420 314 500 310Q580 314 600 340Z" fill="url(#chBrH)"/>');
   s.push('<rect x="487" y="96" width="26" height="218" fill="url(#chBrH)"/>');
@@ -474,13 +486,14 @@ function deskSVG(){
     '<circle cx="200" cy="96" r="12" fill="url(#chBrR)"/><circle cx="800" cy="96" r="12" fill="url(#chBrR)"/><circle cx="500" cy="96" r="22" fill="url(#chBrR)"/><circle cx="500" cy="96" r="7" fill="var(--b5)"/></g>');
   if(!sp.stand) s.push('<path d="M486 74Q500 44 514 74Z" fill="url(#chBrR)"/><circle cx="500" cy="48" r="12" fill="url(#chBrR)"/>');
   /* the fitted weight case: a walnut frame, green velvet and six round seats */
-  s.push('<rect x="40" y="446" width="940" height="270" rx="16" fill="#0a0300" opacity=".35" transform="translate(12 10)"/>');
+  s.push('<rect x="30" y="436" width="940" height="270" rx="16" fill="#060200" opacity=".55" transform="translate(3 4)" filter="url(#chSoft2)"/><rect x="30" y="436" width="940" height="270" rx="16" fill="#0a0300" opacity=".32" transform="translate(12 14)" filter="url(#chSoft)"/><rect x="30" y="436" width="940" height="270" rx="16" fill="#0a0300" opacity=".18" transform="translate(22 26)" filter="url(#chSoft)"/>');
   s.push('<rect x="30" y="436" width="940" height="270" rx="16" fill="url(#chCase)"/><rect x="30" y="436" width="940" height="270" rx="16" fill="url(#chGrain)" opacity=".7"/><path d="M46 438H954" stroke="#fff" stroke-opacity=".35" stroke-width="2.5"/><path d="M32 452V690" stroke="#fff" stroke-opacity=".18" stroke-width="2"/>');
-  s.push('<rect x="56" y="458" width="888" height="214" rx="8" fill="url(#chVel)"/><rect x="56" y="458" width="888" height="214" rx="8" fill="url(#chNap)"/><rect x="56" y="458" width="888" height="22" rx="8" fill="url(#chInT)"/><rect x="56" y="458" width="20" height="214" rx="8" fill="url(#chInL)"/>');
+  s.push('<rect x="56" y="458" width="888" height="214" rx="8" fill="url(#chVel)"/><rect x="56" y="458" width="888" height="214" rx="8" fill="url(#chNap)"/><g clip-path="url(#chVelC)"><rect x="56" y="458" width="888" height="36" fill="url(#chInT)"/><rect x="56" y="458" width="34" height="214" fill="url(#chInL)"/><rect x="930" y="458" width="14" height="214" fill="url(#chInR)"/><rect x="56" y="658" width="888" height="14" fill="url(#chInB)"/><path d="M56 459.2H944M57.2 458V672" stroke="#000" stroke-opacity=".7" stroke-width="2.4"/></g>');
   SEATX.forEach(function(x){ s.push('<ellipse cx="'+x+'" cy="'+(SEATY-6)+'" rx="64" ry="24" fill="url(#chSeat)"/><path d="M'+(x-64)+' '+(SEATY-6)+'A64 24 0 0 0 '+(x+64)+' '+(SEATY-6)+'" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>'); });
   /* the maker's plate: on the case's bottom bar, a hair below dead center */
   s.push('<g transform="translate(500 691)"><rect x="-50" y="-12" width="100" height="25" rx="4" fill="url(#chBrV)" stroke="var(--b5)" stroke-width="1.5"/><circle cx="-42" cy=".5" r="2" fill="var(--b5)"/><circle cx="42" cy=".5" r="2" fill="var(--b5)"/>'+
-    '<text x="-3" y="8" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-weight="700" font-size="18.4" fill="var(--bt)">B<tspan font-family="Pacifico,cursive" font-size="14.5" font-weight="400">W</tspan></text></g>');
+    '<text x="-3" y="9.2" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-weight="700" font-size="18.4" fill="#fff6d8" opacity=".75">B<tspan font-family="Pacifico,cursive" font-size="14.5" font-weight="400">W</tspan></text>'+
+    '<text x="-3" y="8" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-weight="700" font-size="18.4" fill="#2e1d06">B<tspan font-family="Pacifico,cursive" font-size="14.5" font-weight="400">W</tspan></text></g>');
   /* the stamps' shadows on the desk */
   STAMPX.forEach(function(x){ s.push('<ellipse cx="'+(x+10)+'" cy="'+(780+40)+'" rx="62" ry="12" fill="url(#chShade)"/>'); });
   return s.join("");
@@ -710,7 +723,7 @@ function hint(){
   msg="The clerk joins "+fmtN(s.x)+" and "+fmtN(s.y)+": "+fmtN(s.x)+" "+SIGN[s.op]+" "+fmtN(s.y)+" = "+fmtN(s.r)+", "+why;
   snd("ch-hint"); sel=-1; op=-1; render();
   var ea=WTS.querySelector('[data-seat="'+a+'"]'), eb=WTS.querySelector('[data-seat="'+b+'"]'); if(ea) ea.classList.add("ring"); if(eb) eb.classList.add("ring");
-  setTimeout(function(){ join(a,b,s.op,true); },Parlor.smooth()?650:0);
+  busy=true; setTimeout(function(){ busy=false; join(a,b,s.op,true); },Parlor.smooth()?650:0);
   toast(msg,msg.length>110?5600:4600);
   if(mode==="practice"&&window.Parlor) Parlor.hintSay("<p>"+esc(msg)+"</p>");
 }
@@ -932,7 +945,7 @@ Parlor.init({
     score:"<ul><li><b>One order a day</b>, the same for everyone. It changes at midnight on your device. Monday's order is gentle, with small weights; each day takes a little more thinking, and Sunday's is the hardest.</li><li>Every order can be filled exactly.</li><li><b>★★★</b> with no help from the clerk · <b>★★</b> with one or two requests · <b>★</b> with more. Your time is shown too.</li><li>Fill it with the fewest weights it can be done with for a <b>neat ledger</b>.</li><li>Your first finish of the day is the one kept, with your <b>streak</b> of days in a row. Play again as often as you like.</li><li>Practice orders (in the Guided Lesson) are free and don't count.</li></ul>"
   },
   onCoachSize:function(){ setTimeout(fit,0); },
-  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game") b.textContent="Today's Puzzle"; }); startDaily(true); },
+  onNew:function(){ var nb=document.querySelectorAll(".pk-menu .pk-btn, .pk-bar .pk-btn.primary"); [].forEach.call(nb,function(b){ if(b.textContent==="New Game"||b.textContent==="Today's Puzzle") b.textContent="Today's Order"; }); startDaily(true); },
   lesson:{steps:LESSONS,setup:lessonSetup,practice:startPractice,hint:lessonHint}
 });
 var wasSeated=false, wasCoach=false;
