@@ -811,7 +811,7 @@
       var b = mk("button", "pk-set" + (s.id === cur ? " on" : "") + (ok ? "" : " lock")); b.type = "button";
       var dots = mk("span", "dots"); (s.dots || []).forEach(function (c) { var i = mk("i"); i.style.background = c; dots.appendChild(i); });
       var nm = mk("span", "nm"); nm.appendChild(document.createTextNode(s.name + (ok ? "" : " 🔒")));
-      var sm = mk("small", "", s.club ? (ok ? "Club " + (C.setWord || (C.cat === "cards" ? "table" : "board")) : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
+      var sm = mk("small", "", s.club ? (ok ? "Club " + (C.setWord || (C.cat === "cards" ? "Table" : "Board")) : "Club Members") : ok ? (s.need ? "Unlocked" : "Starter set") : (s.need + " points, or join the Club")); nm.appendChild(sm);
       b.appendChild(dots); b.appendChild(nm);
       b.onclick = function () {
         if (!ok) { location.href = "member.html"; return; }
