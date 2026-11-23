@@ -21,7 +21,7 @@ var BC_SHELVES = [
 ];
 
 var BC_MONTHS = [
-  {id:"2026-12", name:"The Opening Shelf", sub:"Winter 2026", from:"2026-11-01", picks:[
+  {id:"2026-12", name:"The Opening Shelf", sub:"Winter 2026\u20132027", from:"2026-11-01", picks:[
     {id:"gentleman-moscow", t:"A Gentleman in Moscow", by:"Amor Towles", yr:2016, sh:["fiction"],
       c:"#7d2433", k:"#f6e7c8", a:"#d9b25c", m:"frame",
       blurb:"In 1922, a Russian count is sentenced to spend the rest of his life inside a grand Moscow hotel. Count Alexander Rostov makes a full and surprising life within its walls: lifelong friendships, a young girl who knows every hidden door, and decades of history passing just outside the windows.",
