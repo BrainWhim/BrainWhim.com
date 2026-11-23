@@ -495,9 +495,12 @@ var HOVER=window.matchMedia("(hover: hover) and (pointer: fine)");
 
 /* ---------- Learn's rooms (Pillars note, Nov 3; photos pw/, HomeCards-Prompts) ---------- */
 var ROOMS=[
-  {id:"reading", name:"The Reading Room", kind:"A Fascinating Fact a Day", glow:"rgba(120,170,255,.5)", page:"reading.html", cta:"Read Today's Lesson",
+  {id:"reading", name:"The Reading Room", kind:"A Fascinating Fact a Day", glow:"rgba(120,170,255,.5)", page:"reading.html", cta:"Read Today's Lesson", moon:["The Book Club","pw/learn-book-sm.jpg?v=1123a","bookclub.html","Open now · a book for every shelf"],
    line:"A five-minute lesson a day on one good idea, with a new subject each weekday, then three quick questions to see if it stuck. Keep a streak, just like the puzzle rooms.",
    try:["telegraph","study"]},
+  {id:"book", orb:false, name:"The Book Club", kind:"A Book for Every Shelf", glow:"rgba(140,190,140,.5)", page:"bookclub.html", cta:"Browse This Month's Shelf",
+   line:"A bright bookshop caf\u00e9 with a fresh pick on every one of our 14 shelves each month, from Fiction to Do It Yourself. Read why we chose each one and keep track of what you've read. Comments open soon.",
+   try:["study","telegraph"]},
   {id:"catalog", name:"The Card Catalog", kind:"Memory", glow:"rgba(120,200,230,.5)",
    line:"Flashcards that come back just before you'd forget them. Make your own decks or borrow ours, from state capitals to Spanish verbs.",
    try:["countinghouse","clockmaker"]},
@@ -585,8 +588,9 @@ document.addEventListener("click",function(e){ var a=e.target.closest&&e.target.
    The places on the rings (`at`, `atP`) and the sizes are play.html's, which were checked through a full turn so nothing ever touches.
    The Kids' Corner crescent rides its own small ring up and to the left, the emptiest corner of the sky (the rings tilt up to the right). */
 var AT=[[71,-12,-134],[288,188,124],[41,-30,-114],[137,79,-3]], ATP=[[80,2,-130],[296,180,136],[37,-25,-104],[211,109,5]];
-var CATS=ROOMS.map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/learn-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
-  moons:r.try.map(pz).filter(Boolean).map(function(p){ return [p.name,p.img,p.page,"Open now · today's puzzle"]; })}; });
+/* rooms with orb:false (the Book Club) ride as a moon of another room (its `moon`) instead of a ring of their own (Nov 23) */
+var CATS=ROOMS.filter(function(r){ return r.orb!==false; }).map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/learn-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
+  moons:(r.moon?[r.moon]:[]).concat(r.try.map(pz).filter(Boolean).map(function(p){ return [p.name,p.img,p.page,"Open now · today's puzzle"]; })).slice(0,2)}; });
 function goRoom(id){ var el=$(id); if(!el) return; $("lane").scrollTo({top:el.getBoundingClientRect().top-$("lane").getBoundingClientRect().top+$("lane").scrollTop-16,behavior:"smooth"}); el.classList.add("lit"); setTimeout(function(){ el.classList.remove("lit"); },1600); }
 var G_DESK ={bw:900,bh:630,core:168,r:[150,228,306,384],k:.66,tilt:-14,orb:90,moon:74,back:.72,font:11.5, kid:{x:-346,y:-262,size:92}};
 var G_PHONE={bw:460,bh:336,core:72, r:[76,114,152,190],  k:.66,tilt:-14,orb:58,moon:44,back:.74,font:9,    kid:{x:-162,y:-120,size:62}};

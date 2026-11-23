@@ -25,7 +25,7 @@
   /* the Puzzles & Brain Games wing (Oct 30): one room per daily puzzle; a puzzle without a page yet shows dimmed */
   var PUZZLE_GAMES = [["orrery","Orrery","orrery.html"],["observatory","Observatory","observatory.html"],["telegraph","Telegraph","telegraph.html"],["nighttrain","Night Train","nighttrain.html"],["gardenplots","Garden Plots","gardenplots.html"],["countinghouse","Counting House","countinghouse.html"],["harbor","Harbor","harbor.html"],["study","Locked Study","study.html"],["maproom","Map Room","maproom.html"],["clockmaker","Clockmaker","clockmaker.html"]];
   /* the Learn wing (Nov 21): the Library Wing's rooms; a room without a page yet shows dimmed */
-  var LEARN_GAMES = [["reading","Reading Room","reading.html"],["catalog","Card Catalog",""],["curio","Cabinet of Curiosities",""],["atlas","Atlas Room",""]];
+  var LEARN_GAMES = [["reading","Reading Room","reading.html"],["bookclub","Book Club","bookclub.html"],["catalog","Card Catalog",""],["curio","Cabinet of Curiosities",""],["atlas","Atlas Room",""]];
   var LIVE_GAMES = [["habits","Habit Garden","habits.html"],["daybook","Daybook",""],["bell","Morning Bell",""],["pantry","Pantry",""]];
   var CREATE_GAMES = [["writing","Writing Desk","writing.html"],["mood","Mood Board",""],["brainstorm","Brainstorm Table",""],["type","Type Case",""]];
   function gameLink(g, cls) {

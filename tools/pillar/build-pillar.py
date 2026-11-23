@@ -191,8 +191,9 @@ R(C['DAYOLD'], C['DAYNEW'])
 # ---- the system: Learn's planet in the middle, its four rooms on the rings, each trailed by two open puzzle rooms ----
 a = s.index('var CATS=['); b = s.index('var G_DESK =')
 s = s[:a] + """var AT=[[71,-12,-134],[288,188,124],[41,-30,-114],[137,79,-3]], ATP=[[80,2,-130],[296,180,136],[37,-25,-104],[211,109,5]];
-var CATS=ROOMS.map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/@@PW@@-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
-  moons:r.try.map(pz).filter(Boolean).map(function(p){ return [p.name,p.img,p.page,"Open now · today's puzzle"]; })}; });
+/* rooms with orb:false (the Book Club) ride as a moon of another room (its `moon`) instead of a ring of their own (Nov 23) */
+var CATS=ROOMS.filter(function(r){ return r.orb!==false; }).map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/@@PW@@-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
+  moons:(r.moon?[r.moon]:[]).concat(r.try.map(pz).filter(Boolean).map(function(p){ return [p.name,p.img,p.page,"Open now · today's puzzle"]; })).slice(0,2)}; });
 """ + s[b:]
 R('var o=document.createElement("a"); o.href=c.href; o.className="orb";', 'var o=document.createElement("a"); o.href=c.href; o.className="orb"+(c.ph?" ph":"");')
 R("o.innerHTML='<span class=\"lbl\" style=\"font-size:'+G.font+'px\">'+c.name+'</span>';",

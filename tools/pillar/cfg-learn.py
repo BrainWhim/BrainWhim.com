@@ -1,9 +1,9 @@
 # Learn page settings for build-pillar.py (Nov 20)
 ROOMS = r"""var ROOMS=[
-  {id:"reading", name:"The Reading Room", kind:"A Fascinating Fact a Day", glow:"rgba(120,170,255,.5)", page:"reading.html", cta:"Read Today's Lesson",
+  {id:"reading", name:"The Reading Room", kind:"A Fascinating Fact a Day", glow:"rgba(120,170,255,.5)", page:"reading.html", cta:"Read Today's Lesson", moon:["The Book Club","pw/learn-book-sm.jpg?v=1123a","bookclub.html","Open now · a book for every shelf"],
    line:"A five-minute lesson a day on one good idea, with a new subject each weekday, then three quick questions to see if it stuck. Keep a streak, just like the puzzle rooms.",
    try:["telegraph","study"]},
-  {id:"book", name:"The Book Club", kind:"A Book for Every Shelf", glow:"rgba(140,190,140,.5)", page:"bookclub.html", cta:"Browse This Month's Shelf",
+  {id:"book", orb:false, name:"The Book Club", kind:"A Book for Every Shelf", glow:"rgba(140,190,140,.5)", page:"bookclub.html", cta:"Browse This Month's Shelf",
    line:"A bright bookshop caf\u00e9 with a fresh pick on every one of our 14 shelves each month, from Fiction to Do It Yourself. Read why we chose each one and keep track of what you've read. Comments open soon.",
    try:["study","telegraph"]},
   {id:"catalog", name:"The Card Catalog", kind:"Memory", glow:"rgba(120,200,230,.5)",
