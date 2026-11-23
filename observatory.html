@@ -459,9 +459,20 @@ function drawChart(){
   sv("path",{d:poly([[-33,-33],[1033,-33],[1033,1033],[-33,1033]]),fill:"none",stroke:"rgba(255,248,220,.7)","stroke-width":1.4},SVG);
   sv("path",{d:poly([[-28,-28],[1028,-28],[1028,1028],[-28,1028]]),fill:"none",stroke:"rgba(80,55,15,.55)","stroke-width":1.2},SVG);
   sv("path",{d:poly([[-21,-21],[1021,-21],[1021,1021],[-21,1021]]),fill:"none",stroke:"rgba(30,20,5,.8)","stroke-width":2.4},SVG);
+  /* brass corner brackets on the frame, in the frame's own metal, like a framed antique star map (Judy, Nov 23) */
+  var PMc=T.plate, cbG=grad(d,"obCorner",[["0%",PMc[0]],["45%",PMc[1]],["80%",PMc[2]],["100%",PMc[3]]],{x1:"0",y1:"0",x2:"1",y2:"1"});
+  [[1,1,0,0],[-1,1,1000,0],[1,-1,0,1000],[-1,-1,1000,1000]].forEach(function(c){
+    var f=function(L){ return L.map(function(p){ return [c[2]+c[0]*p[0],c[3]+c[1]*p[1]]; }); };
+    var out=[[-47,-47],[80,-47],[71,-22],[-22,-22],[-22,71],[-47,80]], inn=[[-43,-43],[72,-43],[66,-26],[-26,-26],[-26,66],[-43,72]];
+    sv("path",{d:poly(f(out.map(function(p){ return [p[0]+2.5,p[1]+3.5]; }))),fill:"rgba(0,0,0,.42)"},SVG);
+    sv("path",{d:poly(f(out)),fill:cbG,stroke:PMc[4],"stroke-width":1.2},SVG);
+    sv("path",{d:poly(f(inn)),fill:"none",stroke:"rgba(255,250,230,.5)","stroke-width":1},SVG);
+    [[58,-34.5],[-34.5,58]].forEach(function(sp){ var q=proj(c[2]+c[0]*sp[0],c[3]+c[1]*sp[1]), sg=sv("g",{transform:"translate("+q[0].toFixed(1)+" "+q[1].toFixed(1)+")"},SVG);
+      sv("circle",{r:3.6,fill:"rgba(40,25,5,.5)",cx:.6,cy:.9},sg); sv("circle",{r:3.1,fill:PMc[1],stroke:PMc[4],"stroke-width":.7},sg); sv("path",{d:"M-2 2 L2 -2",stroke:PMc[4],"stroke-width":1,"stroke-linecap":"round"},sg); });
+  });
   /* four brass screws in the corners of the frame */
   [[-38,-38],[1038,-38],[1038,1038],[-38,1038]].forEach(function(c){ var q=proj(c[0],c[1]), sg=sv("g",{transform:"translate("+q[0].toFixed(1)+" "+q[1].toFixed(1)+")"},SVG);
-    sv("circle",{r:5.2,fill:"rgba(40,25,5,.55)",cx:.8,cy:1.2},sg); sv("circle",{r:4.6,fill:grad(d,"obScrew",[["0%","#fff1bf"],["45%","#c99a3c"],["100%","#5e4212"]],{x1:"0",y1:"0",x2:"1",y2:"1"})},sg);
+    sv("circle",{r:5.2,fill:"rgba(40,25,5,.55)",cx:.8,cy:1.2},sg); sv("circle",{r:4.6,fill:grad(d,"obScrew",[["0%",T.plate[0]],["45%",T.plate[2]],["100%",T.plate[4]]],{x1:"0",y1:"0",x2:"1",y2:"1"})},sg);
     sv("path",{d:"M-3 3 L3 -3",stroke:"rgba(50,30,5,.75)","stroke-width":1.3,"stroke-linecap":"round"},sg); });
   /* the BW monogram (Oct 31): a small brass maker's plate on the frame's front edge, as on the Orrery */
   var mq=proj(500,1036), mg=sv("g",{transform:"translate("+mq[0].toFixed(1)+" "+mq[1].toFixed(1)+")"},SVG);   /* centered on the frame's bottom bar (Judy, Nov 1) */
@@ -995,7 +1006,7 @@ window.addEventListener("resize",refit);
 /* ---------- hook up the kit ---------- */
 Parlor.init({
   game:"observatory", cat:"puzzles", solo:true, free:true, daily:{key:"bwObs:",streak:"bwObsStreak"}, land:true, title:"The Observatory", bg:"puzzles-observatory.jpg", home:"puzzles.html", stage:stage,
-  soloLabel:"Tonight's chart", dealLabel:"Tonight's Chart",
+  soloLabel:"Tonight's Chart", dealLabel:"Tonight's Chart",
   tagline:"Join the stars. Find the constellation.", invite:"The dome is open and the first stars are out. Join them with the right lines and tonight's constellation will appear, with its story.",
   players:[{name:"You",color:"#9fb8ff"}],
   setsLabel:"Charts", seatHead:"Your Telescope", setWord:"Chart",
