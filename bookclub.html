@@ -140,7 +140,8 @@ html.bc-cardph .bc-cin{padding:6px clamp(4px,3%,16px) 4px}
 .bc-btn.wt[aria-pressed="true"]{color:#2c220c;background:#e9bd4f;border-color:#c99a2c}
 .bc-btn .bc-rb{opacity:.55}.bc-btn[aria-pressed="true"] .bc-rb{opacity:1}
 .bc-btn .bc-sl{opacity:.6}.bc-btn[aria-pressed="true"] .bc-sl{opacity:1}
-.bc-talk{margin:16px 0 0;padding:13px 15px;border-radius:8px;border:1.5px dashed rgba(79,112,86,.4);font:15px/1.45 Montserrat,system-ui,sans-serif;color:#4a4439}
+.bc-undo{margin:8px 0 0;font:600 12.5px/1.3 Montserrat,system-ui,sans-serif;color:#6b6457;text-align:center}
+.bc-talk{margin:14px 0 0;padding:13px 15px;border-radius:8px;border:1.5px dashed rgba(79,112,86,.4);font:15px/1.45 Montserrat,system-ui,sans-serif;color:#4a4439}
 .bc-talk b{display:block;margin:0 0 3px;font:700 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#3c5a45}
 .bc-foot{display:flex;align-items:center;gap:8px;padding:12px clamp(18px,5%,34px) 18px;border-top:1px solid rgba(79,112,86,.18)}
 html.bc-cardph .bc-foot{padding:10px clamp(4px,3%,16px) 2px}
@@ -311,14 +312,6 @@ function render(){
   CASE.innerHTML=html;
   if(seatedNow()&&window.Parlor&&Parlor.status) Parlor.status(MONTH.name, n+" Books \u00b7 Read "+c.r);
   words();
-  [].forEach.call(CASE.querySelectorAll(".bc-book"),function(x){ x.onclick=function(){
-    /* the card opens at once (no timer); the book lifts behind it */
-    var id=x.getAttribute("data-id");
-    try{ x.classList.add("pick"); open(id); }
-    catch(err){ veil.classList.add("on"); if(window.Parlor&&Parlor.toast) Parlor.toast("Book card problem: "+(err&&err.message||err)); }
-    setTimeout(function(){ var c=veil.querySelector(".bc-card"), r=c&&c.getBoundingClientRect();   /* a check while we find the Safari problem (Nov 23) */
-      if(window.Parlor&&Parlor.toast&&(!c||!veil.classList.contains("on")||r.height<20||r.bottom<0||r.top>innerHeight)) Parlor.toast("Book card check: "+(c?"on="+veil.classList.contains("on")+" h="+Math.round(r.height)+" top="+Math.round(r.top):"no card")); },350);
-    setTimeout(function(){ x.classList.remove("pick"); },400); }; });
 }
 
 /* a plant and a latte where a shelf has room at its ends (the first such row gets the plant on the left, the last such row the latte on the right) */
@@ -337,6 +330,10 @@ function words(){
   [].forEach.call(document.querySelectorAll("button"),function(x){ if(x.textContent!=="New Game") return;
     var br=x.closest(".pk-bar"); if(br){ x.remove(); br.classList.add("pk-bar-2"); } else x.textContent="This Month\u2019s Shelf"; });
 }
+CASE.addEventListener("click",function(e){
+  var x=e.target&&e.target.closest?e.target.closest(".bc-book"):null; if(!x||!CASE.contains(x)) return;
+  x.classList.add("pick"); open(x.getAttribute("data-id")); setTimeout(function(){ x.classList.remove("pick"); },400);
+});
 /* ---------- the staff-pick card ---------- */
 var cur=-1;
 function open(id){
@@ -348,8 +345,9 @@ function open(id){
     '<h2>'+esc(b.t)+'</h2><p class="bc-by">'+esc(b.by)+' · '+b.yr+'</p></div></div>'+
     '<p class="bc-blurb">'+esc(b.blurb)+'</p>'+
     '<div class="bc-why"><b>Why We Picked It</b>'+esc(b.why)+'</div>'+
-    '<div class="bc-marks"><button type="button" class="bc-btn r" data-m="r" aria-pressed="'+(m.indexOf("r")>=0)+'"><i class="bc-sl">'+SEAL+'</i>Read It</button>'+
+    '<div class="bc-marks"><button type="button" class="bc-btn r" data-m="r" aria-pressed="'+(m.indexOf("r")>=0)+'"><i class="bc-sl">'+SEAL+'</i>I\u2019ve Read It</button>'+
     '<button type="button" class="bc-btn wt" data-m="w" aria-pressed="'+(m.indexOf("w")>=0)+'"><i class="bc-rb w"></i>Want to Read</button></div>'+
+    '<p class="bc-undo">'+(m?"Tap a button again to undo.":"Mark it once you\u2019ve read it, or save it for later.")+'</p>'+
     '<div class="bc-talk"><b>Talk About It</b>Comments open soon: you’ll be able to share what you thought of this book with other readers, right here.</div>'+
     '</div><div class="bc-foot"><button type="button" class="bc-btn gh" data-a="prev" aria-label="Previous book">\u2190 Previous</button>'+
     '<button type="button" class="bc-btn" data-a="close" style="flex:1">Back to the Shelf</button>'+
@@ -360,8 +358,10 @@ function open(id){
     var k=x.getAttribute("data-m"), m2=mark(b.id), on=m2.indexOf(k)<0;
     if(on){ m2+=k; if(k==="r") m2=m2.replace("w",""); } else m2=m2.replace(k,"");
     setMark(b.id,m2); snd(on?"bc-mark":"bc-unmark");
-    if(on&&window.Parlor&&Parlor.toast) Parlor.toast(k==="r"?"Marked as read.":"Added to your Want to Read.");
-    render(); open(b.id); }; });
+    [].forEach.call(veil.querySelectorAll("[data-m]"),function(y){ y.setAttribute("aria-pressed",String(m2.indexOf(y.getAttribute("data-m"))>=0)); });
+    var u=veil.querySelector(".bc-undo"); if(u) u.textContent=m2?"Tap a button again to undo.":"Mark it once you\u2019ve read it, or save it for later.";
+    if(window.Parlor&&Parlor.toast) Parlor.toast(on?(k==="r"?"Marked as read.":"Saved to Want to Read."):(k==="r"?"No longer marked as read.":"Removed from Want to Read."));
+    render(); }; });
   veil.querySelector('[data-a="prev"]').onclick=function(){ snd("bc-pull"); open(BOOKS[(cur-1+BOOKS.length)%BOOKS.length].id); };
   veil.querySelector('[data-a="next"]').onclick=function(){ snd("bc-pull"); open(BOOKS[(cur+1)%BOOKS.length].id); };
   veil.querySelector('[data-a="close"]').onclick=close;
@@ -386,8 +386,10 @@ function fit(){
   SCROLL.style.setProperty("--bc-h",Math.round(h)+"px");
 }
 var lastW=0;
-window.addEventListener("resize",function(){ requestAnimationFrame(function(){ fit(); if(CASE.clientWidth!==lastW){ lastW=CASE.clientWidth; render(); } }); });
-new MutationObserver(function(){ setTimeout(function(){ fit(); render(); },30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+window.addEventListener("resize",function(){ requestAnimationFrame(function(){ fit(); maybeRender(); }); });
+var lastSeat=null;
+function maybeRender(){ var st=seatedNow(), w=CASE.clientWidth; if(st!==lastSeat||w!==lastW){ lastSeat=st; lastW=w; render(); } }
+new MutationObserver(function(){ setTimeout(function(){ fit(); maybeRender(); },30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
 
 Parlor.init({ scoreLabel:"About the Book Club", seatHead:"Your Armchair", setWord:"Shelf",
   game:"bookclub", cat:"learn", solo:true, free:true, title:"The Book Club", bg:"bc/room.jpg?v=1123a", home:"learn.html", stage:stage,
