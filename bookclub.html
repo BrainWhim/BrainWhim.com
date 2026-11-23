@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Book Club · A Book for Every Shelf · BrainWhim</title>
+<meta name="description" content="The Book Club at BrainWhim: a bright bookshop café with a fresh pick on every one of our 14 shelves each month, from Fiction to Do It Yourself.">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parlor-kit.css?v=1122c">
+<style>
+/* ===== The Book Club (Learn, Nov 23, 2026): a bright, modern bookshop café. Our Monthly Shelf: one pick for each of the 14 shelves.
+   Covers are our own design (never the publisher's). Read It / Want to Read stay on this device (bwBook:<id>). Comments come in phase 2.
+   Shelves (the Shelves card): White Oak free, Walnut for Club Members. Photos switch on by themselves: bc/shelf.webp, bc/card.webp. */
+.bc-pad{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;width:100%}
+.bc-scroll{width:100%;height:var(--bc-h,620px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:4px 0 26px;
+  scrollbar-width:thin;scrollbar-color:rgba(242,190,69,.5) transparent}
+.bc-scroll::-webkit-scrollbar{width:6px}.bc-scroll::-webkit-scrollbar-thumb{background:rgba(242,190,69,.45);border-radius:3px}
+.bc-case{width:min(100%,920px);margin:0 auto;padding:0 clamp(8px,2.5vw,24px)}
+body{--bc-oakA:#e9d3ac;--bc-oakB:#c9a777;--bc-oakC:#9d7a4c;--bc-oakE:#7a5a33}
+body[data-set="walnut"]{--bc-oakA:#9a6b45;--bc-oakB:#6e4529;--bc-oakC:#4e2e19;--bc-oakE:#33190b}
+
+/* the letter board: charcoal felt in an oak frame with brass screws (modern café sign) */
+.bc-sign{position:relative;margin:6px auto 26px;width:min(100%,560px);padding:16px 22px 14px;border-radius:6px;text-align:center;color:#f6f3ec;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,rgba(0,0,0,0) 1px 9px),radial-gradient(120% 140% at 25% 0%,#3a3e3b,#1d201e 70%);
+  border:9px solid var(--bc-oakB);border-image:linear-gradient(135deg,var(--bc-oakA),var(--bc-oakB) 45%,var(--bc-oakC)) 1;
+  box-shadow:inset 0 3px 10px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.5),0 2px 0 rgba(0,0,0,.35),0 14px 26px rgba(0,0,0,.45),0 30px 50px rgba(0,0,0,.25)}
+.bc-sign i.sc{position:absolute;width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff3c4,#d4a742 45%,#7d5a17 100%);box-shadow:0 1px 1px rgba(0,0,0,.6),inset 0 0 0 .5px rgba(0,0,0,.3)}
+.bc-sign i.sc::after{content:"";position:absolute;left:1px;right:1px;top:3px;height:1px;background:rgba(70,45,10,.7);transform:rotate(-35deg)}
+.bc-sign i.s1{left:-8px;top:-8px}.bc-sign i.s2{right:-8px;top:-8px}.bc-sign i.s3{left:-8px;bottom:-8px}.bc-sign i.s4{right:-8px;bottom:-8px}
+.bc-kick{margin:0 0 6px;font:600 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#f2be45}
+.bc-title{margin:0;font:700 clamp(22px,4vw,30px)/1.1 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#fbfaf6;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+.bc-sub{margin:7px 0 0;font:600 12.5px/1.35 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d8d4ca}
+.bc-count{display:flex;justify-content:center;gap:18px;margin:10px 0 0;padding-top:9px;border-top:1px solid rgba(255,255,255,.12);
+  font:600 12.5px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#e9e5db;white-space:nowrap}
+.bc-count span{display:inline-flex;align-items:center;gap:7px}
+.bc-count b{color:#fff;font-weight:700}
+
+/* ribbon bookmarks: the room's own marks (sage = read, gold = want to read) */
+.bc-rb{display:inline-block;flex:none;width:9px;height:15px;clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%)}
+.bc-rb.r{background:linear-gradient(90deg,#3f6a45,#6f9f6a 50%,#3f6a45)}
+.bc-rb.w{background:linear-gradient(90deg,#a87a1c,#e8bd52 50%,#a87a1c)}
+
+/* a row: the books standing on a floating shelf, their shelf cards hanging from its edge */
+.bc-row{position:relative;margin:0 0 30px}
+.bc-books{position:relative;z-index:1;display:flex;justify-content:center;align-items:flex-end;gap:var(--bc-gap,24px);padding:0 10px}
+.bc-plank{position:relative;height:var(--bc-pk,30px);margin:0 -2px;border-radius:2px;
+  background:linear-gradient(180deg,var(--bc-oakA) 0,var(--bc-oakA) 22%,var(--bc-oakB) 24%,var(--bc-oakB) 70%,var(--bc-oakC) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 0 var(--bc-oakE)}
+.bc-plank::before{content:"";position:absolute;inset:0;border-radius:inherit;opacity:.35;mix-blend-mode:multiply;
+  background:repeating-linear-gradient(90deg,rgba(90,60,25,.0) 0 7px,rgba(90,60,25,.25) 7px 8px,rgba(90,60,25,0) 8px 19px,rgba(90,60,25,.15) 19px 20px)}
+/* the shelf's shadow on the wall: dark close under the edge, then wide and soft */
+.bc-plank::after{content:"";position:absolute;left:3%;right:3%;top:100%;height:30px;z-index:-1;pointer-events:none;
+  background:radial-gradient(50% 100% at 50% 0%,rgba(0,0,0,.45),rgba(0,0,0,.18) 45%,rgba(0,0,0,0) 75%)}
+html.bc-shelfph .bc-plank{background:none;box-shadow:none;border-style:solid;border-color:transparent;border-width:0 var(--bc-se,10px);
+  border-image:url(bc/shelf.webp?v=1123a) 0 var(--bc-ss,30) fill / 0 var(--bc-se,10px) stretch}
+html.bc-shelfph .bc-plank::before{display:none}
+html.bc-shelfph body[data-set="walnut"] .bc-plank{filter:sepia(.35) saturate(1.2) brightness(.52) contrast(1.08)}
+.bc-tags{position:relative;z-index:1;display:flex;justify-content:center;gap:var(--bc-gap,24px);padding:0 10px;margin-top:-3px}
+.bc-tag{width:var(--bc-bw,112px);min-height:30px;display:flex;align-items:center;justify-content:center;padding:5px 6px 4px;border-radius:0 0 4px 4px;
+  text-align:center;font:700 9.5px/1.25 Montserrat,system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:#3c5a45;
+  background:linear-gradient(180deg,#efe7d4 0,#fbf6ea 22%,#f6efdf);border:1px solid rgba(80,110,85,.35);border-top:0;
+  box-shadow:inset 0 3px 3px -2px rgba(0,0,0,.25),0 2px 3px rgba(0,0,0,.25),0 6px 10px rgba(0,0,0,.15)}
+
+/* the books: face-out covers of our own design, light from the top left */
+.bc-book{appearance:none;position:relative;flex:none;width:var(--bc-bw,112px);height:calc(var(--bc-bw,112px) * 1.5 * var(--hf,1));padding:0;border:0;cursor:pointer;
+  border-radius:2px 5px 5px 2px;background:var(--c);color:var(--k);text-align:left;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 1px 0 rgba(0,0,0,.55),2px 3px 0 -1px rgba(0,0,0,.25),5px 5px 10px rgba(0,0,0,.32),12px 10px 22px rgba(0,0,0,.2);
+  transition:transform .18s ease,box-shadow .18s ease}
+.bc-book::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+  background:linear-gradient(90deg,rgba(0,0,0,.32) 0,rgba(0,0,0,.08) 5px,rgba(255,255,255,.18) 7px,rgba(255,255,255,0) 11px),
+    linear-gradient(150deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 38%),linear-gradient(0deg,rgba(0,0,0,.18),rgba(0,0,0,0) 30%)}
+.bc-book::after{content:"";position:absolute;left:-4%;right:-10%;bottom:-6px;height:9px;z-index:-1;pointer-events:none;
+  background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.55),rgba(0,0,0,0) 70%)}
+@media (hover:hover){.bc-book:hover{transform:translateY(-5px);box-shadow:0 1px 0 rgba(0,0,0,.4),5px 9px 14px rgba(0,0,0,.32),14px 16px 26px rgba(0,0,0,.2)}}
+.bc-book:focus-visible{outline:none;box-shadow:0 0 0 3px #f2be45,0 0 18px rgba(242,190,69,.6),5px 5px 10px rgba(0,0,0,.32)}
+.bc-cv{position:absolute;inset:0;overflow:hidden;border-radius:inherit;display:flex;flex-direction:column;justify-content:space-between;
+  padding:calc(var(--bc-bw,112px)*.11) calc(var(--bc-bw,112px)*.09) calc(var(--bc-bw,112px)*.1) calc(var(--bc-bw,112px)*.13)}
+.bc-cv .t{position:relative;z-index:2;font:700 calc(var(--bc-bw,112px)*.142)/1.04 "Cormorant Garamond",Georgia,serif;letter-spacing:.005em;overflow-wrap:normal;word-break:normal;hyphens:manual;font-size:calc(var(--bc-bw,112px)*.142*var(--tf,1))}
+.bc-cv .a{position:relative;z-index:2;font:600 calc(var(--bc-bw,112px)*.068)/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
+.bc-cv .mo{position:absolute;inset:0;z-index:1;pointer-events:none}
+.m-band .mo{background:linear-gradient(180deg,rgba(0,0,0,0) 0 54%,var(--a) 54% 57%,rgba(0,0,0,0) 57% 60%,var(--a) 60% 61%,rgba(0,0,0,0) 61%)}
+.m-frame .mo{inset:7% 8% 7% 11%;border:1.5px solid var(--a);box-shadow:inset 0 0 0 3px var(--c),inset 0 0 0 4px var(--a);border-radius:1px}
+.m-frame .bc-cv{padding-left:calc(var(--bc-bw,112px)*.2);padding-right:calc(var(--bc-bw,112px)*.14);padding-top:calc(var(--bc-bw,112px)*.18);padding-bottom:calc(var(--bc-bw,112px)*.16)}
+.m-split .mo{background:linear-gradient(180deg,rgba(0,0,0,0) 0 62%,var(--a) 62%)}
+.m-split .bc-cv .a{color:var(--c);opacity:1}
+.m-arch .mo{background:radial-gradient(42% 30% at 56% 74%,var(--a) 0 98%,rgba(0,0,0,0) 100%);opacity:.75}
+.m-dots .mo{background:radial-gradient(circle,var(--a) 0 1.6px,rgba(0,0,0,0) 2px) 0 0/11px 11px;opacity:.55;
+  -webkit-mask:linear-gradient(180deg,rgba(0,0,0,0) 40%,#000 62%,#000 78%,rgba(0,0,0,0) 92%);mask:linear-gradient(180deg,rgba(0,0,0,0) 40%,#000 62%,#000 78%,rgba(0,0,0,0) 92%)}
+.bc-book .rib{position:absolute;top:-13px;z-index:0;width:11px;height:30px;clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.bc-book .rib.r{right:16%;background:linear-gradient(90deg,#3f6a45,#79a873 50%,#3f6a45)}
+.bc-book .rib.w{right:calc(16% + 15px);background:linear-gradient(90deg,#a87a1c,#efc65c 50%,#a87a1c)}
+.bc-book.marked-r .rib.w{right:calc(16% + 15px)}
+
+/* the staff-pick card (a window over the room) */
+.bc-veil{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));
+  background:rgba(14,16,15,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.bc-veil.on{display:flex}
+.bc-card{position:relative;width:min(100%,600px);max-height:100%;display:flex;flex-direction:column;border-radius:14px;color:#26231e;
+  background:linear-gradient(180deg,#fdf9ef,#f6efdf);box-shadow:inset 0 0 0 7px #fbf6ea,inset 0 0 0 8.5px rgba(79,112,86,.55),0 3px 0 rgba(0,0,0,.25),0 24px 60px rgba(0,0,0,.5);
+  animation:bcIn .26s ease-out}
+html.bc-cardph .bc-card{background:none;box-shadow:0 22px 50px rgba(0,0,0,.45);border-style:solid;border-color:transparent;border-width:var(--bc-cw,26px);
+  border-image:url(bc/card.webp?v=1123a) var(--bc-cs,44) fill / var(--bc-cw,26px) stretch}
+@keyframes bcIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.bc-card{animation:none}}
+.bc-cin{overflow-y:auto;overscroll-behavior:contain;padding:26px clamp(18px,5%,34px) 18px;scrollbar-width:thin;scrollbar-color:rgba(79,112,86,.45) transparent}
+html.bc-cardph .bc-cin{padding:6px clamp(4px,3%,16px) 4px}
+.bc-top{display:flex;gap:20px;align-items:flex-start}
+.bc-top .bc-book{--bc-bw:96px;cursor:default;flex:none}
+.bc-top .bc-book:hover{transform:none}
+.bc-sh{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 9px}
+.bc-sh span{padding:4px 9px 3px;border-radius:999px;font:700 10.5px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#3c5a45;background:rgba(79,112,86,.12);border:1px solid rgba(79,112,86,.3)}
+.bc-card h2{margin:0 0 6px;font:700 clamp(26px,4.4vw,34px)/1.06 "Cormorant Garamond",Georgia,serif;color:#1f1c18}
+.bc-by{margin:0;font:600 13.5px/1.4 Montserrat,system-ui,sans-serif;color:#5e5649}
+.bc-blurb{margin:16px 0 0;font:17px/1.6 Georgia,"Times New Roman",serif;color:#26231e}
+.bc-why{margin:14px 0 0;padding:12px 15px;border-radius:8px;border-left:4px solid #5f8a65;background:rgba(95,138,101,.1);font:italic 16.5px/1.5 Georgia,"Times New Roman",serif;color:#26231e}
+.bc-why b{display:block;margin:0 0 3px;font:700 11px/1.2 Montserrat,system-ui,sans-serif;font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:#3c5a45}
+.bc-marks{display:flex;gap:10px;margin:16px 0 0}
+.bc-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:9px 16px;border-radius:999px;cursor:pointer;
+  font:700 14px/1.15 Montserrat,system-ui,sans-serif;color:#2f4a38;background:#fff;border:1.5px solid rgba(63,93,72,.45);box-shadow:0 2px 0 rgba(63,93,72,.15);-webkit-tap-highlight-color:transparent}
+.bc-marks .bc-btn{flex:1 1 0}
+@media (hover:hover){.bc-btn:hover{background:#f3f7f1}}
+.bc-btn[aria-pressed="true"]{color:#fff;background:#3f6a45;border-color:#3f6a45}
+.bc-btn.wt[aria-pressed="true"]{color:#2c220c;background:#e9bd4f;border-color:#c99a2c}
+.bc-btn .bc-rb{opacity:.55}.bc-btn[aria-pressed="true"] .bc-rb{opacity:1}
+.bc-btn.r[aria-pressed="true"] .bc-rb.r{background:linear-gradient(90deg,#dfeedd,#fff 50%,#dfeedd)}
+.bc-talk{margin:16px 0 0;padding:13px 15px;border-radius:8px;border:1.5px dashed rgba(79,112,86,.4);font:15px/1.45 Montserrat,system-ui,sans-serif;color:#4a4439}
+.bc-talk b{display:block;margin:0 0 3px;font:700 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#3c5a45}
+.bc-foot{display:flex;align-items:center;gap:8px;padding:12px clamp(18px,5%,34px) 18px;border-top:1px solid rgba(79,112,86,.18)}
+html.bc-cardph .bc-foot{padding:10px clamp(4px,3%,16px) 2px}
+.bc-foot .gh{background:transparent}
+.bc-foot .sp{flex:1}
+@media (max-height:540px){.bc-top .bc-book{display:none}.bc-card h2{font-size:24px}.bc-cin{padding-top:14px}}
+@media (max-width:520px){
+  .bc-top{gap:14px}.bc-top .bc-book{--bc-bw:74px}
+  .bc-card h2{font-size:25px}.bc-blurb{font-size:16.5px}
+  .bc-foot .bc-btn{padding:9px 10px;font-size:13px}.bc-foot{gap:6px}
+  .bc-tag{font-size:8.5px;letter-spacing:.06em;min-height:28px}
+  .bc-sign{padding:13px 14px 12px;margin-bottom:22px}.bc-count{gap:14px;font-size:11.5px}
+}
+.pk-introtxt{flex:1 1 auto}.pk-introtxt .pk-tag{white-space:normal;line-height:1.4}
+/* the kit's tip mustn't cover the books: at the top on portrait phones, bottom-right beside the shelves when sideways */
+@media (max-width:999px) and (orientation:portrait){body.pk.seated .pk-hint.on{top:calc(70px + env(safe-area-inset-top))!important;bottom:auto!important}}
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){body.pk.seated .pk-hint.on{left:auto!important;right:12px!important;max-width:260px}}
+
+</style>
+<script src="bw-auth.js?v=1120c"></script>
+<script src="bw-scroll.js?v=1026a" defer></script>
+<link rel="icon" href="favicon.ico?v=1113a" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="bw-icon-32.png?v=1113a"><link rel="icon" type="image/png" sizes="192x192" href="bw-icon-192.png?v=1113a"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=1113a">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@144,700,100,0&display=swap">
+<style id="bw-wordmark">/* BrainWhim wordmark (Nov 11): gold Whim, set tight so BrainWhim always reads as one word */
+span.whim,.brand-whim,.brand-whim-accent{background:linear-gradient(180deg,#fff2b3 0%,#f2be45 52%,#c27f1c 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#f2be45!important;text-shadow:none!important;padding:0 .08em!important;margin-left:-.16em!important;margin-right:-.08em!important}
+/* Nov 11 refinement (C): "Brain" in polished ivory-silver, "Whim" gold, both with a soft shadow from the top-left light; room between coin and name */
+span:has(+ span.whim),.brand-brain,.brand .brain{background:linear-gradient(180deg,#ffffff 0%,#e8e4da 50%,#a19c92 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:#efe9dc!important;text-shadow:none!important;letter-spacing:-.01em;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+span.whim,.brand-whim,.brand-whim-accent{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+.brand .whim{font-size:1.08em}
+.brand>img{margin-right:8px!important}
+/* Nov 11 (18b): "Brain" in Fraunces Soft 700 (rounded serifs, real thick-and-thin), sized so its B stands as tall as Pacifico's W */
+span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_){font-family:"Fraunces",Georgia,serif!important;font-weight:700!important;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;font-size:1.3em!important;letter-spacing:-.025em!important;line-height:1!important}
+/* Nov 11 evening: the Pacifico "Tap for Whims" labels in gold to match */
+.whim-label:not(#_),.whimp .wt:not(#_),.whim-mobile-card p:not(#_),.pk-whim-label:not(#_){color:#F2BE45!important}
+</style>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e31875694216416e84797ec764428367"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body class="pk">
+<header>
+<a class="brand" href="index.html" aria-label="BrainWhim"><img src="bw-emblem.png?v=1111a" alt="" width="64" height="64"><span>Brain</span><span class="whim">Whim</span></a>
+<nav class="hdr"><a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a class="up" href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a></nav>
+</header>
+<main class="pk-room"></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="play-config.js"></script>
+<script src="play-rooms.js?v=1120a"></script>
+<script src="bw-avatars.js?v=1120a"></script>
+<script src="parlor-kit.js?v=1123b"></script>
+<script src="bookclub-shelf.js?v=1123a"></script>
+<script>
+(function(){
+"use strict";
+function $(s,r){ return (r||document).querySelector(s); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} return null; }
+function hash(str){ var h=2166136261; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+
+/* ---------- photos switch on by themselves once they load ---------- */
+function photoOn(src,cls){ var im=new Image(); im.onload=function(){ document.documentElement.classList.add(cls); }; im.src=src; }
+photoOn("bc/shelf.webp?v=1123a","bc-shelfph");
+photoOn("bc/card.webp?v=1123a","bc-cardph");
+
+/* ---------- this month's shelf: the newest month that has started ---------- */
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+var todayKey=ymd(new Date());
+var MONTH=BC_MONTHS.filter(function(m){ return m.from<=todayKey; })[0]||BC_MONTHS[BC_MONTHS.length-1];
+var SH={}; BC_SHELVES.forEach(function(s){ SH[s.id]=s.name; });
+var BOOKS=MONTH.picks;
+
+/* ---------- Read It / Want to Read: on this device only ---------- */
+function mark(id){ return store("bwBook:"+id)||""; }
+function setMark(id,v){ store("bwBook:"+id,v||null); }
+function counts(){ var r=0,w=0; BOOKS.forEach(function(b){ var m=mark(b.id); if(m.indexOf("r")>=0) r++; if(m.indexOf("w")>=0) w++; }); return {r:r,w:w}; }
+
+/* ---------- sounds (the room's own: a book slid off the shelf, a ribbon tucked in, the book set back) ---------- */
+(function(){
+  if(!window.Parlor||!Parlor.defSfx) return;
+  var D=Parlor.defSfx;
+  D("bc-pull",function(h){ var d=h.out(.17), t=h.t;
+    h.burst(d,t,.2,"bandpass",1500,.8,.12,.03,.16);
+    h.burst(d,t+.06,.1,"highpass",4200,.7,.06,.02,.08);
+    h.osc(d,t+.17,"sine",150,90,.12,.004,.12,["lowpass",420]); });
+  D("bc-mark",function(h){ var d=h.out(.3), t=h.t;
+    h.burst(d,t,.04,"highpass",3800,1,.07,.002,.03);
+    h.bell(d,t+.03,1318.5,.05,.9); });
+  D("bc-unmark",function(h){ var d=h.out(.14), t=h.t; h.burst(d,t,.05,"bandpass",2400,1.2,.07,.003,.04); });
+  D("bc-set",function(h){ var d=h.out(.16), t=h.t;
+    h.burst(d,t,.12,"bandpass",1200,.9,.08,.02,.09);
+    h.osc(d,t+.08,"sine",130,80,.14,.004,.14,["lowpass",380]); });
+})();
+function snd(n){ if(window.Parlor&&Parlor.sfx) Parlor.sfx(n,{}); }
+
+/* ---------- a cover of our own design ---------- */
+function cover(b,extra){
+  var m=mark(b.id), hf=.95+(hash(b.id)%10)/100, lw=Math.max.apply(null,b.t.split(/\s+/).map(function(x){ return x.length; })), tf=lw>7?Math.max(.72,7/lw):1;
+  return '<button type="button" class="bc-book m-'+b.m+(extra||"")+'" data-id="'+b.id+'" style="--c:'+b.c+';--k:'+b.k+';--a:'+b.a+';--hf:'+hf.toFixed(2)+';--tf:'+tf.toFixed(2)+'" aria-label="'+esc(b.t+" by "+b.by)+'">'+
+    (m.indexOf("r")>=0?'<i class="rib r"></i>':"")+(m.indexOf("w")>=0?'<i class="rib w"></i>':"")+
+    '<span class="bc-cv"><i class="mo"></i><span class="t">'+esc(b.t)+'</span><span class="a">'+esc(b.by)+'</span></span></button>';
+}
+
+/* ---------- the room ---------- */
+var stage=document.createElement("div"); stage.className="bc-pad";
+stage.innerHTML='<div class="bc-scroll"><div class="bc-case"></div></div>';
+var SCROLL=$(".bc-scroll",stage), CASE=$(".bc-case",stage);
+var veil=document.createElement("div"); veil.className="bc-veil"; veil.setAttribute("role","dialog"); veil.setAttribute("aria-modal","true");
+document.body.appendChild(veil);
+
+function layout(){
+  var w=CASE.clientWidth||Math.min(920,window.innerWidth)-16, bw, gap, cols;
+  if(w>=820){ bw=118; gap=30; } else if(w>=600){ bw=108; gap=22; } else { gap=w<380?12:16; bw=Math.min(112,Math.floor((w-20-gap*2)/3)); }
+  cols=Math.max(3,Math.floor((w-20+gap)/(bw+gap)));
+  return {bw:bw,gap:gap,cols:cols};
+}
+function render(){
+  var L=layout(), n=BOOKS.length, rows=Math.ceil(n/L.cols), base=Math.floor(n/rows), extra=n%rows, i=0, html="";
+  CASE.style.setProperty("--bc-bw",L.bw+"px"); CASE.style.setProperty("--bc-gap",L.gap+"px");
+  var c=counts();
+  html+='<div class="bc-sign"><i class="sc s1"></i><i class="sc s2"></i><i class="sc s3"></i><i class="sc s4"></i>'+
+    '<p class="bc-kick">The Book Club</p><h2 class="bc-title">'+esc(MONTH.name)+'</h2>'+
+    '<p class="bc-sub">'+esc(MONTH.sub)+' · '+n+' Books, One for Every Shelf</p>'+
+    '<div class="bc-count"><span><i class="bc-rb r"></i>Read <b>'+c.r+'</b></span><span><i class="bc-rb w"></i>Want to Read <b>'+c.w+'</b></span></div></div>';
+  for(var r=0;r<rows;r++){
+    var k=base+(r<extra?1:0), part=BOOKS.slice(i,i+k); i+=k;
+    html+='<div class="bc-row"><div class="bc-books">'+part.map(function(b){ return cover(b); }).join("")+'</div><div class="bc-plank"></div>'+
+      '<div class="bc-tags">'+part.map(function(b){ return '<span class="bc-tag">'+esc(SH[b.sh[0]])+'</span>'; }).join("")+'</div></div>';
+  }
+  CASE.innerHTML=html;
+  if(seatedNow()&&window.Parlor&&Parlor.status) Parlor.status(MONTH.name, n+" Books \u00b7 Read "+c.r);
+  words();
+  [].forEach.call(CASE.querySelectorAll(".bc-book"),function(x){ x.onclick=function(){ open(x.getAttribute("data-id")); }; });
+}
+
+/* the kit says "New Game" in its menu and phone bar: here the menu says This Month's Shelf and the bar has no such button */
+function words(){
+  [].forEach.call(document.querySelectorAll("button"),function(x){ if(x.textContent!=="New Game") return;
+    var br=x.closest(".pk-bar"); if(br){ x.remove(); br.classList.add("pk-bar-2"); } else x.textContent="This Month\u2019s Shelf"; });
+}
+/* ---------- the staff-pick card ---------- */
+var cur=-1;
+function open(id){
+  cur=BOOKS.map(function(b){ return b.id; }).indexOf(id); if(cur<0) return;
+  var b=BOOKS[cur], m=mark(b.id);
+  veil.innerHTML='<div class="bc-card"><div class="bc-cin">'+
+    '<div class="bc-top">'+cover(b,"").replace('<button type="button"','<div aria-hidden="true"').replace(/<\/button>$/,"</div>")+
+    '<div><div class="bc-sh">'+b.sh.map(function(s){ return '<span>'+esc(SH[s])+'</span>'; }).join("")+'</div>'+
+    '<h2>'+esc(b.t)+'</h2><p class="bc-by">'+esc(b.by)+' · '+b.yr+'</p></div></div>'+
+    '<p class="bc-blurb">'+esc(b.blurb)+'</p>'+
+    '<div class="bc-why"><b>Why We Picked It</b>'+esc(b.why)+'</div>'+
+    '<div class="bc-marks"><button type="button" class="bc-btn r" data-m="r" aria-pressed="'+(m.indexOf("r")>=0)+'"><i class="bc-rb r"></i>Read It</button>'+
+    '<button type="button" class="bc-btn wt" data-m="w" aria-pressed="'+(m.indexOf("w")>=0)+'"><i class="bc-rb w"></i>Want to Read</button></div>'+
+    '<div class="bc-talk"><b>Talk About It</b>Comments open soon: you’ll be able to share what you thought of this book with other readers, right here.</div>'+
+    '</div><div class="bc-foot"><button type="button" class="bc-btn gh" data-a="prev" aria-label="Previous book">\u2190 Previous</button>'+
+    '<button type="button" class="bc-btn" data-a="close" style="flex:1">Back to the Shelf</button>'+
+    '<button type="button" class="bc-btn gh" data-a="next" aria-label="Next book">Next \u2192</button></div></div>';
+  /* the mini cover is a div: give it the book look */
+  var mini=veil.querySelector(".bc-top > div.bc-book"); if(mini) mini.setAttribute("role","img");
+  [].forEach.call(veil.querySelectorAll("[data-m]"),function(x){ x.onclick=function(){
+    var k=x.getAttribute("data-m"), m2=mark(b.id), on=m2.indexOf(k)<0;
+    if(on){ m2+=k; if(k==="r") m2=m2.replace("w",""); } else m2=m2.replace(k,"");
+    setMark(b.id,m2); snd(on?"bc-mark":"bc-unmark");
+    if(on&&window.Parlor&&Parlor.toast) Parlor.toast(k==="r"?"Marked as read.":"Added to your Want to Read.");
+    render(); open(b.id); }; });
+  veil.querySelector('[data-a="prev"]').onclick=function(){ snd("bc-pull"); open(BOOKS[(cur-1+BOOKS.length)%BOOKS.length].id); };
+  veil.querySelector('[data-a="next"]').onclick=function(){ snd("bc-pull"); open(BOOKS[(cur+1)%BOOKS.length].id); };
+  veil.querySelector('[data-a="close"]').onclick=close;
+  if(!veil.classList.contains("on")){ veil.classList.add("on"); snd("bc-pull"); }
+}
+function close(){ if(!veil.classList.contains("on")) return; veil.classList.remove("on"); veil.innerHTML=""; snd("bc-set"); }
+veil.addEventListener("click",function(e){ if(e.target===veil) close(); });
+document.addEventListener("keydown",function(e){
+  if(!veil.classList.contains("on")) return;
+  if(e.key==="Escape"){ close(); e.preventDefault(); }
+  else if(e.key==="ArrowRight"){ veil.querySelector('[data-a="next"]').click(); e.preventDefault(); }
+  else if(e.key==="ArrowLeft"){ veil.querySelector('[data-a="prev"]').click(); e.preventDefault(); }
+});
+
+/* ---------- fitting the shelves to the screen ---------- */
+function seatedNow(){ return document.body.classList.contains("seated"); }
+function fit(){
+  var wide=window.innerWidth>=1000, st2=document.querySelector(".pk-stage");
+  var top=st2&&seatedNow()?st2.getBoundingClientRect().top+window.scrollY:185;
+  var h=wide?window.innerHeight-top-20:window.innerHeight-(seatedNow()?top:56)-(64+12);
+  h=Math.max(window.innerHeight<560?230:360,Math.min(1100,h));
+  SCROLL.style.setProperty("--bc-h",Math.round(h)+"px");
+}
+var lastW=0;
+window.addEventListener("resize",function(){ requestAnimationFrame(function(){ fit(); if(CASE.clientWidth!==lastW){ lastW=CASE.clientWidth; render(); } }); });
+new MutationObserver(function(){ setTimeout(function(){ fit(); render(); },30); setTimeout(fit,400); }).observe(document.body,{attributes:true,attributeFilter:["class"]});
+
+Parlor.init({ scoreLabel:"About the Book Club", seatHead:"Your Armchair", setWord:"Shelf",
+  game:"bookclub", cat:"learn", solo:true, free:true, title:"The Book Club", bg:"bc/room.jpg?v=1123a", home:"learn.html", stage:stage,
+  soloLabel:"This Month’s Shelf", dealLabel:"This Month’s Shelf",
+  tagline:"A Book for Every Shelf.", invite:"A bright bookshop café with a fresh pick on every shelf each month. Browse the shelves, read why we chose each book, and keep track of what you’ve read.",
+  players:[{name:"You",color:"#5f8a65"}],
+  setsLabel:"Shelves",
+  sets:[
+    {id:"oak",name:"White Oak",need:0,dots:["#e3c597","#9d7a4c"]},
+    {id:"walnut",name:"Walnut",club:true,dots:["#6e4529","#33190b"]}
+  ],
+  rules:{
+    play:"<ol><li><b>Browse the shelves:</b> each month we choose one book for every shelf, from Fiction to Do It Yourself.</li><li><b>Tap a book</b> to read what it’s about and why we picked it. Use <b>Previous</b> and <b>Next</b> to walk along the shelves.</li><li><b>Read It</b> or <b>Want to Read</b> tucks a ribbon into the book, so you can see at a glance what you’ve read and what’s next.</li></ol>",
+    score:"<ul><li><b>A new shelf every month:</b> one pick for each of our 14 shelves. Past months stay on their shelves.</li><li><b>Your marks stay on this device.</b> Nobody else sees them.</li><li><b>Coming soon:</b> comments under every book, and then your own recommendations for the shelves.</li><li><b>The covers</b> are our own designs, made for the Book Club.</li></ul>"
+  },
+  onNew:function(){ close(); render(); SCROLL.scrollTop=0; }
+});
+document.addEventListener("DOMContentLoaded",function(){ render(); fit(); });
+if(document.readyState!=="loading"){ render(); fit(); }
+window.BCO={get:function(){ return {month:MONTH.id,books:BOOKS.length,counts:counts(),cur:cur}; },open:open,close:close,render:render,mark:setMark};   /* for testing */
+})();
+</script>
+</body>
+</html>
