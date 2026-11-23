@@ -129,7 +129,7 @@
     var ac = mk("div", "pk-card pk-menu");
     function group(title, cls) { var g = mk("div", "pk-group" + (cls ? " " + cls : "")); g.appendChild(mk("h3", "", title)); var l = mk("div", "pk-actions"); g.appendChild(l); ac.appendChild(g); return l; }
     var g1 = group(C.menuTitle || (C.title || "This Game").replace(/^The /, ""));   /* the room's own name heads its menu (Judy, Nov 22) */
-    el.newBtn = btn("New Game", "", function () { P.newGame(); });
+    el.newBtn = btn(newLbl(), "", function () { P.newGame(); });
     g1.appendChild(el.newBtn);
     el.forfeitBtn = btn(C.partners ? "Leave the Game" : "Forfeit Game", "", function () { P.forfeit(); }); el.forfeitBtn.style.display = "none";   /* online, once both players are seated */
     g1.appendChild(el.forfeitBtn);
@@ -423,7 +423,7 @@
   P.sitHouse = async function () {
     if (!(await gateAndBegin())) return;
     P.lessonOn = false; P.lessonWaiting = false;   /* leaving a lesson for a real game */
-    P.coach(null); if (el.newBtn) el.newBtn.textContent = "New Game"; if (el.learnBtn) el.learnBtn.style.display = "";
+    P.coach(null); if (el.newBtn) el.newBtn.textContent = newLbl(); if (el.learnBtn) el.learnBtn.style.display = "";
     mode = "house"; seat(); paintAv();
     el.mode.textContent = C.solo ? (C.soloLabel || "Playing solo") : "Playing The House"; showLevel();
     if (C.onNew) C.onNew("house");
@@ -524,8 +524,10 @@
      `done` are look-and-read. The last step offers the practice game. Parlor.practiceSay(title, text) shows a practice tip
      with Hint and Back to the Lesson. */
   var LK = 0;
+  /* the menu's first button in a puzzle room is the room's own daily name ("Today's Telegram"), from the start (Nov 23) */
+  function newLbl() { return C && C.cat === "puzzles" && C.dealLabel ? C.dealLabel : "New Game"; }
   /* on every lesson and practice card: leave the lesson and start a real game against The House (Judy, Oct 25) */
-  function houseBtn() { return { label: C && C.cat === "puzzles" ? "Today's Puzzle" : C && C.cat === "learn" ? "Today's Lesson" : C && C.cat === "create" ? "Today's Prompt" : C && C.cat === "live" ? "Today's Garden" : "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
+  function houseBtn() { return { label: C && C.cat === "puzzles" ? (C.dealLabel || "Today's Puzzle") : C && C.cat === "learn" ? "Today's Lesson" : C && C.cat === "create" ? "Today's Prompt" : C && C.cat === "live" ? "Today's Garden" : "Play The House", quiet: true, fn: function () { P.lessonOn = false; P.lessonWaiting = false; P.coach(null); P.sitHouse(); } }; }
   P.houseBtn = houseBtn;
   function lessonSteps() { var L = C.lesson; return typeof L.steps === "function" ? L.steps() : L.steps; }
   P.lessonGo = function (k) {
