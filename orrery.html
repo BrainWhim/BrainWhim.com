@@ -517,9 +517,10 @@ function drawLive(){
       sv("ellipse",{cx:3,cy:2,rx:10,ry:10*K,fill:"rgba(0,0,0,.18)"},bg); sv("ellipse",{cx:1.2,cy:.8,rx:5.6,ry:5.6*K,fill:"rgba(0,0,0,.5)"},bg);
       sv("rect",{x:-3.4,y:-H,width:6.8,height:H,rx:3,fill:stemF},bg);
       sv("ellipse",{cx:0,cy:-H+rad*.86,rx:rad*.36,ry:rad*.36*K,fill:fin.ring[1],stroke:fin.ring[2],"stroke-width":1.5},bg);
+      var hl=sv("circle",{cx:0,cy:-H,r:rad+8,fill:"rgba(255,214,110,.22)",stroke:"rgb(255,226,140)","stroke-width":4,opacity:0},bg);   /* the planet's halo when its ring is picked (review, Nov 23) */
       sv("use",{href:"#orG"+(j?"M":i),transform:"translate(0 "+(-H)+") scale("+(rad/100)+")"},bg);
       var bad=sv("circle",{cx:0,cy:-H,r:rad+5,fill:"none",stroke:"rgba(255,90,70,0)","stroke-width":4},bg);
-      var B={el:bg,ring:i,j:j,off:off,H:H,rad:rad,bad:bad,x:0,y:0,s:1}; R.bodies.push(B); BODIES.push(B);
+      var B={el:bg,ring:i,j:j,off:off,H:H,rad:rad,bad:bad,hl:hl,x:0,y:0,s:1}; R.bodies.push(B); BODIES.push(B);
     });
     /* the crank handle: a turned knob standing on the plate, front left */
     if(ring.crank){ var ka=(122-i*7)*Math.PI/180, kp=pt(r,ka), kq=scr(kp), ks=depth(kp), kg=sv("g",{transform:"translate("+kq[0]+" "+kq[1]+") scale("+ks+")"},STAND);
@@ -562,7 +563,8 @@ function paint(anim,from){
 /* chart marks glow when their planet is home */
 function marks(){ (GEO.marks||[]).forEach(function(m){ var home=t[m.i]===P.goal[m.i]; m.el.setAttribute("stroke-dasharray",home?"0":"7 5"); m.el.setAttribute("stroke-width",home?4.5:3.6); if(m.glow) m.glow.setAttribute("opacity",home?.45:0); }); homeSync(); }
 /* the selected ring glows (and the one under the mouse, faintly) */
-function glowRings(){ RG.forEach(function(R,i){ R.hi.setAttribute("opacity",i===sel?1:i===hov?.3:0); }); }
+function glowRings(){ var eff=(sel>=0&&P&&P._eff&&P._eff[sel])||[];   /* the picked ring and its planet glow; rings its gears turn (and their planets) glow softly (review, Nov 23) */
+  RG.forEach(function(R,i){ var on=i===sel, co=!on&&sel>=0&&!!eff[i]; R.hi.setAttribute("opacity",on?1:co?.45:i===hov?.3:0); R.bodies.forEach(function(B){ if(B.hl) B.hl.setAttribute("opacity",on?1:co?.55:0); }); }); }
 /* arrows show which way each ring turns for a clockwise turn of the selected crank */
 function showSel(){
   glowRings();
@@ -682,7 +684,7 @@ function hintGlow(m){ var R=RG[m.ring]; if(!R) return; var n=0; (function blink(
 function counts(extra){
   var c=$("#orCount",stage), mv=moves+(extra||0);
   c.innerHTML="Turns <b>"+mv+"</b> · Par <b>"+P.par+"</b>";
-  if(window.Parlor){ Parlor.score([mv]); Parlor.status(mode==="lesson"?"Guided Lesson":mode==="practice"?"Practice":"Today's Orrery", "Turns "+mv+" · par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
+  if(window.Parlor){ Parlor.score([mv]); Parlor.status(mode==="lesson"?"Guided Lesson":mode==="practice"?"Practice":"Today's Orrery", "Turns "+mv+" · Par "+P.par+(hints?" · "+hints+" hint"+(hints>1?"s":""):"")); }
 }
 
 /* ---------- drag to turn, tap to choose (Oct 31: the ring follows your hand) ----------
