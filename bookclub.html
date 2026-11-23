@@ -141,6 +141,11 @@ html.bc-cardph .bc-cin{padding:6px clamp(4px,3%,16px) 4px}
 .bc-btn .bc-rb{opacity:.55}.bc-btn[aria-pressed="true"] .bc-rb{opacity:1}
 .bc-btn .bc-sl{opacity:.6}.bc-btn[aria-pressed="true"] .bc-sl{opacity:1}
 .bc-undo{margin:8px 0 0;font:600 12.5px/1.3 Montserrat,system-ui,sans-serif;color:#6b6457;text-align:center}
+.bc-find{margin:16px 0 0;padding:13px 15px 12px;border-radius:8px;background:rgba(79,112,86,.08);border:1px solid rgba(79,112,86,.25)}
+.bc-find>b{display:block;margin:0 0 8px;font:700 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#3c5a45}
+.bc-fb{display:flex;flex-wrap:wrap;gap:8px}.bc-fb .bc-btn{flex:1 1 180px;text-decoration:none;text-align:center}
+.bc-fb .bc-btn:not(.gh){color:#fff;background:#3f6a45;border-color:#3f6a45}
+.bc-disc{margin:9px 0 0;font:500 12.5px/1.45 Montserrat,system-ui,sans-serif;color:#5e5649}
 .bc-talk{margin:14px 0 0;padding:13px 15px;border-radius:8px;border:1.5px dashed rgba(79,112,86,.4);font:15px/1.45 Montserrat,system-ui,sans-serif;color:#4a4439}
 .bc-talk b{display:block;margin:0 0 3px;font:700 11px/1.2 Montserrat,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#3c5a45}
 .bc-foot{display:flex;align-items:center;gap:8px;padding:12px clamp(18px,5%,34px) 18px;border-top:1px solid rgba(79,112,86,.18)}
@@ -334,6 +339,11 @@ CASE.addEventListener("click",function(e){
   var x=e.target&&e.target.closest?e.target.closest(".bc-book"):null; if(!x||!CASE.contains(x)) return;
   x.classList.add("pick"); open(x.getAttribute("data-id")); setTimeout(function(){ x.classList.remove("pick"); },400);
 });
+/* ---------- where to get a book: Bookshop.org (affiliate, once Judy has her ID) and a library near you (WorldCat) ---------- */
+var BC_AFF="";   /* Judy's Bookshop.org affiliate ID goes here (check the link format in her Bookshop.org dashboard first: buyURL may need to become her own affiliate link); the disclosure line shows itself once it is set */
+function q(b){ return encodeURIComponent(b.t+" "+b.by); }
+function buyURL(b){ return "https://bookshop.org/search?keywords="+q(b)+(BC_AFF?"&a_aid="+encodeURIComponent(BC_AFF):""); }
+function libURL(b){ return "https://search.worldcat.org/search?q="+q(b); }
 /* ---------- the staff-pick card ---------- */
 var cur=-1;
 function open(id){
@@ -348,6 +358,10 @@ function open(id){
     '<div class="bc-marks"><button type="button" class="bc-btn r" data-m="r" aria-pressed="'+(m.indexOf("r")>=0)+'"><i class="bc-sl">'+SEAL+'</i>I\u2019ve Read It</button>'+
     '<button type="button" class="bc-btn wt" data-m="w" aria-pressed="'+(m.indexOf("w")>=0)+'"><i class="bc-rb w"></i>Want to Read</button></div>'+
     '<p class="bc-undo">'+(m?"Tap a button again to undo.":"Mark it once you\u2019ve read it, or save it for later.")+'</p>'+
+    '<div class="bc-find"><b>Find This Book</b><div class="bc-fb">'+
+      '<a class="bc-btn" href="'+buyURL(b)+'" target="_blank" rel="noopener sponsored">Buy It at Bookshop.org</a>'+
+      '<a class="bc-btn gh" href="'+libURL(b)+'" target="_blank" rel="noopener">Borrow It from a Library</a></div>'+
+      '<p class="bc-disc">Bookshop.org ships the book to your door and supports independent bookstores. Libraries lend books free, and many lend e-books and audiobooks too, often through the Libby app.'+(BC_AFF?' We may earn a small commission from Bookshop.org purchases, which also supports independent bookstores.':'')+'</p></div>'+
     '<div class="bc-talk"><b>Talk About It</b>Comments open soon: you’ll be able to share what you thought of this book with other readers, right here.</div>'+
     '</div><div class="bc-foot"><button type="button" class="bc-btn gh" data-a="prev" aria-label="Previous book">\u2190 Previous</button>'+
     '<button type="button" class="bc-btn" data-a="close" style="flex:1">Back to the Shelf</button>'+
