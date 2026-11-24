@@ -226,7 +226,10 @@ html.bc-bookph .bc-book::before{background:linear-gradient(150deg,rgba(255,255,2
 .bc-prop.plant{margin-bottom:calc(var(--bc-bw,112px)*-.196);z-index:2}
 .bc-prop.plant::after{left:27%;right:25%;bottom:calc(var(--bc-bw,112px)*.196 - 3px)}
 .bc-prop.latte::after{left:6%;right:10%}
-.bc-prop.latte{width:calc(var(--bc-bw,112px)*.82);height:calc(var(--bc-bw,112px)*.6);background-image:url(bc/latte.webp?v=1123a)}
+.bc-prop.latte{width:calc(var(--bc-bw,112px)*.82);height:calc(var(--bc-bw,112px)*.6);background-image:url(bc/latte.webp?v=1124a)}
+/* Nov 24 (Judy: the old saucer tipped toward you): a new eye-level photo (420x238); the saucer's front edge sits just onto the plank */
+.bc-prop.latte{width:calc(var(--bc-bw,112px)*.9);height:calc(var(--bc-bw,112px)*.51);margin-bottom:calc(var(--bc-bw,112px)*-.03)}
+.bc-prop.latte::after{left:3%;right:4%;bottom:-2px;height:6px}
 .bc-steam{position:absolute;left:28%;bottom:88%;width:30%;height:90%;pointer-events:none}
 .bc-steam i{position:absolute;bottom:0;width:7px;height:26px;border-radius:50%;opacity:0;
   background:radial-gradient(50% 50% at 50% 50%,rgba(255,255,255,.55),rgba(255,255,255,0) 70%);animation:bcSteam 4.2s ease-in infinite}
@@ -359,8 +362,10 @@ function render(){
     '<button type="button" class="bc-count" aria-label="My Books: '+c.w+' want to read, '+c.n+' reading now, '+c.r+' read"><span><i class="bc-rb w"></i><span class="lb">Want to Read</span> <b>'+c.w+'</b></span><span><i class="bc-rb n"></i><span class="lb">Reading</span> <b>'+c.n+'</b></span><span><i class="bc-sl">'+SEAL+'</i><span class="lb">Read</span> <b>'+c.r+'</b></span><span class="bc-mb"><u>My Books</u><i></i></span></button></div>';
   for(var r=0;r<rows;r++){
     var k=base+(r<extra?1:0), part=ITEMS.slice(i,i+k); i+=k;
+    /* Nov 24 (Judy): the plant sits between books near the middle of its shelf, so the row doesn't look lopsided under the sign */
+    if(part.length>2&&part[0].prop==="plant"){ var pl=part.shift(); part.splice(Math.ceil(part.length/2),0,pl); }
     html+='<div class="bc-row"><div class="bc-books">'+part.map(function(b){ return b.prop?'<i class="bc-prop '+b.prop+'" aria-hidden="true">'+(b.prop==="latte"?'<span class="bc-steam"><i></i><i></i><i></i></span>':'')+'</i>':cover(b); }).join("")+'</div><div class="bc-plank"></div>'+
-      '<div class="bc-tags">'+part.map(function(b){ return b.prop?'<span class="bc-tag" style="visibility:hidden;width:calc(var(--bc-bw,112px)*'+(b.prop==="plant"?.95:.82)+')"><b>.</b></span>':'<span class="bc-tag"><b>'+esc(SH[b.sh[0]])+'</b></span>'; }).join("")+'</div></div>';
+      '<div class="bc-tags">'+part.map(function(b){ return b.prop?'<span class="bc-tag" style="visibility:hidden;width:calc(var(--bc-bw,112px)*'+(b.prop==="plant"?.95:.9)+')"><b>.</b></span>':'<span class="bc-tag"><b>'+esc(SH[b.sh[0]])+'</b></span>'; }).join("")+'</div></div>';
   }
   CASE.innerHTML=html;
   if(seatedNow()&&window.Parlor&&Parlor.status) Parlor.status(MONTH.name, n+" Books \u00b7 Read "+counts(BOOKS).r);
@@ -373,7 +378,7 @@ function props(L){
   var room=rows.map(function(r){ var k=r.querySelectorAll(".bc-book").length; return (w-(k*L.bw+(k-1)*L.gap))/2; });
   var pi=-1, li=-1; room.forEach(function(f,i){ if(f>=need&&pi<0) pi=i; }); for(var i=room.length-1;i>=0;i--){ if(room[i]>=L.bw*.82+8&&(i!==pi||room[i]>=need)){ li=i; break; } }
   function put(i,cls,side){ var r=rows[i].querySelector(".bc-books"), f=room[i], el=document.createElement("i"); el.className="bc-prop "+cls; el.setAttribute("aria-hidden","true");
-    var pw=cls==="plant"?L.bw*.95:L.bw*.82; el.style[side]=Math.max(4,Math.round(f-pw-Math.min(L.gap,(f-pw)/2)))+"px";
+    var pw=cls==="plant"?L.bw*.95:L.bw*.9; el.style[side]=Math.max(4,Math.round(f-pw-Math.min(L.gap,(f-pw)/2)))+"px";
     if(cls==="latte") el.innerHTML='<span class="bc-steam"><i></i><i></i><i></i></span>';
     r.appendChild(el); }
   if(pi>=0) put(pi,"plant","left"); if(li>=0) put(li,"latte","right");
