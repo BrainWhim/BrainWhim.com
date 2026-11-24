@@ -726,7 +726,9 @@ function seat(st){
   if(signed){
     var name=p.username||p.display_name||"friend", pts=Number(p.skill_points)||0, rk=window.BWAvatar?BWAvatar.rank(pts):null;
     $("seatName").textContent="Welcome back, "+name;
-    $("seatRank").textContent=(rk?rk.name+" · ":"")+pts+" points"+(st.member?" · Club":"");
+    var srk=$("seatRank"); srk.textContent=(rk?rk.name+" · ":"")+pts+" points";
+    /* Club Members get their own line, no stray dot (Judy, Nov 24) */
+    if(st.member){ var scm=document.createElement("span"); scm.textContent="Club Member"; scm.style.cssText="display:block;margin-top:3px;color:#F2BE45;font-weight:700"; srk.appendChild(scm); }
     if(rk&&rk.next){ $("seatBar").hidden=false; $("seatFill").style.width=Math.max(4,Math.round((pts-rk.min)/(rk.next-rk.min)*100))+"%"; $("seatNext").textContent=(rk.next-pts)+" more to "+rk.nextName; }
     else { $("seatBar").hidden=true; $("seatNext").textContent=rk?"The top of the ladder":""; }
     $("seatActs").innerHTML='<a class="btn" href="lobby.html">Go to the Lobby</a><div class="btns"><button class="btn" type="button" id="seatAvBtn">Avatar</button><button class="btn" type="button" id="seatOut">Sign Out</button></div>';
