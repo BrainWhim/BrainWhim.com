@@ -154,7 +154,7 @@
     var lg = mk("p", "pk-legal"); lg.innerHTML = '<a href="privacy.html">Privacy</a>·<a href="terms.html">Terms</a>·<a href="disclaimers.html">Disclaimers</a>'; ac.appendChild(lg);
     /* Nov 24: BrainWhim's social accounts under the legal links (bw-social.js keeps the one list) */
     var so = mk("p", "pk-social"); so.setAttribute("data-bw-social", ""); ac.appendChild(so);
-    if (window.BWSocial) BWSocial.fill(ac); else if (!document.getElementById("bw-social-js")) { var sj = document.createElement("script"); sj.id = "bw-social-js"; sj.src = "bw-social.js?v=1124b"; document.head.appendChild(sj); }
+    if (window.BWSocial) BWSocial.fill(ac); else if (!document.getElementById("bw-social-js")) { var sj = document.createElement("script"); sj.id = "bw-social-js"; sj.src = "bw-social.js?v=1124c"; document.head.appendChild(sj); }
 
     /* floating bar (phones) */
     var bar = mk("div", "pk-bar");
