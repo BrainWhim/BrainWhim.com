@@ -127,13 +127,16 @@ header.top .bw-bell{width:36px;height:36px;padding:0!important;margin-left:18px!
   -webkit-mask:var(--skin) center/contain no-repeat;mask:var(--skin) center/contain no-repeat}
 .orb.skinned:hover::before,.orb.skinned:focus-visible::before{background:radial-gradient(circle closest-side,rgba(240,210,140,.7) 56%,rgba(229,193,88,.2) 78%,transparent 100%)}
 .moon{border-radius:50%;border:0;padding:0;cursor:pointer;
-  background-size:165%;background-position:center 68%;transform-origin:50% 50%;backface-visibility:hidden;
-  box-shadow:0 0 0 1px rgba(229,193,88,.7),0 6px 14px rgba(0,0,0,.5),inset -5px -6px 12px rgba(0,0,0,.35),inset 3px 3px 8px rgba(255,255,255,.16)}
-.moon:hover,.moon:focus-visible{box-shadow:0 0 0 2px rgba(229,193,88,.95),0 6px 14px rgba(0,0,0,.5)}
-.moon::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.28),transparent 34%);z-index:1}
+  background-size:100% 100%,165%;background-position:center,center 68%;transform-origin:50% 50%;backface-visibility:hidden;
+  box-shadow:0 8px 16px rgba(0,0,0,.5),0 0 12px rgba(255,220,160,.18),inset -10px -12px 18px rgba(0,0,0,.6),inset 6px 5px 11px rgba(255,255,255,.2)}
+/* Nov 24 (Judy chose "C"): each room's photo is pre-curved onto a little sphere (hm/, made in PIL) and lit like the planets;
+   the flat photo sits underneath as a fallback. moonBg() picks hm/<path with / as ->. A new moon photo needs its hm/ copy. */
+@media (max-width: 900px){.moon{box-shadow:0 5px 10px rgba(0,0,0,.5),0 0 8px rgba(255,220,160,.16),inset -6px -7px 11px rgba(0,0,0,.5),inset 4px 3px 7px rgba(255,255,255,.2)}}
+.moon:hover,.moon:focus-visible{box-shadow:0 0 0 2px rgba(229,193,88,.95),0 8px 16px rgba(0,0,0,.5),inset -10px -12px 18px rgba(0,0,0,.6),inset 6px 5px 11px rgba(255,255,255,.2)}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.3) 0%,transparent 26%),radial-gradient(circle at 78% 80%,rgba(0,8,20,.45) 0%,transparent 52%),radial-gradient(circle at 46% 42%,transparent 62%,rgba(0,6,18,.42) 100%);z-index:1}
 .moon.drawn{display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
 .moon.drawn span{position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-.moon.soon{box-shadow:0 0 0 1px rgba(255,255,255,.35),0 6px 16px rgba(0,0,0,.5),inset -6px -8px 14px rgba(0,0,0,.45)}
+
 .tip{position:absolute;z-index:60;pointer-events:none;padding:7px 11px;border-radius:8px;background:rgba(15,23,42,.88);border:1px solid rgba(229,193,88,.55);font-size:12px;font-weight:700;white-space:nowrap;transform:translate(-50%,calc(-100% - 12px));opacity:0;transition:opacity .15s}
 .tip small{display:block;font-weight:600;font-size:10.5px;color:rgba(255,255,255,.65);margin-top:2px}
 .tip.on{opacity:1}
@@ -417,6 +420,7 @@ $("cue").onclick=function(){ $("lane").scrollTo({top:$("rooms").offsetTop-8,beha
    All four rings turn together at one pace. Each piece has its own place on its ring (`at`, degrees),
    spaced unevenly on purpose; the places were chosen by checking every position through a full turn,
    on desktop and phone sizes, so no two pieces on neighbouring rings ever come within about 14px. A moon or an orb opens that category's Lobby. */
+function moonBg(s){ var p=s.split("?")[0].replace(/\//g,"-"); return "url('hm/"+p+"?v=1124a'),url('"+s+"')"; }
 var CATS=[
   {key:"board", name:"Board Games", ic:"♟️", sub:"10 Parlors", href:"lobby.html", glow:"rgba(229,193,88,.55)", at:[71,-12,-134], atP:[80,2,-130], skin:"orb-board.webp",
    moons:[["Garden Chess","garden-parlor-sm.jpg"],["Library Backgammon","library-bg-sm.jpg"]]},
@@ -480,7 +484,7 @@ function build(){
       if(c.href) el.href=c.href; else { el.type="button"; el.onclick=function(){ toast(m[0]+" is coming to the Kids’ Corner soon."); }; }
       el.className="moon"+(m[1]?"":" drawn")+(c.soon?" soon":"");
       el.setAttribute("aria-label",m[0]+(c.soon?" (opening soon)":" · opens the "+c.name+" lobby"));
-      if(m[1]) el.style.backgroundImage="url('"+m[1]+"')";
+      if(m[1]) el.style.backgroundImage=moonBg(m[1]);
       else { el.style.background="radial-gradient(circle at 32% 26%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 50% 55%,"+m[3]+",#0e1a33 95%)"; el.innerHTML='<span style="font-size:'+(G.moon*.42)+'px">'+m[2]+'</span>'; }
       var it=add(el,G.moon,"moon",m[0],label); it.a=at[mi+1]*Math.PI/180; items.push(it);
     });

@@ -140,13 +140,16 @@ header.top .bw-bell{width:36px;height:36px;padding:0!important;margin-left:18px!
 /* the pillar planets carry their own words (Judy, Nov 11), so the orb's name tag stays only for screen readers and search: no box, no space */
 .orb .lbl{width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);border:0;background:none}
 .moon{border-radius:50%;border:0;padding:0;cursor:pointer;text-decoration:none;color:#fff;
-  background-size:165%;background-position:center 68%;transform-origin:50% 50%;backface-visibility:hidden;
-  box-shadow:0 0 0 1px rgba(229,193,88,.7),0 6px 14px rgba(0,0,0,.5),inset -5px -6px 12px rgba(0,0,0,.35),inset 3px 3px 8px rgba(255,255,255,.16)}
-.moon:hover,.moon:focus-visible{box-shadow:0 0 0 2px rgba(229,193,88,.95),0 6px 14px rgba(0,0,0,.5)}
-.moon::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.28),transparent 34%);z-index:1}
+  background-size:100% 100%,165%;background-position:center,center 68%;transform-origin:50% 50%;backface-visibility:hidden;
+  box-shadow:0 8px 16px rgba(0,0,0,.5),0 0 12px rgba(255,220,160,.18),inset -10px -12px 18px rgba(0,0,0,.6),inset 6px 5px 11px rgba(255,255,255,.2)}
+/* Nov 24 (Judy chose "C"): each room's photo is pre-curved onto a little sphere (hm/, made in PIL) and lit like the planets;
+   the flat photo sits underneath as a fallback. moonBg() picks hm/<path with / as ->. A new moon photo needs its hm/ copy. */
+@media (max-width: 900px){.moon{box-shadow:0 5px 10px rgba(0,0,0,.5),0 0 8px rgba(255,220,160,.16),inset -6px -7px 11px rgba(0,0,0,.5),inset 4px 3px 7px rgba(255,255,255,.2)}}
+.moon:hover,.moon:focus-visible{box-shadow:0 0 0 2px rgba(229,193,88,.95),0 8px 16px rgba(0,0,0,.5),inset -10px -12px 18px rgba(0,0,0,.6),inset 6px 5px 11px rgba(255,255,255,.2)}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.3) 0%,transparent 26%),radial-gradient(circle at 78% 80%,rgba(0,8,20,.45) 0%,transparent 52%),radial-gradient(circle at 46% 42%,transparent 62%,rgba(0,6,18,.42) 100%);z-index:1}
 .moon.drawn{display:flex;align-items:center;justify-content:center}
 .moon.drawn span{position:relative;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-.moon.soon{box-shadow:0 0 0 1px rgba(255,255,255,.35),0 6px 16px rgba(0,0,0,.5),inset -6px -8px 14px rgba(0,0,0,.45)}
+
 /* the Kids' Corner: a cream crescent moon on its own little ring (matches the crescent door in kids-landing.jpg) */
 .kmoon{border:0;padding:0;background:none;cursor:pointer;text-decoration:none;color:#fff;border-radius:50%}
 .kmoon .cres{position:absolute;inset:0;border-radius:50%;box-shadow:inset calc(var(--s)*.24) calc(var(--s)*-.08) 0 0 #f4e6b8;filter:drop-shadow(0 0 8px rgba(255,228,160,.55)) drop-shadow(0 0 22px rgba(200,170,255,.45))}
@@ -354,12 +357,12 @@ span:has(+ span.whim):not(#_),span.brand-brain:not(#_),.brand span.brain:not(#_)
   <button class="menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
   <a class="brand" href="index.html" aria-label="BrainWhim"><img src="bw-emblem.png?v=1111a" alt=""><span>Brain</span><span class="whim">Whim</span></a>
   <nav class="hdr">
-    <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a class="on" href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
+    <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Puzzles</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
   </nav>
 </header>
 <nav class="phone-menu" id="phoneMenu" aria-label="Site">
   <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Today's Puzzles</a><a href="lobby.html">Board Game Lobby</a><a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids' Corner</a>
-  <hr><a href="index.html#about">About BrainWhim</a>
+  <hr><a href="#about" data-jump="about">About BrainWhim</a>
 <hr><div data-bw-social></div></nav>
 
 <div class="frame">
@@ -587,6 +590,7 @@ document.addEventListener("click",function(e){ var a=e.target.closest&&e.target.
 /* The core in the middle; four tilted rings, one pillar each, its orb leading and two rooms trailing.
    The places on the rings (`at`, `atP`) and the sizes are play.html's, which were checked through a full turn so nothing ever touches.
    The Kids' Corner crescent rides its own small ring up and to the left, the emptiest corner of the sky (the rings tilt up to the right). */
+function moonBg(s){ var p=s.split("?")[0].replace(/\//g,"-"); return "url('hm/"+p+"?v=1124a'),url('"+s+"')"; }
 var AT=[[71,-12,-134],[288,188,124],[41,-30,-114],[137,79,-3]], ATP=[[80,2,-130],[296,180,136],[37,-25,-104],[211,109,5]];
 /* rooms with orb:false (the Book Club) ride as a moon of another room (its `moon`) instead of a ring of their own (Nov 23) */
 var CATS=ROOMS.filter(function(r){ return r.orb!==false; }).map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/learn-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
@@ -632,10 +636,10 @@ function build(){
       var el=document.createElement("a"); el.href=m[2]||c.href;
       el.className="moon"+(m[1]?"":" drawn soon");
       el.setAttribute("aria-label",m[0]+" ("+m[3]+")");
-      if(m[1]) el.style.backgroundImage="url('"+m[1]+"')";
+      if(m[1]) el.style.backgroundImage=moonBg(m[1]);
       else { el.style.background="radial-gradient(circle at 32% 26%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 50% 55%,"+m[5]+",#0e1a33 95%)"; el.innerHTML='<span style="font-size:'+(G.moon*.42)+'px">'+m[4]+'</span>';
         /* the room's own photo switches on by itself once it exists (HomeCards-Prompts, Nov 20) */
-        if(m[6]) pwOn(m[6]+"?v=1120a",function(src){ el.classList.remove("drawn"); el.style.background=""; el.style.backgroundImage="url('"+src+"')"; if(m[7]) el.style.backgroundPosition=m[7]; el.innerHTML=""; }); }
+        if(m[6]) pwOn(m[6]+"?v=1120a",function(src){ el.classList.remove("drawn"); el.style.background=""; el.style.backgroundImage=moonBg(src.replace(/\?.*/,"")); if(m[7]) el.style.backgroundPosition=m[7]; el.innerHTML=""; }); }
       add(el,G.moon,m[0],m[3],r).a=at[mi+1]*Math.PI/180;
     });
   });
