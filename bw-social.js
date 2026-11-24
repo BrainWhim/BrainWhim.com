@@ -11,7 +11,8 @@
     { name: "TikTok", url: "https://www.tiktok.com/@brainwhim" },
     { name: "YouTube", url: "https://www.youtube.com/@BrainWhimStudios" },
     { name: "X", url: "https://x.com/brainwhim" },
-    { name: "Bluesky", url: "https://bsky.app/profile/brainwhim.bsky.social" }
+    { name: "Bluesky", url: "https://bsky.app/profile/brainwhim.bsky.social" },
+    { name: "Substack", url: "https://brainwhim.substack.com" }
   ];
   var CSS =
     ".bw-social{display:block;margin:0 0 8px;text-align:center;line-height:1.9}" +
