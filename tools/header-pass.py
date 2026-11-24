@@ -37,10 +37,10 @@ def fix_hdr(page, s, log):
     return re.sub(r'(<(?:nav|div) class="hdr">)(.*?)(</(?:nav|div)>)', rep, s, count=1, flags=re.S)
 SOON = '<span style="display:block;padding:6px 18px 2px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)">Coming Soon</span>'
 def phone_menu(page):
-    about = '<a href="#about" data-jump="about">About BrainWhim</a>' if page == "index.html" else '<a href="index.html#about">About BrainWhim</a>'
+    about = '<a href="#about" data-jump="about">About BrainWhim</a>' if page in ("index.html","learn.html","live.html","create.html") else '<a href="index.html#about">About BrainWhim</a>'
     return ('\n  <a href="index.html">Home</a><a href="play.html">Play</a><a href="puzzles.html">Today\'s Puzzles</a><a href="lobby.html">Board Game Lobby</a>'
             '<a href="lobby.html?cat=cards">Card Lobby</a><a href="quickplays.html">Quick Plays</a><a href="learn.html">Learn</a><a href="live.html">Live</a><a href="create.html">Create</a><a href="kids.html">Kids\' Corner</a>'
-            '\n  <hr>' + about + '\n')
+            '\n  <hr>' + about + '\n<hr><div data-bw-social></div>')   # social row (Nov 24, bw-social.js)
 def fix_pm(page, s, log):
     n = len(re.findall(r'<nav class="phone-menu"', s))
     if not n: return s

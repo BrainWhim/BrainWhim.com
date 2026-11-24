@@ -68,8 +68,12 @@ CSS = r"""
 """
 R("</style>\n<script src=\"bw-auth.js", CSS + "</style>\n<script src=\"bw-auth.js")
 
-# ---- header: Learn isn't in the bar yet, so nothing is lit ----
+# ---- header: light this page's own pillar in the 7-link bar (Nov 24; matches tools/header-pass.py) ----
 R('<a class="on" href="index.html">Home</a>', '<a href="index.html">Home</a>')
+_pn = {"learn.html":"Learn","live.html":"Live","create.html":"Create"}[C["OUT"]]
+_hb = s.index('<a href="index.html">Home</a><a href="play.html">Play</a>')   # the header bar comes first
+_o = '<a href="%s">%s</a>' % (C["OUT"], _pn); _i = s.index(_o, _hb)
+s = s[:_i] + '<a class="on" href="%s">%s</a>' % (C["OUT"], _pn) + s[_i+len(_o):]
 
 # ---- everything below the hero ----
 a = s.index('    <div class="rooms" id="rooms">')
