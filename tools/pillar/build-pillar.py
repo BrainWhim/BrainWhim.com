@@ -19,7 +19,8 @@ CSS = r"""
 .core{background:radial-gradient(circle at 26% 22%,rgba(255,255,255,.2) 0%,transparent 24%),radial-gradient(circle at 78% 80%,rgba(0,8,20,.4) 0%,transparent 50%),#071018 @@PLANET@@ center/cover;
   box-shadow:0 10px 24px rgba(0,0,0,.42),@@GLOW@@,inset -18px -20px 28px rgba(0,0,0,.42),inset 12px 10px 16px rgba(255,255,255,.16)}
 /* the four rooms ride the rings as round windows into their photos; their names show below */
-.orb.ph{background-size:cover,cover,170%;background-position:center,center,center 64%}
+/* Nov 24: the room photo curved onto a sphere (hm/, tools/moon-curve.py) over the flat photo as a fallback, like Home's moons */
+.orb.ph{background-size:cover,cover,100% 100%,170%;background-position:center,center,center,center 64%}
 .orb.ph .lbl{width:auto;height:auto;padding:3px 10px;margin:0;overflow:visible;clip:auto;clip-path:none;border:1px solid rgba(255,255,255,.22);background:rgba(6,12,28,.62)}
 .orb.ph .soonb{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);padding:2px 7px;border-radius:10px;background:rgba(15,23,42,.8);border:1px solid rgba(229,193,88,.6);
   font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-b);white-space:nowrap;pointer-events:none;z-index:3}
@@ -195,6 +196,7 @@ s = s[:a] + """var AT=[[71,-12,-134],[288,188,124],[41,-30,-114],[137,79,-3]], A
 var CATS=ROOMS.filter(function(r){ return r.orb!==false; }).map(function(r,i){ return {name:r.name, sub:(r.page?"Open now · ":"Opening Soon · ")+r.kind, href:r.page||"#r-"+r.id, open:!!r.page, img:"pw/@@PW@@-"+r.id+"-sm.jpg?v=1120a", glow:r.glow, at:AT[i], atP:ATP[i], ph:1,
   moons:(r.moon?[r.moon]:[]).concat(r.try.map(pz).filter(Boolean).map(function(p){ return [p.name,p.img,p.page,"Open now · today's puzzle"]; })).slice(0,2)}; });
 """ + s[b:]
+R('o.style.setProperty("--img","url(\'"+c.img+"\')");', 'o.style.setProperty("--img",c.ph?moonBg(c.img):"url(\'"+c.img+"\')");')
 R('var o=document.createElement("a"); o.href=c.href; o.className="orb";', 'var o=document.createElement("a"); o.href=c.href; o.className="orb"+(c.ph?" ph":"");')
 R("o.innerHTML='<span class=\"lbl\" style=\"font-size:'+G.font+'px\">'+c.name+'</span>';",
   "o.innerHTML='<span class=\"lbl\" style=\"font-size:'+(c.ph?G.font*.82:G.font)+'px\">'+c.name+'</span>';\n    if(c.ph&&!c.open) o.addEventListener(\"click\",function(e){ e.preventDefault(); goRoom(c.href.slice(1)); });")
