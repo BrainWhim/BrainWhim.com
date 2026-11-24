@@ -51,7 +51,7 @@
 /* Judy's image pieces: anchored at the square's centre, standing up like the chess pieces; glow and lift through the image's own outline */
 .ck-im{position:absolute;width:0;height:0}
 .ck-im img{position:absolute;left:0;top:0;height:auto;transform:translate(-50%,var(--ay)) translateY(var(--lift,0em));transition:transform .2s ease-out,filter .2s;
-  filter:drop-shadow(0 .45em .4em rgba(0,0,0,.45));pointer-events:none;-webkit-user-drag:none}
+  filter:drop-shadow(0 .1em .07em rgba(0,0,0,.5)) drop-shadow(0 .45em .4em rgba(0,0,0,.4));pointer-events:none;-webkit-user-drag:none}
 .ck-im.can{--lift:-.35em}.ck-im.can img{filter:drop-shadow(0 0 .3em rgba(255,252,242,1)) drop-shadow(0 0 .8em rgba(255,244,218,.75)) drop-shadow(0 .9em .6em rgba(0,0,0,.42))}   /* soft ivory, not yellow (Nov 20) */
 .ck-im.them.can img{filter:drop-shadow(0 0 .3em rgba(255,255,255,.75)) drop-shadow(0 .45em .4em rgba(0,0,0,.4))}
 .ck-im.must img{animation:ck-glow 1.3s ease-in-out infinite}
@@ -61,7 +61,9 @@
 .ck-im.must::before{animation:ck-pool 1.3s ease-in-out infinite}
 @keyframes ck-pool{50%{opacity:.5}}
 @keyframes ck-glow{50%{filter:drop-shadow(0 0 .55em rgba(255,252,240,1)) drop-shadow(0 0 1.2em rgba(255,246,225,.7)) drop-shadow(0 .45em .4em rgba(0,0,0,.4))}}
-.ck-im.sel{--lift:-1.3em}.ck-im.sel img{filter:drop-shadow(0 0 .4em rgba(255,250,236,.95)) drop-shadow(0 1.6em 1em rgba(0,0,0,.35))}
+.ck-im.sel{--lift:-1.3em}.ck-im.sel img{filter:drop-shadow(0 0 .22em #ffe39a) drop-shadow(0 0 .7em rgba(242,190,69,.95)) drop-shadow(0 1.6em 1em rgba(0,0,0,.35))}
+/* the picked piece: a gold glow, and a gold ring on the square it lifts from (Nov 24) */
+.ck-sq.from{background:rgba(255,214,110,.3);box-shadow:inset 0 0 0 .44em #f2c75a,inset 0 0 0 .58em rgba(60,40,0,.45),0 0 1em rgba(250,205,95,.55)}
 .ck-im.crowned img{animation:ck-crown2 .6s ease-out}
 @keyframes ck-crown2{40%{transform:translate(-50%,var(--ay)) translateY(-1.4em) scale(1.12)}}
 .ck-tray .ck-im{font-size:.62em}
@@ -78,6 +80,18 @@ body.pk{--ck-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 @media (max-width:999px){
   body.pk{--ck-size:min(calc(100vw * 1.42),max(300px,calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 150px)));--pk-size:min(calc(100vw - 16px),calc(var(--ck-size) * .72))}
   .ck-crop{width:100vw;clip-path:inset(-30% 0 -30% 0)}
+}
+/* the kit's "Tap Menu" tip must not cover the score rows or the bar (Nov 24) */
+@media (max-width:999px) and (orientation:portrait){
+  body.pk.seated .pk-hint.on{bottom:auto!important;top:calc(118px + env(safe-area-inset-top))!important;left:12px!important;right:auto!important;max-width:none!important;width:calc(100vw - 24px)!important;box-sizing:border-box;text-align:center;padding:8px 12px!important}
+  body.pk.seated .pk-hint.on::after{display:none}
+}
+/* phones held sideways (Nov 24): the kit's side-rail layout; the table fits the screen's height */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk.pk-land{--pk-landR:150px;--ck-size:calc(100dvh - 104px);--pk-size:calc(var(--ck-size) * .9)}
+  body.pk.pk-land .ck-crop{width:auto;clip-path:none}
+  body.pk.pk-land.seated .pk-hint.on{left:auto!important;top:auto!important;right:calc(8px + env(safe-area-inset-right))!important;bottom:6px!important;max-width:calc(var(--pk-landR) - 4px)!important;font-size:12px!important;padding:8px 11px!important}
+  body.pk.pk-land.seated .pk-hint.on::after{display:none}
 }
 @media (prefers-reduced-motion:reduce){.ck-sq.dest::after,.ck-pc.must::before,.ck-pc.crowned{animation:none}}
 </style>
@@ -467,7 +481,7 @@ function paint(){
   }
   pcL.innerHTML=h;
   var lf=last?last[0]:-1, lt=last?last[last.length-1]:-1;
-  for(i=0;i<64;i++){ var c=fx[i].classList; c.toggle("lastf",i===lf&&!partial); c.toggle("lastt",i===lt&&!partial); c.toggle("dest",dests.indexOf(i)>=0); c.toggle("hint",i===hintAt); }
+  for(i=0;i<64;i++){ var c=fx[i].classList; c.toggle("lastf",i===lf&&!partial); c.toggle("lastt",i===lt&&!partial); c.toggle("dest",dests.indexOf(i)>=0); c.toggle("hint",i===hintAt); c.toggle("from",i===sel&&!busy); }
   /* captured pieces */
   var t="",near=nearSide();
   [near,3-near].forEach(function(s){ var arr=took[s].concat(s===pendSide?pend:[]); arr.forEach(function(v,n){ var q=traySpot(s===near,n); t+=pieceHTML(v,"",'left:'+q.x+'%;top:'+q.y+'%'); }); });
@@ -481,8 +495,9 @@ function msg(){
   if(online&&room&&!room.guest){ say("Waiting for a player","Share your table code: "+(CODE||"")); return; }
   var must=legal.length&&legal[0].x.length>0;
   if(turn===mySide){
-    if(partial&&partial.length>1) say("Jump again","Keep going with the same piece");
-    else say("Your turn",must?"You must jump: the glowing pieces can":"Tap a glowing piece, then a lit square");
+    if(partial&&partial.length>1) say("Jump again","Tap a lit square");
+    else if(partial) say("Your turn","Tap a lit square");
+    else say("Your turn",must?"You must jump":"Tap a glowing piece");
   } else say(online?"Opponent's turn":"The House is thinking…",must?"A jump is on":"");
   Parlor.info(quiet>=40?("No jumps for "+Math.floor(quiet/2)+" moves each · a draw at 40"):"");
 }
@@ -537,8 +552,8 @@ async function tap(i){
     commit(done[0],mySide); return;
   }
   if(partial&&partial.length>1) return;   /* in the middle of a jump: only the next hop counts */
-  if(legal.some(function(m){ return m.p[0]===i; })){ partial=(partial&&partial[0]===i)?null:[i]; paint(); return; }
-  if(partial){ partial=null; paint(); }
+  if(legal.some(function(m){ return m.p[0]===i; })){ partial=(partial&&partial[0]===i)?null:[i]; paint(); msg(); return; }
+  if(partial){ partial=null; paint(); msg(); }
 }
 function houseMove(){
   if(over||online||turn!==2||busy) return;
@@ -618,8 +633,8 @@ function setupBoard(list){
   legal=gen(B,1); paint();
 }
 function LESSON(){ var n=colorNames(), me="<b>"+n[0]+"</b>", them="<b>"+n[1]+"</b>"; return [
-  {title:"The Board", board:"fresh", text:"<p>Checkers is played on the dark squares only. You have twelve "+me+" pieces on the near side; The House has twelve "+them+" pieces on the far side.</p><p>You always move first.</p>"},
-  {title:"Moving", board:[[42,1],[14,2]], text:"<p>A piece moves one square <b>diagonally forward</b> onto an empty dark square.</p><p>Tap your glowing piece, then one of the lit squares.</p>", done:"<p>That's a move. Each turn you move one piece.</p>"},
+  {title:"The Board", board:"fresh", text:"<p>Checkers is played on the cream squares only. You have twelve "+me+" pieces on the near side; The House has twelve "+them+" pieces on the far side.</p><p>You always move first.</p>"},
+  {title:"Moving", board:[[42,1],[14,2]], text:"<p>A piece moves one square <b>diagonally forward</b> onto an empty cream square.</p><p>Tap your glowing piece, then one of the lit squares.</p>", done:"<p>That's a move. Each turn you move one piece.</p>"},
   {title:"Jumping", board:[[42,1],[35,2],[10,2]], text:"<p>When a House piece is diagonally in front of yours and the square behind it is empty, <b>jump over it</b> to capture it.</p><p>Try it.</p>", done:"<p>Captured! The piece you jump goes to your side of the table.</p>"},
   {title:"Jumps Are Required", board:[[40,1],[44,1],[37,2],[1,2]], text:"<p>If you can jump, you <b>must</b>. That's why only one piece is glowing here: it's the one with a jump.</p><p>(When several jumps are possible, you choose which.)</p>", done:"<p>Remember: when your pieces pulse, a jump is waiting.</p>"},
   {title:"Double Jumps", board:[[49,1],[42,2],[28,2],[6,2]], text:"<p>After a jump, if the same piece can jump again, it <b>keeps going</b> in the same turn.</p><p>Jump both House pieces.</p>", done:"<p>A double jump: two pieces in one turn.</p>"},
@@ -676,7 +691,7 @@ function practiceTip(m,side,wasK){
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"checkers", title:"Garden Checkers", bg:"checkers-parlor.jpg", home:"lobby.html", stage:stage,
+  game:"checkers", title:"Garden Checkers", bg:"checkers-parlor.jpg", home:"lobby.html", stage:stage, land:true,
   tagline:"Jump when you can. Crown a king.", invite:"The garden table is set. Take a seat and make the first move.",
   players:[{name:"You (cobalt)",color:"var(--ck-dot1,#2a4fb0)"},{name:"The House (marble)",color:"var(--ck-dot2,#f1ece2)"}],
   setsLabel:"Boards",
@@ -686,7 +701,7 @@ Parlor.init({
     {id:"charcoal",name:"Charcoal Damask",club:true,dots:["#505356","#7acec8","#13804a"]}
   ],
   rules:{
-    play:"<ol><li>You play the darker pieces from the near side of the table and move first.</li><li>Pieces move one square diagonally forward, on the dark squares. Tap a glowing piece, then a lit square.</li><li>Jump an opponent's piece by hopping over it diagonally to the empty square beyond. The jumped piece is taken.</li><li>Jumping is required: if you can jump, you must (you choose which jump). If the same piece can keep jumping, it keeps going.</li><li>Reach the far row and your piece is crowned a king. Kings move and jump forward and backward. Being crowned ends the turn.</li></ol>",
+    play:"<ol><li>You play the darker pieces from the near side of the table and move first.</li><li>Pieces move one square diagonally forward, on the cream squares. Tap a glowing piece, then a lit square.</li><li>Jump an opponent's piece by hopping over it diagonally to the empty square beyond. The jumped piece is taken.</li><li>Jumping is required: if you can jump, you must (you choose which jump). If the same piece can keep jumping, it keeps going.</li><li>Reach the far row and your piece is crowned a king. Kings move and jump forward and backward. Being crowned ends the turn.</li></ol>",
     score:"<ul><li>Take all of your opponent's pieces, or leave them with no legal move, to win.</li><li>If forty moves go by on each side with no jump and no uncrowned piece moving, the game is a draw.</li></ul>"
   },
   onNew:function(){ mySide=1; learning=null; practice=false; newGame(); },
