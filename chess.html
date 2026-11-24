@@ -21,7 +21,8 @@
 .cs-sq.lastf{background:rgba(255,226,150,.16);box-shadow:inset 0 0 0 .3em rgba(255,214,120,.35)}
 .cs-sq.lastt{background:rgba(255,226,150,.26);box-shadow:inset 0 0 0 .35em rgba(255,214,120,.6)}
 .cs-sq.check{background:radial-gradient(circle,rgba(230,60,50,.6),rgba(230,60,50,.12) 70%);box-shadow:inset 0 0 0 .35em rgba(200,40,30,.6)}
-.cs-sq.selsq{background:rgba(255,250,236,.22);box-shadow:inset 0 0 0 .3em rgba(255,250,236,.7)}
+/* the picked piece: a gold ring on its square and a gold glow (Nov 24, as Checkers) */
+.cs-sq.selsq{background:rgba(255,214,110,.3);box-shadow:inset 0 0 0 .44em #f2c75a,inset 0 0 0 .58em rgba(60,40,0,.45),0 0 1em rgba(250,205,95,.55)}
 /* where the chosen piece can go: a gold dot (with a dark edge, so it shows on light and dark squares); a ring for captures */
 .cs-sq.dest::after{content:"";position:absolute;left:50%;top:50%;width:30%;height:30%;transform:translate(-50%,-50%);border-radius:50%;
   background:radial-gradient(circle,#fff3c4,#e0b13a);box-shadow:0 0 0 .22em rgba(48,26,6,.55),0 0 1.6em rgba(255,214,110,.95);animation:cs-pulse 1.8s ease-in-out infinite}
@@ -34,7 +35,7 @@
 .cs-pc.can img{filter:drop-shadow(0 0 .3em rgba(255,250,236,.85)) drop-shadow(0 0 .8em rgba(255,246,225,.4)) drop-shadow(.25em .55em .35em rgba(0,0,0,.38))}   /* soft ivory, not yellow (Nov 20) */
 .cs-pc.can.dim img{filter:drop-shadow(0 0 .25em rgba(255,250,236,.45)) drop-shadow(.25em .55em .35em rgba(0,0,0,.38))}
 .cs-pc.them img{filter:drop-shadow(0 0 .35em rgba(255,255,255,.7)) drop-shadow(.25em .55em .35em rgba(0,0,0,.38))}
-.cs-pc.sel{--lift:-1.4em}.cs-pc.sel img{filter:drop-shadow(0 0 .4em rgba(255,250,236,.95)) drop-shadow(.6em 1.8em 1em rgba(0,0,0,.35))}
+.cs-pc.sel{--lift:-1.4em}.cs-pc.sel img{filter:drop-shadow(0 0 .22em #ffe39a) drop-shadow(0 0 .7em rgba(242,190,69,.95)) drop-shadow(.6em 1.8em 1em rgba(0,0,0,.35))}
 .cs-pc.hide{visibility:hidden}
 .cs-pc.drag{z-index:40}.cs-pc.drag img{transition:none;--lift:-2em}
 .cs-pc.crowned img{animation:cs-crown .6s ease-out}
@@ -64,6 +65,18 @@ body.pk{--cs-size:min(calc(100vw - 2*var(--pk-side) - 90px),max(360px,calc(100dv
 @media (max-width:999px){
   body.pk{--cs-size:min(calc(100vw * 1.42),max(300px,calc(100dvh - var(--pk-hdr) - var(--pk-bar) - 150px)));--pk-size:min(calc(100vw - 16px),calc(var(--cs-size) * .72))}
   .cs-crop{width:100vw;clip-path:inset(-30% 0 -30% 0)}
+}
+/* the kit's "Tap Menu" tip must not cover the score rows or the bar (Nov 24) */
+@media (max-width:999px) and (orientation:portrait){
+  body.pk.seated .pk-hint.on{bottom:auto!important;top:calc(118px + env(safe-area-inset-top))!important;left:12px!important;right:auto!important;max-width:none!important;width:calc(100vw - 24px)!important;box-sizing:border-box;text-align:center;padding:8px 12px!important}
+  body.pk.seated .pk-hint.on::after{display:none}
+}
+/* phones held sideways (Nov 24): the kit's side-rail layout; the table fits the screen's height */
+@media (max-width:999px) and (orientation:landscape) and (max-height:540px){
+  body.pk.pk-land{--pk-landR:150px;--cs-size:calc(100dvh - 104px);--pk-size:calc(var(--cs-size) * .9)}
+  body.pk.pk-land .cs-crop{width:auto;clip-path:none}
+  body.pk.pk-land.seated .pk-hint.on{left:auto!important;top:auto!important;right:calc(8px + env(safe-area-inset-right))!important;bottom:6px!important;max-width:calc(var(--pk-landR) - 4px)!important;font-size:12px!important;padding:8px 11px!important}
+  body.pk.pk-land.seated .pk-hint.on::after{display:none}
 }
 @media (prefers-reduced-motion:reduce){.cs-sq.dest::after{animation:none}}
 </style>
@@ -438,12 +451,14 @@ function photoTable(d,k){
   g.globalAlpha=1;g.lineWidth=1.2;g.strokeStyle="rgba(0,0,0,.28)";g.strokeRect(x0-ed-.6,x0-ed-.6,2*half+2*ed+1.2,2*half+2*ed+1.2);
   g.strokeStyle="rgba(0,0,0,.18)";g.strokeRect(x0+.6,x0+.6,2*half-1.2,2*half-1.2);g.restore();
   /* the BrainWhim monogram, gilded on the table's gray rim at the near edge */
-  g.save();g.translate(R,R+.976*R);var sz=.05*R;
+  g.save();g.translate(R,R+.977*R);var sz=.056*R;
   g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";var wB=g.measureText("B").width;g.font="400 "+(sz*.76)+"px Pacifico, cursive";var wW=g.measureText("W").width;
   var mx=-(wB+wW+sz*.06)/2,base=sz*.36;
   function mono(fill,ox,oy){g.fillStyle=fill;g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";g.fillText("B",mx+ox,base+oy);g.font="400 "+(sz*.76)+"px Pacifico, cursive";g.fillText("W",mx+wB+sz*.06+ox,base+oy);}
-  mono("rgba(0,0,0,.4)",1,1.3);mono("rgba(255,250,220,.6)",-.6,-.7);
-  var gg=g.createLinearGradient(0,-sz*.6,0,sz*.5);gg.addColorStop(0,"#f6dc8e");gg.addColorStop(.5,"#c9a24f");gg.addColorStop(1,"#8a6526");mono(gg,0,0);
+  /* Nov 24 (Judy, Checkers): easier to read on the pale rim: a little larger, deeper gold, a fine engraved outline */
+  function monoS(st,lw,ox,oy){g.strokeStyle=st;g.lineWidth=lw;g.lineJoin="round";g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";g.strokeText("B",mx+ox,base+oy);g.font="400 "+(sz*.76)+"px Pacifico, cursive";g.strokeText("W",mx+wB+sz*.06+ox,base+oy);}
+  mono("rgba(0,0,0,.5)",1.2,1.6);monoS("rgba(255,250,225,.55)",sz*.07,-.5,-.6);monoS("rgba(58,36,6,.85)",sz*.07,0,0);
+  var gg=g.createLinearGradient(0,-sz*.6,0,sz*.5);gg.addColorStop(0,"#f2d27a");gg.addColorStop(.5,"#b98a30");gg.addColorStop(1,"#6f4b13");mono(gg,0,0);
   g.restore();
   return 'url('+c.toDataURL("image/jpeg",.9)+')';
 }
@@ -521,7 +536,7 @@ function msg(){
   if(over)return;
   if(online&&room&&!room.guest){say("Waiting for a player","Share your table code: "+(CODE||""));return;}
   var chk=inCheck(S);
-  if(S.turn===(online?mySide:"w"))say(chk?"Check!":"Your move",chk?"Get your king out of check":"Tap or drag a glowing piece to a gold dot");
+  if(S.turn===(online?mySide:"w"))say(chk?"Check!":"Your move",chk?"Get your king out of check":(sel>=0?"Tap a gold dot":"Tap a glowing piece"));
   else say(online?"Opponent's move":"The House is thinking…",chk?"The House is in check":"");
   Parlor.info(S.half>=60?("No capture or pawn move for "+Math.floor(S.half/2)+" moves · a draw at 50"):"Captured material beside each name");
 }
@@ -607,8 +622,8 @@ function tapAt(sq,pc){
   if(!canAct())return;
   if(sel>=0&&sq>=0&&destsOf(sel).some(function(m){return m.t===sq;})){tryMove(sel,sq);return;}
   var mv=movers(),pick=mv[pc]?pc:(mv[sq]?sq:-1);
-  if(pick>=0){if(pick!==sel){sel=pick;Parlor.sfx("click",{pitch:.8});paint();}return;}
-  if(sel>=0){sel=-1;paint();}
+  if(pick>=0){if(pick!==sel){sel=pick;Parlor.sfx("click",{pitch:.8});paint();msg();}return;}
+  if(sel>=0){sel=-1;paint();msg();}
 }
 function tryMove(f,t,fromXY){
   var ms=legalNow.filter(function(m){return m.f===f&&m.t===t;});if(!ms.length)return;
@@ -760,7 +775,7 @@ async function bootOnline(){
 
 /* ---------- hook up the kit ---------- */
 Parlor.init({
-  game:"chess",title:"Garden Chess",bg:"garden-parlor.jpg",home:"lobby.html",stage:stage,
+  game:"chess",title:"Garden Chess",bg:"garden-parlor.jpg",home:"lobby.html",stage:stage,land:true,
   tagline:"Checkmate the king.",invite:"The garden board is set. Take a seat and make the first move.",
   players:[{name:"You (cobalt)",color:"var(--cs-dot1,#2346a8)"},{name:"The House (ivory)",color:"var(--cs-dot2,#efe4c8)"}],
   setsLabel:"Boards",
@@ -770,7 +785,7 @@ Parlor.init({
     {id:"walnut",name:"Slate & Limestone",club:true,dots:["#e4dbc8","#464f59","#161616"]}
   ],
   rules:{
-    play:"<ol><li>You play the light pieces from the near side of the table and move first.</li><li>Tap a glowing piece (or drag it), then a gold dot. A gold ring marks a capture.</li><li>Pawns move one square forward (two from their first square) and capture one square diagonally forward. A pawn that reaches the far side is promoted: you choose a queen, rook, bishop or knight.</li><li>Knights jump in an L; bishops move diagonally; rooks move straight; the queen moves both ways; the king moves one square.</li><li>Castling: move the king two squares toward a rook that hasn't moved; the rook hops over. Not out of, through or into check.</li><li>En passant: a pawn that has just moved two squares can be taken by an enemy pawn beside it, as if it had moved one.</li><li>You can never leave your own king in check.</li></ol>",
+    play:"<ol><li>You play the pieces on the near side of the table and move first.</li><li>Tap a glowing piece (or drag it), then a gold dot. A gold ring marks a capture.</li><li>Pawns move one square forward (two from their first square) and capture one square diagonally forward. A pawn that reaches the far side is promoted: you choose a queen, rook, bishop or knight.</li><li>Knights jump in an L; bishops move diagonally; rooks move straight; the queen moves both ways; the king moves one square.</li><li>Castling: move the king two squares toward a rook that hasn't moved; the rook hops over. Not out of, through or into check.</li><li>En passant: a pawn that has just moved two squares can be taken by an enemy pawn beside it, as if it had moved one.</li><li>You can never leave your own king in check.</li></ol>",
     score:"<ul><li>Checkmate wins: the king is in check and has no way out.</li><li>Draws: stalemate (no legal move but not in check), the same position three times, fifty moves each with no capture or pawn move, or too little material left to checkmate.</li><li>The numbers beside each name add up what that side has captured (pawn 1, knight or bishop 3, rook 5, queen 9).</li></ul>"
   },
   onNew:function(){mySide="w";practice=false;hintAt=-1;lessonAllow=null;newGame();},
