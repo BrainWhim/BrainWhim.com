@@ -129,7 +129,7 @@
 .d-mid .sl.s0{background-image:linear-gradient(rgba(255,255,255,.4),rgba(255,255,255,0) 35%,rgba(0,0,0,0) 60%,rgba(0,0,0,.4)),url(bg/c-mid-0.webp?v=1119a)}
 .d-mid .sl.s1{background-image:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,0) 35%,rgba(0,0,0,0) 60%,rgba(0,0,0,.5)),url(bg/c-mid-1.webp?v=1119a)}
 .d-mid .die{background:radial-gradient(circle at 32% 28%,#4a403b,#1d1715 55%,#0c0908);box-shadow:inset 0 0 0 1.5px #b8923f,inset -3px -4px 6px rgba(0,0,0,.35),3px 6px 8px rgba(0,0,0,.5)}
-.d-mid .die i{background:radial-gradient(circle at 40% 35%,#fbe7a6,#c79a43 60%,#7d5a1f)}
+.d-mid .die i{background:radial-gradient(circle at 40% 35%,#fffbe6,#ffd76a 45%,#e0a72e 80%,#b07a1c);box-shadow:0 0 3px 1px rgba(255,214,110,.55)}
 
 /* the board picker on the preview page (?preview=1) */
 .bg-pick{position:fixed;z-index:60;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px;border-radius:12px;
@@ -337,7 +337,7 @@ function monogram(g,cx,cy,sz,mode){
   function m(fill,ox,oy){g.fillStyle=fill;g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";g.fillText("B",x0+ox,base+oy);g.font="400 "+(sz*.76)+"px Pacifico, cursive";g.fillText("W",x0+wB+sz*.06+ox,base+oy);}
   if(mode==="engrave"){m("rgba(255,240,200,.55)",.7,.9);m("rgba(70,45,15,.85)",0,0);}
   else if(mode==="press"){m("rgba(0,0,0,.35)",-.6,-.8);m("rgba(255,244,222,.8)",.9,1.4);var pg=g.createLinearGradient(0,-sz*.6,0,sz*.5);pg.addColorStop(0,"#2a170b");pg.addColorStop(1,"#4a2c16");m(pg,0,0);}
-  else if(mode==="cut"){m("rgba(60,64,72,.3)",-.6,-.8);m("rgba(255,255,255,.95)",.9,1.4);var cg=g.createLinearGradient(0,-sz*.6,0,sz*.5);cg.addColorStop(0,"#4a4f58");cg.addColorStop(1,"#6b717b");m(cg,0,0);}
+  else if(mode==="cut"){m("rgba(60,64,72,.3)",-.6,-.8);m("rgba(255,255,255,.95)",.9,1.4);var cg=g.createLinearGradient(0,-sz*.6,0,sz*.5);cg.addColorStop(0,"#2c2f35");cg.addColorStop(1,"#454950");m(cg,0,0);}
   else{m("rgba(0,0,0,.4)",1,1.5);m("rgba(255,250,220,.55)",-.6,-.7);m(giltGrad(g,-sz*.6,sz*.5),0,0);}
   g.restore();
 }
@@ -501,13 +501,13 @@ var CUPS={leath:{body:"linear-gradient(180deg,#8e4630,#63261a 45%,#2c0f08)",tex:
    The painted board shows until the photo loads; the BW plate is drawn on top. */
 var photoBd={},photoReq={};
 function plate(g,d){
-  /* THE BW (Nov 28, Room-Ready Review): no plate; pressed into the walnut (Fireside Leather, the branded BW),
-     cut into the marble (Library Marble), gold inlay in the ebony (Midnight Gilt). Centered on the bottom rail of your half. */
-  var cx=(FR[0]+FR[1])/2,cy=H-34,sz=46;
-  if(d.deco==="scroll"){ /* a plain marble cartouche interrupts the gilt scroll, gilt hairline (the set's metal) */
-    var cw=sz*2.1,ch=sz*1.02;g.save();g.shadowColor="rgba(0,0,0,.25)";g.shadowBlur=3*SC;g.shadowOffsetY=1*SC;g.fillStyle="rgba(250,248,242,.98)";g.beginPath();rrp(g,cx-cw/2,cy-ch/2,cw,ch,7);g.fill();g.restore();
-    gilded(g,function(){g.lineWidth=1.4;g.beginPath();rrp(g,cx-cw/2,cy-ch/2,cw,ch,7);g.stroke();},cy-ch/2,cy+ch/2);}
-  monogram(g,cx,cy,sz,d.deco==="brass"?"press":d.deco==="scroll"?"cut":"gilt");
+  /* THE BW (Nov 28, Room-Ready Review; Judy's tweaks): no plate or box. Fireside Leather = the branded BW pressed into the walnut;
+     Library Marble = small charcoal letters cut into the plain marble strip above the gilt scroll (y 955-974 in the photo);
+     Midnight Gilt = gold inlay inside the black rail (y 964-994), clear of the gold line below. Centered under your half. */
+  var cx=(FR[0]+FR[1])/2;
+  if(d.deco==="brass")monogram(g,cx,H-34,46,"press");
+  else if(d.deco==="scroll")monogram(g,cx,964,24,"cut");
+  else monogram(g,cx,977,34,"gilt");
 }
 function loadPhotoBoard(k){
   var d=DESIGNS[k]; if(!d.photo||photoReq[k]) return; photoReq[k]=1;
