@@ -22,11 +22,11 @@
 .ck.dr::after{content:"";position:absolute;inset:19%;border-radius:50%}
 .ck .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 34px "Cormorant Garamond",serif;z-index:2}
 .bw.rot .ck .n{transform:rotate(-90deg)}
-.ck.mv::before{content:"";position:absolute;inset:-5px;border-radius:50%;box-shadow:0 0 0 3px rgba(246,212,120,.95),0 0 18px 5px rgba(246,200,96,.65);animation:bg-glow 1.6s ease-in-out infinite}
+.ck.mv::before{content:"";position:absolute;inset:-5px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(40,26,12,.5),0 0 0 4px rgba(255,250,236,.95),0 0 18px 5px rgba(255,244,218,.62);animation:bg-glow 1.6s ease-in-out infinite}
 .ck.soft::before{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.5),0 0 12px 3px rgba(255,255,255,.3)}
 .ck.sel{transform:scale(1.1) translateY(-5px);z-index:5}
 .ck.sel.img{filter:drop-shadow(5px 14px 6px rgba(0,0,0,.45))}
-.ck.sel::before{animation:none;box-shadow:0 0 0 4px rgba(255,224,140,1),0 0 26px 8px rgba(255,206,100,.8)}
+.ck.sel::before{content:"";position:absolute;inset:-5px;border-radius:50%;animation:none;box-shadow:0 0 0 4px rgba(255,224,140,1),0 0 26px 8px rgba(255,206,100,.8)}
 .ck.hide{visibility:hidden}
 .ck.fly{z-index:20}
 @keyframes bg-glow{0%,100%{opacity:.6}50%{opacity:1}}
@@ -138,6 +138,14 @@
 .bg-pick button.on{background:rgba(255,255,255,.18);border-color:rgba(231,199,122,.6);color:#fff}
 @media (max-width:999px){.bg-pick{top:62px;flex-wrap:nowrap;gap:2px;padding:4px}.bg-pick button{font-size:11.5px;padding:7px 8px;white-space:nowrap}}
 @media (prefers-reduced-motion:reduce){.ck.mv::before,.ghost,.pool,.cup.ready::after{animation:none}}
+/* Room-Ready Review (Nov 28): on an upright phone the Menu tip is one wide line between your score row and the bar */
+@media (max-width:999px) and (orientation:portrait){
+  body.pk.seated .pk-hint.on{top:auto!important;bottom:calc(var(--pk-bar) + 10px + env(safe-area-inset-bottom))!important;left:12px!important;right:auto!important;max-width:none!important;width:calc(100vw - 24px)!important;box-sizing:border-box;text-align:center;font-size:12.5px!important;line-height:1.3!important;padding:6px 12px!important}
+  body.pk.seated .pk-hint.on::after{display:none}
+}
+@media (max-width:370px) and (orientation:portrait){ body.pk.seated .pk-hint.on{font-size:11.5px!important;padding:6px 8px!important} }
+/* short upright phones: no room under your row, so the tip goes up top (over the Whims card) */
+@media (max-width:999px) and (orientation:portrait) and (max-height:620px){ body.pk.seated .pk-hint.on{top:calc(64px + env(safe-area-inset-top))!important;bottom:auto!important} }
 </style>
 <script src="bw-auth.js?v=1120c"></script>
 <script src="bw-scroll.js?v=1026a" defer></script>
@@ -328,6 +336,8 @@ function monogram(g,cx,cy,sz,mode){
   var x0=-(wB+wW+sz*.06)/2,base=sz*.36;
   function m(fill,ox,oy){g.fillStyle=fill;g.font="700 "+(sz*.97)+"px Fraunces, Georgia, serif";g.fillText("B",x0+ox,base+oy);g.font="400 "+(sz*.76)+"px Pacifico, cursive";g.fillText("W",x0+wB+sz*.06+ox,base+oy);}
   if(mode==="engrave"){m("rgba(255,240,200,.55)",.7,.9);m("rgba(70,45,15,.85)",0,0);}
+  else if(mode==="press"){m("rgba(0,0,0,.35)",-.6,-.8);m("rgba(255,244,222,.8)",.9,1.4);var pg=g.createLinearGradient(0,-sz*.6,0,sz*.5);pg.addColorStop(0,"#2a170b");pg.addColorStop(1,"#4a2c16");m(pg,0,0);}
+  else if(mode==="cut"){m("rgba(60,64,72,.3)",-.6,-.8);m("rgba(255,255,255,.95)",.9,1.4);var cg=g.createLinearGradient(0,-sz*.6,0,sz*.5);cg.addColorStop(0,"#4a4f58");cg.addColorStop(1,"#6b717b");m(cg,0,0);}
   else{m("rgba(0,0,0,.4)",1,1.5);m("rgba(255,250,220,.55)",-.6,-.7);m(giltGrad(g,-sz*.6,sz*.5),0,0);}
   g.restore();
 }
@@ -485,21 +495,19 @@ var $=function(id){return stage.querySelector("#"+id);};
 var bw=$("bw"),pcs=$("pcs"),hl=$("hl"),diceL=$("diceL"),tgs=$("tgs"),fitEl=$("bgFit"),cv=$("cv"),cupEl=$("cup");
 
 /* ---------- boards (sets) ---------- */
-var BOARD_NAMES={leath:["bone","ebony"],lib:["ivory","cobalt"],mid:["pearl","garnet"]},BOARD_DOTS={leath:["#efe4cc","#2a1d16"],lib:["#f3eedc","#2555a7"],mid:["#f3efe6","#8c1328"]};
+var BOARD_NAMES={leath:["bone","ebony"],lib:["ivory","cobalt"],mid:["pearl","garnet"]},BOARD_DOTS={leath:["#ecd3b1","#2a1d16"],lib:["#eeebe6","#23308a"],mid:["#ece6e2","#7a1014"]};
 var CUPS={leath:{body:"linear-gradient(180deg,#8e4630,#63261a 45%,#2c0f08)",tex:[120,60,40],inside:"#2a0d06"},lib:{body:"linear-gradient(180deg,#3a5cb4,#22408e 45%,#0f2152)",tex:[70,96,170],inside:"#0a1430"},mid:{body:"linear-gradient(180deg,#3a3a40,#16161a 45%,#050506)",tex:[70,70,76],inside:"#111"}},cupTex={};
 /* Nov 19: Judy's photo boards, remapped strip by strip onto the 1480 x 1020 layout (tools: the BackgammonPhotos note).
    The painted board shows until the photo loads; the BW plate is drawn on top. */
 var photoBd={},photoReq={};
 function plate(g,d){
-  if(d.deco==="scroll"){
-    g.save();g.fillStyle="rgba(250,248,242,.92)";g.beginPath();rrp(g,FR[0]+12,H-52,62,34,6);g.fill();g.restore();
-    gilded(g,function(){g.lineWidth=1.3;g.beginPath();rrp(g,FR[0]+12,H-52,62,34,6);g.stroke();},H-52,H-18);
-    monogram(g,FR[0]+43,H-35,24,"gilt");
-  } else if(d.deco==="brass"){
-    g.save();g.shadowColor="rgba(0,0,0,.5)";g.shadowBlur=4*SC;g.shadowOffsetY=2*SC;g.fillStyle=brassGrad(g,FR[0]+10,H-54,FR[0]+86,H-16);g.beginPath();rrp(g,FR[0]+10,H-53,76,36,5);g.fill();g.restore();
-    g.save();g.strokeStyle="rgba(90,60,18,.6)";g.lineWidth=1;g.beginPath();rrp(g,FR[0]+14,H-49,68,28,3);g.stroke();g.restore();
-    monogram(g,FR[0]+48,H-35,22,"engrave");
-  } else monogram(g,FR[0]+43,H-35,24,"gilt");
+  /* THE BW (Nov 28, Room-Ready Review): no plate; pressed into the walnut (Fireside Leather, the branded BW),
+     cut into the marble (Library Marble), gold inlay in the ebony (Midnight Gilt). Centered on the bottom rail of your half. */
+  var cx=(FR[0]+FR[1])/2,cy=H-34,sz=46;
+  if(d.deco==="scroll"){ /* a plain marble cartouche interrupts the gilt scroll, gilt hairline (the set's metal) */
+    var cw=sz*2.1,ch=sz*1.02;g.save();g.shadowColor="rgba(0,0,0,.25)";g.shadowBlur=3*SC;g.shadowOffsetY=1*SC;g.fillStyle="rgba(250,248,242,.98)";g.beginPath();rrp(g,cx-cw/2,cy-ch/2,cw,ch,7);g.fill();g.restore();
+    gilded(g,function(){g.lineWidth=1.4;g.beginPath();rrp(g,cx-cw/2,cy-ch/2,cw,ch,7);g.stroke();},cy-ch/2,cy+ch/2);}
+  monogram(g,cx,cy,sz,d.deco==="brass"?"press":d.deco==="scroll"?"cut":"gilt");
 }
 function loadPhotoBoard(k){
   var d=DESIGNS[k]; if(!d.photo||photoReq[k]) return; photoReq[k]=1;
@@ -632,7 +640,7 @@ function leftMsg(){var left=G.max-G.played.length;return left+" more move"+(left
 /* ---------- turn flow ---------- */
 function newGame(){token++;busy=false;over=false;winner=0;seq=0;
   G.st=startPos();G.turn=0;G.dice=null;G.roll=null;G.seqs=[];G.max=0;G.played=[];G.hist=[];G.sel=null;G.dests=null;G.sources={};G.last=null;
-  diceL.innerHTML="";G.phase="opening";render(G.st);say("Roll to start","Tap the dice cup · higher die goes first");buttons();fit();}
+  diceL.innerHTML="";G.phase="opening";render(G.st);say("Roll to start","Tap the cup · high die starts");buttons();fit();}
 async function rollClick(){
   if(busy||over||!seatedNow()||watcher)return;var my=token;
   if(G.phase==="opening"){busy=true;await shakeCup();buttons();var a,b;
@@ -648,7 +656,7 @@ function startMyMove(list){G.dice=list;var r=allSeqs(G.st,ms,list);G.seqs=r.seqs
   showDice(true,list,0);
   if(!r.max){G.phase="wait";G.sources={};render(G.st);buttons();say("No legal move","Nothing plays "+rollText(G.roll));var my=token;setTimeout(function(){if(my===token)endMyTurn();},1700);return;}
   G.phase="move";computeSources();autoPick();render(G.st);buttons();
-  say("Your move",r.max===1?"One move: tap or drag a glowing checker":"Tap or drag a glowing checker to a gold ring");
+  say("Your move",r.max===1?"One move: tap a glowing checker":"Tap a glowing checker");
   if(practice)practiceTip();}
 function rollText(d){return d?d[0]+" and "+d[1]:"";}
 function matching(){var P=G.played;return G.seqs.filter(function(o){for(var k=0;k<P.length;k++){if(o.path[k].f!==P[k].f||o.path[k].d!==P[k].d)return false;}return true;});}
@@ -673,8 +681,8 @@ async function tap(kind,dp){
   if(G.phase!=="move"||G.turn!==ms)return;
   var p=pOf(kind,dp);
   if(G.sel!=null&&G.dests){var o=G.dests.filter(function(x){return x.t===p;})[0];if(o){doMove(o);return;}}
-  if(G.sources[p]){if(G.sel!==p){G.sel=p;G.dests=destsFor(p);render(G.st);Parlor.sfx("click",{pitch:.8});}return;}
-  if(G.sel!=null){G.sel=null;G.dests=null;render(G.st);}
+  if(G.sources[p]){if(G.sel!==p){G.sel=p;G.dests=destsFor(p);render(G.st);Parlor.sfx("click",{pitch:.8});say("Your move","Now tap a gold ring");}return;}
+  if(G.sel!=null){G.sel=null;G.dests=null;render(G.st);say("Your move",G.played.length?leftMsg():"Tap a glowing checker");}
 }
 async function doMove(o,fromXY){
   busy=true;buttons();var my=token,f=G.sel;
@@ -910,9 +918,9 @@ Parlor.init({
   players:[{name:"You (bone)",color:"var(--bg-dot1,#efe4cc)"},{name:"The House (ebony)",color:"var(--bg-dot2,#2a1d16)"}],
   setsLabel:"Boards",
   sets:[
-    {id:"leath",name:"Fireside Leather",need:0,dots:["#a2643a","#7a2224","#efe4cc"]},
-    {id:"lib",name:"Library Marble",club:true,dots:["#f1efe9","#4d5c73","#2555a7"]},
-    {id:"mid",name:"Midnight Gilt",club:true,dots:["#1a2550","#d8b25e","#8c1328"]}
+    {id:"leath",name:"Fireside Leather",need:0,dots:["#ecd3b1","#2a1d16"]},
+    {id:"lib",name:"Library Marble",club:true,dots:["#eeebe6","#23308a"]},
+    {id:"mid",name:"Midnight Gilt",club:true,dots:["#ece6e2","#7a1014"]}
   ],
   rules:{
     play:"<ol><li>You play the light checkers and move them around the board toward your home, the six points at your bottom right. The House plays the dark checkers the other way.</li><li>To start, each side rolls one die. The higher roll goes first and plays both numbers.</li><li>On your turn, tap the dice cup to roll two dice, then move a checker the number on each die (one checker can use both). Doubles play four times. Tap a glowing checker, then a gold ring, or drag it there. A ring further along moves the same checker with both dice at once. Undo takes back a move until your turn is played.</li><li>You can land on any point that isn't held by two or more of the other side's checkers. Land on a single one (a blot) and it's hit and goes to the bar.</li><li>A checker on the bar must come back in first, into the other side's home, before anything else moves.</li><li>You must use both dice if you can. If only one can be played, play the larger one when possible.</li><li>Once all fifteen are home, bear them off: a roll takes off a checker on that point, or from the highest point if the roll is bigger than any point you still hold.</li></ol>",
